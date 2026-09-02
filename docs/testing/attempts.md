@@ -16156,3 +16156,78 @@ executor returned with nothing in flight.
   next open item in order; item 7 is available to a review that would rather
   re-order now that its serial gate is discharged, but the protocol's
   first-open-item rule points at 5.
+
+## 2026-09-02T17:15Z — `WF-6` step 3f — outcome: `complete` (12:00 implementer slot)
+
+- **Preflight clean**: tree clean at `dae3987`, `main`, container Up 7 days. No
+  dirty tree, no `attempt/*`, no `recovered/*`. Took §9 On-deck **item 1** — the
+  10:30 review renumbered the list, so the finer-phantom rung that was item 7 at
+  09:00 is now the first open item. Delegated to the `implementer` agent,
+  **foreground**, with the never-background rule, the repo-relative harness path
+  and the "no band moves in-slot" scope restated in the spawn prompt. Its harness
+  window ran foreground and returned footered.
+- **Landed** at `1a78783` on `main`: new
+  `tests/validation/test_birdcage_sar_fine_phantom.py` (837 lines, 19 collected
+  items), §6 phase-5 row + §7 `WF-6` row + rulings blockquote, two
+  known-issues edits, two logs, test-results.md. **Nothing under `src/`** — the
+  knob it drives landed at `d5f007d`. `WF-6` stays 🟡.
+- **Verdict (a)** — the pre-registered clause: all five identities ≤ 5%.
+  Re-read by this slot off `20260902T170559Z_WF-6-step3f.log:4725–4731`, not
+  taken from the executor's report:
+  | identity | coarse | fine (0.0075) | Δ pp | ratio |
+  |---|---|---|---|---|
+  | (i) P2(Rx) | 8.2868% | **3.3600%** | −4.9268 | 0.4055 |
+  | (i) P4(−Rx) | 9.4743% | **3.4442%** | −6.0301 | 0.3635 |
+  | (i) P3(180°) | 7.3477% | **3.4525%** | −3.8952 | 0.4699 |
+  | (ii) ccw(Rx) | 6.8146% | **3.0332%** | −3.7814 | 0.4451 |
+  | (iii) cw(Mx) | 6.1185% | **2.5465%** | −3.5720 | 0.4162 |
+  Mean ratio **0.42** against the 0.25 one halving of a purely second-order
+  residual would give — falling, but slower than `h²`. Both step-3b negative
+  controls survive as asserted: mis-rotated **121.0800%** (coarse 123.6255%),
+  quadrature-vs-single-drive **384.1297%** (coarse 333.0778%).
+- **Asserted anchors, all green.** (iii) mesh **120 499 cells / 2 746 tag-3** at
+  exact equality against 3f₀ (`:4703`) — the `phantom_resolution` passthrough
+  reached the constructor. (ii) same-mesh best approximation **12.5225% ≤
+  1626.2098%** (`:4721`, separation 129.86×, global solve reason 2 in 26 its),
+  coarse 18.7238% printed not asserted per the 10:30 sharpening; `a + b·x`
+  control **9.947634e-13** vs the 1e-10 bound (`:4722`); `x² ê_x` 2.142147e-01
+  above its 1e-4 floor; pinned max |value| 0.000e+00 over owned+ghost, 722 free
+  of 22 147 owned blocks on 66 441 dofs; six restricted solves reason 2 in
+  20–25 its; restricted phantom power 5.499426495e-08 W, −1.5681% from this
+  mesh's primal (coarse −3.5058%). Gate (i) power accounting **9.795780e-03 /
+  9.796465e-03** inside the unmoved 1e-2 band, the P1 figure agreeing with the
+  coarse record 9.795751e-03 to 3e-6 relative.
+- **Three deliberate reds, nothing loosened.** The `|B₁⁺|` C4 identities read
+  **0.6177 / 0.5966 / 0.5647%** against records 2.1870 / 2.1146 / 1.8911%
+  (`:4709–4711`) — moves of −1.5693 / −1.5180 / −1.3264 pp, outside the weekly's
+  pre-registered 0.5 pp ceiling, so
+  `test_the_b1_plus_c4_identities_do_not_move_with_the_phantom_h` fails at all
+  three angles (`3 failed, 27 passed`). The executor kept the anchor at 0.5 pp
+  and opened a 🔴 OPEN known-issues entry instead; this slot agrees with that
+  call and with its reading that the move is an **improvement** (4× further
+  inside the 5% band, mis-rotated control still 25.4563%), so gate (ii) survives
+  but its "converged ~2% floor with 2.3× headroom" provenance does not.
+  **Residual `main` reds at `-n 2` go 8 → 11** — the review's §9 count needs
+  updating.
+- **Cost**: two foreground harness windows, Bash timeout 660000 ms,
+  container-side `timeout -k 30 600`, `-n 2` **complex** with
+  `tests/environment` first, repo-relative harness path.
+  `20260902T170559Z_WF-6-step3f.log` — **Status 1 / Elapsed 175 s** (pytest
+  173.01 s), inside the item's 150–200 s estimate, no overrun and no rank
+  escalation; `20260902T170546Z_WF-6-step3f-collect.log` — 19 items, 5 s,
+  Status 0. **Standard** tier, declared from the footer.
+- **For the review — the one reading that limits this result.** The centroid
+  **sample set grew 51 → 373** with the mesh, which is inherent to an `h` rung on
+  a centroid set but means this rung does **not** separate `h` from the sample
+  set on its own. Read clause (a) with that caveat before acting on it. The
+  disposition options the executor wrote into the known-issues entry (re-read the
+  `|B₁⁺|` anchor one-sided / run step 1c's ring-set control on this mesh to
+  separate `h` from the sample set / a third rung at 0.00375) are a review's to
+  choose, and step 1c's control is the one that answers the caveat directly.
+  Registering the first coil-driven SAR gate is now a live, evidenced option —
+  **for a review, not a slot**; nothing here registered one.
+- **No denials this slot.** Commit messages used the literal multi-line `-m`
+  route both times. No 0-byte FFCx stubs; no unrelated red touched.
+- Next-attempt hypothesis: the 13:30 slot takes **§9 item 2 (`OPS-32`)** as the
+  next open item in order — independent of this one, host runner, and its
+  census-scope half unblocks every "census `exit != 1`" anchor on `main`.

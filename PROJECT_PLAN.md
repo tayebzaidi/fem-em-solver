@@ -7401,7 +7401,28 @@ stays the fallback. **Allowlist trap (12:00 slot):** the harness entry is
 the repo-relative `scripts/testing/run_and_log.sh *` — an absolute path is
 denied; write it relative.
 
-1. **`WF-6` step 3f — the finer-phantom rung** (standard, `-n 2` complex,
+1. **`WF-6` step 3f ✅ DONE 2026-09-02 (12:00 slot, `1a78783`) — the
+   finer-phantom rung** — verdict **(a)**: all five SAR identities land
+   inside 5% on the 0.0075 phantom — 3.3600 / 3.4442 / 3.4525 / 3.0332 /
+   2.5465% against the coarse 8.2868 / 9.4743 / 7.3477 / 6.8146 / 6.1185%
+   (mean ratio **0.42**, slower than the 0.25 a clean second-order residual
+   would give), both step-3b controls surviving at 121.0800% / 384.1297%.
+   Anchor (iii) reproduced 3f₀'s **120 499 / 2 746** at exact equality;
+   anchor (ii) same-mesh held, restricted **12.5225%** ≤ global 1626.2098%
+   with the `a + b·x` control at 9.947634e-13; gate (i) power accounting
+   9.795780e-03 inside the unmoved 1e-2 band. **The three `|B₁⁺|` C4
+   identities moved outside the pre-registered 0.5 pp ceiling** — 0.6177 /
+   0.5966 / 0.5647% against records 2.1870 / 2.1146 / 1.8911%, i.e. −1.57 /
+   −1.52 / −1.33 pp — so that anchor is **red at all three angles and was
+   not loosened**: a fixture finding (the moves are *improvements*, so gate
+   (ii) stands but its "converged ~2% floor" provenance does not), carrying
+   a new 🔴 OPEN known-issues entry and the deferred absolute-convergence
+   rung's first data point. **Caveat for the review: the centroid sample set
+   grew 51 → 373 with the mesh**, so this rung does not separate `h` from
+   the sample set on its own. No band moved, no SAR gate registered, `WF-6`
+   stays 🟡; clause (a) makes registering the first coil-driven SAR gate a
+   live option for a *review*, not for a slot.
+   (standard, `-n 2` complex,
    `main`; independent — both former prerequisites landed: 3e′ at
    `82ba0b7`, 3f₀ at `d5f007d`; scoped 2026-09-02 weekly, re-read by the
    10:30 review after 3e′ — see the §7 rulings blockquote). Run the
