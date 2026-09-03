@@ -18,7 +18,7 @@ package entry point
 Three things are on show, in this order:
 
 1. **A negative control, printed first.** The *raw* mutual ratio
-   |Im Z₂₁|/ωM₁₂ = 0.894543 is **−10.55%** against the filamentary closed form
+   |Im Z₂₁|/ωM₁₂ = 0.894516 is **−10.55%** against the filamentary closed form
    and the script asserts that it **fails** the unmoved 10% mutual band. This is
    an inverted assertion on purpose: the case exists to expose two systematic
    corrections (PEC-box truncation and the gap-generator feed model), and if the
@@ -26,18 +26,23 @@ Three things are on show, in this order:
    would be decorating a result nobody needed. The run would then fail loudly
    rather than quietly report a "corrected" number.
 2. **The corrected number and the identities.** After the two named systematics
-   the ratio is 0.939849 (−6.02%, inside the band); reciprocity
+   the ratio is 0.939822 (−6.02%, inside the band); reciprocity
    ‖S − Sᵀ‖/‖S‖ = 4.7586e-05 against the 1e-3 gate, and passivity
    ‖S‖₂ = 0.864809 ≤ 1. (Those two read 2.5494e-05 / 0.861449 until
    2026-08-26 — the `PORT-9` leg (d3) power-wave assembly moved both; this
    case *imports* all four records from `ports:2`, so they re-recorded here
    with no edit to this case's script. `EX-30` leg (ports).)
 3. **That it is the gated path, not a lookalike.** Every one of those four
-   numbers is asserted to reproduce the `PORT-1` step-4 record within a
-   pre-stated **1%** band. The measured misses are ≤ 2.98e-05
-   (`20260826T124617Z_EX-30-ports-run-ans.log`; ≤ 3.67e-06 when this case
-   closed on 2026-08-16) — at least two orders of magnitude of headroom —
-   because the geometry, drive, quadrature and
+   numbers is asserted to reproduce `EX-20`'s **0.11-image** record within a
+   pre-stated **1e-6 relative** band (**1e-6 absolute** on the symmetry
+   residual). Those four records were the v0.7.2 image's until `OPS-33`
+   (2026-09-03) re-based them under the in-class (1\*) example-record licence;
+   before that the misses were record-vs-image gaps of ≤ 2.98e-05
+   (`20260902T183603Z_OPS-32.log`) rather than run-to-run scatter, which is why
+   the band could not be tightened. The superseded v0.7.2 digits are kept and
+   **asserted to fail** the new band, so the band is shown to bite. The band
+   itself is `EX-37`'s measured ≤ 5e-8 run-to-run Z/S scatter with ≥ 20×
+   headroom, and it holds because the geometry, drive, quadrature and
    correction constants are *imported* from `examples/ports/02_package_sparameter_sweep.py`
    (`EX-20`) rather than restated here. If the gated path moves, this benchmark
    moves with it and the reproduction assertions fire.
@@ -75,11 +80,13 @@ columns.
    line is the raw mutual ratio and its `MISS` label. If that line ever says the
    raw ratio passed, stop — the systematics story has changed and the numbers
    below it need re-deriving, not reporting.
-2. **Check the reproduction line.** `reproduction of the PORT-1 step-4 record
-   (band 1% relative)` prints four relative misses. All four should be ≲ 1e-05.
-   A miss that grows toward 1e-2 means this benchmark has drifted off the gated
-   path even though the assertions still pass — the early warning, not the
-   failure.
+2. **Check the reproduction line.** `reproduction of the 0.11-image record`
+   prints four misses (relative on raw / corrected / ‖S‖₂, absolute on the
+   symmetry residual). All four should sit near 1e-8 or below, against the 1e-6
+   band. A miss that grows toward the band means this benchmark has drifted off
+   the gated path even though the assertions still pass — the early warning, not
+   the failure. The line below it is the band's negative control: the superseded
+   v0.7.2 digits miss by ~2.9e-05, three decades outside.
 3. **Read `COMPARISON.md`.** The Z table's **Im Z₂₁** row is the primary
    adjudication row: ours is +1.1108033e+00 Ω against ωM₁₂ = 1.241755 Ω. The
    closed form spans 66.5% of nominal over ±r_wire, so treat it as an anchor,

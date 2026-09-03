@@ -16723,3 +16723,74 @@ executor returned with nothing in flight.
   work on the generator plus a mesh-side identity rung, and it is a review's
   ruling. `PORT-13` step 1 becomes executable, unchanged in scope, the moment
   such a sheet exists; until then it should not be re-queued.
+
+## 2026-09-03T05:15Z — `OPS-33` (00:00 implementer slot) — **COMPLETE**
+
+- **Outcome.** §4-done and closed ✅ on `main`. `ans:3`'s four `RECORDED_*`
+  constants re-based onto the 0.11 image under the in-class (1\*)
+  example-record licence, and the 1e-6 reproduction control `OPS-32` could not
+  register is now registered and biting. The pre-registered negative result
+  (a miss > 1e-6 on a freshly re-based record ⇒ scatter above `EX-37`'s
+  figure) **did not occur**: the independent `ports:2` solve reproduces at
+  6.51e-10 / 6.39e-10 / 1.87e-10 abs / 6.64e-11, ~3 decades inside the band.
+- **What was tried.** Read the four 0.11-image digits at full precision from
+  the `OPS-32` run's own `metrics.json` (the same run whose six-figure prints
+  are `20260902T183603Z_OPS-32.log:1395–1404`), and edited
+  `examples/ports/02_package_sparameter_sweep.py` — the single example-side
+  source, which `03_two_torus_gap_ports_10MHz.py` re-exports — to carry them:
+  `RECORDED_RAW_RATIO` 0.894543 → **0.8945163788281**,
+  `RECORDED_CORRECTED_RATIO` 0.939849 → **0.9398215452105**,
+  `RECORDED_S_SYMMETRY_RESIDUAL` 4.758625e-05 → **4.7586341120262e-05**,
+  `RECORDED_S_SPECTRAL_NORM` 0.864809457 → **0.8648094567341**. The v0.7.2
+  digits are kept as `SUPERSEDED_V072_RECORD` — **as data, not prose**, so the
+  negative control can assert on them rather than merely cite them. Band
+  `REPRODUCTION_BAND_RELATIVE` 0.01 → **1e-6** (raw / corrected / ‖S‖₂) plus a
+  new `REPRODUCTION_BAND_SYMMETRY_ABSOLUTE` = **1e-6 absolute** and an
+  `_absolute_miss` helper, because the symmetry residual is itself ~4.8e-05
+  and a relative 1e-6 there is arithmetically unreachable against a 5e-8
+  S-entry scatter. Both scripts' gate loops carry the band and its kind
+  per-entry; both print the misses and the superseded-record control.
+- **Measured numbers.** `ans:3` Status 0, **165 s**: reproduction misses raw
+  **0.00e+00**, corrected **4.63e-14**, symmetry **5.99e-14 abs**, ‖S‖₂
+  **7.57e-15**; gates `‖S − Sᵀ‖/‖S‖ = 4.7586e-05 < 1e-03`, `‖S‖₂ = 0.864809
+  ≤ 1`, corrected mutual 0.939822 (−6.02%) inside 10%, raw 0.894516 a MISS at
+  −10.55% — every physics gate unmoved. `ports:2` Status 0, **206 s**: misses
+  **6.51e-10 / 6.39e-10 / 1.87e-10 abs / 6.64e-11**, same four gates plus the
+  deprecated-heuristic separation 3.030e-01. Negative control in both:
+  superseded v0.7.2 raw/corrected miss the same run by **2.98e-05 /
+  2.92e-05**, three decades outside 1e-6. Census `dead=0 guide=0 stale=30
+  stale_severity=report exit=2` — `exit != 1`, 47 guides scanned.
+- **One thing the row anticipated and the slot confirmed.** The negative
+  control covers **raw and corrected only**, exactly as scoped: v0.7.2's
+  symmetry record 4.758625e-05 differs from the new one by ~9e-11 absolute
+  and would *pass* the 1e-6 absolute band, and its spectral record is
+  identical to 9 figures. Only two of the four records were actually stale.
+- **Generated-artifact control** (the standing `OPS-32` ruling): the tracked
+  `COMPARISON.md` and `metrics.json` re-stamped their timestamp and FEM digits
+  as designed; the tracked diff carries **no AED value and no non-blank AED
+  cell**, `"aed": null` unchanged, and nothing under `aed_results/` or any
+  `*_private.md` was staged (the box has no `aed_results/`, so the run printed
+  `no aed_results/ on this box — private table not written`).
+- **Harness logs.** `20260903T050551Z_OPS-33.log` (`ans:3`),
+  `20260903T050845Z_OPS-33.log` (`ports:2`),
+  `20260903T051230Z_OPS-33.log` (census). Standard tier; the two example
+  windows ran under the row's own pre-authorised `-t 400`, and `ports:2`'s
+  206 s is its first measurement on this image (over the 180 s nominal
+  ceiling, inside the wrapped one — the `OPS-27` / `OPS-30` / `OPS-31`
+  precedent, flagged in the §7 tier cell rather than silently absorbed).
+- **No branch parked**; `main` green and clean. Retires the `OPS-32`
+  known-issues entry in the same commit.
+- **No permission denials, no traps.** Both example commands taken **verbatim**
+  from `./scripts/run_examples.sh -e <key> --dry-run` with only the
+  container-side `timeout -k 30` adjusted to 400 s; harness foreground, Bash
+  tool timeout 660 000 ms, repo-relative `run_and_log.sh`; commit message via
+  the literal multi-line `-m` route.
+- **Next-attempt hypothesis.** Not applicable — the chunk is closed. The
+  natural follow-on, for a review rather than a slot: `examples/ports/01`'s
+  `RECORDED_*` block (`01_two_torus_port_pair.py:143–160`) still carries
+  v0.7.2-lineage digits 0.894283 / 0.939581 / 3.11213e-05 / 0.861356895 with
+  an `RAW_REPRODUCTION_BAND` of its own, as does the gate module
+  `tests/validation/test_port_package_sparameters.py:94–95`. This slot did not
+  touch either — they gate a *different* route (terminated-Z, `ports:1`) and
+  re-basing them is a separate (1\*) item with its own measurement, not a
+  drive-by.

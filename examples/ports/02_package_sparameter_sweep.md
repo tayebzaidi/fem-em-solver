@@ -80,25 +80,26 @@ report at this port separation — while the field route's is
 
 ## Gates
 
-All asserted values are allreduced. The two mutual-ratio bands cite
-`docs/testing/logs/20260813T183606Z_PORT-1-step4-packagegate.log`; the two
-S-matrix records are the `PORT-9` leg (d3) power-wave digits carried by the
-gate module `tests/validation/test_port_package_sparameters.py`. All four
-bands are deliberately **looser** than the digits they cite.
+All asserted values are allreduced. Since `OPS-33` (2026-09-03) the four
+reproduction records are this case's own **0.11-image** digits, so the four
+misses are a run-to-run reproduction control rather than a cross-image record
+comparison, and the band is `EX-37`'s measured ≤ 5e-8 Z/S scatter with ≥ 20×
+headroom.
 
-* four reproductions inside a pre-stated **1% relative** band — raw 0.894543,
-  corrected 0.939849, `‖S − Sᵀ‖/‖S‖` 4.7586e-05, `‖S‖₂` 0.864809457; measured
-  misses **2.98e-05 / 2.92e-05 / 3.13e-06 / 1.32e-10**
-  (`20260826T123904Z_EX-30-ports-run-2to3.log`), i.e. at least two orders of
-  magnitude inside the band.
+* four reproductions inside a pre-stated **1e-6 relative** band (**1e-6
+  absolute** on the symmetry residual — that entry is itself only ~4.8e-05, so
+  a 5e-8 S-entry scatter is ~1e-3 of it *relatively* and a relative 1e-6 there
+  is arithmetically unreachable) — raw 0.8945163788281, corrected
+  0.9398215452105, `‖S − Sᵀ‖/‖S‖` 4.7586341120262e-05, `‖S‖₂`
+  0.8648094567341.
 
-  **Re-recorded 2026-08-26** (`EX-30` leg (ports), in-class (1\*) licence):
-  the two S-matrix digits read 2.5494e-05 / 0.861449 until this date, from
-  the v0.7.2 terminated-Z conversion. Leg (d3) changed the sweep to assemble
-  `S` from power waves, so both moved; the symmetry record was the one that
-  went red here (measured miss 8.67e-01 against the 1% band,
-  `20260826T123139Z_EX-30-ports-run-1to2.log`) and it is what found the
-  drift. No band moved and no physics gate was touched;
+  **Re-recorded 2026-09-03** (`OPS-33`, in-class (1\*) licence): all four had
+  been carrying v0.7.2-image digits (raw 0.894543, corrected 0.939849,
+  symmetry 4.758625e-05, `‖S‖₂` 0.864809457), which the 0.11 image misses by
+  2.9e-05 on the two mutual ratios — a stale record, not scatter. Those digits
+  are kept in `SUPERSEDED_V072_RECORD` and the example **asserts** they miss
+  the current run by more than the new band, so the band is shown to bite. No
+  physics band and no gate moved;
 * the **raw** mutual asserted *outside* the unmoved `MUTUAL_TOLERANCE = 10%`
   and the corrected one *inside* it — the systematics have to be doing work;
 * `‖S‖₂ ≤ 1` as an inequality (passivity), not a reproduction;

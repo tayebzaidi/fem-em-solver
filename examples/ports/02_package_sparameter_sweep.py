@@ -18,13 +18,13 @@ shows its :class:`DeprecationWarning`, and asserts its S-matrix differs from the
 solved-field one.  A heuristic that happened to agree would be a finding about
 the gate, not a passing example.
 
-**Anchor.**  Every asserted number reproduces its gate-module record within a
-pre-stated **1%** relative band: raw mutual ``0.894543``, corrected
-``0.939849`` (both from
-``docs/testing/logs/20260813T183606Z_PORT-1-step4-packagegate.log``), and the
-two S-matrix records the `PORT-9` leg (d3) power-wave assembly moved,
-``||S - S^T||/||S|| = 4.758625e-05`` and ``||S||_2 = 0.864809457`` (v0.7.2
-terminated-Z digits ``2.5494e-05`` / ``0.861449`` kept in-comment below).  The
+**Anchor.**  Every asserted number reproduces this case's **0.11-image** record
+within **1e-6 relative** (``1e-6`` *absolute* on the symmetry residual, which is
+itself only ~4.8e-05): raw mutual ``0.8945163788281``, corrected
+``0.9398215452105``, ``||S - S^T||/||S|| = 4.7586341120262e-05`` and
+``||S||_2 = 0.8648094567341``.  All four were re-recorded by `OPS-33`
+(2026-09-03) from the current image; the superseded v0.7.2 digits are kept in
+``SUPERSEDED_V072_RECORD`` and *asserted* to fail the tightened band.  The
 raw mutual is printed **first and labelled a miss** — at -10.55% the unmoved 10%
 band would not accept it; only the two named systematics bring it inside.
 
@@ -115,15 +115,18 @@ REFERENCE_IMPEDANCE_OHM = 50.0
 PATH_QUADRATURE_ORDER = 4097
 
 # ---------------------------------------------------------------------------
-# The anchor.  The two mutual-ratio digits are from
-# docs/testing/logs/20260813T183606Z_PORT-1-step4-packagegate.log (PORT-1
-# step 4, the package-path gate at -n 2); the two S-matrix digits are the
-# route-current ones (see the re-record note below).  The band is the one the
-# EX-20 rubric pre-stated: 1% relative on each, deliberately looser than the
-# digits it cites, never to be tightened onto the measurement nor widened to
-# make a run pass.
-RECORDED_RAW_RATIO = 0.894543
-RECORDED_CORRECTED_RATIO = 0.939849
+# The anchor.  All four records are **0.11-image** digits, re-recorded by OPS-33
+# (2026-09-03) under the in-class (1*) example-record licence, from this case's
+# own current run: 20260902T183603Z_OPS-32.log:1395-1404 and the metrics.json
+# that run wrote (full precision; the log prints six figures of the same
+# numbers).  Before this re-record the two mutual-ratio digits were the v0.7.2
+# image's PORT-1 step-4 figures (docs/testing/logs/
+# 20260813T183606Z_PORT-1-step4-packagegate.log), which the 0.11 image misses by
+# 2.9e-05 relative — a stale record, not scatter (OPS-32's finding, the
+# OPS-27-class disposition).  The superseded digits are kept verbatim in
+# SUPERSEDED_V072_RECORD below and are used as this file's negative control.
+RECORDED_RAW_RATIO = 0.8945163788281
+RECORDED_CORRECTED_RATIO = 0.9398215452105
 # EX-30 leg (ports) re-record, 2026-08-26, under the in-class (1*) example-record
 # licence granted by the 2026-08-25 03:00 review (PROJECT_PLAN §9 item 3): the
 # two S-matrix records below are the ones the `PORT-9` leg (d3) power-wave
@@ -143,11 +146,31 @@ RECORDED_CORRECTED_RATIO = 0.939849
 # 0.861449 (v0.7.2), 0.861356895 (v0.11.0, terminated-Z) and 0.864809457
 # (power-wave).  Measured on current `main` this slot at 4.7586e-05 / 0.864809
 # (20260826T123139Z_EX-30-ports-run-1to2.log, the red that found the drift).
-# No band moved: REPRODUCTION_BAND_RELATIVE stays 1%, and the physics gates
-# (sigma_max <= 1, the gate module's unmoved 1e-3 symmetry band) are untouched.
-RECORDED_S_SYMMETRY_RESIDUAL = 4.758625e-05
-RECORDED_S_SPECTRAL_NORM = 0.864809457
-REPRODUCTION_BAND_RELATIVE = 0.01
+# The physics gates (sigma_max <= 1, the gate module's unmoved 1e-3 symmetry
+# band, the 10% mutual band) are untouched by every re-record in this block.
+RECORDED_S_SYMMETRY_RESIDUAL = 4.7586341120262e-05
+RECORDED_S_SPECTRAL_NORM = 0.8648094567341
+
+# The superseded v0.7.2-image record, kept as data rather than prose so the
+# negative control below can *assert* that it fails the tightened band.
+SUPERSEDED_V072_RECORD = {
+    "raw": 0.894543,
+    "corrected": 0.939849,
+    "symmetry": 4.758625e-05,
+    "spectral": 0.864809457,
+}
+
+# OPS-33 (2026-09-03): with the records re-based onto this image, these four
+# misses are a genuine run-to-run *reproduction* control rather than a
+# cross-image record comparison, so the band drops from EX-20's pre-stated 1%
+# to 1e-6 against EX-37's measured <= 5e-8 run-to-run Z/S scatter — >= 20x
+# headroom.  The symmetry residual gets an ABSOLUTE band instead: it is itself
+# ~4.8e-05, so a 5e-8 S-entry scatter is ~1e-3 of it *relatively* and a relative
+# 1e-6 there is arithmetically unreachable (OPS-32 watched that entry move
+# 1.71e-06 -> 1.91e-06 between two runs of identical code).  1e-6 absolute
+# against a 5e-8 scatter is the same 20x headroom.
+REPRODUCTION_BAND_RELATIVE = 1.0e-6
+REPRODUCTION_BAND_SYMMETRY_ABSOLUTE = 1.0e-6
 
 # PORT-1's own mutual band, unmoved since 3b-ii: the gate the corrected ratio
 # must sit inside and the raw ratio does not.
@@ -261,6 +284,10 @@ def _paraview_fields(msh, fields):
 
 def _relative_miss(measured: float, recorded: float) -> float:
     return abs(measured - recorded) / abs(recorded)
+
+
+def _absolute_miss(measured: float, recorded: float) -> float:
+    return abs(measured - recorded)
 
 
 def main() -> None:
@@ -392,8 +419,15 @@ def main() -> None:
     misses = {
         "raw": _relative_miss(ladder["raw"], RECORDED_RAW_RATIO),
         "corrected": _relative_miss(ladder["corrected"], RECORDED_CORRECTED_RATIO),
-        "symmetry": _relative_miss(s_symmetry, RECORDED_S_SYMMETRY_RESIDUAL),
+        # absolute, not relative — see REPRODUCTION_BAND_SYMMETRY_ABSOLUTE
+        "symmetry": _absolute_miss(s_symmetry, RECORDED_S_SYMMETRY_RESIDUAL),
         "spectral": _relative_miss(s_spectral, RECORDED_S_SPECTRAL_NORM),
+    }
+    superseded_misses = {
+        "raw": _relative_miss(ladder["raw"], SUPERSEDED_V072_RECORD["raw"]),
+        "corrected": _relative_miss(
+            ladder["corrected"], SUPERSEDED_V072_RECORD["corrected"]
+        ),
     }
 
     if comm.rank == 0:
@@ -420,10 +454,19 @@ def main() -> None:
             flush=True,
         )
         print(
-            "[EX-20] reproduction of the step-4 record "
-            f"(band {100.0 * REPRODUCTION_BAND_RELATIVE:.0f}% relative): "
+            "[EX-20] reproduction of the 0.11-image record (band "
+            f"{REPRODUCTION_BAND_RELATIVE:.0e} relative, "
+            f"{REPRODUCTION_BAND_SYMMETRY_ABSOLUTE:.0e} absolute on symmetry): "
             f"raw {misses['raw']:.2e}, corrected {misses['corrected']:.2e}, "
-            f"symmetry {misses['symmetry']:.2e}, ||S||_2 {misses['spectral']:.2e}",
+            f"symmetry {misses['symmetry']:.2e} (abs), "
+            f"||S||_2 {misses['spectral']:.2e}",
+            flush=True,
+        )
+        print(
+            "[EX-20] negative control — the superseded v0.7.2 record misses the "
+            f"same run by raw {superseded_misses['raw']:.2e}, corrected "
+            f"{superseded_misses['corrected']:.2e}, both > the "
+            f"{REPRODUCTION_BAND_RELATIVE:.0e} band that now gates it",
             flush=True,
         )
         print(
@@ -437,16 +480,33 @@ def main() -> None:
             print(f"    DeprecationWarning: {w.message}", flush=True)
 
     # -- gates -------------------------------------------------------------
-    for name, recorded in (
-        ("raw", RECORDED_RAW_RATIO),
-        ("corrected", RECORDED_CORRECTED_RATIO),
-        ("symmetry", RECORDED_S_SYMMETRY_RESIDUAL),
-        ("spectral", RECORDED_S_SPECTRAL_NORM),
+    for name, recorded, band, kind in (
+        ("raw", RECORDED_RAW_RATIO, REPRODUCTION_BAND_RELATIVE, "relative"),
+        ("corrected", RECORDED_CORRECTED_RATIO, REPRODUCTION_BAND_RELATIVE, "relative"),
+        (
+            "symmetry",
+            RECORDED_S_SYMMETRY_RESIDUAL,
+            REPRODUCTION_BAND_SYMMETRY_ABSOLUTE,
+            "absolute",
+        ),
+        ("spectral", RECORDED_S_SPECTRAL_NORM, REPRODUCTION_BAND_RELATIVE, "relative"),
     ):
-        assert misses[name] < REPRODUCTION_BAND_RELATIVE, (
-            f"{name} does not reproduce the PORT-1 step-4 record {recorded:.6g} "
-            f"within {100.0 * REPRODUCTION_BAND_RELATIVE:.0f}%: relative miss "
-            f"{misses[name]:.3e} — the example path is not the gated path"
+        assert misses[name] < band, (
+            f"{name} does not reproduce the 0.11-image record {recorded:.10g} "
+            f"within {band:.0e} {kind}: {kind} miss {misses[name]:.3e} — the "
+            "example path is not the gated path"
+        )
+
+    # The negative control the band exists for: the superseded v0.7.2 digits must
+    # FAIL the tightened band against this same run, so the band is shown to bite
+    # rather than merely to be satisfied by a freshly re-based record.
+    for name in ("raw", "corrected"):
+        assert superseded_misses[name] > REPRODUCTION_BAND_RELATIVE, (
+            f"negative control failed: the superseded v0.7.2 {name} record "
+            f"{SUPERSEDED_V072_RECORD[name]:.6g} misses this run by only "
+            f"{superseded_misses[name]:.3e}, inside the "
+            f"{REPRODUCTION_BAND_RELATIVE:.0e} band — the tightened band is not "
+            "discriminating and the re-record was not the thing that fixed it"
         )
 
     assert abs(ladder["raw_deviation"]) >= MUTUAL_TOLERANCE, (

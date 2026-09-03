@@ -129,7 +129,7 @@ model, not alarming.
 
 | Quantity | Closed form (filamentary) | Our FEM (gated) | Notes |
 |---|---|---|---|
-| Im Z₁₂ | ωM₁₂ = +1.241755 Ω (spans 66.5% of nominal over ±r_wire — an anchor, not a gate) | corrected ratio 0.939849 × ωM₁₂ (−6.02%); raw 0.894543 × ωM₁₂ before the two systematic corrections | both printed; the 10% mutual band is the gate |
+| Im Z₁₂ | ωM₁₂ = +1.241755 Ω (spans 66.5% of nominal over ±r_wire — an anchor, not a gate) | corrected ratio 0.939822 × ωM₁₂ (−6.02%); raw 0.894516 × ωM₁₂ before the two systematic corrections | both printed; the 10% mutual band is the gate |
 | ‖S−Sᵀ‖/‖S‖ | 0 (reciprocity) | 4.7586e-05 (2.5494e-05 before the leg (d3) power-wave assembly) | gated at 1e-3 |
 | ‖S‖₂ | ≤ 1 (passivity) | 0.864809 (0.861449 before leg (d3)) | inequality + reproduction |
 
