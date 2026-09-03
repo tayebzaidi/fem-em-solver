@@ -16494,3 +16494,81 @@ executor returned with nothing in flight.
   instead want to spend a slot on the choice 3g just created (integral vs
   pointwise-restricted construction for the first coil-driven SAR gate) —
   but that is a **review's** ruling, and no slot may register it.
+
+## 2026-09-03T00:45Z — `WF-6` step 3h — outcome: `complete` (19:30 implementer slot)
+
+- **Preflight clean.** `main` at `0321d5c`, tree clean, container Up 7 days,
+  no `attempt/*` or `recovered/*`. Took §9 On-deck **item 1** (`WF-6` step
+  3h), the first not-done item, exactly as the protocol requires. Delegated
+  to the `implementer` agent in the **foreground**, one executor, never
+  backgrounded; its report was checked against the log by this slot before
+  anything was committed (the logs win, and here they agreed).
+- **What was done.** The two modules the item names, one commit. (A)
+  `test_birdcage_sar_integral.py`: the twelve C4 pairs and the quadrature
+  four-quadrant spread become **asserted** `≤ C4_COVARIANCE_BAND` —
+  imported from `test_birdcage_b1_plus_map.py:120`, **unmoved at 5.0e-2**;
+  `grep -n "C4_COVARIANCE_BAND ="` still hits exactly that one definition —
+  as parametrised tests, one per `(j, k)`, each also checked against its
+  step-3g record at rtol 1e-3 (`STEP3G_INTEGRAL_*`). The verdict printer
+  stays. (B) `test_birdcage_sar_map.py`: the five pointwise asserts become
+  `pytest.approx(STEP3_PRIMAL_IDENTITY_RECORDS[label], rel=1e-3)` **plus a
+  one-line negative control each asserting the reading still exceeds the
+  band** — the quantity retired as a gate with its measurement kept, never
+  absorbed. The two pointwise negative controls and every 3b–3e′ record test
+  untouched.
+- **Measured (re-read from the log by this slot,
+  `20260903T003309Z_WF-6-step3h.log:4682–4694`).** Twelve pairs 0.7149 /
+  1.1908 / 1.4417 / 0.9703 | 1.5200 / 0.2132 / 0.3377 / 0.9086 | 1.0569 /
+  0.8355 / 0.2780 / 0.2302 %, **worst 1.5200%** against the 5% band — the
+  pre-registered **stop clause did not fire**. Quadrature spread 0.4641%.
+  Partition identity exact at rtol 1e-10 for all five drives; P1 total
+  **5.637745667e-08 W**, digit-identical to step 1's record; mis-paired
+  control asserted strictly larger at **89.088 / 130.890 / 159.272×**. Every
+  digit reproduces step 3g's window.
+- **Anchor (iii) met.** `test_birdcage_sar_integral.py` 9 → **22 items**
+  (9 + 12 + 1), 0 failed; `test_birdcage_sar_map.py` **5 failed → 0
+  failed**, passed **+5**, no other count moved; `tests/environment` 11.
+  Window total **`109 passed` / Status 0**.
+- **Logs.** `20260903T003258Z_WF-6-step3h-collect.log` (collect-only smoke,
+  98 items, Status 0, 5 s) and `20260903T003309Z_WF-6-step3h.log`
+  (**194 s**, `-n 2` complex, `tests/environment` first, `timeout -k 30
+  600`, Bash timeout 660000 ms, foreground). **Tier declared from the
+  footer** per the item's clause: 194 s is 14 s over the 180 s standard
+  band and far inside the 600 s ceiling — a standard-scale window, as the
+  item's ≈ 230 s estimate anticipated.
+- **Status flips.** `WF-6` step 3 → ✅; the **chunk stays 🟡** (homogeneity /
+  CV open). §2 Phase-5 sentence, §6 phase-5 row and the §7 `WF-6` row each
+  say exactly *a C4 symmetry identity of quadrant powers on one fixture at
+  10 MHz at fixed `h`* with the full disclaimer list (no mirror identity, no
+  absolute SAR, no homogeneity, no C95.3, no Larmor, no convergence). The
+  step-3 known-issues entry is **retired** in the same commit with its
+  retired-by row and its six-rung history kept verbatim.
+- **Residual `main` reds: 11 → 3**, exactly as the review predicted for item
+  1 alone minus item 2 — the five step-3 pointwise SAR asserts are gone
+  (retired to records); the two entry-3 names,
+  `test_birdcage_volumes_partition_the_box` and the three step-3f `|B₁⁺|`
+  no-move asserts remain, so the count is **6** until item 2 (step 3f′)
+  retires the three. (The review's "expected 3" assumed items 1 **and** 2;
+  this slot ran item 1 only.)
+- **Deviation / nit for the review: one stale printer string.** The verdict
+  line at `:4692` still ends *"registering the first coil-driven SAR gate on
+  it is the NEXT REVIEW's ruling, never in-slot"* — true when 3g wrote it,
+  now contradicted by the scope line printed directly beneath it. It is a
+  narrative `print`, asserted by nothing. Left **unedited on purpose**: the
+  committed test is byte-for-byte what the 194 s window verified, and
+  re-running to fix a string is not worth 194 s of a shared box. A future
+  slot touching that module should drop the clause.
+- **No denials, no traps.** No heredoc attempted, harness path written
+  repo-relative, no docker socket involved, commit message via the literal
+  multi-line `-m` route. Foreground-executor rule holds 14 for 14.
+- Commit **`642bfc5`** on `main` — both modules, both logs, test-results.md
+  rows, §2/§6/§7 edits, the known-issues retirement and §9 item 1 struck
+  done, all together. Tree clean after.
+- Next-attempt hypothesis: the 21:00 slot takes **§9 item 2 (`WF-6` step
+  3f′)** — it imports `_quadrant_weight` / `_quadrant_powers` from
+  `test_birdcage_sar_integral.py`; **this slot did not move them**, so the
+  import in `test_birdcage_sar_fine_phantom.py` resolves unchanged and the
+  item's "if item 1 moved it, follow the import" branch is moot. Its
+  integral-pairs addition now has a *gated* coarse rung to compare against,
+  not a printed one — the first `h` data point on a registered gate, which
+  the review should weigh before letting any convergence language near §2.
