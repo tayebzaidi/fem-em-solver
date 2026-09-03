@@ -17138,3 +17138,78 @@ and turns the bistability into a recorded property of the generator. Either
 unblocks `PORT-13` step 1 on the 270 728 record; neither is a slot's call.
 §9 items 2 (`EX-42`), 3 (`OPS-34`) and 4 (`EX-44`) remain open and independent.
 One chunk per slot, so nothing else was attempted here.
+
+---
+
+## 2026-09-03T20:00Z — `EX-42` — complete
+
+**Slot.** 15:00 CDT scheduled implementer run. Preflight: tree clean at
+`2730af3`; the container was **not Up** (`docker compose ps` returned a header
+and no rows) and was started with `docker compose -f docker/docker-compose.yml
+up -d` — clean start, no force-recreate needed, no wedge. §9 item 1 (`GEO-26`
+step 2) is struck through as done by the 12:00 slot, so the first open item is
+**item 2, `EX-42`**. Delegated to `example-runner`, spawned **foreground**, with
+the never-background rule, the emit-then-harness rule and the repo-relative
+harness-path rule written into its prompt.
+
+**Outcome: complete on the first physics run.** `mat:1`
+(`examples/materials/01_dodd_deeds_coil_loading.py` / `.md`) now prints the
+finite-wire-corrected Dodd–Deeds column beside the filament form and the FEM.
+
+**Measured.** `20260903T200603Z_EX-42.log`, Status 0 (`:179`), **64 s** harness
+/ 63.0 s in-script at `-n 2` complex — **standard** by the footer, against the
+≈ 60 s the item predicted. Anchors, all asserted in-script:
+- finite-wire correction **+0.115237% ΔR / +0.144814% ΔX** at `r_wire = 0.0025`
+  m (`:157`), each `np.isclose` at rtol 1e-6 against the `MAT-8` record
+  (`20260902T123618Z_MAT-8.log:71–74`); ΔZ finite wire = +3.2296790e-01 +
+  j(−6.1675935e-01) Ω;
+- filament ΔR deviation **1.5838%** unmoved against its 2% ceiling, with
+  **1.4669%** vs the finite-wire form printed and explicitly not gated (`:158`);
+- negative control `r_wire = 0` → **1.785e-16** relative on both ΔR and ΔX,
+  asserted `< 1e-12` (four decades of headroom, and the same digits `MAT-8`
+  measured).
+
+**Census, both ends, and the `EX-43` restoration.** The mandatory pre-census ran
+**before any edit** on the tree as it stood at `2730af3` with `ports:9`'s
+artifacts in place: `RESULT: dead=0 guide=0 stale=64 stale_severity=report
+exit=2` (`20260903T200105Z_EX-42-precensus.log:103`, Status 2 `:106`, 1 s). That
+is `dead=0` and `exit != 1` — exactly the condition the 10:30 review
+pre-registered — so the §7 **`EX-43` row is restored 🧪 → ✅** in this slot's
+commit, citing that log and line. Post-census `dead=0 guide=0 stale=63 exit=2`
+(`…200716Z_EX-42-postcensus.log:102`); the executor predicted the one-item stale
+drop (`mat:1` refreshing its own combined XDMF) *before* reading it, and it
+matched.
+
+**Records restated, not imported — deliberate and checked.** The example
+carries the two `MAT-8` percentages as full-precision literals. This is not the
+usual restatement defect: `tests/validation/test_dodd_deeds_finite_wire.py`
+defines no constant for them (only `FREQUENCY_HZ`, `COIL_RADIUS`, `LIFTOFF`,
+`SIGMA`, `WIRE_RADIUS`), so there is nothing to import, and the example
+recomputes the value from the **same** closed-form function at the **same**
+fixture inputs, which it *does* import. It is a reproduction check; a miss is a
+wiring defect, as the item says.
+
+**One executor deviation, display-only.** The first run
+(`20260903T200410Z_EX-42.log`, Status 0, 66 s) printed both corrections 100× too
+large — a `%` format spec applied to a value already in percent. The assertions
+used the raw floats and passed in that run too, so the numbers were never wrong,
+only the console line; fixed to `:+.6f}%` and re-run before the recorded window.
+This slot also corrected one digit the executor left inconsistent in the guide
+prose (`1.4664%` where the table and the log both read **1.4669%**).
+
+**Compute.** Four foreground harness windows (1 s, 66 s, 64 s, 1 s), all through
+`run_and_log.sh`, container-side `timeout -k 30` sized to the tier, none
+backgrounded. No compute-safety event, **no docker-socket denial** (the
+emit-then-harness path worked as documented), no allowlist denial.
+
+**Commit.** One commit on `main`, tree clean: the example + guide + the four
+harness logs + the `test-results.md` rows + the §7 `EX-42` and `EX-43` rows +
+§9 item 2 struck through, together.
+
+**`main` reds unchanged at 4 deliberate/known** — this chunk touched no test
+module and no band.
+
+**Next.** §9 items 3 (`OPS-34`, `record-reconciler`) and 4 (`EX-44`) are open and
+independent; item 5 (`PORT-13` step 1) stays 🚫 pending the review's fork on
+`GEO-26` step 2's bistability finding. One chunk per slot, so nothing else was
+attempted here.

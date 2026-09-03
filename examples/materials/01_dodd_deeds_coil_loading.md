@@ -47,12 +47,13 @@ On record at `-n 2` (`20260809T110326Z_EX-11-gate.log`, exit 0, 74 s
 harness-wall / 70.8 s example-internal, 2026-08-09 06:00 slot; every figure
 byte-matching the `MAT-6` step-3 gate record):
 
-| Quantity | Closed form | Measured | Bound |
-| --- | --- | --- | --- |
-| ΔR | +3.2259615e-01 Ω | **+3.2770406e-01** Ω | **1.5834%** vs 2% |
-| ΔX | −6.1586749e-01 Ω | **−5.6657895e-01** Ω | ratio **0.9200**, *not gated* |
-| Sign of ΔR | > 0 (a conductor dissipates) | **+** | asserted |
-| Sign of ΔX | < 0 (induced currents expel flux) | **−** | asserted |
+| Quantity | Closed form (filament) | Closed form (finite wire) | Measured | Bound |
+| --- | --- | --- | --- | --- |
+| ΔR | +3.2259615e-01 Ω | +3.2296790e-01 Ω (+0.115237%) | **+3.2770406e-01** Ω | **1.5838%** vs filament (2%); 1.4669% vs finite wire, *not gated* |
+| ΔX | −6.1586749e-01 Ω | −6.1675934e-01 Ω (+0.144814%) | **−5.6657895e-01** Ω | ratio **0.9200** vs filament, *not gated* |
+| Sign of ΔR | > 0 (a conductor dissipates) | — | **+** | asserted |
+| Sign of ΔX | < 0 (induced currents expel flux) | — | **−** | asserted |
+| Finite-wire correction, r_wire = 0 | equals filament exactly | — | **1.785e-16** rel. diff | `< 1e-12`, asserted (negative control) |
 | Drive current `I′` | 1.0 A nominal | **0.919666** A | reported |
 | Ohmic power in slab, from the field | — | **1.385836e-01** W | — |
 | Same, as ½ΔR·I′² from the reaction integral | — | **1.385836e-01** W | ratio **1.0000**, reported |
@@ -65,6 +66,15 @@ The gate is `MAT-6` step 3 (✅ 2026-07-31, step 3 record 2026-08-04). Its own
 ceiling on ΔR is **5%**; the example gates at **2%**, which is what this fixture
 actually delivers. That is tighter than the gate and **is not a knob** — a run
 outside 2% is a regression finding, not a tolerance question.
+
+**`EX-42`, from `MAT-8`: the finite-wire correction *raises* the closed form,
+it does not absorb the FEM discrepancy.** The filament form used above ignores
+the wire's own cross-section; `utils/dodd_deeds.coil_impedance_change_finite_wire`
+adds that back at this fixture's `r_wire = 2.5` mm and shifts both ΔR and ΔX
+**up** in magnitude by +0.115237% / +0.144814% — moving the closed form *toward*
+the FEM measurement on ΔR (from 1.5838% away down to 1.4669%), which is
+reported here but not gated: `MAT-6` still stays at 1.5834% against the
+filament form until step 11.
 
 This example closes nothing; Phase-3 §5.4 backfill.
 

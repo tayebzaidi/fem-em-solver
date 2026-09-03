@@ -78,7 +78,10 @@ from fem_em_solver.io.paraview_utils import (  # noqa: E402
     adopt_host_ownership,
     write_xdmf_with_tags,
 )
-from fem_em_solver.utils.dodd_deeds import coil_impedance_change  # noqa: E402
+from fem_em_solver.utils.dodd_deeds import (  # noqa: E402
+    coil_impedance_change,
+    coil_impedance_change_finite_wire,
+)
 
 from tests.validation.test_dodd_deeds_impedance import (  # noqa: E402
     FEM_BOX_HALF_WIDTH,
@@ -101,6 +104,16 @@ from tests.validation.test_dodd_deeds_projected_drive import (  # noqa: E402
 #: claim. Looser than the measurement, tighter than the gate — and not a knob:
 #: a run outside it is a regression finding (see the module docstring).
 DELTA_R_RTOL = 0.02
+
+#: `EX-42` — `MAT-8`'s finite-wire correction at this exact fixture
+#: (`r_wire = FEM_WIRE_RADIUS = 0.0025` m), full precision behind the
+#: published 6-decimal record `+0.115237%` / `+0.144814%`
+#: (`20260902T123618Z_MAT-8.log:71-74`). Same closed-form function, same
+#: fixture inputs, so this is a reproduction, not a fresh measurement — a
+#: miss at `rtol` 1e-6 is a wiring defect in this example, not new physics.
+MAT8_FINITE_WIRE_CORRECTION_DR_PCT = 0.11523662842924033
+MAT8_FINITE_WIRE_CORRECTION_DX_PCT = 0.1448135327221565
+FINITE_WIRE_CORRECTION_RTOL = 1e-6
 
 MU0 = 4.0e-7 * np.pi
 
@@ -248,18 +261,52 @@ def main() -> None:
     )
     delta_r_error = abs(dz.real / dz_ref.real - 1.0)
 
+    # ---- `EX-42`: the finite-wire-corrected closed form, beside the filament
+    # form and the FEM. `MAT-8` gated `coil_impedance_change_finite_wire`; this
+    # is the one place in `examples/` that shows it, at the fixture's own
+    # `FEM_WIRE_RADIUS`. The sign matters: the correction *raises* the closed
+    # form (ΔR and ΔX both larger in magnitude), while the slab-refined FEM
+    # (not this fixture; `MAT-6` step 8) sits *below* the filament form — the
+    # term widens that discrepancy, it does not absorb it.
+    dz_finite_wire = coil_impedance_change_finite_wire(
+        FEM_FREQUENCY_HZ, FEM_LOOP_RADIUS, FEM_LIFTOFF, FEM_SIGMA_SLAB,
+        FEM_WIRE_RADIUS,
+    )
+    finite_wire_correction_dr_pct = (
+        (dz_finite_wire.real - dz_ref.real) / dz_ref.real * 100.0
+    )
+    finite_wire_correction_dx_pct = (
+        (dz_finite_wire.imag - dz_ref.imag) / dz_ref.imag * 100.0
+    )
+    delta_r_error_finite_wire = abs(dz.real / dz_finite_wire.real - 1.0)
+
+    # Negative control: r_wire = 0 collapses the finite-wire form onto the
+    # filament form (`MAT-8` measured 1.785e-16).
+    dz_finite_wire_zero_radius = coil_impedance_change_finite_wire(
+        FEM_FREQUENCY_HZ, FEM_LOOP_RADIUS, FEM_LIFTOFF, FEM_SIGMA_SLAB, 0.0
+    )
+    zero_radius_rel_diff_real = abs(dz_finite_wire_zero_radius.real / dz_ref.real - 1.0)
+    zero_radius_rel_diff_imag = abs(dz_finite_wire_zero_radius.imag / dz_ref.imag - 1.0)
+
     if comm.rank == 0:
         print(
             f"\n[solve] loaded {t_loaded:.1f} s, free {t_free:.1f} s "
             f"(each incl. the CG1 Poisson projection of the drive)"
             f"\n[drive] I' = {current:.6f} A against the nominal "
             f"{FEM_CURRENT_A:.1f} A"
-            f"\n[ΔZ]    FEM   = {dz.real:+.7e} + j({dz.imag:+.7e}) Ω"
-            f"\n[ΔZ]    exact = {dz_ref.real:+.7e} + j({dz_ref.imag:+.7e}) Ω"
-            f"\n[ΔR]    relative error {delta_r_error:.4%} against the "
-            f"{DELTA_R_RTOL:.0%} ceiling (1.5834% on the `MAT-6` step-3 record)"
-            f"\n[ΔX]    ratio {dz.imag / dz_ref.imag:.4f} — reported, never gated: "
-            f"ΔX is not converged in box size on this fixture (`MAT-6` step 3)",
+            f"\n[ΔZ]    FEM         = {dz.real:+.7e} + j({dz.imag:+.7e}) Ω"
+            f"\n[ΔZ]    filament    = {dz_ref.real:+.7e} + j({dz_ref.imag:+.7e}) Ω"
+            f"\n[ΔZ]    finite wire = {dz_finite_wire.real:+.7e} + "
+            f"j({dz_finite_wire.imag:+.7e}) Ω  (r_wire = {FEM_WIRE_RADIUS} m; "
+            f"correction {finite_wire_correction_dr_pct:+.6f}% ΔR / "
+            f"{finite_wire_correction_dx_pct:+.6f}% ΔX — raises the closed form)"
+            f"\n[ΔR]    relative error {delta_r_error:.4%} vs filament "
+            f"(against the {DELTA_R_RTOL:.0%} ceiling; 1.5834% on the "
+            f"`MAT-6` step-3 record), {delta_r_error_finite_wire:.4%} vs the "
+            f"finite-wire form (reported, not gated)"
+            f"\n[ΔX]    ratio {dz.imag / dz_ref.imag:.4f} vs filament — reported, "
+            f"never gated: ΔX is not converged in box size on this fixture "
+            f"(`MAT-6` step 3)",
             flush=True,
         )
 
@@ -275,6 +322,44 @@ def main() -> None:
     )
     assert dz.imag < 0.0, (
         f"the induced currents must expel flux, got ΔX = {dz.imag:.6e} Ω"
+    )
+
+    # ---- `EX-42` anchor: the finite-wire correction reproduces `MAT-8` -------
+    assert np.isclose(
+        finite_wire_correction_dr_pct,
+        MAT8_FINITE_WIRE_CORRECTION_DR_PCT,
+        rtol=FINITE_WIRE_CORRECTION_RTOL,
+        atol=0.0,
+    ), (
+        f"finite-wire ΔR correction {finite_wire_correction_dr_pct:+.8f}% misses "
+        f"the `MAT-8` record {MAT8_FINITE_WIRE_CORRECTION_DR_PCT:+.8f}% "
+        f"(+0.115237% published) at rtol {FINITE_WIRE_CORRECTION_RTOL:.0e} — a "
+        f"wiring defect in this example, not new physics"
+    )
+    assert np.isclose(
+        finite_wire_correction_dx_pct,
+        MAT8_FINITE_WIRE_CORRECTION_DX_PCT,
+        rtol=FINITE_WIRE_CORRECTION_RTOL,
+        atol=0.0,
+    ), (
+        f"finite-wire ΔX correction {finite_wire_correction_dx_pct:+.8f}% misses "
+        f"the `MAT-8` record {MAT8_FINITE_WIRE_CORRECTION_DX_PCT:+.8f}% "
+        f"(+0.144814% published) at rtol {FINITE_WIRE_CORRECTION_RTOL:.0e} — a "
+        f"wiring defect in this example, not new physics"
+    )
+
+    # ---- negative control: r_wire = 0 collapses onto the filament form ------
+    assert zero_radius_rel_diff_real < 1e-12, (
+        f"r_wire = 0 ΔR = {dz_finite_wire_zero_radius.real:.10e} Ω does not "
+        f"collapse onto the filament ΔR {dz_ref.real:.10e} Ω to 1e-12 "
+        f"(relative diff {zero_radius_rel_diff_real:.3e}; `MAT-8` measured "
+        f"1.785e-16)"
+    )
+    assert zero_radius_rel_diff_imag < 1e-12, (
+        f"r_wire = 0 ΔX = {dz_finite_wire_zero_radius.imag:.10e} Ω does not "
+        f"collapse onto the filament ΔX {dz_ref.imag:.10e} Ω to 1e-12 "
+        f"(relative diff {zero_radius_rel_diff_imag:.3e}; `MAT-8` measured "
+        f"1.785e-16)"
     )
 
     # ---- negative control: the free solve dissipates nothing -----------------
