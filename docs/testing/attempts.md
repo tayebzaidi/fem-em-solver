@@ -16658,3 +16658,68 @@ executor returned with nothing in flight.
   rather than a measurement. Its cell-count control (`EX-35`'s 265 621 at
   0.000e+00) should be read *before* the solve, so a mesh surprise costs
   seconds rather than the slot.
+
+## 2026-09-03T03:45Z — `PORT-13` step 1 — outcome: `blocked` (22:30 implementer slot)
+
+- **Blocker, measured, not inferred: the `GEO-20` ring-gap sheets are
+  *transverse* mid-sections, so the lumped-sheet port model has no gap
+  height.** §9 item 3 scoped one single-port solve on `mesh:9` with "every
+  other port terminated as `PORT-9` leg (d) terminates them". That route
+  (`src/fem_em_solver/ports/lumped.py`) needs a **longitudinal** sheet
+  spanning the gap *along the drive direction*: `R_s = Z_p·w/h`,
+  `I = (1/R_s)∫_S E·ĥ dS / h`, `E_src = V_src/h`. `GEO-16`/`GEO-18` emit
+  exactly that for a leg gap (`io/mesh.py` "longitudinal port-sheet
+  mid-plane", area `dx·dz`, gated `h_bbox/dz − 1 < 1e-9` in
+  `tests/mesh/test_birdcage_port_sheets.py`). `GEO-20`'s ring branch emits the
+  gap's **cross-section** at `phi = phi_c` instead — `io/mesh.py:3057–3058`
+  ("the mid-plane section (phi = phi_c) is the w x w rectangle",
+  `ring_port_sheet_area_m2 = box_width²`) with
+  `ring_sheet_of_ordinal[ordinal] = (phi_hat, centre)` recording its normal as
+  the azimuthal direction, i.e. the drive direction itself.
+- **The reading** (`tests/mesh/test_birdcage_ring_sheet_orientation.py`, new,
+  mesh-side only, standard tier, `-n 2`, **Status 0 / 29 s**, log
+  `20260903T033437Z_PORT-13.log:6956–6967`). On the 4-leg ring-gapped rung —
+  **110 786 cells, `GEO-20` step 1's record reproduced at ratio 1.000000**,
+  mesh 21.74 s — each of the 8 ring sheets reads:
+  - extent along its own `phi_hat` (the drive direction) **7.69e-18 … 1.43e-17
+    m**, against the `1e-12 m` degeneracy band and against the
+  **1.000000000e-02 m** the leg boxes offer along their drive;
+  - extent along `û` at `phi_c` and along `ẑ` **1.000000000e-02 m each =
+    1.000000000000 w** (band 1e-9 on the generator's closed-form
+    `ring_port_box_width_m`), area **1.000000000000 w²**.
+  So `h = 0` to machine precision, `w = A/h` is undefined, and `E·ĥ` on such a
+  sheet is the **normal** trace on an interior facet — which an H(curl)
+  (Nédélec) space does not carry continuously. This is a prerequisite failure,
+  upstream of the solver.
+- **Why the 4-leg rung and not `mesh:9`.** Sheet orientation is a property of
+  the construction, and `GEO-20` step 2's control (ii) already showed the two
+  leg counts are the same code path; the 4-leg rung meshes in ~22 s against
+  the 16-leg rung's ~72 s. The step-1 negative control (i) — `EX-35`'s 265 621
+  cells at 0.000e+00 — was therefore **not** taken: with the port model
+  unbuildable it would have bought nothing but ~70 s.
+- **No solve ran, so no price and no RSS figure exists.** The heavy `-n 8`
+  window was never opened; peak RSS against the 128 G cap is **unmeasured**,
+  and step 1's cost stays the extrapolation the weekly wrote (≈ 3–6 min). The
+  `timeout -k 30 590` ceiling was never approached: the one command run took
+  29 s wall.
+- **Nothing was widened and nothing else moved.** No band touched, no
+  assertion loosened, no `⚠️` subsystem extended. `WF-6`, `PORT-9`, `PORT-11`
+  and `GEO-20` are all unchanged.
+- **Parked**: `attempt/PORT-13-20260903T033437Z` (`30756cf`) carries the new
+  test module. `main` carries only this entry, the harness log, its
+  test-results.md row, the §7 `PORT-13` row flipped to 🚫 with the blocker and
+  the measurement in it, and §9 item 3 struck with the same one-line verdict.
+  `main` is green and clean.
+- **No permission denials, no traps.** Harness run in the **foreground** with
+  the Bash tool timeout at 660 000 ms and a repo-relative `run_and_log.sh`
+  path; no heredoc through the guard hook (this module was written with
+  Write); commit messages via the literal multi-line `-m` route.
+- **Next-attempt hypothesis.** The fix is a `GEO-20` step, not a `PORT-13`
+  one: `birdcage_port_domain` should emit, per ring gap, the **longitudinal**
+  rectangle in the `(û, phi)` plane at `z = z_ring` — `h = ring_gap_length`
+  along the arc, `w = ring_port_box_width_m` across it, area `g·w` as its
+  closed form — alongside (not instead of) the transverse section the
+  identity family already gates, so no `GEO-20` record moves. That is `src/`
+  work on the generator plus a mesh-side identity rung, and it is a review's
+  ruling. `PORT-13` step 1 becomes executable, unchanged in scope, the moment
+  such a sheet exists; until then it should not be re-queued.
