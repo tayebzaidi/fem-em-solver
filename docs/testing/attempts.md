@@ -16969,3 +16969,66 @@ Larmor, no convergence claim.
 (16-leg rung) is the 04:30 slot's explicit hand-off and is not yet on the list —
 the review should queue it, since `PORT-13` step 1's re-opening is serial behind
 its record. One chunk per slot, so nothing else was attempted here.
+
+## 2026-09-03T12:40Z — `EX-43` — complete (07:30 implementer slot)
+
+**Item.** §9 On deck item 3, the first item not marked done or blocked (items 1
+and 2 were closed by the 04:30 and 06:00 slots). Preflight clean at `3f570dc`,
+container Up 7 days. An `EX-*` chunk, so delegated to `example-runner` per
+step 3 of the protocol, spawned **foreground** with the never-background rule
+and the emit-then-harness rule quoted into its prompt; one executor, none
+concurrent. The report is corroborated by the log — I re-read the footer, the
+gate block and the fixture line myself before writing this entry.
+
+**Built.** The pair `examples/ports/09_birdcage_sar_quadrant_powers.py` / `.md`
+(runner key `ports:9`, discovered by filename) — no `src/` change, no new test
+module, no new band. `build_four_port_sweep` at 10 MHz on the default mesh, the
+four single drives plus the quadrature superposition; the gate records are
+**imported** from `tests/validation/test_birdcage_sar_integral.py`, never
+restated.
+
+**Measured (`20260903T123502Z_EX-43.log`, re-read).** Fixture 116085 cells
+against the 116085 record, **ratio 1.000000** (`:4618`, `:4639`). Gate (ii),
+the partition identity `Σ_j P_j^(k) = P_phantom^(k)` at rtol 1e-10 on all five
+drives, worst residual **1.573e-14** (`:4641-4642`). Gate (iii), the P1 phantom
+total **5.637745667e-08 W** against step 1's record, relative **4.114e-11**
+(`:4648`). The twelve C4 pairs worst **1.5200%** at `k=1→2` (`:4652`), the four
+mirror pairs worst **1.7527%** at `k=0` (`:4656`) — both reproducing the
+`STEP3G_*` / `STEP3I_*` records to the printed digits and sitting under the
+imported, unmoved 5% band.
+
+**Negative controls, both asserted in-script.** The mis-paired 180°-quadrant
+control reads strictly above the C4 pairing at every `k` — **89.09× / 130.89× /
+159.27×**, the same range the gate module measured — and the mirror's
+flank-vs-opposite control reads **21.8×–110.1×** its own pairing. The example
+therefore fails loudly if the quadrant wiring is permuted, which was the point
+of queueing it.
+
+**Census.** Pre `dead=1, stale=34, exit=1` (the `dead=1` was the not-yet-written
+combined XDMF), predicted post `dead=0`, staleness unchanged; measured
+**`dead=0, stale=34, exit=2`** — staleness only, gate satisfied. Guide carries
+the three verbatim `EX-15` headings; the docrefs guide-pass step reads 37/37
+runnable examples passing.
+
+**Log / tier.** `20260903T123502Z_EX-43.log` — `-n 2` complex through
+`run_and_log.sh`, `timeout -k 30 400`, **Status 0, 77 s** harness / 73.1 s
+in-script (`:4670` and the footer). **Standard by measurement**, and well under
+the item's own ≈130 s estimate — no tier-label finding this slot. The
+docker-socket denial did not recur (the emit-then-harness path was used as
+directed, so the host runner was never invoked against the socket).
+
+**Commit.** `8bf4d96` on `main`, tree clean: example + guide + the harness log +
+the `test-results.md` row + the §7 `EX-43` row + §9 item 3 marked closed,
+together.
+
+**Scope — what this is not.** An example of an already-gated quantity. No band,
+no gate, no §2 change. The SAR *map* written to the combined XDMF is a
+**viewing** quantity built from the retired pointwise construction, and both the
+guide and the run's own `[paraview]` line say so (`:4664`). Nothing here is an
+absolute SAR claim, and nothing is at a Larmor frequency — the fixture is 10 MHz.
+
+**Next.** §9 items 4 (`EX-42`, `example-runner`) and 5 (`OPS-34`) remain open
+and independent. `GEO-26` step 2 (16-leg rung) is still the 04:30 slot's
+un-queued hand-off and `PORT-13` step 1 is still serial behind its record —
+both need the review, not a slot. One chunk per slot, so nothing else was
+attempted here.
