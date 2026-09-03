@@ -1,0 +1,4 @@
+# Pinned gating logs (docs/testing/retention-policy.md §1).
+# One basename per line, with or without .gz; "#" starts a comment.
+# Add a log here when it matters but is not cited from the plan, the plan
+# archive, known-issues, or an example guide.

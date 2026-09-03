@@ -171,11 +171,60 @@ set -e
 END_EPOCH="$(date -u +%s)"
 ELAPSED_SECONDS=$((END_EPOCH - START_EPOCH))
 
+# Retention-policy filter (docs/testing/retention-policy.md §2): collapse runs
+# of gmsh mesh-optimisation progress lines to a single count line. Nothing else
+# is touched. FEM_LOG_FILTER=0 disables it for a run whose raw mesher chatter is
+# the object of study. Failure of the filter never fails the run.
+ELIDED_LINES=0
+if [[ "${FEM_LOG_FILTER:-1}" != "0" ]]; then
+  ELIDED_LINES="$(python3 - "$LOG_FILE" <<'PY' || echo 0
+import re
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+chatter = re.compile(
+    r"^Info\s+:\s+("
+    r"ImproveMesh|SwapImprove\d*|SplitImprove|CombineImprove|"
+    r"\d+ swaps performed|\d+ splits performed|\d+ edges? (?:swapped|split)|"
+    r"Total badness = |[\d.eE+-]+ < quality < [\d.eE+-]+|"
+    r"Optimizing (?:mesh|volume|surface)|Optimization starts|"
+    r"Untangling|Smoothing|Volume optimization"
+    r")"
+)
+out = []
+run = 0
+elided = 0
+
+def flush():
+    global run
+    if run:
+        out.append(f"[harness] {run} gmsh optimisation lines elided "
+                   "(docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)\n")
+    run = 0
+
+with path.open("r", encoding="utf-8", errors="surrogateescape") as fh:
+    for line in fh:
+        if chatter.match(line):
+            run += 1
+            elided += 1
+            continue
+        flush()
+        out.append(line)
+flush()
+if elided:
+    path.write_text("".join(out), encoding="utf-8", errors="surrogateescape")
+print(elided)
+PY
+)"
+fi
+
 {
   echo ""
   echo "## Exit"
   echo "- Status: $STATUS"
   echo "- Elapsed (s): $ELAPSED_SECONDS"
+  echo "- Filtered lines (gmsh optimisation chatter): ${ELIDED_LINES:-0}"
 } >> "$LOG_FILE"
 
 ensure_index_file

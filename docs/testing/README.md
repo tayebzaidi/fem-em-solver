@@ -36,7 +36,9 @@ chunk.
 
 ## Output locations
 
-- Full logs: `docs/testing/logs/*.log`
+- Full logs: `docs/testing/logs/*.log` (gzipped to `*.log.gz` after 7 days;
+  non-gating logs are deleted at 14 days — see `retention-policy.md`; read
+  compressed logs with `zcat`)
 - Summary index: `docs/testing/test-results.md`
 - Known pre-existing failures on main: `docs/testing/known-issues.md` — check
   this before debugging any failing test.

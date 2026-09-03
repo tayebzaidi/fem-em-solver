@@ -474,6 +474,13 @@ Use `exec -T` — without it `exec` allocates a TTY and can hang under an agent.
 harness exports `COMPOSE_FILE` itself; a bare `docker compose` outside `docker/`
 needs `-f docker/docker-compose.yml`.
 
+Logs are retained under `docs/testing/retention-policy.md` (adopted
+2026-09-03): the harness collapses gmsh optimisation chatter at write time,
+every log is gzipped at 7 days, and logs not cited from this plan, its archive,
+known-issues, or an example guide are deleted at 14 days by
+`scripts/maintenance/housekeeping.py --apply`. Cite the log basename in the §7
+closure annotation — that citation is what keeps it. Read `.log.gz` with `zcat`.
+
 ### 5.4 Examples and Ansys cross-validation
 
 - **`examples/` is a maintained product surface, not a scratch area.** Each
