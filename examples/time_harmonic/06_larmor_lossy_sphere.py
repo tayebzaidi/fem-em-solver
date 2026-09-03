@@ -29,7 +29,7 @@ solve falsifiable, and this example measures it in every run:
   the SAR-relevant volume integral ½∫σ|E|², **3.629%** from the series integral
   over the same meshed cells. Records: ``20260813T093212Z_TH-10-step2-64mhz.log``,
   ``20260813T123211Z_TH-10-step3-128mhz.log``,
-  ``20260813T170337Z_TH-10-step4-power.log``; the 128 MHz pair is the
+  ``20260813T170337Z_TH-10-step4-power-n2.log``; the 128 MHz pair is the
   **0.11** re-record (1.826% / 57.31× on 0.7.2, moved with its mesh
   55 251 → 55 241), ``20260822T123746Z_OPS-18-step3-th10-rerun.log``.
 * *The negative controls are executed here, not cited* — the quasi-static

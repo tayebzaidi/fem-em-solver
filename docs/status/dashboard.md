@@ -1,23 +1,26 @@
 # FEM-EM Solver — status
 
-**Updated:** 2026-09-03 10:30 daily review. Headline: **the ring-gap port
-sheet the lumped model can drive now exists, and the coil-driven SAR gate
-has a second, independent identity.** `GEO-26` step 1 landed the
-longitudinal ring-gap sheet as a non-default mesh mode on the 4-leg rung —
-eight sheets reconstruct at their closed forms to 1e-9, both port halves at
-their closed-form volumes, the default mesh byte-for-byte unchanged (audited
-PASS). `WF-6` step 3i gated the mirror identity of quadrant SAR powers on
-each single drive (four pairs ≤ 1.76% against the unmoved 5% band, control
-at 38%) — a single-drive statement, so independent evidence rather than a
-re-reading of step 3h's rotation identity (audited PASS). `EX-43` (quadrant
-SAR powers in ParaView) ran green on every physics anchor but was
-**demoted to 🧪 on audit**: its census figures are in no harness log; one
-logged census restores it, and that ride is on the next queue item.
-**Still a self-consistency story on one fixture at 10 MHz at fixed `h`: no
-absolute SAR, no homogeneity, no C95.3, no Larmor, no convergence claim.**
-The 09:00 implementer slot was lost to an API overload at launch (no
-session, nothing touched). Source of truth is `PROJECT_PLAN.md`; this page
-is a read-only digest for the human operator.
+**Updated:** 2026-09-03 18:00 daily review. Headline: **the 16-leg ring-gap
+mesh the first 32-port solve needs now exists, and that solve is unblocked.**
+`GEO-26` step 2 built the longitudinal ring-gap sheet on the 16-leg rung:
+all 32 sheets reconstruct at their closed forms to 1e-12, both port halves at
+closed-form volumes, a new 270 728-cell record identical at 2 and 12 ranks —
+and it stopped, as pre-registered, on one terminal-area reading (two
+azimuth classes at 1.0e-4 against a 2.0e-5 record band). **This review ruled
+the reading acceptable**: it is a mesh-reproducibility record on the terminal
+disks, not a physics band; the sheet the port model integrates over is exact;
+the fix is a per-rung record band (queue item 3) and `PORT-13` step 1, the
+first solve on that layout, is unblocked (queue item 4). `EX-42` landed
+(`mat:1` prints the finite-wire Dodd–Deeds correction, reproducing `MAT-8`)
+and its logged census restored `EX-43` to ✅ (both audited PASS). Interactive
+work landed a README/CI consolidation (`OPS-35`, audited PASS) and a log
+retention policy with its first sweep (`OPS-36`; 111 → 61 MB of logs). Two of
+four implementer slots were lost: one to a host reboot, one to that sweep
+sitting staged and uncommitted — landed by this review. **Still a
+self-consistency story on one fixture at 10 MHz at fixed `h`: no absolute
+SAR, no homogeneity, no C95.3, no Larmor, no convergence claim.** Source of
+truth is `PROJECT_PLAN.md`; this page is a read-only digest for the human
+operator.
 
 ## Weekly review digest (2026-09-02, unchanged from the weekly's own copy)
 
@@ -29,12 +32,12 @@ is a read-only digest for the human operator.
   itself landed 09-02 19:30.
 - **Rulings landed in §7:** `GEO-25` and `PORT-13` re-scoped with anchors
   and prices; `TH-12` closed ✅; `ANS-1` **adjudicated AGREE** (numbers
-  private); `MAT-6` step 11 and `MAT-8` scoped; `OPS-32`, `EX-41` opened;
-  `MAG-20` third rung killed; `ANS-2` not commissioned.
+  private); `MAT-6` step 11 and `MAT-8` scoped; `OPS-32`, `EX-41` opened.
 - **Deferred to 09-06:** the §7 archive rotation and the B1+ literature
-  anchor. **New for the 09-06 weekly:** `PORT-13`'s re-scope assumed a
-  port model the ring layout cannot support; Phase 6's first solve now
-  sits behind `GEO-26` step 2 (queue item 1) and is pre-queued as item 5.
+  anchor. **New for the 09-06 weekly (from the dailies since):** `PORT-13`
+  is unblocked on the longitudinal sheets (first solve queued); the
+  retention policy's three open questions under `OPS-36` (below); the
+  `attempts.md` rotation is overdue at 17 271 lines.
 
 ## Waiting on you
 
@@ -51,103 +54,118 @@ is a read-only digest for the human operator.
    rule, same private-results handling. Its FEM-side records were re-based
    to the 0.11 image (`OPS-33`); the tracked table's AED cells are blank by
    construction.
-3. 🟡 **FYI, a design decision made for you — say so if you disagree:**
-   the longitudinal ring-gap sheet (the `u = R` rectangle, chord along the
-   ring, `w` along `z`) is now the non-default `ring_sheet_orientation`
-   mode; the transverse default and every existing record are frozen. The
-   one measured side effect: the new sheet's edges are diameters of the
-   terminal disks, so the terminal triangulation's C4 covariance reads
-   1.6e-05 instead of 4e-08. **This review ruled it acceptable** — every
-   terminal is inside its band, every exact identity is unmoved, and
-   1.6e-05 is four decades under any port-level band. Recorded, not
-   absorbed; the 16-leg rung re-measures it with the band unmoved. No
-   action needed unless you want a different ring-port geometry.
-4. **Information — automation fix from the 08-30 10:30 review, still
+3. 🟡 **Housekeeping over budget — a policy question, not a cleanup:** the
+   retention policy you adopted today sets a 25 MB ceiling on tracked logs,
+   but after the first sweep the volume is 61.1 MB and cannot go lower —
+   824 of the 1 130 logs are cited by the plan, the archive, known-issues
+   or an example guide, and the policy (rightly) never deletes those. So
+   `housekeeping.py --check` will report a breach every week. Either raise
+   the ceiling to what gating logs cost (≈ 60 MB today, growing with every
+   closure), or say that gating logs are exempt from the volume budget.
+   Nothing is lost either way; this is only about what the tripwire means.
+   Two smaller items under the same `OPS-36` row: `attempts.md` is at
+   17 271 lines against a 6 000 ceiling (the Sunday weekly's rotation, no
+   action from you), and a hand-run `housekeeping.py --apply` leaves its
+   sweep staged and uncommitted — that cost one implementer slot today
+   before this review landed it. If you run it by hand again, commit it.
+4. 🟡 **FYI, a design decision made for you — say so if you disagree:**
+   the 16-leg longitudinal ring-gap rung's terminal disks triangulate in
+   one of two ways (two discrete areas 1.0e-4 apart, five of sixteen gap
+   azimuths on the low one). This review ruled it acceptable for the port
+   model — every terminal is inside its closed-form band, the sheet the
+   port integrates over is exact, and 1e-4 is a decade under the loosest
+   port-level band — and gave the 16-leg rung its own record band (2.0e-4)
+   rather than widening the 4-leg one. The alternative, classifying the
+   terminals by the measured two-state partition, was rejected as fitting
+   the test to the artifact. No action unless you want the ring-port
+   geometry changed instead.
+5. **Information — automation fix from the 08-30 10:30 review, still
    awaiting your OK:** `docs/automation/weekly-review.md` has a commit-first
    checkpoint (rotation committed before plan edits). Revert the paragraph
    if you want the single-commit form back.
-5. **One click: does ParaView open a DG1 `.bp`?** (unchanged since
+6. **One click: does ParaView open a DG1 `.bp`?** (unchanged since
    2026-08-12; `scripts/probes/post4_step5_probe.py` regenerates.)
-6. 🟡 FYI, watch item — **the 09:00 slot today was lost to `API Error:
-   529 Overloaded` at launch**, the first API-side loss on record (the
-   09-01/02 losses were login and CLI-pin). One slot, no retry logic in
-   the launcher; if it recurs the launcher could re-try once after a
-   minute. No action unless you want that added.
-7. FYI, no action — **`GEO-25` (the 30 cm coil cost probe) stays off the
-   queue** (third rung predicted at 30 min of gmsh). Local `main` remains
-   well ahead of origin (push is manual).
+7. FYI, no action — **`OPS-35`'s verification logs came from a second
+   machine** (`Host: unknown`, a hardened-kernel Linux box, a clone under a
+   different path) — the first logs in the corpus not from the shared box.
+   The in-container run matches the canonical image, so the audit passed;
+   noting it so the provenance is on record. Also FYI: the 13:30 slot was
+   lost to a host reboot (≈ 13:44 local), the first loss below cron; the
+   next slot restarted the container itself. Local `main` remains well
+   ahead of origin (push is manual).
 
-## Honest current state (digest of §2 — the coil-driven SAR row and the birdcage-mesh row changed)
+## Honest current state (digest of §2 — unchanged this interval; one queue pointer refreshed)
 
 | Capability | State | Gate |
 |---|---|---|
 | Magnetostatics | ✅ validated | closed forms green; h-refinement gate passes on 0.11 (`MAG-20` ✅) |
 | Time-harmonic curl-curl | ✅ validated | lossy plane wave < 0.06%; Larmor sphere 3.64% / 1.77% + power 3.63%; degree-2 gated at 0.1405% on the sphere (`TH-12` ✅). The coil's two degree-2 identity reds stay open at 3.8990e-09 / 3.7235e-09 vs 1e-9 |
-| Coil loading | ⚠️ eddy-current regime only | Dodd–Deeds ΔR 1.58% (`MAT-6`), bracketed by Maxwell 3D (`ANS-1` AGREE, numbers private); finite-wire term +0.115% on ΔR (`MAT-8` ✅). Larmor coil loading stays an extrapolation |
+| Coil loading | ⚠️ eddy-current regime only | Dodd–Deeds ΔR 1.58% (`MAT-6`), bracketed by Maxwell 3D (`ANS-1` AGREE, numbers private); finite-wire term +0.115% on ΔR (`MAT-8` ✅, now shown by `mat:1`). Larmor coil loading stays an extrapolation |
 | S-parameters / ports | ✅ birdcage gated at 10, 64 and 128 MHz | reciprocity ~1e-14, σ_max ≤ 1, C4 spreads ≤ 0.10% vs 5%; **self-consistency identities only.** Absolute accuracy at Larmor is `ANS-4` (Waiting-on-you 1). `ans:3` / `ports:2` reproduction controls at 1e-6 on the 0.11 image (`OPS-33` ✅) |
-| Birdcage meshes | ✅ 4-leg and 16-leg, leg-gap and ring-gap, identity-gated; **the ring gap now has a drivable (longitudinal) sheet mode on the 4-leg rung** (`GEO-26` step 1 ✅, audited) | `mesh:6` / `mesh:7` re-footered on 0.11 (`EX-41` ✅). Longitudinal sheets: 8/8 at closed form to 1e-9 at `-n 2` and `-n 12`, default frozen at its 110 786-cell record. The 16-leg longitudinal record is queue item 1; `PORT-13` (first 32-port solve) stays 🚫 until it exists |
+| Birdcage meshes | ✅ 4-leg and 16-leg, leg-gap and ring-gap, identity-gated; the ring gap has a drivable (longitudinal) sheet mode on **both** rungs (`GEO-26` steps 1–2) | 4-leg: 8/8 sheets at closed form to 1e-9, record 111 898. 16-leg: 32/32 sheets exact to 1e-12, record **270 728** at 2 and 12 ranks; one terminal-area record band pending (queue item 3, ruled). `PORT-13` (first 32-port solve) **unblocked** — queue item 4 |
 | B₁⁺ | 🧪 computed; symmetry-gated at CG1 at 10, 64 and 128 MHz, not homogeneity-gated | `WF-6` steps 1–2b ✅. The C4 identities improve 2.19% → 0.62% when the phantom's `h` is halved; the sample set is *not* the mechanism (ring-set control within 1.06 pp, step 3f′). Still **no homogeneity, absolute or tuning claim** |
-| Coil-driven SAR | 🟡 **two gates registered on one fixture at 10 MHz at fixed `h`: C4 rotation of quadrant powers (3h, 09-02) and the single-drive mirror identity (3i, 09-03)** | twelve rotation pairs ≤ **1.5200%**, four mirror pairs ≤ **1.7527%**, both vs the unmoved 5% band; mirror control 38% (≥ 21.8×), rotation control 89–159×; partition identity exact; ≤ 0.2998% on the 0.0075 phantom (3f′). Pointwise readings stay records. **No absolute SAR, no homogeneity, no C95.3, no Larmor, no convergence claim** |
+| Coil-driven SAR | 🟡 **two gates registered on one fixture at 10 MHz at fixed `h`: C4 rotation of quadrant powers (3h) and the single-drive mirror identity (3i)**; shown in ParaView by `ports:9` (`EX-43` ✅) | twelve rotation pairs ≤ **1.5200%**, four mirror pairs ≤ **1.7527%**, both vs the unmoved 5% band; mirror control 38% (≥ 21.8×), rotation control 89–159×; partition identity exact. Pointwise readings stay records. **No absolute SAR, no homogeneity, no C95.3, no Larmor, no convergence claim** |
 | SAR | ⚠️ imposed uniform field only | lossy sphere 3.5% (`MAT-4`); the coil case above is a symmetry identity, not an accuracy gate |
-| Test-suite trust | ✅ census complete; **residual reds on `main` at `-n 2`: 3 deliberate/known**; example-artifact census **unmeasured since `8bf4d96`** (the `EX-43` gap — queue item 2's pre-census re-measures it) | API sweep `violations=0` on all four roots |
+| Test-suite trust | ✅ census complete; **residual reds on `main` at `-n 2`: 4 deliberate/known** (the new one is `GEO-26`'s `[16]` terminal band, ruled, queue item 3 re-greens it); example-artifact census `dead=0 exit=2` at `2730af3` | API sweep `violations=0` on all four roots |
 
-## Recent activity (2026-09-03 03:00 → 10:30)
+## Recent activity (2026-09-03 10:30 → 18:00)
 
-- **04:30:** `GEO-26` step 1 — `ring_sheet_orientation="longitudinal"` on
-  `birdcage_port_domain`: 8 sheets at chord × `w` to 1e-9, half volumes at
-  closed form, C8 spread 4.3e-16, at `-n 2` (51 s) and `-n 12` (50 s); the
-  default control reproduces 110 786 at ratio 1.000000; `GEO-20` regression
-  3 passed (262 s). New record 111 898. Step ✅, chunk 🟡. Audited PASS.
-  The parked `PORT-13` branch absorbed as the control and deleted.
-- **06:00:** `WF-6` step 3i — the mirror identity as quadrant integrals on
-  the four single drives: 1.7527 / 1.5261 / 0.3438 / 0.9563% vs 5%,
-  flank-vs-opposite control 38%, every 3h anchor unmoved in the same
-  window. `37 passed` / 96 s. Step ✅, chunk 🟡. Audited PASS.
-- **07:30:** `EX-43` — `ports:9`, quadrant powers of the coil-driven SAR
-  in ParaView; every imported record reproduced (partition residual
-  1.6e-14, P1 total to 4e-11, C4 and mirror pairs to the printed digit),
-  both negative controls asserted. 77 s. **Audited DEMOTE → 🧪**: the
-  census figures were claimed but never logged. Re-closes on one logged
-  census (queue item 2).
-- **09:00:** slot lost — `API Error: 529 Overloaded` at launch, no session.
-- **10:30 review:** three audits (PASS / PASS / DEMOTE); the terminal-
-  triangulation ruling; §2's SAR bullet now carries both identities;
-  `GEO-26` step 2 queued, `EX-44` opened, `PORT-13` step 1 pre-queued as
-  the serial spare; queue rebuilt: five items.
+- **12:00:** `GEO-26` step 2 — the longitudinal ring sheet at 16 legs:
+  32 sheets exact, C32 spread 6.0e-16, record 270 728 at both widths, the
+  default control at 265 621 exactly; **stopped, as pre-registered**, on two
+  terminal classes at 1.0e-4 vs the 2.0e-5 band (160 / 158 s). Known-issues
+  entry filed, band not widened; a deliberate red on `main`.
+- **13:30:** slot lost — host reboot ≈ 13:44 local; no launcher log.
+- **13:43 (interactive, second machine):** `OPS-35` — README, CONTRIBUTING,
+  MkDocs, CI and Dockerfile consolidation; smoke suite 16 passed. Audited
+  PASS.
+- **14:30 / 16:13 (interactive):** `OPS-RETENTION` → §7 `OPS-36` — retention
+  policy, harness chatter filter (verified on a synthetic log), weekly cron
+  sweep; the first sweep run by hand and left staged.
+- **15:00:** `EX-42` — `mat:1` prints the finite-wire Dodd–Deeds correction
+  +0.115237% ΔR / +0.144814% ΔX, reproducing `MAT-8` at 1e-6; its pre-census
+  (`dead=0`, logged) restored `EX-43` to ✅. 64 s. Both audited PASS.
+- **16:30:** slot stopped on the staged sweep (1 930 index entries) —
+  journaled, nothing touched, `OPS-34` not attempted.
+- **18:00 review:** landed the sweep as `ce64659` after checking every
+  plan-cited log survives; ruled the terminal bistability; unblocked
+  `PORT-13`; opened `OPS-36`; three audits (PASS / PASS / PASS); queue
+  rebuilt: five independent items.
 
 ## Automation health
 
-- **3 of 4 scheduled slots fired**, all three complete on the first window
-  and journaled. One slot lost API-side at launch (first such loss). Tree
-  clean at every preflight. Container Up 7 days.
-- **Foreground-executor rule: 20 for 20** since written. No docker-socket
-  denial this interval (**3 of 35** slots overall).
-- Tier labels honest on every landed window this interval (51/50, 96, 77 s
-  standard by measurement); no compute-safety event.
-- Standing rule from `OPS-32`: an anchor on a generated artifact never says
-  "unchanged" — it names what must be absent from the diff. New this
-  review: a census claimed in a journal without a harness log is not
-  evidence (`EX-43`).
+- **2 of 4 scheduled slots landed**, both journaled. One lost to a host
+  reboot (no launcher log — the first loss below cron), one stopped
+  correctly on a dirty tree (first encounter, journal only). Container was
+  down at the 15:00 preflight and restarted cleanly.
+- **Foreground-executor rule: 22 for 22** since written. No docker-socket
+  denial this interval (**3 of 37** slots overall).
+- Tier labels: `GEO-26` step 2 declared heavy, measured 158–160 s (inside
+  standard — over-declared, not mislabelled); `EX-42` 64 s standard. No
+  compute-safety event.
+- **Housekeeping:** first retention sweep landed (821 compressed, 287
+  deleted, 111.3 → 61.1 MB). `--check` still breaches log volume and
+  `attempts.md` — see Waiting-on-you 3.
 
-## On deck (§9 — five items; 1–4 independent, 5 serial on 1; 2, 3 and 4 have specialist executors)
+## On deck (§9 — five items, all independent; 1, 2 and 5 have specialist executors)
 
-1. **`GEO-26` step 2** — the longitudinal ring-gap sheet on the 16-leg
-   rung: 32 sheets, C16, four terminal classes asserted under the unmoved
-   2.0e-5 band, new cell record; the default reproduces 265 621
-   *(implementer; ≈ 200 s per window, three windows)*
-2. **`EX-42`** — `mat:1` prints the finite-wire-corrected Dodd–Deeds beside
-   the filament form and the FEM ΔR; **its pre-census also restores
-   `EX-43` to ✅ if it reads `dead=0`, `exit != 1`** *(`example-runner`;
-   ≈ 60 s)*
-3. **`OPS-34`** — measure `ports:1`'s terminated-`Z` records against the
+1. **`OPS-34`** — measure `ports:1`'s terminated-`Z` records against the
    0.11 image; re-base only if stale *(`record-reconciler`; ≈ 3 min per
    window)*
-4. **`EX-44`** — the longitudinal ring-gap sheet on the 4-leg rung in
+2. **`EX-44`** — the longitudinal ring-gap sheet on the 4-leg rung in
    ParaView, inner/outer halves tagged, records imported from the gate
    module *(`example-runner`; ≈ 70 s)*
-5. **`PORT-13` step 1** — the first solve on the 32-ring-port layout with
-   the longitudinal sheets, `h` = the gap chord; **skip if item 1's record
-   is not on `main`** *(implementer; ≈ 3–6 min at `-n 8`; spare)*
+3. **`GEO-26` step 3** — the 16-leg rung's own terminal-area record band
+   (2.0e-4, `[16]` only; 4-leg bands unmoved), low-state count printed,
+   control pointed back at 2.0e-5 must fail; on green the chunk closes
+   *(implementer; ≈ 160 s per window, three windows)*
+4. **`PORT-13` step 1** — the first solve on the 32-ring-port layout with
+   the longitudinal sheets, `h` = the gap chord, cell control 270 728;
+   power accounting at 1e-2 and the opposite-port pair at 5%
+   *(implementer; ≈ 3–6 min at `-n 8`; unblocked)*
+5. **`GEO-25` rungs 1–2** — the 30 cm coil cost probe at 0.07 and 0.10 m,
+   rung 3 only if rung 2 prices it under 600 s *(`mesh-probe`; ≈ 5 + 12
+   min; spare)*
 
 ---
 

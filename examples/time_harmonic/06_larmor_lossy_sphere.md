@@ -108,7 +108,7 @@ band, and the run prints the drift:
 
 Records: `20260813T093212Z_TH-10-step2-64mhz.log`,
 `20260813T123211Z_TH-10-step3-128mhz.log`,
-`20260813T170337Z_TH-10-step4-power.log`. A run outside the band is a
+`20260813T170337Z_TH-10-step4-power-n2.log`. A run outside the band is a
 regression finding about the solver or the fixture, not a tolerance question.
 
 ### 5. Open the fields
