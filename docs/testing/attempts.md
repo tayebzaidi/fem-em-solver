@@ -16572,3 +16572,89 @@ executor returned with nothing in flight.
   integral-pairs addition now has a *gated* coarse rung to compare against,
   not a printed one — the first `h` data point on a registered gate, which
   the review should weigh before letting any convergence language near §2.
+
+## 2026-09-03T02:15Z — `WF-6` step 3f′ — outcome: `complete` (21:00 implementer slot)
+
+- **Preflight clean.** `main` at `a134392`, tree clean, container Up 7 days,
+  no `attempt/*` or `recovered/*`. §9 On-deck **item 1** was already struck
+  done by the 19:30 slot, so this slot took **item 2** (`WF-6` step 3f′),
+  the first not-done item, exactly as the protocol requires. Delegated to
+  the `implementer` agent in the **foreground**, one executor, never
+  backgrounded; its report was re-checked against the log by this slot
+  before anything was accepted (the logs win — here they agreed on every
+  digit re-read: `:4733–4744`, `:4745–4748`, `:4750–4759`, footer
+  `:4966–4970`).
+- **Green on the first run.** `20260903T020607Z_WF-6-step3f-prime.log` —
+  **`54 passed` / Status 0 / 117 s** (pytest 114.79 s), `-n 2` complex with
+  `tests/environment` first, `timeout -k 30 600`, Bash timeout 660000 ms,
+  foreground. Collect-only smoke first
+  (`20260903T020555Z_WF-6-step3f-prime-collect.log`, 43 items, 5 s). The
+  module went `3 failed, 27 passed` → **`0 failed`**, 30 → 43 items; no
+  count that was passing moved. **Tier: standard** declared from the footer
+  — 117 s is *inside* the 180 s band and well under the item's ≈ 190–210 s
+  estimate; no `-n 4` fallback, no 124.
+- **(A) The ring set — the control the step-3f known-issues entry asked
+  for.** Step 1c's 96-point rotation-invariant set read on the 0.0075 mesh
+  for both columns beside that mesh's own 373 tag-3 centroids, all eight
+  asserted inside step 1c's ±2 pp bar (`:4733–4744`): `|B₁⁺|` +0.1117 /
+  +0.0932 / +0.0538 pp (ring 0.7294 / 0.6898 / 0.6185% vs centroid 0.6177 /
+  0.5966 / 0.5647%); the five restricted-CG1 SAR identities +0.2420 /
+  −1.0548 / −0.7113 / −1.0082 / −0.4078 pp (ring 3.6020 / 2.3894 / 2.7411 /
+  2.0250 / 2.1387% vs centroid 3.3600 / 3.4442 / 3.4525 / 3.0332 /
+  2.5465%). Worst |Δ| **1.0548 pp**. All three negative controls survive on
+  the ring set (24.1868 / 123.3351 / 375.0478%, each asserted `> band`).
+  **Reading: the sample set is not the mechanism on this rung** — step 3f's
+  fall from the coarse 8.29–6.12% to 3.36–2.55% is an `h` effect, not a
+  centroid-set artefact. That is the finding the review commissioned.
+- **(B) The one-sided anchor.** The three `within 0.5 pp` asserts became
+  `fine ≤ coarse record + 0.5 pp`; green at all three angles with large
+  margin (`:4745–4748`) — 0.6177 / 0.5966 / 0.5647% against ceilings
+  2.6870 / 2.6146 / 2.3911%. `STEP3F_B1_PLUS_FINE_RECORDS` asserted at rtol
+  1e-3 **beside** the unmoved coarse `STEP1B_CG1_RECORDS`; the 0.5 pp
+  ceiling and the imported 5% band are untouched
+  (`grep -n "C4_COVARIANCE_BAND ="` still hits exactly one definition,
+  `test_birdcage_b1_plus_map.py:120`, at 5.0e-2). **No band moved and no
+  gate was registered here** — 3h owns the gate.
+- **(C) The integral column — 3h's first `h` data point.** The twelve C4
+  integral pairs of 3g/3h's construction formed on this mesh's four fields,
+  **printed not gated** (`:4755–4759`): 0.1550 / 0.2786 / 0.0220 / 0.1466 |
+  0.0276 / 0.2370 / 0.1754 / 0.1177 | 0.0457 / 0.0621 / 0.1952 / 0.2998%
+  against 3g's coarse 0.7149 … 0.2302%. **Worst 0.2998% vs the coarse
+  1.5200% ⇒ pre-registered verdict (a) fired** — the integral gate's
+  headroom does not shrink with `h`; it grows ≈ 5.1×. Mis-paired control
+  means 94.2606 / 93.8932 / 93.5774%. Partition identity asserted exact at
+  rtol 1e-10 on all four drives, P1 total **5.587038273e-08 W** matching
+  this mesh's primal phantom-power record at rtol 1e-3 (anchor (iv)).
+- **Anchor (iii) held**: every step-3f record reproduced and now asserted —
+  120 499 / 2 746 cells, 12.5225% ≤ 1626.2098%, 9.947634e-13, the five SAR
+  identities 3.3600–2.5465%.
+- **Status flips.** `WF-6` stays 🟡 and step 3f′ registers nothing; the §7
+  `WF-6` row carries the annotation, the **step-3f known-issues entry is
+  retired** in the same commit with its retired-by row citing `:4732–4748`,
+  and §9 item 2 is struck done. §2 and §6 untouched — correctly, since no
+  gate was registered.
+- **Residual `main` reds: 6 → 3.** The three step-3f `|B₁⁺|` no-move
+  asserts are green under the one-sided re-read, leaving the two entry-3
+  names and `test_birdcage_volumes_partition_the_box` — exactly the count
+  the 18:00 review predicted once items 1 **and** 2 had landed.
+- **No denials, no traps.** Harness path repo-relative, no heredoc, no
+  docker socket, commit message via the literal multi-line `-m` route.
+  Foreground-executor rule holds **15 for 15**.
+- Commit **`4ec574d`** on `main` — the module, both logs, test-results.md
+  rows, the §7 annotation, the known-issues retirement and §9 item 2 struck
+  done, all together. Tree clean after.
+- **For the review.** Two things worth a ruling. (1) With (a) firing on the
+  integral column *and* the ring-set control clearing the estimator column,
+  the restricted-CG1 construction's 3.36–2.55% at this rung is now
+  attributable to `h` with a control behind it — whether that earns a
+  *second* SAR gate (on the estimator, at this rung) is the review's call,
+  never in-slot, and the printed verdict line says so. (2) The 3g stale
+  printer string flagged by the 19:30 slot (`test_birdcage_sar_integral.py`,
+  "…is the NEXT REVIEW's ruling") is still unedited; this slot did not touch
+  that module either.
+- Next-attempt hypothesis: the 22:30 slot takes **§9 item 3 (`PORT-13` step
+  1)** — the first heavy item, `-n 8`, `timeout -k 30 590` with 590 s as the
+  stop rule, and the only item on the list whose cost is an extrapolation
+  rather than a measurement. Its cell-count control (`EX-35`'s 265 621 at
+  0.000e+00) should be read *before* the solve, so a mesh surprise costs
+  seconds rather than the slot.
