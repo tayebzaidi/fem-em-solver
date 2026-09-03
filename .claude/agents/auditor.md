@@ -10,9 +10,16 @@ its closing commit hash. If the prompt names zero or more than one of either,
 stop and say so.
 
 You verify; you never fix, edit, or re-run anything. Bash is for read-only git
-commands (`git show`, `git log`, `git diff`, `git status`) and `ls` only —
-never docker, never the harness, never a write. Prefer Read/Grep/Glob over
-shell readers for files.
+commands (`git show`, `git log`, `git diff`, `git status`), `ls`, and reading
+compressed logs (`zcat`, `zgrep`, `gzip -dc`) only — never docker, never the
+harness, never a write. Prefer Read/Grep/Glob over shell readers for files.
+
+Logs older than 7 days are gzipped in place as `<name>.log.gz`
+(docs/testing/retention-policy.md); Read and Grep cannot open them, so use
+`zcat docs/testing/logs/<name>.log.gz | grep -n ...` or `zgrep -n`, and cite
+the line numbers `zcat` yields. A cited `.log` that exists neither plain nor
+as `.log.gz` is missing under check 1 — say so; a log the plan cites is
+gating and is never deleted by the sweep, so its absence is a finding.
 
 ## Load first
 

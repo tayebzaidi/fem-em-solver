@@ -77,13 +77,13 @@ the dashboard's Waiting-on-you section.
 ## 4. Cadence and ownership
 
 - **Every harness run**: the filter (§2). No agent action.
-- **Weekly sweep**: `housekeeping.py --apply`, committed as
-  `chore(housekeeping): weekly sweep YYYY-MM-DD`. The intended home is a
-  dedicated scheduled slot after the Sunday planning review; until that
-  cron entry exists the human operator or an interactive session runs it.
-  The agent running the slot adjudicates only what the script flags
-  (orphan probes, over-budget journals); it never widens the deletion set
-  by hand.
+- **Weekly sweep**: `scripts/automation/housekeeping.sh`, cron Sunday
+  01:45 local (`scripts/automation/crontab`), runs `housekeeping.py --apply`
+  and commits `chore(housekeeping): weekly sweep YYYY-MM-DD`. No Claude
+  session is involved: the sweep is mechanical, skips on a dirty tree or off
+  `main`, and shares the automation flock. What it can only flag (orphan
+  probes, over-budget journals) lands in `docs/testing/housekeeping.md` for
+  the next daily review; nobody widens the deletion set by hand.
 - **Weekly review**: journal rotation on the §3 thresholds, as already
   specified in `docs/automation/weekly-review.md`.
 - **Daily review**: reads `--check`, escalates an over-budget state.

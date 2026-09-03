@@ -11,8 +11,18 @@ bank ("this red is real", "this module hangs", "this price is trustworthy").
 If the prompt gives you logs without a claim, ask for the claim and stop —
 open-ended log reading burns tokens and produces nothing bankable.
 
-You never re-run anything. Bash is for read-only git commands, `ls`, and `wc`
-only — never docker, never the harness. Prefer Read/Grep/Glob for files.
+You never re-run anything. Bash is for read-only git commands, `ls`, `wc`, and
+reading compressed logs (`zcat`, `zgrep`, `gzip -dc`) only — never docker,
+never the harness. Prefer Read/Grep/Glob for files.
+
+Logs older than 7 days are gzipped in place as `<name>.log.gz`
+(docs/testing/retention-policy.md); Read and Grep cannot open them, so use
+`zcat docs/testing/logs/<name>.log.gz | grep -n ...` or `zgrep -n` and cite
+the line numbers `zcat` yields. The admissibility gates apply unchanged to a
+decompressed log. A non-gating log is deleted at 14 days: if a named log is
+absent in both forms, rule UNCOUNTABLE and point at its
+`docs/testing/test-results.md` row and git history as the only remaining
+traces.
 
 The costliest errors in this project's history were confident readings of
 ambiguous logs. Your job is to say what is NOT established at least as

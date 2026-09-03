@@ -16,6 +16,10 @@
 30 4,7,13,16,19,22 * * * /home/taz5297/Development/fem-em-solver/scripts/automation/implementer-run.sh
 0 0,6,9,12,15,21 * * * /home/taz5297/Development/fem-em-solver/scripts/automation/implementer-run.sh
 15 2 * * 0,3 /home/taz5297/Development/fem-em-solver/scripts/automation/weekly-review.sh
+# Sunday 01:45: mechanical log-retention sweep (no Claude session; ~1 min),
+# in the buffer after the 00:00 implementer slot's 01:05 hard kill and before
+# the 02:15 weekly review. See docs/testing/retention-policy.md §4.
+45 1 * * 0 /home/taz5297/Development/fem-em-solver/scripts/automation/housekeeping.sh
 #
 # CANONICAL COPY. The live schedule lives in the user crontab spool; this file
 # is the version-controlled source of truth for it. Install with:
