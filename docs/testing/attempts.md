@@ -16794,3 +16794,13 @@ executor returned with nothing in flight.
   touch either — they gate a *different* route (terminated-Z, `ports:1`) and
   re-basing them is a separate (1\*) item with its own measurement, not a
   drive-by.
+- **Slot verification (owner, not the executor).** I re-read all three log
+  footers myself (`Status: 0` / `0` / `2`, elapsed 165 / 206 / 1 s), the
+  reproduction and negative-control lines
+  (`20260903T050845Z_OPS-33.log:1425–1426`), the two band definitions (exactly
+  one each, at `02_package_sparameter_sweep.py:172–173`, re-exported not
+  redefined), the two live asserts (`:494`, `:504`), and the AED control on the
+  tracked diff (FEM digits and formatting only; every AED cell blank,
+  `"aed": null`). One correction landed on top of `cd2120a`: the §7 tier cell
+  read `+ 5 s` for the census window where its footer reads `Elapsed (s): 1`.
+  No gate or measured physics figure was affected.
