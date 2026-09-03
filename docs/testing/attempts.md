@@ -17032,3 +17032,109 @@ and independent. `GEO-26` step 2 (16-leg rung) is still the 04:30 slot's
 un-queued hand-off and `PORT-13` step 1 is still serial behind its record —
 both need the review, not a slot. One chunk per slot, so nothing else was
 attempted here.
+
+## 2026-09-03T17:20Z — `GEO-26` step 2 — complete-with-STOP (12:00 implementer slot)
+
+**Outcome: `complete`** in the §4 sense — the verification ran, the anchors are
+quantitative, the tier and elapsed times are recorded — but the chunk landed on
+its **pre-registered negative result**, so it closes a measurement and *not* the
+record `PORT-13` step 1 needs. `GEO-26` stays 🟡, `PORT-13` stays 🚫, §9 item 5
+is **not** unblocked.
+
+**Item taken.** §9 On-deck item 1, first not-done/not-blocked, as directed. Tree
+clean at `6fa7a52` on preflight, container Up 8 days. Executed by the
+`implementer` agent, foreground, per step 3.
+
+**What was built.** The 16-leg rung lands as a second parametrised leg count in
+`tests/mesh/test_birdcage_ring_sheet_orientation.py` (both tests now parametrise
+over `[CONTROL_LEG_COUNT, SCALED_LEG_COUNT]`), not a new module. No step-1
+constant or helper renamed — `EX-44`'s imports are safe as they stand at
+`41cd5c8`; the single signature change is `_record_ratio(n_cells, record=…)`,
+backwards compatible. `RING_GAP_SCALED_CELL_RECORD = 265621` is restated with
+the `examples/meshing/09_birdcage_sixteen_ring_gaps.py:147` citation rather than
+imported (importing an example script into a test executes it).
+
+**Anchors (i)–(iv), all green at both widths.** All 32 sheets at
+`φ̂`-extent/chord = `ẑ`-extent/w = area/(chord·w) = **1.000000000000**,
+out-of-plane ≤ 2.1e-16 m against 1e-12; both half volumes at their closed forms
+with sum/`ring_port_volume_m3` = 1.000000000000
+(`20260903T170351Z_GEO-26.log:53401–53434`). **C32 sheet spread 6.035e-16**
+(`-n 2`) / 5.998e-16 (`-n 12`), top/bottom mirror **5.551e-16**, band 1e-12
+(`:53435`). Every `GEO-20` step-2 identity on this rung — partition, air-box
+closure, Pappus, terminal ratio in band — still exact.
+
+**Anchor (v).** `RING_LONGITUDINAL_SCALED_CELL_RECORD = 270 728`, **identical at
+both widths** (`:53400`), discovered on the first window against the `None`
+record exactly as the trap list predicted. Transverse rung 265 621.
+
+**Negative control green.** Default orientation at 16 legs reproduces `EX-35`'s
+**265 621 cells at ratio 1.000000**, all 32 transverse sheets at `φ̂`-extent ≤
+**1.741094e-17 m** (`:26462`) — fourteen-plus decades against the 8.0e-3 m
+longitudinal chord, so the ceiling holds. `mesh:9` untouched.
+
+**THE STOP — the terminal reading.** The four azimuth classes read, against the
+imported and **unmoved** `LONGITUDINAL_TERMINAL_INTRA_BAND = 2.0e-5`
+(`…170351Z:53436–53439`, `…170701Z:53526–53529`):
+
+| class | `-n 2` | `-n 12` |
+|---|---|---|
+| 11.250° | **9.989957e-05** | **9.989957e-05** |
+| 33.750° | 3.792060e-11 | 3.792088e-11 |
+| 56.250° | 3.792129e-11 | 3.792129e-11 |
+| 78.750° | **9.990206e-05** | **9.990206e-05** |
+
+Two classes are **5×** over the band, rank-count-independent to seven digits.
+Per the 10:30 review's pre-registration this is a **stop, not a widening**:
+`LONGITUDINAL_TERMINAL_INTRA_BAND` stays 2.0e-5 and `TERMINAL_INTRA_CLASS_BAND`
+stays 1e-6 (both verified in the tree post-commit —
+`test_birdcage_ring_sheet_orientation.py:195`, `test_birdcage_port_scaleup.py:146`).
+The failure text is a generator finding by construction, not a tolerance
+complaint (`:53448`).
+
+**Mechanism, measured rather than inferred.** The 32 terminals take exactly
+**two** areas — `9.791961125e-05` and `9.792939386e-05 m²`, 9.99e-05 apart —
+with the low value on **5 of the 16** gap azimuths (11.25 / 78.75 / 101.25 /
+191.25 / 281.25°, both rings). Five is no subgroup of C16, so this is *not*
+`GEO-19` step C's azimuth-class effect that `_azimuth_class` folds; it is the
+**bistable** constrained-diameter triangulation step 1 already recorded,
+resolving one of two ways against the surrounding air mesh. At four legs all
+four gaps happened to resolve identically, which is why step 1 read a clean
+1.605442e-05 and the band looked adequate.
+
+**Step-1 regression after the parametrisation.** `20260903T171154Z_GEO-26.log`,
+`-n 2`, **Status 0, 51 s**: 110 786 / 111 898 both at ratio 1.000000, C8 spread
+4.273e-16, terminal 1.605442e-05 — step 1's digits exactly (`:6956`, `:13904`,
+`:13915–13916`, `:13919`). Nothing in the 04:30 closure moved.
+
+**Logs / tier.** Heavy declared, **158–160 s per window measured** — well inside
+the item's ≈200 s estimate, so three windows cost ≈ 6 min of compute, not 12.
+`20260903T170351Z_GEO-26.log` (`-n 2`, Status 1, 160 s, `1 failed, 1 passed` at
+`:53453`, footer `:53470–53471`); `20260903T170701Z_GEO-26.log` (`-n 12`,
+Status 1, 158 s, footer `:53700–53701`); `20260903T171154Z_GEO-26.log` (`-n 2`
+regression, Status 0, 51 s). All three foreground through `run_and_log.sh` with
+container-side `timeout -k 30 600`. No compute-safety event, no docker-socket
+denial, no allowlist denial this slot.
+
+**Commit.** `1ad8ba3` on `main`, tree clean: the test module + the three harness
+logs + the `test-results.md` rows + the known-issues entry + the §7 `GEO-26` row
++ §9 item 1 struck through, together.
+
+**`main` is now 4 deliberate/known reds at `-n 2`**, up from 3 — the new one is
+`test_birdcage_ring_sheet_orientation.py::test_the_longitudinal_ring_sheets_span_the_gap_chord_and_split_the_box[16]`,
+carrying a 🔴 OPEN known-issues entry (line 31) with all four readings at both
+widths. **A question for the review, not acted on here:** the pre-registration
+said "known-issues entry", never "xfail", so the red was left standing as
+written — if the review would rather the corpus be green, an `xfail(strict)`
+with the measurement in the reason is the cheap move and belongs to it, not to a
+slot.
+
+**Next.** The review has a real fork, both branches named in the §7 row: (a)
+rule the bistability acceptable for the port model and re-register the band on
+this measurement — defensible, because the offending reading is a terminal
+*area* covariance while `PORT-13` integrates over the **sheet**, which is exact
+to 1e-16 on all 32 here; or (b) classify by the measured two-valued partition
+instead of `_azimuth_class`, which makes the covariance exact by construction
+and turns the bistability into a recorded property of the generator. Either
+unblocks `PORT-13` step 1 on the 270 728 record; neither is a slot's call.
+§9 items 2 (`EX-42`), 3 (`OPS-34`) and 4 (`EX-44`) remain open and independent.
+One chunk per slot, so nothing else was attempted here.
