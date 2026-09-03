@@ -1,0 +1,76 @@
+# Test Run
+- Chunk: WF-6-step3i-collect
+- Commit: 41cd5c84a41a1d5825b962e101fc68da2481831e
+- Time (UTC): 2026-09-03 11:02:34
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && source /usr/local/bin/dolfinx-complex-mode && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 timeout -k 30 60 python3 -m pytest tests/validation/test_birdcage_sar_integral.py --collect-only -q'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Aug 24 12:40 .
+drwxr-xr-x 16 taz5297 taz5297 4096 Sep  3 06:02 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-rw-r--  1 taz5297 taz5297  657 Aug 23 15:12 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 1449 Aug 24 12:40 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && source /usr/local/bin/dolfinx-complex-mode && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 timeout -k 30 60 python3 -m pytest tests/validation/test_birdcage_sar_integral.py --collect-only -q'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collected 26 items
+
+<Dir workspace>
+  <Dir tests>
+    <Dir validation>
+      <Module test_birdcage_sar_integral.py>
+        <Function test_the_quadrant_partition_recovers_the_whole_phantom_power[k=0]>
+        <Function test_the_quadrant_partition_recovers_the_whole_phantom_power[k=1]>
+        <Function test_the_quadrant_partition_recovers_the_whole_phantom_power[k=2]>
+        <Function test_the_quadrant_partition_recovers_the_whole_phantom_power[k=3]>
+        <Function test_the_quadrant_partition_recovers_the_whole_phantom_power[quadrature]>
+        <Function test_the_p1_drive_total_reproduces_step_1s_phantom_power_record>
+        <Function test_the_c4_integral_pair_is_inside_the_band[pair0]>
+        <Function test_the_c4_integral_pair_is_inside_the_band[pair1]>
+        <Function test_the_c4_integral_pair_is_inside_the_band[pair2]>
+        <Function test_the_c4_integral_pair_is_inside_the_band[pair3]>
+        <Function test_the_c4_integral_pair_is_inside_the_band[pair4]>
+        <Function test_the_c4_integral_pair_is_inside_the_band[pair5]>
+        <Function test_the_c4_integral_pair_is_inside_the_band[pair6]>
+        <Function test_the_c4_integral_pair_is_inside_the_band[pair7]>
+        <Function test_the_c4_integral_pair_is_inside_the_band[pair8]>
+        <Function test_the_c4_integral_pair_is_inside_the_band[pair9]>
+        <Function test_the_c4_integral_pair_is_inside_the_band[pair10]>
+        <Function test_the_c4_integral_pair_is_inside_the_band[pair11]>
+        <Function test_the_quadrature_four_quadrant_spread_is_inside_the_band>
+        <Function test_the_mirror_flanks_of_a_single_drive_carry_equal_power[0]>
+        <Function test_the_mirror_flanks_of_a_single_drive_carry_equal_power[1]>
+        <Function test_the_mirror_flanks_of_a_single_drive_carry_equal_power[2]>
+        <Function test_the_mirror_flanks_of_a_single_drive_carry_equal_power[3]>
+        <Function test_the_mis_paired_quadrant_control_reads_larger_than_the_c4_pairing[0]>
+        <Function test_the_mis_paired_quadrant_control_reads_larger_than_the_c4_pairing[1]>
+        <Function test_the_mis_paired_quadrant_control_reads_larger_than_the_c4_pairing[2]>
+
+========================= 26 tests collected in 2.41s ==========================
+
+## Exit
+- Status: 0
+- Elapsed (s): 4

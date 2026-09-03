@@ -66,9 +66,19 @@ so a mesh or image move is visible as itself rather than as a band miss.
 
 This is the **first coil-driven SAR gate in the repo**, and it is exactly one
 thing: *a C4 symmetry identity of quadrant powers on one fixture at 10 MHz at
-fixed* ``h``.  Not a mirror identity, not an absolute SAR figure, not
-homogeneity, not C95.3, not Larmor, not a convergence claim.  `WF-6` step 3 is
-✅ with this module; the chunk stays 🟡.
+fixed* ``h``.  Not an absolute SAR figure, not homogeneity, not C95.3, not
+Larmor, not a convergence claim.  `WF-6` step 3 is ✅ with this module; the
+chunk stays 🟡.
+
+**The second identity (step 3i, 2026-09-03 03:00 review).**  The mirror through
+the coil axis and drive ``k``'s own azimuth fixes quadrants ``k`` and ``k+2``
+and exchanges the two flanks, so ``P_{k−1}^{(k)} = P_{k+1}^{(k)}`` for each of
+the four drives — asserted against the *same* imported band, one parametrised
+test per ``k``, recorded in :data:`STEP3I_MIRROR_RECORDS`, with the
+flank-vs-opposite pairing as its negative control.  It runs on the same four
+solves and the same partition: **no new solve, no new partition, no new band.**
+Unlike the twelve C4 pairs it is a single-drive statement, so it is independent
+evidence rather than a re-reading of the rotation identity.
 
 The verdict below is kept as the printed pre-registration the 2026-09-02 10:30
 review wrote, so the reading a review acts on stays visible beside the gate:
@@ -80,8 +90,8 @@ review wrote, so the reading a review acts on stays visible beside the gate:
 * **(c)** at or above the pointwise readings ⇒ the sample set was not the
   mechanism either, and the phantom's ``h`` (step 3f) is what decides.
 
-**Scope.**  C4 only — no mirror identity, no band moved, no absolute SAR claim,
-and `WF-6` stays 🟡.  Nothing under ``src/``.  The coarse **default** mesh
+**Scope.**  Two symmetry identities (C4 rotation, mirror reflection) — no band
+moved, no absolute SAR claim, and `WF-6` stays 🟡.  Nothing under ``src/``.  The coarse **default** mesh
 (116 085 cells) on purpose: this rung is independent of step 3f's finer one, so
 that "integral vs pointwise" is the only thing that differs from step 3's
 window.
@@ -178,6 +188,21 @@ STEP3G_INTEGRAL_PAIR_RECORDS = {
 # table, same licence.
 STEP3G_INTEGRAL_QUADRATURE_SPREAD = 0.4641e-2
 
+# Step 3i's mirror readings ``|P_{k+1}^{(k)} - P_{k-1}^{(k)}| / P_{k-1}^{(k)}``,
+# keyed by the drive ``k``.  Pre-computed by the 2026-09-03 03:00 review from
+# step 3h's own printed quadrant table
+# (`20260903T003309Z_WF-6-step3h.log:4682-4685`) and re-derived by the slot that
+# first asserted them: k=0 9.206062871e-09 vs 9.047490023e-09, k=1
+# 9.096436124e-09 vs 8.959698063e-09, k=2 9.127154706e-09 vs 9.095881751e-09,
+# k=3 9.106144177e-09 vs 9.019887150e-09.  Same licence as the C4 records above:
+# a record, never a band, stored as fractions.
+STEP3I_MIRROR_RECORDS = {
+    0: 1.7527e-2,
+    1: 1.5262e-2,
+    2: 0.3438e-2,
+    3: 0.9563e-2,
+}
+
 
 def _quadrant_weight(x, j, eps):
     """``w_j`` as a UFL expression on the mesh's spatial coordinate.
@@ -235,8 +260,7 @@ def _integral_verdict(pairs, band):
         return "(a)", (
             f"all twelve C4 integral pairs are inside the {band * 100:.1f}% band "
             f"(worst {worst * 100:.4f}%) — the INTEGRAL construction is the "
-            "gateable one, and registering the first coil-driven SAR gate on it "
-            "is the NEXT REVIEW's ruling, never in-slot"
+            "gateable one"
         )
     if worst >= POINTWISE_PRIMAL_MIN:
         return "(c)", (
@@ -324,6 +348,22 @@ def sar_integral():
         k: float(np.mean([control_pairs[(k, j)] for j in range(4)])) for k in range(3)
     }
 
+    # Step 3i's mirror pairs, one per drive and read from that drive alone.  The
+    # mirror through the coil axis and drive k's own azimuth fixes quadrants k
+    # and k+2 and exchanges the two flanks k-1 and k+1, so the identity is
+    # P_{k-1}^{(k)} = P_{k+1}^{(k)} — a *reflection* statement, using no
+    # drive-to-drive pairing and therefore independent of the C4 pairs above.
+    # The control keeps the same flank in the numerator but compares it with the
+    # quadrant *opposite* the reference flank (k+2, which the mirror fixes rather
+    # than exchanging): a pairing the symmetry does not predict.
+    mirror_pairs, mirror_control = {}, {}
+    for k in range(4):
+        ref = quadrants[k][(k - 1) % 4]
+        flank = quadrants[k][(k + 1) % 4]
+        opposite = quadrants[k][(k + 2) % 4]
+        mirror_pairs[k] = abs(flank - ref) / ref
+        mirror_control[k] = abs(flank - opposite) / opposite
+
     quad_spread = (max(quad_parts) - min(quad_parts)) / float(np.mean(quad_parts))
     verdict, verdict_text = _integral_verdict(pairs, C4_COVARIANCE_BAND)
 
@@ -374,14 +414,31 @@ def sar_integral():
                 flush=True,
             )
         print(
+            f"    step 3i: the MIRROR identity P_(k-1)^(k) = P_(k+1)^(k), one "
+            f"reading per drive, no drive-to-drive pairing (ASSERTED <= "
+            f"{C4_COVARIANCE_BAND * 100:.1f}%, the same imported unmoved band, "
+            f"and against step 3i's records at rtol {CG1_RECORD_RTOL:.0e}):",
+            flush=True,
+        )
+        for k in range(4):
+            print(
+                f"        k={k} ({by_k[k]})  |P_{(k + 1) % 4} - P_{(k - 1) % 4}|"
+                f" / P_{(k - 1) % 4} = {mirror_pairs[k] * 100:8.4f}%"
+                f"   (record {STEP3I_MIRROR_RECORDS[k] * 100:.4f}%)"
+                f"   flank-vs-opposite control {mirror_control[k] * 100:9.4f}%"
+                f"   ratio {mirror_control[k] / mirror_pairs[k]:8.3f}x"
+                f"   ASSERTED >",
+                flush=True,
+            )
+        print(
             f"    quadrature drive four-quadrant spread (max-min)/mean = "
             f"{quad_spread * 100:.4f}%   ASSERTED <= "
             f"{C4_COVARIANCE_BAND * 100:.1f}% and against "
             f"{STEP3G_INTEGRAL_QUADRATURE_SPREAD * 100:.4f}%\n"
             f"    pre-registered verdict: {verdict} — {verdict_text}\n"
-            f"    scope: this is the FIRST coil-driven SAR gate — a C4 symmetry "
-            "identity of quadrant powers on one fixture at 10 MHz at fixed h, "
-            "and nothing more: no mirror identity, no absolute SAR, no "
+            f"    scope: two SYMMETRY identities of quadrant powers on one "
+            "fixture at 10 MHz at fixed h — the C4 rotation (step 3h) and the "
+            "mirror reflection (step 3i) — and nothing more: no absolute SAR, no "
             "homogeneity, no C95.3, no Larmor, no convergence claim; the band "
             "is imported unmoved and WF-6 stays amber",
             flush=True,
@@ -397,6 +454,8 @@ def sar_integral():
         "pairs": pairs,
         "c4_by_k": c4_by_k,
         "control_by_k": control_by_k,
+        "mirror_pairs": mirror_pairs,
+        "mirror_control": mirror_control,
         "quadrature_spread": quad_spread,
         "verdict": verdict,
         "verdict_text": verdict_text,
@@ -512,6 +571,54 @@ def test_the_quadrature_four_quadrant_spread_is_inside_the_band(sar_integral):
         f"the quadrature four-quadrant spread reads {reading * 100:.4f}% against "
         f"step 3g's recorded {STEP3G_INTEGRAL_QUADRATURE_SPREAD * 100:.4f}% "
         f"(rtol {CG1_RECORD_RTOL:.0e}) — a fixture finding, not a re-record"
+    )
+
+
+@complex_only
+@pytest.mark.parametrize("k", sorted(STEP3I_MIRROR_RECORDS))
+def test_the_mirror_flanks_of_a_single_drive_carry_equal_power(sar_integral, k):
+    """**Step 3i's gate.** ``P_{k−1}^{(k)} = P_{k+1}^{(k)}`` to within 5%.
+
+    A second, *independent* symmetry of the same construction.  The plane
+    containing the coil axis and drive ``k``'s own azimuth is a symmetry plane of
+    the fixture-plus-excitation: it fixes quadrants ``k`` and ``k+2`` setwise and
+    exchanges the two flanking quadrants ``k−1`` and ``k+1``.  Reflections
+    preserve ``|E|`` (the mirror acts on the field, not on the drive), so the two
+    flank integrals are one number read twice.  Unlike the twelve C4 pairs this
+    uses **one** drive at a time, so it is not a re-reading of the rotation
+    identity: a systematic error common to all four solves cancels out of the C4
+    pairs and does *not* cancel out of this one.
+
+    The band is step 1d's ``C4_COVARIANCE_BAND``, **imported and unmoved**; the
+    record beside it asks the separate question of whether this is still step
+    3h's mesh, image and four solves.  The control keeps the same flank in the
+    numerator but pairs it with the quadrant the mirror *fixes* (``k+2``) instead
+    of the one it exchanges — a comparison the symmetry does not predict, and it
+    is asserted strictly larger, so a phantom power map with no azimuthal
+    structure left could not pass this test by accident.
+    """
+    reading = sar_integral["mirror_pairs"][k]
+    control = sar_integral["mirror_control"][k]
+    assert reading <= C4_COVARIANCE_BAND, (
+        f"the mirror pair for drive k={k} reads {reading * 100:.4f}%, outside the "
+        f"imported {C4_COVARIANCE_BAND * 100:.1f}% band (step 3h's table predicts "
+        f"{STEP3I_MIRROR_RECORDS[k] * 100:.4f}% here) — record it and stop, do "
+        "not widen the band and do not re-record"
+    )
+    assert reading == pytest.approx(STEP3I_MIRROR_RECORDS[k], rel=CG1_RECORD_RTOL), (
+        f"the mirror pair for drive k={k} reads {reading * 100:.4f}% against the "
+        f"recorded {STEP3I_MIRROR_RECORDS[k] * 100:.4f}% (rtol "
+        f"{CG1_RECORD_RTOL:.0e}) — the band above may still be met, but the mesh, "
+        "the image or the solves have moved underneath it; a fixture finding, "
+        "not a licence to re-record"
+    )
+    assert control > reading, (
+        f"for drive k={k} the flank-vs-opposite control reads "
+        f"{control * 100:.4f}% against the mirror pairing's {reading * 100:.4f}% "
+        f"(ratio {control / reading:.4f}x) — a pairing the mirror symmetry does "
+        "not predict agrees at least as well as the one it does, so the quadrant "
+        "map carries no azimuthal structure and the mirror reading above is not "
+        "interpretable"
     )
 
 
