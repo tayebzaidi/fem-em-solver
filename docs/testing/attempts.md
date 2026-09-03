@@ -17213,3 +17213,59 @@ module and no band.
 independent; item 5 (`PORT-13` step 1) stays 🚫 pending the review's fork on
 `GEO-26` step 2's bistability finding. One chunk per slot, so nothing else was
 attempted here.
+
+## 2026-09-03T21:30Z — *(no chunk)* — **anomaly (preflight dirty — first encounter, stop and journal)** (16:30 CDT implementer slot)
+
+**Preflight failed.** `main` @ `9a71d8b`, container Up ~1 h. The tree is dirty
+with **1 930 staged entries and nothing unstaged or untracked**:
+
+- `A docs/testing/housekeeping.md` (new file, 7 lines);
+- `D docs/testing/logs/*.log` × **1 108**;
+- `A docs/testing/logs/*.log.gz` × **821**.
+
+821 of the deletions are compressions (the `.log` deleted, the matching
+`.log.gz` added); the remaining **287** are outright deletions. The staged
+`housekeeping.md` states exactly that — `2026-09-03 | 821 compressed | 287
+deleted | 61.1 MB after | gc yes`, with breaches recorded (log volume 111.3 MB
+> 25.0 MB, loose objects 310 MiB > 50 MiB, attempts.md 17 215 lines > 6 000).
+
+**What produced it.** Not the new cron sweep. `logs/automation/20260903T211248Z_housekeeping.log`
+shows `scripts/automation/housekeeping.sh` fired at 21:12:48 UTC and **skipped**
+— it found the tree dirty with the in-progress `OPS-RETENTION` edits
+(`.claude/agents/auditor.md`, `log-pathologist.md`, `retention-policy.md`,
+`crontab`, untracked `housekeeping.sh`), which landed one minute later as
+`9a71d8b` (21:13:00 UTC). Had the wrapper run the sweep it would have committed
+the result itself (`housekeeping.sh:48–59`). So this index is a **manual**
+`scripts/maintenance/housekeeping.py --apply` — almost certainly the same
+interactive session verifying the sweep it had just written, left staged and
+uncommitted.
+
+**Why I stopped rather than landing it.** The step-1 exception for
+already-journaled documentation drift needs a *prior* attempts.md anomaly entry
+describing this exact diff. There is none — this is the first encounter, so the
+unmodified rule applies: journal, commit only the journal, stop. On content the
+diff would otherwise qualify (documentation only: `docs/testing/` logs plus one
+new doc; nothing under `src/`, `tests/`, `scripts/`; no §7 status or done-when
+change; internally consistent — the housekeeping.md row matches the staged file
+counts exactly, 821/287). Nothing was stashed, reset or discarded; the index is
+left byte-for-byte as I found it.
+
+**Committed here:** this attempts.md entry alone, via a pathspec commit
+(`git commit -- docs/testing/attempts.md`), which leaves the 1 930 staged
+entries in the index untouched.
+
+**No chunk work.** §9 item 3 (`OPS-34`) was not attempted. No compute was
+issued, no harness log written, no allowlist denial hit.
+
+**Hypothesis / for the next slot and the review.** The 19:30 slot will meet the
+same tree; that is a *second* encounter with this entry as the prior journal, so
+per step 1 it should commit the diff as-is to `recovered/<UTC-timestamp>`,
+return to a clean `main`, and proceed with `OPS-34`. **The 18:00 daily review
+should short-circuit that**: this diff is a legitimate, complete retention sweep
+whose own policy doc already sanctions it, and parking it on `recovered/*` would
+strand the compression and re-inflate the log volume breach. Recommend the
+review land it on `main` directly as `chore(housekeeping): weekly sweep
+2026-09-03` — the message `housekeeping.sh` would have used — and, separately,
+consider whether the sweep's own preflight should log to `housekeeping.md` when
+it skips, so a hand-run sweep is distinguishable from a scheduled one without
+reading the reflog.
