@@ -1,0 +1,67 @@
+# Test Run
+- Chunk: OPS-CLEANUP-SMOKE
+- Commit: f0dfa5a19cbee0149905e6528d787d3af7d38951
+- Time (UTC): 2026-09-03 18:38:17
+- Host: unknown
+- OS: Linux 7.1.9-hardened1-1-hardened x86_64
+- Python: Python 3.14.7
+- Docker Compose: Docker Compose version 5.5.0
+- Root Dir: /home/tark/Development/NorthwesternResearch/fem-em-solver
+- Working Dir: /home/tark/Development/NorthwesternResearch/fem-em-solver
+- COMPOSE_FILE: /home/tark/Development/NorthwesternResearch/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose -f docker/docker-compose.yml exec -T fem-em-solver bash -lc 'cd /workspace && timeout -k 30 180 ./run_tests.sh --smoke'
+
+## Preflight
+\$ pwd
+/home/tark/Development/NorthwesternResearch/fem-em-solver
+
+\$ ls -la docker
+total 16
+drwxr-xr-x  2 tark tark 4096 Aug 27 00:42 .
+drwxr-xr-x 13 tark tark 4096 Sep  3 13:38 ..
+-rw-r--r--  1 tark tark  657 Aug 27 00:42 Dockerfile
+-rw-r--r--  1 tark tark 1449 Aug 27 00:42 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version 5.5.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose -f docker/docker-compose.yml exec -T fem-em-solver bash -lc '\''cd /workspace && timeout -k 30 180 ./run_tests.sh --smoke'\'''
+Running lightweight smoke matrix (no heavy FEM/mesh/solver cases):
+  - tests/unit/test_analytical_lightweight.py
+  - tests/solver/test_tolerance_policy.py
+  - tests/validation/test_tolerance_policy.py
+  - tests/ports/test_port_definition.py
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.8.0
+collecting ... collected 16 items
+
+tests/unit/test_analytical_lightweight.py::test_straight_wire_analytical_direction_and_magnitude PASSED [  6%]
+tests/unit/test_analytical_lightweight.py::test_helmholtz_center_formula_matches_closed_form PASSED [ 12%]
+tests/unit/test_analytical_lightweight.py::test_wire_vector_potential_conductor_branch_is_finite_and_curls_correctly PASSED [ 18%]
+tests/unit/test_analytical_lightweight.py::test_loop_vector_potential_reproduces_on_axis_closed_form PASSED [ 25%]
+tests/unit/test_analytical_lightweight.py::test_loop_magnetic_field_matches_on_axis_closed_form_and_curl_of_A PASSED [ 31%]
+tests/unit/test_analytical_lightweight.py::test_error_metrics_are_zero_for_identical_arrays PASSED [ 37%]
+tests/solver/test_tolerance_policy.py::test_solver_tolerance_policy_is_consistent PASSED [ 43%]
+tests/validation/test_tolerance_policy.py::test_validation_tolerance_policy_is_ordered_and_positive PASSED [ 50%]
+tests/ports/test_port_definition.py::test_port_definition_defaults_and_tag_name_contract PASSED [ 56%]
+tests/ports/test_port_definition.py::test_required_port_tags_collection_and_validation_success PASSED [ 62%]
+tests/ports/test_port_definition.py::test_validate_required_port_tags_exist_raises_for_missing_tags PASSED [ 68%]
+tests/ports/test_port_definition.py::test_port_definition_rejects_invalid_values PASSED [ 75%]
+tests/ports/test_port_definition.py::test_run_port_calibration_checks_accepts_consistent_order_orientation_and_area PASSED [ 81%]
+tests/ports/test_port_definition.py::test_run_port_calibration_checks_rejects_order_mismatch_with_checklist_reference PASSED [ 87%]
+tests/ports/test_port_definition.py::test_run_port_calibration_checks_rejects_missing_orientation_metadata PASSED [ 93%]
+tests/ports/test_port_definition.py::test_run_port_calibration_checks_rejects_inconsistent_face_area_ratio PASSED [100%]
+
+============================== 16 passed in 0.60s ==============================
+
+## Exit
+- Status: 0
+- Elapsed (s): 1

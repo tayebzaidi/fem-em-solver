@@ -18,6 +18,9 @@ RUN pip install --no-cache-dir \
     flake8 \
     pytest \
     pytest-xdist \
+    mkdocs \
+    mkdocs-material \
+    "mkdocstrings[python]" \
     jupyter \
     ipywidgets \
     matplotlib

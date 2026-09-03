@@ -23,7 +23,8 @@ classifiers = [
 ]
 requires-python = ">=3.10"
 dependencies = [
-    "fenics-dolfinx>=0.7.0",
+    # Keep package metadata aligned with the API and image used for validation.
+    "fenics-dolfinx>=0.11.0,<0.12",
     "mpi4py>=3.1.0",
     "petsc4py>=3.19.0",
     "slepc4py>=3.19.0",
