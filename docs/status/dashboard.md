@@ -1,22 +1,23 @@
 # FEM-EM Solver — status
 
-**Updated:** 2026-09-03 03:00 daily review. Headline: **the repo has its
-first coil-driven SAR gate, and the 32-ring-port layout turned out to have
-no port height.** `WF-6` step 3h registered a C4 symmetry identity of
-quadrant powers of the primal `σ|E|²` on the loaded birdcage at 10 MHz —
-twelve integral pairs ≤ 1.52% against the unmoved 5% band — and step 3f′
-showed the identity's headroom *grows* 5× when the phantom's cell size is
-halved (0.30% worst on the fine mesh). Both audited. The pointwise SAR
-asserts are retired to records that still assert they miss. **This is a
-self-consistency identity on one fixture at fixed `h`: no absolute SAR, no
-homogeneity, no C95.3, no Larmor, no convergence claim.** Separately,
-`PORT-13` step 1 (first solve on the 16-leg / 32-ring-port high-pass mesh)
-is **blocked**: `GEO-20`'s ring sheets are transverse sections with zero
-extent along the drive, so the lumped-sheet model has no `h` — a geometry
-gap, not a solver bug. `GEO-26` (longitudinal ring sheets) is opened and
-queued first. `OPS-33` closed ✅ (audited; re-tiered to heavy). Source of
-truth is `PROJECT_PLAN.md`; this page is a read-only digest for the human
-operator.
+**Updated:** 2026-09-03 10:30 daily review. Headline: **the ring-gap port
+sheet the lumped model can drive now exists, and the coil-driven SAR gate
+has a second, independent identity.** `GEO-26` step 1 landed the
+longitudinal ring-gap sheet as a non-default mesh mode on the 4-leg rung —
+eight sheets reconstruct at their closed forms to 1e-9, both port halves at
+their closed-form volumes, the default mesh byte-for-byte unchanged (audited
+PASS). `WF-6` step 3i gated the mirror identity of quadrant SAR powers on
+each single drive (four pairs ≤ 1.76% against the unmoved 5% band, control
+at 38%) — a single-drive statement, so independent evidence rather than a
+re-reading of step 3h's rotation identity (audited PASS). `EX-43` (quadrant
+SAR powers in ParaView) ran green on every physics anchor but was
+**demoted to 🧪 on audit**: its census figures are in no harness log; one
+logged census restores it, and that ride is on the next queue item.
+**Still a self-consistency story on one fixture at 10 MHz at fixed `h`: no
+absolute SAR, no homogeneity, no C95.3, no Larmor, no convergence claim.**
+The 09:00 implementer slot was lost to an API overload at launch (no
+session, nothing touched). Source of truth is `PROJECT_PLAN.md`; this page
+is a read-only digest for the human operator.
 
 ## Weekly review digest (2026-09-02, unchanged from the weekly's own copy)
 
@@ -32,8 +33,8 @@ operator.
   `MAG-20` third rung killed; `ANS-2` not commissioned.
 - **Deferred to 09-06:** the §7 archive rotation and the B1+ literature
   anchor. **New for the 09-06 weekly:** `PORT-13`'s re-scope assumed a
-  port model the ring layout cannot support (see Waiting-on-you 3); Phase
-  6's first solve now sits behind `GEO-26` steps 1–2.
+  port model the ring layout cannot support; Phase 6's first solve now
+  sits behind `GEO-26` step 2 (queue item 1) and is pre-queued as item 5.
 
 ## Waiting on you
 
@@ -48,108 +49,105 @@ operator.
    confirm the unknowns-per-tet figure AED prints. Ranks above `ANS-3`.
 2. 🟢 **`ANS-3` AED run** — still yours, behind `ANS-4`. Same low-order
    rule, same private-results handling. Its FEM-side records were re-based
-   to the 0.11 image overnight (`OPS-33`); the tracked table's AED cells are
-   blank by construction.
+   to the 0.11 image (`OPS-33`); the tracked table's AED cells are blank by
+   construction.
 3. 🟡 **FYI, a design decision made for you — say so if you disagree:**
-   the 32-ring-port high-pass layout's port sheets were emitted as the
-   gap's *transverse* section (the `GEO-18` leg pattern copied to the
-   rings). The lumped-sheet port model needs a sheet spanning the gap
-   *along* the current, so those ports cannot be driven or terminated.
-   The review ruled a new `ring_sheet_orientation="longitudinal"` mode
-   (default unchanged, all existing records frozen) using the planar
-   rectangle in the plane `u = R` — chord `2R·tan α` along the ring, `w`
-   along `z`. The alternative (the horizontal trapezoid) was rejected
-   because its height varies ±7% across the sheet. No action needed unless
-   you want a different port geometry for the high-pass rings.
+   the longitudinal ring-gap sheet (the `u = R` rectangle, chord along the
+   ring, `w` along `z`) is now the non-default `ring_sheet_orientation`
+   mode; the transverse default and every existing record are frozen. The
+   one measured side effect: the new sheet's edges are diameters of the
+   terminal disks, so the terminal triangulation's C4 covariance reads
+   1.6e-05 instead of 4e-08. **This review ruled it acceptable** — every
+   terminal is inside its band, every exact identity is unmoved, and
+   1.6e-05 is four decades under any port-level band. Recorded, not
+   absorbed; the 16-leg rung re-measures it with the band unmoved. No
+   action needed unless you want a different ring-port geometry.
 4. **Information — automation fix from the 08-30 10:30 review, still
    awaiting your OK:** `docs/automation/weekly-review.md` has a commit-first
    checkpoint (rotation committed before plan edits). Revert the paragraph
    if you want the single-commit form back.
 5. **One click: does ParaView open a DG1 `.bp`?** (unchanged since
    2026-08-12; `scripts/probes/post4_step5_probe.py` regenerates.)
-6. 🟡 FYI, watch item — **the CLI login expired overnight 09-01/02 and
-   cost three sessions.** All twelve slots since ran normally; if the
-   expiry is periodic, the next one lands on a weekend of unattended
-   slots. Worth knowing the refresh interval.
+6. 🟡 FYI, watch item — **the 09:00 slot today was lost to `API Error:
+   529 Overloaded` at launch**, the first API-side loss on record (the
+   09-01/02 losses were login and CLI-pin). One slot, no retry logic in
+   the launcher; if it recurs the launcher could re-try once after a
+   minute. No action unless you want that added.
 7. FYI, no action — **`GEO-25` (the 30 cm coil cost probe) stays off the
    queue** (third rung predicted at 30 min of gmsh). Local `main` remains
    well ahead of origin (push is manual).
 
-## Honest current state (digest of §2 — the coil-driven SAR row changed)
+## Honest current state (digest of §2 — the coil-driven SAR row and the birdcage-mesh row changed)
 
 | Capability | State | Gate |
 |---|---|---|
 | Magnetostatics | ✅ validated | closed forms green; h-refinement gate passes on 0.11 (`MAG-20` ✅) |
 | Time-harmonic curl-curl | ✅ validated | lossy plane wave < 0.06%; Larmor sphere 3.64% / 1.77% + power 3.63%; degree-2 gated at 0.1405% on the sphere (`TH-12` ✅). The coil's two degree-2 identity reds stay open at 3.8990e-09 / 3.7235e-09 vs 1e-9 |
 | Coil loading | ⚠️ eddy-current regime only | Dodd–Deeds ΔR 1.58% (`MAT-6`), bracketed by Maxwell 3D (`ANS-1` AGREE, numbers private); finite-wire term +0.115% on ΔR (`MAT-8` ✅). Larmor coil loading stays an extrapolation |
-| S-parameters / ports | ✅ birdcage gated at 10, 64 and 128 MHz | reciprocity ~1e-14, σ_max ≤ 1, C4 spreads ≤ 0.10% vs 5%; **self-consistency identities only.** Absolute accuracy at Larmor is `ANS-4` (Waiting-on-you 1). `ans:3` / `ports:2` reproduction controls now at 1e-6 on the 0.11 image (`OPS-33` ✅) |
-| Birdcage meshes | ✅ 4-leg and 16-leg, leg-gap and ring-gap, identity-gated — **but the ring-gap sheets are transverse** | `mesh:6` / `mesh:7` re-footered on 0.11 (`EX-41` ✅). The 32-ring-port layout has no usable port sheet for the lumped model (`h = 0` measured, `PORT-13` 🚫); `GEO-26` (queue item 1) adds the longitudinal sheet as a non-default mode |
-| B₁⁺ | 🧪 computed; symmetry-gated at CG1 at 10, 64 and 128 MHz, not homogeneity-gated | `WF-6` steps 1–2b ✅. The C4 identities improve 2.19% → 0.62% when the phantom's `h` is halved; the sample set is *not* the mechanism (ring-set control within 1.06 pp, step 3f′) and the anchor is one-sided with the fine reading recorded beside the coarse one. Still **no homogeneity, absolute or tuning claim** |
-| Coil-driven SAR | 🟡 **one gate registered (`WF-6` step 3h, 09-02): C4 symmetry of quadrant powers, one fixture, 10 MHz, fixed `h`** | twelve integral pairs of the primal `σ\|E\|²` ≤ **1.5200%** vs the unmoved 5% band (coarse mesh), **≤ 0.2998%** on the 0.0075 phantom (3f′, printed); partition identity exact; mis-paired control 89–159× larger. Pointwise readings (25–41% primal, 2.5–9.5% estimator) are records, not gates. **No mirror identity (step 3i queued), no absolute SAR, no homogeneity, no C95.3, no Larmor, no convergence claim** |
+| S-parameters / ports | ✅ birdcage gated at 10, 64 and 128 MHz | reciprocity ~1e-14, σ_max ≤ 1, C4 spreads ≤ 0.10% vs 5%; **self-consistency identities only.** Absolute accuracy at Larmor is `ANS-4` (Waiting-on-you 1). `ans:3` / `ports:2` reproduction controls at 1e-6 on the 0.11 image (`OPS-33` ✅) |
+| Birdcage meshes | ✅ 4-leg and 16-leg, leg-gap and ring-gap, identity-gated; **the ring gap now has a drivable (longitudinal) sheet mode on the 4-leg rung** (`GEO-26` step 1 ✅, audited) | `mesh:6` / `mesh:7` re-footered on 0.11 (`EX-41` ✅). Longitudinal sheets: 8/8 at closed form to 1e-9 at `-n 2` and `-n 12`, default frozen at its 110 786-cell record. The 16-leg longitudinal record is queue item 1; `PORT-13` (first 32-port solve) stays 🚫 until it exists |
+| B₁⁺ | 🧪 computed; symmetry-gated at CG1 at 10, 64 and 128 MHz, not homogeneity-gated | `WF-6` steps 1–2b ✅. The C4 identities improve 2.19% → 0.62% when the phantom's `h` is halved; the sample set is *not* the mechanism (ring-set control within 1.06 pp, step 3f′). Still **no homogeneity, absolute or tuning claim** |
+| Coil-driven SAR | 🟡 **two gates registered on one fixture at 10 MHz at fixed `h`: C4 rotation of quadrant powers (3h, 09-02) and the single-drive mirror identity (3i, 09-03)** | twelve rotation pairs ≤ **1.5200%**, four mirror pairs ≤ **1.7527%**, both vs the unmoved 5% band; mirror control 38% (≥ 21.8×), rotation control 89–159×; partition identity exact; ≤ 0.2998% on the 0.0075 phantom (3f′). Pointwise readings stay records. **No absolute SAR, no homogeneity, no C95.3, no Larmor, no convergence claim** |
 | SAR | ⚠️ imposed uniform field only | lossy sphere 3.5% (`MAT-4`); the coil case above is a symmetry identity, not an accuracy gate |
-| Test-suite trust | ✅ census complete; **residual reds on `main` at `-n 2`: 3 deliberate/known** (was 11 — eight retired by 3h / 3f′ as predicted) | example-artifact census `dead=0 … exit=2` on `main` (staleness only). API sweep `violations=0` on all four roots |
+| Test-suite trust | ✅ census complete; **residual reds on `main` at `-n 2`: 3 deliberate/known**; example-artifact census **unmeasured since `8bf4d96`** (the `EX-43` gap — queue item 2's pre-census re-measures it) | API sweep `violations=0` on all four roots |
 
-## Recent activity (2026-09-02 18:00 → 2026-09-03 03:00)
+## Recent activity (2026-09-03 03:00 → 10:30)
 
-- **19:30:** `WF-6` step 3h — the first coil-driven SAR gate: twelve
-  integral C4 pairs (worst 1.5200%) and the quadrature spread (0.4641%)
-  asserted at the unmoved 5% band; five pointwise asserts → records that
-  still assert `> band`. `109 passed` / 194 s. Step ✅, chunk 🟡. Audited
-  PASS (tier label corrected to heavy by measurement).
-- **21:00:** `WF-6` step 3f′ — ring-set control on the 0.0075 phantom
-  (eight identities within ±1.06 pp of the centroid set), one-sided
-  `|B₁⁺|` anchor with fine records beside coarse, integral pairs on the
-  fine mesh 0.022–0.300% (clause (a), headroom grows 5.1×). `54 passed` /
-  117 s; three deliberate reds retired. Audited PASS; the one-sided re-read
-  ratified by this review.
-- **22:30:** `PORT-13` step 1 — **blocked, measured:** all 8 ring sheets on
-  the 4-leg rung span ≤ 1.43e-17 m along the drive direction (29 s, no
-  solve). Test parked on `attempt/PORT-13-20260903T033437Z`. Ruled
-  SUPPORTED by a `log-pathologist` (with the "cannot terminate" clause
-  softened to "no well-posed `h`; the model would run and integrate a
-  normal trace"). 🚫.
-- **00:00:** `OPS-33` — `ans:3`'s four records re-based to the 0.11 image,
-  1e-6 reproduction control registered (misses ≤ 6.5e-10 on an independent
-  solve; superseded digits fail by 2.98e-05 / 2.92e-05). 165 + 206 + 1 s.
-  ✅ (audited PASS; re-tiered to heavy on the 206 s window).
-- **03:00 review:** three audits (PASS / PASS / PASS, two tier relabels);
-  the `PORT-13` ruling and `GEO-26` opened; the one-gate ruling (no second
-  SAR gate on the estimator; mirror identity as integrals → step 3i; the
-  quadrature mirror integral declared empty by ceiling); `EX-43` and
-  `OPS-34` opened; queue rebuilt: five items.
+- **04:30:** `GEO-26` step 1 — `ring_sheet_orientation="longitudinal"` on
+  `birdcage_port_domain`: 8 sheets at chord × `w` to 1e-9, half volumes at
+  closed form, C8 spread 4.3e-16, at `-n 2` (51 s) and `-n 12` (50 s); the
+  default control reproduces 110 786 at ratio 1.000000; `GEO-20` regression
+  3 passed (262 s). New record 111 898. Step ✅, chunk 🟡. Audited PASS.
+  The parked `PORT-13` branch absorbed as the control and deleted.
+- **06:00:** `WF-6` step 3i — the mirror identity as quadrant integrals on
+  the four single drives: 1.7527 / 1.5261 / 0.3438 / 0.9563% vs 5%,
+  flank-vs-opposite control 38%, every 3h anchor unmoved in the same
+  window. `37 passed` / 96 s. Step ✅, chunk 🟡. Audited PASS.
+- **07:30:** `EX-43` — `ports:9`, quadrant powers of the coil-driven SAR
+  in ParaView; every imported record reproduced (partition residual
+  1.6e-14, P1 total to 4e-11, C4 and mirror pairs to the printed digit),
+  both negative controls asserted. 77 s. **Audited DEMOTE → 🧪**: the
+  census figures were claimed but never logged. Re-closes on one logged
+  census (queue item 2).
+- **09:00:** slot lost — `API Error: 529 Overloaded` at launch, no session.
+- **10:30 review:** three audits (PASS / PASS / DEMOTE); the terminal-
+  triangulation ruling; §2's SAR bullet now carries both identities;
+  `GEO-26` step 2 queued, `EX-44` opened, `PORT-13` step 1 pre-queued as
+  the serial spare; queue rebuilt: five items.
 
 ## Automation health
 
-- **4 of 4 scheduled slots fired**, three complete on the first window, one
-  blocked on a measured prerequisite and correctly parked. Tree clean at
-  every preflight. Container Up 7 days.
-- **Foreground-executor rule: 17 for 17** since written. No docker-socket
-  denial this interval (**3 of 32** slots overall).
-- Two windows over the 180 s standard band (194 s, 206 s), both inside
-  their wrapped ceilings; both relabelled by this review, no compute-safety
-  event.
+- **3 of 4 scheduled slots fired**, all three complete on the first window
+  and journaled. One slot lost API-side at launch (first such loss). Tree
+  clean at every preflight. Container Up 7 days.
+- **Foreground-executor rule: 20 for 20** since written. No docker-socket
+  denial this interval (**3 of 35** slots overall).
+- Tier labels honest on every landed window this interval (51/50, 96, 77 s
+  standard by measurement); no compute-safety event.
 - Standing rule from `OPS-32`: an anchor on a generated artifact never says
-  "unchanged" — it names what must be absent from the diff.
+  "unchanged" — it names what must be absent from the diff. New this
+  review: a census claimed in a journal without a harness log is not
+  evidence (`EX-43`).
 
-## On deck (§9 — five items, all independent; 3, 4 and 5 have specialist executors)
+## On deck (§9 — five items; 1–4 independent, 5 serial on 1; 2, 3 and 4 have specialist executors)
 
-1. **`GEO-26` step 1** — `ring_sheet_orientation="longitudinal"` on
-   `birdcage_port_domain`: the `u = R` rectangle per ring gap, five
-   closed-form identities at `-n 2` and `-n 12` on the 4-leg rung, default
-   unchanged; the parked `PORT-13` module becomes its control *(implementer;
-   ≈ 40–70 s per width; step 2 at 16 legs if time allows)*
-2. **`WF-6` step 3i** — the mirror identity as quadrant integrals on the
-   four single drives, pre-computed from 3h's table at 1.75 / 1.53 / 0.34 /
-   0.96% vs a 38% control; drops the stale printer clause *(implementer;
-   ≈ 110 s)*
-3. **`EX-43`** — quadrant powers of the primal `σ|E|²` on the loaded
-   birdcage in ParaView, records imported from the gate module
-   *(`example-runner`; ≈ 130 s)*
-4. **`EX-42`** — `mat:1` prints the finite-wire-corrected Dodd–Deeds
-   beside the filament form and the FEM ΔR *(`example-runner`; ≈ 60 s)*
-5. **`OPS-34`** — measure `ports:1`'s terminated-`Z` records against the
+1. **`GEO-26` step 2** — the longitudinal ring-gap sheet on the 16-leg
+   rung: 32 sheets, C16, four terminal classes asserted under the unmoved
+   2.0e-5 band, new cell record; the default reproduces 265 621
+   *(implementer; ≈ 200 s per window, three windows)*
+2. **`EX-42`** — `mat:1` prints the finite-wire-corrected Dodd–Deeds beside
+   the filament form and the FEM ΔR; **its pre-census also restores
+   `EX-43` to ✅ if it reads `dead=0`, `exit != 1`** *(`example-runner`;
+   ≈ 60 s)*
+3. **`OPS-34`** — measure `ports:1`'s terminated-`Z` records against the
    0.11 image; re-base only if stale *(`record-reconciler`; ≈ 3 min per
-   window; spare)*
+   window)*
+4. **`EX-44`** — the longitudinal ring-gap sheet on the 4-leg rung in
+   ParaView, inner/outer halves tagged, records imported from the gate
+   module *(`example-runner`; ≈ 70 s)*
+5. **`PORT-13` step 1** — the first solve on the 32-ring-port layout with
+   the longitudinal sheets, `h` = the gap chord; **skip if item 1's record
+   is not on `main`** *(implementer; ≈ 3–6 min at `-n 8`; spare)*
 
 ---
 
