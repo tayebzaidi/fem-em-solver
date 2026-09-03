@@ -54,20 +54,13 @@ operator.
    rule, same private-results handling. Its FEM-side records were re-based
    to the 0.11 image (`OPS-33`); the tracked table's AED cells are blank by
    construction.
-3. 🟡 **Housekeeping over budget — a policy question, not a cleanup:** the
-   retention policy you adopted today sets a 25 MB ceiling on tracked logs,
-   but after the first sweep the volume is 61.1 MB and cannot go lower —
-   824 of the 1 130 logs are cited by the plan, the archive, known-issues
-   or an example guide, and the policy (rightly) never deletes those. So
-   `housekeeping.py --check` will report a breach every week. Either raise
-   the ceiling to what gating logs cost (≈ 60 MB today, growing with every
-   closure), or say that gating logs are exempt from the volume budget.
-   Nothing is lost either way; this is only about what the tripwire means.
-   Two smaller items under the same `OPS-36` row: `attempts.md` is at
-   17 271 lines against a 6 000 ceiling (the Sunday weekly's rotation, no
-   action from you), and a hand-run `housekeeping.py --apply` leaves its
-   sweep staged and uncommitted — that cost one implementer slot today
-   before this review landed it. If you run it by hand again, commit it.
+3. ✅ **Housekeeping budget — resolved by operator decision 2026-09-03:**
+   gating logs are exempt from the 25 MB volume ceiling; it now applies to
+   non-gating logs only (27.3 MB today, all under 14 days old and mostly
+   pre-filter, so it drains as they age out by 2026-09-17). Gating volume
+   is reported for information. Remaining under `OPS-36`: `attempts.md`
+   rotation (the 2026-09-06 weekly's job), and hand-run `--apply` must be
+   committed by whoever runs it.
 4. 🟡 **FYI, a design decision made for you — say so if you disagree:**
    the 16-leg longitudinal ring-gap rung's terminal disks triangulate in
    one of two ways (two discrete areas 1.0e-4 apart, five of sixteen gap

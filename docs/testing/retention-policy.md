@@ -62,13 +62,15 @@ rather than paying for it in the sweep.
 
 ## 3. Budgets and tripwires
 
-The sweep reports these; `--check` fails when any is exceeded, which is the
+The sweep reports these; `--check` fails when any is exceeded (gating-log
+volume is reported for information only, per the operator's 2026-09-03
+decision), which is the
 signal for the daily review to raise a "Housekeeping over budget" item in
 the dashboard's Waiting-on-you section.
 
 | Metric | Ceiling |
 |---|---|
-| Tracked `docs/testing/logs/` volume | 25 MB |
+| Tracked **non-gating** log volume | 25 MB — gating logs are exempt: they are closure evidence, never deleted, and grow with every closure (≈ 60 MB on 2026-09-03), so their size is reported but never a breach |
 | Loose git objects (`git count-objects -v` size) | 50 MiB → `git gc` on `--apply` |
 | `docs/testing/attempts.md` | 6 000 lines → rotate at the next weekly review |
 | `docs/testing/known-issues.md` | 6 000 lines → rotate at the next weekly review |

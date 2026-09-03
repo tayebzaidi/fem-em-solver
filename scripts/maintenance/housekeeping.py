@@ -49,7 +49,9 @@ CITATION_GLOBS = ["examples/**/*.md", "docs/validation/**/*.md", "docs/ports/**/
 COMPRESS_DAYS = 7
 DELETE_DAYS = 14
 
-# §3 budgets
+# §3 budgets. The volume ceiling applies to NON-GATING logs only: gating logs
+# are closure evidence, are never deleted, and grow with every closure, so they
+# are reported but exempt (policy §3, 2026-09-03).
 LOG_VOLUME_CEILING_MB = 25.0
 LOOSE_OBJECTS_CEILING_MIB = 50.0
 JOURNAL_CEILINGS = {
@@ -100,14 +102,14 @@ def plan_logs(as_of: dt.datetime):
     compress: list[Path] = []
     delete: list[Path] = []
     census = Counter()
-    volume = 0
+    volume = Counter()  # bytes by class
     for p in tracked_logs():
         m = LOG_NAME.match(p.name)
         base = p.name.removesuffix(".gz")
         gating = base in cited
         age = age_days(p.name, as_of)
-        volume += p.stat().st_size if p.exists() else 0
         cls = "gating" if gating else "non-gating"
+        volume[cls] += p.stat().st_size if p.exists() else 0
         census[cls] += 1
         if m.group("gz"):
             census[f"{cls} (gz)"] += 1
@@ -178,8 +180,8 @@ def main() -> int:
     orphans = orphan_probes()
 
     breaches = []
-    if volume / 1e6 > LOG_VOLUME_CEILING_MB:
-        breaches.append(f"log volume {volume/1e6:.1f} MB > {LOG_VOLUME_CEILING_MB} MB")
+    if volume["non-gating"] / 1e6 > LOG_VOLUME_CEILING_MB:
+        breaches.append(f"non-gating log volume {volume['non-gating']/1e6:.1f} MB > {LOG_VOLUME_CEILING_MB} MB")
     if loose > LOOSE_OBJECTS_CEILING_MIB:
         breaches.append(f"loose objects {loose:.0f} MiB > {LOOSE_OBJECTS_CEILING_MIB:.0f} MiB")
     for rel, n in journals.items():
@@ -194,7 +196,8 @@ def main() -> int:
     print(f"| Gating (cited) | {census['gating']} of {n_cited} cited basenames |")
     print(f"| Non-gating | {census['non-gating']} |")
     print(f"| Already compressed | {census['gating (gz)'] + census['non-gating (gz)']} |")
-    print(f"| Log volume | {volume/1e6:.1f} MB (ceiling {LOG_VOLUME_CEILING_MB:.0f}) |")
+    print(f"| Non-gating log volume | {volume['non-gating']/1e6:.1f} MB (ceiling {LOG_VOLUME_CEILING_MB:.0f}) |")
+    print(f"| Gating log volume | {volume['gating']/1e6:.1f} MB (exempt — closure evidence) |")
     print(f"| Loose git objects | {loose:.0f} MiB (ceiling {LOOSE_OBJECTS_CEILING_MIB:.0f}) |")
     for rel, n in journals.items():
         print(f"| {rel} | {n} lines (ceiling {JOURNAL_CEILINGS[rel]}) |")
@@ -233,7 +236,7 @@ def main() -> int:
             "Append-only record of `scripts/maintenance/housekeeping.py --apply` runs "
             "under docs/testing/retention-policy.md. Deleted logs remain indexed in "
             "test-results.md and recoverable from git history.\n\n"
-            "| UTC date | Compressed | Deleted | Log volume after (MB) | gc | Breaches |\n"
+            "| UTC date | Compressed | Deleted | Log volume after (MB, total) | gc | Breaches |\n"
             "|---|---:|---:|---:|---|---|\n"
         )
     # The index now reflects the sweep, so ls-files lists the .gz files and not the removed ones.
