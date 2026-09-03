@@ -16887,3 +16887,85 @@ keyword-plumbed — `_measure_ring(SCALED_LEG_COUNT, orientation="longitudinal")
 — so it is one build per width plus a record discovery, `timeout -k 30 600`.
 Expect the same terminal-triangulation reading there; the four azimuth classes
 at 16 legs make it a sharper test of the mechanism than the single class here.
+
+## 2026-09-03T11:15Z — `WF-6` step 3i — complete (06:00 implementer slot)
+
+**Item.** §9 On deck item 2, the first item not marked done or blocked (item 1,
+`GEO-26` step 1, was closed by the 04:30 slot). Preflight clean at `41cd5c8`,
+container Up 7 days. Delegated to the `implementer` agent, spawned
+**foreground** with the never-background rule quoted into its prompt; one
+executor, none concurrent. The report is corroborated by the log — I re-read the
+footer, the printed reading block and the commit stat myself before writing this
+entry.
+
+**Built.** `tests/validation/test_birdcage_sar_integral.py` only — no `src/`
+change, no new solve, no new partition, reusing step 3h's four single-drive
+solves. The mirror through the coil axis and drive `k`'s own azimuth fixes
+quadrants `k` and `k+2` and exchanges the two flanks, so
+`P_{k-1}^{(k)} = P_{k+1}^{(k)}`; asserted as one parametrised test per `k`
+against `C4_COVARIANCE_BAND` **imported and unmoved** (`grep -n
+"C4_COVARIANCE_BAND ="` is still exactly one hit,
+`test_birdcage_b1_plus_map.py:120`), plus `STEP3I_MIRROR_RECORDS` at rtol 1e-3.
+`_quadrant_weight`, `_quadrant_powers` and the `STEP3G_*` records keep their
+names for the queued `EX-43`.
+
+**Measured** (`20260903T110244Z_WF-6-step3i.log:4692-4696`):
+
+| `k` | mirror `|P_{k+1}-P_{k-1}|/P_{k-1}` | flank-vs-opposite control | separation |
+|-----|------|--------|--------|
+| 0 | 1.7527% | 38.2741% | 21.838x |
+| 1 | 1.5261% | 38.6261% | 25.310x |
+| 2 | 0.3438% | 37.8418% | 110.065x |
+| 3 | 0.9563% | 38.9935% | 40.775x |
+
+All four inside the 5% band; every control asserted strictly larger. These
+reproduce the 03:00 review's pre-computed table digit for digit, and the
+executor re-derived them from `20260903T003309Z_WF-6-step3h.log:4682-4685`
+before writing the records rather than copying the plan — worth noting because
+it makes the record a measurement, not a transcription. The `k = 1` record is
+carried as `1.5262e-2`, the exact quotient, against the plan's rounded 1.5261
+(inside rtol 1e-3 either way).
+
+**Anchor (ii) — every step 3h anchor unmoved in the same window**
+(`:4688-4691`, `:4697`): twelve C4 pairs
+`0.7149/1.1908/1.4417/0.9703 | 1.5200/0.2132/0.3377/0.9086 |
+1.0569/0.8355/0.2780/0.2302 %`, spread 0.4641%, mis-paired controls
+`96.1655/97.4944/95.5869%` at `89.09/130.89/159.27x`, partition identity at
+rtol 1e-10 on all five drives, P1 total `5.637745667e-08` W.
+
+**Anchor (iii).** Module 22 -> **26** items (collect-only,
+`20260903T110234Z_WF-6-step3i-collect.log`, 26 items, 4 s); the gated window is
+`37 passed` / Status 0 (26 module + 11 `tests/environment`), no other count
+moving.
+
+**Logs.**
+- `20260903T110234Z_WF-6-step3i-collect.log` — collect-only smoke, 4 s.
+- `20260903T110244Z_WF-6-step3i.log` — `-n 2` complex, `tests/environment`
+  first, `timeout -k 30 560`, **Status 0, 96 s** (`:4879-4882`). **Standard by
+  measurement** — 96 s against the 180 s ceiling, so no tier-label finding this
+  slot (unlike the 194 s / 206 s windows the 03:00 review re-labelled).
+
+**Commit.** `987ac60` on `main`, tree clean: test module + both logs +
+`test-results.md` rows + the §7 `WF-6` row + §9 item 2 marked DONE, together.
+
+**Two narrative-print fixes, asserted by nothing, flagged for the review.** The
+stale "is the NEXT REVIEW's ruling, never in-slot" clause is gone from the
+verdict printer as the item directed. The executor also found and fixed the
+fixture's trailing scope print and the module docstring, which asserted "no
+mirror identity" — false the moment this step landed; both now name the two
+identities (C4 rotation, step 3h; mirror reflection, step 3i). Neither is
+gated, so neither moves a claim, but the review should confirm the wording.
+
+**For the review — why this is not a re-reading of 3h.** The mirror is a
+*single-drive* statement: an error common to all four solves cancels out of the
+twelve C4 pairs and does **not** cancel out of this one. That is the argument
+the executor put in the docstring, and it is the reason the step was worth its
+slot; it is a claim about evidential independence, not a new physical claim.
+`WF-6` stays 🟡 — no band moved, no absolute SAR, no homogeneity, no C95.3, no
+Larmor, no convergence claim.
+
+**Next.** §9 items 3 (`EX-43`, `example-runner`), 4 (`EX-42`,
+`example-runner`) and 5 (`OPS-34`) are open and independent; `GEO-26` step 2
+(16-leg rung) is the 04:30 slot's explicit hand-off and is not yet on the list —
+the review should queue it, since `PORT-13` step 1's re-opening is serial behind
+its record. One chunk per slot, so nothing else was attempted here.
