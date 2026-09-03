@@ -56,10 +56,22 @@ with no sample set, no estimator and no projection anywhere in it.
   nobody has measured this ceiling, and pre-registering a size for it would be
   inventing a number.  The ratio is printed.
 
-**Printed, not gated — the deliverable.**  The twelve C4 pairs
+**The gate (step 3h, 2026-09-02 18:00 review).**  The twelve C4 pairs
 ``|P_{j+1}^{(k+1)} − P_j^{(k)}| / P_j^{(k)}`` and the quadrature drive's
-four-quadrant spread, under the verdict the 2026-09-02 10:30 review
-pre-registered:
+four-quadrant spread are **asserted** ``≤ C4_COVARIANCE_BAND`` — the 5% band
+imported from step 1d, unmoved — one parametrised test per pair, so a miss
+names its ``(k, j)``.  They are additionally asserted against step 3g's
+measured table (:data:`STEP3G_INTEGRAL_PAIR_RECORDS`) at ``CG1_RECORD_RTOL``,
+so a mesh or image move is visible as itself rather than as a band miss.
+
+This is the **first coil-driven SAR gate in the repo**, and it is exactly one
+thing: *a C4 symmetry identity of quadrant powers on one fixture at 10 MHz at
+fixed* ``h``.  Not a mirror identity, not an absolute SAR figure, not
+homogeneity, not C95.3, not Larmor, not a convergence claim.  `WF-6` step 3 is
+✅ with this module; the chunk stays 🟡.
+
+The verdict below is kept as the printed pre-registration the 2026-09-02 10:30
+review wrote, so the reading a review acts on stays visible beside the gate:
 
 * **(a)** all ≤ 5% ⇒ the *integral* construction is the gateable one, and a
   **review** — never this module and never the slot that runs it — registers
@@ -68,8 +80,8 @@ pre-registered:
 * **(c)** at or above the pointwise readings ⇒ the sample set was not the
   mechanism either, and the phantom's ``h`` (step 3f) is what decides.
 
-**Scope.**  C4 only — no mirror identity, no band, no gate, no SAR claim, and
-`WF-6` stays 🟡.  Nothing under ``src/``.  The coarse **default** mesh
+**Scope.**  C4 only — no mirror identity, no band moved, no absolute SAR claim,
+and `WF-6` stays 🟡.  Nothing under ``src/``.  The coarse **default** mesh
 (116 085 cells) on purpose: this rung is independent of step 3f's finer one, so
 that "integral vs pointwise" is the only thing that differs from step 3's
 window.
@@ -139,6 +151,32 @@ QUADRATURE_DEGREE = 4
 # boundary of the pre-registered clause (b)/(c), never a band.
 POINTWISE_PRIMAL_MIN = min(STEP3_PRIMAL_IDENTITY_RECORDS.values())
 POINTWISE_PRIMAL_MAX = max(STEP3_PRIMAL_IDENTITY_RECORDS.values())
+
+# Step 3g's measured table, `20260902T213441Z_WF-6-step3g.log:4689-4692`, keyed
+# by the drive step ``k -> k+1`` and the reference quadrant ``j``.  These are
+# **records**, not a band: the gate is ``<= C4_COVARIANCE_BAND`` (imported,
+# unmoved) and these say in addition that the mesh, the image and the four
+# solves have not moved underneath it.  A miss here with the band still met is
+# a fixture finding — re-record only under the (1*) licence, never to make a
+# run pass.  Stored as fractions, like the readings they are compared with.
+STEP3G_INTEGRAL_PAIR_RECORDS = {
+    (0, 0): 0.7149e-2,
+    (0, 1): 1.1908e-2,
+    (0, 2): 1.4417e-2,
+    (0, 3): 0.9703e-2,
+    (1, 0): 1.5200e-2,
+    (1, 1): 0.2132e-2,
+    (1, 2): 0.3377e-2,
+    (1, 3): 0.9086e-2,
+    (2, 0): 1.0569e-2,
+    (2, 1): 0.8355e-2,
+    (2, 2): 0.2780e-2,
+    (2, 3): 0.2302e-2,
+}
+
+# The quadrature drive's four-quadrant spread ``(max - min)/mean`` from the same
+# table, same licence.
+STEP3G_INTEGRAL_QUADRATURE_SPREAD = 0.4641e-2
 
 
 def _quadrant_weight(x, j, eps):
@@ -322,8 +360,9 @@ def sar_integral():
             f"{STEP1_GATE_I_P1_PHANTOM_POWER_W:.9e} W at rtol "
             f"{CG1_RECORD_RTOL:.0e}\n"
             f"    the twelve C4 pairs |P_(j+1)^(k+1) - P_j^(k)| / P_j^(k) "
-            f"(PRINTED, NOT GATED; band {C4_COVARIANCE_BAND * 100:.1f}% imported "
-            "from step 1d for reading only):",
+            f"(step 3h: ASSERTED <= {C4_COVARIANCE_BAND * 100:.1f}%, the band "
+            f"imported unmoved from step 1d, and against step 3g's records at "
+            f"rtol {CG1_RECORD_RTOL:.0e}):",
             flush=True,
         )
         for k in range(3):
@@ -336,10 +375,15 @@ def sar_integral():
             )
         print(
             f"    quadrature drive four-quadrant spread (max-min)/mean = "
-            f"{quad_spread * 100:.4f}%   PRINTED, NOT GATED\n"
+            f"{quad_spread * 100:.4f}%   ASSERTED <= "
+            f"{C4_COVARIANCE_BAND * 100:.1f}% and against "
+            f"{STEP3G_INTEGRAL_QUADRATURE_SPREAD * 100:.4f}%\n"
             f"    pre-registered verdict: {verdict} — {verdict_text}\n"
-            f"    scope: C4 only, no mirror identity, no band moved, NO SAR GATE "
-            "REGISTERED, WF-6 stays amber",
+            f"    scope: this is the FIRST coil-driven SAR gate — a C4 symmetry "
+            "identity of quadrant powers on one fixture at 10 MHz at fixed h, "
+            "and nothing more: no mirror identity, no absolute SAR, no "
+            "homogeneity, no C95.3, no Larmor, no convergence claim; the band "
+            "is imported unmoved and WF-6 stays amber",
             flush=True,
         )
 
@@ -408,6 +452,66 @@ def test_the_p1_drive_total_reproduces_step_1s_phantom_power_record(sar_integral
         f"1's recorded {STEP1_GATE_I_P1_PHANTOM_POWER_W:.9e} W (rtol "
         f"{CG1_RECORD_RTOL:.0e}) — this module is not integrating step 1's "
         "solve, so nothing below is comparable with the pointwise columns"
+    )
+
+
+@complex_only
+@pytest.mark.parametrize("pair", sorted(STEP3G_INTEGRAL_PAIR_RECORDS))
+def test_the_c4_integral_pair_is_inside_the_band(sar_integral, pair):
+    """**The gate.** ``P_{j+1}^{(k+1)} = P_j^{(k)}`` to within 5%, pair by pair.
+
+    Parametrised one test per ``(k, j)`` so a miss names the pair rather than a
+    worst case.  The band is step 1d's ``C4_COVARIANCE_BAND``, **imported and
+    unmoved** — this module defines no band of its own.  The record check beside
+    it is a different question with a different failure meaning: the band asks
+    whether the physics identity holds, the record asks whether this is still
+    step 3g's mesh, image and four solves.
+    """
+    k, j = pair
+    reading = sar_integral["pairs"][(k, j)]
+    assert reading <= C4_COVARIANCE_BAND, (
+        f"the C4 integral pair k={k}->{k + 1}, quadrant j={j} reads "
+        f"{reading * 100:.4f}%, outside the imported "
+        f"{C4_COVARIANCE_BAND * 100:.1f}% band (step 3g measured "
+        f"{STEP3G_INTEGRAL_PAIR_RECORDS[(k, j)] * 100:.4f}% here) — this is the "
+        "repo's only coil-driven SAR gate; record it and stop, do not widen it"
+    )
+    assert reading == pytest.approx(
+        STEP3G_INTEGRAL_PAIR_RECORDS[(k, j)], rel=CG1_RECORD_RTOL
+    ), (
+        f"the C4 integral pair k={k}->{k + 1}, j={j} reads {reading * 100:.4f}% "
+        f"against step 3g's recorded "
+        f"{STEP3G_INTEGRAL_PAIR_RECORDS[(k, j)] * 100:.4f}% (rtol "
+        f"{CG1_RECORD_RTOL:.0e}) — the band above may still be met, but the "
+        "mesh, the image or the solves have moved and the reading is no longer "
+        "step 3g's; that is a fixture finding, not a licence to re-record"
+    )
+
+
+@complex_only
+def test_the_quadrature_four_quadrant_spread_is_inside_the_band(sar_integral):
+    """The quadrature drive puts equal power in all four quadrants.
+
+    The ccw phase pattern is itself C4-covariant, so its ``P_j`` are four
+    readings of one number; ``(max − min)/mean`` over them is the same identity
+    read without a drive-to-drive pairing.  Same imported band, same record
+    licence as the twelve pairs.
+    """
+    reading = sar_integral["quadrature_spread"]
+    assert reading <= C4_COVARIANCE_BAND, (
+        f"the quadrature drive's four-quadrant power spread is "
+        f"{reading * 100:.4f}%, outside the imported "
+        f"{C4_COVARIANCE_BAND * 100:.1f}% band (step 3g measured "
+        f"{STEP3G_INTEGRAL_QUADRATURE_SPREAD * 100:.4f}%) — four fields each "
+        "inside the band should superpose to a C4-symmetric power distribution, "
+        "so this is a finding about the superposition path"
+    )
+    assert reading == pytest.approx(
+        STEP3G_INTEGRAL_QUADRATURE_SPREAD, rel=CG1_RECORD_RTOL
+    ), (
+        f"the quadrature four-quadrant spread reads {reading * 100:.4f}% against "
+        f"step 3g's recorded {STEP3G_INTEGRAL_QUADRATURE_SPREAD * 100:.4f}% "
+        f"(rtol {CG1_RECORD_RTOL:.0e}) — a fixture finding, not a re-record"
     )
 
 

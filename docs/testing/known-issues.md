@@ -37,9 +37,37 @@ unless fixing it is the task.
 | **Cause** | Not scatter. `ans:3`'s misses are taken against `RECORDED_*` constants transcribed from `20260813T183606Z_PORT-1-step4-packagegate.log`, a different code version and a different image; the 2.9e-05 raw/corrected offset is a standing record-vs-today gap, and the symmetry entry moved 1.71e-06 → 1.91e-06 between two runs of the same code (the residual is ~4.8e-05 absolute, so its *relative* miss amplifies scatter). Re-basing those constants is an `OPS-27`-class record job, not a band tightening. |
 | **Disposition** | The band stays at `EX-20`'s 1%, with the measurement recorded in a code comment at `examples/ansys_benchmarks/two_torus_gap_ports_10MHz/03_two_torus_gap_ports_10MHz.py:113`. The writer half of `OPS-32` landed; the control half is this finding. A follow-up would re-record `RECORDED_RAW_RATIO` / `RECORDED_CORRECTED_RATIO` / `RECORDED_S_SYMMETRY_RESIDUAL` from a current run under the (1*) licence **and only then** register a 1e-6 control. Expected on `main`; **not yours**. |
 
-### 🔴 OPEN 2026-08-31 (`WF-6` step 3, 13:30 implementer slot) — the coil-driven **point-SAR** map misses every C4 / mirror identity by **25–40%** against the same 5% band the `|B₁⁺|` map meets at ~2%: the pointwise `|E|` estimator has its own, much larger floor, and nobody had measured it
+### ✅ RETIRED 2026-09-02 (`WF-6` step 3h, 19:30 implementer slot) — ~~🔴 OPEN 2026-08-31 (`WF-6` step 3, 13:30 implementer slot) — the coil-driven **point-SAR** map misses every C4 / mirror identity by **25–40%** against the same 5% band the `|B₁⁺|` map meets at ~2%: the pointwise `|E|` estimator has its own, much larger floor, and nobody had measured it~~ — **the construction was the mechanism; the identity is gated as cell integrals and the five pointwise asserts are records**
 
-> **Five deliberate reds on `main`**, all in the new
+> **✅ RETIRED 2026-09-02, 19:30 implementer slot (`WF-6` step 3h) — no band
+> was ever moved and none was widened to retire this.** The five asserts in
+> `tests/validation/test_birdcage_sar_map.py` now assert their step-3
+> `STEP3_PRIMAL_IDENTITY_RECORDS` (25.1096 / 40.5462 / 30.0142 / 38.6120 /
+> 28.1459%) at rtol 1e-3 **and** that each reading still *exceeds*
+> `C4_COVARIANCE_BAND` — the pointwise construction retired as a gate with its
+> measurement kept and its miss asserted, so a change that silently made it
+> pass is visible rather than absorbed. The identity itself is gated where six
+> rungs said it belonged: as **cell integrals of the primal `E`** in
+> `tests/validation/test_birdcage_sar_integral.py`, twelve C4 pairs and the
+> quadrature four-quadrant spread asserted `≤ 5%` (imported, unmoved) and
+> against step 3g's table at rtol 1e-3 — 0.7149 … 1.5200%, spread 0.4641%,
+> partition identity exact, mis-paired control 89–159× larger. `main` is
+> **`0 failed`** on both modules: `20260903T003309Z_WF-6-step3h.log`,
+> **`109 passed` / Status 0 / 194 s** at `-n 2` complex with
+> `tests/environment` (`test_birdcage_sar_integral.py` 22 items,
+> `test_birdcage_sar_map.py` 76 items, no other count moved). **Retired-by
+> row: `WF-6` step 3h, this commit; ruled 2026-09-02 18:00 review, §7 `WF-6`
+> rulings blockquote, last paragraph.** The gate this registers is exactly
+> one thing — a C4 symmetry identity of quadrant powers on one fixture at
+> 10 MHz at fixed `h` — with no mirror identity, no absolute SAR, no
+> homogeneity, no C95.3, no Larmor and no convergence claim, and `WF-6`
+> stays 🟡.
+>
+> The historical record below is kept verbatim: it is the only place the six
+> rungs that excluded the projector, the estimator's degree and (at fixed `h`)
+> the mesh are written down.
+
+> **Five deliberate reds on `main`** (retired above), all in the new
 > `tests/validation/test_birdcage_sar_map.py`:
 > `test_single_drive_sar_map_is_c4_covariant` at all three parametrised angles,
 > `test_quadrature_sar_map_is_c4_invariant`, and

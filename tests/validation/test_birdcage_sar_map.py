@@ -21,8 +21,17 @@ is quadratic in ``E``, so a symmetric-error argument admits ~2× the B₁⁺ map
 ~2.2% covariance floor.  5% is therefore a real bar for this quantity, not a
 giveaway.
 
-**The asserted identities**, all symmetry, all against the imported, unmoved
-``C4_COVARIANCE_BAND``:
+**The identities.**  Steps 3–3e′ asserted (i)–(iii) against the imported,
+unmoved ``C4_COVARIANCE_BAND`` and they missed it at 25–41%.  The 2026-09-02
+18:00 review (`WF-6` step 3h) ruled the **pointwise** construction the measured
+floor rather than the gate: a quadratic in ``E`` read at sample points inherits
+the field's pointwise error squared, and the same four solves satisfy the same
+C4 statement as **cell integrals** to ≤ 1.52% in
+``tests/validation/test_birdcage_sar_integral.py``, which is where the repo's
+only coil-driven SAR gate lives.  (i)–(iii) below therefore assert their step-3
+*records* at ``CG1_RECORD_RTOL`` **and** that they still exceed the band — the
+quantity retired as a gate with its measurement kept, no band widened anywhere.
+The two negative controls and (iv) are unchanged and still gated.
 
 * **(i) C4 covariance of the single-drive SAR map.**  Rotating the drive from
   P1 to P2 rotates the whole problem by the sheets' azimuthal separation, and
@@ -592,19 +601,36 @@ def test_the_sample_set_is_a_map_and_not_a_handful_of_cells(sar_map):
     ],
 )
 def test_single_drive_sar_map_is_c4_covariant(sar_map, label):
-    """Identity (i) at each of step 1d's three angles.
+    """Identity (i) at each of step 1d's three angles — as a **record**.
 
     Rotating which port is driven rotates the whole problem; ``|E|`` — and so
-    ``σ|E|²/(2ρ)`` — is invariant in magnitude under that rotation.  The band is
-    step 1d's, imported and unmoved.
+    ``σ|E|²/(2ρ)`` — is invariant in magnitude under that rotation.  Read
+    *pointwise* off the primal N1curl ``E``, that statement misses the 5% band
+    by 25–41%, and six rungs (3b/3c/3d/3e/3e′/3g) measured why: a quadratic in
+    ``E`` read at sample points inherits the field's pointwise error squared.
+
+    The 2026-09-02 18:00 review therefore ruled the **pointwise construction
+    the measured floor, not the gate**.  The gate on this identity lives in
+    ``tests/validation/test_birdcage_sar_integral.py``, where the same four
+    solves satisfy it as cell integrals to ≤ 1.52%.  What is asserted here is
+    the measurement itself — the reading reproduces step 3's record, *and* still
+    exceeds the band, so a future change that silently made the pointwise map
+    pass would be visible rather than absorbed.  Nothing was widened: this
+    quantity was retired as a gate with its number kept.
     """
     reading = sar_map["identities"][label]
-    assert reading <= C4_COVARIANCE_BAND, (
-        f"the single-drive SAR map misses C4 covariance at {label} by "
-        f"{reading * 100:.4f}%, outside the imported {C4_COVARIANCE_BAND * 100:.1f}% "
-        "band — SAR is read off the primal N1curl E with no projection chain, so "
-        "this is an estimator finding about the E-field map (record it, do not "
-        "widen the band)"
+    record = STEP3_PRIMAL_IDENTITY_RECORDS[label]
+    assert reading == pytest.approx(record, rel=CG1_RECORD_RTOL), (
+        f"the pointwise single-drive SAR identity {label} reads "
+        f"{reading * 100:.4f}%, not step 3's recorded {record * 100:.4f}% (rtol "
+        f"{CG1_RECORD_RTOL:.0e}) — the fixture moved under this record; that is "
+        "a fixture finding, not a licence to re-record"
+    )
+    assert reading > C4_COVARIANCE_BAND, (
+        f"the pointwise SAR identity {label} now reads {reading * 100:.4f}%, "
+        f"INSIDE the {C4_COVARIANCE_BAND * 100:.1f}% band this construction was "
+        "measured to miss — the retirement of this quantity as a gate assumed it "
+        "misses; re-open the ruling rather than absorbing the change"
     )
 
 
@@ -613,14 +639,23 @@ def test_quadrature_sar_map_is_c4_invariant(sar_map):
     """Identity (ii): the quadrature SAR map is unchanged by a 90° rotation.
 
     Advancing the phase pattern one port multiplies the superposed ``E`` by a
-    global phase, which ``|E|²`` does not see.
+    global phase, which ``|E|²`` does not see.  As with identity (i), the
+    *pointwise* construction is the measured floor and this test is its record;
+    the gate on the quadrature drive is the four-quadrant integral spread in
+    ``tests/validation/test_birdcage_sar_integral.py`` (0.4641%).
     """
-    reading = sar_map["identities"]["(ii) SAR_ccw(Rx) vs SAR_ccw(x)"]
-    assert reading <= C4_COVARIANCE_BAND, (
-        f"the quadrature SAR map misses C4 invariance by {reading * 100:.4f}%, "
-        f"outside the imported {C4_COVARIANCE_BAND * 100:.1f}% band — four fields "
-        "each inside the band should superpose to one inside it, so this is a "
-        "finding about the superposition path"
+    label = "(ii) SAR_ccw(Rx) vs SAR_ccw(x)"
+    reading = sar_map["identities"][label]
+    record = STEP3_PRIMAL_IDENTITY_RECORDS[label]
+    assert reading == pytest.approx(record, rel=CG1_RECORD_RTOL), (
+        f"the pointwise quadrature SAR identity reads {reading * 100:.4f}%, not "
+        f"step 3's recorded {record * 100:.4f}% (rtol {CG1_RECORD_RTOL:.0e}) — a "
+        "fixture finding, not a licence to re-record"
+    )
+    assert reading > C4_COVARIANCE_BAND, (
+        f"the pointwise quadrature SAR identity now reads {reading * 100:.4f}%, "
+        f"INSIDE the {C4_COVARIANCE_BAND * 100:.1f}% band this construction was "
+        "measured to miss — re-open the ruling rather than absorbing the change"
     )
 
 
@@ -632,12 +667,25 @@ def test_reversing_the_rotation_sense_equals_reflecting_the_sar_map(sar_map):
     the pseudovector sign — and the mirror maps the port set to itself with 2
     and 4 swapped, which is exactly what turns the ccw phase pattern into the cw
     one.  A magnitude is blind to the remaining rotation of the vector.
+
+    Again a **record**, not a gate: the pointwise construction is the measured
+    floor (2026-09-02 18:00 ruling).  Note that no integral counterpart of the
+    *mirror* identity exists yet — the C4 gate in
+    ``tests/validation/test_birdcage_sar_integral.py`` covers rotations only, so
+    the repo makes no gated mirror-symmetry SAR claim of any kind.
     """
-    reading = sar_map["identities"]["(iii) SAR_cw(Mx) vs SAR_ccw(x)"]
-    assert reading <= C4_COVARIANCE_BAND, (
-        f"the SAR mirror identity misses by {reading * 100:.4f}%, outside the "
-        f"imported {C4_COVARIANCE_BAND * 100:.1f}% band — either the superposition "
-        "or the mirror-plane reading is wrong; record both readings, do not widen"
+    label = "(iii) SAR_cw(Mx) vs SAR_ccw(x)"
+    reading = sar_map["identities"][label]
+    record = STEP3_PRIMAL_IDENTITY_RECORDS[label]
+    assert reading == pytest.approx(record, rel=CG1_RECORD_RTOL), (
+        f"the pointwise SAR mirror identity reads {reading * 100:.4f}%, not step "
+        f"3's recorded {record * 100:.4f}% (rtol {CG1_RECORD_RTOL:.0e}) — a "
+        "fixture finding, not a licence to re-record"
+    )
+    assert reading > C4_COVARIANCE_BAND, (
+        f"the pointwise SAR mirror identity now reads {reading * 100:.4f}%, "
+        f"INSIDE the {C4_COVARIANCE_BAND * 100:.1f}% band this construction was "
+        "measured to miss — re-open the ruling rather than absorbing the change"
     )
 
 

@@ -1,0 +1,261 @@
+# Test Run
+- Chunk: WF-6-step3h-collect
+- Commit: 0321d5c7790d2f255e3c91b7ab9b7c2e22211110
+- Time (UTC): 2026-09-03 00:32:58
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && source /usr/local/bin/dolfinx-complex-mode && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 timeout -k 30 120 mpiexec -n 2 python3 -m pytest tests/validation/test_birdcage_sar_integral.py tests/validation/test_birdcage_sar_map.py --collect-only -q'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Aug 24 12:40 .
+drwxr-xr-x 16 taz5297 taz5297 4096 Sep  2 19:32 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-rw-r--  1 taz5297 taz5297  657 Aug 23 15:12 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 1449 Aug 24 12:40 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && source /usr/local/bin/dolfinx-complex-mode && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 timeout -k 30 120 mpiexec -n 2 python3 -m pytest tests/validation/test_birdcage_sar_integral.py tests/validation/test_birdcage_sar_map.py --collect-only -q'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collected 98 items
+
+<Dir workspace>
+  <Dir tests>
+    <Dir validation>
+      <Module test_birdcage_sar_integral.py>
+        <Function test_the_quadrant_partition_recovers_the_whole_phantom_power[k=0]>
+        <Function test_the_quadrant_partition_recovers_the_whole_phantom_power[k=1]>
+        <Function test_the_quadrant_partition_recovers_the_whole_phantom_power[k=2]>
+        <Function test_the_quadrant_partition_recovers_the_whole_phantom_power[k=3]>
+        <Function test_the_quadrant_partition_recovers_the_whole_phantom_power[quadrature]>
+        <Function test_the_p1_drive_total_reproduces_step_1s_phantom_power_record>
+        <Function test_the_c4_integral_pair_is_inside_the_band[pair0]>
+        <Function test_the_c4_integral_pair_is_inside_the_band[pair1]>
+        <Function test_the_c4_integral_pair_is_inside_the_band[pair2]>
+        <Function test_the_c4_integral_pair_is_inside_the_band[pair3]>
+        <Function test_the_c4_integral_pair_is_inside_the_band[pair4]>
+        <Function test_the_c4_integral_pair_is_inside_the_band[pair5]>
+        <Function test_the_c4_integral_pair_is_inside_the_band[pair6]>
+        <Function test_the_c4_integral_pair_is_inside_the_band[pair7]>
+        <Function test_the_c4_integral_pair_is_inside_the_band[pair8]>
+        <Function test_the_c4_integral_pair_is_inside_the_band[pair9]>
+        <Function test_the_c4_integral_pair_is_inside_the_band[pair10]>
+        <Function test_the_c4_integral_pair_is_inside_the_band[pair11]>
+        <Function test_the_quadrature_four_quadrant_spread_is_inside_the_band>
+        <Function test_the_mis_paired_quadrant_control_reads_larger_than_the_c4_pairing[0]>
+        <Function test_the_mis_paired_quadrant_control_reads_larger_than_the_c4_pairing[1]>
+        <Function test_the_mis_paired_quadrant_control_reads_larger_than_the_c4_pairing[2]>
+      <Module test_birdcage_sar_map.py>
+        <Function test_the_phantom_conductivity_is_uniform_and_matches_the_saline_spec>
+        <Function test_the_sample_set_is_a_map_and_not_a_handful_of_cells>
+        <Function test_single_drive_sar_map_is_c4_covariant[(i) SAR_P2(Rx) vs SAR_P1(x)]>
+        <Function test_single_drive_sar_map_is_c4_covariant[(i) SAR_P4(-Rx) vs SAR_P1(x)]>
+        <Function test_single_drive_sar_map_is_c4_covariant[(i) SAR_P3(180deg) vs SAR_P1(x)]>
+        <Function test_quadrature_sar_map_is_c4_invariant>
+        <Function test_reversing_the_rotation_sense_equals_reflecting_the_sar_map>
+        <Function test_the_negative_controls_miss_the_band[mis-rotated SAR_P3(Rx) vs SAR_P1(x)]>
+        <Function test_the_negative_controls_miss_the_band[quadrature SAR_ccw(x) vs single-drive SAR_P1(x)]>
+        <Function test_mean_sar_reproduces_step_1s_phantom_power_record>
+        <Function test_the_primal_sar_identities_reproduce_step_3s_readings[(i) SAR_P2(Rx) vs SAR_P1(x)]>
+        <Function test_the_primal_sar_identities_reproduce_step_3s_readings[(i) SAR_P3(180deg) vs SAR_P1(x)]>
+        <Function test_the_primal_sar_identities_reproduce_step_3s_readings[(i) SAR_P4(-Rx) vs SAR_P1(x)]>
+        <Function test_the_primal_sar_identities_reproduce_step_3s_readings[(ii) SAR_ccw(Rx) vs SAR_ccw(x)]>
+        <Function test_the_primal_sar_identities_reproduce_step_3s_readings[(iii) SAR_cw(Mx) vs SAR_ccw(x)]>
+        <Function test_the_primal_sar_controls_reproduce_step_3s_readings[mis-rotated SAR_P3(Rx) vs SAR_P1(x)]>
+        <Function test_the_primal_sar_controls_reproduce_step_3s_readings[quadrature SAR_ccw(x) vs single-drive SAR_P1(x)]>
+        <Function test_the_cg1_negative_controls_still_miss_the_band[mis-rotated SAR_P3(Rx) vs SAR_P1(x)]>
+        <Function test_the_cg1_negative_controls_still_miss_the_band[quadrature SAR_ccw(x) vs single-drive SAR_P1(x)]>
+        <Function test_the_cg1_mass_solve_converges>
+        <Function test_the_projector_reproduces_a_field_both_spaces_contain>
+        <Function test_the_projector_control_field_is_not_reproduced>
+        <Function test_the_phantom_projection_residual_reproduces_step_3bs_reading>
+        <Function test_the_phantom_core_is_a_nonempty_subdomain>
+        <Function test_the_cg1_sar_identities_reproduce_step_3bs_readings[(i) SAR_P2(Rx) vs SAR_P1(x)]>
+        <Function test_the_cg1_sar_identities_reproduce_step_3bs_readings[(i) SAR_P3(180deg) vs SAR_P1(x)]>
+        <Function test_the_cg1_sar_identities_reproduce_step_3bs_readings[(i) SAR_P4(-Rx) vs SAR_P1(x)]>
+        <Function test_the_cg1_sar_identities_reproduce_step_3bs_readings[(ii) SAR_ccw(Rx) vs SAR_ccw(x)]>
+        <Function test_the_cg1_sar_identities_reproduce_step_3bs_readings[(iii) SAR_cw(Mx) vs SAR_ccw(x)]>
+        <Function test_the_cg1_sar_controls_reproduce_step_3bs_readings[mis-rotated SAR_P3(Rx) vs SAR_P1(x)]>
+        <Function test_the_cg1_sar_controls_reproduce_step_3bs_readings[quadrature SAR_ccw(x) vs single-drive SAR_P1(x)]>
+        <Function test_the_cg1_phantom_power_reproduces_step_3bs_reading>
+        <Function test_the_projection_domain_table_reproduces_step_3cs_readings[phantom core]>
+        <Function test_the_projection_domain_table_reproduces_step_3cs_readings[whole mesh]>
+        <Function test_the_restricted_projection_cannot_beat_its_own_best_approximation>
+        <Function test_the_restricted_projector_reproduces_a_field_both_spaces_contain>
+        <Function test_every_cg1_dof_outside_the_phantom_is_pinned_to_exactly_zero>
+        <Function test_the_restricted_projector_control_field_is_not_reproduced>
+        <Function test_every_restricted_mass_solve_converges[P1]>
+        <Function test_every_restricted_mass_solve_converges[P2]>
+        <Function test_every_restricted_mass_solve_converges[P3]>
+        <Function test_every_restricted_mass_solve_converges[P4]>
+        <Function test_every_restricted_mass_solve_converges[a + b x x]>
+        <Function test_every_restricted_mass_solve_converges[x^2 e_x]>
+        <Function test_the_restricted_negative_controls_still_miss_the_band[mis-rotated SAR_P3(Rx) vs SAR_P1(x)]>
+        <Function test_the_restricted_negative_controls_still_miss_the_band[quadrature SAR_ccw(x) vs single-drive SAR_P1(x)]>
+        <Function test_the_packaged_restriction_separates_from_the_global_fit>
+        <Function test_the_restricted_phantom_residual_reproduces_step_3ds_reading>
+        <Function test_the_packaged_restriction_pins_the_same_blocks>
+        <Function test_every_packaged_restricted_solve_reproduces_step_3ds_solver_record[P1]>
+        <Function test_every_packaged_restricted_solve_reproduces_step_3ds_solver_record[P2]>
+        <Function test_every_packaged_restricted_solve_reproduces_step_3ds_solver_record[P3]>
+        <Function test_every_packaged_restricted_solve_reproduces_step_3ds_solver_record[P4]>
+        <Function test_every_packaged_restricted_solve_reproduces_step_3ds_solver_record[a + b x x]>
+        <Function test_every_packaged_restricted_solve_reproduces_step_3ds_solver_record[x^2 e_x]>
+        <Function test_the_restricted_identities_reproduce_step_3ds_readings[(i) SAR_P2(Rx) vs SAR_P1(x)]>
+        <Function test_the_restricted_identities_reproduce_step_3ds_readings[(i) SAR_P3(180deg) vs SAR_P1(x)]>
+        <Function test_the_restricted_identities_reproduce_step_3ds_readings[(i) SAR_P4(-Rx) vs SAR_P1(x)]>
+        <Function test_the_restricted_identities_reproduce_step_3ds_readings[(ii) SAR_ccw(Rx) vs SAR_ccw(x)]>
+        <Function test_the_restricted_identities_reproduce_step_3ds_readings[(iii) SAR_cw(Mx) vs SAR_ccw(x)]>
+        <Function test_the_restricted_controls_reproduce_step_3ds_readings[mis-rotated SAR_P3(Rx) vs SAR_P1(x)]>
+        <Function test_the_restricted_controls_reproduce_step_3ds_readings[quadrature SAR_ccw(x) vs single-drive SAR_P1(x)]>
+        <Function test_the_restricted_phantom_power_reproduces_step_3ds_reading>
+        <Function test_the_cg2_restriction_cannot_be_worse_than_the_cg1_one>
+        <Function test_the_cg2_restriction_reproduces_the_quadratic_control_exactly>
+        <Function test_the_cg2_restriction_reproduces_the_affine_control_exactly>============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collected 98 items
+
+<Dir workspace>
+  <Dir tests>
+    <Dir validation>
+      <Module test_birdcage_sar_integral.py>
+        <Function test_the_quadrant_partition_recovers_the_whole_phantom_power[k=0]>
+        <Function test_the_quadrant_partition_recovers_the_whole_phantom_power[k=1]>
+        <Function test_the_quadrant_partition_recovers_the_whole_phantom_power[k=2]>
+        <Function test_the_quadrant_partition_recovers_the_whole_phantom_power[k=3]>
+        <Function test_the_quadrant_partition_recovers_the_whole_phantom_power[quadrature]>
+        <Function test_the_p1_drive_total_reproduces_step_1s_phantom_power_record>
+        <Function test_the_c4_integral_pair_is_inside_the_band[pair0]>
+        <Function test_the_c4_integral_pair_is_inside_the_band[pair1]>
+        <Function test_the_c4_integral_pair_is_inside_the_band[pair2]>
+        <Function test_the_c4_integral_pair_is_inside_the_band[pair3]>
+        <Function test_the_c4_integral_pair_is_inside_the_band[pair4]>
+        <Function test_the_c4_integral_pair_is_inside_the_band[pair5]>
+        <Function test_the_c4_integral_pair_is_inside_the_band[pair6]>
+        <Function test_the_c4_integral_pair_is_inside_the_band[pair7]>
+        <Function test_the_c4_integral_pair_is_inside_the_band[pair8]>
+        <Function test_the_c4_integral_pair_is_inside_the_band[pair9]>
+        <Function test_the_c4_integral_pair_is_inside_the_band[pair10]>
+        <Function test_the_c4_integral_pair_is_inside_the_band[pair11]>
+        <Function test_the_quadrature_four_quadrant_spread_is_inside_the_band>
+        <Function test_the_mis_paired_quadrant_control_reads_larger_than_the_c4_pairing[0]>
+        <Function test_the_mis_paired_quadrant_control_reads_larger_than_the_c4_pairing[1]>
+        <Function test_the_mis_paired_quadrant_control_reads_larger_than_the_c4_pairing[2]>
+      <Module test_birdcage_sar_map.py>
+        <Function test_the_phantom_conductivity_is_uniform_and_matches_the_saline_spec>
+        <Function test_the_sample_set_is_a_map_and_not_a_handful_of_cells>
+        <Function test_single_drive_sar_map_is_c4_covariant[(i) SAR_P2(Rx) vs SAR_P1(x)]>
+        <Function test_single_drive_sar_map_is_c4_covariant[(i) SAR_P4(-Rx) vs SAR_P1(x)]>
+        <Function test_single_drive_sar_map_is_c4_covariant[(i) SAR_P3(180deg) vs SAR_P1(x)]>
+        <Function test_quadrature_sar_map_is_c4_invariant>
+        <Function test_reversing_the_rotation_sense_equals_reflecting_the_sar_map>
+        <Function test_the_negative_controls_miss_the_band[mis-rotated SAR_P3(Rx) vs SAR_P1(x)]>
+        <Function test_the_negative_controls_miss_the_band[quadrature SAR_ccw(x) vs single-drive SAR_P1(x)]>
+        <Function test_mean_sar_reproduces_step_1s_phantom_power_record>
+        <Function test_the_primal_sar_identities_reproduce_step_3s_readings[(i) SAR_P2(Rx) vs SAR_P1(x)]>
+        <Function test_the_primal_sar_identities_reproduce_step_3s_readings[(i) SAR_P3(180deg) vs SAR_P1(x)]>
+        <Function test_the_primal_sar_identities_reproduce_step_3s_readings[(i) SAR_P4(-Rx) vs SAR_P1(x)]>
+        <Function test_the_primal_sar_identities_reproduce_step_3s_readings[(ii) SAR_ccw(Rx) vs SAR_ccw(x)]>
+        <Function test_the_primal_sar_identities_reproduce_step_3s_readings[(iii) SAR_cw(Mx) vs SAR_ccw(x)]>
+        <Function test_the_primal_sar_controls_reproduce_step_3s_readings[mis-rotated SAR_P3(Rx) vs SAR_P1(x)]>
+        <Function test_the_primal_sar_controls_reproduce_step_3s_readings[quadrature SAR_ccw(x) vs single-drive SAR_P1(x)]>
+        <Function test_the_cg1_negative_controls_still_miss_the_band[mis-rotated SAR_P3(Rx) vs SAR_P1(x)]>
+        <Function test_the_cg1_negative_controls_still_miss_the_band[quadrature SAR_ccw(x) vs single-drive SAR_P1(x)]>
+        <Function test_the_cg1_mass_solve_converges>
+        <Function test_the_projector_reproduces_a_field_both_spaces_contain>
+        <Function test_the_projector_control_field_is_not_reproduced>
+        <Function test_the_phantom_projection_residual_reproduces_step_3bs_reading>
+        <Function test_the_phantom_core_is_a_nonempty_subdomain>
+        <Function test_the_cg1_sar_identities_reproduce_step_3bs_readings[(i) SAR_P2(Rx) vs SAR_P1(x)]>
+        <Function test_the_cg1_sar_identities_reproduce_step_3bs_readings[(i) SAR_P3(180deg) vs SAR_P1(x)]>
+        <Function test_the_cg1_sar_identities_reproduce_step_3bs_readings[(i) SAR_P4(-Rx) vs SAR_P1(x)]>
+        <Function test_the_cg1_sar_identities_reproduce_step_3bs_readings[(ii) SAR_ccw(Rx) vs SAR_ccw(x)]>
+        <Function test_the_cg1_sar_identities_reproduce_step_3bs_readings[(iii) SAR_cw(Mx) vs SAR_ccw(x)]>
+        <Function test_the_cg1_sar_controls_reproduce_step_3bs_readings[mis-rotated SAR_P3(Rx) vs SAR_P1(x)]>
+        <Function test_the_cg1_sar_controls_reproduce_step_3bs_readings[quadrature SAR_ccw(x) vs single-drive SAR_P1(x)]>
+        <Function test_the_cg1_phantom_power_reproduces_step_3bs_reading>
+        <Function test_the_projection_domain_table_reproduces_step_3cs_readings[phantom core]>
+        <Function test_the_projection_domain_table_reproduces_step_3cs_readings[whole mesh]>
+        <Function test_the_restricted_projection_cannot_beat_its_own_best_approximation>
+        <Function test_the_restricted_projector_reproduces_a_field_both_spaces_contain>
+        <Function test_every_cg1_dof_outside_the_phantom_is_pinned_to_exactly_zero>
+        <Function test_the_restricted_projector_control_field_is_not_reproduced>
+        <Function test_every_restricted_mass_solve_converges[P1]>
+        <Function test_every_restricted_mass_solve_converges[P2]>
+        <Function test_every_restricted_mass_solve_converges[P3]>
+        <Function test_every_restricted_mass_solve_converges[P4]>
+        <Function test_every_restricted_mass_solve_converges[a + b x x]>
+        <Function test_every_restricted_mass_solve_converges[x^2 e_x]>
+        <Function test_the_restricted_negative_controls_still_miss_the_band[mis-rotated SAR_P3(Rx) vs SAR_P1(x)]>
+        <Function test_the_restricted_negative_controls_still_miss_the_band[quadrature SAR_ccw(x) vs single-drive SAR_P1(x)]>
+        <Function test_the_packaged_restriction_separates_from_the_global_fit>
+        <Function test_the_restricted_phantom_residual_reproduces_step_3ds_reading>
+        <Function test_the_packaged_restriction_pins_the_same_blocks>
+        <Function test_every_packaged_restricted_solve_reproduces_step_3ds_solver_record[P1]>
+        <Function test_every_packaged_restricted_solve_reproduces_step_3ds_solver_record[P2]>
+        <Function test_every_packaged_restricted_solve_reproduces_step_3ds_solver_record[P3]>
+        <Function test_every_packaged_restricted_solve_reproduces_step_3ds_solver_record[P4]>
+        <Function test_every_packaged_restricted_solve_reproduces_step_3ds_solver_record[a + b x x]>
+        <Function test_every_packaged_restricted_solve_reproduces_step_3ds_solver_record[x^2 e_x]>
+        <Function test_the_restricted_identities_reproduce_step_3ds_readings[(i) SAR_P2(Rx) vs SAR_P1(x)]>
+        <Function test_the_restricted_identities_reproduce_step_3ds_readings[(i) SAR_P3(180deg) vs SAR_P1(x)]>
+        <Function test_the_restricted_identities_reproduce_step_3ds_readings[(i) SAR_P4(-Rx) vs SAR_P1(x)]>
+        <Function test_the_restricted_identities_reproduce_step_3ds_readings[(ii) SAR_ccw(Rx) vs SAR_ccw(x)]>
+        <Function test_the_restricted_identities_reproduce_step_3ds_readings[(iii) SAR_cw(Mx) vs SAR_ccw(x)]>
+        <Function test_the_restricted_controls_reproduce_step_3ds_readings[mis-rotated SAR_P3(Rx) vs SAR_P1(x)]>
+        <Function test_the_restricted_controls_reproduce_step_3ds_readings[quadrature SAR_ccw(x) vs single-drive SAR_P1(x)]>
+        <Function test_the_restricted_phantom_power_reproduces_step_3ds_reading>
+        <Function test_the_cg2_restriction_cannot_be_worse_than_the_cg1_one>
+        <Function test_the_cg2_restriction_reproduces_the_quadratic_control_exactly>
+        <Function test_the_cg2_restriction_reproduces_the_affine_control_exactly>
+        <Function test_the_quadratic_control_still_misses_at_degree_one_on_the_same_source>
+        <Function test_every_cg2_dof_outside_the_phantom_is_pinned_to_exactly_zero>
+        <Function test_every_cg2_restricted_mass_solve_converges[P1]>
+        <Function test_every_cg2_restricted_mass_solve_converges[P2]>
+        <Function test_every_cg2_restricted_mass_solve_converges[P3]>
+        <Function test_every_cg2_restricted_mass_solve_converges[P4]>
+        <Function test_every_cg2_restricted_mass_solve_converges[a + b x x]>
+        <Function test_every_cg2_restricted_mass_solve_converges[x^2 e_x]>
+        <Function test_the_cg2_negative_controls_still_miss_the_band[mis-rotated SAR_P3(Rx) vs SAR_P1(x)]>
+        <Function test_the_cg2_negative_controls_still_miss_the_band[quadrature SAR_ccw(x) vs single-drive SAR_P1(x)]>
+
+========================= 98 tests collected in 2.39s ==========================
+
+        <Function test_the_quadratic_control_still_misses_at_degree_one_on_the_same_source>
+        <Function test_every_cg2_dof_outside_the_phantom_is_pinned_to_exactly_zero>
+        <Function test_every_cg2_restricted_mass_solve_converges[P1]>
+        <Function test_every_cg2_restricted_mass_solve_converges[P2]>
+        <Function test_every_cg2_restricted_mass_solve_converges[P3]>
+        <Function test_every_cg2_restricted_mass_solve_converges[P4]>
+        <Function test_every_cg2_restricted_mass_solve_converges[a + b x x]>
+        <Function test_every_cg2_restricted_mass_solve_converges[x^2 e_x]>
+        <Function test_the_cg2_negative_controls_still_miss_the_band[mis-rotated SAR_P3(Rx) vs SAR_P1(x)]>
+        <Function test_the_cg2_negative_controls_still_miss_the_band[quadrature SAR_ccw(x) vs single-drive SAR_P1(x)]>
+
+========================= 98 tests collected in 2.40s ==========================
+
+## Exit
+- Status: 0
+- Elapsed (s): 5
