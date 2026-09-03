@@ -1,0 +1,63 @@
+# Test Run
+- Chunk: GEO-26
+- Commit: 5202f75f3071f822e1bbdab4a2aec96f904b6900
+- Time (UTC): 2026-09-03 09:41:01
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 480 mpiexec -n 2 python3 -m pytest tests/mesh/test_birdcage_ring_gaps_scaleup.py tests/mesh/test_birdcage_ring_gaps.py -v --tb=short'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Aug 24 12:40 .
+drwxr-xr-x 16 taz5297 taz5297 4096 Sep  3 04:40 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-rw-r--  1 taz5297 taz5297  657 Aug 23 15:12 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 1449 Aug 24 12:40 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 480 mpiexec -n 2 python3 -m pytest tests/mesh/test_birdcage_ring_gaps_scaleup.py tests/mesh/test_birdcage_ring_gaps.py -v --tb=short'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... collected 3 items
+
+tests/mesh/test_birdcage_ring_gaps_scaleup.py::test_thirty_two_ring_ports_at_sixteen_legs collected 3 items
+
+tests/mesh/test_birdcage_ring_gaps_scaleup.py::test_thirty_two_ring_ports_at_sixteen_legs PASSED [ 33%]
+tests/mesh/test_birdcage_ring_gaps.py::test_ring_gaps_give_every_end_ring_port_two_disk_terminals PASSED [ 33%]
+tests/mesh/test_birdcage_ring_gaps.py::test_ring_gaps_give_every_end_ring_port_two_disk_terminals PASSED [ 66%]
+tests/mesh/test_birdcage_ring_gaps.py::test_leg_and_ring_gaps_coexist_as_a_twelve_port_mesh PASSED [ 66%]
+tests/mesh/test_birdcage_ring_gaps.py::test_leg_and_ring_gaps_coexist_as_a_twelve_port_mesh PASSED [100%]PASSED [100%]
+
+======================== 3 passed in 260.34s (0:04:20) =========================
+
+
+======================== 3 passed in 260.35s (0:04:20) =========================
+
+## Exit
+- Status: 0
+- Elapsed (s): 262

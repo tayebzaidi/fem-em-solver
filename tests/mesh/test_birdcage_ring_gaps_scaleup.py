@@ -157,7 +157,29 @@ def _ring_gap_frame(ordinal, leg_count):
     )
 
 
-def _measure_ring(leg_count):
+def _ring_sheet_frame(ordinal, leg_count, orientation="transverse"):
+    """``(sheet normal, gap centre)`` for a ring port at either orientation.
+
+    `GEO-26`: the flatness reading needs the sheet's *own* normal. In
+    ``transverse`` mode that is ``phi_hat`` (`_ring_gap_frame`); in
+    ``longitudinal`` mode the sheet lies in the plane ``u = R`` and its normal
+    is the radial ``û(phi_c)``. The centre is the same point either way.
+    """
+    phi_hat, centre = _ring_gap_frame(ordinal, leg_count)
+    if orientation == "longitudinal":
+        # û = ẑ x phi_hat, derived from the same phi_c the ordinal fixes.
+        return np.array([phi_hat[1], -phi_hat[0], 0.0]), centre
+    return phi_hat, centre
+
+
+def _ring_sheet_analytic(layout, orientation="transverse"):
+    """The generator's closed-form sheet area for this orientation [m²]."""
+    if orientation == "longitudinal":
+        return float(layout["ring_port_sheet_longitudinal_area_m2"])
+    return float(layout["ring_port_sheet_area_m2"])
+
+
+def _measure_ring(leg_count, *, orientation="transverse"):
     """Everything the gates read, for one ring-gapped sheeted build at `N` legs."""
     comm = MPI.COMM_WORLD
     started = time.perf_counter()
@@ -173,6 +195,7 @@ def _measure_ring(leg_count):
         port_box_size=PORT_BOX_SIZE,
         leg_gap_length=None,
         ring_gap_length=RING_GAP_LENGTH,
+        ring_sheet_orientation=orientation,
         emit_port_sheets=True,
         air_padding=AIR_PADDING,
         resolution=RESOLUTION,
@@ -201,6 +224,7 @@ def _measure_ring(leg_count):
     # command timed out at exit 124 with the tests green).
     return {
         "leg_count": leg_count,
+        "orientation": orientation,
         "ring_ports": ring_ports,
         # The mesh objects themselves are carried so a consumer can export them
         # without rebuilding (`EX-35`/`mesh:9` writes the 32-sheet XDMF from
@@ -232,7 +256,11 @@ def _measure_ring(leg_count):
         },
         "sheet_flatness": {
             i: _out_of_plane_spread(
-                mesh, sheet_tags, SHEET_IFACE + i, *_ring_gap_frame(i, leg_count), comm
+                mesh,
+                sheet_tags,
+                SHEET_IFACE + i,
+                *_ring_sheet_frame(i, leg_count, orientation),
+                comm,
             )
             for i in ring_ports
         },
@@ -260,7 +288,7 @@ def _report(label, m):
     terminal_analytic = layout["ring_terminal_area_m2"]
     port_volume = layout["ring_port_volume_m3"]
     port_surface = layout["ring_port_surface_m2"]
-    sheet_analytic = layout["ring_port_sheet_area_m2"]
+    sheet_analytic = _ring_sheet_analytic(layout, m.get("orientation", "transverse"))
     n = m["leg_count"]
     print(
         f"\n[GEO-20 step 2 {label}] leg_count={n} ring-gapped+sheeted "
@@ -352,13 +380,25 @@ def _report_safely(label, m, comm):
     return comm.bcast(problem, root=0)
 
 
-def _assert_ring_identity_family(m, label):
-    """Step 1's gates at whatever leg count `m` was built at, terminals per class."""
+def _assert_ring_identity_family(
+    m, label, *, terminal_intra_band=TERMINAL_INTRA_CLASS_BAND
+):
+    """Step 1's gates at whatever leg count `m` was built at, terminals per class.
+
+    `terminal_intra_band` defaults to the 2026-08-25 ruling's `1e-6` and is
+    **not** a knob for a red transverse fixture: every `GEO-20` caller uses the
+    default and it is untouched. `GEO-26` step 1 passes its own measured
+    constant because the longitudinal sheet's boundary edge bisects both
+    terminal disks, which is a different triangulation problem — see
+    `tests/mesh/test_birdcage_ring_sheet_orientation.py` for the reading.
+    """
     layout = m["diag"]["ring_port_layout"]
     terminal_analytic = layout["ring_terminal_area_m2"]
     port_volume = layout["ring_port_volume_m3"]
     port_surface = layout["ring_port_surface_m2"]
-    sheet_analytic = layout["ring_port_sheet_area_m2"]
+    # `GEO-26`: the closed form the sheet is gated against is the one for the
+    # orientation actually built — `w²` transverse, `chord·w` longitudinal.
+    sheet_analytic = _ring_sheet_analytic(layout, m.get("orientation", "transverse"))
     ring_ports = m["ring_ports"]
 
     assert m["tag_set"] == m["expected_tags"], (
@@ -470,10 +510,10 @@ def _assert_ring_identity_family(m, label):
         vals = np.array([m["areas"][CONDUCTOR_IFACE + i] for i in members])
         means.append(vals.mean())
         intra = (vals.max() - vals.min()) / vals.mean() if len(members) > 1 else 0.0
-        assert intra < TERMINAL_INTRA_CLASS_BAND, (
+        assert intra < terminal_intra_band, (
             f"{label}: azimuth class '{key}' ({len(members)} ports) has "
             f"intra-class terminal spread {intra:.3e} against the imported "
-            f"{TERMINAL_INTRA_CLASS_BAND}; inside one class the construction is "
+            f"{terminal_intra_band}; inside one class the construction is "
             "exactly covariant, so this is a generator finding, not a band to "
             "widen"
         )

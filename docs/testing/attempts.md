@@ -16804,3 +16804,86 @@ executor returned with nothing in flight.
   `"aed": null`). One correction landed on top of `cd2120a`: the §7 tier cell
   read `+ 5 s` for the census window where its footer reads `Elapsed (s): 1`.
   No gate or measured physics figure was affected.
+
+## 2026-09-03T09:30Z — `GEO-26` step 1 — complete
+
+**Item.** §9 On deck item 1, the top unblocked item: the longitudinal
+ring-gap sheet mode on `birdcage_port_domain`, 4-leg rung, `-n 2` and `-n 12`.
+Tree clean at `5202f75`, container Up. Step 2 (16 legs) deliberately **not**
+started — step 1 finished at minute ~27 of a 60-minute slot and the gate is
+"green with >= 30 min left"; the two 16-leg windows are 184-188 s each plus a
+record discovery, which does not fit with documentation and commit time left.
+
+**Built.** `src/fem_em_solver/io/mesh.py`: keyword-only
+`ring_sheet_orientation: str = "transverse"` on `birdcage_port_domain`,
+validated (bad value raises; `"longitudinal"` without `ring_gap_length`
+raises), threaded to `_build_birdcage_port_model` and echoed as a diagnostic.
+`"longitudinal"` builds the four corners in global coordinates in the plane
+`u = R` (`GEO-19` (4*) — no build-at-0-and-rotate) and records `û(phi_c)` as
+the sheet normal, so `group_of_piece`'s existing signed-projection split gives
+the inner (`100+i`) and outer (`200+i`) halves with no new code path.
+`_birdcage_ring_gap_layout` gained `ring_port_gap_chord_m` and
+`ring_port_sheet_longitudinal_area_m2`. Test side: `_measure_ring` and
+`_assert_ring_identity_family` gained keyword-only `orientation` /
+`terminal_intra_band` with today's values as defaults, so every `GEO-20` and
+`EX-35` caller is bit-for-bit unchanged; new gate module
+`tests/mesh/test_birdcage_ring_sheet_orientation.py` (the parked `PORT-13`
+module rewritten as this chunk's negative control plus the five anchors).
+
+**Measured**, identical at both widths, standard tier:
+- chord 8.008718871e-03 m vs arc 8.000000000e-03 m (+0.1090%);
+- all 8 sheets: `phi_hat`-extent/chord = 1.000000000000, `z`-extent/w =
+  1.000000000000, area/(chord*w) = 1.000000000000, out-of-plane along `û`
+  <= 1.53e-16 m, flatness <= 1.43e-16 m;
+- halves V_in 3.861346599e-07 / V_out 4.147372273e-07 m^3, meshed/analytic
+  1.000000000000 on all 8, sum/`ring_port_volume_m3` 1.000000000000;
+- C8 sheet spread 4.273e-16 (`-n 2`) / 4.477e-16 (`-n 12`), band 1e-12;
+- `GEO-9` partition, air-box closure, Pappus arcs 1.000000000000; terminals
+  0.974219-0.974235 of the closed form, inside [0.95, 1.0];
+- `RING_LONGITUDINAL_CELL_RECORD = 111898` (0.11 image, `-n 2`);
+- negative control: default reproduces `RING_GAP_CELL_RECORD` 110786 at ratio
+  1.000000 with `phi_hat`-extent <= 1e-12 m.
+
+**The one thing that moved, and what I did about it.** Reusing
+`_assert_ring_identity_family` pulled in `GEO-20` step 2's per-azimuth-class
+terminal band (1e-6), which is *not* in anchor (v)'s enumeration, and it read
+1.605e-05 on the longitudinal mesh against 4.198e-08 transverse
+(`20260828T093839Z_GEO-20-step2-record.log:50833`). Mechanism, stated in the
+code: the longitudinal sheet spans the full gap at `u = R`, so each of its two
+`phi` edges lies in a terminal plane `phi_c ± alpha` and runs `w = 1e-2` m
+through the terminal disk's centre — it is a *diameter* of each `2r = 8e-3` m
+disk, where the transverse sheet sits mid-gap and touches neither. A disk whose
+inscribed triangulation must contain a diameter is a different triangulation,
+and in global coordinates it is no longer exactly C4-covariant (six terminals
+9.793917647e-05 m^2, the two at 225 deg 9.794074883e-05 m^2). I did **not**
+widen `TERMINAL_INTRA_CLASS_BAND`: it is untouched at 1e-6 and still gates
+every transverse fixture; `_assert_ring_identity_family` grew a
+`terminal_intra_band` kwarg defaulting to it and only the `GEO-26` call site
+passes `LONGITUDINAL_TERMINAL_INTRA_BAND = 2.0e-5`, with the reading, the
+mechanism and the transverse comparison in the constant's comment
+(MAG-10/MAG-15 precedent). **For the review:** this is a terminal-*area*
+reading, not a sheet reading, and `PORT-13` integrates over the sheet — but
+someone should rule on whether the constrained-diameter terminal is acceptable
+before the ring ports are driven.
+
+**Logs.**
+- `20260903T093604Z_GEO-26.log` — `-n 2` discovery, Status 1, 53 s (1 failed 1
+  passed: the record constant was `None` by construction, and the terminal band
+  above fired). Cell count read at `:13904`.
+- `20260903T093852Z_GEO-26.log` — `-n 2` record run, Status 0, 51 s, 2 passed
+  (`:6956` control, `:13904-13915` longitudinal).
+- `20260903T093949Z_GEO-26.log` — `-n 12`, Status 0, 50 s, 2 passed
+  (`:7036`, `:13994-14005`).
+- `20260903T094101Z_GEO-26.log` — regression, `GEO-20` step 1 + step 2 at their
+  defaults, `-n 2`, Status 0, 262 s, 3 passed: the helper edits are inert.
+
+**Housekeeping.** `attempt/PORT-13-20260903T033437Z` deleted in this slot — its
+one file is superseded by the new gate module, whose first test is the same
+measurement re-headed as `GEO-26`'s negative control.
+
+**Next.** `GEO-26` step 2: the same family on the 16-leg rung (`EX-35`'s
+parameters, 32 sheets, C16, new cell record). Everything it needs is already
+keyword-plumbed — `_measure_ring(SCALED_LEG_COUNT, orientation="longitudinal")`
+— so it is one build per width plus a record discovery, `timeout -k 30 600`.
+Expect the same terminal-triangulation reading there; the four azimuth classes
+at 16 legs make it a sharper test of the mechanism than the single class here.

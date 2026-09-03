@@ -3056,6 +3056,22 @@ class MeshGenerator:
             ),
             # The mid-plane section (phi = phi_c) is the w x w rectangle.
             "ring_port_sheet_area_m2": float(box_width**2),
+            # `GEO-26`: the gap's *chord* at u = ring_radius, 2·R·tan(alpha).
+            # `ring_gap_length_m` above is the *arc* g = 2·R·alpha; the port
+            # box's two radial cap faces are planar, so what a longitudinal
+            # sheet in the plane u = R actually spans is the chord, not the
+            # arc — +0.10% at the fixture's g = 0.008 m / R = 0.07 m. Both are
+            # emitted so a caller never has to pick by re-deriving.
+            "ring_port_gap_chord_m": float(2.0 * ring_radius * tan_half),
+            # The longitudinal sheet (`ring_sheet_orientation="longitudinal"`):
+            # the chord x w rectangle in the plane u = R, normal u_hat(phi_c).
+            # This is the surface the lumped-sheet port model needs — its
+            # extent along the drive direction phi_hat is the chord, i.e. the
+            # `h` that the transverse mid-section above offers as exactly 0
+            # (`PORT-13` step 1's blocker).
+            "ring_port_sheet_longitudinal_area_m2": float(
+                2.0 * ring_radius * tan_half * box_width
+            ),
             "ring_terminal_area_m2": float(2.0 * port_face_area),
             "ring_removed_mass_m3": float(
                 2 * leg_count * np.pi * ring_minor_radius**2 * ring_gap_length
@@ -3094,6 +3110,8 @@ class MeshGenerator:
         leg_radius: Optional[float] = None,
         leg_height: Optional[float] = None,
         return_diagnostics: bool = False,
+        *,
+        ring_sheet_orientation: str = "transverse",
     ):
         """Generate a coarse, parametric birdcage-like geometry fixture with port tags.
 
@@ -3137,6 +3155,28 @@ class MeshGenerator:
             the drive direction is ``phi_hat``. The ring ports take ordinals
             ``leg_count+1 .. leg_count+2·leg_count``, after the leg ports, so
             every existing tag keeps its meaning.
+        ring_sheet_orientation : {'transverse', 'longitudinal'}, optional
+            `GEO-26` step 1, keyword-only, meaningful only with
+            `ring_gap_length` + `emit_port_sheets`. ``'transverse'`` (default)
+            is `GEO-20`'s emission byte-for-byte: the gap's mid-*section* at
+            ``phi = phi_c``, the ``w x w`` rectangle spanned by ``û(phi_c)``
+            and ``ẑ``, normal ``phi_hat``. Its extent along the drive
+            direction is zero (measured ``<= 1.43e-17`` m, `PORT-13` step 1),
+            so the lumped-sheet port model — ``R_s = Z_p·w/h``,
+            ``I = (1/R_s)∫E·ĥ dS / h`` — has no ``h`` on it and ``E·ĥ`` is the
+            normal trace of an H(curl) field on an interior facet.
+            ``'longitudinal'`` emits instead the planar rectangle in the plane
+            ``u = ring_radius`` (normal ``û(phi_c)``), spanning the gap
+            **chord** ``2·R·tan(alpha)`` along ``phi_hat`` and
+            `ring_port_box_width_m` along ``ẑ``: a section *through* the gap,
+            so ``h`` is the chord and the port halves become the inner
+            (``u < R``, tag ``100+i``) and outer (``u > R``, ``200+i``) pieces
+            with closed-form volumes ``w·tan(alpha)·(R·w ∓ w²/4)``. Its four
+            edges lie on the box's two radial caps and two ``z`` faces, so it
+            spans the box exactly. The horizontal trapezoid at ``z = z_ring``
+            was considered and rejected: also planar and box-spanning, but its
+            ``h(u) = 2u·tan(alpha)`` varies by ``±w/(2R)`` across the sheet and
+            the port model needs one ``h``.
         leg_azimuth_offsets_rad : sequence of float, optional
             `PORT-9` step 3 leg (d1), the geometric negative control of the C4
             symmetry gate. ``None`` (the default) and an all-zero sequence both
@@ -3243,6 +3283,21 @@ class MeshGenerator:
                 "boxes float in the air with no terminals to span"
             )
 
+        if ring_sheet_orientation not in ("transverse", "longitudinal"):
+            raise ValueError(
+                "ring_sheet_orientation must be 'transverse' or 'longitudinal', "
+                f"got {ring_sheet_orientation!r}"
+            )
+        if ring_sheet_orientation == "longitudinal" and ring_gap_length is None:
+            # The mode names a surface inside a ring gap; without ring gaps it
+            # has no referent, and silently ignoring it would let a caller
+            # believe it got longitudinal sheets on the leg ports.
+            raise ValueError(
+                "ring_sheet_orientation='longitudinal' requires ring_gap_length: "
+                "it selects the ring gap's own sheet, and the leg-port sheets "
+                "(`GEO-16`/`GEO-18`) are longitudinal already"
+            )
+
         if leg_azimuth_offsets_rad is not None:
             # `PORT-9` step 3 leg (d1). Checked before gmsh exists, like the
             # `emit_port_sheets` contradiction above.
@@ -3345,6 +3400,7 @@ class MeshGenerator:
                     port_radius=port_diagnostics["port_radius_m"],
                     leg_gap_length=leg_gap_length,
                     ring_gap_length=ring_gap_length,
+                    ring_sheet_orientation=ring_sheet_orientation,
                     leg_azimuth_offsets_rad=leg_azimuth_offsets_rad,
                     port_clearance=port_clearance,
                     emit_port_sheets=emit_port_sheets,
@@ -3413,6 +3469,7 @@ class MeshGenerator:
         diagnostics["ring_port_layout"] = (
             None if ring_port_layout is None else dict(ring_port_layout)
         )
+        diagnostics["ring_sheet_orientation"] = str(ring_sheet_orientation)
         return mesh, cell_tags, facet_tags, diagnostics
 
     @staticmethod
@@ -3432,6 +3489,7 @@ class MeshGenerator:
         resolution: float,
         leg_gap_length: Optional[float] = None,
         ring_gap_length: Optional[float] = None,
+        ring_sheet_orientation: str = "transverse",
         leg_azimuth_offsets_rad: Optional[Sequence[float]] = None,
         port_clearance: float = 1.0e-3,
         emit_port_sheets: bool = False,
@@ -3710,15 +3768,45 @@ class MeshGenerator:
 
                 if emit_port_sheets:
                     ordinal = len(port_tags)
-                    sheet_corners = [
-                        gmsh.model.occ.addPoint(u * cos_c, u * sin_c, z)
-                        for u, z in (
-                            (ring_radius - 0.5 * ring_w, z_ring - 0.5 * ring_w),
-                            (ring_radius + 0.5 * ring_w, z_ring - 0.5 * ring_w),
-                            (ring_radius + 0.5 * ring_w, z_ring + 0.5 * ring_w),
-                            (ring_radius - 0.5 * ring_w, z_ring + 0.5 * ring_w),
-                        )
-                    ]
+                    if ring_sheet_orientation == "longitudinal":
+                        # `GEO-26` step 1: the section *through* the gap, in the
+                        # plane u = ring_radius, normal û(phi_c). It spans the
+                        # gap chord `2·R·tan(alpha)` along phi_hat (the drive
+                        # direction, where the transverse section below spans
+                        # exactly 0 — `PORT-13` step 1) and `w` along ẑ. Its
+                        # four edges lie on the box's two radial cap planes
+                        # (v = ±u·tan(alpha), evaluated here at u = R) and its
+                        # two z faces, so it spans the box and splits it into
+                        # an inner (u < R) and an outer (u > R) half. Corners
+                        # evaluated in global coordinates like the box above —
+                        # a build-at-0-and-rotate puts the C_N images ulps
+                        # apart (`GEO-19` ruling (4*)).
+                        v_half = ring_radius * tan_half
+                        sheet_corners = [
+                            gmsh.model.occ.addPoint(
+                                ring_radius * cos_c - v * sin_c,
+                                ring_radius * sin_c + v * cos_c,
+                                z,
+                            )
+                            for v, z in (
+                                (-v_half, z_ring - 0.5 * ring_w),
+                                (+v_half, z_ring - 0.5 * ring_w),
+                                (+v_half, z_ring + 0.5 * ring_w),
+                                (-v_half, z_ring + 0.5 * ring_w),
+                            )
+                        ]
+                        sheet_normal = np.array([cos_c, sin_c, 0.0])
+                    else:
+                        sheet_corners = [
+                            gmsh.model.occ.addPoint(u * cos_c, u * sin_c, z)
+                            for u, z in (
+                                (ring_radius - 0.5 * ring_w, z_ring - 0.5 * ring_w),
+                                (ring_radius + 0.5 * ring_w, z_ring - 0.5 * ring_w),
+                                (ring_radius + 0.5 * ring_w, z_ring + 0.5 * ring_w),
+                                (ring_radius - 0.5 * ring_w, z_ring + 0.5 * ring_w),
+                            )
+                        ]
+                        sheet_normal = np.array([-sin_c, cos_c, 0.0])
                     sheet_lines = [
                         gmsh.model.occ.addLine(
                             sheet_corners[k], sheet_corners[(k + 1) % 4]
@@ -3730,7 +3818,7 @@ class MeshGenerator:
                     )
                     sheet_tags.append(sheet)
                     ring_sheet_of_ordinal[ordinal] = (
-                        np.array([-sin_c, cos_c, 0.0]),
+                        sheet_normal,
                         np.array([ring_radius * cos_c, ring_radius * sin_c, z_ring]),
                     )
 
@@ -3824,8 +3912,12 @@ class MeshGenerator:
                         200 + ordinal if value > 0.0 else 100 + ordinal
                     )
                 elif ordinal in ring_sheet_of_ordinal:
-                    # `GEO-20`: same discipline, but the mid-plane is radial, so
-                    # the side is the sign of (centroid - gap centre)·phi_hat.
+                    # `GEO-20`: same discipline, but the sheet's plane is radial,
+                    # so the side is the sign of (centroid - gap centre)·n. In
+                    # `transverse` mode n = phi_hat and the halves are the two
+                    # azimuthal sides; in `GEO-26`'s `longitudinal` mode n = û
+                    # and they are the inner (u < R, 100+i) and outer (u > R,
+                    # 200+i) halves. Nothing downstream reads the labels' sense.
                     normal, point = ring_sheet_of_ordinal[ordinal]
                     centre = np.asarray(gmsh.model.occ.getCenterOfMass(3, piece))
                     group_of_piece[piece] = (
