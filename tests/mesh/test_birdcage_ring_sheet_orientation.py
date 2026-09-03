@@ -1,4 +1,4 @@
-"""`GEO-26` step 1 — the **longitudinal** ring-gap port sheet, and its control.
+"""`GEO-26` steps 1–2 — the **longitudinal** ring-gap port sheet, and its control.
 
 `PORT-13` step 1 (2026-09-03) measured that `GEO-20`'s ring-gap sheets are the
 gap's *transverse* mid-section at ``phi = phi_c``: the ``w x w`` rectangle
@@ -35,8 +35,24 @@ rejected in the 2026-09-03 03:00 ruling: planar and box-spanning too, but its
 ``h(u) = 2u·tan(alpha)`` varies by ``±w/(2R)`` = ±7% across the sheet and the
 port model needs one ``h``.
 
-Anchors (i)-(v) of the §9 item, all on the `GEO-20` step-1 4-leg rung at
-``RING_GAP_LENGTH = 0.008``, eight ring ports:
+Both tests below are parametrised over the two rungs: `CONTROL_LEG_COUNT` = 4
+(step 1, eight ring ports, C8) and `SCALED_LEG_COUNT` = 16 (**step 2**, the
+`EX-35` / `GEO-20` step-2 rung — 32 ring ports, C16, and four azimuth classes
+where four legs folds to one). Step 2 adds no identity: it re-reads the same
+family one rung up, where the terminal classes are the finding
+(`LONGITUDINAL_TERMINAL_INTRA_BAND` unmoved at 2.0e-5, a class above it is a
+stop, not a widening — 2026-09-03 10:30 ruling).
+
+**That stop fired.** The 16-leg longitudinal case is a *deliberate red on
+`main`* since 2026-09-03: two of the four azimuth classes read an intra-class
+terminal-area covariance of **9.990e-05**, five times the 2.0e-5 band, at both
+`-n 2` and `-n 12`. Every other anchor is green on that rung — the 32 sheets,
+both halves, the C32 spread and the mirror, the whole `GEO-20` family — and the
+negative control reproduces `EX-35`'s 265 621 at ratio 1.000000. See
+`docs/testing/known-issues.md`; the band is **not** widened and `PORT-13` stays
+blocked.
+
+Anchors (i)-(v) of the §9 item, at ``RING_GAP_LENGTH = 0.008`` on both rungs:
 
 (i)   every sheet reconstructs through the plumbed ``_interface_facet_tags``
       path with meshed area / (``chord·w``) = 1.000000000000 at `EXACT`;
@@ -77,6 +93,7 @@ from __future__ import annotations
 
 import numpy as np
 import dolfinx
+import pytest
 from mpi4py import MPI
 
 from tests.mesh.test_birdcage_port_sheet_prerequisite import CELL_COUNT_BAND
@@ -94,8 +111,14 @@ from tests.mesh.test_birdcage_ring_gaps_scaleup import (
     CONTROL_LEG_COUNT,
     _assert_ring_identity_family,
     _measure_ring,
+    _mirror_pairs,
     _report_safely,
     _ring_gap_frame,
+    _terminal_classes,
+)
+from tests.mesh.test_birdcage_port_scaleup import (
+    SCALED_LEG_COUNT,
+    TERMINAL_INTRA_CLASS_BAND,
 )
 
 # The lumped-sheet route needs a strictly positive extent along the drive
@@ -114,6 +137,37 @@ BOX_WIDTH_BAND = 1.0e-9
 # differently and the count is not `RING_GAP_CELL_RECORD` (110 786).
 # Read 111 898 at `-n 2` in 20260903T093604Z_GEO-26.log:13904.
 RING_LONGITUDINAL_CELL_RECORD = 111898
+
+# `GEO-26` step 2, 0.11 image: the **16-leg** ring-gapped rung meshed with
+# longitudinal sheets — the record `PORT-13` step 1's cell-count control becomes
+# (not the transverse 265 621). Measured, not predicted, and identical at both
+# widths: 20260903T170351Z_GEO-26.log:53400 (`-n 2`) and
+# 20260903T170701Z_GEO-26.log:53490 (`-n 12`).
+#
+# **This assert is currently unreachable**: the terminal azimuth-class
+# covariance below fires first on this rung (see the known-issues entry of
+# 2026-09-03). The constant is recorded because it is measured twice, not
+# because anything green depends on it.
+RING_LONGITUDINAL_SCALED_CELL_RECORD = 270728
+
+# `EX-35`'s transverse 16-leg record (`SCALED_CELL_RECORD`,
+# `examples/meshing/09_birdcage_sixteen_ring_gaps.py:147`), restated here rather
+# than imported because that record lives in an example script this test must
+# not execute. It is the *negative control* for step 2: the default orientation
+# at 16 legs must still be `GEO-20` step 2's mesh, unmoved.
+RING_GAP_SCALED_CELL_RECORD = 265621
+
+# Rung -> record, so the two parametrised cases read one table instead of
+# branching. `None` means "not yet measured": the discovery window fails by
+# construction on the assert at the bottom of the longitudinal test.
+TRANSVERSE_CELL_RECORD = {
+    CONTROL_LEG_COUNT: RING_GAP_CELL_RECORD,
+    SCALED_LEG_COUNT: RING_GAP_SCALED_CELL_RECORD,
+}
+LONGITUDINAL_CELL_RECORD = {
+    CONTROL_LEG_COUNT: RING_LONGITUDINAL_CELL_RECORD,
+    SCALED_LEG_COUNT: RING_LONGITUDINAL_SCALED_CELL_RECORD,
+}
 
 # `GEO-26` step 1, measured 20260903T093604Z_GEO-26.log:13913 — a property of
 # the new mode, recorded here, **not** a widening of `GEO-20`'s band.
@@ -164,16 +218,17 @@ def _sheet_extent_along(msh, facet_tags, tag, axis, comm) -> float:
     return float(hi - lo)
 
 
-def _record_ratio(n_cells) -> str:
-    """``n_cells / RING_LONGITUDINAL_CELL_RECORD`` as text, safe when unmeasured.
+def _record_ratio(n_cells, record=RING_LONGITUDINAL_CELL_RECORD) -> str:
+    """``n_cells / record`` as text, safe when the record is unmeasured.
 
     The record print runs inside ``if comm.rank == 0``; a `TypeError` there
     would leave the other ranks in the next collective and turn a red test into
-    a wall-clock hang (`GEO-19` step C, 2026-08-25).
+    a wall-clock hang (`GEO-19` step C, 2026-08-25). `record` defaults to the
+    4-leg step-1 constant so the signature step 1 shipped still works.
     """
-    if RING_LONGITUDINAL_CELL_RECORD is None:
+    if record is None:
         return "unmeasured"
-    return f"{n_cells / RING_LONGITUDINAL_CELL_RECORD:.6f}"
+    return f"{n_cells / record:.6f}"
 
 
 def _sheet_axes(ordinal, leg_count):
@@ -187,25 +242,27 @@ def _sheet_axes(ordinal, leg_count):
     )
 
 
-def test_the_default_ring_sheets_stay_transverse_with_zero_gap_height():
-    """`GEO-26` step 1's **negative control** (was `PORT-13` step 1's reading).
+@pytest.mark.parametrize("leg_count", [CONTROL_LEG_COUNT, SCALED_LEG_COUNT])
+def test_the_default_ring_sheets_stay_transverse_with_zero_gap_height(leg_count):
+    """`GEO-26`'s **negative control** on both rungs (was `PORT-13` step 1's).
 
     With `ring_sheet_orientation` at its default the mesh must be `GEO-20`'s,
-    unchanged: the recorded cell count, and eight transverse sheets whose
-    extent along their own ``phi_hat`` is zero to machine precision. Three
-    readings per ring port — the extent along ``phi_hat`` (the drive direction
-    a ring port would use), and the two in-plane extents along ``û`` at
-    ``phi_c`` and along ``ẑ``.
+    unchanged: the recorded cell count (110 786 at four legs, `EX-35`'s 265 621
+    at sixteen), and 2·N transverse sheets whose extent along their own
+    ``phi_hat`` is zero to machine precision. Three readings per ring port —
+    the extent along ``phi_hat`` (the drive direction a ring port would use),
+    and the two in-plane extents along ``û`` at ``phi_c`` and along ``ẑ``.
     """
     comm = MPI.COMM_WORLD
-    m = _measure_ring(CONTROL_LEG_COUNT)
+    record = TRANSVERSE_CELL_RECORD[leg_count]
+    m = _measure_ring(leg_count)
     msh = m["mesh"]
     layout = m["diag"]["ring_port_layout"]
     box_width = float(layout["ring_port_box_width_m"])
 
     rows = {}
     for i in m["ring_ports"]:
-        phi_hat, u_hat, z_hat = _sheet_axes(i, CONTROL_LEG_COUNT)
+        phi_hat, u_hat, z_hat = _sheet_axes(i, leg_count)
         tag = SHEET_IFACE + i
         rows[i] = {
             "phi": _sheet_extent_along(msh, m["sheet_tags"], tag, phi_hat, comm),
@@ -216,10 +273,10 @@ def test_the_default_ring_sheets_stay_transverse_with_zero_gap_height():
 
     if comm.rank == 0:
         print(
-            f"\n[GEO-26 step1 control] default (transverse) ring sheets at "
-            f"{CONTROL_LEG_COUNT} legs: {m['n_cells']} cells (record "
-            f"{RING_GAP_CELL_RECORD}, ratio "
-            f"{m['n_cells'] / RING_GAP_CELL_RECORD:.6f}), "
+            f"\n[GEO-26 control] default (transverse) ring sheets at "
+            f"{leg_count} legs: {m['n_cells']} cells (record "
+            f"{record}, ratio "
+            f"{m['n_cells'] / record:.6f}), "
             f"{len(m['ring_ports'])} ring ports, orientation "
             f"{m['diag']['ring_sheet_orientation']!r}, mesh "
             f"{m['diag']['mesh_wall_time_s']:.2f} s, rung {m['elapsed']:.2f} s\n"
@@ -237,9 +294,9 @@ def test_the_default_ring_sheets_stay_transverse_with_zero_gap_height():
                 flush=True,
             )
 
-    assert abs(m["n_cells"] / RING_GAP_CELL_RECORD - 1.0) < CELL_COUNT_BAND, (
-        f"the {CONTROL_LEG_COUNT}-leg ring-gapped rung meshed {m['n_cells']} "
-        f"cells against `GEO-20` step 1's record {RING_GAP_CELL_RECORD}; the "
+    assert abs(m["n_cells"] / record - 1.0) < CELL_COUNT_BAND, (
+        f"the {leg_count}-leg ring-gapped rung meshed {m['n_cells']} "
+        f"cells against the transverse record {record}; the "
         "`GEO-26` opt-in is not opt-in"
     )
     assert m["diag"]["ring_sheet_orientation"] == "transverse"
@@ -265,16 +322,21 @@ def test_the_default_ring_sheets_stay_transverse_with_zero_gap_height():
         )
 
 
-def test_the_longitudinal_ring_sheets_span_the_gap_chord_and_split_the_box():
-    """`GEO-26` step 1, anchors (i)-(v) on the 4-leg rung.
+@pytest.mark.parametrize("leg_count", [CONTROL_LEG_COUNT, SCALED_LEG_COUNT])
+def test_the_longitudinal_ring_sheets_span_the_gap_chord_and_split_the_box(leg_count):
+    """`GEO-26` anchors (i)-(v) on both rungs — step 1 at 4 legs, step 2 at 16.
 
     The sheet is now a section *through* the gap: it spans the chord along the
     drive direction (fourteen decades above the transverse 1e-17), reconstructs
     at ``chord·w``, is flat in its own plane ``u = R``, and cuts its port box
-    into the two closed-form halves.
+    into the two closed-form halves. None of the closed forms depends on the
+    leg count — ``alpha = g/2R``, ``w``, ``V_in``/``V_out`` are all fixed by the
+    ring radius and the gap length — so 16 legs is the same arithmetic on 32
+    sheets, with C16 in place of C8 and four azimuth classes in place of one.
     """
     comm = MPI.COMM_WORLD
-    m = _measure_ring(CONTROL_LEG_COUNT, orientation="longitudinal")
+    record = LONGITUDINAL_CELL_RECORD[leg_count]
+    m = _measure_ring(leg_count, orientation="longitudinal")
     msh = m["mesh"]
     layout = m["diag"]["ring_port_layout"]
     box_width = float(layout["ring_port_box_width_m"])
@@ -293,7 +355,7 @@ def test_the_longitudinal_ring_sheets_span_the_gap_chord_and_split_the_box():
 
     rows = {}
     for i in m["ring_ports"]:
-        phi_hat, u_hat, z_hat = _sheet_axes(i, CONTROL_LEG_COUNT)
+        phi_hat, u_hat, z_hat = _sheet_axes(i, leg_count)
         tag = SHEET_IFACE + i
         rows[i] = {
             "phi": _sheet_extent_along(msh, m["sheet_tags"], tag, phi_hat, comm),
@@ -305,15 +367,16 @@ def test_the_longitudinal_ring_sheets_span_the_gap_chord_and_split_the_box():
             "v_out": float(m["volumes"][PORT_UPPER + i]),
         }
 
-    problem = _report_safely("4 legs longitudinal", m, comm)
+    label = f"{leg_count} legs longitudinal"
+    problem = _report_safely(label, m, comm)
 
     if comm.rank == 0:
         print(
-            f"\n[GEO-26 step1] longitudinal ring sheets at {CONTROL_LEG_COUNT} "
+            f"\n[GEO-26] longitudinal ring sheets at {leg_count} "
             f"legs: {m['n_cells']} cells (record "
-            f"{RING_LONGITUDINAL_CELL_RECORD}, ratio "
-            f"{_record_ratio(m['n_cells'])}; the "
-            f"transverse rung is {RING_GAP_CELL_RECORD}), orientation "
+            f"{record}, ratio "
+            f"{_record_ratio(m['n_cells'], record)}; the "
+            f"transverse rung is {TRANSVERSE_CELL_RECORD[leg_count]}), orientation "
             f"{m['diag']['ring_sheet_orientation']!r}, mesh "
             f"{m['diag']['mesh_wall_time_s']:.2f} s, rung {m['elapsed']:.2f} s\n"
             f"    arc ring_gap_length_m = {RING_GAP_LENGTH:.9e} m, chord "
@@ -338,19 +401,42 @@ def test_the_longitudinal_ring_sheets_span_the_gap_chord_and_split_the_box():
                 flush=True,
             )
         sheets = np.array([rows[i]["area"] for i in m["ring_ports"]])
-        terms = np.array(
-            [float(m["areas"][CONDUCTOR_IFACE + i]) for i in m["ring_ports"]]
+        mirror = max(
+            abs(m["sheet_area"][hi] / m["sheet_area"][lo] - 1.0)
+            for lo, hi in _mirror_pairs(leg_count)
         )
-        intra = float((terms.max() - terms.min()) / terms.mean())
         print(
-            f"[GEO-26 step1] C{2 * CONTROL_LEG_COUNT} longitudinal sheet spread "
-            f"= {_spread(sheets):.3e} (band {SYMMETRY}); terminal intra-class "
-            f"spread = {intra:.3e} against this mode's measured band "
-            f"{LONGITUDINAL_TERMINAL_INTRA_BAND} (the transverse mesh reads "
-            f"4.198e-08 — the sheet's phi edges are diameters of the two "
-            f"terminal disks, see the module constant)",
+            f"[GEO-26] C{2 * leg_count} longitudinal sheet spread "
+            f"= {_spread(sheets):.3e}, top/bottom mirror spread = "
+            f"{mirror:.3e} (band {SYMMETRY})",
             flush=True,
         )
+        # The step-2 finding: every azimuth class's terminal-area covariance
+        # against the mode's measured band. Four classes at 16 legs, one at 4.
+        # `TERMINAL_INTRA_CLASS_BAND` (the transverse 1e-6) is printed beside
+        # each so the log carries the comparison the ruling turned on; the
+        # assert lives in `_assert_ring_identity_family` below.
+        classes = _terminal_classes(m)
+        for key, members in classes.items():
+            vals = np.array(
+                [float(m["areas"][CONDUCTOR_IFACE + i]) for i in members]
+            )
+            spread = (
+                float((vals.max() - vals.min()) / vals.mean())
+                if len(members) > 1
+                else 0.0
+            )
+            azimuths = ", ".join("%.3f" % m["azimuth_deg"][i] for i in members)
+            print(
+                f"[GEO-26] terminal azimuth class '{key}': {len(members)} ports "
+                f"[{azimuths}] deg"
+                f"  mean {vals.mean():.9e} m^2  intra-class spread {spread:.6e} "
+                f"against this mode's band {LONGITUDINAL_TERMINAL_INTRA_BAND} "
+                f"(transverse band {TERMINAL_INTRA_CLASS_BAND}; the sheet's phi "
+                f"edges are diameters of the two terminal disks, see the module "
+                f"constant)",
+                flush=True,
+            )
 
     # Closed-form consistency of the two halves against the box's own volume —
     # a same-rank arithmetic identity, so it gates the formulae before the mesh
@@ -408,23 +494,21 @@ def test_the_longitudinal_ring_sheets_span_the_gap_chord_and_split_the_box():
     # mirror.
     _assert_ring_identity_family(
         m,
-        "4 legs longitudinal",
+        label,
         terminal_intra_band=LONGITUDINAL_TERMINAL_INTRA_BAND,
     )
     assert not problem, problem
 
     # The version-tagged record, last so every anchor above is already in the
     # log when it fires.
-    assert RING_LONGITUDINAL_CELL_RECORD is not None, (
-        f"RING_LONGITUDINAL_CELL_RECORD is unmeasured; this run reads "
-        f"{m['n_cells']} cells at {comm.size} ranks"
+    assert record is not None, (
+        f"the longitudinal cell record at {leg_count} legs is unmeasured; this "
+        f"run reads {m['n_cells']} cells at {comm.size} ranks"
     )
-    assert (
-        abs(m["n_cells"] / RING_LONGITUDINAL_CELL_RECORD - 1.0) < CELL_COUNT_BAND
-    ), (
-        f"the {CONTROL_LEG_COUNT}-leg longitudinal rung meshed {m['n_cells']} "
-        f"cells against the `GEO-26` step 1 record "
-        f"{RING_LONGITUDINAL_CELL_RECORD} (ratio "
-        f"{_record_ratio(m['n_cells'])}); the sheet "
+    assert abs(m["n_cells"] / record - 1.0) < CELL_COUNT_BAND, (
+        f"the {leg_count}-leg longitudinal rung meshed {m['n_cells']} "
+        f"cells against the `GEO-26` record "
+        f"{record} (ratio "
+        f"{_record_ratio(m['n_cells'], record)}); the sheet "
         "geometry or the grading moved"
     )
