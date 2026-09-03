@@ -81,9 +81,35 @@ ring set), which is why this rung is read as an ``h`` rung.
 is registered whatever prints**, no homogeneity / absolute / C95.3 claim, and
 `WF-6` stays 🟡.  The printed verdict is the deliverable.
 
+**Step 3f′ (2026-09-02, ruled by the 18:00 review as option (2) of step 3f's
+known-issues entry) adds three things to this same fixture — the same four
+solves, no new solve.**
+
+* **(A) the ring set.**  Step 1c's 96-point rotation-invariant set
+  (:func:`tests.validation.test_birdcage_b1_plus_map._ring_points`, built from
+  constants and therefore identical at any rank count and closed under the
+  rotation) is read *beside* the mesh's own 373 tag-3 centroids, on **both**
+  columns: the three ``|B₁⁺|`` C4 identities and the five restricted-CG1 SAR
+  identities.  The rung moves the phantom's ``h`` and the centroid sample set
+  together; this separates them, and **±2 pp** — step 1c's measured separation
+  on the coarse DG0 column — is the asserted bar at all eight identities.  A
+  larger disagreement means the sample set *is* a mechanism on this rung and
+  every ``h``-attribution above is then a reading of two things at once.
+* **(B) anchor (i) re-read one-sided.**  An identity may not get *worse* than
+  its coarse record by more than 0.5 pp; a fall is the convergence measurement
+  the rung was run to make, not a miss.  The fine readings 0.6177 / 0.5966 /
+  0.5647% are recorded as ``STEP3F_B1_PLUS_FINE_RECORDS`` **beside** the coarse
+  ones — the coarse records are imported unchanged and nothing is replaced.
+* **(C) the integral column, printed not gated.**  Step 3g/3h's twelve C4
+  integral pairs of the **primal** ``E`` formed on *this* mesh, beside the
+  coarse mesh's 0.7149 … 0.2302%: the gate registered by step 3h at fixed ``h``
+  gets its first ``h`` data point here.  Its partition identity and its P1
+  total *are* asserted (they are arithmetic and a record, not a gate on the
+  identities).
+
 Run (complex build required)::
 
-    scripts/testing/run_and_log.sh WF-6-step3f "docker compose exec -T fem-em-solver \\
+    scripts/testing/run_and_log.sh WF-6-step3f-prime "docker compose exec -T fem-em-solver \\
       bash -lc 'cd /workspace && source /usr/local/bin/dolfinx-complex-mode && \\
        PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 timeout -k 30 600 \\
        mpiexec -n 2 python3 -m pytest tests/environment \\
@@ -122,9 +148,17 @@ from tests.validation.test_birdcage_b1_plus_map import (
     _power_shares,
     _read_b1_plus_cg1,
     _relative_l2,
+    _ring_points,
     _rotate_z,
     _sample_points,
     _solve_driven,
+)
+from tests.validation.test_birdcage_sar_integral import (
+    PARTITION_EPS_M,
+    PARTITION_RTOL,
+    QUADRATURE_DEGREE,
+    STEP3G_INTEGRAL_PAIR_RECORDS,
+    _quadrant_powers,
 )
 from tests.validation.test_birdcage_b1_quadrature import (
     QUADRATURE_STEP_DEG,
@@ -184,6 +218,88 @@ NULL_MOVE_PP = 1.0
 # ``new / coarse`` at ~0.25.  Printed as an interpretation aid only — nothing
 # is asserted against it.
 SECOND_ORDER_RATIO = 0.25
+
+# --- step 3f′ -------------------------------------------------------------
+#
+# Step 1c measured the centroid set against the rotation-invariant ring set on
+# the coarse DG0 ``|B₁⁺|`` column and found them to agree within **±2 pp**.
+# That measurement is the bar here, on both columns and on this mesh: inside
+# it, the sample set is not the mechanism and this module's rung is an ``h``
+# rung; outside it, the two are confounded and the attribution above is not
+# available.  It is a *comparison* bar between two readings of the same
+# quantity, never a band on either reading.
+RING_VS_CENTROID_CEILING_PP = 2.0
+
+# Step 3f's own readings of the three ``|B₁⁺|`` C4 identities on THIS mesh,
+# `20260902T170559Z_WF-6-step3f.log:4709-4711`.  Recorded **beside** the coarse
+# ``STEP1B_CG1_RECORDS`` (2.1870 / 2.1146 / 1.8911%), which are imported
+# unchanged and are what anchor (i) is still stated against: nothing is
+# replaced here, and the one-sided form of that anchor below is what makes the
+# −1.53 pp move a measurement rather than a miss.
+STEP3F_B1_PLUS_FINE_RECORDS = {
+    "P2@+90deg": 0.6177e-2,
+    "P4@-90deg": 0.5966e-2,
+    "P3@180deg": 0.5647e-2,
+}
+
+# Step 3f's five restricted-CG1 SAR identities on this mesh, same log
+# (`:4725-4729`), and the run's other single-figure records.  They are
+# reproductions — the whole point of adding columns to a fixture is that the
+# columns already in it must not move — never bands.  Re-record only under the
+# (1*) licence.
+STEP3F_RESTRICTED_FINE_IDENTITY_RECORDS = {
+    "(i) SAR_P2(Rx) vs SAR_P1(x)": 3.3600e-2,
+    "(i) SAR_P4(-Rx) vs SAR_P1(x)": 3.4442e-2,
+    "(i) SAR_P3(180deg) vs SAR_P1(x)": 3.4525e-2,
+    "(ii) SAR_ccw(Rx) vs SAR_ccw(x)": 3.0332e-2,
+    "(iii) SAR_cw(Mx) vs SAR_ccw(x)": 2.5465e-2,
+}
+STEP3F_FINE_RESTRICTED_RESIDUAL = 12.5225e-2
+STEP3F_FINE_GLOBAL_RESIDUAL = 1626.2098e-2
+# The affine reproduction residual is a Krylov round-off quantity, but the
+# solve is deterministic for a fixed mesh, partition and rank count, so it
+# reproduces run to run at this rank count.  It is recorded at
+# ``CG1_RECORD_RTOL`` like the rest; a miss is a fixture finding (a different
+# partition, a different image), not a licence to loosen the bound.
+STEP3F_FINE_AFFINE_RESIDUAL = 9.947634e-13
+STEP3F_FINE_PRIMAL_PHANTOM_POWER_W = 5.587038273e-08
+
+# The worst of step 3g's twelve coarse-mesh C4 integral pairs (1.5200%), the
+# construction step 3h registered as the repo's first coil-driven SAR gate at
+# **fixed h**.  Clause (a) of this step's pre-registration is "the fine mesh
+# does not read worse than that".
+COARSE_INTEGRAL_WORST_PAIR = max(STEP3G_INTEGRAL_PAIR_RECORDS.values())
+
+
+def _fine_integral_verdict(pairs, band):
+    """The (a)/(b)/(c) clause for the integral column, pre-registered 2026-09-02.
+
+    Step 3h's gate is a statement at one ``h``; this is its first second point.
+    Evaluated in a fixed precedence from the readings so the clause a review
+    acts on cannot disagree with the table printed above it.  **Nothing here is
+    asserted** — the twelve pairs are printed on this mesh, by design.
+    """
+    worst = max(pairs.values())
+    if worst <= COARSE_INTEGRAL_WORST_PAIR:
+        return "(a)", (
+            f"the worst C4 integral pair on the finer phantom reads "
+            f"{worst * 100:.4f}%, at or below the coarse mesh's "
+            f"{COARSE_INTEGRAL_WORST_PAIR * 100:.4f}% — the integral gate's "
+            "headroom does not shrink with h"
+        )
+    if worst <= band:
+        return "(b)", (
+            f"the worst C4 integral pair reads {worst * 100:.4f}%, above the "
+            f"coarse mesh's {COARSE_INTEGRAL_WORST_PAIR * 100:.4f}% but inside "
+            f"the {band * 100:.1f}% band — report; step 3h's headroom is "
+            "stated from the larger figure by the NEXT REVIEW, never in-slot"
+        )
+    return "(c)", (
+        f"the worst C4 integral pair reads {worst * 100:.4f}%, OUTSIDE the "
+        f"{band * 100:.1f}% band step 3h gates at fixed h — the integral "
+        "construction is not h-stable; known-issues entry against step 3h and "
+        "the next review decides"
+    )
 
 
 def _fine_mesh_verdict(identities, coarse_records, controls, band):
@@ -409,6 +525,121 @@ def fine_phantom():
         ),
     }
 
+    # --- step 3f′ (A): the same eight identities on step 1c's ring set.
+    #
+    # The set is built from constants about the COIL axis, is closed under the
+    # rotation by construction, and is identical on every rank — so the only
+    # thing that differs from the block above is *which points* are read.  Both
+    # columns go through the same helpers as their centroid counterparts (the
+    # CG1 ``|B₁⁺|`` reader and ``post.sar.point_sar``, which evaluates through
+    # ``evaluate_vector_field_parallel`` and raises rather than returning a
+    # zero for a point no rank owns).
+    def _columns_on(pts):
+        images_pts = {
+            "P1@0deg": ("P1", pts),
+            "P2@+90deg": ("P2", _rotate_z(pts, delta)),
+            "P4@-90deg": ("P4", _rotate_z(pts, -delta)),
+            "P3@180deg": ("P3", _rotate_z(pts, 2.0 * delta)),
+            "P3@+90deg": ("P3", _rotate_z(pts, delta)),
+        }
+        values, valid_flags = {}, {}
+        for label, (pid, p) in images_pts.items():
+            values[label], valid_flags[label] = _read_b1_plus_cg1(b_projected[pid], p)
+        mask = np.logical_and.reduce([valid_flags[label] for label in images_pts])
+        b1 = {
+            label: _relative_l2(values[label], values["P1@0deg"], mask)
+            for label in images_pts
+            if label != "P1@0deg"
+        }
+        sar_single = {
+            label: point_sar(*split[pid], p, **kwargs)
+            for label, (pid, p) in images_pts.items()
+        }
+        sar_quad = {
+            ("ccw", "x"): point_sar(*superposed["ccw"], pts, **kwargs),
+            ("ccw", "Rx"): point_sar(
+                *superposed["ccw"], _rotate_z(pts, delta), **kwargs
+            ),
+            ("cw", "Mx"): point_sar(
+                *superposed["cw"], _mirror_xy(pts, azimuths["P1"]), **kwargs
+            ),
+        }
+        every = np.ones(pts.shape[0], dtype=bool)
+        ref = sar_single["P1@0deg"]
+        ident = {
+            "(i) SAR_P2(Rx) vs SAR_P1(x)": _relative_l2(
+                sar_single["P2@+90deg"], ref, every
+            ),
+            "(i) SAR_P4(-Rx) vs SAR_P1(x)": _relative_l2(
+                sar_single["P4@-90deg"], ref, every
+            ),
+            "(i) SAR_P3(180deg) vs SAR_P1(x)": _relative_l2(
+                sar_single["P3@180deg"], ref, every
+            ),
+            "(ii) SAR_ccw(Rx) vs SAR_ccw(x)": _relative_l2(
+                sar_quad[("ccw", "Rx")], sar_quad[("ccw", "x")], every
+            ),
+            "(iii) SAR_cw(Mx) vs SAR_ccw(x)": _relative_l2(
+                sar_quad[("cw", "Mx")], sar_quad[("ccw", "x")], every
+            ),
+        }
+        ctrl = {
+            "mis-rotated SAR_P3(Rx) vs SAR_P1(x)": _relative_l2(
+                sar_single["P3@+90deg"], ref, every
+            ),
+            "quadrature SAR_ccw(x) vs single-drive SAR_P1(x)": _relative_l2(
+                sar_quad[("ccw", "x")], ref, every
+            ),
+        }
+        return b1, int(mask.sum()), ident, ctrl
+
+    ring_points = _ring_points()
+    ring_b1_table, ring_b1_valid, ring_identities, ring_controls = _columns_on(
+        ring_points
+    )
+    ring_vs_centroid_pp = {
+        f"|B1+| {label}": (ring_b1_table[label] - b1_table[label]) * 100.0
+        for label in STEP1B_CG1_RECORDS
+    }
+    ring_vs_centroid_pp.update(
+        {
+            f"SAR {label}": (ring_identities[label] - identities[label]) * 100.0
+            for label in identities
+        }
+    )
+
+    # --- step 3f′ (C): step 3g/3h's integral construction on THIS mesh.
+    #
+    # The primal N1curl field, no projection and no sample set; the partition's
+    # ``eps`` and the pinned ``quadrature_degree`` are imported constants, and
+    # the powers come back MPI-reduced from the same helper the gate uses.
+    dx_partition = ufl.Measure(
+        "dx",
+        domain=msh,
+        subdomain_data=cell_tags,
+        metadata={"quadrature_degree": QUADRATURE_DEGREE},
+    )(PHANTOM_CELL_TAG)
+    sigma_field = solves["P1"]["fields"].sigma_field
+    by_k = {indices[pid]: pid for pid in order}
+    integral_totals, integral_quadrants = {}, {}
+    for k in range(4):
+        integral_totals[k], integral_quadrants[k] = _quadrant_powers(
+            solves[by_k[k]]["fields"].e_complex, sigma_field, dx_partition, comm
+        )
+    integral_pairs, integral_control_pairs = {}, {}
+    for k in range(3):
+        for j in range(4):
+            ref_power = integral_quadrants[k][j]
+            integral_pairs[(k, j)] = (
+                abs(integral_quadrants[k + 1][(j + 1) % 4] - ref_power) / ref_power
+            )
+            integral_control_pairs[(k, j)] = (
+                abs(integral_quadrants[k + 1][(j + 2) % 4] - ref_power) / ref_power
+            )
+    integral_verdict, integral_verdict_text = _fine_integral_verdict(
+        integral_pairs, C4_COVARIANCE_BAND
+    )
+
     phantom_power_w = float(
         mean_sar(
             projected["P1"],
@@ -542,6 +773,103 @@ def fine_phantom():
                 flush=True,
             )
         print(
+            f"    [step 3f'] (A) the SAME eight identities on step 1c's "
+            f"rotation-invariant RING set: {ring_points.shape[0]} points "
+            f"({ring_b1_valid} valid in every image) about the coil axis, "
+            f"against the {points.shape[0]} tag-3 centroids above.  ASSERTED: "
+            f"|ring - centroid| <= {RING_VS_CENTROID_CEILING_PP:.1f} pp at every "
+            f"one of the eight (step 1c's measured separation on the coarse DG0 "
+            f"column):",
+            flush=True,
+        )
+        print(
+            f"        {'':<40} {'centroid':>10} {'ring':>10} {'delta pp':>10}",
+            flush=True,
+        )
+        for label in STEP1B_CG1_RECORDS:
+            print(
+                f"        {'|B1+| ' + label:<40} {b1_table[label] * 100:9.4f}% "
+                f"{ring_b1_table[label] * 100:9.4f}% "
+                f"{ring_vs_centroid_pp['|B1+| ' + label]:+9.4f}",
+                flush=True,
+            )
+        for label in identities:
+            print(
+                f"        {'SAR ' + label:<40} {identities[label] * 100:9.4f}% "
+                f"{ring_identities[label] * 100:9.4f}% "
+                f"{ring_vs_centroid_pp['SAR ' + label]:+9.4f}",
+                flush=True,
+            )
+        print(
+            f"        {'|B1+| P3@+90deg (mis-rotated)':<40} "
+            f"{b1_table['P3@+90deg'] * 100:9.4f}% "
+            f"{ring_b1_table['P3@+90deg'] * 100:9.4f}%      control, ASSERTED > band",
+            flush=True,
+        )
+        for label in ring_controls:
+            print(
+                f"        {'SAR ' + label:<40} {controls[label] * 100:9.4f}% "
+                f"{ring_controls[label] * 100:9.4f}%      control, ASSERTED > band",
+                flush=True,
+            )
+        print(
+            f"    [step 3f'] (B) anchor (i) is now ONE-SIDED: an identity may "
+            f"not exceed its coarse record by more than "
+            f"{COIL_SIDE_MOVE_CEILING_PP:.1f} pp (a fall is the convergence "
+            f"measurement); the fine readings are recorded BESIDE the coarse "
+            f"ones at rtol {CG1_RECORD_RTOL:.0e}, replacing nothing:",
+            flush=True,
+        )
+        for label, record in STEP3F_B1_PLUS_FINE_RECORDS.items():
+            print(
+                f"        {label:<12} {b1_table[label] * 100:9.4f}%   fine record "
+                f"{record * 100:7.4f}%   coarse record "
+                f"{STEP1B_CG1_RECORDS[label] * 100:7.4f}%   one-sided ceiling "
+                f"{(STEP1B_CG1_RECORDS[label] + COIL_SIDE_MOVE_CEILING_PP / 100.0) * 100:7.4f}%",
+                flush=True,
+            )
+        print(
+            f"    [step 3f'] (C) step 3g/3h's INTEGRAL construction on this mesh "
+            f"— primal N1curl E, no projection, no estimator, no sample set; "
+            f"quadrature_degree {QUADRATURE_DEGREE}, eps {PARTITION_EPS_M:.0e} m "
+            f"(imported).  P_j^(k) = 1/2 int_tag3 sigma w_j |E^(k)|^2 dV [W]:",
+            flush=True,
+        )
+        for k in range(4):
+            row = "  ".join(f"{v:.9e}" for v in integral_quadrants[k])
+            print(
+                f"        k={k} ({by_k[k]})  {row}   sum "
+                f"{sum(integral_quadrants[k]):.9e}   total "
+                f"{integral_totals[k]:.9e}",
+                flush=True,
+            )
+        print(
+            f"    (iv) partition identity ASSERTED at rtol {PARTITION_RTOL:.0e} for "
+            f"all four drives; the P1 total against this mesh's primal phantom "
+            f"power record {STEP3F_FINE_PRIMAL_PHANTOM_POWER_W:.9e} W at rtol "
+            f"{CG1_RECORD_RTOL:.0e}\n"
+            f"    the twelve C4 integral pairs |P_(j+1)^(k+1) - P_j^(k)| / P_j^(k) "
+            f"on the FINER phantom — PRINTED NOT GATED (step 3h owns the gate, at "
+            f"fixed h; coarse-mesh record in parentheses):",
+            flush=True,
+        )
+        for k in range(3):
+            row = "  ".join(
+                f"{integral_pairs[(k, j)] * 100:7.4f}% "
+                f"({STEP3G_INTEGRAL_PAIR_RECORDS[(k, j)] * 100:6.4f})"
+                for j in range(4)
+            )
+            print(
+                f"        k={k}->{k + 1}  {row}   mis-paired control mean "
+                f"{np.mean([integral_control_pairs[(k, j)] for j in range(4)]) * 100:9.4f}%",
+                flush=True,
+            )
+        print(
+            f"    [step 3f'] PRE-REGISTERED INTEGRAL VERDICT: {integral_verdict} — "
+            f"{integral_verdict_text}",
+            flush=True,
+        )
+        print(
             f"    PRE-REGISTERED VERDICT: {verdict} — {verdict_text}\n"
             f"    restricted phantom power 1/2*int(sigma|E_O|^2) = "
             f"{phantom_power_w:.9e} W vs this mesh's PRIMAL "
@@ -577,7 +905,25 @@ def fine_phantom():
         "primal_phantom_power_w": primal_phantom_power_w,
         "verdict": verdict,
         "verdict_text": verdict_text,
+        "ring_points": int(ring_points.shape[0]),
+        "ring_b1_valid": ring_b1_valid,
+        "ring_b1_table": ring_b1_table,
+        "ring_identities": ring_identities,
+        "ring_controls": ring_controls,
+        "ring_vs_centroid_pp": ring_vs_centroid_pp,
+        "integral_totals": integral_totals,
+        "integral_quadrants": integral_quadrants,
+        "integral_pairs": integral_pairs,
+        "integral_control_pairs": integral_control_pairs,
+        "integral_verdict": integral_verdict,
+        "integral_verdict_text": integral_verdict_text,
+        "p1_slot": indices["P1"],
     }
+
+
+RING_COMPARISON_LABELS = tuple(f"|B1+| {label}" for label in STEP1B_CG1_RECORDS) + tuple(
+    f"SAR {label}" for label in STEP3D_RESTRICTED_IDENTITY_RECORDS
+)
 
 
 @complex_only
@@ -652,11 +998,22 @@ def test_the_b1_plus_c4_identities_do_not_move_with_the_phantom_h(fine_phantom, 
     2.1870 / 2.1146 / 1.8911% on the coarse mesh.  Those records were measured
     on a *different* discretisation, so they cannot be reproduced at
     ``CG1_RECORD_RTOL`` here — what is asserted is the band itself (unmoved,
-    imported) and that the move is under 0.5 pp.  The hypothesis being tested is
-    the weekly review's: that these figures are mesh-converged at the ~2% floor,
-    which nothing had checked before this rung; a larger move is the first data
-    point of the absolute-convergence rung and is journalled as a fixture
-    finding, never absorbed by widening anything.
+    imported) and that the identity does not get **worse** than its coarse
+    record by more than 0.5 pp.
+
+    **Step 3f′ made this anchor one-sided, and that is the whole change.**  As
+    written for step 3f it was two-sided (``|reading − record| ≤ 0.5 pp``), on
+    the hypothesis that these figures were mesh-converged at a ~2% floor.  The
+    rung measured that hypothesis to be false in the *favourable* direction —
+    2.1870 / 2.1146 / 1.8911% → 0.6177 / 0.5966 / 0.5647%, −1.57 / −1.52 /
+    −1.33 pp, a 3.5× fall at all three angles at once — which is a
+    discretisation floor still falling with ``h``, i.e. the convergence
+    measurement the rung exists to make, not a gate miss.  The 2026-09-02 18:00
+    review ruled the anchor one-sided on exactly that reading: *an identity may
+    not get worse*, and a fall is recorded (``STEP3F_B1_PLUS_FINE_RECORDS``,
+    asserted separately) rather than flagged.  The ceiling itself is **not**
+    widened, the band is **not** moved, and a reading *above* the coarse record
+    by more than 0.5 pp is still a fixture finding to be journalled.
     """
     reading = fine_phantom["b1_table"][label]
     record = STEP1B_CG1_RECORDS[label]
@@ -666,14 +1023,36 @@ def test_the_b1_plus_c4_identities_do_not_move_with_the_phantom_h(fine_phantom, 
         f"{C4_COVARIANCE_BAND * 100:.1f}% band (coarse record "
         f"{record * 100:.4f}%) — the coil-side gate does not survive the rung"
     )
-    move_pp = abs(reading - record) * 100.0
+    move_pp = (reading - record) * 100.0
     assert move_pp <= COIL_SIDE_MOVE_CEILING_PP, (
-        f"the CG1 |B1+| identity '{label}' moves {move_pp:.4f} pp (from "
+        f"the CG1 |B1+| identity '{label}' gets WORSE by {move_pp:.4f} pp (from "
         f"{record * 100:.4f}% to {reading * 100:.4f}%) when the phantom's h is "
         f"halved, above the pre-registered {COIL_SIDE_MOVE_CEILING_PP:.1f} pp — "
-        "the |B1+| map is then NOT mesh-converged at its ~2% floor, which is a "
-        "fixture finding for the absolute-convergence rung and not a licence to "
-        "widen this ceiling"
+        "an identity that degrades under refinement is a fixture finding and "
+        "not a licence to widen this ceiling (a fall is the convergence "
+        "measurement and is recorded, not flagged)"
+    )
+
+
+@complex_only
+@pytest.mark.parametrize("label", sorted(STEP3F_B1_PLUS_FINE_RECORDS))
+def test_the_fine_rung_b1_plus_readings_reproduce_their_records(fine_phantom, label):
+    """Step 3f′ (B): the fine-rung ``|B₁⁺|`` figures, recorded beside the coarse.
+
+    0.6177 / 0.5966 / 0.5647% is what this mesh reads.  Recording it is what
+    turns the one-sided anchor above from a weakening into a bookkeeping move:
+    the fall is now a *number the suite asserts*, so a later change that quietly
+    put the identities back at 2% — or moved them anywhere else — is visible
+    rather than absorbed by the one-sidedness.  ``STEP1B_CG1_RECORDS`` is
+    untouched and still the coarse mesh's.
+    """
+    reading = fine_phantom["b1_table"][label]
+    record = STEP3F_B1_PLUS_FINE_RECORDS[label]
+    assert reading == pytest.approx(record, rel=CG1_RECORD_RTOL), (
+        f"the fine-rung CG1 |B1+| identity '{label}' reads {reading * 100:.4f}%, "
+        f"not step 3f's recorded {record * 100:.4f}% at rtol "
+        f"{CG1_RECORD_RTOL:.0e} — the mesh, the image or the four solves have "
+        "moved under this rung; re-record only under the (1*) licence"
     )
 
 
@@ -834,4 +1213,197 @@ def test_the_five_identities_are_printed_with_a_pre_registered_verdict(fine_phan
     assert set(fine_phantom["identities"]) == set(STEP3D_RESTRICTED_IDENTITY_RECORDS), (
         "the identity labels have drifted from the coarse-mesh records, so the "
         "delta and ratio columns are not comparing the same five quantities"
+    )
+
+
+@complex_only
+@pytest.mark.parametrize("label", sorted(STEP3F_RESTRICTED_FINE_IDENTITY_RECORDS))
+def test_the_five_fine_identities_reproduce_step_3fs_records(fine_phantom, label):
+    """Step 3f′ anchor (iii): the printed column of step 3f has not moved.
+
+    3.3600 / 3.4442 / 3.4525 / 3.0332 / 2.5465%, from step 3f's own log.  They
+    stay **printed, not gated** — no SAR gate is registered on this
+    construction, and step 3h put the repo's only coil-driven SAR gate on the
+    *integral* one — but a printed column that nothing pins is a column that
+    can drift while three additions are bolted to the fixture around it.  This
+    is a reproduction, not a band: a miss is a fixture finding.
+    """
+    reading = fine_phantom["identities"][label]
+    record = STEP3F_RESTRICTED_FINE_IDENTITY_RECORDS[label]
+    assert reading == pytest.approx(record, rel=CG1_RECORD_RTOL), (
+        f"the fine-rung restricted-CG1 identity '{label}' reads "
+        f"{reading * 100:.4f}%, not step 3f's recorded {record * 100:.4f}% at "
+        f"rtol {CG1_RECORD_RTOL:.0e}"
+    )
+
+
+@complex_only
+def test_the_estimator_diagnostics_reproduce_step_3fs_records(fine_phantom):
+    """Step 3f′ anchor (iii), the single-figure half of the same statement.
+
+    The same-mesh best-approximation pair (12.5225% ≤ 1626.2098%), the affine
+    reproduction residual (9.947634e-13) and this mesh's primal phantom power
+    (5.587038273e-08 W).  The inequality itself is a theorem and is asserted
+    separately above; what is asserted here is that the two sides of it, and the
+    two other figures the fine rung is quoted by, are the numbers step 3f
+    measured.  The affine residual is a Krylov quantity but a deterministic one
+    at a fixed mesh, partition and rank count.
+    """
+    for name, reading, record in (
+        ("restricted residual", fine_phantom["restricted_residual"],
+         STEP3F_FINE_RESTRICTED_RESIDUAL),
+        ("same-mesh global residual", fine_phantom["global_residual"],
+         STEP3F_FINE_GLOBAL_RESIDUAL),
+        ("affine reproduction residual",
+         fine_phantom["control_fields"]["a + b x x"]["residual"],
+         STEP3F_FINE_AFFINE_RESIDUAL),
+        ("primal phantom power [W]", fine_phantom["primal_phantom_power_w"],
+         STEP3F_FINE_PRIMAL_PHANTOM_POWER_W),
+    ):
+        assert reading == pytest.approx(record, rel=CG1_RECORD_RTOL), (
+            f"the fine rung's {name} reads {reading:.6e}, not step 3f's recorded "
+            f"{record:.6e} at rtol {CG1_RECORD_RTOL:.0e} — a record of this rung "
+            "moved, which is a fixture finding and not something to re-record "
+            "in-slot"
+        )
+
+
+@complex_only
+@pytest.mark.parametrize("label", RING_COMPARISON_LABELS)
+def test_the_ring_set_agrees_with_the_centroid_set(fine_phantom, label):
+    """Step 3f′ anchor (i): the sample set is not the mechanism on this rung.
+
+    The rung halves the phantom's ``h``, and the centroid sample set is built
+    from that same mesh — so it grew 51 → 373 points with the refinement, and
+    every reading above moves *two* things at once.  Step 1c separated them for
+    the coarse DG0 ``|B₁⁺|`` column with a rotation-invariant ring set built
+    from constants (96 points, closed under the rotation, identical on every
+    rank) and measured the two sample sets to agree within ±2 pp.  That measured
+    separation is the bar here, imported as a number and applied to all eight
+    identities on this mesh.
+
+    A disagreement larger than 2 pp is **the finding**: it would mean the
+    sample set is a mechanism at this ``h``, and the ``h``-attribution of the
+    whole rung would then be unavailable until a review rules.  It is not a band
+    on either reading and nothing about it may be widened.
+    """
+    delta_pp = fine_phantom["ring_vs_centroid_pp"][label]
+    assert abs(delta_pp) <= RING_VS_CENTROID_CEILING_PP, (
+        f"on the finer phantom the identity '{label}' reads {delta_pp:+.4f} pp "
+        f"differently on step 1c's {fine_phantom['ring_points']}-point ring set "
+        f"than on the mesh's {fine_phantom['n_points']} tag-3 centroids, outside "
+        f"step 1c's measured ±{RING_VS_CENTROID_CEILING_PP:.1f} pp — the sample "
+        "set IS a mechanism on this rung, so the h-attribution of every column "
+        "above is confounded; journal it, do not widen this"
+    )
+
+
+@complex_only
+def test_the_negative_controls_survive_on_the_ring_set_too(fine_phantom):
+    """Step 3f′: all three negative controls, re-read on the ring set.
+
+    The centroid set reads 25.4563% (mis-rotated ``|B₁⁺|``) and 121.0800% /
+    384.1297% (the two SAR controls).  A ring set on which the controls had
+    collapsed into the band would make the eight agreement readings beside them
+    agreements about nothing.
+    """
+    control = fine_phantom["ring_b1_table"]["P3@+90deg"]
+    assert control > C4_COVARIANCE_BAND, (
+        f"on the ring set the mis-rotated |B1+| control (P3 at +90deg) matches "
+        f"the P1 map to {control * 100:.4f}%, inside the "
+        f"{C4_COVARIANCE_BAND * 100:.1f}% band"
+    )
+    for label, reading in fine_phantom["ring_controls"].items():
+        assert reading > CONTROL_MIN_MISMATCH, (
+            f"on the ring set the restricted SAR control '{label}' reads "
+            f"{reading * 100:.4f}%, inside the {CONTROL_MIN_MISMATCH * 100:.1f}% "
+            "band — the ring set has no azimuthal structure left to measure"
+        )
+
+
+@complex_only
+@pytest.mark.parametrize("k", [0, 1, 2, 3])
+def test_the_integral_partition_recovers_the_phantom_power_on_this_mesh(
+    fine_phantom, k
+):
+    """Step 3f′ anchor (iv): ``Σ_j P_j = P_phantom`` on the finer mesh, exactly.
+
+    ``Σ_j w_j = 1`` pointwise, so the four weighted integrals and the unweighted
+    one are the same quadrature sum re-associated — arithmetic, not physics, and
+    therefore asserted at round-off before the twelve pairs beside it are looked
+    at.  A miss at 1e-10 on *this* mesh would say the imported construction did
+    not survive the change of mesh (a measure that is not this phantom's, a
+    reduction that did not happen on some rank), which would make the printed
+    column below uninterpretable.
+    """
+    parts = fine_phantom["integral_quadrants"][k]
+    total = fine_phantom["integral_totals"][k]
+    assert total > 0.0, f"the phantom power for drive k={k} is {total!r} — no solve"
+    assert sum(parts) == pytest.approx(total, rel=PARTITION_RTOL), (
+        f"on the finer phantom the four quadrant integrals for drive k={k} sum to "
+        f"{sum(parts):.12e} W but the whole phantom reads {total:.12e} W "
+        f"(relative miss {abs(sum(parts) / total - 1.0):.3e} against "
+        f"{PARTITION_RTOL:.0e})"
+    )
+
+
+@complex_only
+def test_the_integral_p1_total_reproduces_this_meshs_primal_phantom_power(
+    fine_phantom,
+):
+    """Step 3f′ anchor (iv): the integral column is reading the same field.
+
+    ``½∫_{tag 3} σ|E^{(P1)}|²`` assembled by the partition helper at
+    ``quadrature_degree`` 4 against the same quantity assembled independently by
+    ``post.mean_sar`` in this fixture — and against step 3f's record for it,
+    5.587038273e-08 W.  Two different assemblies of one integral: if they
+    disagreed, the twelve pairs printed beside them would be pairs of some other
+    quantity.
+    """
+    p1_total = fine_phantom["integral_totals"][fine_phantom["p1_slot"]]
+    assert p1_total == pytest.approx(
+        fine_phantom["primal_phantom_power_w"], rel=CG1_RECORD_RTOL
+    ), (
+        f"the partition's P1 total {p1_total:.9e} W disagrees with mean_sar's "
+        f"{fine_phantom['primal_phantom_power_w']:.9e} W on the same primal field "
+        f"and the same tag-3 cells, at rtol {CG1_RECORD_RTOL:.0e}"
+    )
+    assert p1_total == pytest.approx(
+        STEP3F_FINE_PRIMAL_PHANTOM_POWER_W, rel=CG1_RECORD_RTOL
+    ), (
+        f"the partition's P1 total {p1_total:.9e} W is not step 3f's recorded "
+        f"{STEP3F_FINE_PRIMAL_PHANTOM_POWER_W:.9e} W for this mesh at rtol "
+        f"{CG1_RECORD_RTOL:.0e}"
+    )
+
+
+@complex_only
+def test_the_integral_pairs_on_this_mesh_are_printed_with_a_pre_registered_verdict(
+    fine_phantom,
+):
+    """Step 3f′ (C): step 3h's gate gets its first ``h`` data point — printed.
+
+    Step 3h registered the twelve C4 integral pairs as the repo's first
+    coil-driven SAR gate **at fixed h** (worst 1.5200% inside a 5% band).  This
+    module forms the same twelve on a mesh whose phantom is meshed at half the
+    cell size and prints them against that record under a pre-registered clause:
+    (a) worst ≤ 1.5200% ⇒ the headroom does not shrink with ``h``; (b) between
+    that and 5% ⇒ report, and the *next review* restates the headroom from the
+    larger figure; (c) above 5% ⇒ the construction is not ``h``-stable, which is
+    a known-issues entry against step 3h.
+
+    **Nothing about the pairs is asserted here.**  Step 3h owns the gate; this
+    step registers none, moves no band and re-records nothing.  What is asserted
+    is only that the module classified its own readings into the
+    pre-registration rather than leaving a reviewer to eyeball a table, and that
+    the twelve pairs it classified are the twelve step 3g recorded.
+    """
+    assert fine_phantom["integral_verdict"] in {"(a)", "(b)", "(c)"}, (
+        f"the integral verdict machinery returned "
+        f"{fine_phantom['integral_verdict']!r}"
+    )
+    assert set(fine_phantom["integral_pairs"]) == set(STEP3G_INTEGRAL_PAIR_RECORDS), (
+        "the (k, j) keys of the fine-mesh integral pairs differ from step 3g's "
+        "coarse-mesh records, so the printed comparison is not comparing the "
+        "same twelve quantities"
     )

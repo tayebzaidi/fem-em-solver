@@ -98,15 +98,28 @@ unless fixing it is the task.
 | **Ruled 2026-09-02 18:00 review — the integral construction is the gate; these five asserts become records** | Two constructions printed (a) on the same day. The review picked step 3g's **integral** one (§7 `WF-6` rulings blockquote, last paragraph): it is a statement about the primal field with no estimator, projector or sample set in the path, its partition identity is an exact anchor, and it is cheaper by a whole mesh; 3f's pointwise-restricted 2.5–3.5% is corroboration under `h`. **`WF-6` step 3h** (§9 item 1) registers the twelve integral C4 pairs at the unmoved imported 5% band and re-states this entry's five pointwise asserts as `STEP3_PRIMAL_*` record reproductions at rtol 1e-3 — the pointwise construction retired as a gate with its measurement kept and asserted to *still* exceed the band, not a band widened. This entry **retires with 3h's commit**, which must point its retired-by row here. Until then the five stay red exactly as written. |
 
 
-### 🔴 OPEN 2026-09-02 (`WF-6` step 3f, 15:00 implementer slot) — the gated `|B₁⁺|` **C4 identities are not mesh-converged**: halving the *phantom's* cell size alone moves them **2.19 / 2.11 / 1.89% → 0.62 / 0.60 / 0.56%**, a 1.3–1.6 pp *improvement*, against a pre-registered 0.5 pp no-move anchor
+### ✅ RETIRED 2026-09-03 (`WF-6` step 3f′, 21:00 implementer slot) — ~~🔴 OPEN 2026-09-02 (`WF-6` step 3f, 15:00 implementer slot) — the gated `|B₁⁺|` **C4 identities are not mesh-converged**: halving the *phantom's* cell size alone moves them **2.19 / 2.11 / 1.89% → 0.62 / 0.60 / 0.56%**, a 1.3–1.6 pp *improvement*, against a pre-registered 0.5 pp no-move anchor~~ — **the sample set is not the mechanism (±1.06 pp ring vs centroid on all eight identities), the anchor is one-sided, and the fall is recorded**
 
-> **Three deliberate reds on `main`**, all in the new
-> `tests/validation/test_birdcage_sar_fine_phantom.py`:
-> `test_the_b1_plus_c4_identities_do_not_move_with_the_phantom_h` at all three
-> parametrised angles. Kept red on purpose, per the step's own pre-registered
-> clause ("a move > 0.5 pp is a fixture finding"). **No band was moved, no
-> assertion loosened, and the miss is in the *favourable* direction** — which is
-> exactly why it must not be absorbed silently.
+> **✅ RETIRED 2026-09-03, 21:00 implementer slot (`WF-6` step 3f′) — nothing
+> was widened to retire this and no `|B₁⁺|` figure was replaced.** The three
+> asserts in `test_the_b1_plus_c4_identities_do_not_move_with_the_phantom_h`
+> are now **one-sided** (`reading ≤ coarse record + 0.5 pp`: an identity may
+> not get *worse* under refinement; a fall is the convergence measurement the
+> rung exists to make), the 0.5 pp ceiling itself is unchanged, the 5% band is
+> unchanged and still asserted in the same test, and the fine readings are
+> recorded **beside** the coarse ones as `STEP3F_B1_PLUS_FINE_RECORDS` (0.6177
+> / 0.5966 / 0.5647%, asserted at rtol 1e-3) so the improvement is a number the
+> suite pins rather than a slack the one-sidedness hides. The confound this
+> entry named — the phantom's `h` and the centroid sample set moving together —
+> is **measured and excluded**: step 1c's 96-point rotation-invariant ring set,
+> read on this same mesh and the same four solves, agrees with the 373-centroid
+> set within **+0.11 / +0.09 / +0.05 pp** on the `|B₁⁺|` identities and
+> **+0.24 / −1.05 / −0.71 / −1.01 / −0.41 pp** on the five restricted-CG1 SAR
+> identities — all eight inside step 1c's measured ±2 pp bar, asserted, with
+> all three negative controls surviving on the ring set (24.1868% / 123.3351% /
+> 375.0478%). `20260903T020607Z_WF-6-step3f-prime.log`, **`54 passed` / Status
+> 0 / 117 s** at `-n 2` complex with `tests/environment`; the module went `3
+> failed, 27 passed` → `0 failed`, 43 items.
 
 | | |
 |---|---|
@@ -117,6 +130,7 @@ unless fixing it is the task.
 | **Consequence** | Gate (ii) is **not** invalidated — it asserts `≤ 5%` and the new reading is 0.6%, four times *further* inside the band. What is invalidated is the claim that its 2.19 / 2.11 / 1.89% record is a converged floor with "2.3× of headroom": the headroom is at least 8× on a phantom meshed at 7.5 mm. No `\|B₁⁺\|` claim changes (they were always symmetry identities and the §2 language already says so), no absolute or homogeneity claim is created, and `WF-6` stays **🟡**. The three reds are this module's only failures; `test_birdcage_b1_plus_map.py` and the rest of the `WF-6` family are untouched and unmoved on the coarse mesh. |
 | **Resolves with** | A **review ruling**, not another implementer slot, and it is the deferred *absolute-convergence rung* arriving early — the 2026-09-02 weekly parked that rung "behind step 3f, whose anchor (i) is its first data point for free", and this is that data point. The options, none of which a slot may take: (1) re-read anchor (i) as a **one-sided** anchor (the identities must not get *worse* by more than 0.5 pp) and record the improvement as the convergence measurement it is — the direction is favourable and the same rung's SAR column depends on it; (2) commission the ring-set control on this mesh (step 1c's construction, already in `test_birdcage_b1_plus_map._ring_points`) so the `h` half and the sample-set half are separated before either number is quoted; (3) run a third rung (`phantom_resolution = 0.00375`, ≈ 8× the tag-3 cells again — cost it against step 3f₀'s +4 414 cells per halving before queueing) to see whether the identities are heading to zero or to a floor. Until a review rules, the three asserts stay exactly as written and red, and **no `\|B₁⁺\|` figure is re-recorded**. |
 | **Ruled 2026-09-02 18:00 review — option (2), with (1) folded in** | **`WF-6` step 3f′** (§9 item 2) runs step 1c's 96-point ring set (`test_birdcage_b1_plus_map._ring_points`) on the 0.0075 mesh for both the `\|B₁⁺\|` and the SAR columns (anchor: ring vs centroid within ±2 pp, step 1c's measured separation), re-reads anchor (i) **one-sided** (an identity may not get *worse* than its coarse record by more than 0.5 pp), and records the fine-rung figures 0.6177 / 0.5966 / 0.5647% as `STEP3F_B1_PLUS_FINE_RECORDS` **beside** the coarse ones, never replacing them. Option (3), the 0.00375 rung, is not queued: 3f₀ priced one halving at 5.1× the phantom cells, so the next needs a cost probe (the weekly's). This entry **retires with 3f′'s commit**; the three asserts stay red until then. |
+| **Retired by** | `WF-6` step 3f′, 2026-09-03 21:00 implementer slot, this commit — `20260903T020607Z_WF-6-step3f-prime.log:4732–4748` (the ring-vs-centroid table and the one-sided anchor), `54 passed` / Status 0 / **117 s**, `-n 2` complex, standard tier under the 600 s ceiling. All three additions the ruling asked for landed in one window on the same four solves: **(A)** the ring set on both columns, ±2 pp asserted at all eight identities (worst |Δ| **1.0548 pp**, `SAR_P4(−Rx)`); **(B)** the one-sided anchor green at all three angles with the fine records reproduced; **(C)** the twelve C4 **integral** pairs of step 3g/3h's construction on this mesh, printed not gated — **0.1550 / 0.2786 / 0.0220 / 0.1466 \| 0.0276 / 0.2370 / 0.1754 / 0.1177 \| 0.0457 / 0.0621 / 0.1952 / 0.2998%**, worst **0.2998%** against the coarse mesh's 1.5200%, so the pre-registered clause reads **(a)**: *the integral gate's headroom does not shrink with `h`* — 5.1× more headroom on the finer phantom, with the partition identity exact at rtol 1e-10 on all four drives and the P1 total 5.587038273e-08 W agreeing with `mean_sar`'s independent assembly. Every step-3f record reproduced unmoved (120 499 / 2 746 cells, 12.5225% ≤ 1626.2098%, 9.947634e-13, the five SAR identities 3.3600–2.5465%, the primal phantom power). **No band moved, no gate was registered here** (step 3h owns the SAR gate, at fixed `h`), no `\|B₁⁺\|` figure was replaced, and `WF-6` stays 🟡. Option (3) — the 0.00375 rung — is still unqueued and still wants a cost probe. |
 
 ### ✅ RETIRED 2026-08-27 (`OPS-27` step 2, 21:00 implementer slot) — a **tenth** stale exact cell-count record, and it is a **fifth** mesh with **no sibling**: `test_dodd_deeds_reactance_wire_resolution.py` recorded 366 207 and 0.11 meshes 365 970
 
