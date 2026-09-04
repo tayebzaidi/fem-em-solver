@@ -17269,3 +17269,89 @@ review land it on `main` directly as `chore(housekeeping): weekly sweep
 consider whether the sweep's own preflight should log to `housekeeping.md` when
 it skips, so a hand-run sweep is distinguishable from a scheduled one without
 reading the reflog.
+
+## 2026-09-04T00:50Z — `OPS-34` — complete (19:30 CDT implementer slot)
+
+**Preflight clean.** Tree clean on `main` at `22940e0`, container Up ~4 h. The
+16:30 slot's dirty tree was landed by the 18:00 review as `ce64659`, so the
+second-encounter/`recovered/*` path the previous entry anticipated did not
+apply — nothing was parked, `main` was clean as found.
+
+**Item taken:** §9 item 1, `OPS-34`, the first item not done or blocked.
+Executor `record-reconciler`, spawned **foreground** with the never-background
+rule and the emit-then-harness runner rule in its prompt. Three compute windows,
+all footered, all `-n 2` complex, Status 0: **143 s / 142 s / 143 s** — standard
+tier by the footers (the item's ~3 min estimate was right), ~7 min of compute
+total plus a 1 s census.
+
+**Step A — the records were stale, and by how much.**
+`20260904T003215Z_OPS-34.log:651`: raw **0.894516** against the recorded
+0.894283 (miss **2.61e-4** relative) and corrected **0.939822** against
+0.939581 (**2.56e-4**). Both are three decades over the item's 1e-6 step-B
+trigger, so step B ran. Symmetry 3.1121e-05 / spectral 0.861357 matched their
+already-0.11-era records to display precision. The 2e-3 band had indeed been
+hiding a 2.6e-4 gap, exactly as the `OPS-33` slot flag suspected.
+
+**Step B — re-base + tighten.** This route (terminated-`Z`, via
+`sparameters_from_impedance`) has **no `metrics.json` of its own**, unlike the
+package/d3 route `OPS-33` re-based from `ANS-3`'s, so the executor added one
+`repr()`-precision print and read the digits off a footered log rather than
+compute them (`20260904T003530Z_OPS-34.log:648`): raw
+**0.8945163788281**, corrected **0.9398215452105435**, symmetry
+**3.11213171925739e-05**, spectral **0.8613568943949574**, at 177 998 cells.
+All four `RECORDED_*` re-based to those digits; the v0.7.2 digits kept verbatim
+as `SUPERSEDED_V072_RECORD` (data, not prose — the `OPS-33` pattern);
+`RAW_REPRODUCTION_BAND = 2e-3` replaced by `REPRODUCTION_BAND_RELATIVE = 1e-6`
+(raw / corrected / ‖S‖₂) and `REPRODUCTION_BAND_SYMMETRY_ABSOLUTE = 1e-6`; the
+symmetry and spectral numbers promoted from printed-only to asserted.
+
+**Anchor re-run — the load-bearing measurement**
+(`20260904T004019Z_OPS-34.log:649–650,654–655,658–659`). The four reproduction
+misses on an independent run: **6.51e-10 / 6.38e-10 / 3.60e-11 (abs) /
+1.85e-10**. That is the number worth keeping: **run-to-run scatter on this
+route is ~1e-9**, a decade under `EX-37`'s 5e-8 and three decades under the new
+band — so the negative-result clause ("a miss > 1e-6 that persists after
+re-basing") does not fire, and the 1e-6 band is generous rather than fitted.
+Negative control bites: the superseded v0.7.2 raw/corrected miss the *same* run
+by 2.61e-04 / 2.56e-04, asserted to exceed the band. Physics gates unmoved and
+green — corrected mutual −6.02% inside the unmoved 10%, ‖S−Sᵀ‖/‖S‖ = 3.1121e-05
+< 1e-3, ‖S‖₂ = 0.861357 ≤ 1; 141.1 s of script time, mesh 32.6 s, solves
+26.0 + 24.3 s.
+
+**Census** (run by this slot, not the executor):
+`20260904T004409Z_OPS-34-census.log:101` reads `dead=0 guide=0 stale=62
+stale_severity=report exit=2` — `exit != 1` satisfied, staleness-only per
+`OPS-19`.
+
+**Verified against the logs, not the report.** The executor's report quoted
+`raw=0.8945163788281` from the record window; the anchor window reads
+`0.8945163782461952` — the 6.5e-10 scatter above, not a discrepancy, and the
+in-file constant is the record window's digit as the (1\*) licence requires.
+Diff re-read line by line: only `examples/ports/01_two_torus_port_pair.py` is
+touched; `MUTUAL_TOLERANCE`, `S_SYMMETRY_BAND`, `S_SPECTRAL_NORM_CEILING`
+unmoved; the deleted `RAW_REPRODUCTION_BAND` is file-local (the gate module
+defines its own, confirmed by grep); no `*_private.md` or `aed_results/` path
+in the diff; `01_two_torus_port_pair.md` carries none of these four numbers, so
+there is no guide copy to move with them.
+
+**Left explicitly undone, for a review (both out of the (1\*) licence).**
+(a) `tests/validation/test_port_package_sparameters.py:94–96` still carries
+`RECORDED_RAW_RATIO` 0.894283 / `RECORDED_CORRECTED_RATIO` 0.939581 under
+`RAW_REPRODUCTION_BAND = 2e-3` — now **measured** 2.6e-4 stale rather than
+merely suspected, which is the number the item said a review would need. Its
+`delta > RAW_REPRODUCTION_BAND` blind-fixture control at `:396` is keyed to the
+same band, so a re-base there is not a two-line edit. (b) The same v0.7.2
+digits appear as docstring prose in `src/fem_em_solver/ports/gap_voltage.py:31–32`
+(and in `tests/validation/test_port_gap_voltage_impedance.py:523–552, 2696` as
+`PORT-1`'s gated record, where they are historically correct and should
+probably stay).
+
+**No allowlist denial, no docker-socket denial, no compute-safety event.** The
+emit-then-harness path was used for all three example windows.
+
+**Hypothesis for the next attempt:** nothing is owed on `OPS-34` itself. The
+next slot takes §9 item 2 (`EX-44`, `example-runner`). The open question this
+run hands the review is (a) above — and, more generally, whether the ~1e-9
+scatter measured here justifies pulling the *gate* module's 2e-3 down as well,
+which would turn a band that currently cannot see a 2.6e-4 image drift into one
+that can.
