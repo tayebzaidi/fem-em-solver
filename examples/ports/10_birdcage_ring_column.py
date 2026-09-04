@@ -62,7 +62,7 @@ import numpy as np
 import ufl
 from mpi4py import MPI
 
-from dolfinx import fem, io
+from dolfinx import fem
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
 # The runner puts only ``src`` on PYTHONPATH; the repo root goes on sys.path so
@@ -78,8 +78,7 @@ from fem_em_solver.core import (  # noqa: E402
 )
 from fem_em_solver.io.paraview_utils import (  # noqa: E402
     adopt_host_ownership,
-    cell_tags_to_function,
-    consolidate_xdmf_grids,
+    write_xdmf_with_tags,
 )
 from fem_em_solver.ports.lumped import LumpedSheetPortSpec  # noqa: E402
 
@@ -237,25 +236,23 @@ def _magnitude_field(e_complex, name):
 
 def _write_combined(msh, cell_tags, sheet_tags, fields, comm):
     """Mesh + ``CellTags`` + the DG0 fields + the 32 sheet facet tags, in
-    **one** XDMF file. ``write_xdmf_with_tags`` writes cell-based data only
-    (no facet ``MeshTags`` parameter), so this inlines its pattern —
-    ``cell_tags_to_function``/``consolidate_xdmf_grids`` imported, not
-    reimplemented — and adds ``xdmf.write_meshtags`` for the sheets before
-    the file closes, rather than opening a second file the way `EX-44`/`EX-45`
-    did for the same rung's mesh-only examples.
+    **one** XDMF file, through the shared helper. ``write_xdmf_with_tags``
+    took cell data only until `OPS-38` gave it the additive ``facet_tags``
+    keyword (round-tripped against the closed-form face area in
+    ``tests/io/test_xdmf_facet_tags.py``); this example's inlined copy of
+    the pattern is gone.
     """
     OUTPUT_DIR.mkdir(exist_ok=True)
-    path = OUTPUT_DIR / f"{BASENAME}_combined.xdmf"
-    msh.topology.create_connectivity(msh.topology.dim - 1, msh.topology.dim)
-    with io.XDMFFile(comm, path, "w") as xdmf:
-        xdmf.write_mesh(msh)
-        xdmf.write_function(cell_tags_to_function(msh, cell_tags))
-        for func in fields.values():
-            xdmf.write_function(func)
-        xdmf.write_meshtags(sheet_tags, msh.geometry)
-    consolidate_xdmf_grids(path, comm=comm)
+    path, _ = write_xdmf_with_tags(
+        OUTPUT_DIR / f"{BASENAME}_combined",
+        msh,
+        cell_tags,
+        fields,
+        comm=comm,
+        facet_tags=sheet_tags,
+    )
     adopt_host_ownership(OUTPUT_DIR, comm=comm)
-    return path if comm.rank == 0 else None
+    return path
 
 
 def main() -> None:

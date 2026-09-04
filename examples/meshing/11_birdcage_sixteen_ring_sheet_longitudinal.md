@@ -110,10 +110,10 @@ the 4-leg one, the spread would fall inside `2.0e-5` and this control would
 fail by construction.
 
 **Step 7 — open the mesh in ParaView.** `File → Open →`
-`examples/meshing/paraview_output/meshing_11_birdcage_sixteen_ring_sheet_longitudinal_combined.xdmf`,
-and
-`examples/meshing/paraview_output/meshing_11_birdcage_sixteen_ring_sheet_longitudinal_facets.xdmf`
-alongside it.
+`examples/meshing/paraview_output/meshing_11_birdcage_sixteen_ring_sheet_longitudinal_combined.xdmf`
+— one file, carrying both the cell grid and the sheet facet grid. `OPS-38`
+folded the sheets into the combined file; the separate facet file this rung
+used to write alongside it is gone.
 
 - Threshold `CellTags` in the `_combined` file: `1` conductor, `2` air, `3`
   phantom, `101-116` the sixteen uncut leg boxes, `117-148` / `217-248` the
@@ -122,7 +122,7 @@ alongside it.
   grid): `> 0` isolates the 32 ring-port boxes directly, and its own value
   is each port's measured terminal area — the two clustered values *are* the
   two triangulation states, visible without cross-referencing the cell tags.
-- In the `_facets` file, threshold `mesh_tags` to `227-258` for the 32
+- In the same file's facet block, threshold `mesh_tags` to `227-258` for the 32
   reconstructed longitudinal sheets — radial rectangles in each gap's own
   `u = R` plane, each spanning its gap's full chord through both terminal
   disks' centres.

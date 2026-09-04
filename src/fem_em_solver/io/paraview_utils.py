@@ -87,6 +87,11 @@ def consolidate_xdmf_grids(xdmf_path, comm=MPI.COMM_WORLD):
         for grid in grids:
             if grid is mesh_grid:
                 continue
+            if grid.find("Topology") is not None:
+                # Owns its own topology (a write_meshtags facet grid): its
+                # attributes are indexed by facets, not cells, so they cannot
+                # be lifted onto the mesh grid. Leave it as its own block.
+                continue
             # Function grids are temporal collections; descend to every
             # uniform grid inside and lift out its attributes.
             for uniform in grid.iter("Grid"):
@@ -123,13 +128,22 @@ def cell_tags_to_function(mesh, cell_tags, name="CellTags"):
     return tags
 
 
-def write_xdmf_with_tags(filename, mesh, cell_tags, functions, comm=MPI.COMM_WORLD):
+def write_xdmf_with_tags(
+    filename, mesh, cell_tags, functions, comm=MPI.COMM_WORLD, facet_tags=None
+):
     """
     Write a single XDMF output containing mesh, optional cell tags, and fields.
 
     Cell tags are written as a DG0 cell array named "CellTags" on the same
     grid as the fields (see :func:`cell_tags_to_function`), so ParaView can
     threshold on them like any other array.
+
+    Optional ``facet_tags`` are written with ``XDMFFile.write_meshtags`` into
+    the *same* file, as their own (facet-topology) grid — the sheets cannot
+    live on the cell grid, so they stay a separate block, but the caller gets
+    one file instead of two. :func:`consolidate_xdmf_grids` is still called
+    once, last, and only merges the *field* grids onto the mesh grid; the
+    facet grid owns its own Topology and is left alone.
 
     Parameters
     ----------
@@ -143,12 +157,21 @@ def write_xdmf_with_tags(filename, mesh, cell_tags, functions, comm=MPI.COMM_WOR
         Mapping of field name -> function to write on the same grid.
     comm : MPI.Comm
         MPI communicator.
+    facet_tags : dolfinx.mesh.MeshTags | None
+        Optional facet tags, written into the same file as a facet grid
+        (array name is the tag object's ``name``, e.g. ``mesh_tags``).
     """
     from dolfinx import io
 
     filename = Path(filename)
     xdmf_file = filename.with_suffix(".xdmf")
     h5_file = filename.with_suffix(".h5")
+
+    if facet_tags is not None:
+        # write_meshtags needs facet -> cell connectivity to place the tagged
+        # entities in the mesh's topology (known-issues 9).
+        tdim = mesh.topology.dim
+        mesh.topology.create_connectivity(tdim - 1, tdim)
 
     with io.XDMFFile(comm, xdmf_file, "w") as xdmf:
         xdmf.write_mesh(mesh)
@@ -157,6 +180,9 @@ def write_xdmf_with_tags(filename, mesh, cell_tags, functions, comm=MPI.COMM_WOR
 
         for _, func in functions.items():
             xdmf.write_function(func)
+
+        if facet_tags is not None:
+            xdmf.write_meshtags(facet_tags, mesh.geometry)
 
     # One grid per file, or ParaView loads a multiblock and Plot Over Line
     # returns NaN for every array outside the first block.

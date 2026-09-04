@@ -120,8 +120,10 @@ opt-in would have leaked into the default emission, or the longitudinal sheet
 would not actually span the drive direction.
 
 **Step 6 — open the mesh in ParaView.** `File → Open →`
-`examples/meshing/paraview_output/meshing_10_birdcage_ring_sheet_longitudinal_combined.xdmf`,
-and `meshing_10_birdcage_ring_sheet_longitudinal_facets.xdmf` alongside it.
+`examples/meshing/paraview_output/meshing_10_birdcage_ring_sheet_longitudinal_combined.xdmf`
+— one file, carrying both the cell grid and the sheet facet grid. `OPS-38`
+folded the sheets into the combined file; the separate facet file this rung
+used to write alongside it is gone.
 
 - Threshold `CellTags` in the `_combined` file: `1` conductor, `2` air, `3`
   phantom, `101-104` the four uncut leg boxes, `105-112` / `205-212` the
@@ -130,7 +132,7 @@ and `meshing_10_birdcage_ring_sheet_longitudinal_facets.xdmf` alongside it.
 - Threshold `105` and `205` separately (one ring port): the flat radial
   interface between them, at `u = ring_radius`, *is* that port's longitudinal
   sheet.
-- In the `_facets` file, threshold `mesh_tags` to `215-222`. Those are the
+- In the same file's facet block, threshold `mesh_tags` to `215-222`. Those are the
   eight sheets themselves — planar rectangles lying in the `u = R` plane, each
   running the gap's full chord along `phi_hat` and through both terminal
   disks' centres along `ẑ`, unlike the mid-gap transverse sheets `mesh:7` /

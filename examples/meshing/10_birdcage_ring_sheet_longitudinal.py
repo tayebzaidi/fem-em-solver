@@ -20,8 +20,8 @@ known-issues 2026-09-03): only the 4-leg rung is shown here, at
 mesh as the negative control, and the longitudinal 4-leg mesh as the subject.
 The longitudinal mesh is written as one combined XDMF carrying the cell tags
 (the inner ``100+i`` / outer ``200+i`` halves of each ring port's box, split
-by the sheet at ``u = R``) and, separately, the reconstructed sheet facet
-tags — so ParaView can threshold one ring port's two halves either side of
+by the sheet at ``u = R``) and, in the same file, the reconstructed sheet
+facet tags — so ParaView can threshold one ring port's two halves either side of
 the sheet, and the sheet itself edge-on.
 
 **It asserts, it does not merely render** (the `ANS-1` rule): every anchor
@@ -54,9 +54,9 @@ Output lands in ``examples/meshing/paraview_output/``: open
 ``meshing_10_birdcage_ring_sheet_longitudinal_combined.xdmf`` and threshold on
 ``CellTags`` (1 = conductor, 2 = air, 3 = phantom, 101-104 = the four uncut
 leg boxes, 105-112 / 205-212 = the inner/outer halves of the eight ring gap
-boxes — both end rings, four gaps each), then
-``meshing_10_birdcage_ring_sheet_longitudinal_facets.xdmf`` for
-``mesh_tags`` 215-222, the eight reconstructed longitudinal sheets.
+boxes — both end rings, four gaps each). The same file carries the facet
+block: threshold ``mesh_tags`` 215-222 for the eight reconstructed
+longitudinal sheets.
 """
 
 from __future__ import annotations
@@ -68,7 +68,6 @@ from pathlib import Path
 import numpy as np
 from mpi4py import MPI
 
-from dolfinx import io
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
 # The runner puts only ``src`` on PYTHONPATH; the repo root goes on sys.path so
@@ -104,26 +103,26 @@ OUTPUT_DIR = Path(__file__).resolve().parent / "paraview_output"
 BASENAME = "meshing_10_birdcage_ring_sheet_longitudinal"
 
 
-def _write_cells(mesh, cell_tags, comm):
-    """The longitudinal mesh + cell tags as a DG0 ``CellTags`` array."""
+def _write_combined(mesh, cell_tags, facet_tags, comm):
+    """One file: the longitudinal mesh + a DG0 ``CellTags`` array + the eight
+    reconstructed sheets as ``mesh_tags`` on their own tdim-1 grid.
+
+    `EX-45` wrote the sheets into a second, facet-only file; `OPS-38` gave
+    ``write_xdmf_with_tags`` the additive ``facet_tags`` keyword (round-tripped
+    against the closed-form face area in ``tests/io/test_xdmf_facet_tags.py``)
+    so this rung ships the single combined file §5.4 asks for.
+    """
     OUTPUT_DIR.mkdir(exist_ok=True)
     path, _ = write_xdmf_with_tags(
-        OUTPUT_DIR / f"{BASENAME}_combined", mesh, cell_tags, {}, comm=comm
+        OUTPUT_DIR / f"{BASENAME}_combined",
+        mesh,
+        cell_tags,
+        {},
+        comm=comm,
+        facet_tags=facet_tags,
     )
     adopt_host_ownership(OUTPUT_DIR, comm=comm)
     return path
-
-
-def _write_facets(mesh, facet_tags, comm):
-    """The eight reconstructed longitudinal sheets, on their own tdim-1 grid."""
-    OUTPUT_DIR.mkdir(exist_ok=True)
-    path = OUTPUT_DIR / f"{BASENAME}_facets.xdmf"
-    mesh.topology.create_connectivity(mesh.topology.dim - 1, mesh.topology.dim)
-    with io.XDMFFile(comm, path, "w") as xdmf:
-        xdmf.write_mesh(mesh)
-        xdmf.write_meshtags(facet_tags, mesh.geometry)
-    adopt_host_ownership(OUTPUT_DIR, comm=comm)
-    return path if comm.rank == 0 else None
 
 
 def _sheet_rows(m, leg_count):
@@ -265,8 +264,9 @@ def main() -> None:
 
     # ---- ParaView ------------------------------------------------------------
     written = {
-        "combined": _write_cells(long_m["mesh"], long_m["cells"], comm),
-        "facets": _write_facets(long_m["mesh"], long_m["sheet_tags"], comm),
+        "combined": _write_combined(
+            long_m["mesh"], long_m["cells"], long_m["sheet_tags"], comm
+        ),
     }
     if comm.rank == 0:
         print("\n[paraview] wrote:")
@@ -282,7 +282,7 @@ def main() -> None:
             "the inner/outer halves of the ring gap boxes split by the "
             "longitudinal sheet at u = R); threshold `100+i` and `200+i` "
             "separately for one port to see the two halves either side of the "
-            "sheet. In the _facets file threshold `mesh_tags` to "
+            "sheet. In the same file threshold `mesh_tags` to "
             f"{210 + first}-{210 + last} for the sheets themselves — planar "
             "rectangles in the u = R plane, each spanning its gap's full chord "
             "and running through both terminal disks' centres."

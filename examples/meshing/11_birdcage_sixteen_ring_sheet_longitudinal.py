@@ -56,9 +56,9 @@ threshold on ``CellTags`` (1 = conductor, 2 = air, 3 = phantom, 101-116 the
 sixteen uncut leg boxes, 117-148 / 217-248 the inner/outer halves of the 32
 ring gap boxes, split by the longitudinal sheet at ``u = R``) or on the DG0
 field ``RingPortTerminalArea`` (each ring port's own measured terminal area,
-broadcast to both its halves, 0 elsewhere) to isolate the low-state ports;
-then ``meshing_11_birdcage_sixteen_ring_sheet_longitudinal_facets.xdmf`` for
-``mesh_tags`` 227-258, the 32 reconstructed longitudinal sheets.
+broadcast to both its halves, 0 elsewhere) to isolate the low-state ports.
+The same file carries the facet block: threshold ``mesh_tags`` 227-258 for
+the 32 reconstructed longitudinal sheets.
 """
 
 from __future__ import annotations
@@ -70,7 +70,7 @@ from pathlib import Path
 import numpy as np
 from mpi4py import MPI
 
-from dolfinx import fem, io
+from dolfinx import fem
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
 # The runner puts only ``src`` on PYTHONPATH; the repo root goes on sys.path so
@@ -121,8 +121,15 @@ EXPECTED_LOW_STATE_COUNT = 10
 EXPECTED_TERMINAL_COUNT = 2 * SCALED_LEG_COUNT
 
 
-def _write_cells(mesh, cell_tags, field, comm):
-    """The longitudinal mesh + cell tags + the per-port terminal-area field."""
+def _write_combined(mesh, cell_tags, field, facet_tags, comm):
+    """One file: the longitudinal mesh + cell tags + the per-port terminal-area
+    field + the 32 reconstructed sheets as ``mesh_tags``.
+
+    `EX-45` wrote the sheets into a second, facet-only file; `OPS-38` gave
+    ``write_xdmf_with_tags`` the additive ``facet_tags`` keyword (round-tripped
+    against the closed-form face area in ``tests/io/test_xdmf_facet_tags.py``)
+    so this rung ships the single combined file §5.4 asks for.
+    """
     OUTPUT_DIR.mkdir(exist_ok=True)
     path, _ = write_xdmf_with_tags(
         OUTPUT_DIR / f"{BASENAME}_combined",
@@ -130,21 +137,10 @@ def _write_cells(mesh, cell_tags, field, comm):
         cell_tags,
         {"RingPortTerminalArea": field},
         comm=comm,
+        facet_tags=facet_tags,
     )
     adopt_host_ownership(OUTPUT_DIR, comm=comm)
     return path
-
-
-def _write_facets(mesh, facet_tags, comm):
-    """The 32 reconstructed longitudinal sheets, on their own tdim-1 grid."""
-    OUTPUT_DIR.mkdir(exist_ok=True)
-    path = OUTPUT_DIR / f"{BASENAME}_facets.xdmf"
-    mesh.topology.create_connectivity(mesh.topology.dim - 1, mesh.topology.dim)
-    with io.XDMFFile(comm, path, "w") as xdmf:
-        xdmf.write_mesh(mesh)
-        xdmf.write_meshtags(facet_tags, mesh.geometry)
-    adopt_host_ownership(OUTPUT_DIR, comm=comm)
-    return path if comm.rank == 0 else None
 
 
 def _terminal_area_field(m):
@@ -376,8 +372,9 @@ def main() -> None:
     # ---- ParaView ------------------------------------------------------------
     field = _terminal_area_field(m)
     written = {
-        "combined": _write_cells(m["mesh"], m["cells"], field, comm),
-        "facets": _write_facets(m["mesh"], m["sheet_tags"], comm),
+        "combined": _write_combined(
+            m["mesh"], m["cells"], field, m["sheet_tags"], comm
+        ),
     }
     if comm.rank == 0:
         print("\n[paraview] wrote:")
@@ -394,7 +391,7 @@ def main() -> None:
             "longitudinal sheet at u = R); or threshold the DG0 field "
             "`RingPortTerminalArea` (> 0 isolates the 32 ring-port boxes, and "
             "its own two values are the two terminal-area states directly). "
-            "In the _facets file threshold `mesh_tags` to "
+            "In the same file threshold `mesh_tags` to "
             f"{210 + first}-{210 + last} for the 32 sheets themselves."
             f"\n\nAll identities hold at {SCALED_LEG_COUNT} legs across "
             f"{len(m['ring_ports'])} ring ports; {low_count} of "
