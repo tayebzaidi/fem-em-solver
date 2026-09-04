@@ -17522,3 +17522,94 @@ constant's *value* is unchanged, only its band-selection neighbour moved, so
 the pin still holds — worth the review confirming). Its live risk is cost:
 this module alone now runs 222 s for mesh-only work at 270 728 cells, so a
 heavy solve on the same rung wants a cost probe before a full window.
+
+---
+
+## 2026-09-04T05:11Z — `PORT-13` step 1 — **complete**
+
+Scheduled implementer slot, 00:00 local. Preflight clean at `a494f7e`,
+container Up 9 h, no `attempt/*` or `recovered/*`. §9 items 1–3 are marked
+done, so the first open item is **item 4, `PORT-13` step 1** — taken as
+written, no fallback, no substitution. Executor: `implementer`, spawned
+**foreground**; no harness window was ever backgrounded and no executor was
+in flight at a turn boundary.
+
+**Outcome: §4-complete on the first run**, committed to `main` at `052bd61`
+(new `tests/validation/test_port_birdcage_ring_column.py`, the log, the
+`test-results.md` row and the §7 `PORT-13` flip ⬜ → 🟡 with step 1 ✅,
+together). Tree clean after. **No `src/` change** — the chunk is a new test
+module against the shipped `ports/lumped.py` route.
+
+**One harness window, heavy tier by measurement:**
+`20260904T050538Z_PORT-13.log` — `14 passed in 325.27s`, **Status 0, elapsed
+329 s** (`:10842`, `:11300–11301`), `-n 8`, complex build with
+`FEM_EM_REQUIRE_COMPLEX=1` and `tests/environment` first, container-side
+`timeout -k 30 570`. The item priced `timeout -k 30 1200`, which does not fit
+one foreground window; the executor sized to 570 s instead and the run
+finished in 329 s, so the ceiling was never material and the 900 s stop rule
+was never approached.
+
+**Measured, re-read by this slot at the cited lines (the digits below are
+from the log, not from the executor's report):**
+- Fixture `:10714` — **270 728 cells at ratio 1.000000** of
+  `RING_LONGITUDINAL_SCALED_CELL_RECORD`, **imported** from
+  `tests/mesh/test_birdcage_ring_sheet_orientation.py`, never restated;
+  orientation `'longitudinal'`, mesh 106.07 s, 32 ring ports, **P17** (bottom
+  ring, 11.250°) driven at 1 V with every other port at `Z_p = z0 = 50 Ω`,
+  10 MHz, degree 1. Both pre-registered edits honoured: the control is the
+  270 728 longitudinal record, not `EX-35`'s 265 621.
+- Port spec `:10716` — `h = ring_port_gap_chord_m` = **8.008718871e-03 m**
+  (arc 8.0e-03), `w = A/h` from the reconstructed sheet =
+  **1.000000000e-02 m**, C32 `w` spread 2.255e-15. Both printed, as the item
+  requires; `gap_height_m` is passed, nothing derives it.
+- **Anchor (i)** `:10750–10756` — supplied 5.078728668e-03 W vs phantom
+  9.180375767e-09 (0.0002%) + conductor 1.612862046e-04 (3.1757%) + 32
+  sheets 4.868272216e-03 (95.8561%); residual **9.679798e-03 INSIDE** the
+  imported, unmoved 1e-2.
+- **Anchor (ii)** `:10760–10763` — P25 and P41, the two ports diametrically
+  opposite P17 (both 191.250°, located from the measured sheet azimuths),
+  agree to **0.3504%** complex / 0.0072% magnitude-only against the
+  pre-registered 5%. The full 32-vector of `V = V_src − I·Z_p` with per-port
+  `I` is printed at `:10717–10749` for step 2.
+- **Price** `:10715` — **one solve 27.96 s wall at `-n 8`**, 6–13× under the
+  item's ≈ 3–6 min prediction (the run is mesh-bound: 106 s mesh, 118 s rung).
+  Summed `ru_maxrss` **5.732 GiB** against the 128 G cap.
+
+**Two things for the review, neither a deviation from the item's letter.**
+(a) **Anchor (i) passes at 0.97 of its band** — 9.679798e-03 against 1e-2.
+That is the same place `WF-6` step 1's own 9.80e-3 sits and the band was
+imported unmoved, so the reading is in-family and nothing was loosened; but
+it is a thin margin and any step-2 change that perturbs the accounting could
+cross it. Worth a review deciding whether the ring column deserves its own
+error budget rather than inheriting `WF-6`'s. (b) **The item's ≥ 100×
+separation was asserted by argument, not executed** — the item says so
+explicitly (the transverse-sheet solve is deliberately not run). What *was*
+executed is a cheaper free in-run control the executor added: dropping the
+conductor term gives 4.143700e-02 = **4.14×** the band (`:10756`). That is a
+sensitivity check on one term, not the O(1) mis-wiring control the item's
+prose describes, and I am not claiming the 100× figure as measured.
+
+Also noted: the executor deliberately did **not** use the 0.5%
+`ADJACENT_SPREAD_BAND` for anchor (ii), keeping the item's pre-registered 5%,
+because the 0.5% tightening was measured on the 4-leg leg-gap fixture; the
+reason is a code comment on `OPPOSITE_SPREAD_BAND`. No band widened, no
+record moved, no §2 claim. Scope held: one solve, one identity, one price —
+no 32×32, no C16 gate, no tuning or resonance claim.
+
+The §9 item-4 pin question the 22:30 slot raised is resolved: the module
+`tests/mesh/test_birdcage_ring_sheet_orientation.py` was read at `a494f7e`
+and `RING_LONGITUDINAL_SCALED_CELL_RECORD` still reads 270 728, reproduced
+in-run at ratio 1.000000.
+
+**No compute-safety event, no docker-socket denial, no allowlist denial, no
+container wedge.** One window, 329 s, well inside every ceiling.
+
+**Hypothesis for the next attempt:** the next slot takes §9 item 5 (`GEO-25`
+rungs 1 and 2, the F-human cost probe, `mesh-probe`, `-n 1`) — item 4 is
+done and nothing in the queue is serial on it. For `PORT-13` **step 2**,
+which is a review's to scope: at 27.96 s/solve the full 32×32 projects to
+≈ 895 s of solve time plus one 106 s mesh, over the 20-minute per-command
+rule as a single command, so it wants splitting into two or four windows over
+one cached mesh (the `build_four_port_sweep(reuse=…)` precedent), with
+reciprocity `‖S−Sᵀ‖/‖S‖` at `PORT-9`'s unmoved 1e-3 as the natural first gate
+rather than a C16 spread.

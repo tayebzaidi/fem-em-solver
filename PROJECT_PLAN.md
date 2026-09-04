@@ -7815,7 +7815,34 @@ denied; write it relative.
    area (the low-state count off 10), is a new generator finding — journal
    with the readings in the §7 row, band not widened further, stop.
 
-4. **`PORT-13` step 1 — the first solve on the 16-leg / 32-ring-port
+4. ✅ **done 2026-09-04, 00:00 slot** — both anchors green on the first run
+   (`20260904T050538Z_PORT-13.log`, `14 passed in 325.27s`, Status 0, 329 s,
+   `-n 8` complex, heavy by measurement; container-side `timeout -k 30 570`,
+   not the item's 1200 s, which does not fit one foreground window). Both
+   pre-registered edits honoured: the in-run control is **270 728 at ratio
+   1.000000** of the imported `RING_LONGITUDINAL_SCALED_CELL_RECORD` (`:10714`)
+   and the port spec prints `h = ring_port_gap_chord_m` = 8.008718871e-03 m,
+   `w = A/h` = 1.000000000e-02 m at a C32 spread of 2.255e-15 (`:10716`).
+   **Anchor (i)** residual **9.679798e-03 INSIDE** the imported, unmoved 1e-2
+   (`:10750–10756`); **anchor (ii)** P25/P41 opposite the driven P17 agree to
+   **0.3504%** complex / 0.0072% magnitude-only against 5% (`:10760–10763`),
+   with the 32-vector printed for step 2 at `:10717–10749`. **Price: one solve
+   27.96 s wall at `-n 8`**, 6–13× under the item's estimate (mesh-bound:
+   106 s mesh), peak summed `ru_maxrss` 5.732 GiB vs the 128 G cap; the 900 s
+   stop rule was never approached. New module
+   `tests/validation/test_port_birdcage_ring_column.py`, no `src/` change, no
+   band widened, no record moved. **Two notes for a review:** (a) anchor (i)
+   sits at **0.97 of its band** — in family with `WF-6` step 1's own 9.80e-3
+   and imported unmoved, but thin enough that the ring column may deserve its
+   own error budget before step 2; (b) the item's ≥ 100× separation is
+   asserted by argument, not executed (the item says so) — what ran is a free
+   in-run sensitivity control, conductor term dropped, at **4.14×** the band
+   (`:10756`), which is not the O(1) mis-wiring control and is not claimed as
+   one. `PORT-13` → 🟡. Step 2 is a review's to scope from the price: 32×32
+   projects to ≈ 895 s of solve time plus one 106 s mesh, over the 20-minute
+   per-command rule as one window. See the §7 row. Original item text follows.
+
+   **`PORT-13` step 1 — the first solve on the 16-leg / 32-ring-port
    high-pass layout, on the longitudinal sheets** (heavy, `-n 8` complex,
    `main`; **independent** — unblocked by the 18:00 review's ruling; the
    record `RING_LONGITUDINAL_SCALED_CELL_RECORD = 270 728` is on `main` at
