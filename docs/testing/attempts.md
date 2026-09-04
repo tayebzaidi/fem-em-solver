@@ -18058,3 +18058,78 @@ questions it leaves are the σ_max margin (5.5e-07 — tight enough that the
 0.97-of-band accounting residual is the obvious next suspect to quantify)
 and everything the fixture still does not have (Larmor frequency, tuning,
 mode spectrum).
+
+## 2026-09-04T18:40Z — `EX-47` — **complete** (13:30 CDT implementer slot)
+
+**Item.** §9 "On deck" item 2 — item 1 (`PORT-13` step 3) was already marked
+done by the 12:00 slot, so item 2 was the first open one; taken as written, no
+substitution. Executor: `example-runner`, spawned **foreground** with the
+never-background rule, the emit-then-harness rule, the repo-relative harness
+path, both census windows through `run_and_log.sh`, and the full-filename guide
+rule all restated in the spawn prompt.
+
+**Outcome: §4-complete on the first attempt, one compute window.** New pair
+`examples/ports/11_birdcage_ring_mirror_pair.py` / `.md` (`ports:11`): the ring
+context built once, P17 and its measured z-mirror P33 driven through the
+imported `_solve_one_drive`, both `|E|` fields written as two distinctly named
+DG0 arrays into one combined XDMF with cell and sheet facet tags, and the 2×2
+sub-block printed with its reciprocity, the worst mirror pair, both passivity
+sums and both residuals.
+
+**Measured (all from `20260904T183520Z_EX-47.log`, re-read by this slot).**
+Status 0, harness **110 s**, in-script total 106.5 s at `-n 4` — mesh 69.26 s,
+rung 75.89 s, solves 13.20 s and 12.98 s (`:10561`, `:10563`, `:10588`), well
+inside the 600 s window and under the ≈ 300 s estimate. Anchors, every one
+imported from `tests/validation/test_port_birdcage_ring_column.py` and none
+restated: cells **270 728**, ratio 1.000000 against
+`RING_LONGITUDINAL_SCALED_CELL_RECORD` (`:10561`); the sub-block
+`S_P17,P17 = −1.574573363e-02+4.001658480e-02j`,
+`S_P33,P17 = S_P17,P33 = +8.930511224e-01−5.305026455e-02j`,
+`S_P33,P33 = −1.574724803e-02+4.001898663e-02j`, giving
+`‖S₂ − S₂ᵀ‖_F/‖S₂‖_F = 1.371994e-13` vs the unmoved 1e-3 (`:10575–10578`);
+worst of the 32 mirror pairs **P20/P36 at 0.0308%** vs 5%, the same pair and
+figure step 2 read (`:10581–10582`); column passivity **0.915817419** (P17) and
+**0.915816510** (P33), margins +0.084182581 / +0.084183490 (`:10569–10571`);
+power residuals **9.679798e-03** and **9.680020e-03** vs 1e-2, supplied power
+5.078728668e-03 / 5.078736240e-03 W (`:10565–10567`); and the tie to the
+audited gate — the P17 sum against step 2's `-n 8` record 0.915817419 at
+relative **2.394e-10**, inside the cross-rank rtol 1e-3 and far inside it, the
+`EX-46` precedent (`:10573`). **Negative control:** the P17 column × 1.01 moves
+the ratio to **9.938650e-03 = 9.939×** the band against the 5× bar; the item's
+own arithmetic predicted ≈ 9.3×, and the log states plainly that nothing larger
+is claimed than what was computed (`:10579`).
+
+**Census both sides, through the harness.** Pre
+(`20260904T183512Z_EX-47-precensus.log`) `dead=1 guide=0 stale=65 exit=1` — the
+new guide's forward reference to an artifact the run had not yet written; post
+(`20260904T183717Z_EX-47-postcensus.log:104`) **`dead=0 guide=0 stale=65
+exit=2`**, staleness-only, all 65 pre-existing (the four `time_harmonic_07/08`
+artifacts at 102.1 h are visible in the tail). The predicted delta was written
+down before the run and matched. Corpus now **41** runnable examples, 41
+guided, 0 pending. The `EX-45`/`EX-44` full-filename trap did not recur — the
+guide's references carry `ports_11_birdcage_ring_mirror_pair_combined.xdmf` in
+full, which is exactly why `dead` went to 0.
+
+**Scope held; no deviation.** §9 item 1 had landed `_build_ring_context` in the
+step-2 module at `04c12d0`, so the example took the item's preferred import
+branch and there is **no `tests/` change and no `src/` change at all** — the
+standing additive licence was available and was not needed, so no gate re-run
+was owed. No band, no gate, no 32×32, no tuning or resonance claim; the
+artifacts are gitignored under `examples/ports/paraview_output/` and are absent
+from the commit. Neither the runner socket-denial trap nor any allowlist denial
+occurred; the emitted `--dry-run` command was copied verbatim into the harness.
+
+**Verification by this slot, not the executor.** The report was re-read against
+the logs before this entry: the footer (`Status: 0`, `Elapsed (s): 110`), all
+seven anchor digits, the control factor, and the post-census `dead=0 guide=0
+stale=65 exit=2`. No disagreement — the logs and the report agree line for line.
+
+**Logs:** `20260904T183512Z_EX-47-precensus.log`,
+`20260904T183520Z_EX-47.log`, `20260904T183717Z_EX-47-postcensus.log`. No
+branch parked; `main` clean at preflight and after the commit.
+
+**Next.** §9 items 3–5 remain open (`OPS-38`, the `GEO-25` `mesh-probe`,
+`MAT-6` step 11 as the spare) — the 15:00 slot takes item 3. Note for the
+review: `OPS-38` step C re-points `ports:10`'s write path, and `ports:11` now
+inlines the same two-array combined write, so it is a fourth candidate caller
+for the new `facet_tags` keyword if the review wants the rung on one write path.
