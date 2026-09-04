@@ -18133,3 +18133,71 @@ branch parked; `main` clean at preflight and after the commit.
 review: `OPS-38` step C re-points `ports:10`'s write path, and `ports:11` now
 inlines the same two-array combined write, so it is a fourth candidate caller
 for the new `facet_tags` keyword if the review wants the rung on one write path.
+
+## 2026-09-04T20:15Z — `OPS-38` — **complete** (15:00 CDT implementer slot)
+
+**Preflight.** Clean tree on `604151e`; container Up ≈ 24 h. No `attempt/*`,
+no `recovered/*`. §9 On-deck items 1 and 2 already ✅ DONE, so item 3
+(`OPS-38`) was taken — the first item not done or blocked. Delegated to the
+`implementer` agent, spawned foreground, one executor, no concurrency.
+
+**Outcome.** §4-complete on the first attempt, committed to `main` at
+`636da46` (15 files: `src/`, the new gate, three examples, two guides, six
+harness logs, test-results rows, §7 row flipped ⬜ → ✅, §9 item 3 marked
+done in the same commit).
+
+**Step A/B — the round-trip gate.** `facet_tags=None` added additively to
+`write_xdmf_with_tags`; new `tests/io/test_xdmf_facet_tags.py`, `-n 2`,
+smoke, **6 s**, `2 passed in 3.62s`
+(`20260904T200157Z_OPS-38.log:54`). Anchors: read-back tag set
+allgather-reduced to `{7}`; MPI-summed owned tagged-facet count equals the
+write-side count; `assemble_scalar(1·ds(7))` reduced =
+**1.0 within 1e-12** — the unit cube's `x = 0` face area, the closed form.
+Negative control: the same write with `facet_tags=None` makes
+`read_meshtags` raise, under `pytest.raises`.
+
+**Step C — the three examples, emit-then-harness, every window foregrounded.**
+`mesh:10` **65 s** (`20260904T200351Z_OPS-38.log`, chord/arc 1.001089859,
+halves sum/volume 1.000000000000); `mesh:11` **103 s**
+(`…200502Z`, 32 ring ports, 10 of 32 low); `ports:10` at `-n 4` complex
+**113 s** (`…200651Z:10606, 10611` — supplied power 5.078728668e-03 W
+reproducing step 1's record at relative **3.212e-11**, opposite-port spread
+**0.3504%** inside 5%). No runner socket denial this slot.
+
+**Census, both windows through the harness.** First `dead=1 guide=0
+stale=73 exit=1` (`…200858Z:36,113`) — the executor's own new guide
+sentence carried a bare `..._facets.xdmf`, which is exactly the standing
+rule (b) trap the item named; reworded to name no filename, second window
+`dead=0 guide=0 stale=73 stale_severity=report exit=2` (`…200926Z:34,112`).
+The 73 stale hits are age-only and pre-existing (`OPS-19` exit-2 class).
+
+**One `src/` change beyond the item's letter, disclosed.**
+`consolidate_xdmf_grids` lifted every non-mesh top-level `<Grid>`'s
+attributes onto the mesh grid and then removed it; a `write_meshtags` facet
+grid is a top-level Uniform grid with its own `<Topology>`, so the
+consolidator would have silently deleted the whole facet block after close.
+Guard added: `if grid.find("Topology") is not None: continue`. Function
+grids are `GridType="Collection"` with no top-level `Topology`, so nothing
+that worked before takes the new branch — but the executor did **not**
+re-run that function's own pre-existing gate. The slot ran it itself:
+`tests/unit/test_paraview_combined_xdmf.py`, `-n 2`, **2 s**,
+`1 passed in 0.80s`
+(`20260904T201109Z_OPS-38-consolidator-gate.log:52,59`). Green; the
+executor's "unchanged by construction" claim is now measured rather than
+asserted.
+
+**Negative-result branch never triggered** — no area off 1.0, no
+non-reducing count, so no known-issues entry was needed.
+
+**Two orphaned artifact pairs** (`meshing_10_…_facets.{xdmf,h5}`,
+`meshing_11_…_facets.{xdmf,h5}`) deleted from
+`examples/meshing/paraview_output/` — gitignored, so absent from the diff,
+but the census would otherwise have kept scoring them.
+
+**Next.** §9 items 4 (`GEO-25` rungs 1–2, `mesh-probe`) and 5 (`MAT-6`
+step 11, the spare) remain open — the 16:30 slot takes item 4. Note for the
+review: the consolidator guard is a real `src/` widening of `OPS-38`'s
+declared scope, gated after the fact by the slot rather than by the item;
+if the review wants that pattern licensed rather than tolerated, it should
+say so, since `ports:11` is the fourth candidate caller for the same
+keyword and would hit the same guard.
