@@ -319,14 +319,21 @@ def _solve_one_drive(ctx, driven_id):
     }
 
 
-@pytest.fixture(scope="module")
-def ring_four_columns():
-    """One longitudinal-sheet mesh; **four** drives, four columns of ``S``.
+def _build_ring_context():
+    """Build the fixture once: the mesh, the 32 located sheets and the solver.
 
-    Step 1 drove one port (``P17``) and is still read, unchanged, out of this
-    fixture's ``P17`` column.  Step 2 adds ``P33`` (``P17``'s z-mirror at the
-    same measured azimuth) and step 1's two measured opposites ``P25`` / ``P41``
-    — four drives over the one mesh, four columns, no ``Z``.
+    **Additive** (`PORT-13` step 3): this is the body the ``ring_four_columns``
+    fixture used to hold inline, lifted verbatim so that the fixture, step 3's
+    matrix module and `ports:11` all call *one* function rather than typing the
+    build three times.  Nothing is renamed and nothing is removed — the fixture
+    below calls this and then drives its four ports exactly as before.
+
+    Returns a dict carrying the solve context (``ctx``, what
+    :func:`_solve_one_drive` consumes) alongside everything the callers locate
+    ports with: the measured sheet table, the measured azimuths, the driven
+    ordinal and its two measured opposites, the ring-mirror map, and the mesh
+    diagnostics.  Every port location is by **measured** geometry; no caller
+    does ordinal arithmetic.
     """
     comm = MPI.COMM_WORLD
 
@@ -417,10 +424,50 @@ def ring_four_columns():
         "solver": TimeHarmonicSolver(problem, degree=1),
     }
 
+    sigma_map = _ring_mirror_map(sheets)
+
+    return {
+        "comm": comm,
+        "ctx": ctx,
+        "m": m,
+        "sheets": sheets,
+        "ring_ports": ring_ports,
+        "chord": chord,
+        "driven": driven,
+        "driven_id": driven_id,
+        "opposite": opposite,
+        "sigma_map": sigma_map,
+        "mirror": sigma_map[driven],
+        "z_p": z_p,
+        "azimuth_deg": {i: float(m["azimuth_deg"][i]) for i in ring_ports},
+        "cells": int(m["n_cells"]),
+    }
+
+
+@pytest.fixture(scope="module")
+def ring_four_columns():
+    """One longitudinal-sheet mesh; **four** drives, four columns of ``S``.
+
+    Step 1 drove one port (``P17``) and is still read, unchanged, out of this
+    fixture's ``P17`` column.  Step 2 adds ``P33`` (``P17``'s z-mirror at the
+    same measured azimuth) and step 1's two measured opposites ``P25`` / ``P41``
+    — four drives over the one mesh, four columns, no ``Z``.
+    """
+    built = _build_ring_context()
+    comm = built["comm"]
+    ctx = built["ctx"]
+    m = built["m"]
+    sheets = built["sheets"]
+    ring_ports = built["ring_ports"]
+    chord = built["chord"]
+    driven, driven_id = built["driven"], built["driven_id"]
+    opposite = built["opposite"]
+    sigma_map = built["sigma_map"]
+    z_p = built["z_p"]
+
     # The four drives, every one of them *located*: `P17` (step 1's, the lowest
     # ring-port ordinal), its z-mirror at the same measured azimuth, and step 1's
     # two measured opposites (one per ring).  No ordinal arithmetic anywhere.
-    sigma_map = _ring_mirror_map(sheets)
     mirror = sigma_map[driven]
     drive_ordinals = sorted({driven, mirror, *opposite})
 

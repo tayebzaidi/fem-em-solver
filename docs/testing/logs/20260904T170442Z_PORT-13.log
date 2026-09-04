@@ -1,0 +1,96 @@
+# Test Run
+- Chunk: PORT-13
+- Commit: 183843c1b14c8f818bf203188ddc2c9b28c9aa22
+- Time (UTC): 2026-09-04 17:04:42
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && source /usr/local/bin/dolfinx-complex-mode && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 timeout -k 30 120 mpiexec -n 2 python3 -m pytest tests/validation/test_port_birdcage_ring_column.py tests/validation/test_port_birdcage_ring_matrix.py --collect-only -q'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Sep  3 13:49 .
+drwxr-xr-x 16 taz5297 taz5297 4096 Sep  4 12:01 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  721 Sep  3 13:49 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 1449 Aug 24 12:40 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && source /usr/local/bin/dolfinx-complex-mode && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 timeout -k 30 120 mpiexec -n 2 python3 -m pytest tests/validation/test_port_birdcage_ring_column.py tests/validation/test_port_birdcage_ring_matrix.py --collect-only -q'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collected 15 items
+
+<Dir workspace>
+  <Dir tests>
+    <Dir validation>
+      <Module test_port_birdcage_ring_column.py>
+        <Function test_the_ring_column_came_off_the_longitudinal_fixture>
+        <Function test_power_accounting_closes_on_the_thirty_two_port_drive>
+        <Function test_the_two_diametrically_opposite_ring_ports_agree>
+        <Function test_the_four_columns_came_off_one_mesh_and_one_convention>
+        <Function test_the_four_by_four_sub_block_is_reciprocal>
+        <Function test_every_measured_column_is_passive>
+        <Function test_the_top_and_bottom_ring_columns_are_z_mirrors>
+        <Function test_power_accounting_closes_on_all_four_columns>
+      <Module test_port_birdcage_ring_matrix.py>
+        <Function test_the_sweep_half_solves_and_caches_its_sixteen_columns>
+        <Function test_the_two_halves_came_off_one_fixture>
+        <Function test_all_thirty_two_columns_balance_power>
+        <Function test_the_thirty_two_by_thirty_two_is_reciprocal>
+        <Function test_the_matrix_is_passive>
+        <Function test_the_matrix_carries_the_c16_and_mirror_symmetry>
+        <Function test_the_sweep_reproduces_step_twos_audited_columns>
+
+========================= 15 tests collected in 2.22s ==========================
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collected 15 items
+
+<Dir workspace>
+  <Dir tests>
+    <Dir validation>
+      <Module test_port_birdcage_ring_column.py>
+        <Function test_the_ring_column_came_off_the_longitudinal_fixture>
+        <Function test_power_accounting_closes_on_the_thirty_two_port_drive>
+        <Function test_the_two_diametrically_opposite_ring_ports_agree>
+        <Function test_the_four_columns_came_off_one_mesh_and_one_convention>
+        <Function test_the_four_by_four_sub_block_is_reciprocal>
+        <Function test_every_measured_column_is_passive>
+        <Function test_the_top_and_bottom_ring_columns_are_z_mirrors>
+        <Function test_power_accounting_closes_on_all_four_columns>
+      <Module test_port_birdcage_ring_matrix.py>
+        <Function test_the_sweep_half_solves_and_caches_its_sixteen_columns>
+        <Function test_the_two_halves_came_off_one_fixture>
+        <Function test_all_thirty_two_columns_balance_power>
+        <Function test_the_thirty_two_by_thirty_two_is_reciprocal>
+        <Function test_the_matrix_is_passive>
+        <Function test_the_matrix_carries_the_c16_and_mirror_symmetry>
+        <Function test_the_sweep_reproduces_step_twos_audited_columns>
+
+========================= 15 tests collected in 2.22s ==========================
+
+## Exit
+- Status: 0
+- Elapsed (s): 4
+- Filtered lines (gmsh optimisation chatter): 0

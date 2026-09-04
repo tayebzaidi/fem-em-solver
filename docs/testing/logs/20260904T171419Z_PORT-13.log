@@ -1,0 +1,264 @@
+# Test Run
+- Chunk: PORT-13
+- Commit: 183843c1b14c8f818bf203188ddc2c9b28c9aa22
+- Time (UTC): 2026-09-04 17:14:19
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && source /usr/local/bin/dolfinx-complex-mode && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 timeout -k 30 120 mpiexec -n 2 python3 -m pytest tests/environment tests/validation/test_port_birdcage_ring_matrix.py -v -s'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Sep  3 13:49 .
+drwxr-xr-x 16 taz5297 taz5297 4096 Sep  4 12:14 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  721 Sep  3 13:49 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 1449 Aug 24 12:40 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && source /usr/local/bin/dolfinx-complex-mode && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 timeout -k 30 120 mpiexec -n 2 python3 -m pytest tests/environment tests/validation/test_port_birdcage_ring_matrix.py -v -s'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... collected 18 items
+
+tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build 
+[TH-1 step 0] PETSC_ARCH='linux-gnu-complex128-32' ScalarType=complex128 dolfinx=/usr/local/dolfinx-complex/lib/python3.12/dist-packages/dolfinx/__init__.py version=0.11.0.post0
+PASSED
+tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form collected 18 items
+
+tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build PASSED
+tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form PASSEDPASSED
+tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not 
+tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not [TH-1 step 0] inner=(11.00000000000001+1.9999999999999993j) dot=(-5.000000000000001+10.000000000000002j)
+PASSEDPASSED
+tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly 
+tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly [TH-1 step 0] ||M||_F=1.041233e+00 ||M_c - eps_c*M||_F=7.526e-16
+PASSEDPASSED
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites 
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites PASSED
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations PASSED
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations PASSED
+tests/environment/test_dolfinx_api_migration.py::test_filed_survivors_outside_the_gated_roots_are_unchanged PASSED
+tests/environment/test_dolfinx_api_migration.py::test_filed_survivors_outside_the_gated_roots_are_unchanged PASSED
+tests/environment/test_dolfinx_version.py::test_adopted_dolfinx_version_is_exact 
+[OPS-18 step 1] dolfinx=0.11.0.post0 file=/usr/local/dolfinx-complex/lib/python3.12/dist-packages/dolfinx/__init__.py python=3.12.3 ScalarType=complex128
+PASSED
+tests/environment/test_dolfinx_version.py::test_resolved_dolfinx_path_matches_mode_and_interpreter [OPS-18 step 1] expect /dolfinx-complex/ and /python3.12/ in /usr/local/dolfinx-complex/lib/python3.12/dist-packages/dolfinx/__init__.py
+PASSED
+tests/environment/test_dolfinx_version.py::test_h5py_built_against_the_image_hdf5 [OPS-18 step 1] h5py=3.16.0 built=(2, 1, 1) linked=(2, 1, 1)
+PASSED
+tests/environment/test_dolfinx_version.py::test_complex_build_is_complex128 PASSED
+tests/validation/test_port_birdcage_ring_matrix.py::test_the_sweep_half_solves_and_caches_its_sixteen_columns SKIPPEDno solve)
+tests/validation/test_port_birdcage_ring_matrix.py::test_the_two_halves_came_off_one_fixture 
+[PORT-13 step3] GATE (v) one fixture, two windows: 270728 cells in both (record 270728), azimuth tables agree to 0.000e+00 deg, all 32 columns driven; window solve bottom 158.87 s at -n 8, top 156.25 s at -n 8
+PASSED
+tests/validation/test_port_birdcage_ring_matrix.py::test_all_thirty_two_columns_balance_power 
+[PORT-13 step3] GATE (vi) power accounting over all 32 drives (band 1e-02, imported, unmoved): min 9.330979e-03, max 9.680804e-03 (P37, 0.968x the band), spread 3.498e-04
+PASSED
+tests/validation/test_port_birdcage_ring_matrix.py::test_the_thirty_two_by_thirty_two_is_reciprocal 
+[PORT-13 step3] GATE (i) reciprocity of the 32x32 (band 1e-03, imported, unmoved): ||S - S^T||_F/||S||_F = 5.446798e-13 (5.447e-10x the band, INSIDE); ||S||_F = 5.414671
+    negative control, column P17 scaled by 1.01: 2.496159e-03 (2.496x the band; the item's ceiling is ~2.5x, the bar 2x)
+PASSED
+tests/validation/test_port_birdcage_ring_matrix.py::test_the_matrix_is_passive 
+[PORT-13 step3] GATE (ii) passivity of the matrix, sigma_max(S) <= 1 (`PORT-9`'s gate, a necessary condition, not a band):
+    sigma_max = 0.999999452  margin +0.000000548 (+0.0001%)  PASSIVE
+    column sum|S|^2 over the 32 drives: min 0.915816510, max 0.916582584
+PASSED
+tests/validation/test_port_birdcage_ring_matrix.py::test_the_matrix_carries_the_c16_and_mirror_symmetry 
+[PORT-13 step3] GATE (iii) the C16 x mirror class identity over 18 classes (band 5%, step 1's, unmoved); classes built from the measured azimuths and ring membership:
+    same  ring, 0 x 22.500 deg  n =   32  mean |S| = 4.306980034e-02  spread   0.4426%   <-- worst
+    same  ring, 1 x 22.500 deg  n =   64  mean |S| = 7.418148269e-02  spread   0.1623%
+    same  ring, 2 x 22.500 deg  n =   64  mean |S| = 6.183796842e-02  spread   0.1101%
+    same  ring, 3 x 22.500 deg  n =   64  mean |S| = 6.131953877e-02  spread   0.0602%
+    same  ring, 4 x 22.500 deg  n =   64  mean |S| = 6.125535027e-02  spread   0.0293%
+    same  ring, 5 x 22.500 deg  n =   64  mean |S| = 6.124661507e-02  spread   0.0353%
+    same  ring, 6 x 22.500 deg  n =   64  mean |S| = 6.124968913e-02  spread   0.0371%
+    same  ring, 7 x 22.500 deg  n =   64  mean |S| = 6.125383168e-02  spread   0.0346%
+    same  ring, 8 x 22.500 deg  n =   32  mean |S| = 6.125550880e-02  spread   0.0334%
+    other ring, 0 x 22.500 deg  n =   32  mean |S| = 8.948394965e-01  spread   0.0462%
+    other ring, 1 x 22.500 deg  n =   64  mean |S| = 4.995267219e-02  spread   0.1663%
+    other ring, 2 x 22.500 deg  n =   64  mean |S| = 6.088787953e-02  spread   0.0599%
+    other ring, 3 x 22.500 deg  n =   64  mean |S| = 6.122495350e-02  spread   0.0501%
+    other ring, 4 x 22.500 deg  n =   64  mean |S| = 6.125300748e-02  spread   0.0357%
+    other ring, 5 x 22.500 deg  n =   64  mean |S| = 6.125692492e-02  spread   0.0299%
+    other ring, 6 x 22.500 deg  n =   64  mean |S| = 6.125930256e-02  spread   0.0274%
+    other ring, 7 x 22.500 deg  n =   64  mean |S| = 6.126166107e-02  spread   0.0338%
+    other ring, 8 x 22.500 deg  n =   32  mean |S| = 6.126267624e-02  spread   0.0275%
+    worst class same ring / 0 steps at 0.4426%: max |S| = 4.315637317e-02 at (P38, P38), min = 4.296576246e-02 at (P29, P29)  INSIDE
+PASSED
+tests/validation/test_port_birdcage_ring_matrix.py::test_the_sweep_reproduces_step_twos_audited_columns 
+[PORT-13 step3] GATE (iv) the four step-2 columns reproduced (rtol 1e-06, the `OPS-34` scatter precedent):
+    column P17  sum|S|^2 = 0.915817419  record 0.915817419  rel 2.394e-10
+    column P25  sum|S|^2 = 0.915956086  record 0.915956086  rel 1.185e-10
+    column P33  sum|S|^2 = 0.915816510  record 0.915816510  rel 3.059e-10
+    column P41  sum|S|^2 = 0.915944997  record 0.915944997  rel 2.076e-10
+PASSED
+
+=============================== warnings summary ===============================
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_four_port.py:1: SyntaxWarning: invalid escape sequence '\*'
+    """`PORT-9` step 3 leg (d) — the 4x4 on the gapped birdcage at 50 Ohm.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_lumped_column.py:1: SyntaxWarning: invalid escape sequence '\*'
+    """`PORT-9` step 3 leg (c) — the first port solve on the gapped birdcage.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_lumped_column.py:458: SyntaxWarning: invalid escape sequence '\*'
+    """**Leg (c)'s gate.**  ``|Z₂₁ − Z₄₁|/|Z₂₁| ≤ 0.5%``, with ``Z₃₁`` apart.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_termination_probe.py:1: SyntaxWarning: invalid escape sequence '\*'
+    """`PORT-9` step 3 leg (d0) — the termination probe on the gapped birdcage.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_termination_probe.py:432: SyntaxWarning: invalid escape sequence '\*'
+    """**Negative control (1).**  Z_p = 1e6 Ω reproduces leg (c)'s ``I₁``.
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-bd1ql9zp/tests/validation/test_port_birdcage_four_port.py:1: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-bd1ql9zp/tests/validation/test_port_birdcage_lumped_column.py:1: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-bd1ql9zp/tests/validation/test_port_birdcage_lumped_column.py:458: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-bd1ql9zp/tests/validation/test_port_birdcage_termination_probe.py:1: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-bd1ql9zp/tests/validation/test_port_birdcage_termination_probe.py:432: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_filed_survivors_outside_the_gated_roots_are_unchanged
+tests/environment/test_dolfinx_api_migration.py::test_filed_survivors_outside_the_gated_roots_are_unchanged
+  /workspace/examples/ansys_benchmarks/two_torus_gap_ports_10MHz/03_two_torus_gap_ports_10MHz.py:398: SyntaxWarning: invalid escape sequence '\*'
+    """
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+================= 17 passed, 1 skipped, 32 warnings in 23.47s ==================
+PASSED
+tests/environment/test_dolfinx_version.py::test_adopted_dolfinx_version_is_exact PASSED
+tests/environment/test_dolfinx_version.py::test_resolved_dolfinx_path_matches_mode_and_interpreter PASSED
+tests/environment/test_dolfinx_version.py::test_h5py_built_against_the_image_hdf5 PASSED
+tests/environment/test_dolfinx_version.py::test_complex_build_is_complex128 PASSED
+tests/validation/test_port_birdcage_ring_matrix.py::test_the_sweep_half_solves_and_caches_its_sixteen_columns SKIPPEDno solve)
+tests/validation/test_port_birdcage_ring_matrix.py::test_the_two_halves_came_off_one_fixture PASSED
+tests/validation/test_port_birdcage_ring_matrix.py::test_all_thirty_two_columns_balance_power PASSED
+tests/validation/test_port_birdcage_ring_matrix.py::test_the_thirty_two_by_thirty_two_is_reciprocal PASSED
+tests/validation/test_port_birdcage_ring_matrix.py::test_the_matrix_is_passive PASSED
+tests/validation/test_port_birdcage_ring_matrix.py::test_the_matrix_carries_the_c16_and_mirror_symmetry PASSED
+tests/validation/test_port_birdcage_ring_matrix.py::test_the_sweep_reproduces_step_twos_audited_columns PASSED
+
+=============================== warnings summary ===============================
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_four_port.py:1: SyntaxWarning: invalid escape sequence '\*'
+    """`PORT-9` step 3 leg (d) — the 4x4 on the gapped birdcage at 50 Ohm.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_lumped_column.py:1: SyntaxWarning: invalid escape sequence '\*'
+    """`PORT-9` step 3 leg (c) — the first port solve on the gapped birdcage.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_lumped_column.py:458: SyntaxWarning: invalid escape sequence '\*'
+    """**Leg (c)'s gate.**  ``|Z₂₁ − Z₄₁|/|Z₂₁| ≤ 0.5%``, with ``Z₃₁`` apart.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_termination_probe.py:1: SyntaxWarning: invalid escape sequence '\*'
+    """`PORT-9` step 3 leg (d0) — the termination probe on the gapped birdcage.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_termination_probe.py:432: SyntaxWarning: invalid escape sequence '\*'
+    """**Negative control (1).**  Z_p = 1e6 Ω reproduces leg (c)'s ``I₁``.
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-pdt4ss7b/tests/validation/test_port_birdcage_four_port.py:1: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-pdt4ss7b/tests/validation/test_port_birdcage_lumped_column.py:1: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-pdt4ss7b/tests/validation/test_port_birdcage_lumped_column.py:458: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-pdt4ss7b/tests/validation/test_port_birdcage_termination_probe.py:1: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-pdt4ss7b/tests/validation/test_port_birdcage_termination_probe.py:432: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_filed_survivors_outside_the_gated_roots_are_unchanged
+tests/environment/test_dolfinx_api_migration.py::test_filed_survivors_outside_the_gated_roots_are_unchanged
+  /workspace/examples/ansys_benchmarks/two_torus_gap_ports_10MHz/03_two_torus_gap_ports_10MHz.py:398: SyntaxWarning: invalid escape sequence '\*'
+    """
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+================= 17 passed, 1 skipped, 32 warnings in 23.72s ==================
+
+## Exit
+- Status: 0
+- Elapsed (s): 25
+- Filtered lines (gmsh optimisation chatter): 0
