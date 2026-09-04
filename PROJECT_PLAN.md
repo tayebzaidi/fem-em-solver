@@ -7665,9 +7665,14 @@ denied; write it relative.
    (`20260904T020406Z_EX-44.log`, Status 0, 59 s at `-n 2`): both cell
    counts to the digit, all eight sheets' chord/`w`/half-volume identities
    at 1.000000000000, the identity family green on both meshes, and the
-   fourteen-decade negative control asserted. Census `dead=0 guide=0
-   stale=62 exit=2` before and after (guide count 37→38). No deviations
-   from this item's plan. See the §7 row. Original item text follows.
+   fourteen-decade negative control asserted. Census on the committed tree
+   `dead=0 guide=0 stale=62 exit=2`
+   (`20260904T020747Z_EX-44-postcensus.log:101`), so the new guide is
+   discovered and the anchor holds; the matching pre-census reading is the
+   executor's report only — it was run outside the harness and left no log,
+   and the slot re-ran the post window through `run_and_log.sh` to close
+   that gap. No deviations from this item's plan. See the §7 row. Original
+   item text follows.
 
    **`EX-44` — the longitudinal ring-gap port sheet in ParaView:
    `birdcage_port_domain(ring_sheet_orientation="longitudinal")` on the
