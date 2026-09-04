@@ -17711,3 +17711,84 @@ The caution is that 292 s is measured at *this* load; step 1's 27.96 s/solve
 would put the same sweep at 895 s, over the rule. A review scoping step 3
 should size the window off step 1's slower price and treat today's as
 upside, not budget.
+
+## 2026-09-04T11:12Z — `OPS-37` — **complete** (06:00 CDT implementer slot)
+
+**Item.** §9 On-deck item 2, taken as the first not-done/not-blocked entry
+(item 1 landed at the 04:30 slot) — `OPS-37`, re-basing the `PORT-1` step-4
+gate module's two mutual-ratio records onto the 0.11 image and tightening its
+reproduction control from 2e-3 to 1e-6 relative. Opened by the 2026-09-04
+03:00 review from `OPS-34`'s measured miss. Executed by the `implementer`
+agent (not `record-reconciler` — a band moves), spawned **foreground**, one
+chunk, no concurrent executor.
+
+**Preflight.** Tree clean on `999780b`; container Up ≈ 15 h; no `attempt/*`,
+no `recovered/*`. No dirty-tree exception invoked.
+
+**Outcome — §4-complete, committed `88770c3` on `main`** (test module + both
+logs + `test-results.md` rows + the §7 flip + §9 item 2 marked done,
+together). Both windows `-n 2`, complex build, `tests/environment` first,
+`timeout -k 30 400`, one module, no `-k` expression.
+
+**Step A** (`20260904T110108Z_OPS-37.log`, `17 passed in 177.62s`, Status 0,
+elapsed **179 s** — standard by footer, as the item priced it). One
+`repr()`-precision print added beside the existing `:.6f` print, because a
+`:.6f` line cannot resolve a 1e-6 band and this route has no `metrics.json`.
+The module's own digits, `:705`: raw **0.8945163786446685**, corrected
+**0.9398215450213951**. Against the example's 0.11 digits from `OPS-34`
+(0.8945163788281 / 0.9398215452105435, `20260904T003530Z_OPS-34.log:648`)
+that is **2.1e-10 relative on both** — inside the item's < 1e-6 precondition,
+so **no example/test divergence** and step B was authorised. The v0.7.2
+records were therefore genuinely stale on 0.11, by the 2.6e-4 `OPS-34`
+predicted; this closure is a re-basing, **not** the item's "closes on step A
+alone" branch.
+
+**Step B** (`20260904T110501Z_OPS-37.log`, `17 passed in 171.42s`, Status 0,
+elapsed **173 s**). `RECORDED_RAW_RATIO` / `RECORDED_CORRECTED_RATIO` re-based
+to step A's own digits at `repr()` precision; `RAW_REPRODUCTION_BAND = 2e-3`
+replaced by `REPRODUCTION_BAND_RELATIVE = 1e-6` (relative, where the old one
+was absolute); the v0.7.2 pair kept verbatim as `SUPERSEDED_V072_RECORD` and
+**asserted to fail** the tightened band; the heuristic-vs-field control at
+`:396` given its own `HEURISTIC_SEPARATION_FLOOR = 2e-3`, numerically the
+unchanged bar it used to ride on `RAW_REPRODUCTION_BAND`, so a 2000× tighten
+does not silently lower a separation control. Measured on the anchor re-run,
+`:709`: raw miss **2.051e-10**, corrected miss **2.013e-10**; the superseded
+pair misses by **2.609e-04 / 2.559e-04 = 260×** the new band — the item's
+computed ceiling to three digits, no larger factor claimed. `:719`: heuristic
+separation **3.030183e-01** against the 2e-3 floor.
+
+**Nothing loosened, nothing renamed.** `MUTUAL_TOLERANCE`,
+`BLIND_FIXTURE_IM_Z12_OHM`, `S_SYMMETRY_BAND`, `S_SPECTRAL_NORM_CEILING` and
+every `PORT-5` record untouched and green in the same 17-test run. No `src/`
+change (`ports/gap_voltage.py:31–32`'s docstring digits stay as `PORT-1`'s
+historical record, as scoped), no example change (`ports:1` was re-based by
+`OPS-34`), no known-issues change, no §2 claim. The one band that moved moved
+**tighter**, with its measurement in a code comment beside it, under the (1\*)
+licence.
+
+**Verification I did myself** (a delegated chunk is still mine): re-read both
+footers (`17 passed`, Status 0, 179 / 173 s), `:705` / `:709` / `:719` in the
+step-B log, and the committed diff — the anchor block, the two assertions and
+the new floor are the only semantic changes to the module; the four physics
+constants above are absent from the diff. Incidental worth recording: the
+step-B window's `repr` line reproduced the example's digits **exactly**
+(0.8945163788281 / 0.9398215452105435) where step A read 0.8945163786446685,
+so run-to-run scatter on this route is ~2e-10 — three-plus decades under the
+new band, consistent with `OPS-34`'s ~1e-9 and comfortable headroom for the
+tighten.
+
+**Slot bookkeeping.** ~6 min of compute against the item's ≈ 6 min estimate.
+**No compute-safety event, no docker-socket denial, no allowlist denial, no
+container wedge, no backgrounded harness command.** Foreground-executor rule
+held. Tree clean on `main` at slot end.
+
+**Hypothesis for the next attempt.** The next slot takes §9 item 3 (`EX-45`,
+the 16-leg longitudinal ring-gap rung in ParaView with its two-state terminal
+triangulation as a per-port cell field) — an `example-runner` chunk, spawned
+foreground, with **both census windows through `run_and_log.sh`** per the
+item's own instruction. Items 1–4 remain independent of each other's results.
+For the review: with `OPS-37` closed, the same staleness question applies to
+any other module still carrying v0.7.2-era reproduction records under bands
+too wide to see a 2.6e-4 image shift — `OPS-34` and `OPS-37` have now each
+found one on the same route; a sweep for the rest is cheap to scope and has
+not been done.
