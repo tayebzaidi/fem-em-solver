@@ -47,11 +47,57 @@ tuning, no resonance and no absolute-accuracy claim: 10 MHz is the port model's
 frequency, one column is not a network, and a full S-matrix is 32 solves —
 that is step 2, for a review to scope from the price below.
 
+`PORT-13` **step 2** — the ring column becomes a 4x4 sub-block
+=============================================================
+
+Same mesh, same port spec, same terminations: the fixture below now solves
+**four** drives over the one 270 728-cell rung — ``P17`` (step 1's), ``P33``
+(the top-ring port at ``P17``'s azimuth) and step 1's two opposites
+``P25`` / ``P41`` — each located from the *measured* sheet azimuths, never from
+an ordinal.  Step 1's three tests keep reading the ``P17`` column and are
+unchanged.
+
+**Assembly, no inversion.**  Every port is matched at ``Z_p = z0 = 50 Ohm``, so
+the incident wave is non-zero only at the driven port and a drive of port ``j``
+reads column ``j`` of ``S`` straight off the generator-convention pair
+``V_i = V_src δ_ij − I_i Z_p``::
+
+    S_ij = (V_i − z0 I_i) / V_src
+
+— i.e. ``−2 z0 I_i / V_src`` off the diagonal and ``1 − 2 z0 I_j / V_src`` on
+it, from the *same* expression.  ``Z`` is never formed: `PORT-9` leg (d2)'s
+per-column normalisation defect lived in the ``Z`` assembly, and four columns
+cannot be inverted anyway.
+
+**Anchors (asserted).**
+
+(iii) **reciprocity** of the 4x4 sub-block among the four driven ports,
+      ``‖S₄ − S₄ᵀ‖_F/‖S₄‖_F <= RECIPROCITY_BAND`` (1e-3, imported from
+      `test_port_lumped_sheet_sweep` exactly as `PORT-9` imports it), with an
+      in-run **negative control** for the (d2) defect class: a 1% scale on one
+      measured column — an error column passivity cannot see — must push the
+      ratio to ``>= 5x`` the band.
+(iv)  **column passivity**, a *necessary* condition on a passive network:
+      ``Σ_i |S_ij|² <= 1`` on each of the four measured columns, margins
+      printed.
+(v)   the **top/bottom mirror identity**: the ``P33`` column is the z-mirror of
+      the ``P17`` column, every pair ``|S_{σ(i),33}|`` vs ``|S_{i,17}|`` (``σ``
+      the ring swap at equal measured azimuth) inside the unmoved
+      ``OPPOSITE_SPREAD_BAND``.
+(vi)  step 1's power accounting re-asserted on **each** of the four columns at
+      the unmoved imported ``POWER_BALANCE_BAND``.
+
+No band is widened or renamed here, and step 1's 0.97-of-band power residual
+gets no new band (03:00 2026-09-04 review ruling): a column crossing 1e-2, or a
+reciprocity / mirror pair outside its band, is a known-issues entry with the
+4x4 printed and nothing loosened.  **Still not** the 32x32 (that is step 3),
+no C16 class gate, no sigma_max on a full matrix, no tuning or resonance claim.
+
 Cost: heavy tier, ``-n 8``.  Run (complex build required)::
 
     scripts/testing/run_and_log.sh PORT-13 "docker compose exec -T fem-em-solver \\
       bash -lc 'cd /workspace && source /usr/local/bin/dolfinx-complex-mode && \\
-       PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 timeout -k 30 570 \\
+       PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 timeout -k 30 600 \\
        mpiexec -n 8 python3 -m pytest tests/environment \\
        tests/validation/test_port_birdcage_ring_column.py -v -s'"
 """
@@ -96,6 +142,7 @@ from tests.validation.test_port_gap_voltage_impedance import (
     FREQUENCY_HZ,
     SIGMA_WIRE_S_PER_M,
 )
+from tests.validation.test_port_lumped_sheet_sweep import RECIPROCITY_BAND
 
 # Anchor (ii)'s band: the C4-class spread `PORT-9` measured, imported at its
 # pre-tightening value **as the §9 item pre-registered it** for this fixture.
@@ -114,6 +161,24 @@ AZIMUTH_MATCH_DEG = 1.0e-6
 # the deliverable and step 2's 32 solves are not affordable as scoped.  Printed
 # with the price, never used to skip an assert.
 SOLVE_PRICE_STOP_RULE_S = 900.0
+
+# Step 2, anchor (iv).  Not a tolerance: `Σ_i |S_ij|² <= 1` is the necessary
+# condition a passive network's scattering column obeys exactly, so the ceiling
+# is 1 and the margin `1 − Σ` is a measurement, printed, never a band that could
+# be widened.  Step 1's printed `P17` currents project to ≈ 0.914 (0.8946² on
+# `S_33,17` plus 30 entries near 0.061 and 0.043 on the diagonal), so the
+# expected margin is ≈ 8.6%.
+COLUMN_PASSIVITY_CEILING = 1.0
+
+# Step 2's in-run negative control for the `PORT-9` leg (d2) defect class — a
+# *per-column* normalisation error, which column passivity cannot see (a 1%
+# scale moves `Σ|S|²` by 2%, still far under 1) and which reciprocity can.
+# Ceiling from step 1's printed column: the sub-block's large entries are the
+# two mirror couplings ≈ 0.893, so `‖S₄‖_F ≈ 1.79` and a 1% scale on one column
+# moves the ratio by ≈ 0.01·√2·0.893/1.79 ≈ 7.0e-3 = 7x the 1e-3 band.  5x is
+# assertable against that ceiling; 10x is not.
+CONTROL_COLUMN_SCALE = 1.01
+CONTROL_MARGIN_FACTOR = 5.0
 
 
 def _driven_and_opposite(azimuth_deg, ring_ports):
@@ -134,9 +199,130 @@ def _driven_and_opposite(azimuth_deg, ring_ports):
     return driven, sorted(opposite)
 
 
+def _ring_mirror_map(sheets):
+    """``σ``: the ring swap at equal **measured** azimuth, as a dict of ordinals.
+
+    The z-mirror of the fixture maps the bottom ring onto the top ring at the
+    same azimuth.  Both the ring membership (the sign of the sheet centre's
+    ``z``) and the azimuth come off the reconstructed sheets, so a generator
+    that renumbered or re-stacked its ring ports fails the bijection assert
+    below instead of quietly mirroring the wrong pair.
+    """
+    bottom = [s for s in sheets if s["z"] < 0.0]
+    top = [s for s in sheets if s["z"] > 0.0]
+    sigma = {}
+    for a in bottom:
+        for b in top:
+            delta = abs((a["azimuth_deg"] - b["azimuth_deg"] + 180.0) % 360.0 - 180.0)
+            if delta < AZIMUTH_MATCH_DEG:
+                sigma[a["ordinal"]] = b["ordinal"]
+                sigma[b["ordinal"]] = a["ordinal"]
+    return sigma
+
+
+def _solve_one_drive(ctx, driven_id):
+    """Solve the fixture with ``driven_id`` at 1 V and all 32 ports at ``z0``.
+
+    Step 1's route verbatim, with only the driven port's identity varying: the
+    bilinear side is drive-independent (every sheet is a `z0` termination, L1),
+    the linear side carries the impressed source on one sheet (L3).
+    """
+    comm = ctx["comm"]
+    msh, tags_f, omega = ctx["msh"], ctx["tags_f"], ctx["omega"]
+    port_sheets = [
+        spec.sheet(driven=(spec.port_id == driven_id)) for spec in ctx["specs"]
+    ]
+    driven_sheet = next(s for s in port_sheets if s.port_id == driven_id)
+
+    comm.Barrier()
+    t0 = time.perf_counter()
+    fields = ctx["solver"].solve(
+        current_density=None,
+        project_source=False,
+        extra_bilinear_terms=[
+            lambda trial, test, _s=sheet: lumped_port_bilinear_term(
+                msh, tags_f, _s, trial, test, omega_rad_per_s=omega
+            )
+            for sheet in port_sheets
+        ],
+        extra_linear_terms=[
+            lambda test, _s=driven_sheet: lumped_port_linear_term(
+                msh, tags_f, _s, test, omega_rad_per_s=omega
+            )
+        ],
+    )
+    comm.Barrier()
+    t_solve = time.perf_counter() - t0
+
+    # Every current is already MPI-reduced inside `sheet_terminal_current`.
+    currents = {
+        sheet.port_id: sheet_terminal_current(msh, tags_f, sheet, fields.e_complex, comm)
+        for sheet in port_sheets
+    }
+    z_p = complex(TERMINATED_PORT_IMPEDANCE_OHM)
+    voltages = {
+        sheet.port_id: complex(sheet.source_voltage_v) - currents[sheet.port_id] * z_p
+        for sheet in port_sheets
+    }
+
+    # Column `j` of `S`, from the one expression — the diagonal is not a second
+    # convention, it is `V_j = V_src − I_j z0` put through the same formula.
+    v_src = complex(driven_sheet.source_voltage_v)
+    s_column = {
+        pid: (voltages[pid] - z_p * currents[pid]) / v_src for pid in voltages
+    }
+
+    kwargs = dict(
+        sigma=fields.sigma_field,
+        rho=PHANTOM_RHO_KG_PER_M3,
+        cell_tags=ctx["cell_tags"],
+        comm=comm,
+    )
+    phantom = float(
+        mean_sar(fields.e_complex, subdomain_ids=PHANTOM_CELL_TAG, **kwargs)[
+            "dissipated_power_w"
+        ]
+    )
+    conductor = float(
+        mean_sar(fields.e_complex, subdomain_ids=CONDUCTOR_CELL_TAG, **kwargs)[
+            "dissipated_power_w"
+        ]
+    )
+    sheet_powers = {
+        pid: 0.5 * abs(i) ** 2 * float(np.real(z_p)) for pid, i in currents.items()
+    }
+    supplied = 0.5 * float(np.real(v_src * np.conjugate(currents[driven_id])))
+    total = phantom + conductor + sum(sheet_powers.values())
+    residual = abs(supplied - total) / abs(supplied) if supplied else float("inf")
+    blind = (
+        abs(supplied - (total - conductor)) / abs(supplied) if supplied else float("inf")
+    )
+
+    return {
+        "driven_id": driven_id,
+        "solve_time": float(t_solve),
+        "currents": currents,
+        "voltages": voltages,
+        "s_column": s_column,
+        "v_src": v_src,
+        "supplied": supplied,
+        "phantom": phantom,
+        "conductor": conductor,
+        "sheet_total": float(sum(sheet_powers.values())),
+        "residual": float(residual),
+        "blind": float(blind),
+    }
+
+
 @pytest.fixture(scope="module")
-def ring_column():
-    """One longitudinal-sheet mesh; one solve, the first ring port driven."""
+def ring_four_columns():
+    """One longitudinal-sheet mesh; **four** drives, four columns of ``S``.
+
+    Step 1 drove one port (``P17``) and is still read, unchanged, out of this
+    fixture's ``P17`` column.  Step 2 adds ``P33`` (``P17``'s z-mirror at the
+    same measured azimuth) and step 1's two measured opposites ``P25`` / ``P41``
+    — four drives over the one mesh, four columns, no ``Z``.
+    """
     comm = MPI.COMM_WORLD
 
     # `GEO-26` step 2's build, unchanged and imported rather than re-parametrised:
@@ -211,65 +397,41 @@ def ring_column():
     ]
 
     omega = 2.0 * np.pi * float(FREQUENCY_HZ)
-    port_sheets = [spec.sheet(driven=(spec.port_id == driven_id)) for spec in specs]
-    driven_sheet = next(s for s in port_sheets if s.port_id == driven_id)
-
-    solver = TimeHarmonicSolver(problem, degree=1)
-    comm.Barrier()
-    t0 = time.perf_counter()
-    fields = solver.solve(
-        current_density=None,
-        project_source=False,
-        extra_bilinear_terms=[
-            lambda trial, test, _s=sheet: lumped_port_bilinear_term(
-                msh, tags_f, _s, trial, test, omega_rad_per_s=omega
-            )
-            for sheet in port_sheets
-        ],
-        extra_linear_terms=[
-            lambda test, _s=driven_sheet: lumped_port_linear_term(
-                msh, tags_f, _s, test, omega_rad_per_s=omega
-            )
-        ],
-    )
-    comm.Barrier()
-    t_solve = time.perf_counter() - t0
-
-    # Every current is already MPI-reduced inside `sheet_terminal_current`.
-    currents = {
-        sheet.port_id: sheet_terminal_current(
-            msh, tags_f, sheet, fields.e_complex, comm
-        )
-        for sheet in port_sheets
-    }
     z_p = complex(TERMINATED_PORT_IMPEDANCE_OHM)
-    voltages = {
-        sheet.port_id: complex(sheet.source_voltage_v) - currents[sheet.port_id] * z_p
-        for sheet in port_sheets
+    ctx = {
+        "comm": comm,
+        "msh": msh,
+        "tags_f": tags_f,
+        "cell_tags": cell_tags,
+        "omega": omega,
+        "specs": specs,
+        # One solver for the four drives: the function space is built once and
+        # every drive re-assembles the same terminated bilinear form with a
+        # different `L3` sheet, so nothing is carried between columns but the
+        # discretisation itself.
+        "solver": TimeHarmonicSolver(problem, degree=1),
     }
 
-    kwargs = dict(
-        sigma=fields.sigma_field,
-        rho=PHANTOM_RHO_KG_PER_M3,
-        cell_tags=cell_tags,
-        comm=comm,
-    )
-    phantom = float(
-        mean_sar(fields.e_complex, subdomain_ids=PHANTOM_CELL_TAG, **kwargs)[
-            "dissipated_power_w"
-        ]
-    )
-    conductor = float(
-        mean_sar(fields.e_complex, subdomain_ids=CONDUCTOR_CELL_TAG, **kwargs)[
-            "dissipated_power_w"
-        ]
-    )
+    # The four drives, every one of them *located*: `P17` (step 1's, the lowest
+    # ring-port ordinal), its z-mirror at the same measured azimuth, and step 1's
+    # two measured opposites (one per ring).  No ordinal arithmetic anywhere.
+    sigma_map = _ring_mirror_map(sheets)
+    mirror = sigma_map[driven]
+    drive_ordinals = sorted({driven, mirror, *opposite})
+
+    columns = {}
+    for ordinal in drive_ordinals:
+        columns[f"P{ordinal}"] = _solve_one_drive(ctx, f"P{ordinal}")
+
+    step1 = columns[driven_id]
+    currents = step1["currents"]
+    voltages = step1["voltages"]
+    t_solve = step1["solve_time"]
+    phantom, conductor = step1["phantom"], step1["conductor"]
+    supplied, residual, blind = step1["supplied"], step1["residual"], step1["blind"]
     sheet_powers = {
         pid: 0.5 * abs(i) ** 2 * float(np.real(z_p)) for pid, i in currents.items()
     }
-    supplied = 0.5 * float(
-        np.real(complex(driven_sheet.source_voltage_v) * np.conjugate(currents[driven_id]))
-    )
 
     # Peak RSS against the 128 G cap: rank-local by construction, summed over the
     # ranks (ru_maxrss is in KiB on Linux), which is the `PORT-11` step 1
@@ -277,12 +439,6 @@ def ring_column():
     rss_gib = float(
         comm.allreduce(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss, op=MPI.SUM)
     ) / (1024.0 * 1024.0)
-
-    total = phantom + conductor + sum(sheet_powers.values())
-    residual = abs(supplied - total) / abs(supplied) if supplied else float("inf")
-    blind = (
-        abs(supplied - (total - conductor)) / abs(supplied) if supplied else float("inf")
-    )
 
     if comm.rank == 0:
         print(
@@ -293,13 +449,13 @@ def ring_column():
             f"orientation {m['diag']['ring_sheet_orientation']!r}, mesh "
             f"{m['diag']['mesh_wall_time_s']:.2f} s, rung {m['elapsed']:.2f} s; "
             f"{len(ring_ports)} ring ports, driven {driven_id} at "
-            f"{abs(complex(driven_sheet.source_voltage_v)):.3f} V, f = "
+            f"{abs(step1['v_src']):.3f} V, f = "
             f"{FREQUENCY_HZ:.3e} Hz, Z_p = {z_p:.6e} Ohm, degree 1, "
             f"{comm.size} ranks\n"
             f"[PORT-13 step1] PRICE: one solve **{t_solve:.2f} s** wall at -n "
-            f"{comm.size} (stop rule {SOLVE_PRICE_STOP_RULE_S:.0f} s; step 2's 32 "
-            f"solves project to {32.0 * t_solve:.0f} s of solve time); summed "
-            f"ru_maxrss {rss_gib:.3f} GiB\n"
+            f"{comm.size} (stop rule {SOLVE_PRICE_STOP_RULE_S:.0f} s; a 32-drive "
+            f"sweep projects to {32.0 * t_solve:.0f} s of solve time); summed "
+            f"ru_maxrss {rss_gib:.3f} GiB after four drives\n"
             f"[PORT-13 step1] port spec: h = ring_port_gap_chord_m = "
             f"{chord:.9e} m (arc 8.000000000e-03 m), w = A/h from the "
             f"reconstructed sheet, A = {sheets[0]['area']:.9e} m^2 -> w = "
@@ -340,6 +496,20 @@ def ring_column():
             f"({blind / POWER_BALANCE_BAND:.2f}x the band)",
             flush=True,
         )
+        print(
+            f"\n[PORT-13 step2] four drives over the one mesh: "
+            f"{', '.join('P%d' % o for o in drive_ordinals)} "
+            f"(driven P{driven}, its z-mirror P{mirror} at the same measured "
+            f"azimuth, and the two measured opposites "
+            f"{', '.join('P%d' % o for o in opposite)}); solve wall times "
+            + ", ".join(
+                f"P{o} {columns['P%d' % o]['solve_time']:.2f} s"
+                for o in drive_ordinals
+            )
+            + f"; four-drive total "
+            f"{sum(c['solve_time'] for c in columns.values()):.2f} s",
+            flush=True,
+        )
 
     return {
         "cells": int(m["n_cells"]),
@@ -357,7 +527,23 @@ def ring_column():
         "sheet_total": float(sum(sheet_powers.values())),
         "chord": chord,
         "azimuth_deg": {i: float(m["azimuth_deg"][i]) for i in ring_ports},
+        # --- step 2 ---
+        "columns": columns,
+        "drive_ordinals": drive_ordinals,
+        "mirror": mirror,
+        "sigma_map": sigma_map,
+        "z_p": z_p,
     }
+
+
+@pytest.fixture(scope="module")
+def ring_column(ring_four_columns):
+    """Step 1's view of the fixture: the ``P17`` column, keys unchanged.
+
+    Step 1's three tests are not re-scoped by step 2 — they read exactly the
+    dictionary they read at `052bd61`, off the same drive.
+    """
+    return ring_four_columns
 
 
 @complex_only
@@ -492,3 +678,310 @@ def test_the_two_diametrically_opposite_ring_ports_agree(ring_column):
         "step 1, negative result: the readings and the price into known-issues, "
         "stop; never widen)"
     )
+
+
+# ---------------------------------------------------------------------------
+# `PORT-13` step 2 — the four columns as a network reading
+# ---------------------------------------------------------------------------
+
+
+def _sub_block(four):
+    """The 4x4 ``S`` sub-block among the four driven ports, and its port ids.
+
+    ``S4[i, j]`` is entry ``i`` of the column measured by driving ``j`` — the
+    columns are read, never assembled from a ``Z`` and never inverted.
+    """
+    ids = [f"P{o}" for o in four["drive_ordinals"]]
+    s4 = np.array(
+        [[four["columns"][pj]["s_column"][pi] for pj in ids] for pi in ids],
+        dtype=complex,
+    )
+    return ids, s4
+
+
+def _reciprocity_ratio(s4):
+    return float(np.linalg.norm(s4 - s4.T, ord="fro") / np.linalg.norm(s4, ord="fro"))
+
+
+@complex_only
+def test_the_four_columns_came_off_one_mesh_and_one_convention(ring_four_columns):
+    """Structural for step 2: which four drives, and one ``S`` convention.
+
+    Not the identity — what the identities need in order to mean anything.  The
+    four drives must be the *located* ones (step 1's port, its measured z-mirror
+    and step 1's two measured opposites), each column must carry all 32 ports,
+    and every entry — diagonal included — must come from the single expression
+    ``S_ij = (V_i − z0 I_i)/V_src``, which is what the `PORT-9` leg (d2) defect
+    class taught: a second convention on the diagonal is invisible to every gate
+    below.
+    """
+    four = ring_four_columns
+    sigma_map = four["sigma_map"]
+    assert len(sigma_map) == 2 * SCALED_LEG_COUNT, (
+        f"the ring mirror map pairs {len(sigma_map)} ports, not the "
+        f"{2 * SCALED_LEG_COUNT} a two-ring C16 layout carries"
+    )
+    by_ord = {s["ordinal"]: s for s in four["sheets"]}
+    for i, j in sigma_map.items():
+        assert sigma_map[j] == i, f"sigma is not an involution at P{i} -> P{j}"
+        assert i != j
+        assert by_ord[i]["z"] * by_ord[j]["z"] < 0.0, (
+            f"P{i} and P{j} are mirrored onto one another but sit on the same ring"
+        )
+        delta = abs(
+            (by_ord[i]["azimuth_deg"] - by_ord[j]["azimuth_deg"] + 180.0) % 360.0
+            - 180.0
+        )
+        assert delta < AZIMUTH_MATCH_DEG, (
+            f"P{i} and P{j} are mirrored but {delta:.9f} deg apart in azimuth"
+        )
+
+    assert four["mirror"] == sigma_map[four["driven"]]
+    assert len(four["drive_ordinals"]) == 4, (
+        f"{four['drive_ordinals']} is not the four-drive set the item pre-registered"
+    )
+    assert set(four["drive_ordinals"]) == {
+        four["driven"],
+        four["mirror"],
+        *four["opposite"],
+    }
+
+    z_p = four["z_p"]
+    for pid, col in four["columns"].items():
+        assert len(col["s_column"]) == 2 * SCALED_LEG_COUNT
+        assert all(
+            np.isfinite(s.real) and np.isfinite(s.imag)
+            for s in col["s_column"].values()
+        )
+        for other, s in col["s_column"].items():
+            # The one convention, re-derived: `−2 z0 I/V_src` everywhere, plus
+            # the unit incident wave on the driven port and nowhere else.
+            expected = -2.0 * z_p * col["currents"][other] / col["v_src"]
+            if other == pid:
+                expected = expected + 1.0
+            assert abs(s - expected) <= 1.0e-12 * max(1.0, abs(s)), (
+                f"S_{other},{pid} = {s:+.9e} is not the single expression "
+                f"(V - z0 I)/V_src = {expected:+.9e}"
+            )
+
+
+@complex_only
+def test_the_four_by_four_sub_block_is_reciprocal(ring_four_columns):
+    """**Anchor (iii)** — ``‖S₄ − S₄ᵀ‖/‖S₄‖ <= 1e-3``, with the (d2) control.
+
+    Reciprocity is a property of the *physics* (an isotropic, reciprocal medium
+    with no gyrotropy), not of the port model, so it is the sharpest available
+    check that four independently solved columns belong to one network.  The
+    band is `PORT-9`'s own imported ``RECIPROCITY_BAND``, unmoved; a miss is a
+    known-issues entry carrying the printed 4x4 and nothing is widened.
+
+    The in-run negative control is the `PORT-9` leg (d2) defect class: a
+    per-column normalisation error.  Scaling **one measured column** by 1% is
+    invisible to column passivity (it moves ``Σ|S|²`` by 2%, still far below 1)
+    and must move this ratio to at least 5x the band.
+    """
+    four = ring_four_columns
+    ids, s4 = _sub_block(four)
+    ratio = _reciprocity_ratio(s4)
+
+    control = s4.copy()
+    control[:, 0] *= CONTROL_COLUMN_SCALE
+    control_ratio = _reciprocity_ratio(control)
+
+    if MPI.COMM_WORLD.rank == 0:
+        print(
+            f"\n[PORT-13 step2] GATE (iii) reciprocity of the 4x4 sub-block "
+            f"(band {RECIPROCITY_BAND:.0e}, imported from "
+            f"`test_port_lumped_sheet_sweep`, unmoved); rows/cols "
+            f"{', '.join(ids)}:",
+            flush=True,
+        )
+        for i, pid in enumerate(ids):
+            print(
+                f"    {pid:>4s}  "
+                + "  ".join(f"{s4[i, j]:+.9e}" for j in range(len(ids))),
+                flush=True,
+            )
+        print(
+            f"    ||S4 - S4^T||_F/||S4||_F = {ratio:.6e}  "
+            f"({ratio / RECIPROCITY_BAND:.3f}x the band, "
+            f"{'INSIDE' if ratio <= RECIPROCITY_BAND else 'MISS'})\n"
+            f"    negative control, column {ids[0]} scaled by "
+            f"{CONTROL_COLUMN_SCALE:.2f}: {control_ratio:.6e} "
+            f"({control_ratio / RECIPROCITY_BAND:.3f}x the band; the item's "
+            f"ceiling is ~7x, the bar {CONTROL_MARGIN_FACTOR:.0f}x)",
+            flush=True,
+        )
+
+    assert ratio <= RECIPROCITY_BAND, (
+        f"the 4x4 sub-block over {ids} is asymmetric at {ratio:.6e}, outside the "
+        f"pre-stated {RECIPROCITY_BAND:.0e} band — four columns of one reciprocal "
+        f"network cannot disagree this much (§9 item 1 negative result: the 4x4 "
+        f"into known-issues, band not widened, stop)"
+    )
+    assert control_ratio >= CONTROL_MARGIN_FACTOR * RECIPROCITY_BAND, (
+        f"a {(CONTROL_COLUMN_SCALE - 1.0) * 100:.0f}% per-column normalisation "
+        f"error — the `PORT-9` leg (d2) defect class — moves the reciprocity "
+        f"ratio only to {control_ratio:.6e}, under the "
+        f"{CONTROL_MARGIN_FACTOR:.0f}x{RECIPROCITY_BAND:.0e} bar; the gate above "
+        f"is then not sensitive to the defect it exists to catch"
+    )
+
+
+@complex_only
+def test_every_measured_column_is_passive(ring_four_columns):
+    """**Anchor (iv)** — ``Σ_i |S_ij|² <= 1`` on each of the four columns.
+
+    A necessary condition, not a sufficient one: a passive network scatters no
+    more power than it is fed, so no column of ``S`` may have norm above 1.  It
+    is exactly the reading a mis-normalised port model fails at O(1), and it
+    needs no second solve.  The ceiling is the physical 1, never a widenable
+    band; the margins are measurements and are printed.
+    """
+    four = ring_four_columns
+    norms = {
+        pid: float(sum(abs(s) ** 2 for s in col["s_column"].values()))
+        for pid, col in four["columns"].items()
+    }
+
+    if MPI.COMM_WORLD.rank == 0:
+        print(
+            f"\n[PORT-13 step2] GATE (iv) column passivity, "
+            f"sum_i |S_ij|^2 <= {COLUMN_PASSIVITY_CEILING:.0f} "
+            f"(a necessary condition on a passive network, not a band):",
+            flush=True,
+        )
+        for o in four["drive_ordinals"]:
+            pid = f"P{o}"
+            print(
+                f"    column {pid:>4s}  sum|S|^2 = {norms[pid]:.9f}  margin "
+                f"{COLUMN_PASSIVITY_CEILING - norms[pid]:+.9f} "
+                f"({(COLUMN_PASSIVITY_CEILING - norms[pid]) * 100:+.4f}%)  "
+                f"{'PASSIVE' if norms[pid] <= COLUMN_PASSIVITY_CEILING else 'ACTIVE'}",
+                flush=True,
+            )
+
+    for o in four["drive_ordinals"]:
+        pid = f"P{o}"
+        assert norms[pid] > 0.0
+        assert norms[pid] <= COLUMN_PASSIVITY_CEILING, (
+            f"column {pid} scatters sum_i |S_ij|^2 = {norms[pid]:.9f} > 1: the "
+            f"passive 32-port ring network would be delivering more power than "
+            f"the generator supplies, which is a port-normalisation defect, not "
+            f"a tolerance (§9 item 1 negative result: all four column norms into "
+            f"known-issues, stop)"
+        )
+
+
+@complex_only
+def test_the_top_and_bottom_ring_columns_are_z_mirrors(ring_four_columns):
+    """**Anchor (v)** — the top-ring column is the z-mirror of the bottom one.
+
+    The fixture is symmetric about ``z = 0``, so the ring swap ``σ`` at equal
+    measured azimuth is a symmetry of the network: ``S_{σ(i),σ(j)} = S_{i,j}``.
+    With ``σ(P17) = P33`` that says every entry of the top-ring column matches
+    its partner in the bottom-ring column.  This is an identity between two
+    *independently solved* columns — the one check in this module that a second
+    solve buys, and the reason step 2 drives the mirror port at all.  The band
+    is step 1's unmoved ``OPPOSITE_SPREAD_BAND``.
+    """
+    four = ring_four_columns
+    driven, mirror = four["driven"], four["mirror"]
+    sigma_map = four["sigma_map"]
+    col_a = four["columns"][f"P{driven}"]["s_column"]
+    col_b = four["columns"][f"P{mirror}"]["s_column"]
+
+    pairs = []
+    for o in sorted(sigma_map):
+        a = abs(col_a[f"P{o}"])
+        b = abs(col_b[f"P{sigma_map[o]}"])
+        pairs.append((o, sigma_map[o], a, b, abs(a - b) / a if a else float("inf")))
+    worst = max(pairs, key=lambda p: p[4])
+
+    if MPI.COMM_WORLD.rank == 0:
+        print(
+            f"\n[PORT-13 step2] GATE (v) the top/bottom mirror identity "
+            f"|S_(sigma(i)),P{mirror}| vs |S_i,P{driven}| (band "
+            f"{OPPOSITE_SPREAD_BAND * 100:.0f}%, step 1's, unmoved):",
+            flush=True,
+        )
+        for o, so, a, b, rel in pairs:
+            print(
+                f"    |S_P{o},P{driven}| = {a:.9e}   "
+                f"|S_P{so},P{mirror}| = {b:.9e}   rel {rel * 100:8.4f}%"
+                + ("   <-- worst" if o == worst[0] else ""),
+                flush=True,
+            )
+        print(
+            f"    worst pair P{worst[0]}/P{worst[1]} at {worst[4] * 100:.4f}%  "
+            f"{'INSIDE' if worst[4] <= OPPOSITE_SPREAD_BAND else 'MISS'}",
+            flush=True,
+        )
+
+    assert len(pairs) == 2 * SCALED_LEG_COUNT
+    assert worst[4] <= OPPOSITE_SPREAD_BAND, (
+        f"the mirror pair P{worst[0]}/P{worst[1]} reads "
+        f"|S_P{worst[0]},P{driven}| = {worst[2]:.9e} against "
+        f"|S_P{worst[1]},P{mirror}| = {worst[3]:.9e}, {worst[4] * 100:.4f}% apart "
+        f"against the unmoved {OPPOSITE_SPREAD_BAND * 100:.0f}% band — the two "
+        f"independently solved columns do not carry the fixture's z-mirror "
+        f"symmetry (§9 item 1 negative result: the pair table into known-issues, "
+        f"band not widened, stop)"
+    )
+
+
+@complex_only
+def test_power_accounting_closes_on_all_four_columns(ring_four_columns):
+    """**Anchor (vi)** — step 1's conservation identity, on every column.
+
+    One column closing is a solve that balanced; four columns closing on four
+    different drives is the port model closing.  The band is the same imported
+    ``POWER_BALANCE_BAND`` and it does not move here: the 2026-09-04 03:00
+    review ruled explicitly that step 1's 0.97-of-band residual gets **no new
+    band**, because it did not shrink from `WF-6` step 1's 9.80e-3 at 116 085
+    cells to this rung's 9.68e-3 at 270 728 and so is a term-accounting reading
+    rather than an h-effect.  A column crossing 1e-2 is a known-issues entry
+    carrying all four residuals.
+    """
+    four = ring_four_columns
+
+    if MPI.COMM_WORLD.rank == 0:
+        print(
+            f"\n[PORT-13 step2] GATE (vi) power accounting on each of the four "
+            f"columns (band {POWER_BALANCE_BAND:.0e}, imported from `WF-6` step 1, "
+            f"unmoved):",
+            flush=True,
+        )
+        for o in four["drive_ordinals"]:
+            col = four["columns"][f"P{o}"]
+            print(
+                f"    driven P{o:<2d}  supplied {col['supplied']:.9e} W  "
+                f"phantom {col['phantom']:.9e}  conductor {col['conductor']:.9e}  "
+                f"32 sheets {col['sheet_total']:.9e}\n"
+                f"                residual {col['residual']:.6e} "
+                f"({col['residual'] / POWER_BALANCE_BAND:.3f}x the band, margin "
+                f"{POWER_BALANCE_BAND - col['residual']:+.6e})  "
+                f"{'INSIDE' if col['residual'] <= POWER_BALANCE_BAND else 'MISS'}  "
+                f"[conductor-blind control {col['blind']:.6e}, "
+                f"{col['blind'] / POWER_BALANCE_BAND:.2f}x]",
+                flush=True,
+            )
+
+    for o in four["drive_ordinals"]:
+        col = four["columns"][f"P{o}"]
+        assert col["supplied"] > 0.0, (
+            f"driving P{o} the sheet supplies {col['supplied']:.9e} W — a passive "
+            "load cannot absorb negative real power"
+        )
+        assert col["residual"] <= POWER_BALANCE_BAND, (
+            f"driving P{o}, power accounting misses by {col['residual']:.6e} of "
+            f"the supplied {col['supplied']:.9e} W (phantom {col['phantom']:.9e}, "
+            f"conductor {col['conductor']:.9e}, 32 sheets "
+            f"{col['sheet_total']:.9e}); band {POWER_BALANCE_BAND:.0e}, unmoved "
+            f"(§9 item 1: all four residuals into known-issues, stop)"
+        )
+        assert col["blind"] > POWER_BALANCE_BAND, (
+            f"driving P{o}, dropping the conductor's 1/2 int sigma|E|^2 still "
+            f"closes to {col['blind']:.6e}, inside the band — the identity is "
+            "then insensitive to a term it is supposed to weigh"
+        )
