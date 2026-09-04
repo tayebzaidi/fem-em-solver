@@ -17962,3 +17962,99 @@ list needs topping up at the 10:30 review. The review's own scoping note stands
 open: `PORT-13` step 3 (the 32×32) is now projected at ≈ 292 s of solve plus one
 69–106 s mesh by item 1's footer, i.e. plausibly one window without column
 caching — worth deciding from that footer rather than step 1's.
+
+---
+
+## 2026-09-04T17:20Z — `PORT-13` step 3 — **complete** (12:00 CDT implementer slot)
+
+**Item.** §9 On-deck item 1, taken as the first open entry. Executor:
+`implementer`, spawned **foreground**, one chunk. The full 32×32 S-matrix on
+the 32-ring-port birdcage rung: two 16-drive solve windows with cached
+columns, then one assembly window with no solve.
+
+**Outcome: §4-complete on the first attempt**, committed to `main` at
+`04c12d0`. All six anchors green; no band moved, widened or renamed; no
+known-issues entry needed. Every digit below was re-read from the logs by
+this slot, not taken from the executor's report.
+
+**Windows** (all foreground, all through `scripts/testing/run_and_log.sh
+PORT-13`, all Status 0):
+
+| window | selection | ranks | footer | elapsed |
+|---|---|---|---|---|
+| pre-flight collect | — | 2 | `15 tests collected` | 4 s (`20260904T170442Z_PORT-13.log:262`) |
+| A | `FEM_EM_RING_SWEEP_HALF=bottom` (P17…P32) | 8 | `12 passed, 6 skipped in 271.93s` | **274 s** (`20260904T170452Z_PORT-13.log:11395, 11398`) |
+| B | `=top` (P33…P48) | 8 | `18 passed in 268.86s` | **271 s** (`20260904T170934Z_PORT-13.log:11337, 11340`) |
+| C | unset (assembly, no solve) | 2 | `17 passed, 1 skipped in 23.47s` | **25 s** (`20260904T171419Z_PORT-13.log:183, 262`) |
+| step-2 re-run | — | 8 | `19 passed in 143.23s` | **145 s** (`20260904T171451Z_PORT-13.log:11398, 11401`) |
+
+Window B also ran the assembly gates (`bottom.npz` already on disk); window C
+reproduced every one of its digits at a different rank count — the same
+identity read twice at `-n 8` and `-n 2`.
+
+**Anchors** (citations to `20260904T171419Z_PORT-13.log`, the `-n 2`
+assembly window):
+
+- (i) reciprocity `‖S − Sᵀ‖_F/‖S‖_F = **5.446798e-13**` vs the unmoved
+  imported `RECIPROCITY_BAND` 1e-3; `‖S‖_F = 5.414671`, against the item's
+  predicted √(32 × 0.916) = 5.41 (`:83`). Negative control, one cached
+  column × 1.01: **2.496159e-03 = 2.496× the band**, against the item's
+  computed ≈ 2.5× ceiling (to three digits) and the locally defined
+  `MATRIX_CONTROL_MARGIN = 2.0` (`:84`).
+- (ii) `σ_max(S) = **0.999999452**`, margin +5.48e-07 — passive, and *not*
+  in the (1, 1 + 1e-2] band the item's negative-result clause reserved for
+  the 0.97-of-band accounting offset (`:87–88`).
+- (iii) 18 measured C16 × mirror classes from measured azimuths and ring
+  membership, all 1024 entries classified, every class inside the unmoved
+  5%: **worst 0.4426%**, the same-ring 0-step class (the 32 diagonal
+  entries), max `|S_38,38|` = 4.315637e-02 vs min `|S_29,29|` = 4.296576e-02
+  (`:93, :111`).
+- (iv) the four step-2 columns' `Σ_i|S_ij|²` reproduced at **1.185e-10 …
+  3.059e-10** relative vs rtol 1e-6 — the tie to the audited step 2.
+- (v) both halves 270 728 cells at ratio 1.000000 of
+  `RING_LONGITUDINAL_SCALED_CELL_RECORD`; azimuth tables agree at
+  **0.000e+00 °** (`:77`).
+- (vi) all 32 residuals **9.330979e-03 … 9.680804e-03**, worst P37 at 0.968×
+  the imported 1e-2 band, spread 3.498e-04 (`:80`).
+
+**Price.** Window A: 158.87 s of solve over 16 drives (9.18–10.61 s each),
+246.75 s wall, summed `ru_maxrss` 6.771 GiB against the 128 G cap; window B:
+156.25 s (8.88–10.41 s), 243.76 s wall, 6.649 GiB. **Both solve windows
+finished at ≈ 270 s against the `timeout -k 30 600` ceiling — the 600 s stop
+rule was never approached.** The item sized the windows off step 1's
+27.96 s/solve (215–560 s); the machine delivered step 2's ≈ 9–10 s/solve
+instead, so the conservative sizing cost nothing and the whole item ran in
+≈ 12 min of compute. **For the review:** the per-solve price on this fixture
+has now been 27.96 s once and 9–10 s three times; the 9–10 s figure is the
+one to size step 4 from, with the 600 s ceiling kept as the guard.
+
+**Scope held.** The step-2 module gained one **additive** plain helper
+`_build_ring_context()` holding the fixture body verbatim — nothing renamed,
+removed or re-ordered — and its 19 tests re-ran green in the same slot, per
+the item and the standing additive licence. Selection was by
+`FEM_EM_RING_SWEEP_HALF` only, never a `-k` expression. The two `.npz` caches
+stayed in the gitignored `output/port13_ring_columns/` and are absent from the
+commit (verified: `git show --stat HEAD` lists only `PROJECT_PLAN.md`,
+`test-results.md`, the four logs and the two test modules). §2's 16-leg
+parenthetical gained the one clause the item allowed, naming what the 32×32
+still is not (self-consistency on one fixture at 10 MHz, degree 1 — no σ_max
+record, no absolute accuracy, no resonance, tuning or mode-spectrum claim).
+
+**Verification by this slot, not the executor.** The report's claims were
+re-read against the logs before the entry was written: the five footers with
+`Status: 0`, the reciprocity / σ_max / worst-class / control digits, the
+commit's file list, and the §9 done-mark. No disagreement found — the logs
+and the report agree line for line.
+
+**Logs:** `20260904T170442Z_PORT-13.log`, `20260904T170452Z_PORT-13.log`,
+`20260904T170934Z_PORT-13.log`, `20260904T171419Z_PORT-13.log`,
+`20260904T171451Z_PORT-13.log`. No branch parked; `main` clean.
+
+**Next.** §9 items 2–5 remain open (`EX-47`, `OPS-38`, the `GEO-25`
+`mesh-probe`, `MAT-6` step 11 as the spare) — the 13:30 slot takes item 2.
+`PORT-13` step 4 is now scopeable from this footer as the review intended:
+the 32×32 exists, is reciprocal / passive / C16-symmetric, and the open
+questions it leaves are the σ_max margin (5.5e-07 — tight enough that the
+0.97-of-band accounting residual is the obvious next suspect to quantify)
+and everything the fixture still does not have (Larmor frequency, tuning,
+mode spectrum).
