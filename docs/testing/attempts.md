@@ -17792,3 +17792,88 @@ any other module still carrying v0.7.2-era reproduction records under bands
 too wide to see a 2.6e-4 image shift — `OPS-34` and `OPS-37` have now each
 found one on the same route; a sweep for the rest is cheap to scope and has
 not been done.
+
+---
+
+## 2026-09-04T12:50Z — `EX-45` — **complete**
+
+**Slot:** scheduled implementer run, 07:30 CDT. Preflight clean on `2d8c77b`
+(no `attempt/*`, no `recovered/*`); container Up ≈ 16 h. §9 item 3 was the
+first item not done or blocked — items 1 (`PORT-13` step 2) and 2 (`OPS-37`)
+were closed by the 04:30 and 06:00 slots. Delegated to **`example-runner`**,
+spawned **foreground**, per the item's own executor line.
+
+**What was built.** New pair
+`examples/meshing/11_birdcage_sixteen_ring_sheet_longitudinal.py` / `.md`
+(runner key `mesh:11`): `_measure_ring(SCALED_LEG_COUNT,
+orientation="longitudinal")` once — no transverse control mesh, `mesh:9` is
+that example — written as combined XDMF with the `100+i` / `200+i` half tags,
+a separate facets XDMF for the 32 reconstructed sheets, and one DG0 cell
+field `RingPortTerminalArea` on the 32 ring-port boxes carrying each port's
+measured terminal area, so a threshold isolates the 10 low-state ports
+directly. Printed: the four azimuth-class spreads, the state census, the C32
+and mirror sheet spreads, the 32-sheet identity table.
+
+**Windows (all foreground, all through `run_and_log.sh`).** Pre-census
+`20260904T123145Z_EX-45-precensus.log` (exit 2, `:104` `dead=0 guide=0
+stale=65`); the example
+`20260904T123421Z_EX-45.log` — emitted verbatim by `./scripts/run_examples.sh
+-e mesh:11 -t 400 --dry-run`, Status 0, **elapsed 82 s** at `-n 2`, **tier
+standard** by footer against the item's ≈ 150 s estimate (mesh 68.85 s, rung
+76.30 s, `:10561`); post-census `20260904T123551Z_EX-45-postcensus.log`
+(**exit 1** — see below) and after the fix
+`20260904T123605Z_EX-45-postcensus2.log` (exit 2, `:104` `dead=0 guide=0
+stale=65`, 39 runnable). Both census windows through the harness this time,
+as the item required after `EX-44`.
+
+**Anchors, all green on the first solve run, all imported and never
+restated** (from `tests/mesh/test_birdcage_ring_sheet_orientation.py` and
+`test_birdcage_ring_gaps_scaleup.py` as they stand at `2445b9e`):
+cells **270 728** vs `RING_LONGITUDINAL_SCALED_CELL_RECORD`, **ratio
+1.000000** (`:10605`); `_assert_ring_identity_family(..., terminal_intra_band=
+LONGITUDINAL_TERMINAL_BAND[16])` green; the terminal-area census **2 states,
+low state 10 of 32** (`:10615–10616`) — `GEO-26` step 3's record reproduced;
+C32 sheet spread **6.035e-16**, top/bottom mirror **5.551e-16** under the
+1e-12 band (`:10618`); census `exit != 1`.
+
+**Free negative control.** The four class spreads read **9.989957e-05 /
+3.792060e-11 / 3.792129e-11 / 9.990206e-05** (`:10610–10613`) — the largest,
+9.990206e-05, sits strictly above `LONGITUDINAL_TERMINAL_INTRA_BAND` (2.0e-5)
+and below `LONGITUDINAL_TERMINAL_BAND[16]` (2.0e-4): the **5.0×** separation
+`GEO-26` step 3's control window measured, to the digit, and the ceiling — no
+larger factor claimed.
+
+**One self-caught authoring error, disclosed.** The first post-census failed
+`exit 1`: a guide reference to `..._facets.xdmf` was written without its
+filename prefix and `check_example_doc_references.py` read it as a dead
+reference. Fixed to the full filename and re-run clean. Both windows are
+committed; the failing one is evidence, not noise.
+
+**Scope held.** Commit `d911425` touches only the example pair, the four
+logs, `docs/testing/test-results.md` and PROJECT_PLAN.md (§7 row ⬜ → ✅,
+§9 item 3 struck). **No `src/`, no `tests/`, no band, no gate, no solve, no
+§2 change** — verified against `git show --stat`.
+
+**Verification I did myself** (a delegated chunk is still mine): re-read the
+footer (Status 0, Elapsed 82 s), `:10605`, `:10610–10613`, `:10615–10616`,
+`:10618`, the `RESULT:` line of both surviving census logs, and the commit's
+file list. Every number the executor reported is in the logs at the line it
+cited.
+
+**Slot bookkeeping.** ~2.5 min of compute against the item's ≈ 150 s
+estimate. **No compute-safety event, no docker-socket denial, no allowlist
+denial, no container wedge, no backgrounded harness command.**
+Foreground-executor rule held. Tree clean on `main` at slot end.
+
+**Hypothesis for the next attempt.** The next slot takes §9 item 4 (`EX-46`,
+the first field on the 32-ring-port birdcage — `|E|` on the longitudinal ring
+sheets and the phantom for one driven ring port, with the 32-port voltage
+vector), heavy by ceiling, `example-runner`, importing from `PORT-13` step
+1's module as it stands at `052bd61`. Note for it: this run's mesh cost 68.85 s
+against step 1's 106.07 s serial build, so `EX-46`'s ≈ 250 s estimate has more
+headroom than priced — but it carries a solve, so size the container-side
+`timeout -k 30` to return a footer inside one foreground window regardless.
+For the review: the `mesh:11` guide's dead-reference slip is the second
+census-gate catch in three example chunks, and both were filename-prefix
+mistakes in a `paraview_output/` reference — a one-line guide-authoring note
+in the `EX-15` heading convention would retire the class.
