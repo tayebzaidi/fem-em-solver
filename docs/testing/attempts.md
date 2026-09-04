@@ -17355,3 +17355,91 @@ run hands the review is (a) above — and, more generally, whether the ~1e-9
 scatter measured here justifies pulling the *gate* module's 2e-3 down as well,
 which would turn a band that currently cannot see a 2.6e-4 image drift into one
 that can.
+
+---
+
+## 2026-09-04T02:00Z — `EX-44` — complete (21:00 local implementer slot)
+
+**Preflight clean.** `git status --porcelain` empty at `9d44114`, container Up
+6 h. No `attempt/*` or `recovered/*` outstanding. §9 item 1 (`OPS-34`) is
+marked done by the 19:30 slot, so this run took **item 2, `EX-44`** — its
+first attempt, not a retry.
+
+**Delegated to `example-runner`, spawned foreground** (the never-background
+rule and the emit-then-harness rule were both restated in the spawn prompt;
+the executor used `./scripts/run_examples.sh -e mesh:10 --dry-run` then the
+harness, and reported no socket denial and no allowlist denial). Committed at
+`2758f4b`; I re-read the log myself before accepting it.
+
+**Landed:** the pair `examples/meshing/10_birdcage_ring_sheet_longitudinal.py`
+/ `.md` (runner key `mesh:10`), building the longitudinal and the default
+transverse 4-leg ring-gap meshes in one run and writing the longitudinal one
+as combined XDMF with the `100+i` / `200+i` inner/outer half tags plus the
+sheet facet tags (215–222), so ParaView can threshold one ring port's two
+halves either side of the `u = R` sheet.
+
+**Measured — `20260904T020406Z_EX-44.log`, Status 0, Elapsed 59 s, `-n 2`,
+real build, header commit `9d44114`; standard tier declared from the footer**
+(the §9 item priced ≈ 70 s; in-script total 55.5 s):
+- longitudinal **111 898** cells = `RING_LONGITUDINAL_CELL_RECORD`, ratio
+  1.000000; transverse control **110 786** = `RING_GAP_CELL_RECORD`, ratio
+  1.000000, both at `CELL_COUNT_BAND` (`:5479–5480`).
+- chord `8.008718871e-03` m vs arc `8.000000000e-03` m, chord/arc
+  `1.001089859` — the designed +0.109% (`:5481`); halves
+  `V_in = 3.861346599e-07` / `V_out = 4.147372273e-07` m³, sum /
+  `ring_port_volume_m3` = 1.000000000000 (`:5482`).
+- per-port table on all **8** ring ports P5–P12 (`:5485–5491`): `φ̂`-extent /
+  chord = `ẑ`-extent / `w` = `V_in`/analytic = `V_out`/analytic =
+  **1.000000000000** on every one.
+- `_assert_ring_identity_family` green on the longitudinal mesh at
+  `terminal_intra_band=LONGITUDINAL_TERMINAL_INTRA_BAND` and on the control at
+  the helper's own defaults; the control's C8 sheet spread 2.443e-16,
+  intra-class terminal spread 4.198e-08 vs its 1e-06 band (`:5475–5476`) —
+  step 1's digits.
+- **Negative control asserted, fourteen decades:** the transverse sheets'
+  `φ̂`-extent (the drive direction) reads 7.691e-18 – 1.429e-17 m against the
+  longitudinal 8.008719e-03 m chord, with the per-port ratio asserted > 1e13
+  on all 8.
+
+**All four records are imported, never restated** — `CELL_COUNT_BAND` from
+`test_birdcage_port_sheet_prerequisite`, `RING_GAP_CELL_RECORD` /
+`RING_GAP_LENGTH` from `test_birdcage_ring_gaps`, `_assert_ring_identity_family`
+from `test_birdcage_ring_gaps_scaleup`, `RING_LONGITUDINAL_CELL_RECORD` /
+`LONGITUDINAL_TERMINAL_INTRA_BAND` from `test_birdcage_ring_sheet_orientation`
+(verified by grep on the landed file, lines 85–97). No band, no gate, no
+`src/` or `tests/` change, no solve, no §2 change; 4 legs only.
+
+**Census.** `dead=0 guide=0 stale=62 exit=2` on `main` after the commit —
+`RESULT:` at `20260904T020747Z_EX-44-postcensus.log:101`, Status 2, 1 s, run
+by me through the harness. `exit != 1`, so the anchor holds, and the new guide
+is discovered (`guide=0`). The corpus went 37 → 38 examples with `stale`
+unchanged at 62 — the review's 63 at `2730af3` dropped to 62 when `OPS-34`
+refreshed `01_two_torus_port_pair.md`.
+
+**One evidence gap, closed after the fact.** The executor ran its mandatory
+**pre**-census outside the harness, so it left no log — only its report
+(`dead=0 guide=0 stale=62 exit=2`, 37 examples). I re-ran the census through
+the harness on the committed tree, which is the reading the anchor actually
+needs; the pre-census figure in this entry is the executor's word, not a
+footered log. Worth a line in the `example-runner` prompt: both census
+windows go through `run_and_log.sh`, as `EX-42` did on 2026-09-03.
+
+**One cosmetic deviation from the item text**, no anchor moved: the §9 item
+and the §7 row say "4 legs" in a shorthand that reads as 4 ring sheets, but
+the fixture is 4 legs × 2 end rings = **8** ring ports (the gate module's own
+`CONTROL_LEG_COUNT` docstring says "eight ring ports, C8"). The script and the
+guide report all 8. The `-t 300` window and the 1e-12 degeneracy band are the
+item's as written.
+
+**Guide** carries the three `EX-15` headings verbatim (What this demonstrates
+/ How to run it / How to analyze it, step by step) plus Related.
+
+**No compute-safety event, no docker-socket denial, no allowlist denial.** One
+59 s window plus a 1 s census; well inside the standard tier and the slot.
+
+**Hypothesis for the next attempt:** nothing is owed on `EX-44`. The next slot
+takes §9 item 3 (`GEO-26` step 3 — the 16-leg terminal-area band, implementer,
+three windows at ≈ 160 s, negative control first). Its one live risk is the
+control window: it must read `1 failed` on `9.989956525036291e-05 < 2e-05`
+before the one-line edit is reverted, and a slot that records the band-moved
+windows first has no ceiling measurement.
