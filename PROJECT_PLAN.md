@@ -3419,6 +3419,8 @@ from `OPS-26` step 2's four sites. Full narrative and both step-2 rubrics archiv
 | `TH-11` | **Coil-loading trend across the eddy→displacement transition (`MAT-6`'s ΔR machinery at rising f)** | ✅ *(closed 2026-08-18 on step 4's answer + step 5's measured negative — the `GEO-14` precedent; step 1 ✅ 2026-08-13 — 64 MHz feasible at the 10 MHz price, identities to 1e-14, quasi-static ΔR deviation 1.5834% → **10.2698%**, unattributed between physics and 1.26 cells/δ; step 2 ✅ 2026-08-15 — the resolution rung attributes most of it to mesh: **+2.8063%** at 2.52 cells/δ, a −7.4635 pp move, the pre-registered RESOLUTION-DOMINATED band, so no gated trend claim is scopeable yet; step 3 ✅ 2026-08-16 — the 30 MHz mid-point reads **+5.5912%**, giving 1.5834 / 5.5912 / 10.2698% across 10 / 30 / 64 MHz, but cells/δ falls 3.18 / 1.84 / 1.26 in lockstep, so the confound is monotone too and the trend stays a set of points; step 4 ✅ 2026-08-17 — the fixed-f h-ladder reads **flat in f**: refinement moves the deviation −1.87 pp at 10 MHz and −4.48 pp at 30 MHz (−7.46 pp at 64 MHz on record) and the h → 0 brackets overlap at ~−1%, so the "trend" was the resolution term; no gated trend claim is scopeable and §2 stands; step 5 scoped 2026-08-17 review, attempt 1 🚫 2026-08-17 — the third rung is **priced and does not fit a scheduled slot**: 2 807 309 cells (inside the 3.4 M ceiling) but 288.2 s of mesh plus a loaded solve still assembling at the 570 s kill, so §7's probe stop condition fired; module parked on `attempt/TH-11-step5-20260817T123353Z`; **rescoped by the 10:30 review as 5a/5b** — 5a caches the mesh to XDMF and buys the `-n 8` rank change with a measured control (fine-rung +2.8063% reproduced within 0.1 pp), 5b runs the pair off the cache; step 5a ✅ 2026-08-17 — the cache round-trips the 2 807 309-cell rung **exactly** (per-tag owned counts and tag names preserved, mesh 126.4 s replaced by a 14.8 s read) and the `-n 8` fine-rung pair reproduces the `-n 2` record to **+0.00002 pp**, so the rank change is bought; 5b is unblocked and needs one solve per command at ~480 s; step 5b attempt 1 🟡 2026-08-18 — the loaded/free split is **exact** (fine rung reproduced to the last digit, drive surrogate 0.000e+00) and the cache reads back at `-n 12`, but the third-rung solve was **OOM-killed with the container** at 518 s, so the rung is memory-bound at 64 GiB, not time-bound: the review's lever (b) more ranks is the wrong one and (c) shrinking the rung is now live; module parked on `attempt/TH-11-step5b-20260818T004000Z`; step 5b attempt 2 🟡 2026-08-18 — the peak is now **measured**: at `-n 8` the same solve drove `memory.peak` to **64.00 GiB, exactly `memory.max`**, and ran past `timeout -k 30 560` without returning, so `-n 12`'s OOM and `-n 8`'s overrun are one wall with two failure modes and **no rank count affords 2 807 309 cells on this box** — §7's stop condition fires and (c) shrinking to ~1.4 M cells is the review's call; parked on `attempt/TH-11-step5b-20260818T024200Z`; **rescoped 2026-08-18 03:00 review as step 5c** — the ~1.4 M rung (`near ≈ 0.0018`, non-2 `ratio`) end to end off the parked branch, 480 s ceilings, `memory.peak` printed every command; step 5c attempt 1 🚫 2026-08-18 — **the stop condition fired at 0.99 M cells**: the rung meshes to 994 258 cells and its loaded solve alone pegs `memory.peak` at `memory.max` = 64.00 GiB (identity family green at 1e-9 on the solve that completed), so the wall is superlinear in cells — 0.42 M comfortable / 0.99 M pegged / 2.81 M OOM, MUMPS fill-in; **step 5 closed as a measured negative, adjudicated 2026-08-18 10:30 review** — no affordable third rung exists (a rung between 0.42 M and 0.99 M is ratio ≈ 1.2, difference signal at the 0.01 pp run-to-run floor), no 5d scoped, no 64 MHz bracket; the surviving axis is `TH-12` step 2, which names this swap. **Chunk closed:** the trend question is answered — the apparent frequency trend was the resolution term (step 4), no gated trend claim is scopeable, and §2 carries the negative)* | standard (steps 4–5 heavy) |
 | `TH-12` | **Second-order elements (degree-2 N1curl): accuracy-per-DOF and cost, measured** (operator directive 2026-08-18; decides the production element order for §10 Phase 5/6 — see entry) | ✅ *(closed 2026-09-02 weekly review — see the decision clause re-affirmation in the entry; steps 1–3 ✅ since 08-23)* *(step 1 ✅ 2026-08-18 — degree 2 on the **coarse** 5 866-cell sphere reads **0.1405%** interior relL2, against the degree-1 fine-rung record 3.643% at 17 670 cells: **25.9× the accuracy at 3.01× fewer cells**, and the ohmic-power error falls 8.3869% → **0.0058%**; the cost is 5.22× the DOFs (7 591 → 39 634), 4.32× the solve wall (0.93 → 4.03 s) and 2.67× the summed peak RSS (388 → 1 036 MiB), i.e. **sublinear in DOFs on both**; negative control green — degree 1 on the same rung reproduces its recorded 8.387% power error to 0.0001 pp; step 2 (the coil) is unblocked. *Audited COMPLIANT 2026-08-18 10:30 review — every claimed number verified against `20260818T110442Z_TH-12-step1-sphere-degree2-rss.log`, gate asserted in code at the unloosened record, `TH-10` callers unmoved; the `memory.peak` → summed-RSS instrument substitution is disclosed and instrument-only*; step 2 ✅ 2026-08-18 — the coil at degree 2 reads ΔR deviation **−0.8508%** against step 4's h → 0 bracket [−2.1492%, −0.9050%]: **outside by 0.054 pp past the upper edge**, having moved **−2.434 pp** off degree 1's +1.5834% on the same coarse mesh, so raising the order walks the coarse rung essentially to the refined answer; the cost is 5.423× the DOFs for **~20× the solve wall** (12.4 + 12.2 s → 235.4 + 266.4 s) and **61.94 GiB** summed peak RSS — 29% above the calibrated 48.04 GiB projection and 96.8% of `memory.max`, so degree 2 is against the same memory wall that killed `TH-11` step 5b; controls green (degree-1 anchor to −0.00002 pp, cells exact, σ = 0 dissipation exactly +0.0), and **one real defect found and left failing**: the complex-power identity reads 3–5e-9 against its 1e-9 family bound at degree 2 because `W_e` explodes 2.03e-13 → 7.16e-06 J (ungauged gradient null space, `Im Z` +9.02 → −2 117 Ω) — common-mode, so the ΔR reading survives, but the identity no longer discriminates at this order; known-issues carries it, unassigned. *Audited COMPLIANT 2026-08-18 18:00 review — every claimed number verified against the log; exit 1 is exactly the two unloosened identity tests.* **Adjudicated, same review:** no affordable (order, h) route to the 64 MHz bracket exists on this box (recorded §2.2, no rung swap scoped), and the identity defect's disposition is commissioned as **step 3** (mechanism: generic-to-incompatible-drives vs coil-feed-specific, on the smoke + sphere fixtures at smoke cost). step 3 ✅ 2026-08-19 — the mechanism reads **COIL-SPECIFIC** at the pre-registered ≤ 10×-on-both band and not narrowly: the smoke fixture's incompatible `J·n ≠ 0` drive moves `W_e/W_m` **1.155×** across order and the sphere's imposed field **1.015×**, against the coil's **3.426e+07×**, so `J·n ≠ 0` is *not sufficient* and the incompatible-drive hypothesis is refuted; anchors green (smoke reproduces `POST-5`'s 1.199162e-06 W at rtol 1e-6 on 1 405 cells; the sphere pair reproduces step 1's 0.1405% / 0.0058% and the degree-1 control band), negative control asserted, energy forms imported not restated; **confound named** — the three fixtures' baseline `W_e/W_m` spans 2.16 / 1.07 / 6.7e-6, so the step excludes "`J·n ≠ 0` is sufficient" but does not separate the feed model from "only a `W_m ≫ W_e` fixture can display it" (`20260819T183425Z_TH-12-step3-warm.log`, 8 passed / 10 s at `-n 2`). **Chunk closed ✅ 2026-09-02 weekly review: the production-order clause (§10, 2026-08-23) is re-affirmed with `TH-13` in hand — degree 1 for coil-fed solves, degree 2 for imposed-field phantom solves; `TH-13` step 2 located the degree-2 injector in the degree-1-only source projection (feed-side, CLASS/FEED dichotomy retired), and the coil's two degree-2 identity reds at 3.9e-9 / 3.7e-9 vs 1e-9 stay open in known-issues as the reopening condition, not as a blocker**)* | standard (step 2 heavy) |
 | `TH-13` | The degree-2 gradient-subspace injector: feed model or any `W_m ≫ W_e` fixture? — the discriminator `TH-12` step 3 named (commissioned 2026-08-23 weekly review; cheap fixtures only) | ✅ *(closed 2026-08-31 on step 2 — (A) holds at round-off, the injector is the degree-1-only `H¹₀`-only source projection; audited COMPLIANT 03:00 review. Follow-on **step 3a** — the matched projection, opt-in, loop fixture only — scoped 03:00 review, §9 item 1, **executed 2026-08-31 04:30 slot and 🟡**: both anchors met with 6–14 orders of margin (residue 1.298386e-02 / 1.045186e-01 → **8.109635e-17 / 1.790460e-16** vs ≤ 1e-8; gradient share of `W_e` 99.98% / 99.9997% → **4.6e-23 / 3.1e-21** vs ≤ 1e-6; `W_e` to 0.018% / 2.6e-4 % of record vs ≤ 2% / ≤ 1%), default path bit-identical on control (b) at **0.000e+00**, but one of the two owed regression re-runs — `test_coil_loading_degree2.py` — **could not be executed** (exit 124 at 571 s, twice — step 3a″ on 2026-08-31 measured the cost as the degree-2 pair alone, ≥ 524 s, mesh 4.3 s; known-issues entry), so the coil identity tests' 1e-9 reds are unverified on this commit — the degree-1 half of the owed claim was re-observed by 3a″ (+0.00039 pp of record), and **step 3a‴ (module split, one σ-half per window) closed that gap on 2026-09-01**: the two reds are now **observed** at 3.8990e-09 / 3.7235e-09 against the unloosened 1e-9, one per half, each window footered inside its 600 s ceiling — see the step-3a‴ bullet; the lumped-sheet coil drive is `project_source=False` and out of 3a's reach, see entry)* | standard |
+| `TH-15` | **Internal perfect-electric-conductor bodies** — a conductor solved as a *hole* in the domain with `n × E = 0` on its surface facets, the lossless limit of a real (copper) coil (operator directive 2026-09-04, interactive session; the first of the two conductor-model routes; serial on nothing) | ⬜ | standard (step 3 heavy) |
+| `TH-14` | **Surface-impedance (Leontovich) boundary on conductor surfaces** — `n × E = Z_s n × (n × H)`, `Z_s = (1 + j)/(σδ)`, so copper (σ = 5.8e7 S/m) is affordable at any frequency; Jin §1.5.3 (1.54)–(1.56) and §5.8.3 (third-kind boundary term) (operator directive 2026-09-04; the second conductor-model route; **serial on `TH-15`** for the conductor-as-hole mesh and facet tags) | ⬜ | standard (step 3 heavy) |
 
 **`TH-10` — lossy dielectric sphere, full-wave, 64/128 MHz (Larmor gate)**
 ✅ *(steps 1–4 ✅ 2026-08-13, chunk closed by the 10:30 review; full step
@@ -4167,6 +4169,110 @@ contamination", because neither cheap fixture is magnetically dominated.
 >   three cross-half readings (drive control, ΔZ signs, ΔR against step 4's
 >   bracket) are unobservable one half at a time and stay as 08-18 recorded
 >   them; the two tests skip with that reason.
+
+
+**`TH-15` — internal PEC bodies: the conductor as a hole with
+`n × E = 0` on its surface** ⬜ *(commissioned 2026-09-04 by operator
+directive, interactive session; the first of two conductor-model routes;
+serial on nothing; `TH-14` and `ANS-6` are serial on it.)* **Why.** Every
+conductor in every gated fixture is a solved-inside volume whose σ is capped
+by the mesh: `δ = √(2/(ωμ₀σ)) ≥ r_wire` (asserted in
+`test_port_gap_voltage_impedance.py::test_sigma_respects_the_skin_depth_constraint`),
+which is where the 800 S/m coil comes from. Copper at 10 MHz has δ ≈ 21 µm;
+no volume mesh resolves it. §1's steps 2–3 (tuning, matching, B₁⁺ and SAR
+per unit accepted power) are loss-partition quantities and the 800 S/m coil
+carries a coil-loss share no real birdcage has, so no per-workflow parity
+claim on a tuned coil can be made on it. The solver has two outer-boundary
+modes (`TimeHarmonicBoundaryCondition`: natural, PEC) and no interior
+conductor model of any kind. This chunk adds the lossless one; `TH-14`
+adds the lossy one on the same mesh and facet tags. **Path.** Through the
+`TH-1` solver and the `PORT-9` `extra_bilinear_terms` hook — *not* through
+`TH-3`'s ⚠️ option set, which the §9 standing rule forbids extending; the
+review confirms that reading before step 1 runs.
+> * **Step 0 (mesh, measurement first).** Does `MeshGenerator` emit a
+>   conductor as a *hole* — its volume absent from the cell set, its surface
+>   present as a tagged facet set — for the two-torus and
+>   `birdcage_port_domain` generators, with the port sheets still touching
+>   the (now surface-only) terminals? Probe with the `mesh-probe` agent on
+>   the two-torus fixture first. Pre-registered stop: if OCC fragmentation
+>   of a hollow torus against a sheet lands in the `GEO-23` "overlapping
+>   facets" family, this becomes a `GEO` chunk and `TH-15` waits on it.
+>   Record cell counts against the solved-inside records (a hole is fewer
+>   cells; say how many).
+> * **Step 1 (formulation, cheap fixture).** Homogeneous Dirichlet on the
+>   conductor-surface facet dofs (`locate_dofs_topological` on the tagged
+>   facets — an `H(curl)` tangential-trace condition, Jin §1.5.2), volume
+>   excluded. Gate (closed form): a **PEC sphere in a uniform time-harmonic
+>   field** at 10 MHz — the `TH-8` fixture with the sphere's material
+>   replaced by the hole — against the static-limit dipole field outside the
+>   sphere (`E_r`, `E_θ` on the `TH-8` sample set); band **≤ the `TH-8`
+>   record's own miss × 2**, pre-stated in the module from the imported
+>   `TH-8` constant, never restated. Negative control: the same sphere at
+>   σ = 800 solved inside must *not* pass the PEC closed form (the field
+>   penetrates ~δ); print its miss.
+> * **Step 2 (identities on the PEC two-torus).** The `PORT-1` package on
+>   the hollow two-torus: reciprocity ≤ 1e-3 (imported), passivity, and the
+>   new identity a lossless coil buys — **`Re P_in = 0` to 1e-9-class
+>   round-off** (no phantom, no loss anywhere), the first exact power
+>   identity the port lineage has had. Standard tier.
+> * **Step 3 (the birdcage, heavy).** `birdcage_port_domain` with the coil
+>   as a hole, phantom present, `PORT-9`/`PORT-11`'s three gates at 10 / 64
+>   / 128 MHz with every band imported, plus **`Re P_in = ½∫_phantom σ|E|²`
+>   to ≤ 1e-3** (all loss is in the phantom by construction). Record the
+>   4×4 beside the σ = 800 record and print `max|ΔS|` per class — a
+>   *reading*, gated by nothing; it is the number `TH-14` step 3 brackets.
+> * **Done-when (§4).** Steps 1–3 executed, the PEC-sphere closed form and
+>   the two power identities asserted, cell counts and elapsed times
+>   recorded, §2.1 gains a "conductor model" line stating exactly what is
+>   gated (PEC interior bodies on three fixtures) and what is not (no loss,
+>   no Q, no copper). No band moved.
+
+**`TH-14` — surface-impedance (Leontovich) boundary on conductor
+surfaces** ⬜ *(commissioned 2026-09-04 by operator directive, interactive
+session; the second conductor-model route; **serial on `TH-15`** — same
+hole mesh, same facet tags, one surface term added; `ANS-6` is serial on
+it.)* **Formulation.** On the conductor-surface facets Γ_c the field
+satisfies `n × E = Z_s n × (n × H)` with `Z_s = (1 + j)/(σδ)` (Jin §1.5.3,
+(1.54)–(1.56); valid when δ ≪ the surface's radius of curvature, which copper
+satisfies on every fixture here by 10³–10⁴). In the `E`-field curl-curl weak
+form that is the third-kind boundary term of Jin §5.8.3,
+`jωμ₀ ∫_Γc (1/Z_s)(n × E)·(n × W) dS`, i.e. exactly the shape of the
+lumped-sheet term the `PORT-9` `extra_bilinear_terms` hook already carries
+— the hook is the implementation route, with a `surface_impedance` material
+attribute per facet tag. HFSS's counterpart is the *Finite Conductivity*
+boundary with Solve Inside off, which is what `ANS-6` replicates.
+> * **Step 1 (closed form, plane wave).** The `TH-6` lossy-half-space fixture
+>   with the half-space replaced by an impedance surface at σ ∈ {1e4, 5.8e7}
+>   S/m: reflection coefficient against the exact Fresnel `Γ = (η_c − η₀)/(η_c
+>   + η₀)`; the Leontovich error is O(δ/λ), so pre-state **≤ 1e-3** on `|Γ|`
+>   and `arg Γ` at 5.8e7 and record the 1e4 rung as the approximation's own
+>   scale. Negative control: `Z_s = 0` (PEC) must give `|Γ| = 1` and miss the
+>   phase by the recorded amount. Smoke/standard tier.
+> * **Step 2 (closed form, coil loading — the copper Dodd–Deeds).** `MAT-6`'s
+>   loop-over-slab fixture with the slab as an impedance surface at **σ =
+>   5.8e7** and the loop itself still solved inside at its gated σ: ΔR and ΔX
+>   against Dodd–Deeds (the closed form is valid at any σ), pre-stated band
+>   **2%** (the `MAT-6` record is 1.58% at 100 S/m on a resolved volume; the
+>   surface route has no resolution term, so if it misses by more the miss is
+>   the formulation). Standard tier; the `ANS-1` slab geometry, so it is also
+>   an AED-checkable point.
+> * **Step 3 (the copper birdcage, heavy).** `TH-15` step 3's hole mesh with
+>   `Z_s` for copper on the coil surface, phantom present: `PORT-9`/`PORT-11`
+>   gates at 10 / 64 / 128 MHz (bands imported), the power identity
+>   **`Re P_in = ½∫_phantom σ|E|² + ½∫_Γc Re(Z_s)|H_t|² ≤ 1e-3`**, and the
+>   **bracket**: the copper 4×4 must lie between the σ = 800 record and the
+>   `TH-15` PEC 4×4 class by class, and the σ ladder {5.8e7, 5.8e9, 5.8e11}
+>   must converge onto the PEC matrix monotonically — the consistency
+>   identity between the two routes, and the reason `TH-15` goes first.
+>   Print the coil-loss share `P_coil/P_in` at each frequency beside the
+>   σ = 800 fixture's; that pair of numbers is the whole point of the
+>   directive.
+> * **Done-when (§4).** Steps 1–3 executed, Fresnel and Dodd–Deeds asserted,
+>   the power identity and the two-route bracket asserted, elapsed times
+>   recorded, §2.1's conductor-model line updated to "copper via Leontovich,
+>   gated on a plane wave, a Dodd–Deeds slab and the F-small birdcage's
+>   identities". Still no absolute S claim on the copper coil — that is
+>   `ANS-6`.
 
 ### MAT — Materials & phantoms (Phase 3)
 
@@ -6965,6 +7071,7 @@ next weekly review adjudicates the returned numbers.
 | `ANS-3` | Two coaxial gapped loops at 10 MHz: runnable half of the second AED benchmark (2-port Z/S; `ANS-2` reserved by §10 for the future B1+/SAR case) | ✅ *(example path restored 2026-08-31 by `EX-37` and re-run green, 128 s; the 08-16 / 08-26 records stand)* | heavy |
 | `ANS-4` | **Gapped four-leg birdcage, phantom-loaded, four lumped ports: 4×4 S-matrix at 10 / 64 / 128 MHz — runnable half** (commissioned 2026-08-30 02:15 weekly review; authoritative spec `examples/ansys_benchmarks/birdcage_four_port_10_64_128MHz/SPEC.md`; the first independent absolute check of the coil-fed port model at a Larmor frequency) | ✅ **runnable half 2026-08-30** (`20260830T213415Z_ANS-4-run1.log`, Status 0, 125 s at `-n 2`) — all three gates on all three rungs of one 116 085-cell mesh (ratio 1.000000, `reused_mesh`); 10 MHz reproduces leg (d)'s 4×4 to **1.158e-10** (band 1e-6) and leg (d0)'s column to **2.568e-10** (band 1e-9); 64 / 128 MHz reproduce `PORT-11` steps 2/3 to worst **1.075e-03** / **6.755e-04** (band 1e-2); control separation **1.585460** vs 2e-3. **Operator's AED replication at both orders is now Waiting-on-you; adjudication is a weekly review's** | heavy (≈ 160 s at `-n 2`, one command; measured 125 s) |
 | `ANS-5` | **Pin the element-order correspondence in every ANS `SPEC.md`/`COMPARISON.md`** — our production `degree 1` is what HFSS calls **Zero Order**, not its default **First Order**; the specs do not say so, and a default-settings replication is a different discretization (operator observation, interactive session 2026-08-28) | ✅ **RULED 2026-08-30 02:15 weekly review** — (a) AED runs at **Zero Order** (matched, the adjudication column) **and** at its default **First Order** (an order-sensitivity column); **Mixed Order forbidden**; our side stays at one order (none of options 1–3 as framed — option 1 for the adjudication column plus a second AED column, our side unchanged, step 3 **not** taken). (b) `ANS-1` **is in scope** for the spec line (state the Maxwell 3D formulation and order AED used). Already-returned numbers at an unrecorded order stand as an "order-unknown" column. Steps 1–2 are documentary and queueable; `ANS-4`'s spec already carries the wording. **Steps 1–2 executed 2026-08-31 00:00 slot — 🟡:** README correspondence table + a *Basis / element order* paragraph in all three SPECs (four `*.md` files, +71/−3, no band or figure moved); the `ANS-1`/`ANS-3` `COMPARISON.md` rows need a **generator `.py`** edit the item's scope forbids — carried as a finding, **priced as step 1b by the 03:00 review (§9 item 2)**. **Step 1b executed 2026-08-31 06:00 slot — chunk ✅** (steps 1, 1b, 2; step 3 ruled not taken): both generators' `_write_comparison` now emit `AED (Zero Order)` / `AED (First Order)` and a `Basis order` row, both cases re-run green on their own asserts (ΔR **1.5838%** vs 2%; `PORT-1` step-4 reproduction **2.98e-05 / 2.92e-05 / 1.71e-06 / 3.33e-10** inside 1%, reciprocity 4.7586e-05 < 1e-3, ‖S‖₂ 0.864809 ≤ 1), census at the standing `dead=53 guide=0 stale=10`. The pre-registered ≤ 1e-8 `metrics.json` negative control **is not a valid discriminator for `ANS-3`** — measured below | smoke (no compute; step 1b ≈ 200 s, measured 61 + 133 s + 125 s control + 1 s census) |
+| `ANS-6` | **Copper birdcage, phantom-loaded, four lumped ports: the `ANS-4` fixture with a σ = 5.8e7 S/m coil — the first AED case on a realistic conductor** (operator directive 2026-09-04, interactive session; **serial on `TH-15` ✅ and `TH-14` ✅**; AED side: HFSS *Finite Conductivity* boundary on the coil with Solve Inside off, plus a PEC-coil column) | ⬜ | heavy |
 
 
 **`ANS-5` — pin the element-order correspondence in the benchmark specs** ✅
@@ -7368,6 +7475,42 @@ and one combined XDMF (the P1-driven field at 128 MHz through the shared
 
 ---
 
+
+**`ANS-6` — copper birdcage, the `ANS-4` fixture on a realistic conductor**
+⬜ *(commissioned 2026-09-04 by operator directive, interactive session — an
+exception to "commissioned by the weekly planning review only", recorded
+here as such; the weekly review owns its spec text and adjudication as for
+every other case. Serial on `TH-15` ✅ and `TH-14` ✅.)* **Why.** `ANS-4`
+is the absolute check of the port model at the Larmor frequencies, but on
+an 800 S/m coil that no real birdcage resembles; its coil-loss share is
+wrong by construction and every tuning-workflow parity claim (§1 step 2)
+needs the conductor model checked against AED *before* Phase 6 leans on it.
+One case, same geometry, one thing moved: the coil conductivity.
+> * **Step 1 (spec).** `examples/ansys_benchmarks/birdcage_copper_four_port/SPEC.md`
+>   by copying `ANS-4`'s spec with these changes and no others: coil
+>   σ = **5.8e7 S/m** (copper, μᵣ = 1), *Solve Inside off*, HFSS **Finite
+>   Conductivity** boundary on every coil face; a **second AED column with
+>   the coil as PEC** (HFSS *Perfect E* on the same faces) matching `TH-15`;
+>   the `ANS-5` order rule unchanged (Zero + First Order, Mixed forbidden);
+>   quantities as `ANS-4` plus the **coil-loss share `P_coil/P_accepted`**
+>   per frequency (HFSS: surface loss on the finite-conductivity boundary
+>   from the field calculator) — the row that discriminates the conductor
+>   model. Our side: `TH-14` (copper) and `TH-15` (PEC) columns.
+> * **Step 2 (runnable half).** As `ANS-4`'s script, importing every band
+>   from the `TH-14`/`TH-15` gate modules; `metrics.json`, `COMPARISON.md`
+>   (AED columns blank by construction) and the private-mode writer
+>   (`OPS-32`'s pattern, `aed_results/ans6_aed_results.json`). Heavy tier.
+> * **Step 3 (operator replication).** The `ANS-4` PyAEDT script (untracked,
+>   `aed/`) adapted: material copper, `solve_inside = False`,
+>   `assign_finite_conductivity` on the coil faces, a second design with
+>   `assign_perfecte_to_sheets` on them. Goes to the dashboard's
+>   Waiting-on-you when step 2 closes. Numbers private, verdict public, as
+>   always.
+> * **Done-when (§4).** Step 2's harness log with the imported gates
+>   asserted; adjudication by the first weekly review after the AED numbers
+>   land — AGREE on the S classes **and** on the coil-loss share is what
+>   licenses §2.1 to say "conductor model checked externally".
+
 ## 8. Legacy ID mapping
 
 Commit messages, `docs/testing/logs/*.log`, and the retired
@@ -7436,6 +7579,17 @@ beyond the two-torus fixture and the Larmor-regime validation gate.
    weekly review's production-order decision clause; nothing on this
    front is implementer-ready.
 3. Then `PORT-4`…`PORT-8`, then Phase 5 (`WF-5`…`WF-8`).
+4. **Operator directive 2026-09-04 (interactive session) — the conductor
+   model.** Both realistic-conductor routes are commissioned and are to be
+   completed, in this order: **`TH-15`** (internal PEC bodies, conductor as
+   a hole) → **`TH-14`** (Leontovich surface impedance, copper) →
+   **`ANS-6`** (the `ANS-4` birdcage with a copper coil, replicated in AED
+   with a Finite-Conductivity column and a PEC column). The next daily
+   review queues `TH-15` step 0 (the mesh probe) on deck; the weekly review
+   owns the §10 Phase 6 subgoal it becomes and `ANS-6`'s spec text. The
+   routes go through the `TH-1` solver and the `PORT-9` surface-term hook,
+   not `TH-3`'s ⚠️ option set (standing rule below) — the review confirms
+   that reading before step 1 runs.
 
 **Standing rules.** Do not add new features to `⚠️` subsystems. Do not
 trust a chunk's status without a log — any §7 status that is not `✅`
@@ -8502,6 +8656,22 @@ C_N (the 32-port S-matrix is block-circulant in the 16 ring-gap pairs);
 (d) the AED HFSS + Circuit benchmark commissioned at the production
 rung count, not at 4. The 4-leg fixture stays the cheap validation
 vehicle — first gates land there — but Phase 6 does not close on it.
+
+**Operator directive 2026-09-04 (binding on this phase's scoping) — the
+conductor model.** Every gated coil is solved inside at σ = 800 S/m, the
+ceiling the skin-depth-≥-wire-radius mesh rule allows (§7 `TH-15` entry);
+copper is δ ≈ 21 µm at 10 MHz and cannot be a volume. Tuning, matching and
+per-unit-accepted-power B₁⁺/SAR are loss-partition quantities, so no
+parity claim in this phase stands on the 800 S/m coil. Added as a
+prerequisite subgoal, before any tuning claim: (e) **realistic conductors
+by both routes** — `TH-15` (interior PEC, the lossless limit) then `TH-14`
+(Leontovich surface impedance, copper), each gated on a closed form and on
+the F-small birdcage's identities, and checked externally by **`ANS-6`**
+(the `ANS-4` fixture with a copper coil, AED Finite-Conductivity and PEC
+columns). Item (d)'s HFSS + Circuit benchmark at 16 legs is then
+commissioned on the copper coil, not on 800 S/m. No date: the first step is
+a mesh-probe whose outcome (hole meshing inside or outside the `GEO-23`
+family) sets the pace; the review dates it after `TH-15` step 0 reports.
 Circuit-layer detail is deliberately left to the reviews when the phase
 opens (operator: the area is well-covered by literature; ladder-network
 closed forms are the entry point).
