@@ -7723,7 +7723,47 @@ denied; write it relative.
    a wiring defect in the example, not the mesh — journal in the §7 row,
    stop.
 
-3. **`GEO-26` step 3 — register the 16-leg rung's own terminal-area band
+3. ✅ **done 2026-09-03, 22:30 slot** — the 18:00 ruling's prescription ran
+   exactly as written and every anchor held. Negative control **first** and
+   footered (`20260904T033238Z_GEO-26.log:26282,26286`, Status 1, 226 s): the
+   `[16]` case pointed back at the unmoved 2.0e-5 reproduces step 2's failure
+   to the digit, `assert np.float64(9.989956525036291e-05) < 2e-05`,
+   `1 failed, 3 passed` — then reverted. Recorded windows `4 passed` /
+   Status 0: `-n 2` `…034052Z_GEO-26.log` (222 s), `-n 12`
+   `…034441Z_GEO-26.log` (224 s). The four classes read 9.989957e-05 /
+   3.792060e-11 (`-n 12` 3.792088e-11) / 3.792129e-11 / 9.990206e-05 against
+   the new 2.0e-4 (`…034052Z:26267–26270`, re-read by this slot), and the
+   newly printed state census reads **2 states, 9.791961125e-05 m² ×10 and
+   9.792939386e-05 m² ×22 — 10 of 32 on the low area** at both widths
+   (`:26271–26272`), the pre-registered count. Step-2 anchors unmoved: 32
+   sheets at 1.000000000000 on chord / `w` / area with out-of-plane ≤ 1.94e-16
+   m, both halves at closed form, C32 6.035e-16 (`-n 12` 5.998e-16) and mirror
+   5.551e-16, `RING_LONGITUDINAL_SCALED_CELL_RECORD` 270 728 at ratio
+   1.000000 (that assert reachable for the first time), the 265 621 and
+   110 786 controls at 1.000000, `[4]` at step 1's digits.
+   `LONGITUDINAL_TERMINAL_INTRA_BAND` (2.0e-5) and `TERMINAL_INTRA_CLASS_BAND`
+   (1e-6) verified unmoved by this slot; no `src/` change, no name removed or
+   revalued, so `EX-44`'s imports are untouched. `[16]` leaves the
+   deliberate-red list (**3 remain**) and the known-issues entry retired in
+   the same commit; `GEO-26` ✅.
+   **Two deviations, both for a review.** (a) **Tier: heavy by measurement,
+   221–226 s per window** — the item's ≈160 s was step 2's footer and the
+   module now runs four cases; still well inside the 600 s ceiling, but the
+   §9 estimate was low, not the executor. (b) The band is selected through a
+   small `LONGITUDINAL_TERMINAL_BAND = {4: …, 16: …}` table rather than an
+   inline branch (no rename, no revalue). Also: a **first** `-n 2` record
+   window (`…033637Z`, green, 221 s) is committed but **superseded** — its
+   state-census print carried a wrong literal inherited from step 2's claim
+   that at four legs all gaps land the same way; the census *measures* the
+   4-leg rung as two-state too (6 at 9.793917647e-05 m², 2 at
+   9.794074883e-05 m², `…034052Z:15663`), 1.605e-05 apart rather than
+   9.99e-05, which is why it reads inside 2.0e-5. The print text and the
+   constant's comment were corrected and `-n 2` re-run, so the recorded
+   windows carry the measured statement; the known-issues Cause row's
+   four-leg sentence is corrected in the retirement note. No band moved.
+   See the §7 row. Original item text follows.
+
+   **`GEO-26` step 3 — register the 16-leg rung's own terminal-area band
    and re-green `[16]`** (standard by step 2's 158–160 s per window —
    declare from the footers; real or complex build, mesh only; `main`;
    independent; ruled 2026-09-03 18:00 review — see the §7 `GEO-26` row and

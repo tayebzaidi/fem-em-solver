@@ -17443,3 +17443,82 @@ three windows at ≈ 160 s, negative control first). Its one live risk is the
 control window: it must read `1 failed` on `9.989956525036291e-05 < 2e-05`
 before the one-line edit is reverted, and a slot that records the band-moved
 windows first has no ceiling measurement.
+
+## 2026-09-04T03:30Z — `GEO-26` step 3 — complete (22:30 CDT implementer slot)
+
+**Outcome: complete.** §9 item 3 taken as the first open On-deck entry (items
+1 and 2 done). Preflight clean on `a3426f4`, container Up 7 h. Delegated to
+the `implementer` agent, spawned **foreground**; commit `2445b9e` on `main`,
+tree clean. The band `LONGITUDINAL_TERMINAL_INTRA_BAND_16 = 2.0e-4` is
+registered version-tagged (0.11 image) for the `[16]` case only, `GEO-26`
+closes ✅, and the 2026-09-03 known-issues entry retires in the same commit —
+`[16]` leaves the deliberate-red list, **3 reds remain** on `main` at `-n 2`.
+
+**Windows (three recorded, one superseded), all `timeout -k 30 600`,
+foreground:**
+
+| Log | Window | Status | Elapsed |
+|---|---|---|---|
+| `20260904T033238Z_GEO-26.log` | negative control, `[16]` at the unmoved 2.0e-5, `-n 2` | 1 | 226 s |
+| `20260904T033637Z_GEO-26.log` | first `-n 2` record window — **superseded**, see below | 0 | 221 s |
+| `20260904T034052Z_GEO-26.log` | recorded `-n 2` | 0 | 222 s |
+| `20260904T034441Z_GEO-26.log` | recorded `-n 12` | 0 | 224 s |
+
+**Negative control ran first**, exactly the pre-registered read:
+`assert np.float64(9.989956525036291e-05) < 2e-05`, `1 failed, 3 passed`
+(`…033238Z:26282,26286`), then reverted before the recorded windows. The
+5.0× separation is the ceiling this measurement allows; nothing larger
+claimed.
+
+**Measured (re-read from the logs by this slot, not taken from the executor's
+report).** Four classes at `-n 2` (`…034052Z:26267–26270`): 9.989957e-05 /
+3.792060e-11 / 3.792129e-11 / 9.990206e-05; at `-n 12`
+(`…034441Z:26377–26380`) identical but 3.792088e-11 in the second class.
+New state census, both widths: **2 states, 9.791961125e-05 m² ×10 and
+9.792939386e-05 m² ×22 — 10 of 32 terminals on the low area**
+(`…034052Z:26271–26272`), the pre-registered count; no third state. Step-2
+anchors unmoved: 32 sheets at 1.000000000000 on `φ̂`/chord, `ẑ`/`w` and
+area/(chord·`w`) with out-of-plane ≤ 1.94e-16 m, both halves at closed form,
+C32 6.035e-16 (`-n 12` 5.998e-16), mirror 5.551e-16,
+`RING_LONGITUDINAL_SCALED_CELL_RECORD` 270 728 at ratio 1.000000 (that
+assert reachable for the first time), controls 265 621 and 110 786 at
+1.000000, `[4]` at step 1's digits. I verified in the tree that
+`LONGITUDINAL_TERMINAL_INTRA_BAND` is still 2.0e-5 and
+`TERMINAL_INTRA_CLASS_BAND` still 1e-6, that the diff removes or revalues no
+constant (`git diff | grep '^-[A-Z_]* ='` is empty), and that the commit
+touches no `src/` file.
+
+**Tier: heavy by measurement, 221–226 s per window** — the §9 item said
+standard-ish (≈160 s, step 2's footer), but the module now runs four cases
+(two 16-leg meshes plus the two controls). Not an `OPS-27`-class mislabel:
+the executor declared from its own footers, well inside the 600 s
+container ceiling and the 20-minute cap. ≈ 15 min of compute in four
+windows.
+
+**Two deviations, both for the review.** (a) The band is selected via a small
+`LONGITUDINAL_TERMINAL_BAND = {4: …, 16: …}` table rather than an inline
+branch — no rename, no revalue, `EX-44`'s imports unaffected. (b) The first
+`-n 2` record window (`…033637Z`, green) is **superseded and still
+committed**: its state-census print carried a wrong literal inherited from
+step 2's claim that at four legs all four gaps land the same way. The census
+*measures* the 4-leg rung as **two-state too** — 6 at 9.793917647e-05 m², 2
+at 9.794074883e-05 m² (`…034052Z:15663`), 1.605e-05 apart rather than
+9.99e-05, which is why that rung reads inside its unmoved 2.0e-5. The print
+text and the constant's comment were corrected and `-n 2` re-run; the
+known-issues Cause row's four-leg sentence is corrected in the retirement
+note. No band moved by either deviation. The state census is **printed, not
+asserted**, as the item specifies.
+
+**No compute-safety event, no docker-socket denial, no allowlist denial. No
+executor backgrounded** — the implementer ran foreground and no harness
+window was left in flight.
+
+**Hypothesis for the next attempt:** nothing is owed on `GEO-26`; it is ✅ and
+its known-issues entry is retired. The next slot takes §9 item 4 (`PORT-13`
+step 1 — first solve on the 16-leg / 32-ring-port high-pass layout, heavy,
+`-n 8` complex), which reads `RING_LONGITUDINAL_SCALED_CELL_RECORD` = 270 728
+from the module as it now stands at `2445b9e` (the item pins `1ad8ba3`; the
+constant's *value* is unchanged, only its band-selection neighbour moved, so
+the pin still holds — worth the review confirming). Its live risk is cost:
+this module alone now runs 222 s for mesh-only work at 270 728 cells, so a
+heavy solve on the same rung wants a cost probe before a full window.
