@@ -7,8 +7,12 @@ never travelled through :func:`run_n_port_sparameter_sweep`.  This gate drives
 that entry point with ``gap_voltage_ports=`` and asserts it reproduces the
 step-3b-xviii record:
 
-  * raw mutual within ``RAW_REPRODUCTION_BAND = 2e-3`` of **0.894283** x omega*M12
-    — printed first, as the **miss** it is against the 10% band;
+  * raw mutual within ``REPRODUCTION_BAND_RELATIVE = 1e-6`` (relative) of
+    **0.8945163786446685** x omega*M12 — printed first, as the **miss** it is
+    against the 10% band.  `OPS-37` re-based this pair and its partner onto the
+    0.11 image and tightened the band from the v0.7.2-era 2e-3; the superseded
+    v0.7.2 pair is kept as ``SUPERSEDED_V072_RECORD`` and asserted to *fail* the
+    tightened band, by 260x;
   * corrected mutual (the two named systematics, via
     ``ports/systematics.py``) inside the unmoved ``MUTUAL_TOLERANCE = 0.10``;
   * ``||S - S^T||/||S|| < 1e-3`` — a measured network identity here (two solves,
@@ -90,10 +94,42 @@ REFERENCE_IMPEDANCE_OHM = 50.0
 # it here.
 PATH_QUADRATURE_ORDER = 4097
 
-# --- the anchor, from 20260813T020352Z_PORT-1-step3bxviii-pairgate-n2.log ---
-RECORDED_RAW_RATIO = 0.894283
-RECORDED_CORRECTED_RATIO = 0.939581
-RAW_REPRODUCTION_BAND = 2.0e-3
+# --- the anchor ------------------------------------------------------------
+# OPS-37 re-record, 2026-09-04 (§9 item 2; the (1*) licence — an image-dependent
+# reproduction record and its own control band move, no physics band moves).
+#
+# The pair below was recorded on image v0.7.2 (dolfinx 0.7.2, gmsh 4.11.1) from
+# 20260813T020352Z_PORT-1-step3bxviii-pairgate-n2.log as raw 0.894283 /
+# corrected 0.939581 under RAW_REPRODUCTION_BAND = 2.0e-3.  `main` has booted
+# the 0.11 image (dolfinx 0.11.0.post0, gmsh 4.15.2) since OPS-18, where the
+# two_torus mesh is 184 176 cells rather than 184 919 and this route reads
+# ~2.6e-4 away from the v0.7.2 digits — a staleness the 2e-3 band could not
+# see.  OPS-34 measured it from the example side (raw 0.8945163788281 /
+# corrected 0.9398215452105435, 20260904T003530Z_OPS-34.log:648); this module's
+# own repr()-precision print reads raw 0.8945163786446685 / corrected
+# 0.9398215450213951 (20260904T110108Z_OPS-37.log:705, -n 2, complex build,
+# 17 passed in 177.62 s), i.e. the test and the example agree to 2.1e-10
+# relative — the same route, re-based here to the module's own digits.
+#
+# The band is now RELATIVE and 1e-6.  OPS-34 measured run-to-run scatter on this
+# route at ~1e-9 (20260904T004019Z_OPS-34.log:649), three decades of headroom,
+# and the superseded v0.7.2 pair below misses the new band by 260x (2.6e-4 /
+# 1e-6) — asserted as the negative control in
+# test_package_sweep_reproduces_the_gated_mutual.  No physics band moved:
+# MUTUAL_TOLERANCE, BLIND_FIXTURE_IM_Z12_OHM, S_SYMMETRY_BAND and
+# S_SPECTRAL_NORM_CEILING are untouched and green in the same run.  The
+# historical v0.7.2 digits also remain in
+# src/fem_em_solver/ports/gap_voltage.py:31-32 as PORT-1's record.
+RECORDED_RAW_RATIO = 0.8945163786446685
+RECORDED_CORRECTED_RATIO = 0.9398215450213951
+REPRODUCTION_BAND_RELATIVE = 1.0e-6
+# The v0.7.2 pair, verbatim, kept as the negative control for the tightening.
+SUPERSEDED_V072_RECORD = (0.894283, 0.939581)
+# The heuristic-vs-field negative control at test_retiring_heuristic_... used to
+# ride RAW_REPRODUCTION_BAND.  Tightening the reproduction band 2000x would have
+# silently lowered that control's separation bar, so it keeps its own —
+# numerically the unchanged 2e-3.
+HEURISTIC_SEPARATION_FLOOR = 2.0e-3
 MUTUAL_TOLERANCE = 0.10
 S_SYMMETRY_BAND = 1.0e-3
 S_SPECTRAL_NORM_CEILING = 1.0
@@ -328,14 +364,55 @@ def test_package_sweep_reproduces_the_gated_mutual(package_sweep):
             f"{RECORDED_CORRECTED_RATIO:.6f}",
             flush=True,
         )
+        # OPS-37 step A: the `:.6f` print above cannot resolve a 1e-6 band, and
+        # this route has no metrics.json — the re-basing digits come off this
+        # line in a footered harness log, never computed by hand.
+        print(
+            f"[OPS-37] repr ladder['raw'] = {ladder['raw']!r}, "
+            f"ladder['corrected'] = {ladder['corrected']!r}",
+            flush=True,
+        )
         print(f"[PORT-1 step 4] Z (Ohm) through the package:\n{result.z_matrix}", flush=True)
 
-    assert abs(ladder["raw"] - RECORDED_RAW_RATIO) < RAW_REPRODUCTION_BAND, (
-        f"raw mutual {ladder['raw']:.6f} does not reproduce the 3b-xviii record "
-        f"{RECORDED_RAW_RATIO:.6f} within {RAW_REPRODUCTION_BAND:.1e} — the "
-        "package route is not the gated route"
+    raw_miss = abs(ladder["raw"] - RECORDED_RAW_RATIO) / abs(RECORDED_RAW_RATIO)
+    corrected_miss = abs(ladder["corrected"] - RECORDED_CORRECTED_RATIO) / abs(
+        RECORDED_CORRECTED_RATIO
     )
-    assert abs(ladder["corrected"] - RECORDED_CORRECTED_RATIO) < RAW_REPRODUCTION_BAND
+    # The superseded v0.7.2 pair against the same band: the tightening's own
+    # negative control, so a 1e-6 band that nothing could fail is not claimed.
+    sup_raw, sup_corrected = SUPERSEDED_V072_RECORD
+    sup_raw_miss = abs(sup_raw - RECORDED_RAW_RATIO) / abs(RECORDED_RAW_RATIO)
+    sup_corrected_miss = abs(sup_corrected - RECORDED_CORRECTED_RATIO) / abs(
+        RECORDED_CORRECTED_RATIO
+    )
+    if comm.rank == 0:
+        print(
+            f"[OPS-37] reproduction, relative band {REPRODUCTION_BAND_RELATIVE:.1e}: "
+            f"raw miss {raw_miss:.3e}, corrected miss {corrected_miss:.3e}; "
+            f"superseded v0.7.2 pair {sup_raw:.6f}/{sup_corrected:.6f} misses by "
+            f"{sup_raw_miss:.3e}/{sup_corrected_miss:.3e}",
+            flush=True,
+        )
+
+    assert raw_miss < REPRODUCTION_BAND_RELATIVE, (
+        f"raw mutual {ladder['raw']!r} does not reproduce the re-based 0.11 record "
+        f"{RECORDED_RAW_RATIO!r} within {REPRODUCTION_BAND_RELATIVE:.1e} relative "
+        f"(missed by {raw_miss:.3e}) — the package route is not the gated route"
+    )
+    assert corrected_miss < REPRODUCTION_BAND_RELATIVE, (
+        f"corrected mutual {ladder['corrected']!r} does not reproduce the re-based "
+        f"0.11 record {RECORDED_CORRECTED_RATIO!r} within "
+        f"{REPRODUCTION_BAND_RELATIVE:.1e} relative (missed by {corrected_miss:.3e})"
+    )
+    assert sup_raw_miss > REPRODUCTION_BAND_RELATIVE, (
+        f"the superseded v0.7.2 raw record {sup_raw:.6f} passes the tightened "
+        f"{REPRODUCTION_BAND_RELATIVE:.1e} band — the tightening gates nothing"
+    )
+    assert sup_corrected_miss > REPRODUCTION_BAND_RELATIVE, (
+        f"the superseded v0.7.2 corrected record {sup_corrected:.6f} passes the "
+        f"tightened {REPRODUCTION_BAND_RELATIVE:.1e} band — the tightening gates "
+        "nothing"
+    )
     assert abs(ladder["deviation"]) < MUTUAL_TOLERANCE, (
         f"corrected mutual {ladder['corrected']:.6f} is "
         f"{100.0 * ladder['deviation']:+.2f}% against the closed form, outside the "
@@ -390,10 +467,10 @@ def test_retiring_heuristic_differs_from_the_solved_field(package_sweep):
         print(
             f"[PORT-1 step 4] negative control — retiring heuristic S:\n"
             f"{heuristic.s_matrix}\n    max|S_heuristic - S_field| = {delta:.6e} "
-            f"(must exceed the reproduction band {RAW_REPRODUCTION_BAND:.1e})",
+            f"(must exceed the separation floor {HEURISTIC_SEPARATION_FLOOR:.1e})",
             flush=True,
         )
-    assert delta > RAW_REPRODUCTION_BAND, (
+    assert delta > HEURISTIC_SEPARATION_FLOOR, (
         f"the retiring heuristic reproduces the solved-field S to {delta:.3e} — "
         "that is a finding about the heuristic, not a passing gate"
     )
