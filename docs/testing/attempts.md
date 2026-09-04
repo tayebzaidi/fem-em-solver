@@ -18201,3 +18201,106 @@ declared scope, gated after the fact by the slot rather than by the item;
 if the review wants that pattern licensed rather than tolerated, it should
 say so, since `ports:11` is the fourth candidate caller for the same
 keyword and would hit the same guard.
+
+---
+
+## 2026-09-04T21:55Z — `GEO-25` rungs 1–3 — **complete**
+
+**Slot** 16:30 local (2026-09-04). Preflight clean on `c7241a2`, `main`,
+container Up ≈ 25 h. §9 On deck: items 1, 2 and 3 already ✅, so the first
+open item is **4** (`GEO-25`, executor `mesh-probe`). Spawned foreground per
+step 3; returned in ~14 min with no compute in flight.
+
+**Outcome: §4-complete, first attempt.** Measurement-only probe, no solve, no
+fix, no record moved, no band touched. `src/` and `tests/` untouched — the
+only new file is `scripts/probes/geo25_ring_radius_cost_probe.py`, which
+asserts nothing and is imported by nothing.
+
+**Six harness windows, all Status 0, 554 s total elapsed**, each `-n 1` (gmsh
+is serial), one OS process per rung (the `GEO-23` step-1 contamination trap),
+container-side `timeout -k 30 600` per the item's 10:30 window rule:
+
+| log | rung | Status | Elapsed (s) |
+|---|---|---|---|
+| `20260904T213333Z_GEO-25.log` | A, 0.07 (control) | 0 | 87 |
+| `20260904T213508Z_GEO-25.log` | A, 0.10 | 0 | 78 |
+| `20260904T213646Z_GEO-25.log` | A, 0.15 | 0 | 80 |
+| `20260904T213833Z_GEO-25.log` | B, 0.10 | 0 | 103 |
+| `20260904T214031Z_GEO-25.log` | B, 0.15 | 0 | 127 |
+| `20260904T214248Z_GEO-25.log` | A, 0.10 repeat | 0 | 79 |
+
+**Negative control, run first as the item requires: passed exactly.** The
+0.07 m rung reproduces `mesh:9`'s **265 621 cells at relative 0.000e+00**
+(`…213333Z:10182,10190`). No wiring defect; the ladder is trustworthy.
+
+**Measured (both scaling branches — see below).** Branch A (mesh sizing
+scales with the radius): 265 621 / 72.35 s, 244 056 / 67.82 s, 204 977 /
+69.98 s at 0.07 / 0.10 / 0.15 m. Branch B (`resolution` fixed at 0.015 m):
+265 621, 352 984 / 90.21 s, 504 642 / 112.27 s. Volume partition
+**1.000000000000** and terminal ratio inside [0.95, 1.0] on all 32 ports at
+every rung of both branches. Peak summed `ru_maxrss` 0.752 GiB against 128 G.
+
+**The headline: the pre-registered `r³` prediction is wrong.** Branch B's
+fitted cell exponent is **+0.84** (time +0.58); branch A's is **−0.34**. The
+count is dominated by the pinned 1.6 mm conductor refinement, which grows
+roughly linearly with conductor length rather than with domain volume, so
+`r³` overstates the 0.15 m rung by 5.2× (B) to 12.8× (A). §10 Phase 6 dates
+itself from this number and should be re-dated off ≈ 0.84.
+
+**Stop rule never approached** — worst rung 17% of the 3 M cell ceiling and
+19% of the 600 s ceiling. Rung 3 was therefore *not* left to the weekly: the
+item's own arithmetic licensed it on both branches (`3.375 × 67.816 = 228.9 s`,
+`3.375 × 90.205 = 304.4 s`) and it ran in 70 s / 112 s. Conductor sizing was
+never coarsened. No mesher fallback, no invalid-boundary line, no
+`GEO-21`-class negative result — every rung meshes.
+
+**Determinism checked** (the executor volunteered a repeat, kept): the 0.10 m
+branch-A rung re-run in a fresh process reproduces every reported digit
+(`…214248Z:10126–10133`); only wall time and `ru_maxrss` move.
+
+**Verification I did myself.** Executor reports are evidence, not findings, so
+I re-read all six logs before committing: the control pair, every rung's
+`cells` / `volume partition` / `terminal ratio` / `meshed/CAD` / `ru_maxrss`
+summary block, and all six `- Status: 0` / `- Elapsed` footers. Every digit
+in the §7 row and above is one I read in a log, not one I was told. I also
+read the probe script to confirm what is scaled and what is pinned.
+
+**Three disclosed deviations from the item text, all mine to own.**
+(a) `conductor_resolution` pinned at `mesh:9`'s **1.6e-3 m**, not the item's
+"4.8 mm `GEO-21` floor" — 4.8e-3 is `GEO-21`'s *coarse control* (0.846 mass
+recovery) and the rule as written is "not **coarser** than the floor"; 1.6 mm
+is also the only value that can reproduce the mandated 265 621-cell control,
+so the two constraints are otherwise contradictory. The control passing at
+0.000e+00 settles the reading. (b) **Two branches instead of one**: the row's
+"phantom/air **sizing** scaled with the radius" is ambiguous between the mesh
+size field and the geometric size, and the choice *inverts the sign of the
+answer*, so both were measured (cost: two extra windows, 230 s). (c)
+`leg_spacing` scaled with `coil_length`, which the row does not name — an
+unscaled 11 cm ring separation inside a 30 cm coil is not a similar geometry.
+
+**Two ungated findings for the weekly review — neither asserted, neither
+moved.** (1) Under branch A the conductor's meshed/CAD mass recovery falls
+monotonically 0.976465 → 0.959483 → **0.893028**, so at 0.15 m it is *below*
+`CAD_MASS_GATE = 0.95`: an F-human coil built by scaling the mesh sizing with
+the radius would fail the existing `GEO-15`/`GEO-21` conductor-mass gate,
+while branch B stays above 0.965. That is an independent argument that fixed
+absolute sizing is the correct scaling for this generator, and the weekly
+should pick one reading and write it into the row so no later chunk has to
+re-decide it. (2) The conductor **cross-section** (`leg_width`,
+`ring_minor_radius`) is held at the 7 cm coil's values at every rung, so these
+are prices for a human-sized cage built from small-coil stock; a
+re-proportioned conductor is a different (and more expensive) question that
+nobody has commissioned.
+
+**Hypothesis for the next attempt on this front.** Mesh cost does not gate
+Phase 6 — half a million cells and 112 s is cheap. The real F-human constraint
+is the solve, not the mesh, and the `TH-16` symmetry-plane lever (§9's B2 row,
+which explicitly waits on this report) should now be dated off branch B's
+504 642 cells rather than off the `r³` figure. The 62 GiB F-human wall cited
+at PROJECT_PLAN:4314 was computed from the same wrong scaling and is due a
+re-estimate.
+
+**No denials, no compute-safety event, no container wedge, no background
+harness call.** Item 5 (`MAT-6` step 11, the spare) is the only §9 item still
+open; the 19:30 slot takes it, and the 18:00 review will want to top the queue
+up first.
