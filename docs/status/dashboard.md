@@ -1,26 +1,23 @@
 # FEM-EM Solver — status
 
-**Updated:** 2026-09-03 18:00 daily review. Headline: **the 16-leg ring-gap
-mesh the first 32-port solve needs now exists, and that solve is unblocked.**
-`GEO-26` step 2 built the longitudinal ring-gap sheet on the 16-leg rung:
-all 32 sheets reconstruct at their closed forms to 1e-12, both port halves at
-closed-form volumes, a new 270 728-cell record identical at 2 and 12 ranks —
-and it stopped, as pre-registered, on one terminal-area reading (two
-azimuth classes at 1.0e-4 against a 2.0e-5 record band). **This review ruled
-the reading acceptable**: it is a mesh-reproducibility record on the terminal
-disks, not a physics band; the sheet the port model integrates over is exact;
-the fix is a per-rung record band (queue item 3) and `PORT-13` step 1, the
-first solve on that layout, is unblocked (queue item 4). `EX-42` landed
-(`mat:1` prints the finite-wire Dodd–Deeds correction, reproducing `MAT-8`)
-and its logged census restored `EX-43` to ✅ (both audited PASS). Interactive
-work landed a README/CI consolidation (`OPS-35`, audited PASS) and a log
-retention policy with its first sweep (`OPS-36`; 111 → 61 MB of logs). Two of
-four implementer slots were lost: one to a host reboot, one to that sweep
-sitting staged and uncommitted — landed by this review. **Still a
-self-consistency story on one fixture at 10 MHz at fixed `h`: no absolute
-SAR, no homogeneity, no C95.3, no Larmor, no convergence claim.** Source of
-truth is `PROJECT_PLAN.md`; this page is a read-only digest for the human
-operator.
+**Updated:** 2026-09-04 03:00 daily review. Headline: **the first field on
+the 16-leg, 32-ring-port birdcage exists, and all four scheduled slots
+landed on the first try.** `PORT-13` step 1 solved one driven ring port on
+the 270 728-cell longitudinal rung at 10 MHz: the three-way power accounting
+closes inside its imported 1e-2 band (residual 9.68e-3 — the same place the
+4-leg fixture sits), the two ports diametrically opposite the driven one
+agree to 0.35%, and a solve costs 28 s at 8 ranks — so a 4×4 sub-block
+(reciprocity, passivity, the top/bottom mirror) is affordable in one window
+and is queued as step 2; the full 32×32 is a later step. `GEO-26` closed
+(the 16-leg rung's terminal-area band registered exactly as ruled, control
+first, `[16]` green again), `OPS-34` found the two-torus example's records
+2.6e-4 stale and re-based them with a 1e-6 control (measured scatter ~1e-9),
+and `EX-44` put the longitudinal ring sheet in ParaView. All three closures
+audited PASS. **Still a self-consistency story on one fixture family at
+10 MHz at fixed `h`: no absolute SAR, no homogeneity, no C95.3, no Larmor
+coil claim, no convergence claim, and at 16 legs one column is not a
+network.** Source of truth is `PROJECT_PLAN.md`; this page is a read-only
+digest for the human operator.
 
 ## Weekly review digest (2026-09-02, unchanged from the weekly's own copy)
 
@@ -35,9 +32,10 @@ operator.
   private); `MAT-6` step 11 and `MAT-8` scoped; `OPS-32`, `EX-41` opened.
 - **Deferred to 09-06:** the §7 archive rotation and the B1+ literature
   anchor. **New for the 09-06 weekly (from the dailies since):** `PORT-13`
-  is unblocked on the longitudinal sheets (first solve queued); the
-  retention policy's three open questions under `OPS-36` (below); the
-  `attempts.md` rotation is overdue at 17 271 lines.
+  step 1 landed and step 2 is queued — the 32×32 (step 3) needs column
+  caching across windows and is the weekly's to rung; the retention
+  policy's open questions under `OPS-36`; the `attempts.md` rotation is
+  overdue at 17 615 lines.
 
 ## Waiting on you
 
@@ -54,108 +52,110 @@ operator.
    rule, same private-results handling. Its FEM-side records were re-based
    to the 0.11 image (`OPS-33`); the tracked table's AED cells are blank by
    construction.
-3. ✅ **Housekeeping budget — resolved by operator decision 2026-09-03:**
-   gating logs are exempt from the 25 MB volume ceiling; it now applies to
-   non-gating logs only (27.3 MB today, all under 14 days old and mostly
-   pre-filter, so it drains as they age out by 2026-09-17). Gating volume
-   is reported for information. Remaining under `OPS-36`: `attempts.md`
-   rotation (the 2026-09-06 weekly's job), and hand-run `--apply` must be
-   committed by whoever runs it.
-4. 🟡 **FYI, a design decision made for you — say so if you disagree:**
-   the 16-leg longitudinal ring-gap rung's terminal disks triangulate in
-   one of two ways (two discrete areas 1.0e-4 apart, five of sixteen gap
-   azimuths on the low one). This review ruled it acceptable for the port
-   model — every terminal is inside its closed-form band, the sheet the
-   port integrates over is exact, and 1e-4 is a decade under the loosest
-   port-level band — and gave the 16-leg rung its own record band (2.0e-4)
-   rather than widening the 4-leg one. The alternative, classifying the
-   terminals by the measured two-state partition, was rejected as fitting
-   the test to the artifact. No action unless you want the ring-port
-   geometry changed instead.
-5. **Information — automation fix from the 08-30 10:30 review, still
+3. 🟡 **One small permission, if you agree:** the 03:00 review wanted to
+   add one line to `.claude/agents/example-runner.md` step 5 — "both
+   census windows through `run_and_log.sh`" — because `EX-44`'s pre-census
+   ran on the host and left no log. The sandbox denies writes under
+   `.claude/agents/`, so the rule is written into the two queued example
+   items instead. Landing it in the agent definition is a one-line edit
+   for an interactive session.
+4. ✅ **Housekeeping budget — resolved by operator decision 2026-09-03:**
+   gating logs are exempt from the 25 MB volume ceiling. Remaining under
+   `OPS-36`: `attempts.md` rotation (the 2026-09-06 weekly's job), and a
+   hand-run `--apply` must be committed by whoever runs it.
+5. ✅ **The 16-leg terminal-triangulation ruling landed as designed** (FYI
+   from the 18:00 review, now closed): `GEO-26` step 3 registered the
+   per-rung record band, the control pointed back at the old band failed
+   exactly as pre-registered, and the census confirmed 10 of 32 terminals
+   on the low state at both rank counts. No action unless you want the
+   ring-port geometry changed instead.
+6. **Information — automation fix from the 08-30 10:30 review, still
    awaiting your OK:** `docs/automation/weekly-review.md` has a commit-first
    checkpoint (rotation committed before plan edits). Revert the paragraph
    if you want the single-commit form back.
-6. **One click: does ParaView open a DG1 `.bp`?** (unchanged since
+7. **One click: does ParaView open a DG1 `.bp`?** (unchanged since
    2026-08-12; `scripts/probes/post4_step5_probe.py` regenerates.)
-7. FYI, no action — **`OPS-35`'s verification logs came from a second
-   machine** (`Host: unknown`, a hardened-kernel Linux box, a clone under a
-   different path) — the first logs in the corpus not from the shared box.
-   The in-container run matches the canonical image, so the audit passed;
-   noting it so the provenance is on record. Also FYI: the 13:30 slot was
-   lost to a host reboot (≈ 13:44 local), the first loss below cron; the
-   next slot restarted the container itself. Local `main` remains well
-   ahead of origin (push is manual).
+8. FYI, no action — physics worth a glance: on the 32-ring-port coil at
+   10 MHz, driving one bottom-ring gap puts **89% of the incident wave
+   amplitude onto the top-ring gap at the same azimuth** (the P17 → P33
+   entry of `S`, read from the printed currents), with every other port
+   near 6%. That is the high-pass ring-to-ring path through the legs
+   below resonance; step 2's mirror identity will test it. Local `main`
+   remains well ahead of origin (push is manual).
 
-## Honest current state (digest of §2 — unchanged this interval; one queue pointer refreshed)
+## Honest current state (digest of §2 — one line changed this interval: the 16-leg rung)
 
 | Capability | State | Gate |
 |---|---|---|
 | Magnetostatics | ✅ validated | closed forms green; h-refinement gate passes on 0.11 (`MAG-20` ✅) |
 | Time-harmonic curl-curl | ✅ validated | lossy plane wave < 0.06%; Larmor sphere 3.64% / 1.77% + power 3.63%; degree-2 gated at 0.1405% on the sphere (`TH-12` ✅). The coil's two degree-2 identity reds stay open at 3.8990e-09 / 3.7235e-09 vs 1e-9 |
-| Coil loading | ⚠️ eddy-current regime only | Dodd–Deeds ΔR 1.58% (`MAT-6`), bracketed by Maxwell 3D (`ANS-1` AGREE, numbers private); finite-wire term +0.115% on ΔR (`MAT-8` ✅, now shown by `mat:1`). Larmor coil loading stays an extrapolation |
-| S-parameters / ports | ✅ birdcage gated at 10, 64 and 128 MHz | reciprocity ~1e-14, σ_max ≤ 1, C4 spreads ≤ 0.10% vs 5%; **self-consistency identities only.** Absolute accuracy at Larmor is `ANS-4` (Waiting-on-you 1). `ans:3` / `ports:2` reproduction controls at 1e-6 on the 0.11 image (`OPS-33` ✅) |
-| Birdcage meshes | ✅ 4-leg and 16-leg, leg-gap and ring-gap, identity-gated; the ring gap has a drivable (longitudinal) sheet mode on **both** rungs (`GEO-26` steps 1–2) | 4-leg: 8/8 sheets at closed form to 1e-9, record 111 898. 16-leg: 32/32 sheets exact to 1e-12, record **270 728** at 2 and 12 ranks; one terminal-area record band pending (queue item 3, ruled). `PORT-13` (first 32-port solve) **unblocked** — queue item 4 |
+| Coil loading | ⚠️ eddy-current regime only | Dodd–Deeds ΔR 1.58% (`MAT-6`), bracketed by Maxwell 3D (`ANS-1` AGREE, numbers private); finite-wire term +0.115% on ΔR (`MAT-8` ✅, shown by `mat:1`). Larmor coil loading stays an extrapolation |
+| S-parameters / ports | ✅ 4-leg birdcage gated at 10, 64 and 128 MHz; **16-leg: one column only** | 4-leg: reciprocity ~1e-14, σ_max ≤ 1, C4 spreads ≤ 0.10% vs 5% — **self-consistency identities only.** 16-leg / 32 ring ports (`PORT-13` step 1, 2026-09-04): power accounting 9.68e-3 vs 1e-2, opposite pair 0.35% vs 5%, 28 s per solve; **no 32×32, no reciprocity, no C16 gate, no resonance or tuning claim** at 16 legs. Absolute accuracy at Larmor is `ANS-4` (Waiting-on-you 1). `ans:3` / `ports:1` / `ports:2` reproduction controls at 1e-6 on the 0.11 image (`OPS-33`, `OPS-34` ✅) |
+| Birdcage meshes | ✅ 4-leg and 16-leg, leg-gap and ring-gap, identity-gated; the ring gap has a drivable (longitudinal) sheet mode on both rungs (`GEO-26` ✅) | 4-leg: 8/8 sheets at closed form to 1e-9, record 111 898. 16-leg: 32/32 sheets exact to 1e-12, record 270 728 at 2 and 12 ranks, terminal-area record band 2.0e-4 for that rung only (two-state triangulation, 10 of 32 low, ruled and measured) |
 | B₁⁺ | 🧪 computed; symmetry-gated at CG1 at 10, 64 and 128 MHz, not homogeneity-gated | `WF-6` steps 1–2b ✅. The C4 identities improve 2.19% → 0.62% when the phantom's `h` is halved; the sample set is *not* the mechanism (ring-set control within 1.06 pp, step 3f′). Still **no homogeneity, absolute or tuning claim** |
-| Coil-driven SAR | 🟡 **two gates registered on one fixture at 10 MHz at fixed `h`: C4 rotation of quadrant powers (3h) and the single-drive mirror identity (3i)**; shown in ParaView by `ports:9` (`EX-43` ✅) | twelve rotation pairs ≤ **1.5200%**, four mirror pairs ≤ **1.7527%**, both vs the unmoved 5% band; mirror control 38% (≥ 21.8×), rotation control 89–159×; partition identity exact. Pointwise readings stay records. **No absolute SAR, no homogeneity, no C95.3, no Larmor, no convergence claim** |
+| Coil-driven SAR | 🟡 two gates registered on one fixture at 10 MHz at fixed `h`: C4 rotation of quadrant powers (3h) and the single-drive mirror identity (3i); shown in ParaView by `ports:9` (`EX-43` ✅) | twelve rotation pairs ≤ 1.5200%, four mirror pairs ≤ 1.7527%, both vs the unmoved 5% band; mirror control 38% (≥ 21.8×), rotation control 89–159×; partition identity exact. Pointwise readings stay records. **No absolute SAR, no homogeneity, no C95.3, no Larmor, no convergence claim** |
 | SAR | ⚠️ imposed uniform field only | lossy sphere 3.5% (`MAT-4`); the coil case above is a symmetry identity, not an accuracy gate |
-| Test-suite trust | ✅ census complete; **residual reds on `main` at `-n 2`: 4 deliberate/known** (the new one is `GEO-26`'s `[16]` terminal band, ruled, queue item 3 re-greens it); example-artifact census `dead=0 exit=2` at `2730af3` | API sweep `violations=0` on all four roots |
+| Test-suite trust | ✅ census complete; **residual reds on `main` at `-n 2`: 3 deliberate/known** (`[16]` re-greened by `GEO-26` step 3); example-artifact census `dead=0 exit=2` at `2758f4b`, 38 examples | API sweep `violations=0` on all four roots |
 
-## Recent activity (2026-09-03 10:30 → 18:00)
+## Recent activity (2026-09-03 18:00 → 2026-09-04 03:00)
 
-- **12:00:** `GEO-26` step 2 — the longitudinal ring sheet at 16 legs:
-  32 sheets exact, C32 spread 6.0e-16, record 270 728 at both widths, the
-  default control at 265 621 exactly; **stopped, as pre-registered**, on two
-  terminal classes at 1.0e-4 vs the 2.0e-5 band (160 / 158 s). Known-issues
-  entry filed, band not widened; a deliberate red on `main`.
-- **13:30:** slot lost — host reboot ≈ 13:44 local; no launcher log.
-- **13:43 (interactive, second machine):** `OPS-35` — README, CONTRIBUTING,
-  MkDocs, CI and Dockerfile consolidation; smoke suite 16 passed. Audited
-  PASS.
-- **14:30 / 16:13 (interactive):** `OPS-RETENTION` → §7 `OPS-36` — retention
-  policy, harness chatter filter (verified on a synthetic log), weekly cron
-  sweep; the first sweep run by hand and left staged.
-- **15:00:** `EX-42` — `mat:1` prints the finite-wire Dodd–Deeds correction
-  +0.115237% ΔR / +0.144814% ΔX, reproducing `MAT-8` at 1e-6; its pre-census
-  (`dead=0`, logged) restored `EX-43` to ✅. 64 s. Both audited PASS.
-- **16:30:** slot stopped on the staged sweep (1 930 index entries) —
-  journaled, nothing touched, `OPS-34` not attempted.
-- **18:00 review:** landed the sweep as `ce64659` after checking every
-  plan-cited log survives; ruled the terminal bistability; unblocked
-  `PORT-13`; opened `OPS-36`; three audits (PASS / PASS / PASS); queue
-  rebuilt: five independent items.
+- **19:30:** `OPS-34` — the `ports:1` terminated-`Z` records measured
+  2.6e-4 stale against the 0.11 image, re-based at `repr()` precision,
+  reproduction control tightened 2e-3 → 1e-6 with the old digits asserted
+  to fail it; run-to-run scatter measured ~1e-9. Three windows, 143 s
+  each. Audited PASS.
+- **21:00:** `EX-44` — `mesh:10`, the longitudinal ring sheet on the 4-leg
+  rung in ParaView, both cell records exact, eight sheets at
+  1.000000000000, the transverse control fourteen decades away. 59 s.
+  Audited PASS (caveat: its pre-census ran outside the harness).
+- **22:30:** `GEO-26` step 3 — control first (`[16]` at the old band fails
+  to the digit), then the 2.0e-4 band registered for the 16-leg rung only,
+  green at 2 and 12 ranks, census 10 of 32 low; known-issues entry
+  retired; **`GEO-26` ✅**. Four windows, 221–226 s (heavy). Audited PASS.
+- **00:00:** `PORT-13` step 1 — **the first solve on the 32-ring-port
+  coil**: 270 728 cells, `h` = the gap chord, power accounting 9.68e-3 vs
+  1e-2, opposite pair 0.35%, 28 s per solve at 8 ranks, 5.7 GiB. 329 s.
+  `PORT-13` → 🟡.
+- **03:00 review:** §2's stale "no solve at 16 legs" sentence replaced;
+  `PORT-13` step 2 scoped (4×4 sub-block, one window) with a ruling that
+  the 0.97-of-band residual gets no new band; `OPS-37` opened for the gate
+  module's stale records; two example chunks opened (`EX-45`, `EX-46`);
+  three audits PASS; queue rebuilt to five items.
 
 ## Automation health
 
-- **2 of 4 scheduled slots landed**, both journaled. One lost to a host
-  reboot (no launcher log — the first loss below cron), one stopped
-  correctly on a dirty tree (first encounter, journal only). Container was
-  down at the 15:00 preflight and restarted cleanly.
-- **Foreground-executor rule: 22 for 22** since written. No docker-socket
-  denial this interval (**3 of 37** slots overall).
-- Tier labels: `GEO-26` step 2 declared heavy, measured 158–160 s (inside
-  standard — over-declared, not mislabelled); `EX-42` 64 s standard. No
-  compute-safety event.
-- **Housekeeping:** first retention sweep landed (821 compressed, 287
-  deleted, 111.3 → 61.1 MB). `--check` still breaches log volume and
-  `attempts.md` — see Waiting-on-you 3.
+- **4 of 4 scheduled slots landed**, all journaled, all §4-complete on the
+  first attempt — the first interval with no lost or stopped slot since the
+  90-minute grid started. Container Up ≈ 13 h continuously.
+- **Foreground-executor rule: 26 for 26** since written. No docker-socket
+  denial this interval (**3 of 41** slots overall). No compute-safety
+  event.
+- Tier labels: `GEO-26` step 3 priced ≈ 160 s and measured 221–226 s
+  (heavy) — the review's estimate was a two-case footer and the module
+  now runs four cases; `PORT-13` step 1's executor sized its window to
+  570 s rather than the item's 1200 s (which does not fit one foreground
+  window) — the right call, and step 2 is sized to 600 s.
+- **Housekeeping:** `attempts.md` at 17 615 lines vs the 6 000 budget — the
+  2026-09-06 weekly's rotation. Log volume within policy after the
+  operator's gating-log exemption.
 
-## On deck (§9 — five items, all independent; 1, 2 and 5 have specialist executors)
+## On deck (§9 — five items; 3 and 4 have specialist executors)
 
-1. **`OPS-34`** — measure `ports:1`'s terminated-`Z` records against the
-   0.11 image; re-base only if stale *(`record-reconciler`; ≈ 3 min per
-   window)*
-2. **`EX-44`** — the longitudinal ring-gap sheet on the 4-leg rung in
-   ParaView, inner/outer halves tagged, records imported from the gate
-   module *(`example-runner`; ≈ 70 s)*
-3. **`GEO-26` step 3** — the 16-leg rung's own terminal-area record band
-   (2.0e-4, `[16]` only; 4-leg bands unmoved), low-state count printed,
-   control pointed back at 2.0e-5 must fail; on green the chunk closes
-   *(implementer; ≈ 160 s per window, three windows)*
-4. **`PORT-13` step 1** — the first solve on the 32-ring-port layout with
-   the longitudinal sheets, `h` = the gap chord, cell control 270 728;
-   power accounting at 1e-2 and the opposite-port pair at 5%
-   *(implementer; ≈ 3–6 min at `-n 8`; unblocked)*
+1. **`PORT-13` step 2** — four drives over one mesh (P17, its top-ring
+   partner, the two opposites): 4×4 reciprocity at 1e-3, column passivity,
+   the top/bottom mirror at 5%, power accounting per column; `S` read
+   directly from the matched drives, no `Z` inversion *(implementer; ≈ 430 s
+   at `-n 8`)*
+2. **`OPS-37`** — the `PORT-1` step-4 gate module's two v0.7.2 ratios
+   re-based onto 0.11 and its reproduction control tightened to 1e-6, the
+   heuristic control keeping its 2e-3 floor *(implementer; two windows
+   ≈ 155 s)*
+3. **`EX-45`** — the 16-leg longitudinal rung in ParaView with the two-state
+   terminal triangulation as a per-port field; free control = the 5× band
+   separation *(`example-runner`; ≈ 150 s)*
+4. **`EX-46`** — the first field on the 32-ring-port coil in ParaView:
+   `|E|` on the sheets and phantom for the P17 drive, records imported
+   from the step-1 module *(`example-runner`; ≈ 250 s at `-n 4`)*
 5. **`GEO-25` rungs 1–2** — the 30 cm coil cost probe at 0.07 and 0.10 m,
    rung 3 only if rung 2 prices it under 600 s *(`mesh-probe`; ≈ 5 + 12
    min; spare)*
