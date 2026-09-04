@@ -43,14 +43,20 @@ family one rung up, where the terminal classes are the finding
 (`LONGITUDINAL_TERMINAL_INTRA_BAND` unmoved at 2.0e-5, a class above it is a
 stop, not a widening — 2026-09-03 10:30 ruling).
 
-**That stop fired.** The 16-leg longitudinal case is a *deliberate red on
-`main`* since 2026-09-03: two of the four azimuth classes read an intra-class
-terminal-area covariance of **9.990e-05**, five times the 2.0e-5 band, at both
-`-n 2` and `-n 12`. Every other anchor is green on that rung — the 32 sheets,
-both halves, the C32 spread and the mirror, the whole `GEO-20` family — and the
-negative control reproduces `EX-35`'s 265 621 at ratio 1.000000. See
-`docs/testing/known-issues.md`; the band is **not** widened and `PORT-13` stays
-blocked.
+**That stop fired, and was adjudicated.** The 16-leg longitudinal case read an
+intra-class terminal-area covariance of **9.990e-05** on two of its four
+azimuth classes, five times the 4-leg rung's 2.0e-5, at both `-n 2` and
+`-n 12`; every other anchor was green (the 32 sheets, both halves, the C32
+spread and the mirror, the whole `GEO-20` family, and the negative control
+reproducing `EX-35`'s 265 621 at ratio 1.000000). The 2026-09-03 18:00 review
+ruled the mechanism — a **bistable** constrained-diameter triangulation with
+exactly two discrete terminal areas — acceptable for the port model and gave
+the 16-leg rung **its own record band** (`GEO-26` step 3): the 4-leg
+`LONGITUDINAL_TERMINAL_INTRA_BAND` stays 2.0e-5, `TERMINAL_INTRA_CLASS_BAND`
+stays 1e-6, and only the `[16]` case reads
+`LONGITUDINAL_TERMINAL_INTRA_BAND_16` below. The `_azimuth_class` fold is
+deliberately kept — classifying by the two-valued partition would fit the
+assertion to the artifact and hide a third state.
 
 Anchors (i)-(v) of the §9 item, at ``RING_GAP_LENGTH = 0.008`` on both rungs:
 
@@ -78,8 +84,8 @@ unmoved, but the C4 covariance of that triangulation drops from 4.198e-08 to
 measured value.
 
 Mesh-side only: no port model, no drive, no solve, no `GEO-20` record moves
-(the default is untouched), `EX-35` unchanged. `PORT-13` stays blocked until
-step 2 produces the 16-leg longitudinal record.
+(the default is untouched), `EX-35` unchanged. The 16-leg longitudinal record
+`PORT-13` step 1 reads is `RING_LONGITUDINAL_SCALED_CELL_RECORD` = 270 728.
 
 Run (real or complex build; mesh-side only)::
 
@@ -144,10 +150,10 @@ RING_LONGITUDINAL_CELL_RECORD = 111898
 # widths: 20260903T170351Z_GEO-26.log:53400 (`-n 2`) and
 # 20260903T170701Z_GEO-26.log:53490 (`-n 12`).
 #
-# **This assert is currently unreachable**: the terminal azimuth-class
-# covariance below fires first on this rung (see the known-issues entry of
-# 2026-09-03). The constant is recorded because it is measured twice, not
-# because anything green depends on it.
+# Reproduced green under `GEO-26` step 3 at both widths at ratio 1.000000:
+# 20260904T034052Z_GEO-26.log:26231 (`-n 2`), 20260904T034441Z_GEO-26.log:26341
+# (`-n 12`). (Between step 2 and step 3 this assert was unreachable — the
+# terminal azimuth-class covariance below fired first on this rung.)
 RING_LONGITUDINAL_SCALED_CELL_RECORD = 270728
 
 # `EX-35`'s transverse 16-leg record (`SCALED_CELL_RECORD`,
@@ -193,6 +199,78 @@ LONGITUDINAL_CELL_RECORD = {
 # `TERMINAL_INTRA_CLASS_BAND` itself is untouched and still gates every
 # transverse fixture; only this call site passes the measured value.
 LONGITUDINAL_TERMINAL_INTRA_BAND = 2.0e-5
+
+# `GEO-26` step 3, 0.11 image: the **16-leg** rung's own record band for the
+# same reading. Registered on step 2's measurement (2026-09-03 18:00 ruling),
+# not predicted, and only after the mechanism was measured rather than inferred.
+#
+# The four azimuth classes' intra-class terminal-area covariance at 16 legs,
+# identical to four digits at both widths — `-n 2`
+# 20260903T170351Z_GEO-26.log:53436-53439 / `-n 12`
+# 20260903T170701Z_GEO-26.log:53526-53529:
+#
+#     '11.250 deg'  9.989957e-05 / 9.989957e-05
+#     '33.750 deg'  3.792060e-11 / 3.792088e-11
+#     '56.250 deg'  3.792129e-11 / 3.792129e-11
+#     '78.750 deg'  9.990206e-05 / 9.990206e-05
+#
+# Mechanism, measured: across the 32 ring terminals the meshed area takes
+# exactly **two** values, 9.791961125e-05 m^2 and 9.792939386e-05 m^2 (9.99e-05
+# apart relative), the low one taken by the 5 gap azimuths 11.25 / 78.75 /
+# 101.25 / 191.25 / 281.25 deg — 10 of the 32 ports, both rings — and the high
+# one by the other 11. Five of sixteen is no subgroup of C16, so this is not
+# `GEO-19` step C's azimuth-class effect but the bistable constrained-diameter
+# triangulation `LONGITUDINAL_TERMINAL_INTRA_BAND` records: gmsh resolves the
+# disk whose triangulation must contain a diameter one of two ways, depending
+# on how that diameter falls against the surrounding air mesh. The 4-leg rung
+# is two-state as well — 6 terminals at 9.793917647e-05 m^2 and the 2 at
+# 225 deg at 9.794074883e-05 m^2 (state census printed by the test, `-n 2`
+# 20260904T033637Z_GEO-26.log:15663) — but there the two states are only
+# 1.605e-05 apart, which is why that rung reads inside 2.0e-5 and this one,
+# with a 9.99e-05 separation, does not.
+#
+# What is unmoved: all 32 terminals sit inside the [0.95, 1.0] inscribed band;
+# every *exact* (polyhedral) form on this rung is 1.000000000000 — the 32
+# sheets' chord / w / area, both halves, the C32 spread 6.035e-16, the mirror
+# 5.551e-16; the inter-class spread stays inside its 5e-3 ceiling. The
+# two-state amplitude 9.99e-05 is a decade under `PORT-9`'s 1e-3 reciprocity
+# band and three under the 5% class band, and this is a terminal-*area*
+# reproducibility record, not a physics band: `PORT-13` integrates over the
+# sheet, which is exact to 1e-16 here.
+#
+# 2.0e-4 is 2.0x the measurement; the separation from the unmoved 2.0e-5 is
+# 5.0x, which is the ceiling this measurement allows, so no larger factor is
+# claimed. Only the `[16]` call site passes it.
+LONGITUDINAL_TERMINAL_INTRA_BAND_16 = 2.0e-4
+
+# Rung -> the terminal-area covariance band that rung's own measurement
+# registered. Two records, not one band widened: 4 legs is monostable
+# (1.605e-05), 16 legs bistable (9.990e-05).
+LONGITUDINAL_TERMINAL_BAND = {
+    CONTROL_LEG_COUNT: LONGITUDINAL_TERMINAL_INTRA_BAND,
+    SCALED_LEG_COUNT: LONGITUDINAL_TERMINAL_INTRA_BAND_16,
+}
+
+# Relative width of one terminal-area *state* for the state census below: four
+# decades under the 9.99e-05 separation between the two measured states and
+# three decades above the 3.8e-11 scatter inside one, so the clustering is not
+# a tuned threshold. Printed, never asserted on.
+TERMINAL_STATE_TOL = 1.0e-8
+
+
+def _terminal_area_states(areas, tol=TERMINAL_STATE_TOL):
+    """``[(state area, count)]`` ascending: the discrete terminal-area states.
+
+    `areas` is the already-reduced global list of the rung's meshed terminal
+    areas. Two readings share a state when they agree to `tol` relative.
+    """
+    states = []
+    for a in sorted(float(x) for x in areas):
+        if states and abs(a / states[-1][0] - 1.0) < tol:
+            states[-1][1] += 1
+        else:
+            states.append([a, 1])
+    return [(a, n) for a, n in states]
 
 
 def _sheet_extent_along(msh, facet_tags, tag, axis, comm) -> float:
@@ -336,6 +414,8 @@ def test_the_longitudinal_ring_sheets_span_the_gap_chord_and_split_the_box(leg_c
     """
     comm = MPI.COMM_WORLD
     record = LONGITUDINAL_CELL_RECORD[leg_count]
+    # Each rung reads its own measured band; neither is the other's widening.
+    terminal_band = LONGITUDINAL_TERMINAL_BAND[leg_count]
     m = _measure_ring(leg_count, orientation="longitudinal")
     msh = m["mesh"]
     layout = m["diag"]["ring_port_layout"]
@@ -431,12 +511,37 @@ def test_the_longitudinal_ring_sheets_span_the_gap_chord_and_split_the_box(leg_c
                 f"[GEO-26] terminal azimuth class '{key}': {len(members)} ports "
                 f"[{azimuths}] deg"
                 f"  mean {vals.mean():.9e} m^2  intra-class spread {spread:.6e} "
-                f"against this mode's band {LONGITUDINAL_TERMINAL_INTRA_BAND} "
+                f"against this rung's band {terminal_band} "
                 f"(transverse band {TERMINAL_INTRA_CLASS_BAND}; the sheet's phi "
                 f"edges are diameters of the two terminal disks, see the module "
                 f"constant)",
                 flush=True,
             )
+        # The state census beside the class table: the bistable triangulation
+        # `LONGITUDINAL_TERMINAL_INTRA_BAND_16` records takes exactly two
+        # discrete terminal areas at 16 legs, 10 of the 32 terminals on the low
+        # one (4 legs is two-state too, 6 of 8 low, but only 1.6e-05 apart).
+        # Printed, not asserted — a third state, or a low-state count off the
+        # record, is a new generator finding, and this line is how it becomes
+        # visible in the log.
+        all_terminals = [
+            float(m["areas"][CONDUCTOR_IFACE + i]) for i in m["ring_ports"]
+        ]
+        states = _terminal_area_states(all_terminals)
+        census = "  ".join(
+            f"{a:.9e} m^2 x{n}" for a, n in states
+        )
+        low_count = states[0][1]
+        print(
+            f"[GEO-26] terminal-area states at {leg_count} legs "
+            f"({len(all_terminals)} terminals, {TERMINAL_STATE_TOL:.0e} "
+            f"relative clustering): {len(states)} state(s)  {census}\n"
+            f"[GEO-26] terminals on the LOW area: {low_count} of "
+            f"{len(all_terminals)} "
+            f"(records: 16 legs 2 states, 10 of 32 low; 4 legs 2 states, "
+            f"6 of 8 low)",
+            flush=True,
+        )
 
     # Closed-form consistency of the two halves against the box's own volume —
     # a same-rank arithmetic identity, so it gates the formulae before the mesh
@@ -495,7 +600,7 @@ def test_the_longitudinal_ring_sheets_span_the_gap_chord_and_split_the_box(leg_c
     _assert_ring_identity_family(
         m,
         label,
-        terminal_intra_band=LONGITUDINAL_TERMINAL_INTRA_BAND,
+        terminal_intra_band=terminal_band,
     )
     assert not problem, problem
 
