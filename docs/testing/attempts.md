@@ -17613,3 +17613,101 @@ rule as a single command, so it wants splitting into two or four windows over
 one cached mesh (the `build_four_port_sweep(reuse=…)` precedent), with
 reciprocity `‖S−Sᵀ‖/‖S‖` at `PORT-9`'s unmoved 1e-3 as the natural first gate
 rather than a C16 spread.
+
+## 2026-09-04T09:52Z — `PORT-13` step 2 — **complete** (04:30 CDT implementer slot)
+
+**Item.** §9 On-deck item 1, taken as the first not-done/not-blocked entry —
+`PORT-13` step 2, the ring column becoming a 4×4 sub-block. Scoped by the
+2026-09-04 03:00 review from step 1's price. Executed by the `implementer`
+agent, spawned **foreground**, one chunk, no concurrent executor.
+
+**Preflight.** Tree clean on `d6a652e`; container Up ≈ 13 h; no `attempt/*`,
+no `recovered/*`. No dirty-tree exception invoked.
+
+**Outcome — §4-complete, committed `0121738` on `main`** (code + tests + both
+logs + `test-results.md` rows + the §7 flip together). `tests/validation/
+test_port_birdcage_ring_column.py` extended in place, nothing renamed: the
+module-scoped `ring_four_columns` builds the one mesh and solves four drives
+through a new `_solve_one_drive`, and `ring_column` is now a thin fixture
+onto the same dict, so step 1's three tests read exactly what they read at
+`052bd61` (item 4 imports the module as it stands). New helpers
+`_ring_mirror_map` (σ from the *measured* ring/azimuth, asserted an
+involution), `_sub_block`, `_reciprocity_ratio`; new constants
+`COLUMN_PASSIVITY_CEILING = 1.0`, `CONTROL_COLUMN_SCALE = 1.01`,
+`CONTROL_MARGIN_FACTOR = 5.0`; `RECIPROCITY_BAND` imported from
+`test_port_lumped_sheet_sweep`. Five new tests. No `src/` change, no
+`known-issues.md` change (nothing failed, nothing unrelated broke).
+
+**Harness logs.** `20260904T093622Z_PORT-13.log` — `--collect-only` smoke,
+`-n 2`, 8 collected, Status 0, 4 s. `20260904T093638Z_PORT-13.log` — the
+heavy run: **`19 passed, 32 warnings in 147.24s`** (`:10943`), **Status 0,
+Elapsed 149 s** (`:11401–11402`), `-n 8`, complex build,
+`FEM_EM_REQUIRE_COMPLEX=1`, `tests/environment` first, container window
+`timeout -k 30 600`, foreground Bash `timeout` 660000 ms.
+
+**Measured, each against its band** (all five load-bearing lines re-read by
+this slot from the log, not taken on the executor's word):
+
+- Fixture: 270 728 cells at ratio 1.000000, same port spec as step 1. Four
+  drives **P17 / P25 / P33 / P41** — P33 located as P17's measured z-mirror
+  at 11.250°, P25 / P41 as step 1's measured opposites at 191.250°. Solve
+  walls 9.12 / 11.68 / 9.94 / 10.07 s, **four-drive total 40.82 s**; mesh
+  **69.74 s**; summed `ru_maxrss` **6.571 GiB** vs the 128 G cap.
+- (iii) reciprocity `‖S₄−S₄ᵀ‖_F/‖S₄‖_F = **4.118219e-13**` vs the unmoved
+  imported **1e-3** (`:10786`). Negative control, P17 column ×1.01:
+  **7.045018e-03 = 7.045× the band** (`:10787`) — the item's computed
+  ≈ 7.0e-3 ceiling to two digits, clearing the pre-stated 5× bar. Caveat
+  written into the docstring and the §7 row: 4e-13 is machine-level because
+  the discrete operator is complex-symmetric and both sides use the same
+  port functional, so this gate tests column *extraction*, not mesh error —
+  the control is what gives it teeth.
+- (iv) column passivity `Σ_i|S_ij|²` = **0.915817419 / 0.915956086 /
+  0.915816510 / 0.915944997**, margins +8.4183 / +8.4044 / +8.4183 /
+  +8.4055 % under the physical ceiling 1 (`:10797`ff) — the item projected
+  ≈ 0.92 from step 1's printed currents.
+- (v) mirror identity over all 32 pairs, worst **P20/P36 at 0.0308 %**
+  (`:10810, :10839`), next 0.0303 %, vs the unmoved 5 %
+  `OPPOSITE_SPREAD_BAND` — 163× inside, between two *independently solved*
+  columns. This is the one identity the second solve buys.
+- (vi) power accounting per column: **9.679798e-03 / 9.680187e-03 /
+  9.680020e-03 / 9.680343e-03**, all 0.968× the unmoved imported **1e-2**
+  (margins +3.20e-04), conductor-blind control 4.14× the band on each
+  (`:10843–10854`). The six-digit agreement across four different drives is
+  the 03:00 ruling's own prediction made visible: a drive-independent
+  term-accounting offset, not noise and not an h-effect.
+- Step 1's three tests re-passed unchanged on the P17 column.
+
+**No band moved, widened or renamed** — verified by this slot on the diff:
+every `RECIPROCITY_BAND` / `OPPOSITE_SPREAD_BAND` / `POWER_BALANCE_BAND`
+occurrence is a read of the imported constant, and the only new numbers are
+the physical ceiling 1.0 and the two control factors. Scope held: four
+columns, three identities, one mirror check — no 32×32, no C16 class gate,
+no σ_max, no tuning or resonance claim, no §2 edit.
+
+**Cost note (not a finding).** The window came in at **149 s against the
+item's ≈ 430 s estimate and a quarter of its 600 s ceiling** — the box was
+lighter than at 05:05: the same fixture meshed in 69.74 s against step 1's
+106.07 and one solve took 9.12 s against 27.96. This is machine load, not a
+code change; step 1's price stands as the conservative one.
+
+**Slot bookkeeping.** The executor left §9 item 1 unmarked and dated the §7
+row "09:00 slot" from the log's UTC stamp; both corrected in the journal
+commit (item 1 marked done with its digits, the row re-dated 04:30). **No
+compute-safety event, no docker-socket denial, no allowlist denial, no
+container wedge, no backgrounded harness command.** Foreground-executor rule
+held: one executor, `run_in_background: false`, never an ended turn with a
+window in flight.
+
+**Hypothesis for the next attempt.** The next slot takes §9 item 2
+(`OPS-37`, the `PORT-1` step-4 gate module's two mutual-ratio records
+re-based to 0.11 and its reproduction control tightened to 1e-6) — items
+1–4 are independent of each other's results and nothing is serial on this
+one. For **`PORT-13` step 3**, a review's to scope: this footer changes the
+premise the step-2 item assumed. At 9.12–11.68 s/solve a 32-drive sweep
+projects to **≈ 292 s of solve time** plus one 69–106 s mesh, i.e. ≈ 400 s —
+**inside a single foreground window**, so the column caching across windows
+(`build_four_port_sweep(reuse=…)`) the item called for may be unnecessary.
+The caution is that 292 s is measured at *this* load; step 1's 27.96 s/solve
+would put the same sweep at 895 s, over the rule. A review scoping step 3
+should size the window off step 1's slower price and treat today's as
+upside, not budget.
