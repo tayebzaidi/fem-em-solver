@@ -311,6 +311,11 @@ def _solve_one_drive(ctx, driven_id):
         "sheet_total": float(sum(sheet_powers.values())),
         "residual": float(residual),
         "blind": float(blind),
+        # Additive (`EX-46`, `ANS-1` licence): the solved fields, so a caller
+        # that needs the raw complex E-field for a viewing quantity (this
+        # module's own tests never read this key) does not have to
+        # re-solve. No accounting term above is derived from it.
+        "fields": fields,
     }
 
 

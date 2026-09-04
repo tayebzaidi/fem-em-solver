@@ -17877,3 +17877,88 @@ For the review: the `mesh:11` guide's dead-reference slip is the second
 census-gate catch in three example chunks, and both were filename-prefix
 mistakes in a `paraview_output/` reference — a one-line guide-authoring note
 in the `EX-15` heading convention would retire the class.
+
+---
+
+## 2026-09-04T14:10Z — `EX-46` — complete
+
+**Slot:** scheduled implementer run, 2026-09-04 09:00 CDT (60-min timebox).
+**Preflight:** tree clean on `40b7be3`, container Up ≈ 18 h. §9 items 1–3 all
+marked done by earlier slots this interval, so item 4 (`EX-46`) was the first
+open one; item 1 (`PORT-13` step 2) landed all-green with no known-issues entry
+naming the ring-port model defective, so this item's skip clause did not apply.
+**Executor:** `example-runner`, spawned **foreground** with the
+never-background rule, the emit-then-harness path and both census windows
+through `run_and_log.sh` written into its prompt. Foreground-executor rule
+held; no background task, no docker-socket denial, no compute-safety event.
+
+**Outcome: complete (§4).** New pair
+`examples/ports/10_birdcage_ring_column.py` / `.md` (`ports:10`) — the first
+field on the 32-ring-port birdcage: one 10 MHz solve, degree 1, P17 driven at
+1 V, 31 ports at 50 Ω on the 270 728-cell 16-leg longitudinal ring-gap rung.
+All four anchors green on the first run, every constant imported from
+`tests/validation/test_port_birdcage_ring_column.py`, none restated:
+
+| anchor | measured | band / record | reading |
+| --- | --- | --- | --- |
+| cells | 270 728 | `RING_LONGITUDINAL_SCALED_CELL_RECORD` | ratio 1.000000 |
+| power residual | 9.679798e-03 | `POWER_BALANCE_BAND` 1e-2 | inside, 0.968× |
+| supplied power | 5.078728668e-03 W | step 1's `-n 8` record, rtol 1e-3 | 3.205e-11 |
+| P25 / P41 | 0.3504% | `OPPOSITE_SPREAD_BAND` 5% | inside |
+| negative control | 4.143700e-02 | conductor term dropped | 4.14× the band |
+
+The negative control matched step 1's own `-n 8` ceiling of 4.14× exactly; no
+larger factor claimed. Term breakdown at `20260904T140525Z_EX-46.log:10598–10604`
+(supplied 5.078728668e-03 / phantom 9.180375767e-09 / conductor 1.612862046e-04
+/ 32 sheets 4.868272216e-03 W); cells and timings `:10561`; the 32-vector
+`V = V_src − I·Z_p` with measured azimuths `:10565–10596`; combined XDMF `:10615`.
+
+**Cost.** Example window **103 s** harness / 99.9 s in-script at `-n 4` complex
+(mesh 68.96 s + rung 75.62 s serial gmsh, one solve **13.12 s**) — declared
+heavy by ceiling per the §7 entry, **measured standard**, well under the ≈ 250 s
+estimate; the prior slot's note that the mesh is now building in ~69 s rather
+than step 1's 106 s held. Gate re-run 143 s at `-n 8`.
+
+**Two disclosed deviations from the item text.**
+1. *"one combined XDMF via `write_xdmf_with_tags`"* could not be met literally —
+   that helper takes cell tags only and accepts no facet `MeshTags`. The example
+   inlines the helper's own internal pattern (`cell_tags_to_function` +
+   `consolidate_xdmf_grids`, both imported unchanged from
+   `fem_em_solver.io.paraview_utils`, nothing reimplemented) and adds
+   `xdmf.write_meshtags` for the 32 sheet facets, producing the single file the
+   entry asks for instead of `EX-44`/`EX-45`'s two-file split. Noted in the
+   script's docstring. **For the review:** either the entry's phrasing or
+   `write_xdmf_with_tags`'s signature is the thing to reconcile — a
+   facet-tag-accepting variant would retire the improvisation.
+2. *"no `src/` or `tests/` change"* **was not held.** `_solve_one_drive` in
+   `tests/validation/test_port_birdcage_ring_column.py:314` gained one
+   **additive** return key `"fields"` (the solved `TimeHarmonicFields`), because
+   the example re-implements that fixture body and needs the raw complex E for
+   the `|E|` viewing quantity. No accounting term reads it; nothing removed,
+   renamed or altered. The executor's report claimed the gate module "re-ran
+   green" as part of the example's import — **that claim is not supported**
+   (importing a module executes no tests), so this slot re-ran the gate module
+   itself: `19 passed in 141.38s`, Status 0, 143 s at `-n 8`
+   (`20260904T140814Z_EX-46-gate.log:436, 764–765`). The key is harmless, but
+   the scope line was crossed and the review owns whether the `ANS-1` additive
+   licence should be written into future `EX-*` items that re-implement a
+   fixture body.
+
+**Census, both windows through the harness** (the `EX-44` gap stays closed):
+pre `dead=1 guide=0 stale=65 exit=1` (40 runnable — the one dead ref was the new
+guide's not-yet-generated artifact, predicted before reading,
+`20260904T140509Z_EX-46-precensus.log:105`) → post `dead=0 guide=0 stale=65
+exit=2`, 40 runnable (`20260904T140721Z_EX-46-postcensus.log:104`). Predicted
+delta matched; unlike `EX-45` no intermediate exit-1 run was needed — the
+guide's artifact references carried their filename prefixes first time.
+
+**Logs:** `20260904T140509Z_EX-46-precensus.log`, `20260904T140525Z_EX-46.log`,
+`20260904T140721Z_EX-46-postcensus.log`, `20260904T140814Z_EX-46-gate.log`.
+No branch parked; `main` clean and green.
+
+**Next.** §9's five items are now all done or spare — item 5 (`GEO-25` rungs 1
+and 2, `mesh-probe`) is the only open entry left for the 12:00 slot, and the
+list needs topping up at the 10:30 review. The review's own scoping note stands
+open: `PORT-13` step 3 (the 32×32) is now projected at ≈ 292 s of solve plus one
+69–106 s mesh by item 1's footer, i.e. plausibly one window without column
+caching — worth deciding from that footer rather than step 1's.
