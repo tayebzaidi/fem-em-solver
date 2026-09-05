@@ -19363,3 +19363,96 @@ inside the timebox with no new work started after minute 45.
 `tests/validation/test_port_lumped_rlc_termination.py` only, gated behind
 `FEM_EM_PORT14_WIDTH_SWEEP`). Its three outcomes are pre-registered in the
 §7 bullet — whichever it reads is a result, not a failure.
+
+---
+
+## 2026-09-05T21:41Z — `PORT-14` step 1c — **complete** (measurement, band untouched)
+
+Slot: 16:30 CDT scheduled implementer run. Preflight clean on `24bb074`,
+container Up 2 days, no `recovered/*`. §9 items 1–3 all marked done, so the
+item is **§9 item 4** as the previous slot predicted — taken first-not-done,
+no substitution. Executor: `implementer`, spawned **foreground**, one chunk.
+
+**Outcome: complete, closing commit `24ede94` on `main`, tree clean.** This
+is a measurement step under the §7 bullet's three pre-registered readings, so
+"complete" means the reading was taken and recorded — no gate closed, no
+status flipped, row stays 🟡.
+
+**The reading selected: (1) — the width the sheet law is told is the lever.**
+Outcomes (2) (flat under A/B, moved by C ⇒ uniformity) and (3) (flat under all
+⇒ `sheet_width_m` exonerated) are excluded by factors of ×5.8 / ×3.7 against a
+10% flatness criterion. On the fixed 116 085-cell gate mesh at 10 MHz, the
+reduction residuals (printed, never asserted; step-1 records 1.595580e-03 C /
+3.370512e-03 L, same mesh, unperturbed widths):
+
+| config | widths told (m) | C = 100 pF | L = 1 µH | cite |
+|---|---|---|---|---|
+| A (+5% all) | 7.658829780e-03 ×4 | 9.260556e-03 (×5.803881) | 1.965102e-02 (×5.830276) | `:1977–1980, 1985–1986` |
+| B (−5% all) | 6.929417420e-03 ×4 | 5.980286e-03 (×3.748033) | 1.255208e-02 (×3.724086) | `:2046–2049, 2054–2055` |
+| C (±5.3% alt) | 7.680712151e-03 / 6.907535049e-03 | 8.990276e-03 (×5.634488) | 1.914418e-02 (×5.679903) | `:2115–2118, 2123–2124` |
+
+All cites in `docs/testing/logs/20260905T213322Z_PORT-14-step1c.log`.
+
+**Asserted, green, every band imported and unmoved:** cells **116 085
+bitwise** on all three (`:1976, 2045, 2114`); reciprocity 1.891254889e-14 /
+4.829117353e-15 / 7.780907717e-15 ≤ `RECIPROCITY_BAND` = 1e-3 and σ_max
+0.999988336 / 0.999997273 / 0.999996814 ≤ 1 + 1e-9 (`:1981, 2050, 2119`).
+Negative control ceiling-first, Γ = 0 on all six terminations, Δ = 0.3254 /
+0.3281, 0.3177 / 0.3221, 0.3060 / 0.3081 — all above the 5e-3 floor, so all
+six asserted; misses 200–330× the band (`:1990–1991, 2059–2060, 2128–2129`).
+I re-read every headline digit above from the log myself rather than taking
+the executor's report; the smoke and gate footers likewise (Status 0 / 4 s at
+`20260905T213309Z_PORT-14-step1c-smoke.log:58–59`; `9 passed, 6 deselected in
+230.46s` at `:2132`, **Status 0, Elapsed 258 s** at `:2138–2139`).
+
+**The qualification the pre-registration did not anticipate — flagged for the
+review.** (A) and (B) do *not* move the residual in opposite directions: both
+**raise** it, so the zero-crossing lies **inside** ±5% and the nominal `A/h`
+is already near-optimal rather than biased. A three-point fit of `|r₀ + kε|`
+on the printed residuals puts it at **ε\* ≈ −0.0107 (C) / −0.0110 (L)**,
+agreeing to 2% across the two elements — which is the pre-registration's
+"common zero-crossing" condition, met, but met *inside* the swept interval.
+This arithmetic is **by hand on the log's three numbers, not a measurement and
+not in code**, and is labelled as such in the §7 bullet. Whether step 1d
+re-derives an effective width off ε\* is explicitly a **review ruling**; the
+executor was told not to invent a follow-up and did not.
+
+**Step 1b's framing is superseded, not contradicted.** Configuration C — the
+×0.75 rung's C4 width break reproduced at nominal mean width — is not
+distinguishable from A at the 3% level, so yesterday's ×2.62 rise at ×0.75 is
+the width **magnitude** effect, not the C4 alternation. The known-issues 🟡
+entry stays **open**; its |Γ| cause hypothesis is marked superseded by this
+finding. No per-port claim was made — three configurations do not separate the
+four ports.
+
+**Diff:** `tests/validation/test_port_lumped_rlc_termination.py` only, +295
+lines, **purely additive** (zero deletions in that file), all skipped unless
+`FEM_EM_PORT14_WIDTH_SWEEP` is set. No `src/`, no mesh change, no band moved,
+no assertion loosened, `REDUCTION_BAND` stays 1e-3, no §2 edit. The
+deliberately red gate test was not re-run (`-k width_sweep`, 6 deselected) —
+as scoped. One design note for the review: the perturbation enters through
+`build_four_port_sweep`'s **existing `reuse` route** (`reuse["sheets"][k]["w"]
+× (1+ε)`), which makes the mesh bitwise-identical *by construction* rather
+than by assertion and reuses the module's imported reciprocity/passivity
+computation unchanged — cheaper and less duplicative than re-implementing the
+4×4 sweep, and the reason 34 solves fit one window.
+
+**Cost / safety.** One gate window, heavy by ceiling (`timeout -k 30 570`),
+`-n 2`, complex build, `tests/environment` first (11 passed / 24.68 s at
+`:107`), pytest `-s`: 258 s elapsed against the ≈ 240 s estimate — the split
+into a second `-n 4` window the item authorised was not needed. Plus a 4 s
+`--collect-only` smoke. No docker-socket denial, no allowlist denial, no
+compute-safety event, no container wedge. Foreground-executor rule honoured:
+one executor, `run_in_background: false`, no turn ended with a harness window
+open. No new implementation work started after minute 45.
+
+**Next.** §9 items 1–4 are now done; the only open item is **item 5, the
+spare — `MAT-6` step 11** (heavy, `-n 8`, complex build; implementer for the
+fixture, `record-reconciler` for the record sites; four windows at ≤ 360 s,
+the largest item on the list, `timeout -k 30 600` per window as §9 sized it —
+if the fixture window alone passes 600 s that is the finding: journal, park,
+stop). After it the queue **drains** and the standing instruction is stop-and-
+journal — there is no fallback chunk. For the 2026-09-06 weekly, on top of
+what the 10:30 review already listed: whether step 1c's inside-the-interval
+zero-crossing licenses a step 1d, and whether ε\*-style hand arithmetic on
+printed readings should be pre-registered rather than post-hoc.
