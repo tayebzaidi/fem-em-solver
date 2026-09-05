@@ -53,6 +53,15 @@ class SParameterSweepResult:
     # (d2) mechanism (ii), leg (d3)).  S itself comes from power waves.  `None`
     # on the heuristic route, which has no impedance matrix to speak of.
     z_matrix: Optional[np.ndarray] = None
+    # Present only when the sweep was run with ``keep_fields=True`` on the
+    # lumped-sheet route (`POST-6` step 1): ``{port_id: fields}``, the solver's
+    # own ``TimeHarmonicFields`` for the drive at that port — its ``e_complex``
+    # is what
+    # :func:`~fem_em_solver.ports.superposition.superpose_drives` combines, and
+    # the material fields beside it are what a loss integral over the
+    # superposed field needs.  `None` by default so no existing caller's memory
+    # footprint moves.
+    fields: Optional[dict[str, object]] = None
 
 
 def _power_waves(voltage_v: complex, current_a: complex, z0_ohm: float) -> tuple[complex, complex]:
@@ -263,6 +272,7 @@ def run_n_port_sparameter_sweep(
     subdomain_ids: Optional[Sequence[int]] = None,
     gauge_penalty: float = DEFAULT_GAUGE_PENALTY,
     degree: int = 1,
+    keep_fields: bool = False,
 ) -> SParameterSweepResult:
     """Run an N-port excitation sweep and assemble an NxN S-matrix.
 
@@ -293,6 +303,12 @@ def run_n_port_sparameter_sweep(
       a :class:`DeprecationWarning` on top of the existing
       :class:`~fem_em_solver.ports.excitation.PlaceholderPortModelWarning`.
 
+    ``keep_fields`` (`POST-6` step 1, lumped-sheet route only) retains each
+    drive's solved ``E`` phasor on ``result.fields`` instead of dropping it, so
+    that :func:`~fem_em_solver.ports.superposition.superpose_drives` can form an
+    arbitrary multi-port drive from the same N solves.  Default off: with it off
+    this function is byte-for-byte what it was, and no caller's memory moves.
+
     ``reference_impedance_ohm`` overrides the scalar ``Z0`` of the conversion;
     by default the ports' common ``z0_ohm`` is used (the converter is scalar-Z0
     by construction, so mixed per-port references are rejected rather than
@@ -314,7 +330,14 @@ def run_n_port_sparameter_sweep(
             "different port models and an S-matrix mixing them means nothing"
         )
 
+    if keep_fields and lumped_sheet_ports is None:
+        raise ValueError(
+            "keep_fields=True is implemented on the lumped-sheet route only "
+            "(`POST-6` step 1): the other routes do not return their solved field"
+        )
+
     excitation_results: dict[str, SinglePortExcitationResult] = {}
+    kept_fields: Optional[dict[str, object]] = {} if keep_fields else None
     z_matrix: Optional[np.ndarray] = None
 
     if gap_voltage_ports is not None or lumped_sheet_ports is not None:
@@ -329,7 +352,7 @@ def run_n_port_sparameter_sweep(
                     degree=degree,
                 )
             else:
-                excitation_results[port.port_id] = run_lumped_sheet_port_case(
+                case = run_lumped_sheet_port_case(
                     problem,
                     ports,
                     lumped_sheet_ports,
@@ -337,7 +360,12 @@ def run_n_port_sparameter_sweep(
                     driven_port_id=port.port_id,
                     gauge_penalty=gauge_penalty,
                     degree=degree,
+                    return_fields=keep_fields,
                 )
+                if keep_fields:
+                    case, drive_fields = case
+                    kept_fields[port.port_id] = drive_fields
+                excitation_results[port.port_id] = case
         if reference_impedance_ohm is None:
             references = {float(port.z0_ohm) for port in ports}
             if len(references) != 1:
@@ -419,4 +447,5 @@ def run_n_port_sparameter_sweep(
         sanity_report=sanity_report,
         is_placeholder=any(r.is_placeholder for r in excitation_results.values()),
         z_matrix=z_matrix,
+        fields=kept_fields,
     )

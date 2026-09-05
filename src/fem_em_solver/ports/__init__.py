@@ -32,6 +32,7 @@ from .sparameters import (
     sparameters_from_impedance,
     summarize_sparameter_sanity,
 )
+from .superposition import SuperposedDrive, superpose_drives
 from .sweep import FrequencySweepPlan, plan_frequency_sweep
 from .systematics import (
     GAP_PHYSICS_SYSTEMATIC,
@@ -68,6 +69,8 @@ __all__ = [
     "run_n_port_sparameter_sweep",
     "sparameters_from_impedance",
     "summarize_sparameter_sanity",
+    "SuperposedDrive",
+    "superpose_drives",
     "FrequencySweepPlan",
     "plan_frequency_sweep",
     "GAP_PHYSICS_SYSTEMATIC",

@@ -374,6 +374,7 @@ def run_lumped_sheet_port_case(
     gauge_penalty: Optional[float] = None,
     degree: int = 1,
     verbose: bool = True,
+    return_fields: bool = False,
 ):
     """One lumped-sheet solve; per-port ``V`` and ``I`` off the solved field.
 
@@ -389,6 +390,12 @@ def run_lumped_sheet_port_case(
 
     Returns the same :class:`~fem_em_solver.ports.excitation.SinglePortExcitationResult`
     container the gap-voltage route returns, ``is_placeholder=False``.
+
+    ``return_fields`` (`POST-6` step 1, additive and default off) returns
+    ``(result, fields)`` instead, ``fields`` being the solver's own
+    ``TimeHarmonicFields`` for this drive — the solved phasor this function
+    otherwise reads its terminal quantities off and drops.  Every existing
+    caller takes the default and is unchanged.
     """
     from ..core import TimeHarmonicSolver
     from ..core.solvers import DEFAULT_GAUGE_PENALTY
@@ -487,10 +494,11 @@ def run_lumped_sheet_port_case(
                 f"({'driven' if r.is_driven else 'undriven'})"
             )
 
-    return SinglePortExcitationResult(
+    result = SinglePortExcitationResult(
         driven_port_id=driven_port_id,
         frequency_hz=problem.frequency_hz,
         responses=responses,
         solve_context=solve_context,
         is_placeholder=False,
     )
+    return (result, fields) if return_fields else result
