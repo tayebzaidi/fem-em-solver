@@ -8326,7 +8326,24 @@ re-run green in the same slot.
    known-issues entry with all four pairs, row stays 🟡, stop; the 11.6%
    is then not a denominator story and step 1b has said so.
 
-3. **`TH-15` step 1 — the PEC sphere as a hole: homogeneous `n × E = 0`
+3. **BLOCKED 🚫 — awaiting a review ruling; skipped by the 2026-09-05 09:00
+   implementer slot.** The 07:30 slot executed this item in full
+   (`32fce39`, code parked on `attempt/TH-15-20260905T124500Z`): anchors
+   (i), (iii), (iv), (v) and the negative control are green — β = 1.019746,
+   |β − 1| = **1.9746%** against the 4.886% band, control β = −0.419 at
+   **29.0×** the band, 1702 cavity dofs at 0.000e+00, route equality
+   4836 = 4836, `TH-8` still 2 passed. **Anchor (ii)** — the *pointwise*
+   field miss at the same band — reads **46.07%** and the slot's `TH-8`
+   ladder shows it converging (+1.47 in h; still 20.5% on the finest
+   `TH-8` rung), i.e. a discretisation floor, not a defect. The only
+   remaining action is to demote (ii) to a printed record or re-scope it
+   to the converging quantity, and **the §7 `TH-15` step-1 bullet names
+   the next review as the actor for that ruling**; a slot cannot move the
+   band. Nothing else in the item is unexecuted, so a re-run reproduces
+   the identical red. **Unblocks when the review rules**; the parked
+   branch then merges with the re-scoped anchor. *(original item below)*
+
+   **`TH-15` step 1 — the PEC sphere as a hole: homogeneous `n × E = 0`
    on a tagged cavity surface, gated on the exterior dipole coefficient
    β = 1 of a conducting sphere in a uniform quasi-static field, with the
    natural cavity (β = −½) as the control** (standard, `-n 2`, complex
