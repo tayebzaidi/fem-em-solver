@@ -18927,3 +18927,112 @@ should have moved anchor (ii) with it.
 **Timebox.** Slot start 07:30 CDT; executor spawned foreground ≈ minute 3 and
 returned ≈ minute 13; digits re-read from the logs and journal written inside
 minute 30. No new implementation work started after minute 45.
+
+---
+
+## 2026-09-05T14:00Z — `PORT-14` step 1b — **complete** (negative result, band untouched)
+
+*(2026-09-05 09:00 CDT scheduled implementer slot.)*
+
+**Preflight.** `git status` clean on `main` at `880ca63`; container Up ≈ 42 h.
+No `recovered/*`; one pre-existing `attempt/TH-15-20260905T124500Z` from the
+07:30 slot (left alone — the daily review disposes of it).
+
+**Item selection — §9 item 3 skipped as blocked, item 4 taken.** Items 1 and 2
+are marked done. **Item 3 (`TH-15` step 1) was executed in full by the 07:30
+slot** (`32fce39`; code parked): anchors (i), (iii), (iv), (v) and the negative
+control are green, and the *only* failing anchor (ii) — the pointwise field
+miss at the 4.886% band, 46.07% and converging — has no in-scope remedy for a
+slot, because the §7 `TH-15` step-1 bullet explicitly assigns the demote-or-
+re-scope ruling to **the next review**. Nothing in the item is unexecuted, so a
+re-run reproduces the identical red and burns the slot; moving the band is
+forbidden. This slot therefore **annotated §9 item 3 as blocked** with the
+unblock condition named (commit **e49cb67**, plan-only) and proceeded to
+**item 4**, the first item that is neither done nor blocked. Flagged for the
+review: item 3's §9 text was never marked by the 07:30 slot, which is why it
+still read as first-open.
+
+**What was tried (item 4).** Delegated to the `implementer` agent, spawned
+**foreground**, with the never-background / `timeout -k 30` / repo-relative-
+harness-path / never-loosen-a-band rules restated in the spawn prompt. Three
+harness windows, all footered, all Status 0:
+
+| log | Status | Elapsed | ranks |
+|---|---|---|---|
+| `20260905T140432Z_PORT-14-step1b-smoke.log` (`:76–77`) — `--collect-only` import smoke | 0 | 5 s | `-n 1` |
+| `20260905T140449Z_PORT-14-step1b-r075.log` (`:1907–1908`) — ×0.75 rung, `3 passed, 3 deselected in 121.38s` (`:1901`) | 0 | 149 s | `-n 2` |
+| `20260905T140738Z_PORT-14-step1b-r060.log` (`:1908–1909`) — ×0.6 rung, `3 passed, 3 deselected in 133.69s` (`:1896`) | 0 | 136 s | `-n 4` |
+
+Heavy by ceiling (`timeout -k 30 600`), measured 149 / 136 s. `-n 4` on the
+second rung is licensed by the item's own rule (the `-n 2` window came in
+under 300 s); the `-n 2` rung is the one where a rank-local bug would show.
+≈ 290 s of compute total. No overrun, no wedge, no allowlist denial, no
+docker-socket denial.
+
+**Measured — every digit re-read from the logs by this slot, not taken from
+the executor's report.**
+
+| `conductor_resolution` | cells | `sheet_width_m` per port | C = 100 pF | L = 1 µH |
+|---|---|---|---|---|
+| ×1 (step 1's record) | 116 085 | 7.294123600e-03 ×4 (`20260905T020428Z_PORT-14.log:1831–1834`) | 1.595580e-03 | 3.370512e-03 |
+| ×0.75 | 161 695 (`r075:1886`) | 6.884098695e-03 / 7.649794837e-03 **alternating** (`r075:1887`) | 4.187955e-03, **×2.6247** (`r075:1892`) | 8.875487e-03, **×2.6333** (`r075:1893`) |
+| ×0.6 | 209 604 (`r060:1877`) | 7.674817764e-03 ×4 (`r060:1878`) | 1.490415e-03, **×0.9341** (`r060:1885`) | 3.144877e-03, **×0.9331** (`r060:1886`) |
+
+Asserted and green on both rungs, every band imported and unmoved:
+reciprocity `‖S−Sᵀ‖/‖S‖` = **2.392912949e-14** / **1.574340894e-14** vs
+`RECIPROCITY_BAND` 1e-3, `σ_max` = **0.999992054** / **0.999992924** vs
+1 + 1e-9 (`r075:1888`, `r060:1879`); cell count strictly above the record.
+Ceiling-first Γ = 0 control asserted on both terminations of both rungs:
+Δ = 3.201766e-01 / 3.232376e-01 missed by 3.203580e-01 / 3.267480e-01
+(`r075:1897–1898`) and Δ = 3.217285e-01 / 3.251679e-01 missed by
+3.217863e-01 / 3.264002e-01 (`r060:1892–1893`) — **200–330×** the band, both
+above the 5e-3 floor. Verified by this slot that the anchors are executed
+`assert`s, not prints (`test_port_lumped_rlc_termination.py:472, 477, 482,
+564`) and that `REDUCTION_BAND` is still `1.0e-3` (`:75`) and deliberately
+unread by the new block (`:496`).
+
+**The finding — the pre-registered hypothesis is refuted.** The residuals do
+**not** fall monotonically with sheet resolution: they *rise* ×2.62 at ×0.75
+and fall to ×0.93 at ×0.6. Per the item's own pre-registration, that moves the
+suspect to **`sheet_width_m`** (`src/fem_em_solver/ports/lumped.py:353`), i.e.
+a **step 1c**, never a band change. The mechanism the logs support: the ×0.75
+rung is the **only** one whose four narrowed sheets do not share one effective
+width (they alternate, a ±5.3% C4 break) and the **only** one whose residual
+rises; both elements move by the same factor per rung to 4 s.f.
+(2.6247/2.6333, 0.9341/0.9331), so the residual is a common geometric factor
+times a per-element constant, not an element-type effect. Consequence for the
+review: **step 2 (64 MHz) must not be queued "on the finer rung"** as the
+pre-registration assumed — resolution is not the axis.
+
+**Code — additive and gate-neutral; no `src/` change at all.**
+`conductor_resolution=None` on `tests/mesh/test_birdcage_port_sheets.py::_build`
+and on `build_four_port_sweep` (`test_port_birdcage_four_port.py`), `None`
+passing the module `CONDUCTOR_RESOLUTION` exactly as before so every gate's
+mesh is bit-identical (the `phantom_resolution` precedent); three rung tests
+that skip unless `FEM_EM_PORT14_CONDUCTOR_RESOLUTION_FACTOR` is set, so the
+gate rung is untouched and its deliberately red gate test was not re-run.
+`REDUCTION_BAND` 1e-3, `RECIPROCITY_BAND`, `PASSIVITY_SIGMA_TOLERANCE` and the
+116 085-cell record all unmoved. Row stays **🟡**; no §2 change.
+
+**Commits.** **e49cb67** — §9 item 3 marked blocked (plan only). **1ef4f77** —
+`PORT-14` step 1b: code, tests, three logs, `test-results.md:1469–1471`, the
+§7 entry + table row, and the §9 item-4 annotation, together on `main`.
+No branch parked. `main` clean at slot end.
+
+**No known-issues entry** — no new unrelated failure; `main`'s red set is
+unchanged (still the 5 deliberate/known at `-n 2`).
+
+**Hypothesis for the next attempt.** `PORT-14` **step 1c**: the reduction
+residual tracks the sheets' *effective width* and its C4 uniformity, not mesh
+density. The cheap discriminator is to hold the mesh fixed and vary
+`sheet_width_m` directly (or `GATED_WIDTH_FRACTION`), predicting the residual
+moves with it while reciprocity/passivity/C4 stay green — the ×0.75 rung is a
+free natural experiment in the opposite direction (a mesh that broke C4 width
+without breaking any `PORT-9` gate). Writing that item is review work: it needs
+a pre-stated relation between `sheet_width_m` and the residual, which no run
+has yet measured.
+
+**Timebox.** Slot start 09:00 CDT. Protocol read and preflight by minute 5;
+item-3 blocked annotation committed ≈ minute 10; executor spawned foreground
+≈ minute 11 and returned ≈ minute 21; digits re-read from the logs and journal
+written inside minute 35. No new implementation work started after minute 45.
