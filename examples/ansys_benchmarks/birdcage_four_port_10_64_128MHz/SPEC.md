@@ -28,7 +28,10 @@ and `|Im P|/Re P` at the driven port rises 0.34 → 1.76 → 2.66.
       `examples/ports/05_birdcage_larmor_frequency_ladder.py`, writing
       `metrics.json`, `COMPARISON.md` (our columns filled, AED columns
       blank) and combined XDMF
-- [ ] Operator replication in AED (goes to the top of the dashboard's
+- [x] Operator replication in AED **2026-09-04** (HFSS 2026 R1 Driven Modal via
+      PyAEDT, both orders; results private in `aed_results/`; the private-mode
+      run `20260905T041254Z_ANS-4-private.log` filled `COMPARISON_private.md`)
+      (goes to the top of the dashboard's
       Waiting-on-you list when the box above is checked)
 - [ ] Adjudication (next weekly review after AED numbers land)
 

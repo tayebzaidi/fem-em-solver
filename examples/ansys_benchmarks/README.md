@@ -36,8 +36,11 @@ as the physics.
 | Mixed Order | per element | **no equivalent** — `TimeHarmonicSolver.degree` is one global int | — |
 
 The right-hand column is measured on our side (0.11 image, 2026-08-28); the
-HFSS column is the standard basis definition and is **not yet confirmed**
-against AED's own output.
+HFSS column is the standard basis definition and was **confirmed 2026-09-04**
+against AED's own matrix statistics on `ANS-4` (HFSS 2026 R1, Zero and First
+Order): the global matrix size per tetrahedron matches what 6 edge-only and
+20 edge-plus-face unknowns per element give once shared edges and faces are
+counted once.
 
 Every `SPEC.md` solver section therefore carries a *Basis / element order*
 line stating the ruling of §7 `ANS-5` (weekly planning review, 2026-08-30):

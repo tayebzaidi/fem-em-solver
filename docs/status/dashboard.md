@@ -42,16 +42,12 @@ operator.
 
 ## Waiting on you
 
-1. 🟢 **`ANS-4` is ready to replicate — both halves exist, and the
-   private-mode writer is in place** (`OPS-32` ✅): drop the AED results
-   JSON into the gitignored `aed_results/`, re-run the example, and the
-   filled comparison goes only to the untracked `COMPARISON_private.md`.
-   `examples/ansys_benchmarks/birdcage_four_port_10_64_128MHz/`. Run the
-   **low-order pair only** (Zero Order for adjudication, default First
-   Order for sensitivity; Mixed Order not) — `ANS-1` showed the
-   higher-order flag is silently ignored with a winding excitation. Please
-   confirm the unknowns-per-tet figure AED prints. Ranks above `ANS-3`.
-2. 🟢 **`ANS-3` AED run** — still yours, behind `ANS-4`. Same low-order
+1. ✅ **`ANS-4` replicated 2026-09-04** — both orders landed in the
+   gitignored `aed_results/`, the private-mode run filled
+   `COMPARISON_private.md` (Status 0, 128 s), and a private pre-read for
+   the review is in `docs/private/`. Nothing for you to do; the
+   2026-09-06 weekly review adjudicates. Retire this line then.
+2. 🟢 **`ANS-3` AED run** — now the top of your queue (`ANS-4` is done). Same low-order
    rule, same private-results handling. Its FEM-side records were re-based
    to the 0.11 image (`OPS-33`); the tracked table's AED cells are blank by
    construction.
