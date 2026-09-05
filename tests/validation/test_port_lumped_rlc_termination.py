@@ -567,3 +567,298 @@ def test_the_zero_gamma_control_misses_on_the_refined_rung(refined_rung_cases):
             f"{CONTROL_MISS_FACTOR:g}x the {REDUCTION_BAND:.0e} band, though the "
             f"4x4 predicts a coupling term Delta = {delta:.3e}"
         )
+
+
+# ---------------------------------------------------------------------------
+# `PORT-14` step 1c — the width law on a *fixed* mesh
+# ---------------------------------------------------------------------------
+#
+# Step 1b refuted the resolution hypothesis and named the next suspect.  Its
+# table has one clean discriminator in it: the x0.75 rung is the only rung whose
+# four `sheet_width_m` values are unequal (6.884e-03 / 7.650e-03 alternating,
+# +-5.3% about their mean) and the only rung whose residual *rose* (x2.6).  So
+# hold the gate mesh fixed — 116 085 cells, no new mesh, no `src/` change — and
+# perturb the width the sheet law is *told*, per port, through the
+# `LumpedSheetPortSpec` rebuild `build_four_port_sweep`'s `reuse` route already
+# performs off the measured sheet geometry.
+#
+# The sheet resistivity is `Z_p · w/h` (`lumped.py:111`), so a *common* factor
+# (1+eps) on `w` scales every sheet's effective Z by (1+eps), while the
+# reduction's Gamma is built from the nominal `Z_p/z0` ratio (invariant under a
+# common factor) and the field-solved S is referenced to the nominal z0 = 50
+# through `_power_waves` (not invariant).  The three pre-registered readings are
+# in the `PORT-14` §7 entry, "Step 1c", and are not restated here.
+#
+# **Nothing about the residual is asserted.**  What *is* asserted, per
+# configuration, is that the perturbed 4x4 is still a valid passive reciprocal
+# network (imported bands, unmoved), that the mesh really did not move (cell
+# count bitwise equal to the record), and the same ceiling-first Gamma = 0
+# control step 1 ran.  `REDUCTION_BAND` is deliberately not read below.
+STEP1C_ENV = "FEM_EM_PORT14_WIDTH_SWEEP"
+
+# The three configurations, per the §7 entry.  Index k of the tuple is port
+# `P(k+1)`, so (C) is +5.3% on P1/P3 and -5.3% on P2/P4 — step 1b's x0.75 rung's
+# C4 break reproduced on the gate mesh with the mesh itself untouched.
+WIDTH_CONFIGURATIONS = (
+    ("A", "common +5%", (+0.05, +0.05, +0.05, +0.05)),
+    ("B", "common -5%", (-0.05, -0.05, -0.05, -0.05)),
+    ("C", "alternating +-5.3%", (+0.053, -0.053, +0.053, -0.053)),
+)
+
+
+def _width_sweep_enabled():
+    return bool(os.environ.get(STEP1C_ENV, ""))
+
+
+@pytest.fixture(scope="module")
+def width_sweep_baseline():
+    """The gate mesh and its unperturbed sheet geometry, built once.
+
+    This is `build_four_port_sweep`'s own construction at its own defaults, so
+    the mesh, the facet tags and the *measured* sheet extents are the gate
+    rung's exactly.  The perturbed configurations below reuse this mesh through
+    the function's `reuse` route: only the widths handed to the sheet law
+    differ.
+    """
+    if not _width_sweep_enabled():
+        pytest.skip(
+            f"{STEP1C_ENV} unset — `PORT-14` step 1c's width configurations run "
+            "only when a slot asks for them, so `main`'s red set is unchanged"
+        )
+    comm = MPI.COMM_WORLD
+    comm.Barrier()
+    t0 = time.perf_counter()
+    sweep = build_four_port_sweep(frequency_hz=FREQUENCY_HZ)
+    comm.Barrier()
+    seconds = time.perf_counter() - t0
+    widths = [float(spec.sheet_width_m) for spec in sweep["specs"]]
+    if comm.rank == 0:
+        print(
+            f"\n[PORT-14 step1c] baseline (unperturbed) gate rung: "
+            f"{int(sweep['cells'])} cells (record {STEP1_CELL_RECORD}); "
+            f"mesh + four 50 Ohm drives in {seconds:.2f} s wall; "
+            "sheet_width_m per port = " + ", ".join(f"{w:.9e}" for w in widths),
+            flush=True,
+        )
+    return {"sweep": sweep, "widths": widths, "seconds": float(seconds)}
+
+
+@pytest.fixture(
+    scope="module",
+    params=WIDTH_CONFIGURATIONS,
+    ids=[c[0] for c in WIDTH_CONFIGURATIONS],
+)
+def width_sweep_case(request, width_sweep_baseline):
+    """One width configuration: the perturbed 50 Ohm 4x4 plus C and L terminated.
+
+    Ten solves on the **same mesh** as the baseline: four for the perturbed
+    50 Ohm 4x4 and three each for the two lossless terminated 3x3s.  The
+    perturbation enters through `sheets[k]["w"]` — which is the only thing
+    `build_four_port_sweep` reads to fill `LumpedSheetPortSpec.sheet_width_m` —
+    so the mesh, the facet tags and the measured areas/heights are bit-identical
+    to the baseline's by construction, not by assertion.
+    """
+    key, description, epsilons = request.param
+    comm = MPI.COMM_WORLD
+    base = width_sweep_baseline["sweep"]
+
+    perturbed_sheets = []
+    for sheet, eps in zip(base["sheets"], epsilons):
+        entry = dict(sheet)
+        entry["w"] = float(sheet["w"]) * (1.0 + float(eps))
+        perturbed_sheets.append(entry)
+
+    reuse = {
+        "mesh": base["mesh"],
+        "cell_tags": base["cell_tags"],
+        "facet_tags": base["facet_tags"],
+        "sheets": perturbed_sheets,
+        "halves": base["halves"],
+        "cells": base["cells"],
+    }
+
+    comm.Barrier()
+    t0 = time.perf_counter()
+    sweep = build_four_port_sweep(frequency_hz=FREQUENCY_HZ, reuse=reuse)
+    comm.Barrier()
+    baseline_seconds = time.perf_counter() - t0
+
+    cases = []
+    for label, element in STEP1B_TERMINATIONS:
+        z_term = series_rlc_impedance(FREQUENCY_HZ, **element)
+        comm.Barrier()
+        t1 = time.perf_counter()
+        measured, kept_ids, _results = _terminated_three_port(sweep, z_term)
+        comm.Barrier()
+        elapsed = time.perf_counter() - t1
+        predicted = reduce_terminated_ports(
+            sweep["s"], float(REFERENCE_IMPEDANCE_OHM), {TERMINATED_PORT_INDEX: z_term}
+        )
+        residual = float(
+            np.linalg.norm(measured - predicted) / np.linalg.norm(predicted)
+        )
+        cases.append(
+            {
+                "label": label,
+                "z": z_term,
+                "gamma": termination_reflection_coefficient(
+                    z_term, float(REFERENCE_IMPEDANCE_OHM)
+                ),
+                "measured": measured,
+                "predicted": predicted,
+                "residual": residual,
+                "kept_ids": kept_ids,
+                "seconds": float(elapsed),
+            }
+        )
+
+    return {
+        "key": key,
+        "description": description,
+        "epsilons": tuple(float(e) for e in epsilons),
+        "sweep": sweep,
+        "baseline_widths": list(width_sweep_baseline["widths"]),
+        "widths": [float(spec.sheet_width_m) for spec in sweep["specs"]],
+        "cases": cases,
+        "baseline_seconds": float(baseline_seconds),
+        "baseline_cells": int(base["cells"]),
+    }
+
+
+@complex_only
+def test_the_width_sweep_configuration_is_a_valid_four_port(width_sweep_case):
+    """Anchor: a perturbed width still gives a passive, reciprocal 4x4.
+
+    Both bands are **imported** from the modules that pre-stated them and
+    neither is touched.  A configuration that fails here is a fixture finding —
+    its residual would mean nothing — and the §7 entry says to record it in
+    known-issues and stop.  The cell count is asserted **bitwise** equal to the
+    record: the whole point of step 1c is that the mesh did not move.
+    """
+    case = width_sweep_case
+    sweep = case["sweep"]
+    reciprocity = float(sweep["reciprocity"])
+    sigma_max = float(np.max(sweep["sigma"]))
+    cells = int(sweep["cells"])
+    if MPI.COMM_WORLD.rank == 0:
+        print(
+            f"\n[PORT-14 step1c] configuration {case['key']} ({case['description']}): "
+            f"{cells} cells (record {STEP1_CELL_RECORD}, same mesh); four 50 Ohm "
+            f"drives in {case['baseline_seconds']:.2f} s wall",
+            flush=True,
+        )
+        for idx, (w0, w1, eps) in enumerate(
+            zip(case["baseline_widths"], case["widths"], case["epsilons"]), start=1
+        ):
+            print(
+                f"    P{idx}: sheet_width_m {w0:.9e} -> {w1:.9e} m "
+                f"(eps = {eps:+.4f}, ratio {w1 / w0:.9f})",
+                flush=True,
+            )
+        print(
+            f"    50 Ohm baseline: ||S - S^T||/||S|| = {reciprocity:.9e} "
+            f"(band {RECIPROCITY_BAND:.0e}); sigma_max = {sigma_max:.9f} "
+            f"(band 1 + {PASSIVITY_SIGMA_TOLERANCE:.0e})",
+            flush=True,
+        )
+    assert cells == STEP1_CELL_RECORD, (
+        f"configuration {case['key']} solved on {cells} cells, not the "
+        f"{STEP1_CELL_RECORD}-cell gate mesh — the width perturbation moved the "
+        "mesh, so this is not a fixed-mesh measurement"
+    )
+    assert reciprocity <= RECIPROCITY_BAND, (
+        f"configuration {case['key']}'s 50 Ohm 4x4 is reciprocal only to "
+        f"{reciprocity:.3e} against the imported {RECIPROCITY_BAND:.0e} band — a "
+        "perturbed width does not give a valid four-port and its residual means "
+        "nothing (§7 `PORT-14` step 1c: known-issues with its widths, stop)"
+    )
+    assert sigma_max <= 1.0 + PASSIVITY_SIGMA_TOLERANCE, (
+        f"configuration {case['key']}'s 4x4 has sigma_max = {sigma_max:.9f} > 1 + "
+        f"{PASSIVITY_SIGMA_TOLERANCE:.0e}: a passive network cannot"
+    )
+
+
+@complex_only
+def test_the_width_sweep_residuals_are_printed(width_sweep_case):
+    """**The measurement, printed not asserted.**  Residual vs the width told.
+
+    Each residual is printed beside step 1's 116 085-cell record and as a factor
+    of it.  The three pre-registered readings — linear-in-eps with a common
+    zero-crossing, flat under (A)/(B) but moved by (C), or flat under all three
+    — are named in the `PORT-14` §7 entry and are a review's call, not this
+    module's.  `REDUCTION_BAND` is deliberately not read here.
+    """
+    case = width_sweep_case
+    if MPI.COMM_WORLD.rank != 0:
+        return
+    print(
+        f"[PORT-14 step1c] configuration {case['key']} ({case['description']}) "
+        f"reduction identity residuals at f = {FREQUENCY_HZ:.3e} Hz on the "
+        f"{int(case['sweep']['cells'])}-cell gate mesh; step 1's record is on the "
+        "same mesh with the unperturbed widths. Printed, not asserted:",
+        flush=True,
+    )
+    for entry in case["cases"]:
+        record = STEP1_RESIDUAL_RECORD[entry["label"]]
+        print(
+            f"    {entry['label']:<12s} |Gamma| = {abs(entry['gamma']):.6f}   "
+            f"residual = {entry['residual']:.6e}   "
+            f"(step 1 record {record:.6e}; factor "
+            f"{entry['residual'] / record:.6f})   "
+            f"three drives in {entry['seconds']:.2f} s wall",
+            flush=True,
+        )
+
+
+@complex_only
+def test_the_zero_gamma_control_misses_on_the_width_sweep(width_sweep_case):
+    """**Negative control, ceiling first**, exactly as step 1 ran it.
+
+    Delta — the coupling term this configuration's own 4x4 predicts — is
+    computed first and printed as the ceiling; the >= 5x-band miss is asserted
+    only where Delta reaches the floor, so no factor is claimed above that
+    ceiling.  Step 1 measured Delta = 0.32 / 0.33 on these two terminations.
+    """
+    case = width_sweep_case
+    s4 = np.asarray(case["sweep"]["s"], dtype=np.complex128)
+    kept = [i for i in range(s4.shape[0]) if i != TERMINATED_PORT_INDEX]
+    s_aa = s4[np.ix_(kept, kept)]
+
+    rows = []
+    for entry in case["cases"]:
+        predicted = entry["predicted"]
+        delta = float(np.linalg.norm(predicted - s_aa) / np.linalg.norm(predicted))
+        miss = float(
+            np.linalg.norm(entry["measured"] - s_aa) / np.linalg.norm(predicted)
+        )
+        rows.append((entry["label"], delta, miss))
+
+    reached = [row for row in rows if row[1] >= CONTROL_DELTA_FLOOR]
+    if MPI.COMM_WORLD.rank == 0:
+        print(
+            f"[PORT-14 step1c] configuration {case['key']} Gamma = 0 control "
+            f"(ceiling first), floor {CONTROL_DELTA_FLOOR:.0e}:",
+            flush=True,
+        )
+        for label, delta, miss in rows:
+            print(
+                f"    {label:<12s} Delta = {delta:.6e}   "
+                f"||S'_meas - S_aa||_F/||S'_pred||_F = {miss:.6e}   "
+                f"({'asserted' if delta >= CONTROL_DELTA_FLOOR else 'below floor'})",
+                flush=True,
+            )
+        if not reached:
+            print(
+                "    FINDING: no termination reaches the Delta floor on this "
+                "configuration",
+                flush=True,
+            )
+
+    for label, delta, miss in reached:
+        assert miss >= CONTROL_MISS_FACTOR * REDUCTION_BAND, (
+            f"{label}: on width configuration {case['key']} the Gamma = 0 "
+            f"prediction S_aa misses the measured terminated 3x3 by only "
+            f"{miss:.3e}, under {CONTROL_MISS_FACTOR:g}x the "
+            f"{REDUCTION_BAND:.0e} band, though the 4x4 predicts a coupling term "
+            f"Delta = {delta:.3e}"
+        )

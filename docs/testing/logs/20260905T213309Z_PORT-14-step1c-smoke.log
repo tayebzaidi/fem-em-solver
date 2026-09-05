@@ -1,0 +1,60 @@
+# Test Run
+- Chunk: PORT-14-step1c-smoke
+- Commit: 24bb0742d5b3aeb2268b195320f1d439ea4d14b5
+- Time (UTC): 2026-09-05 21:33:10
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && source /usr/local/bin/dolfinx-complex-mode && export PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 FEM_EM_PORT14_WIDTH_SWEEP=1 && timeout -k 30 120 python3 -m pytest tests/validation/test_port_lumped_rlc_termination.py -k width_sweep --collect-only -q'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Sep  4 23:31 .
+drwxr-xr-x 16 taz5297 taz5297 4096 Sep  5 16:31 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  721 Sep  3 13:49 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 2801 Sep  4 23:31 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && source /usr/local/bin/dolfinx-complex-mode && export PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 FEM_EM_PORT14_WIDTH_SWEEP=1 && timeout -k 30 120 python3 -m pytest tests/validation/test_port_lumped_rlc_termination.py -k width_sweep --collect-only -q'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collected 15 items / 6 deselected / 9 selected
+
+<Dir workspace>
+  <Dir tests>
+    <Dir validation>
+      <Module test_port_lumped_rlc_termination.py>
+        <Function test_the_width_sweep_configuration_is_a_valid_four_port[A]>
+        <Function test_the_width_sweep_residuals_are_printed[A]>
+        <Function test_the_zero_gamma_control_misses_on_the_width_sweep[A]>
+        <Function test_the_width_sweep_configuration_is_a_valid_four_port[B]>
+        <Function test_the_width_sweep_residuals_are_printed[B]>
+        <Function test_the_zero_gamma_control_misses_on_the_width_sweep[B]>
+        <Function test_the_width_sweep_configuration_is_a_valid_four_port[C]>
+        <Function test_the_width_sweep_residuals_are_printed[C]>
+        <Function test_the_zero_gamma_control_misses_on_the_width_sweep[C]>
+
+================= 9/15 tests collected (6 deselected) in 2.42s =================
+
+## Exit
+- Status: 0
+- Elapsed (s): 4
+- Filtered lines (gmsh optimisation chatter): 0
