@@ -18565,3 +18565,120 @@ spectrum is that mistake before it is physics. §9 items 4–7 remain open; the
 
 **Timebox.** Slot start 22:30 CDT; executor returned ≈ minute 8; verification
 and this entry inside minute 20.
+
+## 2026-09-05T05:20Z — `TH-15` step 0 — **complete (🧪, measurement-only)**
+
+**Slot.** 2026-09-05 00:00 CDT scheduled implementer run. Preflight clean on
+`27f81ad`, container Up ≈ 33 h, no `attempt/*` or `recovered/*`. §9 On-deck
+items 1–3 were already done, so **item 4 (`TH-15` step 0)** was the first open
+one — taken as written, no substitution. Executor: **`mesh-probe`**, spawned
+**foreground** per the item and the step-3 rule, returned at ≈ minute 20.
+
+**Outcome.** Complete as a measurement, and **🧪 not ✅ — deliberately.** The
+18:00 review put "🧪 by the §3 rule" in this item's own first line after
+`GEO-25` was demoted for exactly this, and I verified the ground rather than
+assuming it: `grep -n assert tests/mesh/probe_two_torus_conductor_hole.py`
+returns **one line, a docstring sentence saying the script asserts nothing** —
+zero `assert` statements. So this closes no chunk; `TH-15` step 1's PEC-sphere
+gate is what does. Committed on `main`: the probe script, seven harness logs,
+the test-results.md rows, the §7 `TH-15` step 0 bullet and row, and §9 item 4
+marked done.
+
+**What was tried.** The item's sweep verbatim — two variants × two repeats,
+one OS process each, `-n 1` (gmsh serial), real build, standard tier,
+`timeout -k 30 300`. (A) the solid build with the fixture arguments imported
+from `test_port_lumped_two_torus._build`, on the
+`tests/mesh/probe_two_torus_cell_count.py` template; (B) a **probe-local copy**
+of the generator's OCC sequence with the tori cut from the box
+(`removeTool=False`), gap boxes and sheet fragmented *after* the cut in the
+generator's order. **`MeshGenerator` was not edited** — no `src/` change at
+all; the only tracked code is the new probe.
+
+**The answer: yes, and the pre-registered stop did not fire.** No `Invalid
+boundary mesh (overlapping facets)`, no `Frontal-Delaunay → MeshAdapt`
+fallback, no gmsh warning anywhere on the cut route; B meshes as "3D Meshing 5
+volumes with 1 connected component". The `GEO-23` family is absent from this
+route, so no `GEO` chunk is owed and step 1 is unblocked.
+
+**Measured numbers** (all re-read by me in the logs, not taken from the
+executor's table).
+- Control A: **184 176 cells / 31 550 vertices**, reproducing the 0.11 record
+  exactly (`20260905T050518Z_TH-15.log:950–951`; repeat `…051110Z:950–951`
+  identical).
+- Hole B: **161 461 cells / 29 345 vertices** — **−22 715 cells, 13.7%
+  cheaper** (`…051023Z:510–511`; repeat `…051156Z:510–511` identical).
+- Conductor tags **absent** in B: cell census `{3: 110778, 101: 12585,
+  102: 12632, 111: 12740, 112: 12726}` (`…051023Z:512`), no tag 1 or 2, vs A's
+  `{1: 9471, 2: 9348, 3: 110696, …}` (`…051110Z:952`). Air tag moves **+82
+  cells (+0.074%)** — the re-triangulation at the removed interface; the
+  balance is A's 18 819 conductor cells plus 3 978 fewer gap-piece cells.
+- Port sheet at nominal: B **1579 facets** per sheet, area
+  **1.451325262e-04** against `nominal_area` identically, rel dev **1.868e-16
+  and 0.000e+00** (`…051023Z:514–515`) — tighter than A's 2.241e-15 /
+  2.988e-15 (`…050518Z:954–955`) and far inside the 1e-9 reading. The sheet
+  fragments cleanly against the surface-only terminals; both gap-box halves
+  present.
+- Conductor surface: B tag 301, **7642 facets, area 1.515910101e-02**
+  (`…051023Z:516`) vs A's conductor↔(air+gap) interface **7658 facets,
+  7.579509813e-03 + 7.579585585e-03 = 1.515909540e-02** (`…050518Z:956–957`)
+  — **−16 facets (−0.21%)**, areas agreeing to **3.7e-7** relative.
+- Bit-identical across repeats for both variants; only wall time varies
+  (mesh 43.26 / 37.92 s for A, 31.96 / 34.91 s for B — load, not mesh).
+
+**The one mechanism finding step 1 inherits.** `occ.cut` with
+`removeTool=False` preserves the tool volume but **not its surfaces' identity
+with the cavity** — measured, each torus keeps 6 of its 7 faces while the air
+gets its own 22 cavity faces. A conductor-surface physical group built from the
+*retained tool* therefore tags faces belonging to no tet, and `_model_to_mesh`
+does not merely mis-count, it **aborts**: `nodes not attached to any tet=716`,
+then `Invalid rank has value 1 but must be nonnegative and less than 1` /
+`Abort(202007046)` (`…050616Z:506–509`), isolated by the group-suppressed
+diagnostic `…050827Z`. Deriving the group from the **meshed** volumes' boundary
+(a face bounding exactly one of air/gap, not flat against an outer wall) gives
+`duplicates=0`, `nodes not attached to any tet=0` and survives dropping the
+conductor volumes 22/22. Group 301 is exterior to the meshed domain, so it
+comes straight out of `model_to_mesh` — no known-issues-9 interior-facet
+hazard. **No known-issues.md entry filed:** nothing on `main` fails, and the
+abort was a probe-local construction the probe then corrected; it is recorded
+in the §7 step 0 bullet where step 1 will read it.
+
+**Harness logs** (seven windows, all foreground, all footered, `-n 1`):
+`20260905T050508Z_TH-15.log` (A, `ModuleNotFoundError: No module named
+'tests'`, 3 s, exit 1) · `…050518Z` (A r1, **48 s**, Status 0) · `…050616Z`
+(B, the `model_to_mesh` abort above, 39 s, exit 6) · `…050827Z` (B diagnostic,
+group suppressed, 40 s, exit 0) · `…051023Z` (B r1, **35 s**, Status 0) ·
+`…051110Z` (A r2, **43 s**, Status 0) · `…051156Z` (B r2, **38 s**, Status 0).
+Every window inside the standard tier; no compute-safety event, no container
+wedge, no docker-socket denial, no denied command.
+
+**Judgement calls, disclosed.** (1) Seven windows rather than the item's four:
+one lost to the import failure, one to the abort, one diagnostic to isolate it
+— all standard tier, all ≤ 48 s, so the item's cost envelope held. (2)
+`PYTHONPATH=/workspace/src:/workspace` — the probe imports the fixture module,
+as its template does; the first window failed without it. (3) B's cavity-surface
+identification is topological rather than tool-derived, forced by the measured
+mechanism above, and lives inside the probe only. (4) B replicates the
+generator's `Distance`/`Threshold` + two `MathEval` arc fields against the
+conductor-surface and gap-box faces so its air cell count is comparable to A's
+— without this the +82 reading would not mean anything.
+
+**Verification I did myself.** Re-read all four measurement logs at the census
+lines and their `Status: 0` / `Elapsed` footers, plus the abort stack in
+`…050616Z:506–509`; recomputed A's conductor interface area sum and the −0.21%
+/ 3.7e-7 / +0.074% / −13.7% deltas from the printed digits; ran the `assert`
+grep on the probe script; confirmed `git status --porcelain` shows no `src/`
+file and no existing test touched. The executor's table and the logs agree on
+every digit.
+
+**Hypothesis for the next attempt.** Step 1 is now scopeable and its first
+trap is already paid for: build the Dirichlet facet set from the meshed
+volumes' boundary, never from the retained tool, or `locate_dofs_topological`
+inherits the same not-a-face-of-any-tet set that aborted `_model_to_mesh`
+here. The open question step 1 answers is whether tag 301's 7642 facets carry
+a well-posed `H(curl)` tangential trace — the facet count matching A's
+interface to 0.21% says the geometry is right, but nothing here says the dof
+set is. §9 items 5, 6 and 7 remain open; the next slot takes item 5 (`EX-48`,
+`example-runner`).
+
+**Timebox.** Slot start 00:00 CDT; executor returned ≈ minute 20; verification,
+plan updates and this entry inside minute 35.
