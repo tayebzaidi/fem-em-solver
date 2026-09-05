@@ -1,0 +1,54 @@
+# Test Run
+- Chunk: GEO-25
+- Commit: 3f2c6b03222e5f86a762e726597179655bd4f599
+- Time (UTC): 2026-09-05 18:40:25
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 60 python3 -c "import scripts.probes.geo25_ring_radius_cost_probe as p; print(p.MESH9_CELL_RECORD, p.BASE_RING_RADIUS, p.LEG_COUNT); [print(k, repr(v)) for k, v in sorted(p._params(0.15, scale_sizing=False).items())]"'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Sep  4 23:31 .
+drwxr-xr-x 16 taz5297 taz5297 4096 Sep  5 13:40 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  721 Sep  3 13:49 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 2801 Sep  4 23:31 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 60 python3 -c "import scripts.probes.geo25_ring_radius_cost_probe as p; print(p.MESH9_CELL_RECORD, p.BASE_RING_RADIUS, p.LEG_COUNT); [print(k, repr(v)) for k, v in sorted(p._params(0.15, scale_sizing=False).items())]"'\'''
+265621 0.07 16
+air_padding 0.06428571428571428
+coil_length 0.30000000000000004
+conductor_resolution 0.0016
+emit_port_sheets True
+leg_count 16
+leg_gap_length None
+leg_spacing 0.2357142857142857
+leg_width 0.012
+phantom_height 0.17142857142857143
+phantom_radius 0.06428571428571428
+port_box_size (0.02142857142857143, 0.017142857142857144, 0.02142857142857143)
+resolution 0.015
+ring_gap_length 0.017142857142857144
+ring_minor_radius 0.004
+ring_radius 0.15000000000000002
+
+## Exit
+- Status: 0
+- Elapsed (s): 2
+- Filtered lines (gmsh optimisation chatter): 0

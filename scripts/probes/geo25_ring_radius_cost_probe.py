@@ -57,65 +57,24 @@ from tests.mesh.test_coil_phantom_conforming import (  # noqa: E402
     _tag_volume,
     _total_volume,
 )
-from tests.mesh.test_birdcage_port_sheet_prerequisite import (  # noqa: E402
-    CONDUCTOR_RESOLUTION,
-)
 from tests.mesh.test_birdcage_port_terminals import CONDUCTOR_IFACE  # noqa: E402
 from tests.mesh.test_birdcage_port_sheets import PORT_LOWER, PORT_UPPER  # noqa: E402
-from tests.mesh.test_birdcage_port_tags import (  # noqa: E402
-    AIR_PADDING,
-    COIL_LENGTH,
-    LEG_SPACING,
-    LEG_WIDTH,
-    PHANTOM_HEIGHT,
-    PHANTOM_RADIUS,
-    PORT_BOX_SIZE,
-    RESOLUTION,
-    RING_MINOR_RADIUS,
-    RING_RADIUS,
-)
 from tests.mesh.test_birdcage_ring_gaps import (  # noqa: E402
-    RING_GAP_LENGTH,
     _port_boundary_partition,
 )
 
-# `mesh:9` / `EX-35`'s own rung, and the number the 0.07 m control must hit.
-BASE_RING_RADIUS = RING_RADIUS  # 0.07 m
+# `GEO-25` step 2 (2026-09-05) moved `_params` and its two anchors verbatim into
+# the gate module, which is now the single source of the F-human parameter set;
+# this probe imports them back so the two can never drift. Additive only — the
+# probe's printed digits are unchanged.
+from tests.validation.test_birdcage_f_human_rung import (  # noqa: E402
+    BASE_RING_RADIUS,
+    LEG_COUNT,
+    _params,
+)
+
+# The number the 0.07 m control must hit (`mesh:9` / `EX-35`).
 MESH9_CELL_RECORD = 265621
-LEG_COUNT = 16
-
-
-def _params(radius: float, *, scale_sizing: bool = True) -> dict:
-    """`mesh:9`'s call, geometrically scaled by ``s = radius / 0.07``.
-
-    ``scale_sizing`` resolves the one ambiguity in the `GEO-25` §7 row's
-    phrase "phantom/air **sizing** scaled with the radius". ``True`` (default,
-    the row read literally, since "sizing" elsewhere in this repo means a mesh
-    size field) scales the global `resolution` too, so every rung is a
-    geometrically *similar* mesh. ``False`` (env
-    ``FEM_EM_PROBE_SCALE_MESH_SIZING=0``) holds `resolution` at `mesh:9`'s
-    0.015 m, so the air/phantom volume grows as ``r^3`` at a fixed absolute
-    element size — the only reading under which the row's own ``r^3`` cell
-    count prediction is even testable. Both are reported; neither is asserted.
-    """
-    s = radius / BASE_RING_RADIUS
-    return dict(
-        leg_count=LEG_COUNT,
-        ring_radius=BASE_RING_RADIUS * s,
-        leg_width=LEG_WIDTH,  # conductor cross-section: NOT scaled
-        leg_spacing=LEG_SPACING * s,
-        coil_length=COIL_LENGTH * s,
-        ring_minor_radius=RING_MINOR_RADIUS,  # conductor: NOT scaled
-        phantom_radius=PHANTOM_RADIUS * s,
-        phantom_height=PHANTOM_HEIGHT * s,
-        port_box_size=tuple(v * s for v in PORT_BOX_SIZE),
-        leg_gap_length=None,
-        ring_gap_length=RING_GAP_LENGTH * s,
-        emit_port_sheets=True,
-        air_padding=AIR_PADDING * s,
-        resolution=RESOLUTION * (s if scale_sizing else 1.0),
-        conductor_resolution=CONDUCTOR_RESOLUTION,  # pinned, 1.6e-3 m
-    )
 
 
 def main() -> None:
