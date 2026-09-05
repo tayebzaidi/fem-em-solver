@@ -19036,3 +19036,93 @@ has yet measured.
 item-3 blocked annotation committed ≈ minute 10; executor spawned foreground
 ≈ minute 11 and returned ≈ minute 21; digits re-read from the logs and journal
 written inside minute 35. No new implementation work started after minute 45.
+
+---
+
+## 2026-09-05T17:05Z — `TH-15` step 1 (landing) — **complete** (§4-done, row 🟡 step 1 of 3)
+
+*(2026-09-05 12:00 CDT scheduled implementer slot.)*
+
+**Preflight.** `git status` clean on `main` at `07a439c`; container Up ≈ 45 h.
+No `recovered/*`; one `attempt/TH-15-20260905T124500Z` — the park this item
+exists to land. §9 item 1 was the first item neither done nor blocked, taken
+without deviation.
+
+**What was tried.** Delegated to the `implementer` agent, spawned
+**foreground**, with the never-background / `timeout -k 30` / repo-relative-
+harness-path / never-loosen-a-band / literal-`-m` rules restated in the spawn
+prompt. The item's plan executed as written: `git cherry-pick 5e804a5`
+**applied clean** (no conflicts, so the stop-and-journal branch was not
+taken), then the three-rung ladder moved out of
+`scripts/probes/th15_pec_hole_resolution.py` into
+`tests/validation/test_pec_sphere_hole.py` with the probe importing `LADDER`
+and `run` back (no circular import — the module imports nothing from the
+probe), `POINTWISE_CONVERGENCE_RATE_FLOOR = 0.8` defined beside `BAND` with
+the ruling's one-line reason, `assert pointwise <= BAND` replaced by the
+fitted-rate assertion, and the gate rung's max/rms pointwise misses printed as
+records. `_solve` now also returns the rms miss. **No band moved.**
+
+| log | Status | Elapsed | ranks |
+|---|---|---|---|
+| `20260905T170225Z_TH-15.log` (`:290–309`, footer `:441–444`) — gate module, `14 passed, 32 warnings in 33.00s` | 0 | 34 s | `-n 2` |
+| `20260905T170309Z_TH-15.log` (`:225`, `:345`) — `test_dielectric_sphere.py` (`TH-8`), `2 passed` | 0 | 13 s | `-n 2` |
+| `20260905T170327Z_TH-15.log` (`:191–199`) — the probe, `PYTHONPATH=/workspace/src:/workspace` | 0 | 5 s | `-n 2` |
+
+Standard tier (`timeout -k 30 300`), 52 s of compute across three windows,
+complex build (`FEM_EM_REQUIRE_COMPLEX=1`). No overrun, no wedge, no
+allowlist denial, no docker-socket denial.
+
+**Measured — every digit re-read from the logs by this slot, not taken from
+the executor's report** (`20260905T170225Z_TH-15.log`, 13 239 cells):
+
+- (i) `fitted beta = 1.019746`, `|beta - 1| = 1.9746%` vs the 4.886% band
+  (`:291`) — **reproduces the parked run's digits exactly**, so neither the
+  cherry-pick nor the ladder move touched the gate path.
+- (ii) the re-scoped anchor: ladder rel-L2 **21.031 / 15.641 / 9.000%** at
+  h = 0.0125 / 0.00833 / 0.00625 (4530 / 13 239 / 29 563 cells), **fitted rate
+  in h = +1.1917 ≥ 0.8** (`:294–295`), margin 1.49×.
+- Records, asserted nowhere: max pointwise **46.0725%**, rms **18.6437%**
+  (`:292`).
+- (iii) `|Im E|/|Re E| = 0.000e+00` (`:293`).
+- (iv) **1702** reduced cavity dofs, max |E| on them `0.000e+00`, total
+  Dirichlet dofs 2427 (`:296`).
+- (v) route equality `None = (1, 2) = 4836`, `(1,) = 3134` (`:309`).
+- **Negative control** (`pec_facet_tags=(1,)`, natural cavity): `beta =
+  -0.419038` (void closed form −0.5000), `|beta - 1| = 141.9038% = 29.0×`
+  the band (`:303`), inside the fixture's 1.5 ceiling; cavity dofs released
+  at `1.410e-02` (`:305`). Factor printed, no larger claim made.
+- Ruling (c) discharged: `TH-8` green with the additive keyword off, finest
+  rung **2.442%** (`…170309Z:225`), `2 passed` (`:345`).
+- Probe digits **unmoved**: `…170327Z:191–199` reprints
+  `20260905T123827Z_TH-15.log:191–199`.
+
+Note for the review: the ladder's `|beta-1|` column is *not* monotone
+(9.305 / 1.975 / 2.864%) — the asserted quantity is the rel-L2 miss, which is,
+and the 1.9746% gate rung is the middle rung. Neither fact is claimed as
+convergence of β.
+
+**Commits.** **2bfd1f1** — the clean cherry-pick of the parked code
+(`sphere_in_box_domain(as_hole=True)`, `pec_facet_tags`, the gate module).
+**5806773** — the ladder move, the re-scoped anchor, three logs,
+`test-results.md`, §2.1's one licensed line, the `TH-15` §7 step-1 LANDED
+paragraph and row status, and **§9 item 1 marked DONE in the same commit**
+(standing rule (d)). Seven files, no `src/` change beyond the cherry-pick's
+own. `attempt/TH-15-20260905T124500Z` **deleted** after the landing commit
+was on `main`. `main` clean and green at slot end.
+
+**No known-issues entry** — nothing unrelated failed; `main`'s red set is
+unchanged (still the 5 deliberate/known at `-n 2`).
+
+**Hypothesis for the next attempt.** `TH-15` **step 2** (two-torus PEC hole)
+is *not* slot-ready and the 10:30 review already assigned its scoping to the
+2026-09-06 weekly: step 0 cut the hole with a probe-local OCC copy, so step 2
+needs a `MeshGenerator` route first (a step 0b), building the conductor
+surface group from `getBoundary` of the *meshed air volume*, never from the
+retained tool's faces. The cheapest identity to gate once that route exists is
+`Re P_in = 0` to round-off — it is the first thing that would fail if the hole
+leaked power. Writing the item is review work.
+
+**Timebox.** Slot start 12:00 CDT. Protocol read and preflight by minute 2;
+executor spawned foreground ≈ minute 3 and returned ≈ minute 8; digits
+re-read from the logs, tree and commits verified, journal written inside
+minute 20. No new implementation work started after minute 45.
