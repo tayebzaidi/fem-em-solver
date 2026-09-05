@@ -84,6 +84,7 @@ __all__ = [
     "LumpedPortSheet",
     "LumpedSheetPortSpec",
     "sheet_resistivity_ohm_per_square",
+    "series_rlc_impedance",
     "lumped_port_bilinear_term",
     "lumped_port_linear_term",
     "sheet_terminal_current",
@@ -108,6 +109,52 @@ def sheet_resistivity_ohm_per_square(
     if z == 0.0:
         raise ValueError("port_impedance_ohm must be non-zero — R = Z_p·w/h is its sheet form")
     return z * (sheet_width_m / gap_height_m)
+
+
+def series_rlc_impedance(
+    frequency_hz: float,
+    *,
+    r_ohm: float = 0.0,
+    l_h: float = 0.0,
+    c_f: Optional[float] = None,
+) -> complex:
+    """``Z_p(ω) = R + jωL + 1/(jωC)`` — HFSS's *Lumped RLC* boundary, series form.
+
+    `PORT-14` step 1.  The terminal impedance :class:`LumpedPortSheet` turns into
+    a sheet resistivity by (L2); nothing about that conversion assumed ``Z_p``
+    real, and the bilinear term (L1) is linear in ``1/R``, so a complex ``Z_p``
+    is the whole of "a capacitor lives in the model".
+
+    ``c_f=None`` (the default) means *no capacitor in the branch* — a short, i.e.
+    the ``1/(jωC)`` term is omitted — which is not the same as ``c_f=0`` (an open,
+    infinite reactance, rejected here as a non-element).  ``r_ohm=0, l_h=0`` with a
+    capacitor gives the pure reactance ``−j/(ωC)``.
+
+    The result is *not* clamped or made lossy: an ideal reactance is exactly what
+    a ring-gap capacitor is, and the sheet term stays energy-neutral for it.
+    """
+    f = float(frequency_hz)
+    if not np.isfinite(f) or f <= 0.0:
+        raise ValueError(f"frequency_hz must be finite and positive, got {frequency_hz!r}")
+    r = float(r_ohm)
+    l = float(l_h)
+    if not np.isfinite(r) or r < 0.0:
+        raise ValueError(f"r_ohm must be finite and non-negative, got {r_ohm!r}")
+    if not np.isfinite(l) or l < 0.0:
+        raise ValueError(f"l_h must be finite and non-negative, got {l_h!r}")
+    omega = 2.0 * np.pi * f
+    z = complex(r, omega * l)
+    if c_f is not None:
+        c = float(c_f)
+        if not np.isfinite(c) or c <= 0.0:
+            raise ValueError(f"c_f must be finite and positive when given, got {c_f!r}")
+        z += 1.0 / (1j * omega * c)
+    if z == 0.0:
+        raise ValueError(
+            "series_rlc_impedance gave Z_p = 0 (a short at this frequency); a lumped "
+            "sheet needs a non-zero terminal impedance — R = Z_p·w/h is its sheet form"
+        )
+    return z
 
 
 @dataclass(frozen=True)
