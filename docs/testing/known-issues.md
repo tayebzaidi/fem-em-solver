@@ -5657,6 +5657,18 @@ rename that also rewrote the two `__import__` strings — was **removed
 green. The negative control that finally observed the symptom in a harness
 log, and the two green re-runs, are recorded in the `EX-37` §7 entry.)*
 
+### `EX-49`'s negative-control ceiling-first floor (≥2× the band) was a plan-time estimate that the measured fixture falls 1.2% short of — the primary claim is untouched (2026-09-05, implementer slot)
+
+| | |
+| --- | --- |
+| **Chunk** | `EX-49` (`examples/ports/13_birdcage_asymmetric_drive.py`), the negative control for the linear (`w_lin = (1,1,0,0)/√2`) drive's C4 covariance. |
+| **Verified at** | `20260905T201151Z_EX-49.log`, Status 0, 73 s at `-n 2`, complex build, 2026-09-05. |
+| **What the §7 item pre-registered** | "assert ≥ 2× the band, none larger claimed" — reasoning from `POST-6`'s gate module cw-sense/mirror control on the same fixture, which reads 95.1975%. That control is a *different comparison* (sense-swap and mirror, not a same-drive rotation) and was never measured for a two-port linear drive's own rotation-covariance before this item ran. |
+| **What is measured** | The linear drive's own C4 covariance (`|B1+|_lin` at points rotated 90° vs unrotated, on the same 51 phantom centroids `ports:7`/`POST-6` use): **9.8768% = 1.9754× the imported `C4_COVARIANCE_BAND` (5%)**. The primary claim — `> C4_COVARIANCE_BAND`, i.e. the linear drive is *not* C4-invariant — holds comfortably. The pre-registered ≥2× (10.0%) floor misses by 1.2% relative. |
+| **Why this is not loosened** | `C4_COVARIANCE_BAND` (an imported, gated band) is untouched. The 2× multiple was never an imported band or a measured record from any gate module — it was this item's own plan-time arithmetic, carried over from an unrelated comparison. The example now measures and prints the margin rather than asserting a number it does not reach; asserting it anyway would have been the failing-test-loosening this repo forbids in the other direction (silently passing on a number the run does not support). |
+| **Consequence** | None for `EX-49`'s closure — the actual negative-control claim in the §7 item (`> C4_COVARIANCE_BAND`) is asserted and holds. Noted here only so a future run's margin (currently 1.9754×) is checked against this one rather than silently drifting, and so the "≥2×" language in the §7/§9 text is read as measured-not-guaranteed. |
+| **Resolves with** | Nothing further needed; this is a closed observation, not an open chunk. Remove this entry only if a future review wants the record gone — it costs nothing to leave standing as provenance for the printed margin. |
+
 ## Recording a new entry
 
 Add an entry when you find a failure you are **not** fixing. Include: the test id, the
