@@ -398,6 +398,7 @@ cores.** Every verification command declares a tier and must not exceed it:
 | `smoke` | 30 s | Imports, pure-Python logic, config validation |
 | `standard` | 3 min | Coarse meshes, single small solves — the default |
 | `heavy` | 20 min | Convergence studies, sweeps — must be labeled `heavy` |
+| `xl` | **2 h, 512 GiB, 16 ranks — one run per 7 days** | The convergence rung the heavy tier cannot hold (operator directive 2026-09-05). Runs against the separate `fem-em-solver-xl` compose service (profile `xl`), **commissioned only by the weekly planning review** with a named chunk and a pre-registered readout, and recorded in `docs/testing/xl-ledger.md`; the bash guard denies a second XL exec inside 7 days, any XL exec outside `run_and_log.sh`, any `timeout` above 7200 s, and `-n` above 16. First slot reserved for the `ANS-4` 128 MHz refinement rung |
 
 - Wrap commands in `timeout -k 30 <s>` at the tier ceiling — the `-k` is
   mandatory: a plain TERM does not reliably stop an `mpiexec` job, and an
@@ -427,6 +428,14 @@ cores.** Every verification command declares a tier and must not exceed it:
   reopened: re-pricing one is a **review** decision, and any revival needs its
   finest rung priced first (the epitaph's own lesson). Do not cite "does not
   fit the box" from a pre-2026-08-24 measurement without re-measuring.
+- **The XL slot is a budget, not a loophole.** One run per week, spent by the
+  weekly review on the one measurement the heavy tier cannot hold; the
+  ledger row is appended by the harness *when the run starts*, so a killed or
+  failed XL run has still spent the week. Bring the service up for the slot
+  (`docker compose -f docker/docker-compose.yml --profile xl up -d
+  fem-em-solver-xl`) and stop it afterwards. Every other rule above (kill and
+  shrink, `timeout -k 30`, rank-local bugs at `-n 2` first) applies to it
+  unchanged.
 - Record real elapsed time in `docs/testing/test-results.md`.
 - **A tier is a measurement, not an intention.** A chunk whose runtime has never
   been measured is `unmeasured`. Cost-probe first: build the mesh, print the cell
@@ -7765,6 +7774,20 @@ beyond the two-torus fixture and the Larmor-regime validation gate.
    What is deliberately *not* on the ladder, because it already exists:
    PEC outer box, lumped ports (`PORT-9`), incident plane wave (`TH-6`),
    projected current drives, the 4-port fixed quadrature (`WF-6` step 2).
+6. **Operator directive 2026-09-05 (interactive session) — the XL tier.**
+   §5.1 gains a fourth tier: one run per 7 days at up to 512 GiB, 16 ranks
+   and 2 h, against the separate `fem-em-solver-xl` compose service,
+   commissioned only by the weekly planning review (protocol step 3b),
+   enforced by the bash guard and `docs/testing/xl-ledger.md`. **The first
+   slot is reserved for the `ANS-4` diagnosis rung** — the operator's AED
+   replication (landed 2026-09-04) agrees with our 10 MHz classes and
+   disagrees at the Larmor rungs with a frequency trend, and the private
+   pre-read names our fixed 116 085-cell mesh's resolution at 128 MHz as the
+   first suspect; the 2026-09-06 weekly review adjudicates, opens the
+   diagnosis chunk, and spends the slot on its finest rung. Recorded
+   negatives measured against the old 64 GiB wall (`TH-11` step 5, `TH-12`)
+   are still not automatically reopened; the review re-prices one only
+   with an XL slot in hand.
 
 **Standing rules.** Do not add new features to `⚠️` subsystems. Do not
 trust a chunk's status without a log — any §7 status that is not `✅`
@@ -7942,7 +7965,11 @@ to it is write access to *what the container mounts from the host*. The
 operator granted this knowingly and narrowly (2026-08-22). **Edit only
 `environment:` keys. Do not touch `volumes:`, do not add a mount, do not
 widen a path, and do not change the memory limit (**128 G**, raised from
-64 G by operator directive 2026-08-24) — in this or any future chunk.** A
+64 G by operator directive 2026-08-24) — in this or any future chunk.**
+*(The `fem-em-solver-xl` service added 2026-09-05 is the one operator-
+authorized exception — a second service with its own 512 G limit under the
+`xl` profile; the constraint applies to it verbatim, and chunks do not
+edit it either.)* A
 chunk that believes it needs a mount change is a **blocked finding for the
 operator**. The `Edit(docker/.claude/**)` caution stands for the same
 reason: a nested `.claude/` is a settings-override surface. One surviving

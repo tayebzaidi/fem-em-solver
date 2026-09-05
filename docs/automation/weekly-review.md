@@ -73,6 +73,20 @@ mitigations.
    lacks a next step concrete enough for the daily review to break down.
    Keep the §6 phase-map states current.
 
+3b. **Spend the XL slot, or explicitly do not.** §5.1's `xl` tier (operator
+   directive 2026-09-05) is one run per 7 days at ≤ 512 GiB / 16 ranks / 2 h
+   against `fem-em-solver-xl`, and **this review is the only thing that may
+   commission it.** Check `docs/testing/xl-ledger.md`: if the last row is
+   ≥ 7 days old, name the one chunk and step that gets the slot this week,
+   with a pre-registered readout (what number, what band, what each outcome
+   decides) and a cost estimate from a priced smaller rung, and put it on
+   deck as an item marked **`xl`** — the implementer brings the service up,
+   runs it through the harness (the ledger row is appended at start), and
+   stops the service. If nothing is ready, write "XL slot not spent" and
+   why. Never split the slot, never carry it over, never let a daily review
+   or an implementer commission it. The first slot is reserved for the
+   `ANS-4` 128 MHz refinement rung (§9 item 6).
+
 4. **Examples health.** `./run_examples.sh --list`; for each example, find
    its most recent verified run in `docs/testing/logs/` (or note there is
    none) and whether its XDMF outputs still reflect current capability.

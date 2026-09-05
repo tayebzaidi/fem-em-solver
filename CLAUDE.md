@@ -50,6 +50,10 @@ that solves in the frequency domain needs the complex DolfinX build
   (smoke 30 s / standard 180 s / heavy 1200 s), wrap runs in `timeout` at the
   ceiling, never exceed 20 minutes for a single compute command.
   Overrun ⇒ kill and shrink the case; never just raise the timeout.
+  **One exception, mechanically gated: the weekly XL slot** (PROJECT_PLAN §5.1,
+  operator directive 2026-09-05) — one run per 7 days at ≤ 512 GiB / 16 ranks /
+  2 h against the separate `fem-em-solver-xl` service, commissioned only by the
+  weekly planning review and recorded in `docs/testing/xl-ledger.md`.
 - **All verification runs in Docker through the logging harness** (service must
   be Up — `docker compose -f docker/docker-compose.yml ps`):
 
@@ -65,7 +69,7 @@ that solves in the frequency domain needs the complex DolfinX build
   `docker compose -f docker/docker-compose.yml up -d --force-recreate`, see
   known-issues).
 
-- `mpiexec -n 12` is the hard ceiling; use the smallest rank count that fits the
+- `mpiexec -n 12` is the hard ceiling (16 only inside the XL slot above); use the smallest rank count that fits the
   tier, and keep `-n 2` for anything a rank-local bug could hide in (that is the
   only width where a missing reduction is visible in CI).
 - A chunk is ✅ only per §4: verification executed by the agent itself, at

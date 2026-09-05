@@ -159,6 +159,19 @@ START_EPOCH="$(date -u +%s)"
   echo "## Output"
 } > "$LOG_FILE"
 
+# XL tier (PROJECT_PLAN §5.1, operator directive 2026-09-05): a command against
+# the fem-em-solver-xl service consumes the weekly slot the moment it starts, so
+# the ledger row is appended BEFORE the run (a killed run still spent the box);
+# the bash guard reads this table. Ranks/cells/memory/readout are filled by hand.
+XL_LEDGER="$ROOT_DIR/docs/testing/xl-ledger.md"
+IS_XL=0
+if [[ "$CMD" == *fem-em-solver-xl* && -f "$XL_LEDGER" ]]; then
+  IS_XL=1
+  printf '| %s | %s | `%s` | | | | | |\n' \
+    "$(date -u '+%Y-%m-%d')" "$CHUNK_ID" "$(basename "$LOG_FILE")" >> "$XL_LEDGER"
+  echo "[harness] XL slot consumed: row appended to $(basename "$XL_LEDGER")" >> "$LOG_FILE"
+fi
+
 set +e
 (
   cd "$ROOT_DIR"
@@ -226,6 +239,24 @@ fi
   echo "- Elapsed (s): $ELAPSED_SECONDS"
   echo "- Filtered lines (gmsh optimisation chatter): ${ELIDED_LINES:-0}"
 } >> "$LOG_FILE"
+
+if [[ "$IS_XL" == 1 ]]; then
+  # fill the elapsed column of the row appended above (last row naming this log)
+  python3 - "$XL_LEDGER" "$(basename "$LOG_FILE")" "$ELAPSED_SECONDS" <<'PY' || true
+import sys
+from pathlib import Path
+path, log, elapsed = Path(sys.argv[1]), sys.argv[2], sys.argv[3]
+lines = path.read_text().splitlines(keepends=True)
+for i in range(len(lines) - 1, -1, -1):
+    if log in lines[i]:
+        cells = lines[i].rstrip("\n").split("|")
+        if len(cells) >= 9:
+            cells[7] = f" {elapsed} "
+            lines[i] = "|".join(cells) + "\n"
+        break
+path.write_text("".join(lines))
+PY
+fi
 
 ensure_index_file
 printf '| %s | %s | `%s` | %s | `%s` | %s | `%s` |\n' \

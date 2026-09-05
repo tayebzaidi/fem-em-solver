@@ -155,7 +155,8 @@ version-bump record sweeps) says so in its first line:
    1/0.1185 = 8.4× is arithmetically the most that fixture can show and a 10×
    bar would have been unreachable, not merely unmet.
 3. **Tier, ranks, and expected wall clock** — smoke 30 s / standard 180 s /
-   heavy 1200 s, the rank count, and a cost estimate taken from a prior
+   heavy 1200 s (never `xl`: that tier is the weekly review's to commission,
+   §5.1), the rank count, and a cost estimate taken from a prior
    measurement where one exists (a probe's solve time, a comparable fixture).
    An item nobody has costed is an item that overruns.
 4. **The traps already paid for** — name the failures this project has already

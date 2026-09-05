@@ -35,5 +35,37 @@ services:
         reservations:
           memory: 4G
 
+  # XL tier (operator directive 2026-09-05, interactive session): ONE run per
+  # week at up to 512 GiB and 16 ranks, 2 h ceiling, commissioned only by the
+  # weekly planning review and recorded in docs/testing/xl-ledger.md. It is a
+  # separate service so the standing 128 G / 12-rank discipline of every other
+  # run is untouched; the `xl` profile keeps it out of a plain `up -d`. Bring
+  # it up for the slot and take it down after:
+  #   docker compose -f docker/docker-compose.yml --profile xl up -d fem-em-solver-xl
+  #   docker compose -f docker/docker-compose.yml --profile xl stop fem-em-solver-xl
+  # The bash guard (scripts/automation/hooks/bash_guard.py) allows -n 13..16
+  # only against this service, only through run_and_log.sh, only with a
+  # timeout <= 7200 s, and only when the ledger shows no XL run in 7 days.
+  fem-em-solver-xl:
+    image: fem-em-solver:latest
+    container_name: fem-em-solver-xl
+    profiles: ["xl"]
+    volumes:
+      - ..:/workspace
+      - fem-em-cache:/root/.cache
+    environment:
+      - PYTHONPATH=/usr/local/dolfinx-real/lib/python3.12/dist-packages:/usr/local/lib:/workspace/src
+      - MPLBACKEND=Agg
+    working_dir: /workspace
+    command: /bin/bash
+    stdin_open: true
+    tty: true
+    deploy:
+      resources:
+        limits:
+          memory: 512G
+        reservations:
+          memory: 4G
+
 volumes:
   fem-em-cache:

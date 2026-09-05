@@ -14,7 +14,11 @@ grid spacing exceeds the 65-minute hard kill, and all runs share one `flock`.
 after minute 45** — the final 15 minutes are for documentation and leaving a
 clean tree. The per-command compute budget is unchanged and non-negotiable:
 §5.1 tiers, 20-minute hard ceiling per compute command, `mpiexec -n 12` max,
-`timeout` at the tier ceiling, shared machine.
+`timeout` at the tier ceiling, shared machine. The one exception is an on-deck
+item the weekly review marked **`xl`** (§5.1 XL tier: ≤ 512 GiB / 16 ranks /
+7200 s against `fem-em-solver-xl`, one per week, ledger-gated) — run exactly
+the command it specifies, bring the service up before and stop it after, and
+never invent an XL run yourself.
 
 ## Steps
 
