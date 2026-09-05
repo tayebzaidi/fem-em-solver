@@ -18304,3 +18304,106 @@ re-estimate.
 harness call.** Item 5 (`MAT-6` step 11, the spare) is the only §9 item still
 open; the 19:30 slot takes it, and the 18:00 review will want to top the queue
 up first.
+
+---
+
+## 2026-09-05T00:55Z — `POST-6` step 1 — **incomplete (3 of 4 anchors gated; anchor (iii) a documented red)** (2026-09-04 19:30 CDT implementer slot)
+
+**Preflight.** Tree clean at `2d8ce09`; no `attempt/*`, no `recovered/*`;
+container Up ≈ 28 h. §9 On-deck item 1 taken as written (`POST-6` step 1,
+`ports.superpose_drives`), delegated to the `implementer` agent spawned
+**foreground** per the item and step 3 of the protocol. No background harness
+call, no docker-socket denial, no compute-safety event, no container wedge.
+
+**Landed:** commit `b4ad887` on `main`, tree clean after. Code + tests + both
+harness logs + the §7 row + the known-issues entry + the §9 item mark in one
+commit. Two compute windows, both `-n 2`, complex build, heavy tier by
+ceiling (`timeout -k 30 590`), **145 s** and **146 s**
+(`20260905T003909Z_POST-6.log:4016`, `20260905T004202Z_POST-6.log:3917`). The
+first window is red on a bug of the executor's own making — a function-space
+guard comparing `functionspace` objects by identity, 8 errors at `:3871` —
+fixed, and the comment in the fix cites that line. The second is the record.
+
+**What exists now.** `src/fem_em_solver/ports/superposition.py`
+(`superpose_drives`), `run_n_port_sparameter_sweep(keep_fields=True)` keeping
+each drive's solved phasor, and the combination done on the drives' own
+N1curl space — no interpolation, no DG0 detour, as the item's trap list
+required. Gated by `tests/validation/test_port_drive_superposition.py` on the
+116 085-cell 4-leg fixture at 10 MHz, the fixture build imported, never
+retyped. `1 failed, 23 passed … 144.48s` (`…004202Z:3839`).
+
+**Anchors as measured** (all `…004202Z_POST-6.log`):
+
+- **(i) green, `:1911–1913`** — the ccw quadrature weights driven *through the
+  package* reproduce `WF-6` step 2's records: C4 **0.9818%** (rel dev
+  9.619e-06), mirror **0.8087%** (3.585e-05), cw control **95.1975%**
+  (5.248e-07). The package path also agrees with step 2's own fixture DG0 path
+  on the *same four solves* to **1.237e-15 / 1.931e-15 / 1.166e-16**.
+- **(ii) green** — `w = e_k` returns drive k's dof array bit for bit
+  (`np.array_equal`); `S(w₁)+S(w₂) = S(w₁+w₂)` and the terminal weighted sums
+  at 1e-12.
+- **(iv) green, `:1914`** — all four single-drive residuals reproduce step 1's
+  9.795751e-03: **9.795751 / 9.796209 / 9.794985 / 9.795283 e-03** (P3 and P4
+  read for the first time).
+- **(iii) RED, `:1915–1920`, failure text `:3772–3773`** — ccw
+  `P_acc = ½aᴴ(I − SᴴS)a` = **3.014424803e-03 W** (available
+  1.000000000e-02 W) against `½∫σ|E_w|²` = **2.663302665e-03 W** (phantom
+  3.796523707e-07, conductor 2.662923013e-03) ⇒ residual **1.164806e-01**
+  against the imported 1e-2 `POWER_BALANCE_BAND`. cw identical to seven
+  digits. Blind sum `Σ|w_k|²P_k` = 1.794631250e-03 W, cross-term share
+  **40.4652%** (`:1918`) — above the item's 10% print trigger.
+
+**Disposition of the red — the item's own negative-result protocol, followed
+literally.** "(iii) above 1e-2 is an accounting defect in the superposition —
+known-issues entry, row 🟡." Both are in the commit; `POWER_BALANCE_BAND` is
+**not** touched, and the test is left red on `main` as a **deliberate,
+journaled red** (known-issues.md, top of "Failing tests"). Reviews should read
+the residual-red count as **4 deliberate/known at `-n 2`**, not 3, until this
+closes.
+
+**Two deviations from the item text, both mine to own, both disclosed in the
+commit message, the module docstring and the §7 row.**
+
+(a) **Anchor (i)'s pre-registered rtol 1e-6 was not asserted as written**, and
+the reason is arithmetic rather than physical: `STEP2_IDENTITY_RECORDS` are
+four-significant-digit literals (`0.9818e-2`), so *any* measurement —
+including a bit-identical re-run of the run that produced them — can only
+agree with the literal to ±5.1e-5 relative. The executor asserted the literals
+at the imported `CG1_RECORD_RTOL` (1e-3) and the thing 1e-6 was actually
+reaching for — does the package path compute what the fixture path computes on
+the same four solves — at **1e-12**, measured at 1e-15, six orders tighter than
+the item asked for. No band moved and no assertion loosened; the record
+literals are still asserted against. **A review should ratify or overrule this
+reading**: it is a change to a pre-registered number made in-slot, which is
+exactly the class of move the standing rules distrust, and it is defensible
+only because the substituted assertion is strictly tighter on the quantity
+that carries the information.
+
+(b) **One `src/` widening beyond the item's letter (a)**, handled under the
+18:00 review's ruling (c): `run_lumped_sheet_port_case`
+(`src/fem_em_solver/ports/lumped.py`) gained an additive **default-off**
+`return_fields` keyword — without it the sweep has nothing to keep. Its
+pre-existing gate `tests/validation/test_port_birdcage_four_port.py` was
+re-run **green in the same window and the same log** (the `PORT-9` gate
+readings at `…004202Z:3760–3766`), which is what the ruling requires.
+Secondary to it: `result.fields` holds the per-drive `TimeHarmonicFields`
+rather than the bare `e_complex` the item names — a superset, needed because
+the loss integral over the superposed field needs `sigma_field`.
+
+**Hypothesis for the next attempt (step 1b).** The band is pre-registered
+against the wrong denominator. `WF-6` step 1's 9.795751e-03 is scored against
+**supplied** power, of which the sheets take 92.5%; `P_acc` is ~13× smaller.
+Hand arithmetic on the same logs gives the *single*-drive form of this very
+identity (`supplied − sheets` = 5.154401e-04 W vs volume 4.482780e-04 W) a
+**13.0%** miss — i.e. the four-port drive appears to reproduce the
+single-drive miss rather than to add to it, which would make (iii) a band
+question, not a superposition defect. That figure is **computed from a log by
+hand, not asserted in-run**, so it settles nothing: step 1b should measure the
+single-drive `P_acc` in-run beside the superposed one, print both, and let a
+review re-point or keep the band on that evidence. The alternative mechanism —
+a real un-accounted loss channel of ~3.5e-04 W common to every drive — is not
+excluded by anything measured this slot.
+
+**Timebox.** Slot start 19:30 CDT; executor returned at ≈ minute 17; entry and
+verification inside minute 30. Every number above was re-read from the logs by
+the slot, not taken from the executor's report.
