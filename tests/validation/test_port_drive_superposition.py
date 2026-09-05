@@ -56,6 +56,32 @@ modules that gated them.
   ``STEP1_GATE_I_P1_RESIDUAL`` = 9.795751e-03 at 1e-3, which is what says these
   are the solves the records were made on.
 
+**Step 1b — the denominator, measured in-run.**  Anchor (iii) misses by 11.6%,
+and the review's working diagnosis was that the S-derived ``P_acc`` and the
+fixture's ``supplied − Σ sheets`` accounting are simply not the same number, so
+the 11.6% would be the fixture's own ~1% single-drive offset read against a 13×
+smaller denominator.  That is an identity of the power-wave definition at
+``z0 = Re Z_p`` and it had never been measured.  Here it is, per single drive k:
+
+* **(1b-i) asserted** — ``P_acc,k = ½|a_k|²(1 − Σ_i |S_ik|²)`` equals
+  ``P_net,k = supplied_k − Σ_i sheets_ik`` (all four sheets, the driven one
+  included) to ``STEP1B_POWER_WAVE_RTOL`` = 1e-6.
+* **(1b-ii) asserted** — the superposed ccw ``P_acc`` reproduces step 1's
+  ``STEP1_SUPERPOSED_ACCEPTED_W`` (3.014424803e-03 W,
+  ``20260905T004202Z_POST-6.log:1915``) at rtol 1e-9.  Same solves, same path:
+  a regression pin, not a new measurement.
+* **printed, never asserted** — the four single-drive residuals
+  ``|P_acc,k − P_vol,k| / P_acc,k`` and the ratio of the superposed 11.6% to
+  their mean.
+* **negative control** — ``P_acc,k`` recomputed with the reflection diagonal
+  zeroed must break (1b-i).  Its miss is exactly ``|S_kk|²/(1 − Σ_i |S_ik|²)``,
+  computed from the assembled 4×4 **before** the assertion and printed; the
+  floor asserted is ``STEP1B_CONTROL_MIN_MISS`` = 1e-3, 1000× the band, and
+  nothing above the computed value is claimed.
+
+``POWER_BALANCE_BAND`` is **not** re-pointed here — the §7 disposition rule
+names the next review as the actor, on these printed numbers.
+
 **Scope.**  One entry point and its identities, on the 4-leg fixture at 10 MHz.
 No tuning, no 32-port drive (step 2), no re-pointing of `WF-6`/`WF-7`, no band
 moved, and no claim beyond "a package-level multi-port drive exists and closes
@@ -125,6 +151,27 @@ PATH_AGREEMENT_MAX = 1.0e-12
 # cross terms it drops are worth more than this multiple of the band.
 CROSS_TERM_TRIGGER = 10.0 * POWER_BALANCE_BAND
 BLIND_SUM_MIN_MISS = 5.0 * POWER_BALANCE_BAND
+
+# --- `POST-6` step 1b ------------------------------------------------------
+#
+# The power-wave definition's own identity at ``z0 = Re Z_p``: the accepted
+# power a drive's S-column reports and the terminal accounting's
+# ``supplied − Σ sheets`` are the *same* quantity written two ways, so their
+# agreement is limited only by the arithmetic that assembled S from the same
+# stored terminal readings — not by any discretisation.  1e-6 is therefore a
+# statement about the assembly, and a miss is a finding, not a tolerance.
+STEP1B_POWER_WAVE_RTOL = 1.0e-6
+
+# Step 1's superposed ccw reading (`20260905T004202Z_POST-6.log:1915`).  Pinned
+# at 1e-9 because this module re-runs the *same* solves through the *same* path:
+# nothing here is allowed to move it.
+STEP1_SUPERPOSED_ACCEPTED_W = 3.014424803e-03
+STEP1B_ACCEPTED_RTOL = 1.0e-9
+
+# Negative-control floor: 1000× ``STEP1B_POWER_WAVE_RTOL``.  The control's true
+# miss is ``|S_kk|²/(1 − Σ_i |S_ik|²)``, computed from the assembled 4×4 and
+# printed before the assertion; this floor is what is *claimed*.
+STEP1B_CONTROL_MIN_MISS = 1.0e-3
 
 
 def _loss_power_w(sweep, e_complex, sigma_field):
@@ -248,6 +295,58 @@ def superposition_case():
         residuals[pid] = abs(sh["supplied"] - total) / abs(sh["supplied"])
         single_losses[pid] = sh["phantom"] + sh["conductor"]
 
+    # --- step 1b: the single-drive power-wave identity, per drive -----------
+    #
+    # ``P_acc,k`` is taken through the *package* on ``w = e_k`` — the same
+    # ``_power_waves`` route the superposed drive uses, so ``a_k`` carries the
+    # fixture's own ``z0`` normalisation and is not renormalised here — and
+    # re-derived in closed form from the assembled 4×4 beside it.  The closed
+    # form is what the negative control perturbs.
+    s_matrix = np.asarray(result.s_matrix, dtype=np.complex128)
+    single_power = {}
+    for index, pid in enumerate(port_ids):
+        unit = np.zeros(len(port_ids), dtype=np.complex128)
+        unit[index] = 1.0
+        drive_k = superpose_drives(result, unit)
+
+        a_k = complex(drive_k.incident_waves[index])
+        column = s_matrix[:, index]
+        reflected_fraction = float(np.sum(np.abs(column) ** 2))
+        closed_form = 0.5 * abs(a_k) ** 2 * (1.0 - reflected_fraction)
+        # Diagonal zeroed: the same column with ``S_kk`` deleted.  Written out
+        # rather than differenced so the control is an independent evaluation.
+        control_column = column.copy()
+        control_column[index] = 0.0
+        control_acc = 0.5 * abs(a_k) ** 2 * (
+            1.0 - float(np.sum(np.abs(control_column) ** 2))
+        )
+
+        sh = shares[pid]
+        net = float(sh["supplied"]) - float(sh["sheet_total"])
+        accepted_k = float(drive_k.accepted_power_w)
+        single_power[pid] = {
+            "a": a_k,
+            "acc": accepted_k,
+            "acc_closed_form": closed_form,
+            "net": net,
+            "vol": float(single_losses[pid]),
+            "supplied": float(sh["supplied"]),
+            "sheet_total": float(sh["sheet_total"]),
+            "identity_dev": abs(accepted_k - net) / abs(net),
+            "vol_residual": abs(accepted_k - single_losses[pid]) / abs(accepted_k),
+            "control_acc": control_acc,
+            "control_miss": abs(control_acc - net) / abs(net),
+            # The closed-form ceiling on the control's miss, from S alone.
+            "control_ceiling": float(abs(s_matrix[index, index]) ** 2)
+            / (1.0 - reflected_fraction),
+            "s_kk": complex(s_matrix[index, index]),
+            "reflected_fraction": reflected_fraction,
+        }
+
+    mean_single_vol_residual = float(
+        np.mean([single_power[pid]["vol_residual"] for pid in port_ids])
+    )
+
     # (iii) the drive-level identity, on the ccw (physical) drive.
     sigma_field = result.fields[port_ids[0]].sigma_field
     power = {}
@@ -315,6 +414,40 @@ def superposition_case():
                 f"(trigger {CROSS_TERM_TRIGGER * 100:.1f}%)",
                 flush=True,
             )
+        print(
+            "    (1b) the power-wave identity per single drive: P_acc,k = "
+            "1/2|a_k|^2(1 - sum_i|S_ik|^2) vs P_net,k = supplied_k - sum_i "
+            f"sheets_ik  (ASSERTED rel <= {STEP1B_POWER_WAVE_RTOL:.0e})",
+            flush=True,
+        )
+        for pid in port_ids:
+            q = single_power[pid]
+            print(
+                f"        {pid}  P_acc {q['acc']:.9e} W   P_net {q['net']:.9e} W"
+                f"   rel dev {q['identity_dev']:.3e}\n"
+                f"            supplied {q['supplied']:.9e} W, sheets "
+                f"{q['sheet_total']:.9e} W, |a_k| {abs(q['a']):.9e}, "
+                f"sum_i|S_ik|^2 {q['reflected_fraction']:.9f}, |S_kk| "
+                f"{abs(q['s_kk']):.9f}\n"
+                f"            P_vol,k = 1/2 int sigma|E_k|^2 = {q['vol']:.9e} W"
+                f"   residual |P_acc-P_vol|/P_acc = {q['vol_residual']:.6e} "
+                "(PRINTED, not asserted)\n"
+                f"            negative control (S diagonal zeroed): P_acc,k -> "
+                f"{q['control_acc']:.9e} W, miss {q['control_miss']:.6e}; "
+                f"closed-form ceiling |S_kk|^2/(1-sum_i|S_ik|^2) = "
+                f"{q['control_ceiling']:.6e}; floor asserted "
+                f"{STEP1B_CONTROL_MIN_MISS:.0e}",
+                flush=True,
+            )
+        print(
+            f"        mean single-drive |P_acc-P_vol|/P_acc = "
+            f"{mean_single_vol_residual:.6e}; superposed (ccw) "
+            f"{power['ccw']['residual']:.6e}; ratio superposed/mean = "
+            f"{power['ccw']['residual'] / mean_single_vol_residual:.4f} "
+            "(PRINTED, not asserted — the denominator question the 03:00 "
+            "review posed)",
+            flush=True,
+        )
 
     return {
         "sweep": sweep,
@@ -331,6 +464,8 @@ def superposition_case():
         "residuals": residuals,
         "shares": shares,
         "power": power,
+        "single_power": single_power,
+        "mean_single_vol_residual": mean_single_vol_residual,
     }
 
 
@@ -594,3 +729,96 @@ def test_the_drive_level_power_identity_closes(superposition_case):
                 f"are worth {p['cross_share'] * 100:.4f}% — the identity is then "
                 "insensitive to the interference it exists to account for"
             )
+
+
+@complex_only
+def test_the_single_drive_power_wave_identity_closes(superposition_case):
+    """**(1b-i)** ``½|a_k|²(1 − Σ_i|S_ik|²) = supplied_k − Σ_i sheets_ik``.
+
+    Both sides are built from the *same* stored terminal readings: ``a_k`` and
+    the S-column come from ``_power_waves`` on drive k's own ``V``/``I``, and
+    the accounting side is ``½Re(V_src I*)`` less ``½|I_i|²Re Z_p`` on all four
+    sheets.  At ``z0 = Re Z_p`` these are algebraically one quantity, so the
+    only thing 1e-6 can catch is the assembly disagreeing with its own
+    definition — which is exactly the question `POST-6` step 1's 11.6% raised.
+
+    The closed form is checked against the package's ``accepted_power_w`` first,
+    so a failure below cannot be blamed on the test's own arithmetic.
+    """
+    for pid, q in superposition_case["single_power"].items():
+        assert q["acc"] == pytest.approx(q["acc_closed_form"], rel=1.0e-12), (
+            f"[{pid}] the package's accepted power {q['acc']:.9e} W and the "
+            f"closed form ½|a_k|²(1 − Σ|S_ik|²) = {q['acc_closed_form']:.9e} W "
+            "disagree — the test's own arithmetic is not the package's"
+        )
+        assert q["net"] > 0.0, (
+            f"[{pid}] supplied − sheets is {q['net']:.9e} W — the drive is not "
+            "delivering power into the structure at all"
+        )
+        assert q["identity_dev"] <= STEP1B_POWER_WAVE_RTOL, (
+            f"[{pid}] the power-wave identity misses by {q['identity_dev']:.6e}: "
+            f"P_acc = {q['acc']:.9e} W from the S-column against "
+            f"P_net = supplied {q['supplied']:.9e} − sheets "
+            f"{q['sheet_total']:.9e} = {q['net']:.9e} W, band "
+            f"{STEP1B_POWER_WAVE_RTOL:.0e}. The S-matrix's power-wave "
+            "normalisation and the sheet accounting disagree; this is a "
+            "finding about the assembly, not a band to widen"
+        )
+
+
+@complex_only
+def test_the_superposed_accepted_power_reproduces_step_1(superposition_case):
+    """**(1b-ii)** the ccw drive's ``P_acc`` is still 3.014424803e-03 W.
+
+    A regression pin, not a measurement: the same four solves through the same
+    path must return the same watt, so the printed single-drive numbers beside
+    it are read on the run step 1's 11.6% was read on.  rtol 1e-9 is the
+    9-significant-digit precision the record was stored at.
+    """
+    accepted = superposition_case["power"]["ccw"]["accepted"]
+    assert accepted == pytest.approx(
+        STEP1_SUPERPOSED_ACCEPTED_W, rel=STEP1B_ACCEPTED_RTOL
+    ), (
+        f"the ccw drive accepts {accepted:.9e} W, not step 1's "
+        f"{STEP1_SUPERPOSED_ACCEPTED_W:.9e} W — these are not the solves the "
+        "11.6% residual was measured on, and the single-drive numbers printed "
+        "beside it do not speak to it"
+    )
+
+
+@complex_only
+def test_zeroing_the_reflection_diagonal_breaks_the_power_wave_identity(
+    superposition_case,
+):
+    """Negative control for (1b-i), ceiling computed before the assertion.
+
+    Deleting ``S_kk`` from drive k's column removes the port's own reflection
+    from the accepted power, so ``P_acc,k`` grows by exactly
+    ``½|a_k|²|S_kk|²`` — a miss of ``|S_kk|²/(1 − Σ_i|S_ik|²)`` against
+    ``P_net,k``.  That ceiling is computed from the assembled 4×4 in the
+    fixture and printed; here it is asserted *as the prediction* (the control's
+    measured miss must equal it, which is only true if (1b-i) itself holds) and
+    the floor claimed is ``STEP1B_CONTROL_MIN_MISS``, 1000× the band.  Nothing
+    larger is claimed than the number S itself produces.
+    """
+    for pid, q in superposition_case["single_power"].items():
+        ceiling = q["control_ceiling"]
+        assert ceiling >= STEP1B_CONTROL_MIN_MISS, (
+            f"[{pid}] the control's own closed-form miss is {ceiling:.6e}, "
+            f"below the {STEP1B_CONTROL_MIN_MISS:.0e} floor this test claims — "
+            "the control cannot separate anything on this fixture and the "
+            "floor, not the control, is what is wrong"
+        )
+        assert q["control_miss"] >= STEP1B_CONTROL_MIN_MISS, (
+            f"[{pid}] zeroing S_kk = {abs(q['s_kk']):.6f} moves P_acc,k to "
+            f"{q['control_acc']:.9e} W, only {q['control_miss']:.6e} from "
+            f"P_net = {q['net']:.9e} W — the identity does not see the port's "
+            "own reflection, so passing it says nothing"
+        )
+        assert q["control_miss"] == pytest.approx(
+            ceiling, rel=2.0 * STEP1B_POWER_WAVE_RTOL
+        ), (
+            f"[{pid}] the control misses by {q['control_miss']:.9e} but S alone "
+            f"predicts |S_kk|²/(1 − Σ|S_ik|²) = {ceiling:.9e}; the perturbation "
+            "is not the one this control claims to make"
+        )

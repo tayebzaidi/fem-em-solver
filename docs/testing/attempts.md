@@ -18774,3 +18774,64 @@ review's arithmetic makes the one measurement that can settle whether
 
 **Timebox.** Slot start 04:30 CDT; executor returned ≈ minute 17;
 verification, the §7 + §9 updates and this entry inside minute 40.
+
+## 2026-09-05T11:05Z — `POST-6` step 1b — **complete (both anchors green; the step-1 red stays red by design)**
+
+**Slot.** 2026-09-05 06:00 CDT implementer run, §9 item 2. Executed in-session
+(no subagent). Tests-only change, no `src/` edit, no new solve.
+
+**What was tried.** In `tests/validation/test_port_drive_superposition.py`
+only, on the existing module-scoped `superposition_case` fixture: for each
+single drive k, `P_acc,k` taken through the package on `w = e_k`
+(`superpose_drives(result, e_k).accepted_power_w`, so `a_k` carries the
+fixture's own `z0 = 50 Ω` normalisation and is never renormalised) and
+re-derived in closed form as `½|a_k|²(1 − Σ_i|S_ik|²)` from
+`result.s_matrix`; `P_net,k = supplied_k − Σ_i sheets_ik` from the fixture's
+existing `_power_shares` (all four sheets, driven one included); `P_vol,k`
+from the same `phantom + conductor` the (iv) anchor already computes. Three
+new tests: (1b-i) the identity at rtol 1e-6, (1b-ii) the superposed ccw
+`P_acc` pinned to step 1's watt at rtol 1e-9, and a negative control that
+deletes `S_kk` from drive k's column, with its ceiling computed from the
+assembled 4×4 before any assertion.
+
+**Measured (`20260905T110305Z_POST-6.log`).**
+
+* (1b-i) `|P_acc,k − P_net,k| / P_net,k` = **1.683e-15 / 0.000e+00 /
+  1.679e-15 / 0.000e+00** for P1–P4 vs the pre-registered 1e-6
+  (`:1924`, `:1928`, `:1932`, `:1936`). The S-derived accepted power and the
+  sheet accounting are the same number.
+* (1b-ii) ccw `P_acc` = **3.014424803e-03 W**, step 1's digit, at rtol 1e-9.
+* Printed: `|P_acc,k − P_vol,k| / P_acc,k` = **1.303004e-01 / 1.302723e-01 /
+  1.300031e-01 / 1.302052e-01**, mean **1.301952e-01**; superposed ccw
+  **1.164806e-01**; ratio superposed/mean = **0.8947** (`:1926`, `:1930`,
+  `:1934`, `:1938`, `:1940`).
+* Negative control: **7.659732e-01 / 7.656687e-01 / 7.634896e-01 /
+  7.652279e-01**, each equal to its closed-form ceiling
+  `|S_kk|²/(1 − Σ_i|S_ik|²)` (`:1927`, `:1931`, `:1935`, `:1939`); floor
+  claimed 1e-3, 1000× the band.
+* Supporting digits: `|a_k|` = 7.071067812e-02 for every drive,
+  `Σ_i|S_ik|²` ≈ 0.7938, `|S_kk|` ≈ 0.3973.
+
+**Footer.** `1 failed, 21 passed, 32 warnings in 102.66s` (`:2034`), Status 1
+/ Elapsed **104 s** (`:2112`). Heavy by ceiling (`timeout -k 30 600`), `-n 2`,
+complex build, `tests/environment` first. The single failure is the
+**deliberate** step-1 red `test_the_drive_level_power_identity_closes`
+(1.164806e-01 vs 1e-2, `:1967`), untouched; `POWER_BALANCE_BAND` was not
+re-pointed and nothing was widened.
+
+**Log.** `docs/testing/logs/20260905T110305Z_POST-6.log`.
+
+**Hypothesis for the next attempt.** The denominator question is answered but
+the *gap* is not: ~6.7e-05 W is missing from every single drive alike —
+0.98% of `supplied`, 13.0% of `supplied − sheets` — and the superposed drive
+reproduces it at 0.8947× rather than adding to it, which rules out the
+superposition and the power-wave normalisation together. The remaining
+candidate is a real loss/storage channel the sheet model does not book (the
+lumped sheets' own reactive part, or conductor loss inside the sheet
+thickness); the cheapest next probe is a σ- or Z_p-ladder on the same
+fixture asking whether the absolute gap tracks `Re Z_p` or the conductor σ.
+`POWER_BALANCE_BAND`'s drive-level re-pointing is the next review's call per
+the `POST-6` §7 disposition rule, not an implementer's.
+
+**Timebox.** Slot start 06:00 CDT; item read and code written by ≈ minute 25;
+single harness window 104 s; docs + commit inside minute 45.
