@@ -18492,3 +18492,76 @@ landed here.
 **Timebox.** Slot start 21:00 CDT; executor returned at ≈ minute 12; entry and
 verification inside minute 30. Both remaining §9 items open after this slot
 are 3 (`PORT-15` step 1) and 4–7; the 22:30 slot takes item 3.
+
+---
+
+## 2026-09-05T03:30Z — `PORT-15` step 1 — **complete**
+
+**Slot.** 2026-09-04 22:30 CDT scheduled implementer run. Preflight clean on
+`621ee6b`, container Up ≈ 32 h, no `attempt/*` or `recovered/*`. §9 On-deck
+items 1 and 2 were already done, so item 3 (`PORT-15` step 1) was the first
+open one — taken as written, no substitution. Executor: `implementer`, spawned
+**foreground**, returned at ≈ minute 8.
+
+**Outcome.** ✅ per §4, committed on `main` at **`e295a88`** — code, the new
+test module, both harness logs, test-results.md rows, the §7 `PORT-15` row
+(step 1 ✅, row 🟡) and §9 item 3 struck through, all in one commit.
+
+**What was tried.** The item's (a)/(b)/(c) exactly, extending the
+`ports/circuit.py` that `PORT-14` step 1 landed one slot earlier rather than
+creating it: `birdcage_highpass_mesh_matrices`,
+`birdcage_highpass_mode_frequencies`, `s_to_z`, `z_to_s`, two private helpers
+and four `__all__` entries. `reduce_terminated_ports` and
+`termination_reflection_coefficient` are byte-identical to `PORT-14`'s — I
+checked the diff, not the report. Additive only, so ruling (c)'s "pre-existing
+gate re-run green" was discharged with a collect-only run of `PORT-14`'s gate
+module (its heavy field gate is 🟡-red on `main` per known-issues and would
+have proved nothing about the import).
+
+**Measured numbers (all read by me in the log, not taken from the report).**
+Anchor (i), closed form vs `eigvals(L⁻¹ C_inv)` at rtol 1e-12 —
+N = 4: **5.280e-16**; N = 16: **2.366e-15**
+(`20260905T033509Z_PORT-15.log:45,50`), with both spectra printed
+(k = 0 at 112.539540 MHz through k = N/2 at 33.931948 MHz). Anchor (ii), the
+S route vs `z_to_s(Z_aa − Z_ab (Z_bb + Z)⁻¹ Z_ba)` on a random passive
+reciprocal 4×4, bar 1e-12, six terminations — **1.388e-16 / 2.559e-16 /
+2.666e-16 / 2.359e-16 / 1.671e-16 / 2.502e-16** for 50, −j159.15, +j62.83,
+200, 0, 1e9 Ω (`:59–75`). Anchor (iii), Γ = 0 → `S_aa` bitwise: **0.000e+00**
+for one and for two terminated ports (`:78`). Negative control, one leg's
+`L_l` × 1.01 at N = 4: per-mode |Δω²|/ω² **[2.279e-03, 4.129e-03, 0.0, 7.7e-16]**,
+worst **4.129e-03 in ω² (2.062e-03 in ω)** against the item's ≥ 1e-3 bar and
+under the first-order ceiling 2ε/N = 5.000e-03; the degenerate k = 1 pair
+splits by 4.129e-03 (`:53–57`).
+
+**Harness logs.** `20260905T033509Z_PORT-15.log` — smoke, `-n 1`, real build,
+`timeout -k 30 120`, footer **`10 passed in 1.80s`**, Status 0, **Elapsed 4 s**
+(`:80,83,84`). `20260905T033637Z_PORT-15-port14-collect.log` — `3 tests
+collected in 1.58s`, Status 0, **3 s**.
+
+**One judgement call, disclosed.** The item's closed form
+`ω_k = 1/√(C(L_r + 2 L_l sin²(πk/N)))` reproduces the mesh-matrix eigenvalues
+exactly only when `l_ring_h` / `c_ring_f` are read as **per-ring-segment**
+values — a window carries `2L_r` and `2/(jωC)`, halving KVL's
+`4 L_l sin²(πk/N)`. That convention is now in the module docstring, the §7
+entry and the §9 execution note. It is a reading of the item's own symbols,
+not a change to its formula, and no assertion was loosened; anchor (i) at
+5e-16 is what says the reading is the right one. Second, smaller call:
+(i)'s imaginary-part check is `≤ 1e-12` **relative to the eigenvalue scale**
+(ω² is O(1e16) in SI, so an absolute 1e-12 would be vacuous).
+
+**Verification I did myself.** Re-read the log at `:40–84` — every anchor
+line, the control block, the footer and the `Status 0 / Elapsed 4` exit block
+— and the commit's `--stat` (6 files, no `tests/` or `src/` file outside the
+two named). The tree is clean on `e295a88`.
+
+**Hypothesis for the next attempt.** Step 1 is pure algebra and it closed at
+machine precision, so nothing here is a lead; the open question moves entirely
+to step 2, which reads `L_l` and `L_r` off the 32×32 and compares the ladder's
+resonances to the FEM coil's. The thing to watch there is the convention this
+slot pinned down: step 2 must feed **per-segment** ring inductance into
+`birdcage_highpass_mode_frequencies`, and a factor-2 disagreement in the mode
+spectrum is that mistake before it is physics. §9 items 4–7 remain open; the
+00:00 slot takes item 4 (`TH-15` step 0, `mesh-probe`).
+
+**Timebox.** Slot start 22:30 CDT; executor returned ≈ minute 8; verification
+and this entry inside minute 20.
