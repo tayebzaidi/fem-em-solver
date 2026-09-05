@@ -41,6 +41,7 @@ not a port of the reduced network.  So the three drives go through
 
 from __future__ import annotations
 
+import os
 import time
 
 import numpy as np
@@ -59,6 +60,7 @@ from fem_em_solver.ports.lumped import (
 from fem_em_solver.ports.sparameters import _power_waves
 
 from tests.complex_mode import complex_only
+from tests.mesh.test_birdcage_port_sheet_prerequisite import CONDUCTOR_RESOLUTION
 from tests.validation.test_port_birdcage_four_port import (
     PASSIVITY_SIGMA_TOLERANCE,
     build_four_port_sweep,
@@ -332,4 +334,236 @@ def test_the_zero_gamma_control_misses(rlc_termination_cases):
             f"{REDUCTION_BAND:.0e} band, even though the 4x4 predicts a coupling "
             f"term Delta = {delta:.3e}. The gate above is then not resolving the "
             "termination and means nothing"
+        )
+
+
+# ---------------------------------------------------------------------------
+# `PORT-14` step 1b — does the reduction residual fall with sheet resolution?
+# ---------------------------------------------------------------------------
+#
+# Step 1's residuals ordered by |Gamma| (1.6e-3 and 3.4e-3 at |Gamma| = 1,
+# 7.2e-4 at |Gamma| = 0.6), which is what you would see if total reflection
+# re-excites the sheet's non-single-mode content.  That hypothesis predicts the
+# residual **falls with sheet resolution**.  This block measures exactly that on
+# refined rungs of the same fixture: the mesh's `conductor_resolution` is scaled
+# by a factor read from the environment, so the **gate rung (factor 1) above is
+# untouched** — no rung here runs unless the env var is set.
+#
+# Nothing about the residual is asserted here (`REDUCTION_BAND` stays 1e-3 and
+# the residual is only printed): the residuals are printed beside step 1's
+# 116 085-cell record.  What **is** asserted is that the rung is a valid 4x4 at
+# all (reciprocity and passivity, both imported and unmoved), that refining
+# actually refined (cell count strictly above the record for a factor < 1), and
+# the same ceiling-first Gamma = 0 control step 1 ran.
+STEP1B_FACTOR_ENV = "FEM_EM_PORT14_CONDUCTOR_RESOLUTION_FACTOR"
+
+# Step 1's printed record, `20260905T020428Z_PORT-14.log`, restated here as the
+# comparison line for the printout (it is a logged number, not a constant any
+# module exports).
+STEP1_CELL_RECORD = 116085
+STEP1_RESIDUAL_RECORD = {"C = 100 pF": 1.595580e-03, "L = 1 uH": 3.370512e-03}
+
+# The two lossless terminations — |Gamma| = 1, the worst pair — taken from the
+# gate's own tuple so no value is restated.  The resistor is step 1's business.
+STEP1B_TERMINATIONS = tuple(
+    entry for entry in TERMINATIONS if entry[0] in STEP1_RESIDUAL_RECORD
+)
+
+
+def _step1b_factor():
+    raw = os.environ.get(STEP1B_FACTOR_ENV, "")
+    if not raw:
+        return None
+    return float(raw)
+
+
+@pytest.fixture(scope="module")
+def refined_rung_cases():
+    """One refined rung: the 50 Ohm 4x4 (4 solves) plus C and L terminated (6)."""
+    factor = _step1b_factor()
+    if factor is None:
+        pytest.skip(
+            f"{STEP1B_FACTOR_ENV} unset — `PORT-14` step 1b's refined rungs run "
+            "only when a slot asks for one, so the gate rung is untouched"
+        )
+    comm = MPI.COMM_WORLD
+    h_c = factor * CONDUCTOR_RESOLUTION
+
+    comm.Barrier()
+    t_sweep0 = time.perf_counter()
+    sweep = build_four_port_sweep(frequency_hz=FREQUENCY_HZ, conductor_resolution=h_c)
+    comm.Barrier()
+    baseline_seconds = time.perf_counter() - t_sweep0
+
+    cases = []
+    for label, element in STEP1B_TERMINATIONS:
+        z_term = series_rlc_impedance(FREQUENCY_HZ, **element)
+        comm.Barrier()
+        t0 = time.perf_counter()
+        measured, kept_ids, _results = _terminated_three_port(sweep, z_term)
+        comm.Barrier()
+        elapsed = time.perf_counter() - t0
+        predicted = reduce_terminated_ports(
+            sweep["s"], float(REFERENCE_IMPEDANCE_OHM), {TERMINATED_PORT_INDEX: z_term}
+        )
+        residual = float(
+            np.linalg.norm(measured - predicted) / np.linalg.norm(predicted)
+        )
+        cases.append(
+            {
+                "label": label,
+                "z": z_term,
+                "gamma": termination_reflection_coefficient(
+                    z_term, float(REFERENCE_IMPEDANCE_OHM)
+                ),
+                "measured": measured,
+                "predicted": predicted,
+                "residual": residual,
+                "kept_ids": kept_ids,
+                "seconds": float(elapsed),
+            }
+        )
+
+    return {
+        "factor": factor,
+        "h_c": float(h_c),
+        "sweep": sweep,
+        "cases": cases,
+        "baseline_seconds": float(baseline_seconds),
+    }
+
+
+@complex_only
+def test_the_refined_rung_is_a_valid_four_port(refined_rung_cases):
+    """Anchor: the refined rung's 50 Ohm 4x4 is still `PORT-9`'s matrix.
+
+    Both bands are **imported** from the modules that pre-stated them and
+    neither is touched.  A rung that fails here is a fixture finding: its
+    residual would mean nothing.  The cell count is asserted strictly above
+    step 1's record for a refining factor — otherwise "refined" is a claim the
+    mesher did not honour.
+    """
+    rung = refined_rung_cases
+    sweep = rung["sweep"]
+    reciprocity = float(sweep["reciprocity"])
+    sigma_max = float(np.max(sweep["sigma"]))
+    cells = int(sweep["cells"])
+    widths = [float(spec.sheet_width_m) for spec in sweep["specs"]]
+    if MPI.COMM_WORLD.rank == 0:
+        print(
+            f"\n[PORT-14 step1b] refined rung: conductor_resolution x"
+            f"{rung['factor']:.4g} = {rung['h_c']:.6e} m; {cells} cells "
+            f"(step 1 record {STEP1_CELL_RECORD}, ratio "
+            f"{cells / STEP1_CELL_RECORD:.6f}); four 50 Ohm drives in "
+            f"{rung['baseline_seconds']:.2f} s wall",
+            flush=True,
+        )
+        print(
+            "    sheet_width_m per port (A/h off the *measured* extents, so a "
+            "finer mesh moves it): " + ", ".join(f"{w:.9e}" for w in widths),
+            flush=True,
+        )
+        print(
+            f"    50 Ohm baseline: ||S - S^T||/||S|| = {reciprocity:.9e} "
+            f"(band {RECIPROCITY_BAND:.0e}); sigma_max = {sigma_max:.9f} "
+            f"(band 1 + {PASSIVITY_SIGMA_TOLERANCE:.0e})",
+            flush=True,
+        )
+    assert reciprocity <= RECIPROCITY_BAND, (
+        f"the refined rung's 50 Ohm 4x4 is reciprocal only to {reciprocity:.3e} "
+        f"against the imported {RECIPROCITY_BAND:.0e} band — this rung is not a "
+        "valid four-port and its residual means nothing"
+    )
+    assert sigma_max <= 1.0 + PASSIVITY_SIGMA_TOLERANCE, (
+        f"the refined rung's 4x4 has sigma_max = {sigma_max:.9f} > 1 + "
+        f"{PASSIVITY_SIGMA_TOLERANCE:.0e}: a passive network cannot"
+    )
+    if rung["factor"] < 1.0:
+        assert cells > STEP1_CELL_RECORD, (
+            f"conductor_resolution x{rung['factor']:.4g} gave {cells} cells, not "
+            f"more than step 1's {STEP1_CELL_RECORD} — the keyword did not refine "
+            "anything and the measurement below would be a re-run, not a rung"
+        )
+
+
+@complex_only
+def test_the_refined_rung_residuals_are_printed(refined_rung_cases):
+    """**The measurement, printed not asserted.**  Residual vs sheet resolution.
+
+    Monotone decrease against step 1's 1.595580e-03 / 3.370512e-03 confirms the
+    |Gamma| hypothesis; flat or rising refutes it and names the sheet law's
+    area-based effective width (`lumped.py:353`) as the next suspect — a step
+    1c, never a band change.  `REDUCTION_BAND` is deliberately not read here.
+    """
+    rung = refined_rung_cases
+    if MPI.COMM_WORLD.rank != 0:
+        return
+    print(
+        f"[PORT-14 step1b] reduction identity residuals at "
+        f"f = {FREQUENCY_HZ:.3e} Hz, {int(rung['sweep']['cells'])} cells "
+        f"(conductor_resolution x{rung['factor']:.4g}); step 1's record is on "
+        f"{STEP1_CELL_RECORD} cells. Printed, not asserted:",
+        flush=True,
+    )
+    for case in rung["cases"]:
+        record = STEP1_RESIDUAL_RECORD[case["label"]]
+        fell = "FELL" if case["residual"] < record else "DID NOT FALL"
+        print(
+            f"    {case['label']:<12s} |Gamma| = {abs(case['gamma']):.6f}   "
+            f"residual = {case['residual']:.6e}   "
+            f"(step 1 on {STEP1_CELL_RECORD} cells: {record:.6e}; "
+            f"ratio {case['residual'] / record:.6f}, {fell})   "
+            f"three drives in {case['seconds']:.2f} s wall",
+            flush=True,
+        )
+
+
+@complex_only
+def test_the_zero_gamma_control_misses_on_the_refined_rung(refined_rung_cases):
+    """**Negative control, ceiling first**, exactly as step 1 ran it.
+
+    Delta — the coupling term the rung's own 4x4 predicts — is computed first
+    and printed as the ceiling; the >= 5x-band miss is asserted only where
+    Delta reaches the floor, so no factor is claimed above that ceiling.
+    """
+    rung = refined_rung_cases
+    s4 = np.asarray(rung["sweep"]["s"], dtype=np.complex128)
+    kept = [i for i in range(s4.shape[0]) if i != TERMINATED_PORT_INDEX]
+    s_aa = s4[np.ix_(kept, kept)]
+
+    rows = []
+    for case in rung["cases"]:
+        predicted = case["predicted"]
+        delta = float(np.linalg.norm(predicted - s_aa) / np.linalg.norm(predicted))
+        miss = float(
+            np.linalg.norm(case["measured"] - s_aa) / np.linalg.norm(predicted)
+        )
+        rows.append((case["label"], delta, miss))
+
+    reached = [row for row in rows if row[1] >= CONTROL_DELTA_FLOOR]
+    if MPI.COMM_WORLD.rank == 0:
+        print(
+            "[PORT-14 step1b] Gamma = 0 control (ceiling first), floor "
+            f"{CONTROL_DELTA_FLOOR:.0e}:",
+            flush=True,
+        )
+        for label, delta, miss in rows:
+            print(
+                f"    {label:<12s} Delta = {delta:.6e}   "
+                f"||S'_meas - S_aa||_F/||S'_pred||_F = {miss:.6e}   "
+                f"({'asserted' if delta >= CONTROL_DELTA_FLOOR else 'below floor'})",
+                flush=True,
+            )
+        if not reached:
+            print(
+                "    FINDING: no termination reaches the Delta floor on this rung",
+                flush=True,
+            )
+
+    for label, delta, miss in reached:
+        assert miss >= CONTROL_MISS_FACTOR * REDUCTION_BAND, (
+            f"{label}: on the refined rung the Gamma = 0 prediction S_aa misses "
+            f"the measured terminated 3x3 by only {miss:.3e}, under "
+            f"{CONTROL_MISS_FACTOR:g}x the {REDUCTION_BAND:.0e} band, though the "
+            f"4x4 predicts a coupling term Delta = {delta:.3e}"
         )

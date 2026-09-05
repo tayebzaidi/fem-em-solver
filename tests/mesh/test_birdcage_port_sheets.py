@@ -77,7 +77,7 @@ PORT_LOWER = 100
 PORT_UPPER = 200
 
 
-def _build(emit_port_sheets, phantom_resolution=None):
+def _build(emit_port_sheets, phantom_resolution=None, conductor_resolution=None):
     """One graded, gapped birdcage rung, sheeted or not, with its wall time.
 
     ``phantom_resolution`` is `WF-6` step 3f₀'s additive keyword (the
@@ -86,6 +86,12 @@ def _build(emit_port_sheets, phantom_resolution=None):
     ``None``, the default every gate in this repo takes, passes ``None`` down
     to `birdcage_port_domain` and so builds the identical mesh this helper has
     always built.
+
+    ``conductor_resolution`` is `PORT-14` step 1b's additive keyword, on the
+    same precedent: ``None`` — every gate's value — passes the module's
+    ``CONDUCTOR_RESOLUTION`` exactly as this helper always has, so every
+    existing rung's mesh is bit-identical.  A float replaces it, which is how
+    step 1b refines the sheet without touching any gate.
     """
     comm = MPI.COMM_WORLD
     started = time.perf_counter()
@@ -103,7 +109,10 @@ def _build(emit_port_sheets, phantom_resolution=None):
         emit_port_sheets=emit_port_sheets,
         air_padding=AIR_PADDING,
         resolution=RESOLUTION,
-        conductor_resolution=CONDUCTOR_RESOLUTION,
+        conductor_resolution=(
+            CONDUCTOR_RESOLUTION if conductor_resolution is None
+            else float(conductor_resolution)
+        ),
         phantom_resolution=phantom_resolution,
         comm=comm,
         return_diagnostics=True,

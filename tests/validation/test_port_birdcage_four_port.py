@@ -216,7 +216,12 @@ def _circulant_classes(z_matrix):
     }
 
 
-def build_four_port_sweep(frequency_hz=FREQUENCY_HZ, reuse=None, phantom_resolution=None):
+def build_four_port_sweep(
+    frequency_hz=FREQUENCY_HZ,
+    reuse=None,
+    phantom_resolution=None,
+    conductor_resolution=None,
+):
     """One mesh; four driven lumped-sheet solves at 50 Ohm; the assembled 4x4.
 
     The module fixture's body, lifted to module level so a consumer can run the
@@ -238,6 +243,12 @@ def build_four_port_sweep(frequency_hz=FREQUENCY_HZ, reuse=None, phantom_resolut
     ``_four_port_rung`` precedent in
     `tests/validation/test_port_birdcage_leg_offset_sweep.py`).
 
+    ``conductor_resolution`` is the fourth additive parameter (`PORT-14` step
+    1b, same precedent): ``None`` — every gate's value — passes ``None`` to
+    `_build`, which then uses the module ``CONDUCTOR_RESOLUTION`` this sweep
+    has always used, leaving the gated mesh bit-for-bit unchanged.  It is
+    ignored when ``reuse`` is given, since then no mesh is built.
+
     ``reuse`` is the second additive parameter, same precedent: hand it a dict
     this function already returned and the mesh, the narrowed sheet facet tags
     and the sheet geometry are taken from it rather than rebuilt, so a
@@ -258,7 +269,9 @@ def build_four_port_sweep(frequency_hz=FREQUENCY_HZ, reuse=None, phantom_resolut
         t_mesh = 0.0
     else:
         msh, cell_tags, _facet_tags, diag, t_mesh = _build(
-            True, phantom_resolution=phantom_resolution
+            True,
+            phantom_resolution=phantom_resolution,
+            conductor_resolution=conductor_resolution,
         )
         tdim = msh.topology.dim
         ncells = int(msh.topology.index_map(tdim).size_global)
