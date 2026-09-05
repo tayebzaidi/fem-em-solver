@@ -1,11 +1,11 @@
 """`TH-15` step 1 probe: does the PEC hole's exterior miss fall with h?
 
 Measurement only — no assertions.  The step-1 gate module fits the exterior
-dipole coefficient β and *also* asserts a pointwise field miss at the same band;
-the middle rung fits β to 1.97% while the pointwise miss on the same points is
-46%.  This probe solves the same fixture on the `TH-8` resolution ladder and
-prints both, so the two can be told apart: a discretisation floor falls with h,
-a defect does not.
+dipole coefficient β on the middle rung to 1.97% while the *pointwise* miss on
+the same points is 46%: a first-order N1curl floor next to the pinned curved
+wall, not a defect, which is why the module's field anchor is the convergence
+rate and the pointwise numbers are records (ruling, 2026-09-05 10:30 review).
+This probe runs the module's own ladder and prints the full table.
 
 Run (complex build required)::
 
@@ -20,63 +20,10 @@ from __future__ import annotations
 import numpy as np
 from mpi4py import MPI
 
-from fem_em_solver.core import (
-    HomogeneousMaterial,
-    TimeHarmonicProblem,
-    TimeHarmonicSolver,
-)
-from fem_em_solver.io.mesh import MeshGenerator
-from fem_em_solver.post.evaluation import evaluate_vector_field_parallel
-
-from tests.validation.test_pec_sphere_hole import (
-    BETA_PEC,
-    BOX_HALF_WIDTH,
-    E0,
-    FREQUENCY_HZ,
-    SPHERE_RADIUS,
-    _dipole_basis,
-    _pec_exterior_numpy,
-    _probe_shells,
-    _uniform_field,
-)
-
-LADDER = [(0.0125, 0.025), (0.00833, 0.0167), (0.00625, 0.0125)]
-
-
-def run(resolution_sphere: float, resolution_far: float):
-    comm = MPI.COMM_WORLD
-    msh, cell_tags, facet_tags = MeshGenerator.sphere_in_box_domain(
-        sphere_radius=SPHERE_RADIUS,
-        box_half_width=BOX_HALF_WIDTH,
-        resolution_sphere=resolution_sphere,
-        resolution_far=resolution_far,
-        comm=comm,
-        as_hole=True,
-    )
-    problem = TimeHarmonicProblem(
-        mesh=msh,
-        frequency_hz=FREQUENCY_HZ,
-        material=HomogeneousMaterial(sigma=0.0, epsilon_r=1.0),
-        cell_tags=cell_tags,
-        facet_tags=facet_tags,
-        boundary_condition="pec_zero_tangential_a",
-        dirichlet_e_field=_pec_exterior_numpy(),
-        pec_facet_tags=(1, 2),
-    )
-    fields = TimeHarmonicSolver(problem, degree=1).solve()
-
-    points = _probe_shells()
-    values, valid = evaluate_vector_field_parallel(fields.e_real, points, comm)
-    if not np.all(valid):
-        raise RuntimeError("probe points not evaluated")
-    e = np.real(values[:, :3])
-    basis = _dipole_basis(points)
-    beta = float(np.sum((e - _uniform_field(points)) * basis) / np.sum(basis * basis))
-    closed = _uniform_field(points) + BETA_PEC * basis
-    misses = np.linalg.norm(e - closed, axis=1) / E0
-    rel_l2 = float(np.linalg.norm(e - closed) / np.linalg.norm(closed))
-    ncells = int(comm.allreduce(msh.topology.index_map(msh.topology.dim).size_local, op=MPI.SUM))
-    return beta, float(np.max(misses)), float(np.sqrt(np.mean(misses**2))), rel_l2, ncells
+# The ladder itself now lives in the gate module — this probe imports it back, so
+# the assertion and the printed table are measurements of the same code path.
+# The import must not go the other way: the module is the one under test.
+from tests.validation.test_pec_sphere_hole import LADDER, run
 
 
 def main() -> None:

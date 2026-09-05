@@ -19,7 +19,8 @@ cells are absent from the mesh and its surface arrives as facet tag ``2``.  The
 solve constrains the tangential trace on tags ``(1, 2)`` — outer wall and cavity
 — through ``TimeHarmonicProblem.pec_facet_tags``.
 
-**What is gated is the dipole coefficient β, not the field.**  At 10 MHz and
+**What is gated is the dipole coefficient β and the field's convergence *rate*,
+not the field's absolute miss.**  At 10 MHz and
 ``k₀R = 5e-3`` the exterior field of a *lossy* sphere is the PEC one to ~1e-6
 (``σ/(ωε₀) = 1.4e6`` at σ = 800 S/m), and even the `TH-8` dielectric at ε = 78
 has β = 0.9625 — within 3.75% of PEC, i.e. inside the band below.  So neither is
@@ -74,6 +75,17 @@ CAVITY_TAG = 2
 # rung, imported).  Pre-stated: this module never restates the record and never
 # widens the band.
 BAND = 2.0 * TH8_RECORD_INTERIOR_MISS
+
+# The exterior *field* anchor is a convergence rate, not a band: at lowest-order
+# N1curl one cell from a Dirichlet-pinned curved wall the pointwise miss has a
+# discretisation floor (20.5% on the finest `TH-8` rung), so a ~5% field band
+# would assert a mesh this test does not build (ruling, 2026-09-05 10:30 review).
+# Nédélec degree 1 is O(h) in L2, so 1.0 is the expectation and 0.8 leaves the
+# two-interval fit its slack; measured +1.19 over the three rungs below.
+POINTWISE_CONVERGENCE_RATE_FLOOR = 0.8
+
+# `TH-8`'s three resolution rungs, (resolution_sphere, resolution_far).
+LADDER = [(0.0125, 0.025), (RESOLUTION_SPHERE, RESOLUTION_FAR), (0.00625, 0.0125)]
 
 # The perfect-conductor dipole coefficient.
 BETA_PEC = 1.0
@@ -178,8 +190,8 @@ def _cavity_dofs(msh, facet_tags, v_space) -> np.ndarray:
 def _solve(pec_facet_tags):
     """Solve on the hole mesh with the given Dirichlet facet set.
 
-    Returns ``(beta, max_pointwise_miss, imag_ratio, cavity_dof_max, ncells,
-    dirichlet_dof_count)``.
+    Returns ``(beta, max_pointwise_miss, rms_pointwise_miss, imag_ratio,
+    cavity_dof_max, ncells, dirichlet_dof_count)``.
     """
     comm = MPI.COMM_WORLD
     msh, cell_tags, facet_tags = _hole_mesh()
@@ -214,6 +226,7 @@ def _solve(pec_facet_tags):
     e_closed = _uniform_field(points) + BETA_PEC * basis
     misses = np.linalg.norm(e_measured - e_closed, axis=1) / E0
     pointwise = float(np.max(misses))
+    pointwise_rms = float(np.sqrt(np.mean(misses**2)))
     if comm.rank == 0:
         half = points.shape[0] // 2
         worst = int(np.argmax(misses))
@@ -245,7 +258,62 @@ def _solve(pec_facet_tags):
     ncells = int(
         comm.allreduce(msh.topology.index_map(msh.topology.dim).size_local, op=MPI.SUM)
     )
-    return beta, pointwise, imag_ratio, cavity_dof_max, ncells, int(fields.dirichlet_dof_count)
+    return (
+        beta,
+        pointwise,
+        pointwise_rms,
+        imag_ratio,
+        cavity_dof_max,
+        ncells,
+        int(fields.dirichlet_dof_count),
+    )
+
+
+def run(resolution_sphere: float, resolution_far: float):
+    """One rung of the resolution ladder: solve, fit β, and measure the misses.
+
+    Measurement only — no assertion, no mesh cache (each rung builds its own mesh
+    so the gate's cached mesh above is never evicted).  Returns
+    ``(beta, max_miss, rms_miss, relative_l2_miss, ncells)``.
+    `scripts/probes/th15_pec_hole_resolution.py` imports this; the import must go
+    that way round, since this module is the one under test.
+    """
+    comm = MPI.COMM_WORLD
+    msh, cell_tags, facet_tags = MeshGenerator.sphere_in_box_domain(
+        sphere_radius=SPHERE_RADIUS,
+        box_half_width=BOX_HALF_WIDTH,
+        resolution_sphere=resolution_sphere,
+        resolution_far=resolution_far,
+        comm=comm,
+        as_hole=True,
+    )
+    problem = TimeHarmonicProblem(
+        mesh=msh,
+        frequency_hz=FREQUENCY_HZ,
+        material=HomogeneousMaterial(sigma=0.0, epsilon_r=1.0),
+        cell_tags=cell_tags,
+        facet_tags=facet_tags,
+        boundary_condition="pec_zero_tangential_a",
+        dirichlet_e_field=_pec_exterior_numpy(),
+        pec_facet_tags=(OUTER_BOUNDARY_TAG, CAVITY_TAG),
+    )
+    fields = TimeHarmonicSolver(problem, degree=1).solve()
+
+    points = _probe_shells()
+    values, valid = evaluate_vector_field_parallel(fields.e_real, points, comm)
+    if not np.all(valid):
+        raise RuntimeError("probe points not evaluated")
+    e = np.real(values[:, :3])
+    basis = _dipole_basis(points)
+    beta = float(np.sum((e - _uniform_field(points)) * basis) / np.sum(basis * basis))
+    closed = _uniform_field(points) + BETA_PEC * basis
+    misses = np.linalg.norm(e - closed, axis=1) / E0
+    rel_l2 = float(np.linalg.norm(e - closed) / np.linalg.norm(closed))
+    # Rank-safety: `size_local` counts this rank's owned cells only.
+    ncells = int(
+        comm.allreduce(msh.topology.index_map(msh.topology.dim).size_local, op=MPI.SUM)
+    )
+    return beta, float(np.max(misses)), float(np.sqrt(np.mean(misses**2))), rel_l2, ncells
 
 
 @complex_only
@@ -256,8 +324,16 @@ def test_pec_hole_reproduces_the_conducting_sphere_dipole_coefficient():
     comm = MPI.COMM_WORLD
     msh, _, facet_tags = _hole_mesh()
 
-    beta, pointwise, imag_ratio, cavity_dof_max, ncells, ndirichlet = _solve((1, 2))
+    beta, pointwise, pointwise_rms, imag_ratio, cavity_dof_max, ncells, ndirichlet = _solve(
+        (1, 2)
+    )
     beta_miss = abs(beta - BETA_PEC)
+
+    # The field anchor: the relative-L2 exterior miss over the `TH-8` ladder.
+    rungs = [run(hs, hf) for hs, hf in LADDER]
+    h = np.array([hs for hs, _ in LADDER])
+    rel_l2 = np.array([r[3] for r in rungs])
+    rate = float(np.polyfit(np.log(h), np.log(rel_l2), 1)[0])
 
     # Rank-safety: `find` is rank-local, so the cavity's existence is a reduced
     # property of the mesh, not of this rank.
@@ -272,8 +348,24 @@ def test_pec_hole_reproduces_the_conducting_sphere_dipole_coefficient():
             f"f = {FREQUENCY_HZ / 1e6:.4f} MHz, {ncells} cells, band = {BAND:.4%}"
         )
         print(f"  fitted beta = {beta:.6f}   |beta - 1| = {beta_miss:.4%}")
-        print(f"  max pointwise |E - E_closed|/E0 on r = 1.2R, 1.5R: {pointwise:.4%}")
+        # Records, asserted nowhere: the pointwise miss is a first-order N1curl
+        # floor next to the pinned curved wall (`WF-6` step 3h disposition).
+        print(
+            f"  [record, not asserted] max pointwise |E - E_closed|/E0 on "
+            f"r = 1.2R, 1.5R: {pointwise:.4%}, rms {pointwise_rms:.4%}"
+        )
         print(f"  |Im E|/|Re E| = {imag_ratio:.3e}")
+        print(
+            "  ladder (h_sphere, cells, |beta-1|, max, rms, rel-L2): "
+            + "; ".join(
+                f"{hs:.5f} {n} {abs(b - BETA_PEC):.3%} {mx:.3%} {rms:.3%} {l2:.3%}"
+                for (hs, _), (b, mx, rms, l2, n) in zip(LADDER, rungs)
+            )
+        )
+        print(
+            f"  fitted rate in h of the relative-L2 exterior miss = {rate:+.4f} "
+            f"(floor {POINTWISE_CONVERGENCE_RATE_FLOOR})"
+        )
         print(
             f"  cavity dofs (tag {CAVITY_TAG}, reduced) = {n_cavity_dofs}, "
             f"max |E| on them = {cavity_dof_max:.3e}; total Dirichlet dofs = {ndirichlet}"
@@ -296,8 +388,11 @@ def test_pec_hole_reproduces_the_conducting_sphere_dipole_coefficient():
         f"beta = 1 by {beta_miss:.4%}, over the {BAND:.4%} band (2x the TH-8 "
         f"record miss {TH8_RECORD_INTERIOR_MISS:.4%})"
     )
-    assert pointwise <= BAND, (
-        f"max pointwise exterior miss {pointwise:.4%} exceeds the {BAND:.4%} band"
+    assert rate >= POINTWISE_CONVERGENCE_RATE_FLOOR, (
+        f"the exterior relative-L2 miss converges at only {rate:+.4f} in h "
+        f"(floor {POINTWISE_CONVERGENCE_RATE_FLOOR}) over rel-L2 = "
+        f"{', '.join(f'{v:.3%}' for v in rel_l2)} at h = {list(h)} — the exterior "
+        "field is not converging to the perfect-conductor closed form"
     )
 
 
@@ -310,7 +405,7 @@ def test_natural_cavity_is_the_negative_control():
     cases by more than ``|β_void − β_PEC| = 1.5``, so nothing larger is claimed.
     """
     comm = MPI.COMM_WORLD
-    beta, pointwise, _, cavity_dof_max, ncells, ndirichlet = _solve((OUTER_BOUNDARY_TAG,))
+    beta, pointwise, _, _, cavity_dof_max, ncells, ndirichlet = _solve((OUTER_BOUNDARY_TAG,))
     beta_miss = abs(beta - BETA_PEC)
 
     if comm.rank == 0:
