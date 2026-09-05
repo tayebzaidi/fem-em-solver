@@ -18407,3 +18407,88 @@ excluded by anything measured this slot.
 **Timebox.** Slot start 19:30 CDT; executor returned at ≈ minute 17; entry and
 verification inside minute 30. Every number above was re-read from the logs by
 the slot, not taken from the executor's report.
+
+---
+
+## 2026-09-05T02:20Z — `PORT-14` step 1 — **complete as a negative result (code lands, pre-stated band missed; §7 row 🟡)** (2026-09-04 21:00 CDT implementer slot)
+
+**Preflight.** Tree clean at `995e7fe`; no `attempt/*`, no `recovered/*`;
+container Up ≈ 30 h. §9 On-deck item 1 (`POST-6` step 1) was already marked
+executed by the 19:30 slot, so **item 2 — `PORT-14` step 1** — was taken as
+the first item not done or blocked, as written, and delegated to the
+`implementer` agent spawned **foreground** per step 3. No background harness
+call, no docker-socket denial, no allowlist denial, no compute-safety event,
+no container wedge.
+
+**Landed:** commit `12461d6` on `main`, tree clean after. Code + tests + both
+harness logs + two `test-results.md` rows + the §7 row flip + the §9 item 2
+strike + the known-issues entry, in one commit. Two windows, both `-n 2`,
+complex build: `tests/environment` green first (11 passed, **29 s**,
+`20260905T020353Z_PORT-14.log`), then the gate module, heavy tier by ceiling
+(`timeout -k 30 560`), **105 s**, 13 solves on one 116 085-cell mesh
+(`20260905T020428Z_PORT-14.log:1896,1911–1912`).
+
+**What exists now.** `src/fem_em_solver/ports/circuit.py` (new) with
+`reduce_terminated_ports(s, z0, terminations)` implementing
+`S' = S_aa + S_ab Γ (I − S_bb Γ)⁻¹ S_ba` and
+`termination_reflection_coefficient`, pure numpy — this is the file §9 item 3
+(`PORT-15` step 1) was told it might have to create; it now exists and item 3
+extends it. `ports/lumped.py` gains `series_rlc_impedance(frequency_hz, *,
+r_ohm, l_h, c_f)`. **No `src/` widening beyond the item's letters (a) and
+(b):** `sheet_resistivity_ohm_per_square` needed no edit at all — it already
+did `complex(port_impedance_ohm)` and rejects only zero, and nothing in
+`lumped.py` applies `<=`/`max`/`min` to it, so no pre-existing behaviour
+moved and the 18:00 review's ruling (a) gate re-run was not owed. The item's
+"check whether the sweep lets a sheet be terminated without being an S port"
+trap resolved as the item's fallback predicted: it does not, so the three
+terminated cases are driven through `run_lumped_sheet_port_case` directly.
+
+**The measurement, all digits re-read from the log by the slot.** 50 Ω
+baseline reproduces `PORT-9` on this run's own mesh — `‖S − Sᵀ‖/‖S‖ =
+**1.464324816e-14**` against the imported 1e-3 band, `σ_max = **0.999992805**`
+(`…020428Z:1854`). With P1 terminated and P2/P3/P4 driven,
+`‖S'_meas − S'_pred‖_F/‖S'_pred‖_F` = **1.595580e-03** (C = 100 pF,
+`Z_p = −j1.591549e+02`, |Γ| = 1.000000), **3.370512e-03** (L = 1 µH,
+`+j6.283185e+01`, |Γ| = 1.000000), **7.249519e-04** (R = 200 Ω, Γ = +0.600000)
+against the pre-stated **1e-3** (`:1850–1878`); three drives in 18.64 / 17.49 /
+17.41 s. The ceiling-first Γ = 0 control passes **with room** and was computed
+in-run before asserting: `Δ = 3.218888e-01 / 3.254627e-01 / 2.112830e-01` from
+the 4×4 itself, all far above the 5e-3 floor, so all three were asserted; the
+measured misses are `3.219520e-01 / 3.267853e-01 / 2.120063e-01`, 200–330× the
+band (`:1881–1884`). Footer `1 failed, 2 passed in 102.72s` (`:1896`).
+
+**Negative-result protocol followed as written.** Two residuals land in
+(1e-3, 1e-2], which §9 item 2 defines as the finding *"the lumped sheet is
+single-mode to 3.4e-03, not 1e-3"*: `REDUCTION_BAND` stays **1e-3** and was
+not widened, the three residuals are in a known-issues 🟡 row, the §7 row is
+🟡 not ✅, and the gate test is a **deliberate red on `main`** — the
+`POST-6` step-1 precedent one slot earlier. Nothing here is above 1e-2 and the
+50 Ω baseline reproduces `PORT-9`, so the item's "formulation defect — stop"
+branch was not reached.
+
+**Verification I did myself.** The executor's report is evidence, not a
+finding: I re-read `…020428Z_PORT-14.log` at `:1850–1884`, the failure text at
+`:1889–1895`, the pytest footer and the `Status 1 / Elapsed 105` exit block
+before committing this entry, and read the commit's diff of known-issues.md,
+test-results.md and both PROJECT_PLAN edits. Every digit above is one I read
+in a log. The claim "no `src/` widening" I checked against the diff's file
+list — `lumped.py` is +47 lines and `circuit.py` is new; nothing else under
+`src/`.
+
+**Hypothesis for the next attempt.** The residual tracks **|Γ|**, not the
+element type: the two lossless terminations (|Γ| = 1) read 1.6e-03 and
+3.4e-03 while the lossy one (|Γ| = 0.6) reads 7.2e-04, which is the ordering a
+"the sheet is not exactly one mode, and total reflection re-excites the
+higher-order content" story predicts and *not* one a complex-`Z_p` arithmetic
+bug would produce (an arithmetic bug would not leave R = 200 Ω inside the band
+while C = −j159 Ω sits outside). So a step 1b should sweep the sheet's facet
+resolution and the interior-width fraction on the **capacitor** case and
+re-measure, before anyone touches the reduction algebra. Two consequences for
+the queue: §9 item 3 (`PORT-15` step 1) should compare against the measured
+3×3 with these three numbers in hand rather than re-deriving them, and its
+`reduce_terminated_ports` contract is already satisfied by the file that
+landed here.
+
+**Timebox.** Slot start 21:00 CDT; executor returned at ≈ minute 12; entry and
+verification inside minute 30. Both remaining §9 items open after this slot
+are 3 (`PORT-15` step 1) and 4–7; the 22:30 slot takes item 3.
