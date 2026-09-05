@@ -19126,3 +19126,88 @@ leaked power. Writing the item is review work.
 executor spawned foreground ≈ minute 3 and returned ≈ minute 8; digits
 re-read from the logs, tree and commits verified, journal written inside
 minute 20. No new implementation work started after minute 45.
+
+## 2026-09-05T18:55Z — `GEO-25` step 2 — **complete** (§4-done, row 🧪 → ✅)
+
+*(2026-09-05 13:30 CDT scheduled implementer slot.)*
+
+**Preflight.** `git status` clean on `main` at `3f2c6b0`; container Up ≈ 46 h.
+No `recovered/*`, no `attempt/*` (the 12:00 slot deleted the `TH-15` park).
+§9 item 1 is marked DONE by that slot, so **item 2 (`GEO-25` step 2) was the
+first item neither done nor blocked** — taken without deviation.
+
+**What was tried.** Delegated to the `implementer` agent, spawned
+**foreground**, with the never-background / `timeout -k 30` /
+repo-relative-harness-path / never-loosen-a-band / literal-`-m` /
+no-`docker-compose.yml`-edit rules restated in the spawn prompt, plus standing
+rules (b), (c) and (d). The item's plan executed as written: `_params`,
+`BASE_RING_RADIUS` and `LEG_COUNT` moved **verbatim** out of
+`scripts/probes/geo25_ring_radius_cost_probe.py` into the new
+`tests/validation/test_birdcage_f_human_rung.py`, which is now the single
+source of the F-human parameter set, with the probe importing them back; the
+branch-B 0.15 m rung asserted on four anchors and the branch-A rung asserted
+as the below-gate control. Every band **imported**, none new: `CELL_COUNT_BAND`
+= 0.01, the `GEO-18` `EXACT` = 1e-9, `CAD_MASS_GATE` = 0.95. Two
+version-tagged cell records registered under the (1\*) licence
+(`F_HUMAN_BRANCH_B_CELL_RECORD`, `F_HUMAN_BRANCH_A_CELL_RECORD`), both
+asserted **at the band, never at equality** (the `OPS-27` stale-exact class).
+**No band moved, nothing in `src/` changed**, so ruling (c) does not bite.
+
+| harness log | Status | elapsed | ranks |
+| --- | --- | --- | --- |
+| `20260905T183314Z_GEO-25.log` — collect-only smoke | 0 | 4 s | `-n 2` |
+| `20260905T183324Z_GEO-25.log` — gate, output captured | 0 | 197 s | `-n 2` |
+| `20260905T183654Z_GEO-25.log` — **the record run**, `-s` | 0 | 196 s | `-n 2` |
+| `20260905T184025Z_GEO-25.log` — probe-import check | 0 | 2 s | `-n 2` |
+
+Heavy by ceiling (`timeout -k 30 560`), real build, 399 s of compute across
+four windows. No overrun, no wedge, no allowlist denial, no docker-socket
+denial.
+
+**Measured — every digit re-read from the log by this slot, not taken from
+the executor's report** (`20260905T183654Z_GEO-25.log`, `2 passed in 194.05s`
+at `:20030`, Elapsed 196 s at `:20037`):
+
+- **Branch B (the fixture, `scale_sizing=False`)**, `:9730–9735`, mesh
+  109.350 s: cells **504 642 vs record 504 642, relative 0.000e+00**;
+  volume partition **1.000000000000** (total 9.663827405e-02 m³); terminal
+  ratio **0.974454791 … 0.974455230** on all 32 ring ports, inside [0.95, 1.0];
+  meshed/CAD conductor **0.965414**, **+0.015414** over the gate.
+- **Branch A (the negative control, `scale_sizing=True`)**, `:20017–20022`,
+  mesh 63.498 s: cells **204 977 vs record 204 977, relative 0.000e+00**;
+  partition **1.000000000000**; terminal ratio **0.974445583 … 0.974446474**;
+  meshed/CAD **0.893028**, **−0.056972** under the same gate.
+- **Separation assert** `:20024–20027`: **0.893028 < 0.95 ≤ 0.965414**,
+  spread **0.072387**. Fixed absolute mesh sizing is now a *gated* conclusion
+  rather than step 1's ungated reading.
+- Probe digits **unmoved**: all 16 printed parameters in
+  `20260905T184025Z_GEO-25.log` match `20260904T214031Z_GEO-25.log:36–50`.
+
+**Determinism note for the review.** Step 1's determinism repeat was on the
+0.10 m branch-A rung, so the 0.15 m rungs were unrepeated; both now reproduce
+at **0.000e+00** in a fresh process at `-n 2` (step 1 ran at `-n 1`). **No
+known-issues entry is owed** — nothing unrelated failed and `main`'s red set
+is unchanged (the 5 deliberate/known at `-n 2`).
+
+**Deviation, disclosed.** Two full 195 s gate runs were spent: the first
+(`…183324Z`) passed but pytest captured the prints, so the module was re-run
+with `-s` to produce a readable record. Cheap here, but a gate module built
+around printed records should carry `-s` in the harness command from the
+first window.
+
+**Commit.** **e9c7c39** — the new test module, the probe's import change,
+four logs, four `test-results.md` rows, the `GEO-25` §7 row flipped
+**🧪 → ✅** with the step-2 paragraph, and **§9 item 2 marked DONE in the same
+commit** (standing rule (d)). Eight files. `main` clean at slot end.
+
+**Hypothesis for the next attempt.** The F-human rung is now gated on **CAD
+identities only** — no solve has ever touched it. The open question the
+executor names, and the one §10 Phase 6 actually dates itself from, is whether
+504 642 cells at 0.752 GiB survives a *time-harmonic solve* at 64 MHz; that is
+the `TH-16` symmetry-plane lever's real test and wants a cost probe before any
+Phase 6 date is quoted. Scoping it is review work, not slot work.
+
+**Timebox.** Slot start 13:30 CDT. Protocol read and preflight by minute 3;
+executor spawned foreground ≈ minute 5 and returned ≈ minute 16; digits
+re-read from the log, tree, asserts and commit verified, journal written
+inside minute 30. No new implementation work started after minute 45.
