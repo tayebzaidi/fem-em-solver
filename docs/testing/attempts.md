@@ -18835,3 +18835,95 @@ the `POST-6` §7 disposition rule, not an implementer's.
 
 **Timebox.** Slot start 06:00 CDT; item read and code written by ≈ minute 25;
 single harness window 104 s; docs + commit inside minute 45.
+
+---
+
+## 2026-09-05T12:45Z — `TH-15` step 1 — **incomplete** (gate green, one
+## pre-stated anchor red; code parked)
+
+**Slot.** 2026-09-05 07:30 CDT scheduled implementer run. Preflight clean on
+`b3a5ade`, container Up ≈ 42 h. §9 On deck items 1 (`EX-48`) and 2 (`POST-6`
+step 1b) already marked done by the 04:30 / 06:00 slots, so this run took
+**item 3**, the first open one, exactly as written. Executed by the
+`implementer` agent, spawned **foreground** with the never-background rule,
+the harness-only rule and the pre-stated band in its prompt; every digit
+below was **re-read from the logs by this slot**, not taken from the
+executor's report.
+
+**Outcome: incomplete.** The step-1 gate passes. A *different* pre-stated
+anchor — (ii), the pointwise field miss — fails at a floor the run measured
+and converged, and re-scoping a pre-stated band is a review's call, not an
+implementer's. So nothing was widened, the code is parked, and `main` carries
+only the record.
+
+**What was tried.** All three code parts of item 3 written: (a)
+`MeshGenerator.sphere_in_box_domain(..., *, as_hole=False)` with the cavity
+facet group built from `getBoundary` of the *meshed* air volume (step 0's
+abort mechanism avoided); (b) `TimeHarmonicProblem.pec_facet_tags` threaded
+into `build_boundary_conditions`; (c) `tests/validation/test_pec_sphere_hole.py`
+on the middle `TH-8` rung, plus the additive
+`TH8_RECORD_INTERIOR_MISS = 0.02443` in `test_dielectric_sphere.py` and a
+resolution probe `scripts/probes/th15_pec_hole_resolution.py`.
+
+**Measured (all re-read by this slot).**
+
+* (i) **gate, green** — fitted exterior dipole coefficient **β = 1.019746,
+  |β − 1| = 1.9746%** vs the 4.886% band, 13 239 cells
+  (`20260905T123453Z_TH-15.log:132–133`).
+* control, **green** — natural cavity (`pec_facet_tags=(1,)`):
+  **β = −0.419038** against the void's closed-form −½, |β − 1| =
+  **141.9038% = 29.0×** the band, inside the 1.5 ceiling, over the 5× bar
+  (`:141`).
+* (iii) `|Im E|/|Re E|` = **0.000e+00** (`:135`).
+* (iv) cavity dofs on tag 2, reduced = **1702**, max |E| on them
+  **0.000e+00** (`:136`).
+* (v) route equality — Dirichlet dofs `None` / `(1,2)` / `(1,)` =
+  **4836 / 4836 / 3134**, per-rank `np.array_equal` true (`:147`).
+* (ii) **RED** — max pointwise `|E − E_closed|/E₀` over both shells =
+  **46.0725%** vs 4.886% (`:134`); per-shell 46.07 / 35.14% max, rms
+  22.70 / 13.41%, rel-L2 15.64% (`20260905T123612Z_TH-15.log:101–102`).
+* ladder (h = 0.0125 / 0.00833 / 0.00625; 4530 / 13 239 / 29 563 cells):
+  β-miss **9.305 / 1.975 / 2.864%**, max miss **59.164 / 46.072 / 20.540%**,
+  rms **25.068 / 18.644 / 10.728%**, rel-L2 **21.031 / 15.641 / 9.000%**;
+  fitted rates in h **+1.8401 / +1.4661 / +1.1917 / +1.1917**
+  (`20260905T123827Z_TH-15.log:191–199`, Status 0 / 6 s).
+* `TH-8` regression with the keyword off: **2 passed in 10.59s**, Status 0 /
+  12 s, finest rung 2.442% = the imported record to the digit
+  (`20260905T123859Z_TH-15.log:345, 351–352`).
+
+**Harness windows.** Standard tier, `-n 2`, complex build,
+`timeout -k 30 300`, all foreground: `…123453Z` 28 s (Status 1, the gate
+module), `…123612Z` 5 s (Status 1, diagnostics), `…123812Z` 2 s (Status 1 —
+a probe import path miss, `PYTHONPATH` lacked `/workspace`; corrected in the
+next window), `…123827Z` 6 s (Status 0, ladder), `…123859Z` 12 s (Status 0,
+`TH-8`). ≈ 53 s of compute total, every window footered, no overrun, no
+wedge, no allowlist denial, no docker-socket denial.
+
+**Commits.** Record on `main`: **32fce39** — `TH-15` §7 row ⬜ → 🟡 with a
+full step-1 measurement block, `test-results.md` rows, five logs. No `src/`
+or `tests/` change reached `main`; §9 item 3 deliberately left un-ticked.
+Code parked: **5e804a5** on **`attempt/TH-15-20260905T124500Z`**
+(`io/mesh.py`, `core/time_harmonic.py`, `test_dielectric_sphere.py`,
+`test_pec_sphere_hole.py`, `scripts/probes/th15_pec_hole_resolution.py`).
+`main` clean at slot end.
+
+**No known-issues entry** — the failing module never landed on `main`, so
+`main`'s red set is unchanged (still the 5 deliberate/known at `-n 2`); the
+finding is durable in the §7 step-1 bullet.
+
+**Hypothesis for the next attempt / ruling owed by the review.** Anchor (ii)
+is a converging pointwise floor of lowest-order N1curl one cell (≈ 1.2 h)
+from a Dirichlet-pinned curved wall — the `WF-6` step 3h class — not a solver
+defect: it falls at +1.47 in h and is still 20.5% on the *finest* `TH-8` rung,
+while β fitted from the *same* 48 points is right to 2% because the pointwise
+error is orthogonal to the dipole column. The review's call is a two-line
+change on the parked branch: demote (ii) to a printed record and close step 1
+on (i), (iii), (iv), (v) + the control with the band untouched, or re-point it
+at the converging quantity (rel-L2, or the fitted coefficient). Note this
+restates the 03:00 review's own argument that a ~5% *field* band cannot
+discriminate on this fixture — the same reasoning that moved the gate to β
+should have moved anchor (ii) with it.
+
+**Timebox.** Slot start 07:30 CDT; executor spawned foreground ≈ minute 3 and
+returned ≈ minute 13; digits re-read from the logs and journal written inside
+minute 30. No new implementation work started after minute 45.
