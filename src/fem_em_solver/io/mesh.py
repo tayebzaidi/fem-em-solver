@@ -2033,11 +2033,22 @@ class MeshGenerator:
         resolution_far: float = 0.025,
         comm: MPI.Intracomm = MPI.COMM_WORLD,
         rank: int = 0,
+        *,
+        as_hole: bool = False,
     ) -> Tuple[dolfinx.mesh.Mesh, dolfinx.mesh.MeshTags, dolfinx.mesh.MeshTags]:
         """Dielectric sphere centred in a cubic air box (`TH-8`).
 
         Cell tags: ``1`` sphere, ``2`` air.  Facet tag ``1`` is the outer
         boundary of the cube.
+
+        With ``as_hole=True`` (`TH-15` step 1) the sphere is *cut* from the box
+        instead of fragmented into it: the meshed cell set is air only (tag
+        ``2``, no tag ``1``), and the cavity wall arrives as facet tag ``2``.
+        That surface group is built from the **meshed** volume's boundary, never
+        from the cut tool — `TH-15` step 0 measured that a retained tool's faces
+        are not the cavity's, and tagging them makes ``_model_to_mesh`` abort
+        with ``nodes not attached to any tet`` / ``Invalid rank``.  ``False``
+        (the default) leaves the `TH-8` generator bit-identical.
 
         Sizing is graded through a ``Ball`` field rather than a single global
         ``setSize``: the interior of the sphere is where the gate measures, and
@@ -2081,40 +2092,15 @@ class MeshGenerator:
             sphere = gmsh.model.occ.addSphere(0.0, 0.0, 0.0, R)
             box = gmsh.model.occ.addBox(-W, -W, -W, 2 * W, 2 * W, 2 * W)
 
-            gmsh.model.occ.fragment([(3, box)], [(3, sphere)])
-            gmsh.model.occ.synchronize()
-
-            # Identify by mass, not by the tags fragment hands back.
-            sphere_mass = 4.0 / 3.0 * np.pi * R**3
-            sphere_volume = None
-            air_volume = None
-            for dim, tag in gmsh.model.getEntities(dim=3):
-                mass = gmsh.model.occ.getMass(dim, tag)
-                if abs(mass - sphere_mass) < 0.05 * sphere_mass:
-                    sphere_volume = tag
-                else:
-                    air_volume = tag
-
-            if sphere_volume is None or air_volume is None:
-                raise RuntimeError(
-                    "sphere_in_box_domain: fragment did not produce the expected "
-                    f"sphere/air volumes (got {gmsh.model.getEntities(dim=3)})"
-                )
-
-            gmsh.model.addPhysicalGroup(3, [sphere_volume], tag=1)
-            gmsh.model.setPhysicalName(3, 1, "sphere")
-            gmsh.model.addPhysicalGroup(3, [air_volume], tag=2)
-            gmsh.model.setPhysicalName(3, 2, "air")
-
             # `GEO-12`: 1e-9 -> 1e-6, same measured defect as above and as
             # `GEO-10`. The OCC bounding-box padding is 1.000e-07, so the old
             # tolerance accepted 0 of 7 surfaces and never declared the group
             # (known-issues 12); the nearest interior face is at 1.500e-01.
             tol = 1e-6
-            boundary_surfaces = []
-            for dim, surf in gmsh.model.getEntities(dim=2):
+
+            def _on_wall(dim: int, surf: int) -> bool:
                 x0, y0, z0, x1, y1, z1 = gmsh.model.getBoundingBox(dim, surf)
-                on_wall = (
+                return (
                     abs(x0 + W) < tol and abs(x1 + W) < tol
                     or abs(x0 - W) < tol and abs(x1 - W) < tol
                     or abs(y0 + W) < tol and abs(y1 + W) < tol
@@ -2122,8 +2108,71 @@ class MeshGenerator:
                     or abs(z0 + W) < tol and abs(z1 + W) < tol
                     or abs(z0 - W) < tol and abs(z1 - W) < tol
                 )
-                if on_wall:
-                    boundary_surfaces.append(surf)
+
+            if as_hole:
+                cut_out, _ = gmsh.model.occ.cut([(3, box)], [(3, sphere)])
+                gmsh.model.occ.synchronize()
+
+                volumes = gmsh.model.getEntities(dim=3)
+                if len(volumes) != 1:
+                    raise RuntimeError(
+                        "sphere_in_box_domain(as_hole=True): cut did not leave a "
+                        f"single air volume (got {volumes}, cut returned {cut_out})"
+                    )
+                air_volume = volumes[0][1]
+
+                gmsh.model.addPhysicalGroup(3, [air_volume], tag=2)
+                gmsh.model.setPhysicalName(3, 2, "air")
+
+                # The surface groups come from the *meshed* volume's boundary
+                # (`TH-15` step 0's rule): every face of the air volume is either
+                # an outer wall or the cavity wall, and both are faces of tets.
+                boundary_surfaces = []
+                cavity_surfaces = []
+                for dim, surf in gmsh.model.getBoundary(
+                    [(3, air_volume)], oriented=False, recursive=False
+                ):
+                    if _on_wall(dim, surf):
+                        boundary_surfaces.append(surf)
+                    else:
+                        cavity_surfaces.append(surf)
+                if not cavity_surfaces:
+                    raise RuntimeError(
+                        "sphere_in_box_domain(as_hole=True): the air volume has no "
+                        "non-wall boundary face, so the cavity surface is missing"
+                    )
+                gmsh.model.addPhysicalGroup(2, cavity_surfaces, tag=2)
+                gmsh.model.setPhysicalName(2, 2, "cavity_surface")
+            else:
+                gmsh.model.occ.fragment([(3, box)], [(3, sphere)])
+                gmsh.model.occ.synchronize()
+
+                # Identify by mass, not by the tags fragment hands back.
+                sphere_mass = 4.0 / 3.0 * np.pi * R**3
+                sphere_volume = None
+                air_volume = None
+                for dim, tag in gmsh.model.getEntities(dim=3):
+                    mass = gmsh.model.occ.getMass(dim, tag)
+                    if abs(mass - sphere_mass) < 0.05 * sphere_mass:
+                        sphere_volume = tag
+                    else:
+                        air_volume = tag
+
+                if sphere_volume is None or air_volume is None:
+                    raise RuntimeError(
+                        "sphere_in_box_domain: fragment did not produce the expected "
+                        f"sphere/air volumes (got {gmsh.model.getEntities(dim=3)})"
+                    )
+
+                gmsh.model.addPhysicalGroup(3, [sphere_volume], tag=1)
+                gmsh.model.setPhysicalName(3, 1, "sphere")
+                gmsh.model.addPhysicalGroup(3, [air_volume], tag=2)
+                gmsh.model.setPhysicalName(3, 2, "air")
+
+                boundary_surfaces = [
+                    surf for dim, surf in gmsh.model.getEntities(dim=2) if _on_wall(dim, surf)
+                ]
+
             if boundary_surfaces:
                 gmsh.model.addPhysicalGroup(2, boundary_surfaces, tag=1)
                 gmsh.model.setPhysicalName(2, 1, "outer_boundary")

@@ -64,6 +64,13 @@ E0 = 1.0
 EPSILON_R_SPHERE = 78.0
 SPHERE_TAG = 1
 
+# The `TH-8` record: the finest rung's measured miss against the closed form
+# (PROJECT_PLAN §7, `TH-8`).  Asserted nowhere in this module — the gate above
+# asserts the 5% MVP bar and the convergence rate — but exported so a chunk that
+# reuses this fixture states its band from this fixture's own measured accuracy
+# rather than inventing one (`TH-15` step 1 imports it and doubles it).
+TH8_RECORD_INTERIOR_MISS = 0.02443
+
 # Quasi-static means kR ≪ 1 on *both* sides.  k₀R = 5e-3 puts the interior at
 # k_in R = √78 · 5e-3 = 4.4e-2, so the retardation correction the closed form
 # drops is O((k_in R)²) ≈ 0.2% — an order of magnitude under the discretisation

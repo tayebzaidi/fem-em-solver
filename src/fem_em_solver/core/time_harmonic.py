@@ -111,6 +111,9 @@ class TimeHarmonicProblem:
     phantom_tag: int = 3
     boundary_condition: TimeHarmonicBoundaryCondition | str = TimeHarmonicBoundaryCondition.NATURAL
     dirichlet_e_field: Optional[Callable] = None
+    # `TH-15` step 1: restrict the PEC Dirichlet set to these facet tags instead
+    # of every exterior facet.  ``None`` (the default) is the historical path.
+    pec_facet_tags: Optional[Sequence[int]] = None
     solver_petsc_options: Optional[Mapping[str, object]] = None
     collect_solver_diagnostics: bool = False
 
@@ -335,6 +338,13 @@ class TimeHarmonicSolver:
         zero, or to ``problem.dirichlet_e_field`` when one is supplied (that is
         how an analytic gate imposes a known total field on a truncation box).
         NATURAL leaves the boundary term alone, which is PMC.
+
+        ``problem.pec_facet_tags`` (`TH-15` step 1) narrows the constrained set
+        to the union of those tagged facets — an internal PEC body solved as a
+        hole is exactly this: the cavity wall carries the same homogeneous
+        tangential-trace condition, and leaving its tag out is what makes the
+        cavity *natural* (the negative control).  ``None`` keeps every exterior
+        facet, bit-identically.
         """
         mode = normalize_boundary_condition(self.problem.boundary_condition)
 
@@ -344,8 +354,25 @@ class TimeHarmonicSolver:
         v_space = self.function_space()
         fdim = self.mesh.topology.dim - 1
         self.mesh.topology.create_connectivity(fdim, self.mesh.topology.dim)
-        exterior_facets = dolfinx.mesh.exterior_facet_indices(self.mesh.topology)
-        exterior_dofs = fem.locate_dofs_topological(v_space, fdim, exterior_facets)
+        pec_facet_tags = self.problem.pec_facet_tags
+        if pec_facet_tags is None:
+            constrained_facets = dolfinx.mesh.exterior_facet_indices(self.mesh.topology)
+        else:
+            facet_tags = self.problem.facet_tags
+            if facet_tags is None:
+                raise ValueError(
+                    "pec_facet_tags requires problem.facet_tags so the tagged facets can be found"
+                )
+            requested = [int(tag) for tag in pec_facet_tags]
+            if not requested:
+                raise ValueError("pec_facet_tags was given but is empty; use None for every exterior facet")
+            # `facet_tags.find` is rank-local — a tag owned by no facet on this
+            # rank is legitimately empty here, so emptiness is only an error
+            # globally (the caller asserts the reduced count).
+            found = [np.asarray(facet_tags.find(tag), dtype=np.int32) for tag in requested]
+            constrained_facets = np.unique(np.concatenate(found)) if found else np.empty(0, np.int32)
+            constrained_facets = constrained_facets.astype(np.int32)
+        exterior_dofs = fem.locate_dofs_topological(v_space, fdim, constrained_facets)
 
         boundary_value = fem.Function(v_space)
         if self.problem.dirichlet_e_field is None:
