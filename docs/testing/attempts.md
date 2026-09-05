@@ -18682,3 +18682,95 @@ set is. §9 items 5, 6 and 7 remain open; the next slot takes item 5 (`EX-48`,
 
 **Timebox.** Slot start 00:00 CDT; executor returned ≈ minute 20; verification,
 plan updates and this entry inside minute 35.
+
+---
+
+## 2026-09-05T10:05Z — `EX-48` — **complete (✅)**
+
+**Slot.** 2026-09-05 04:30 CDT scheduled implementer run. Preflight clean on
+`52fb1af`, container Up ≈ 37 h, no `attempt/*` and no `recovered/*`. §9 item 1
+taken as written — `EX-48`, the first open On-deck item — delegated to
+`example-runner` spawned **foreground** with the never-background rule, the
+emit-then-harness rule, the repo-relative harness path and the
+both-census-windows-logged rule stated in the spawn prompt.
+
+**Outcome.** Landed on the first run, no negative result, no deviation from
+the §7 item. `examples/ports/12_birdcage_ring_quarter_turn.py` + same-stem
+`.md`; `ports:12` is auto-discovered by the runner, so no dispatch edit.
+**No `src/` change and no `tests/` change** — the executor took the `EX-47`
+route and imported `_build_ring_context` / `_solve_one_drive` unchanged, so
+the §9 standing rule (a) additive licence was never invoked.
+
+**Measured (all from `20260905T093738Z_EX-48.log`, re-read by me, not taken
+from the executor's report).** Cells **270 728** = the imported
+`RING_LONGITUDINAL_SCALED_CELL_RECORD`, ratio 1.000000 (`:10561`). P17's
+same-ring 4-step (90.000°) partner located **by measured azimuth** at
+`AZIMUTH_MATCH_DEG` = 1e-06 and asserted unique: **P21** (`:10563`;
+`12_birdcage_ring_quarter_turn.py:164`) — never the ordinal, as the item
+requires. Two solves 14.12 / 13.72 s at `-n 4` over the one mesh (`:10565`).
+Power-accounting residuals **9.679798e-03** (P17) / **9.680240e-03** (P21)
+inside `POWER_BALANCE_BAND` 1e-2 (`:10567–10569`); column passivity
+**0.915817419** / **0.916051643** with margins +0.0842 / +0.0839 against
+`COLUMN_PASSIVITY_CEILING` (`:10571–10573`); the P17 sum vs `PORT-13` step
+2's `-n 8` record 0.915817419 at relative **2.393e-10** under rtol 1e-3
+(`:10575`, 1e-6 explicitly not claimed because the rank count differs).
+**The C16 column identity** over all 32 ring ports: worst
+`|S_P21,P21|` = 4.305302359e-02 vs `|S_P17,P17|` = 4.300296718e-02, **rel
+0.1163%**, inside the imported `OPPOSITE_SPREAD_BAND` 5% (`:10577–10578`) —
+i.e. the example path reproduces step 3's ≤ 0.4426% comfortably, so the
+item's example/test-divergence branch was not reached. **Negative control:**
+the 3-step (67.5°) wrong rotation misses worst at i=P36 / ρ⁻³(i)=P33 by
+**1690.1743% = 338.035× the band** against the `CONTROL_MARGIN_FACTOR` 5×
+bar (`:10580–10581`).
+
+**Census, both windows through the harness and committed** (the `EX-43`
+demotion's lesson): pre `dead=0 guide=0 stale=74 exit=2`, 52 guides / 41
+runnable (`20260905T093454Z_EX-48-precensus.log:113`); the +1 guide / +1
+runnable / no-new-dead / no-new-stale delta predicted before reading; post
+`dead=0 guide=0 stale=74 exit=2`, 53 guides / 42 runnable
+(`20260905T093947Z_EX-48-postcensus.log:113`) — match. `exit != 1` both
+sides; the guide's three `EX-15` headings pass.
+
+**One reading worth the review's attention (ungated, printed only, exactly
+as scoped).** `|E|` on a 64-point ring (r = 0.02 m, z = 0) through
+`post.evaluation.evaluate_vector_field_parallel`, 64/64 points valid on both
+sides, P21 vs P17 rotated 90° (an exact 16-sample index shift on a 64-point
+ring) reads **RMS 16.5268%, worst 38.7992%** (`:10583`). No band and no
+assert — but this is roughly **8× the ~2%** the item quoted from `WF-6` step
+1's C4 field identities on the 4-leg mesh. The integral-level C16 identity
+is untouched by it (0.1163% on the same two solves), so the honest reading
+is that the 16-leg longitudinal ring rung's mesh is far less rotationally
+symmetric at CG1 than the 4-leg one, not that anything is wrong. Flagged
+here because the item's own estimate was off by an order of magnitude and a
+future field-level C16 chunk should size its band off **this** number, not
+`WF-6`'s.
+
+**Harness logs.** `20260905T093454Z_EX-48-precensus.log` (Status 2, 1 s) ·
+`20260905T093738Z_EX-48.log` (**Status 0, 112 s** harness / 108.7 s
+in-script) · `20260905T093947Z_EX-48-postcensus.log` (Status 2, 1 s). Every
+window inside the standard tier and far inside the 600 s runner ceiling; no
+compute-safety event, no container wedge, no docker-socket denial (the
+`--dry-run` emit-then-harness path worked first time), no denied command.
+
+**Verification I did myself.** Re-read the log's anchor block
+(`:10561–10589`) and the `Status: 0` / `Elapsed (s): 112` footer; grepped the
+example for executed `assert`s and confirmed all six anchors are asserts, not
+prints (`:270, 323, 327, 353, 354, 373, 411, 412, 440`); confirmed every band
+is an import from `test_port_birdcage_ring_column.py` (`:104–118`) and that
+the one literal, `STEP2_P17_PASSIVITY_SUM_RECORD = 0.915817419`, is a
+printed-not-named record carried with its provenance comment and checked at
+rtol 1e-3 (`:123–130`) — the `EX-46`/`EX-47` precedent, not a restatement;
+confirmed `git status --porcelain` shows nothing under `src/` or `tests/`;
+read both `RESULT:` lines myself. The executor's table and the logs agree on
+every digit.
+
+**Hypothesis for the next attempt.** Nothing here blocks anything: `EX-48`
+closed its own gate-ramp and opened no question the backlog does not already
+carry. §9 items 2–7 remain open and the next slot takes **item 2**
+(`POST-6` step 1b, implementer) — the power-wave identity
+`P_acc,k = supplied_k − Σ sheets_k` per single drive, which the 03:00
+review's arithmetic makes the one measurement that can settle whether
+`POWER_BALANCE_BAND`'s drive-level use is pointed at the wrong denominator.
+
+**Timebox.** Slot start 04:30 CDT; executor returned ≈ minute 17;
+verification, the §7 + §9 updates and this entry inside minute 40.
