@@ -1,0 +1,54 @@
+# Test Run
+- Chunk: PORT-15-port14-collect
+- Commit: 621ee6b2af77763987fc24ea25214fff5060b41c
+- Time (UTC): 2026-09-05 03:36:37
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 timeout -k 30 120 mpiexec -n 1 python3 -m pytest tests/validation/test_port_lumped_rlc_termination.py --collect-only -q'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Sep  3 13:49 .
+drwxr-xr-x 16 taz5297 taz5297 4096 Sep  4 22:36 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  721 Sep  3 13:49 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 1449 Aug 24 12:40 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 timeout -k 30 120 mpiexec -n 1 python3 -m pytest tests/validation/test_port_lumped_rlc_termination.py --collect-only -q'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collected 3 items
+
+<Dir workspace>
+  <Dir tests>
+    <Dir validation>
+      <Module test_port_lumped_rlc_termination.py>
+        <Function test_the_fifty_ohm_baseline_reproduces_the_port9_gates>
+        <Function test_the_terminated_solve_matches_the_circuit_reduction>
+        <Function test_the_zero_gamma_control_misses>
+
+========================== 3 tests collected in 1.58s ==========================
+
+## Exit
+- Status: 0
+- Elapsed (s): 3
+- Filtered lines (gmsh optimisation chatter): 0

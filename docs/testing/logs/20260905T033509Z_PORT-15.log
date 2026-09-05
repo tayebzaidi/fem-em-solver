@@ -1,0 +1,85 @@
+# Test Run
+- Chunk: PORT-15
+- Commit: 621ee6b2af77763987fc24ea25214fff5060b41c
+- Time (UTC): 2026-09-05 03:35:09
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 120 mpiexec -n 1 python3 -m pytest tests/unit/test_port_circuit_layer.py -v --tb=short -s'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Sep  3 13:49 .
+drwxr-xr-x 16 taz5297 taz5297 4096 Sep  4 22:32 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  721 Sep  3 13:49 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 1449 Aug 24 12:40 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 120 mpiexec -n 1 python3 -m pytest tests/unit/test_port_circuit_layer.py -v --tb=short -s'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... collected 10 items
+
+tests/unit/test_port_circuit_layer.py::test_ladder_closed_form_matches_the_mesh_matrix_eigenvalues[4] 
+[PORT-15 (i)] N = 4: closed-form mode frequencies (MHz), k = 0…N/2:
+  k=0:112.539540  k=1:45.944075  k=2:33.931948
+[PORT-15 (i)] N = 4: max |eig − closed form| / closed form = 5.280e-16
+PASSED
+tests/unit/test_port_circuit_layer.py::test_ladder_closed_form_matches_the_mesh_matrix_eigenvalues[16] 
+[PORT-15 (i)] N = 16: closed-form mode frequencies (MHz), k = 0…N/2:
+  k=0:112.539540  k=1:95.779118  k=2:71.687545  k=3:55.670482  k=4:45.944075  k=5:40.005813  k=6:36.444553  k=7:34.534661  k=8:33.931948
+[PORT-15 (i)] N = 16: max |eig − closed form| / closed form = 2.366e-15
+PASSED
+tests/unit/test_port_circuit_layer.py::test_one_detuned_leg_moves_the_spectrum_off_the_closed_form 
+[PORT-15 control] N = 4, one leg ×1.01 (ε = 0.01, ceiling 2ε/N = 5.000e-03):
+  per-mode |Δω²|/ω² = [2.2789e-03 4.1287e-03 0.0000e+00 7.6800e-16]
+  worst mode: 4.1287e-03 in ω², 2.0622e-03 in ω
+  k = 1 degenerate pair split: 4.1287e-03 in ω²
+PASSED
+tests/unit/test_port_circuit_layer.py::test_s_route_termination_equals_the_z_route[matched-50] 
+[PORT-15 (ii)] Z = 50.0 Ω: max |S'_S-route − S'_Z-route| = 1.388e-16  (‖S'‖_F = 0.701032)
+PASSED
+tests/unit/test_port_circuit_layer.py::test_s_route_termination_equals_the_z_route[C-100pF-at-10MHz] 
+[PORT-15 (ii)] Z = (-0-159.15j) Ω: max |S'_S-route − S'_Z-route| = 2.559e-16  (‖S'‖_F = 0.742108)
+PASSED
+tests/unit/test_port_circuit_layer.py::test_s_route_termination_equals_the_z_route[L-1uH-at-10MHz] 
+[PORT-15 (ii)] Z = 62.83j Ω: max |S'_S-route − S'_Z-route| = 2.666e-16  (‖S'‖_F = 0.857709)
+PASSED
+tests/unit/test_port_circuit_layer.py::test_s_route_termination_equals_the_z_route[R-200] 
+[PORT-15 (ii)] Z = 200.0 Ω: max |S'_S-route − S'_Z-route| = 2.359e-16  (‖S'‖_F = 0.723455)
+PASSED
+tests/unit/test_port_circuit_layer.py::test_s_route_termination_equals_the_z_route[short] 
+[PORT-15 (ii)] Z = 0.0 Ω: max |S'_S-route − S'_Z-route| = 1.671e-16  (‖S'‖_F = 0.826060)
+PASSED
+tests/unit/test_port_circuit_layer.py::test_s_route_termination_equals_the_z_route[open-1e9] 
+[PORT-15 (ii)] Z = 1000000000.0 Ω: max |S'_S-route − S'_Z-route| = 2.502e-16  (‖S'‖_F = 0.756262)
+PASSED
+tests/unit/test_port_circuit_layer.py::test_matched_termination_returns_s_aa_exactly 
+[PORT-15 (iii)] Γ = 0: max|S' − S_aa| = 0.000e+00 (1 port), 0.000e+00 (2 ports)
+PASSED
+
+============================== 10 passed in 1.80s ==============================
+
+## Exit
+- Status: 0
+- Elapsed (s): 4
+- Filtered lines (gmsh optimisation chatter): 0
