@@ -57,6 +57,7 @@ from tests.validation.test_dodd_deeds_impedance import (
     FEM_FREQUENCY_HZ,
     FEM_LIFTOFF,
     FEM_LOOP_RADIUS,
+    FEM_RESOLUTION_NEAR,
     FEM_SIGMA_SLAB,
     FEM_WIRE_RADIUS,
     SLAB_TAG,
@@ -106,9 +107,10 @@ def _solve_projected(msh, cell_tags, sigma_slab, comm):
 def projected_impedance_change():
     """Mesh once, solve the loaded/free pair on the default path.
 
-    Module-scoped for the same reason step 2b's fixture is: 138 490 cells on
-    0.11 (0.7.2: 138 619) and
-    ~27 s per solve at ``-n 2``.
+    Module-scoped for the same reason step 2b's fixture is, and it now imports
+    the same ``FEM_RESOLUTION_NEAR``: 418 888 cells on 0.11 since `MAT-6`
+    step 11 (the 0.005 fixture was 138 490 on 0.11 / 138 619 on 0.7.2), which
+    is why this module runs at ``-n 8``.
     """
     comm = MPI.COMM_WORLD
     comm.Barrier()
@@ -119,7 +121,7 @@ def projected_impedance_change():
         liftoff=FEM_LIFTOFF,
         box_half_width=FEM_BOX_HALF_WIDTH,
         resolution_wire=0.002,
-        resolution_near=0.005,
+        resolution_near=FEM_RESOLUTION_NEAR,
         resolution_far=0.025,
         near_half_width=0.06,
         near_depth=0.05,

@@ -226,6 +226,16 @@ FEM_CURRENT_A = 1.0
 # W = 0.15 and W = 0.20, so ΔR is converged in box size here; ΔX is not (5.57%
 # still moving), which is why ΔX is gated only on sign and magnitude below.
 FEM_BOX_HALF_WIDTH = 0.15
+#: The production near-field cell size, and the **single** site that owns it:
+#: the projected-drive gate, `EX-11` (``mat:1``) and `ANS-1` (``ans:1``) all
+#: import this name rather than restating the number.  `MAT-6` **step 11**
+#: (2026-09-06) promoted step 8's slab-refined rung 0.005 → 0.0025 — ~6.4 cells
+#: per skin depth instead of ~3.2 — after step 8 measured ΔR's deviation from
+#: the filament closed form falling 1.5834% → 0.2829% under that one knob.
+#: Cells: 418 888 on the dolfinx-0.11 image (0.7.2 probe: 417 914), the
+#: `OPS-27` step-2 re-record.  The 5% ΔR ceiling is unchanged — no band moved
+#: with the fixture.
+FEM_RESOLUTION_NEAR = 0.0025
 
 WIRE_TAG = 1
 SLAB_TAG = 3
@@ -313,9 +323,10 @@ def _reaction_impedance(msh, cell_tags, e_a, e_b, current_a, comm) -> complex:
 def fem_impedance_change():
     """Mesh once, solve three times, return the two reaction integrals.
 
-    Module-scoped because the mesh is 138 490 cells on 0.11 (0.7.2: 138 619)
-    and each solve is ~27 s at
-    ``-n 2``: the gate, the ΔX check and the null control share one fixture.
+    Module-scoped because the mesh is 418 888 cells on 0.11 since `MAT-6`
+    step 11 promoted ``FEM_RESOLUTION_NEAR`` to 0.0025 (the 0.005 fixture was
+    138 490 on 0.11 / 138 619 on 0.7.2): the gate, the ΔX check and the null
+    control share one fixture, and at this size the module wants ``-n 8``.
     """
     comm = MPI.COMM_WORLD
     msh, cell_tags, _ = MeshGenerator.loop_over_half_space_domain(
@@ -324,7 +335,7 @@ def fem_impedance_change():
         liftoff=FEM_LIFTOFF,
         box_half_width=FEM_BOX_HALF_WIDTH,
         resolution_wire=0.002,
-        resolution_near=0.005,
+        resolution_near=FEM_RESOLUTION_NEAR,
         resolution_far=0.025,
         near_half_width=0.06,
         near_depth=0.05,
@@ -381,11 +392,14 @@ def test_fem_regime_constraints_hold_for_the_eddy_current_kernel():
     k0_box = omega * np.sqrt(MU_0 * EPSILON_0) * 2 * FEM_BOX_HALF_WIDTH * np.sqrt(3.0)
     print(
         f"\n  loss tangent = {loss_tangent:.4g}; δ = {delta:.6f} m"
-        f" ({delta / 0.005:.2f} near-cells, slab {FEM_BOX_HALF_WIDTH / delta:.2f} δ deep);"
+        f" ({delta / FEM_RESOLUTION_NEAR:.2f} near-cells,"
+        f" slab {FEM_BOX_HALF_WIDTH / delta:.2f} δ deep);"
         f" k₀·diag = {k0_box:.4f}"
     )
     assert loss_tangent > 1.0e2, f"displacement current not negligible: {loss_tangent}"
-    assert delta / 0.005 > 3.0, f"skin depth under-resolved: {delta / 0.005} cells"
+    assert (
+        delta / FEM_RESOLUTION_NEAR > 3.0
+    ), f"skin depth under-resolved: {delta / FEM_RESOLUTION_NEAR} cells"
     assert FEM_BOX_HALF_WIDTH / delta > 3.0, "slab shallower than 3 δ"
     assert k0_box < 0.2, f"air-side retardation not negligible: k₀·diag = {k0_box}"
 
