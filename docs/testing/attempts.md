@@ -19456,3 +19456,99 @@ journal — there is no fallback chunk. For the 2026-09-06 weekly, on top of
 what the 10:30 review already listed: whether step 1c's inside-the-interval
 zero-crossing licenses a step 1d, and whether ε\*-style hand arithmetic on
 printed readings should be pre-registered rather than post-hoc.
+
+---
+
+## 2026-09-06T00:38Z — `PORT-14` step 1d — **complete**
+
+**Slot:** 2026-09-05 19:30 local implementer run. Preflight clean on `cdc0566`
+(no `attempt/*`, no `recovered/*`, container Up 2 days). §9 item 1 taken as
+written — the first item not marked done or blocked. Executor: `implementer`,
+spawned **foreground**, one executor, `run_in_background: false`; no turn ended
+with a harness window open. Closed on `main` at **e62aeb1**; tree clean.
+
+**Outcome: pre-registered reading (2)** — the linear/parabolic fit *holds* on a
+fourth point, but no measured geometric ratio predicts ε\*, so **no constant
+enters the sheet law and step 1e is not licensed**. The origin of ε\* is a
+field effect, recorded in the known-issues disposition, not a geometry the
+fixture already measures.
+
+**Numbers, all re-read from the log by this slot** (`20260906T003627Z_PORT-14-step1d.log`):
+ε\* recomputed *in code* from `STEP1C_RESIDUALS` as the exact parabola through
+the three (ε, r²) points — **−0.010735** (C) and **−0.010970** (L), mean
+**−0.010852**, fitted minima −1.375055e-07 / −1.178493e-06 (`:2005–2007`).
+Configuration D, all four told widths 7.294123600e-03 → **7.214965819e-03 m**
+(ratio 0.989147732, `:2094–2098`), reads residuals **5.756561e-05** (C) and
+**1.196780e-04** (L) — factors **0.036078 / 0.035507** of step 1's records and
+**0.057566× / 0.119678×** the 1e-3 band, both UNDER (`:2103–2105`), which
+excludes reading (3). Printed, **not asserted**: the width was fitted to these
+numbers, so D closes nothing. Geometry (`:2001–2004`): all four sheets
+identical to nine digits — 26 facets, area 5.835298880e-05 m², `h_bbox`
+8.000000000e-03 m, `w_law` 7.294123600e-03 m, `w_bbox` 9.167340025e-03 m,
+`h_mean` 6.365313018e-03 m, out-of-plane 0.0. Candidates (`:2008–2040`): the
+fill/ragged-edge ratio **−0.204336** (miss 0.193484), its inverse +0.256812,
+port-box-z −0.200000 / +0.250000, and the told `leg_gap_length` reproduced
+**exactly** by `h_bbox` ⇒ ε_geom = **+0.000000**, miss **0.010852** — the
+nearest candidate, and still 3.3× the match window. Verdict at `:2040`.
+
+**Asserted anchors, all green and all imported unmoved** (`:2099`,
+`:2110–2111`): cells **116 085 bitwise**; reciprocity **9.998294990e-15** vs
+`RECIPROCITY_BAND` 1e-3; σ_max **0.999993774** vs 1 + `PASSIVITY_SIGMA_TOLERANCE`
+1e-9. The Γ = 0 negative control (**asserted**, rule (e) label, backed by
+`20260905T213322Z_PORT-14-step1c.log:1990–1991`) reads Δ = **0.321025 /
+0.324791** — above the 5e-3 floor, so the miss was asserted and holds at
+**321× / 325×** the band, reproducing the 0.31–0.33 step 1/1c measured. Each of
+`REDUCTION_BAND` / `RECIPROCITY_BAND` / `PASSIVITY_SIGMA_TOLERANCE` still
+`grep`s to exactly one definition; `REDUCTION_BAND` stays 1e-3, the row stays
+🟡, and the deliberately red gate test was not re-run (15 deselected).
+
+**Diff:** `tests/validation/test_port_lumped_rlc_termination.py` only (+467,
+purely additive, everything skipped unless `FEM_EM_PORT14_WIDTH_SWEEP`), plus
+`PROJECT_PLAN.md` (§7 annotation, §9 item 1 marked DONE), `known-issues.md`
+(the 🟡 OPEN step-1 disposition extended — entry stays open, band not widened),
+`test-results.md`, two logs. **No `src/`, no §2, no band moved, no assertion
+loosened.** Log header commit `cdc0566` = the closer's parent, verified.
+
+**Three deviations, all disclosed by the executor and checked by this slot.**
+(1) Two harness windows, not one: a 4 s `--collect-only` import smoke
+(`20260906T003614Z_PORT-14-step1d-smoke.log`, 4/19 collected, Status 0) before
+the solve window — step 1c's precedent. (2) Inside the solve window,
+`tests/environment` and the `-k step1d` selection ran as two chained pytest
+calls, because a single `-k step1d` invocation would have deselected the
+environment tests. (3) **The match window was read as 0.3 × |ε\*| = ±0.003256,
+where §9 item 1 says "within 0.3 pp of ε\*" — 0.3 pp is ±0.003000.** The
+reading is unaffected: the nearest candidate misses by 0.010852, which is 3.3×
+either window, and no candidate lies between the two. Flagged for the review
+because the item's wording is ambiguous (a *relative* 0.3 fraction and an
+*absolute* 0.3 pp are different pre-registrations) and the next item that
+pre-registers a match window should say which.
+
+**One measurement note worth banking:** `area/(w_bbox·h_bbox) − 1`,
+`w_law/w_bbox − 1` and `h_mean/h_bbox − 1` are algebraically the **same
+number** and print as three identical rows (`:2008–2010`), so the plan's
+candidate list contains **two** independent geometric quantities, not four.
+A future geometric-origin item should widen the list rather than re-run these.
+Nothing rank-local was read: `area` and `w_bbox` arrive comm-reduced from
+`build_four_port_sweep`, so no facet vertices needed gathering.
+
+**Cost / safety.** One solve window, heavy by ceiling (`timeout -k 30 400`),
+`-n 2`, complex build, `FEM_EM_REQUIRE_COMPLEX=1`, `tests/environment` first
+(11 passed / 24.23 s at `:116`), pytest `-s` **from the first window** as the
+item required: `4 passed, 15 deselected in 110.42s` (`:2114`), Status 0,
+**Elapsed 137 s** (`:2120–2121`) against the ≈ 110 s + geometry estimate. Plus
+the 4 s smoke. No docker-socket denial, no allowlist denial, no compute-safety
+event, no container wedge. No new implementation work started after minute 45.
+
+**Next.** §9 item 1 is done. Open, in order: **item 2 `EX-50`** (`th:9`,
+`example-runner`), **item 3 `EX-51`** (`mesh:12`, `example-runner`), **item 4
+`TH-15` step 2a** (implementer), and **item 5 `MAT-6` step 11** as the spare —
+four items for the four slots before the 03:00 review, so the queue does not
+drain tonight. For the 2026-09-06 weekly: `PORT-14` step 2 is now unblocked by
+1d in the narrow sense that 1d returned a reading, but reading (2) means the
+width law keeps `A/h` with an **unexplained** −1.09% offset — whether step 2
+may proceed on a law with a measured-but-unattributed residual is the weekly's
+call, and the honest alternative is a step 1e that widens the candidate list
+(two quantities were tested, not four) or an `h`-rung that asks whether ε\*
+moves with the mesh. Also carried forward from the 16:30 slot and answered in
+the affirmative by this one: putting the fit in code with the residuals as
+constants worked exactly as intended — no hand arithmetic entered this entry.
