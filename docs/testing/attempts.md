@@ -19552,3 +19552,83 @@ call, and the honest alternative is a step 1e that widens the candidate list
 moves with the mesh. Also carried forward from the 16:30 slot and answered in
 the affirmative by this one: putting the fit in code with the residuals as
 constants worked exactly as intended — no hand arithmetic entered this entry.
+
+---
+
+## 2026-09-06T02:05Z — `EX-50` — **complete**
+
+Scheduled implementer slot, 2026-09-05 21:00 CDT. Preflight clean on `3f2b329`,
+`main`, container Up 2 days. §9 On-deck item 1 (`PORT-14` step 1d) was already
+DONE, so this slot took **item 2, `EX-50`** — the first item not marked done or
+blocked. Executor: **`example-runner`**, spawned **foreground**, with the
+never-background rule, the emit-then-harness rule, the repo-relative harness
+path, full-filename guide references and standing rule (e) in its prompt. It
+returned inside ~20 minutes of the 45-minute implementation window; I re-read
+every headline digit from the logs myself before committing, and they agree
+with its report.
+
+**Outcome: the example lands the gated capability and reproduces both of the
+gate module's own readings on the identical mesh.** New pair
+`examples/time_harmonic/09_pec_sphere_as_hole.py` / `.md`, registered `th:9`;
+no `src/` change, no `tests/` change, no band moved, the additive licence (rule
+(a)) not needed — every record, band and callable came from
+`tests/validation/test_pec_sphere_hole.py` by import
+(`BAND`, `BETA_PEC`, `BETA_VOID`, `CAVITY_TAG`, `CONTROL_CEILING`,
+`OUTER_BOUNDARY_TAG`, `RESOLUTION_*`, `TH8_RECORD_INTERIOR_MISS`,
+`_cavity_dofs`, `_dipole_basis`, `_pec_exterior_numpy`, `_probe_shells`,
+`_uniform_field`; `09_pec_sphere_as_hole.py:97–112`), plus the geometry
+constants from `test_dielectric_sphere`. Only `CONTROL_BAND_MULTIPLE = 5.0`
+is defined in the example, which is the §7 plan's own floor.
+
+**Digits, all re-read from `20260906T020307Z_EX-50.log` (header commit
+`3f2b329`, Status 0 `:111`, Elapsed 4 s `:112`):** cells **13239** on the
+gate's own rung, solved in 1.3 s (`:94`); anchor fitted **β = 1.019746**,
+`|β − 1| = 1.9746%` vs `BAND = 4.8860%` (`:95`) — the gate's reading on this
+mesh to the digit; cavity dofs (tag 2, reduced) **1702** > 0 with max `|E|` on
+them **0.000e+00** < 1e-12, total Dirichlet dofs 2427 (`:97`);
+`|Im E|/|Re E| = 0.000e+00` < 1e-6 (`:98`). **Negative control, asserted
+(rule (e): asserted because the gate module measured the *same* comparison on
+the *same* mesh — `20260905T170225Z_TH-15.log:303`, 29.0× against a 30×
+ceiling):** natural cavity `pec_facet_tags=(1,)`, 1576 Dirichlet dofs
+(`:100`), fitted **β = −0.419038** against the void closed form −0.5,
+`|β_control − 1| = 141.9038% = 29.0×` the band vs the `≥ 5×` floor (`:101`),
+max `|E|` on the unconstrained cavity dofs **1.410e-02** (`:103`). **Printed,
+never asserted:** max / rms pointwise miss on the probe shells **46.0725% /
+18.6437%** (`:96`), matching the gate's 46.07% / 18.64% records — the guide
+says why they are large while β is 2% (first-order Nédélec next to a pinned
+curved wall) and that the module asserts the convergence *rate* (+1.19 ≥ 0.8),
+not these numbers. Seven executed `assert`s at
+`09_pec_sphere_as_hole.py:292, 296, 300, 304, 342, 347, 352`. Writes one
+combined XDMF (`time_harmonic_09_pec_sphere_hole_combined.xdmf`) with
+`E_real` / `E_magnitude` plus `CellTags` and the cavity facet tag.
+
+**Census, both windows through the harness, predicted before read:** pre
+`dead=0 guide=0 stale=77 stale_severity=report exit=2`, 43 guides/runnable
+(`20260906T020153Z_EX-50-precensus.log:116`, Status 2, 1 s) → predicted 44/44
+with dead/guide/stale unchanged → post identical counters at **44**
+guides/runnable (`20260906T020354Z_EX-50-postcensus.log:116`, Status 2, 1 s).
+Exact match; guide-violation count stayed 0 and the guide carries all three
+`EX-15` headings.
+
+**One bookkeeping note for the review:** the 18:00 review's §9 preamble records
+the `main` census as `stale=76` at `f50defd`; both of this slot's windows read
+**77**, before and after, so the increment is not `EX-50`'s doing — it arrived
+with an intervening landing (`EX-49`/`PORT-14` step 1d). Flagged, not chased:
+`stale` is severity `report`, exit 2 is the census's normal stale exit, and
+nothing in this item touches it.
+
+**Cost / safety.** One example window plus two census windows, all foreground,
+all footered: 4 s / 1 s / 1 s against the **standard** 300 s tier
+(`-e th:9 -n 2 -t 300`, complex build sourced by the `th:` group, `-n 2`
+only). Emit-then-harness followed — `--dry-run` first, the emitted command run
+verbatim through `scripts/testing/run_and_log.sh`. No docker-socket denial, no
+allowlist denial, no compute-safety event, no container wedge. No new
+implementation work started after minute 45.
+
+**Next.** §9 items 1 and 2 are done. Open, in order: **item 3 `EX-51`**
+(`mesh:12`, `example-runner`, real build, ≈ 220 s), **item 4 `TH-15` step 2a**
+(implementer), **item 5 `MAT-6` step 11** as the spare — two items and a spare
+for the two slots before the 03:00 review, so the queue does not drain
+tonight. No new blocker, no known-issues entry (no example/test divergence:
+the example path reproduced the module's β to 1e-3 relative and its control
+factor to the digit).

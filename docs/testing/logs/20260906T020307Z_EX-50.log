@@ -1,0 +1,113 @@
+# Test Run
+- Chunk: EX-50
+- Commit: 3f2b32900a6e5017049055b1807dd751f70be95b
+- Time (UTC): 2026-09-06 02:03:07
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc "cd /workspace && source /usr/local/bin/dolfinx-complex-mode && PYTHONPATH=/workspace/src timeout -k 30 300 mpiexec -n 2 python3 examples/time_harmonic/09_pec_sphere_as_hole.py"
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Sep  4 23:31 .
+drwxr-xr-x 16 taz5297 taz5297 4096 Sep  5 21:03 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  721 Sep  3 13:49 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 2801 Sep  4 23:31 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc "cd /workspace && source /usr/local/bin/dolfinx-complex-mode && PYTHONPATH=/workspace/src timeout -k 30 300 mpiexec -n 2 python3 examples/time_harmonic/09_pec_sphere_as_hole.py"'
+========================================================================
+EX-50 — the conductor as a hole: PEC sphere cut from the mesh
+========================================================================
+
+[geometry] sphere R = 0.05 m cut from a 0.2 m air box (`sphere_in_box_domain(as_hole=True)`) — the sphere's cells are absent, its surface is facet tag 2
+[boundary] n x E = 0 on tags (1, 2): the outer wall carries the exact exterior Dirichlet data, the cavity wall carries the homogeneous PEC condition that stands in for the conductor
+[regime] f = 4.7713 MHz, lossless (sigma = 0)
+[vs th:3] `th:3` solves a sphere *inside* the mesh and lets eps set the field; here no sphere is meshed at all, and n x E = 0 on a hole's wall produces the perfect-conductor limit beta = 1.0 instead
+Info    : Meshing 1D...
+Info    : [ 10%] Meshing curve 2 (Circle)
+Info    : [ 30%] Meshing curve 4 (Line)
+Info    : [ 30%] Meshing curve 5 (Line)
+Info    : [ 40%] Meshing curve 6 (Line)
+Info    : [ 50%] Meshing curve 7 (Line)
+Info    : [ 50%] Meshing curve 8 (Line)
+Info    : [ 60%] Meshing curve 9 (Line)
+Info    : [ 70%] Meshing curve 10 (Line)
+Info    : [ 70%] Meshing curve 11 (Line)
+Info    : [ 80%] Meshing curve 12 (Line)
+Info    : [ 90%] Meshing curve 13 (Line)
+Info    : [ 90%] Meshing curve 14 (Line)
+Info    : [100%] Meshing curve 15 (Line)
+Info    : Done meshing 1D (Wall 0.0015632s, CPU 0.000846s)
+Info    : Meshing 2D...
+Info    : [  0%] Meshing surface 1 (Sphere, Frontal-Delaunay)
+Info    : [ 20%] Meshing surface 2 (Plane, Frontal-Delaunay)
+Info    : [ 30%] Meshing surface 3 (Plane, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 4 (Plane, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 5 (Plane, Frontal-Delaunay)
+Info    : [ 80%] Meshing surface 6 (Plane, Frontal-Delaunay)
+Info    : [ 90%] Meshing surface 7 (Plane, Frontal-Delaunay)
+Info    : Done meshing 2D (Wall 0.0721572s, CPU 0.068477s)
+Info    : Meshing 3D...
+Info    : 3D Meshing 1 volume with 1 connected component
+Info    : Tetrahedrizing 1582 nodes...
+Info    : Done tetrahedrizing 1590 nodes (Wall 0.0276097s, CPU 0.02728s)
+Info    : Reconstructing mesh...
+Info    :  - Creating surface mesh
+Info    :  - Identifying boundary edges
+Info    :  - Recovering boundary
+Info    : Done reconstructing mesh (Wall 0.0505669s, CPU 0.049721s)
+Info    : Found void region
+Info    : Found volume 2
+Info    : It. 0 - 0 nodes created - worst tet radius 4.80311 (nodes removed 0 0)
+Info    : It. 500 - 496 nodes created - worst tet radius 1.34969 (nodes removed 0 4)
+Info    : It. 1000 - 996 nodes created - worst tet radius 1.09596 (nodes removed 0 4)
+Info    : 3D refinement terminated (2956 nodes total):
+Info    :  - 0 Delaunay cavities modified for star shapeness
+Info    :  - 4 nodes could not be inserted
+Info    :  - 13448 tetrahedra created in 0.0764631 sec. (175875 tets/s)
+Info    : 0 node relocations
+Info    : Done meshing 3D (Wall 0.170427s, CPU 0.168334s)
+[harness] 13 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 227 edge swaps, 5 node relocations (volume = 0.00748175): worst = 0.00641344 / average = 0.779828 (Wall 0.00440749s, CPU 0.004343s)
+Info    : 229 edge swaps, 5 node relocations (volume = 0.00748175): worst = 0.00641344 / average = 0.779751 (Wall 0.00538339s, CPU 0.005101s)
+Info    : No ill-shaped tets in the mesh :-)
+[harness] 10 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : Done optimizing mesh (Wall 0.0181364s, CPU 0.015659s)
+Info    : 2956 nodes 16568 elements
+
+[solve] 13239 cells (gate's own 13 239-cell rung: h_sphere = 0.00833, h_far = 0.0167), solved in 1.3 s
+[anchor] fitted beta = 1.019746, |beta - 1| = 1.9746% vs BAND = 4.8860% (= 2x TH8 record miss 2.4430%); the gate's own reading on this mesh is 1.9746%
+[record, not asserted] max pointwise |E - E_closed|/E0 on the probe shells: 46.0725%, rms 18.6437% — a first-order Nedelec floor next to the pinned curved wall, not a regression (see the guide)
+[structure] cavity dofs (tag 2, reduced) = 1702, max |E| on them = 0.000e+00; total Dirichlet dofs = 2427
+[structure] |Im E|/|Re E| = 0.000e+00
+
+[control] cavity left natural (pec_facet_tags=(1,)), 1576 Dirichlet dofs (vs 2427 with the cavity constrained)
+[control] fitted beta = -0.419038 (void closed form -0.5000), |beta - 1| = 141.9038% = 29.0x the 4.8860% band (ceiling 5x required, gate's own measurement of this comparison on this mesh: 29.0x against a 30x ceiling, `20260905T170225Z_TH-15.log:303`)
+[control] max pointwise |E - E_closed(PEC)|/E0 = 184.9304%
+[control] max |E| on the (unconstrained) cavity dofs = 1.410e-02
+
+[paraview] wrote /workspace/examples/time_harmonic/paraview_output/time_harmonic_09_pec_sphere_hole_combined.xdmf
+[paraview] colour by `E_magnitude`: the box shows a spherical void rather than a solid ball, with the field tangentially zero on its surface. `Clip` through y = 0 and `Glyph` on `E_real` to see the dipole pattern outside the hole — compare beside `th:3`'s picture of a solved (not absent) sphere.
+
+All assertions hold. Total elapsed 1.9 s.
+
+## Exit
+- Status: 0
+- Elapsed (s): 4
+- Filtered lines (gmsh optimisation chatter): 23
