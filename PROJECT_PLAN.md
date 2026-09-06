@@ -8898,7 +8898,38 @@ the factor was a prediction, but the item should have said so).
    path while the module holds it is an example/test divergence —
    known-issues entry, stop; **no Phase 6 cost claim** in any outcome.~~
 
-4. **`TH-15` step 2a — the two-torus hole as a `MeshGenerator` route:
+4. **DONE ✅ 2026-09-06, 00:00 slot** — `TH-15` step 2a executed as scoped,
+   in one window after one in-slot fix (implementer, foreground; `-n 2`,
+   **real** build, standard tier, `20260906T050829Z_TH-15.log`,
+   `12 passed, 4 skipped in 123.72s` `:1543`, Status 0, **126 s** `:1612`,
+   `tests/environment` first). Landed on `main` at `d121097`; the `TH-15`
+   row **stays 🟡** — a step, not a closure. Hole **161 461** cells at ratio
+   **1.000000** against the imported `CELL_COUNT_BAND` 0.01 (`:1463, :1469`,
+   the new version-tagged record under the (1\*) licence); conductor tags
+   **1 / 2 absent** from the reduced census, facets
+   `{1: 1344, 211: 1579, 212: 1579, 301: 7642}` (`:1463`); both sheets
+   `1.451325262e-04` at rel_dev **8.882e-16 / 6.661e-16** vs the imported
+   `SHEET_AREA_BAND` 1e-9 (`:1472–1473`); tag-301 area **1.515910101e-02**
+   vs the solid route's conductor/air interface **1.515909540e-02**,
+   rel_dev **3.704e-07** against the 1e-5 band (`:1477`) — step 0's own
+   3.7e-7 to the digit, so the port *is* the probe's cut. Negative control
+   asserted: `as_hole=False` reproduces **184 176** cells with tags 1 / 2 at
+   **9471 / 9348**, hole < solid (`:1464`). Code is one additive
+   `as_hole=False` keyword on `MeshGenerator.two_torus_domain` (+
+   `TWO_TORUS_CONDUCTOR_SURFACE_TAG = 301`), every caller unchanged, plus
+   `tests/mesh/test_two_torus_conductor_hole.py`. **One finding for the
+   review to dispose of:** the first window failed the control's per-tag
+   counts at 1.0697% because step 0's probe `_census` sums
+   `cell_tags.values` across ranks and double-counts shared entities under
+   this fixture's `GhostMode.shared_facet` (tag sum over owned cells by
+   2972, `20260906T050521Z_TH-15.log:1485`); the gate module masks on
+   `size_local` and asserts the census sums to the global owned count on
+   both routes. **No band loosened** — the measurement was wrong, not the
+   record; but any other importer of that probe's `_census` at width > 1
+   carries the same defect, and no known-issues entry was filed (the probe
+   is measurement-only and correct at the `-n 1` step 0 read it at). No
+   solve, no `Re P_in`, no §2 change.
+   ~~**`TH-15` step 2a — the two-torus hole as a `MeshGenerator` route:
    `two_torus_domain(as_hole=True)` with the surface group from the meshed
    volumes' boundary, step 0's counts and areas as executed asserts**
    (standard, `-n 2` — `-n 1` if the gmsh-serial rule bites, say so; real
@@ -8929,7 +8960,7 @@ the factor was a prediction, but the item should have said so).
    PEC-gate re-run; the row stays 🟡. **Negative result:** a cell count off
    the record is a known-issues entry with both counts; a tag-301 area off
    the interface by > 1e-5 means the port differs from the probe's cut —
-   known-issues, park on `attempt/*`, stop.
+   known-issues, park on `attempt/*`, stop.~~
 
 5. **`MAT-6` step 11 — promote the step-8 slab-refined Dodd–Deeds fixture
    to production: `resolution_near` 0.005 → 0.0025 in the gate fixture and

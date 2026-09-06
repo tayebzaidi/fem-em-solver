@@ -19727,3 +19727,100 @@ doing so, which the 03:00 review should note. For that review: the
 pre-census-ordering deviation above is worth a line in the `example-runner`
 protocol (take the pre-census as the *first* action of the slot, before the
 example or guide file exists), since it has now cost a clean baseline once.
+
+## 2026-09-06T05:15Z — `TH-15` step 2a — **complete**
+
+**Slot.** 00:00 local implementer run (2026-09-06 00:00 CDT). Preflight
+clean: `git status --porcelain` empty on `a8ebf9c`, no `attempt/*`, no
+`recovered/*`, container `fem-em-solver` Up 2 days. §9 items 1, 2 and 3 read
+DONE, so the first open item was **item 4**, taken as written.
+
+**Executor.** `implementer` agent, spawned **foreground** with the
+never-background rule, the repo-relative `run_and_log.sh` rule, the
+660 000 ms host window / container-side `timeout -k 30` rule and rule (e) in
+its prompt. ~24 min of the slot's 60. The report is evidence; the digits
+below were re-read from the log by this slot before commit.
+
+**Outcome — landed on `main` as `d121097`**, every anchor and the negative
+control an executed assert against an imported band, `TH-15` row unchanged
+at 🟡 (this is a step, not a closure).
+
+**Code.** One *additive* keyword `MeshGenerator.two_torus_domain(...,
+as_hole=True)` in `src/fem_em_solver/io/mesh.py` (default `False`; raises
+`ValueError` unless `port_gap and emit_port_sheet`), plus the module
+constant `TWO_TORUS_CONDUCTOR_SURFACE_TAG = 301`; every existing caller
+unchanged. Step 0's probe sequence ported verbatim — `cut(arcs, gap boxes,
+removeTool=False)` → `cut(box, conductors, removeTool=False)` →
+`fragment(air, [gaps, sheets])`, cavity wall taken as the faces bounding
+exactly one **meshed** volume and not flat on an outer wall (the trap step 0
+paid for: retained-tool faces are not the cavity's), conductors dropped with
+`recursive=False` plus a model-side `removeEntities` fallback, the size
+field's `Distance` set seeded with the cavity surfaces, and the interface
+rebuild reduced to `{211, 212}` — there is no conductor cell left to
+interface with. New gate module `tests/mesh/test_two_torus_conductor_hole.py`
+(+319).
+
+**Verification.** `docs/testing/logs/20260906T050829Z_TH-15.log` —
+**12 passed, 4 skipped in 123.72s** (`:1543`), Elapsed **126 s** (`:1612`),
+one foreground window, `-n 2`, **real** build, standard tier
+(`timeout -k 30 300`), pytest `-s`, `tests/environment` first in the same
+window. Digits, all re-read from the log by this slot:
+- hole **161 461** cells / 29 345 vertices, ratio **1.000000** against the
+  imported `CELL_COUNT_BAND` = 0.01 (`:1463`, `:1469`) — the new
+  version-tagged record under the (1\*) licence;
+- hole cell census `{3: 110778, 101: 12585, 102: 12632, 111: 12740,
+  112: 12726}` — conductor tags **1 / 2 absent**; facets
+  `{1: 1344, 211: 1579, 212: 1579, 301: 7642}` (`:1463`);
+- sheets 211 / 212 = `1.451325262e-04`, rel_dev **8.882e-16 / 6.661e-16**
+  against the imported `SHEET_AREA_BAND` 1e-9 (`:1472–1473`);
+- tag-301 area **1.515910101e-02** vs the solid route's conductor/air
+  interface **1.515909540e-02** (7.579509813e-03 + 7.579585585e-03, 3830 +
+  3828 facets), rel_dev **3.704e-07** against the 1e-5 band (`:1477`) —
+  step 0's own 3.7e-7 to the digit, so the port is the probe's cut;
+- **negative control (asserted):** `as_hole=False` reproduces **184 176**
+  cells with tags 1 / 2 present at **9471 / 9348**, and
+  `hole cells < solid cells` (`:1464`, asserts at
+  `tests/mesh/test_two_torus_conductor_hole.py:225, 240, 244, 249`).
+
+Every per-tag number equals step 0's `-n 1` reading to the digit.
+
+**One finding, and it is a defect in the step-0 probe's census, not in the
+route.** The first window (`docs/testing/logs/20260906T050521Z_TH-15.log:1485`,
+Status 1) failed the control's per-tag counts at **1.0697%** — solid tag 2
+read 9448 vs 9348, tag 1 9556 vs 9471, air 113 483 vs 110 696 — while total
+cells, both sheet areas and the cavity area were *already* exact. Cause:
+`tests/mesh/probe_two_torus_conductor_hole.py::_census` sums
+`cell_tags.values` across ranks, and under this fixture's
+`GhostMode.shared_facet` that counts every shared entity twice (the tag sum
+overshot owned cells by **2972**). The gate module now masks on `size_local`
+(`_owned_census`) and carries an executed assert that the per-tag census
+sums to the global owned cell count on *both* routes
+(`test_two_torus_conductor_hole.py:219`). **No band was loosened and no
+assertion was weakened** — the reference counts are step 0's, unmoved; the
+measurement was wrong, not the record. **For the review:** anything else
+importing that probe's `_census` at width > 1 carries the same
+double-count. No known-issues entry was filed because the probe is
+measurement-only and step 0 read it at `-n 1`, where it is correct — but
+that is a disposition call, and this slot is naming it rather than making
+it.
+
+**Scope held.** A mesh route and its identities only: no solve, no
+`Re P_in`, no birdcage hole, no PEC-gate re-run, no §2 change, no band or
+tolerance moved. The `TH-15` row stays 🟡. `docs/testing/test-results.md`
+gained its two lines; the §7 `TH-15` entry gained a "Step 2a ✅ done
+2026-09-06" bullet in the same commit.
+
+**Process.** No docker-socket denial, no allowlist denial, no compute-safety
+event, no container wedge; both windows foreground and footered; no new
+implementation work started after minute 45. Housekeeping: this file is now
+~19 790 lines against the 6 000 budget — the 2026-09-06 weekly's rotation,
+still outstanding.
+
+**Next.** §9 items 1–4 are done; only **item 5 `MAT-6` step 11** (the spare,
+and the largest) remains open, so the queue drains at the next slot and the
+03:00 review must refill it. Hypothesis for what follows step 2a: step 2
+proper (`Re P_in = 0` on the hollow two-torus, the weekly's to scope) can be
+driven straight off this route — the open question the executor names is
+whether the PEC condition on the *exterior* facet group 301 needs a
+`locate_dofs_topological` path different from the interior 201 / 202 ports
+the `PORT-1` package assumes.
