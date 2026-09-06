@@ -3155,6 +3155,27 @@ review confirms that reading before step 1 runs.
 >   0.5 and printed. Gap-voltage route only — the lumped-sheet route adds a
 >   resistive sheet and is not lossless by construction. Heavy by ceiling,
 >   `-n 4`, `timeout -k 30 400`.
+>   **🚫 Attempted 2026-09-06 (13:30 implementer slot) and blocked on the
+>   port-current definition, not on the physics.** The module
+>   `tests/validation/test_two_torus_pec_hole_ports.py` (anchors (i)–(v)
+>   and the σ = 800 control, every band imported, `LOSSLESS_BAND = 1e-9`
+>   pre-stated) is parked on `attempt/TH-15-step2-20260906T183305Z`
+>   (`4dedf89`). The hole mesh reproduces step 2a's **161 461** cells in
+>   26.32 s and the PEC solve *returns*, but
+>   `run_gap_voltage_port_case` then raises `non-positive conductor
+>   length` (`ports/gap_voltage.py:255`;
+>   `20260906T183305Z_TH-15.log:606, 734–739`, `-n 4`, complex, 11 passed /
+>   4 errors in 100.15 s, elapsed 102 s). The gap-voltage port's `I` is the
+>   **conduction** current in the conductor *volume*
+>   (`I = σ ∫_{tag 1} E·φ̂ dx / L`, `gap_voltage.py:249–265`) and the hole
+>   has no conductor cells, so `L = 0`; fixing `conductor_length_m` only
+>   moves the failure to `I ≡ 0` in `_assemble_impedance_matrix`. A PEC
+>   conductor carries a **surface** current, and no surface-current port
+>   extraction exists in the package. Step 2 therefore needs a prior step —
+>   `I = ∮ H·dl = (1/jωμ₀) ∮ (∇×E)·dl` around the cavity wall (or `n × H`
+>   integrated over tag 301), anchored against the solid route's `Im Z₁₂`
+>   before the lossless identities are attempted. Nothing about anchors
+>   (i)–(v) was measured; no band moved.
 > * **Step 3a (the birdcage hole as a `MeshGenerator` route — scoped
 >   2026-09-06 10:30 review, §9 item 4; step 2a's pattern on
 >   `birdcage_port_domain`).** One additive `as_hole=False` keyword: the
@@ -7064,7 +7085,36 @@ was a prediction and the executor was right to stop).
    branch stays, the old fixture stays production; `mat:1` outside 2% the
    same.
 
-2. **`TH-15` step 2 — the lossless identity on the hollow two-torus:
+2. 🚫 **BLOCKED 2026-09-06 13:30 slot** (parked on
+   `attempt/TH-15-step2-20260906T183305Z`, commit `4dedf89`;
+   `20260906T183305Z_TH-15.log`, `-n 4`, complex build, 11 passed / 4
+   errors in 100.15 s, Status 1, elapsed 102 s). **The item is not
+   executable as scoped: the gap-voltage route has no port current on a
+   PEC hole.** The mesh and the solve are both fine — the hole builds to
+   step 2a's record **161 461 cells** in 26.32 s (`:606`) and
+   `TimeHarmonicSolver.solve` with `pec_facet_tags=(1, 301)` returns; the
+   sweep then raises `ValueError: port 'P1': non-positive conductor
+   length` at `ports/gap_voltage.py:255` (`:734–739`), before any `Z`
+   entry exists, so none of anchors (i)–(v) was reached.
+   `run_gap_voltage_port_case` defines the port current as the
+   **conduction** current in the conductor *volume*,
+   `I = σ_wire ∫_{tag 1} E·φ̂ dx / L` with `L` from the meshed conductor
+   volume (`gap_voltage.py:249–265`); on `as_hole=True` cell tags 1 / 2
+   are absent by construction (step 2a anchor (ii)), so `L = 0`. Passing
+   `conductor_length_m` explicitly does not rescue it — the integral is
+   over an empty cell set, `I ≡ 0`, and `_assemble_impedance_matrix`
+   raises "driven-port current is zero" instead. A PEC conductor carries a
+   **surface** current and the package has no surface-current port
+   extraction. **Unblock condition:** a scoped `PORT`/`TH` step that gives
+   the gap-voltage port a current on a conductor-free mesh — the natural
+   one is Ampère's law on a loop encircling the cavity wall,
+   `I = ∮ H·dl = (1/jωμ₀) ∮ (∇×E)·dl`, or the equivalent surface integral
+   of `n × H` over the tag-301 facets — with its own anchor against the
+   solid route's `Im Z₁₂` before step 2's identities are attempted. Until
+   that lands, this item stays 🚫; the parked module needs only its
+   current extraction swapped. No band was moved and no assertion
+   loosened. *(original scoping, unchanged, below)*
+   **`TH-15` step 2 — the lossless identity on the hollow two-torus:
    `Re Z = 0` through the `PORT-1` package on the `as_hole=True` mesh,
    the σ = 800 solid as the dissipating control** (heavy by ceiling,
    `-n 4`, complex build; `main`; independent; scoped by this review,
