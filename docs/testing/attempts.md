@@ -15666,3 +15666,80 @@ fixture** (private, 2026-09-09).
 identity on the hollow two-torus) is next and independent; its named trap —
 what the package's material map does with an empty wire cell set — is worth
 resolving before the solve rather than reading it out of a failing anchor (i).
+
+## 2026-09-06T18:40Z — `TH-15` step 2 — **blocked (parked)**
+
+**Slot:** 13:30 CDT scheduled implementer. Preflight clean on `d166a52`,
+container Up 2 days, no `recovered/*`, one `attempt/*` (the `PORT-13` branch,
+not mine). §9 On-deck item 1 was already ✅ (17:00 slot), so item 2 taken as
+written — `TH-15` step 2, the `Re Z = 0` lossless identity on the hollow
+two-torus. Executor: `implementer`, one foreground spawn, no background
+harness call.
+
+**Outcome: the item is not executable as scoped.** The gap-voltage port route
+has **no port current on a PEC hole**, so none of anchors (i)–(v) was reached.
+Not a defect in the new module and not a band question: nothing was loosened,
+nothing was widened, no known-issues entry is owed (nothing on `main` fails).
+
+**Measured** (`20260906T183305Z_TH-15.log`, `-n 4`, complex build,
+`timeout -k 30 400`, heavy by ceiling): **11 passed / 1 deselected / 4 errors
+in 100.15 s, Status 1, elapsed 102 s** (`:914, :1010–1011`) — a cost-probe
+window running the hole route only, the σ = 800 control deselected.
+
+- `:606` — the hole mesh reproduces step 2a's record **exactly**:
+  `161461 cells (record 161461, band 0.01)`, 26.32 s. Anchor (v)'s fixture is
+  therefore confirmed, though the assert never ran (the error is at fixture
+  setup for all four anchor tests).
+- The PEC-hole **solve completes** — the traceback is downstream of
+  `TimeHarmonicSolver.solve`, so `pec_facet_tags=(1, 301)` on the hollow mesh
+  and the air-only material map are both fine. The item's named trap (what the
+  material map does with an empty wire cell set) is **answered: it is a
+  non-issue**; the real trap was one layer further on.
+- `:734–739` — `ValueError: port 'P1': non-positive conductor length`, raised
+  at `src/fem_em_solver/ports/gap_voltage.py:255` inside
+  `run_n_port_sparameter_sweep`, before any `Z` entry exists.
+
+**Cause (structural).** `run_gap_voltage_port_case` defines the port current as
+the *conduction* current in the conductor **volume**: `length =
+conductor_volume / conductor_cross_section_m2` (`gap_voltage.py:253`), then
+`I = σ ∫_{tag 1} E·φ̂ dx / length` (`:257–265`). On `as_hole=True` cell tags
+1/2 are absent by construction — that is step 2a's own anchor (ii) — so
+`conductor_volume = 0` and the guard fires. Passing `conductor_length_m`
+explicitly does not rescue it: the integral is over an empty cell set, `I ≡ 0`,
+and `_assemble_impedance_matrix` (`sparameters.py:248`) raises "driven-port
+current is zero" instead. A PEC conductor carries a **surface** current and the
+package has no surface-current port extraction. The scoping ruling ((3), 10:30
+review) read the route as "plumbing step 2a landed"; step 2a landed the *mesh*
+plumbing, not the *port* plumbing.
+
+**Repo state.** Parked: `attempt/TH-15-step2-20260906T183305Z` (`4dedf89`) —
+the new module `tests/validation/test_two_torus_pec_hole_ports.py` (anchors
+(i)–(v) written as the item specifies, every band and fixture constant imported
+from `test_port_package_sparameters.py`, `test_port_birdcage_four_port.py` and
+`test_two_torus_conductor_hole.py`; the one new band is the pre-stated
+`LOSSLESS_BAND = 1e-9`; the σ = 800 control asserted for its sign, its size
+printed as *predicted* per rule (e)), plus the log and its `test-results.md`
+row. `main` at `b30ca2b`: the harness log, the `test-results.md` row, §9 item 2
+marked 🚫 BLOCKED with the unblock condition (rule (d)), and the `TH-15` §7
+step-2 bullet annotated with the measurement. Clean and green; verified
+`git status --porcelain` empty.
+
+**Compute:** one foreground window, 102 s, heavy by ceiling, footered inside
+its 400 s container timeout and the 660 000 ms host window. No
+`run_in_background`, no docker-socket denial, no allowlist denial, no
+compute-safety event, no container wedge. One chunk, one executor, no
+concurrency.
+
+**For the review.** Step 2 needs a **prior step** that gives a port a current
+on a conductor-free mesh, and that is `src/ports/` work — a review's to scope,
+not an in-slot fix. The obvious route: `I = ∮H·dl = (1/jωμ₀)∮(∇×E)·dl` on a
+loop encircling the cavity wall, or `n × H` integrated over the tag-301 facets,
+anchored against the **solid** route's `Im Z₁₂` on the *same* fixture (the
+0.9398 record) before any lossless identity is attempted. Item 4 (`TH-15`
+step 3a) is mesh-route work and is **unaffected** by this — it does not touch
+`ports/`.
+
+**Next attempt, one line:** re-scope `TH-15` step 2 as two steps — a surface-
+current port extraction validated against the solid's `Im Z₁₂` first — after
+which the parked module needs only its current extraction swapped and its
+anchors are unchanged.
