@@ -82,6 +82,14 @@ GAP_BOX_THICKNESS_CAP_M = 5.0e-3
 #: tags.  Value carried over from `TH-15` step 0's probe.
 TWO_TORUS_CONDUCTOR_SURFACE_TAG = 301
 
+#: `TH-15` step 3a: the same thing for ``birdcage_port_domain(as_hole=True)`` —
+#: the dim-2 physical group on the coil's cavity wall once the ring and leg
+#: solids have been cut out of the air.  Distinct value from the two-torus one
+#: so a mesh that ever carried both could not confuse them; 401 is free of the
+#: birdcage's cell groups (1/2/3, 100+i, 200+i) and of its only other facet
+#: group (``1``, the outer boundary).
+BIRDCAGE_CONDUCTOR_SURFACE_TAG = 401
+
 
 def _interface_facet_tags(
     mesh: "dolfinx.mesh.Mesh",
@@ -3350,8 +3358,22 @@ class MeshGenerator:
         return_diagnostics: bool = False,
         *,
         ring_sheet_orientation: str = "transverse",
+        as_hole: bool = False,
     ):
         """Generate a coarse, parametric birdcage-like geometry fixture with port tags.
+
+        ``as_hole`` (`TH-15` step 3a) is additive and defaults to ``False``, so
+        every existing caller builds the identical mesh it always has.  With
+        ``True`` the ring and leg solids are **cut out** of the air box
+        (``removeTool=False``, then dropped from the model) instead of being
+        meshed: the coil becomes a cavity whose wall carries the dim-2 physical
+        group :data:`BIRDCAGE_CONDUCTOR_SURFACE_TAG`, which is where a PEC
+        (``n x E = 0``) condition goes.  The phantom, the port boxes and their
+        sheets stay exactly what they were.  It needs ``emit_port_sheets=True``:
+        without terminals the hole has no drive at all.  Same trap as
+        `two_torus_domain(as_hole=True)` — the retained tools' faces are *not*
+        the cavity's, so the wall is identified from the **meshed** volumes'
+        boundary (step 0's abort: 716 ``nodes not attached to any tet``).
 
         Parameters
         ----------
@@ -3501,6 +3523,11 @@ class MeshGenerator:
         if leg_height is not None:
             coil_length = leg_height
 
+        if as_hole and not emit_port_sheets:
+            raise ValueError(
+                "as_hole needs emit_port_sheets: with the coil cut out of the "
+                "mesh the port sheets are the only thing left to drive it"
+            )
         if leg_count < 3:
             raise ValueError("leg_count must be >= 3 for a birdcage-like fixture")
         if leg_width <= 0.0:
@@ -3642,6 +3669,7 @@ class MeshGenerator:
                     leg_azimuth_offsets_rad=leg_azimuth_offsets_rad,
                     port_clearance=port_clearance,
                     emit_port_sheets=emit_port_sheets,
+                    as_hole=as_hole,
                     air_padding=air_padding,
                     resolution=resolution,
                     conductor_resolution=conductor_resolution,
@@ -3731,6 +3759,7 @@ class MeshGenerator:
         leg_azimuth_offsets_rad: Optional[Sequence[float]] = None,
         port_clearance: float = 1.0e-3,
         emit_port_sheets: bool = False,
+        as_hole: bool = False,
         conductor_resolution: Optional[float] = None,
         conductor_refine_distance: Optional[float] = None,
         phantom_resolution: Optional[float] = None,
@@ -4082,18 +4111,48 @@ class MeshGenerator:
         # conforming piece, and re-derive the physical groups from the fragment
         # out-map — fragment renumbers and reorders, so absolute tags from before
         # the call mean nothing afterwards.
-        tool_tags = conductor_tags + [phantom_tag] + port_tags
-        tool_dimtags = [(3, tag) for tag in tool_tags] + [
-            (2, tag) for tag in sheet_tags
-        ]
-        _, fragment_map = gmsh.model.occ.fragment(
-            [(3, air_tag)],
-            tool_dimtags,
-        )
-        gmsh.model.occ.synchronize()
+        if as_hole:
+            # `TH-15` step 3a, `two_torus_domain(as_hole=True)`'s sequence:
+            #   air = cut(box, conductors)     # the cavity
+            #   fragment(air, [phantom, port boxes, sheets])
+            # `removeTool=False` keeps the ring/leg solids alive (and so their
+            # own faces addressable) until the cavity wall has been read off the
+            # *meshed* volumes; they are dropped from the model below, before
+            # anything is meshed.  The tools overlap each other by construction
+            # (every leg pierces both rings) — a cut subtracts their union, so
+            # that is exactly the coil.
+            air_pieces, _ = gmsh.model.occ.cut(
+                [(3, air_tag)],
+                [(3, tag) for tag in conductor_tags],
+                removeObject=True,
+                removeTool=False,
+            )
+            gmsh.model.occ.synchronize()
+            if not air_pieces:
+                raise RuntimeError(
+                    "birdcage_port_domain(as_hole=True): cutting the coil out "
+                    "left no air volume"
+                )
+            tool_dimtags = [(3, phantom_tag)] + [(3, tag) for tag in port_tags] + [
+                (2, tag) for tag in sheet_tags
+            ]
+            _, fragment_map = gmsh.model.occ.fragment(air_pieces, tool_dimtags)
+            gmsh.model.occ.synchronize()
+            # out-map is positional: one entry per input, objects first then tools.
+            input_dimtags = list(air_pieces) + tool_dimtags
+        else:
+            tool_tags = conductor_tags + [phantom_tag] + port_tags
+            tool_dimtags = [(3, tag) for tag in tool_tags] + [
+                (2, tag) for tag in sheet_tags
+            ]
+            _, fragment_map = gmsh.model.occ.fragment(
+                [(3, air_tag)],
+                tool_dimtags,
+            )
+            gmsh.model.occ.synchronize()
 
-        # out-map is positional: one entry per input, objects first then tools.
-        input_dimtags = [(3, air_tag)] + tool_dimtags
+            # out-map is positional: one entry per input, objects first then tools.
+            input_dimtags = [(3, air_tag)] + tool_dimtags
         if len(fragment_map) != len(input_dimtags):
             raise RuntimeError(
                 "birdcage_port_domain: occ.fragment returned an out-map of "
@@ -4111,7 +4170,9 @@ class MeshGenerator:
                 if dim == 3:
                     ancestors.setdefault(piece, set()).add(input_tag)
 
-        conductor_set = set(conductor_tags)
+        # With `as_hole` no piece descends from a conductor — they were cut away
+        # before the fragment — so the metal-wins rule below is simply empty.
+        conductor_set = set() if as_hole else set(conductor_tags)
         port_ordinal = {tag: idx for idx, tag in enumerate(port_tags, start=1)}
 
         # Piece policy. Metal wins over everything (a leg∩ring piece is conductor
@@ -4172,6 +4233,88 @@ class MeshGenerator:
         for piece, group in sorted(group_of_piece.items()):
             pieces_by_group.setdefault(group, []).append(piece)
 
+        # `TH-15` step 3a — the cavity wall, and the drop of the retained tools.
+        # Identified from the *meshed* volumes alone (`pieces_by_group`): the
+        # ring and leg solids are still in the model at this point, and testing a
+        # face against a set that includes them is self-satisfying (step 0's
+        # abort: 716 `nodes not attached to any tet`).  A cavity wall is a face
+        # that bounds exactly ONE meshed volume and does not lie flat on an outer
+        # wall — every air/phantom/port interface bounds two, the outer walls
+        # bound one but lie on a wall.
+        cavity_surfaces: List[int] = []
+        cavity_cad_area = float("nan")
+        if as_hole:
+            def _face_on_wall(surf: int) -> bool:
+                bb = gmsh.model.getBoundingBox(2, surf)
+                return any(
+                    abs(bb[i] - lo) < 1e-6 and abs(bb[i + 3] - lo) < 1e-6
+                    for i, lo in (
+                        (0, -radial_extent), (0, radial_extent),
+                        (1, -radial_extent), (1, radial_extent),
+                        (2, -z_extent), (2, z_extent),
+                    )
+                )
+
+            face_use: Dict[int, int] = {}
+            for pieces in pieces_by_group.values():
+                for piece in pieces:
+                    for dim, surf in gmsh.model.getBoundary(
+                        [(3, piece)], oriented=False, recursive=False
+                    ):
+                        if dim == 2:
+                            face_use[surf] = face_use.get(surf, 0) + 1
+            cavity_surfaces = sorted(
+                s for s, n in face_use.items() if n == 1 and not _face_on_wall(s)
+            )
+            if not cavity_surfaces:
+                raise RuntimeError(
+                    "birdcage_port_domain(as_hole=True): the meshed volumes have "
+                    "no single-use non-wall boundary face, so the conductor "
+                    "cavity surface is missing"
+                )
+            cavity_cad_area = float(
+                sum(gmsh.model.occ.getMass(2, s) for s in cavity_surfaces)
+            )
+
+            # Drop the conductor solids: the cavity IS the hole.
+            # `recursive=False` so the cavity faces (which belong to the meshed
+            # volumes, not to the tools) are untouched either way.
+            gmsh.model.occ.remove([(3, t) for t in conductor_tags], recursive=False)
+            gmsh.model.occ.synchronize()
+            still_present = [
+                t for t in conductor_tags
+                if (3, t) in gmsh.model.getEntities(dim=3)
+            ]
+            if still_present:
+                # occ.remove + synchronize did not propagate; drop them
+                # model-side (the two-torus route needed this fallback).
+                gmsh.model.removeEntities(
+                    [(3, t) for t in still_present], recursive=False
+                )
+            cavity_surfaces = [
+                s for s in cavity_surfaces
+                if (2, s) in gmsh.model.getEntities(dim=2)
+            ]
+            if not cavity_surfaces:
+                raise RuntimeError(
+                    "birdcage_port_domain(as_hole=True): every cavity surface "
+                    "was destroyed with the conductor solids"
+                )
+            gmsh.model.addPhysicalGroup(
+                2, cavity_surfaces, tag=BIRDCAGE_CONDUCTOR_SURFACE_TAG
+            )
+            gmsh.model.setPhysicalName(
+                2, BIRDCAGE_CONDUCTOR_SURFACE_TAG, "conductor_surface"
+            )
+            print(
+                "[birdcage-mesh] conductor cavity (CAD) tag "
+                f"{BIRDCAGE_CONDUCTOR_SURFACE_TAG}: {len(cavity_surfaces)} "
+                f"surface(s) area={cavity_cad_area:.9e}; volumes after the drop="
+                f"{len(gmsh.model.getEntities(dim=3))} "
+                f"(conductor solids removed: {len(conductor_tags)})",
+                flush=True,
+            )
+
         # A port is split only if it actually has a sheet: with `ring_gap_length`
         # alone the floating leg boxes have no terminals and stay single pieces.
         sheeted_ordinals = sorted(set(sheet_of_ordinal) | set(ring_sheet_of_ordinal))
@@ -4184,7 +4327,9 @@ class MeshGenerator:
             if has_sheet:
                 group_names[200 + idx] = f"port_P{idx}_upper"
 
-        expected_groups = [1, 2, 3] + [100 + i for i in port_ordinal.values()]
+        expected_groups = ([2, 3] if as_hole else [1, 2, 3]) + [
+            100 + i for i in port_ordinal.values()
+        ]
         expected_groups += [200 + i for i in sheeted_ordinals]
         missing_groups = [
             group_names[tag] for tag in expected_groups if tag not in pieces_by_group
@@ -4323,22 +4468,31 @@ class MeshGenerator:
                 if conductor_refine_distance is None
                 else conductor_refine_distance
             )
-            conductor_surfaces = sorted(
-                {
-                    surf
-                    for dim, surf in gmsh.model.getBoundary(
-                        [(3, piece) for piece in pieces_by_group[1]],
-                        combined=True,
-                        oriented=False,
-                        recursive=False,
-                    )
-                    if dim == 2
-                }
+            # With `as_hole` the metal is gone and its boundary *is* the cavity
+            # wall, so the Distance field is sampled over exactly the same
+            # surface set the solid route grades on — the grading is the one
+            # thing that must not change between the two routes.
+            conductor_surfaces = (
+                list(cavity_surfaces)
+                if as_hole
+                else sorted(
+                    {
+                        surf
+                        for dim, surf in gmsh.model.getBoundary(
+                            [(3, piece) for piece in pieces_by_group[1]],
+                            combined=True,
+                            oriented=False,
+                            recursive=False,
+                        )
+                        if dim == 2
+                    }
+                )
             )
             if not conductor_surfaces:
                 raise RuntimeError(
                     "birdcage_port_domain: conductor grading requested but the "
-                    f"conductor group has no boundary surfaces ({len(pieces_by_group[1])} pieces)"
+                    "conductor group has no boundary surfaces "
+                    f"({len(pieces_by_group.get(1, ()))} pieces, as_hole={as_hole})"
                 )
             distance_field = gmsh.model.mesh.field.add("Distance")
             gmsh.model.mesh.field.setNumbers(
@@ -4432,4 +4586,14 @@ class MeshGenerator:
             "ring_cad_mass_m3": float(ring_cad_mass),
             "ring_analytic_mass_m3": float(ring_analytic_mass),
             "port_sheet_cad": port_sheet_cad,
+            "as_hole": bool(as_hole),
+            "conductor_cavity_cad": (
+                None
+                if not as_hole
+                else {
+                    "surfaces": len(cavity_surfaces),
+                    "area_m2": cavity_cad_area,
+                    "facet_tag": BIRDCAGE_CONDUCTOR_SURFACE_TAG,
+                }
+            ),
         }

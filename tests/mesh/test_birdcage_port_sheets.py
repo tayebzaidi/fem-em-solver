@@ -77,7 +77,12 @@ PORT_LOWER = 100
 PORT_UPPER = 200
 
 
-def _build(emit_port_sheets, phantom_resolution=None, conductor_resolution=None):
+def _build(
+    emit_port_sheets,
+    phantom_resolution=None,
+    conductor_resolution=None,
+    as_hole=False,
+):
     """One graded, gapped birdcage rung, sheeted or not, with its wall time.
 
     ``phantom_resolution`` is `WF-6` step 3f₀'s additive keyword (the
@@ -92,6 +97,12 @@ def _build(emit_port_sheets, phantom_resolution=None, conductor_resolution=None)
     ``CONDUCTOR_RESOLUTION`` exactly as this helper always has, so every
     existing rung's mesh is bit-identical.  A float replaces it, which is how
     step 1b refines the sheet without touching any gate.
+
+    ``as_hole`` is `TH-15` step 3a's additive keyword, same precedent again:
+    ``False`` — every gate's value — is the generator's own default and builds
+    the identical mesh.  ``True`` cuts the coil out of the air instead of
+    meshing it, which is what `tests/mesh/test_birdcage_conductor_hole.py`
+    scores against this very fixture.
     """
     comm = MPI.COMM_WORLD
     started = time.perf_counter()
@@ -114,6 +125,7 @@ def _build(emit_port_sheets, phantom_resolution=None, conductor_resolution=None)
             else float(conductor_resolution)
         ),
         phantom_resolution=phantom_resolution,
+        as_hole=as_hole,
         comm=comm,
         return_diagnostics=True,
     )

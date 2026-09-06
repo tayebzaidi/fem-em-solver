@@ -3195,6 +3195,40 @@ review confirms that reading before step 1 runs.
 >   present, hole < solid. Pre-registered stop: gmsh "overlapping facets"
 >   on the cut is a `GEO` finding — known-issues, park, stop. Standard,
 >   `-n 2`, real build, ≈ 60 s. No solve; step 3 proper stays the weekly's.
+>   **✅ LANDED 2026-09-06 (16:30 implementer slot), 6 passed / 54 s,
+>   standard, `-n 2`, real build (`20260906T213913Z_TH-15.log:2655`).**
+>   `birdcage_port_domain(as_hole=True)` (additive, keyword-only, default
+>   `False`) and the exported `BIRDCAGE_CONDUCTOR_SURFACE_TAG = 401`; new
+>   gate `tests/mesh/test_birdcage_conductor_hole.py`. Readings, all at
+>   `-n 2`: the hole meshes **80 181 cells / 19 369 vertices in 23.02 s**
+>   against the solid control's **116 085** (ratio to the `PORT-9` record
+>   **1.000000**, band 0.01) — hole/solid **0.690709**, the first
+>   measurement of this route and the (1\*) record it opens
+>   (`:2628–2632`); all four port sheets mesh **1.120000000e-04 m²** on
+>   *both* routes at **≤ 3.331e-16** relative against the imported
+>   `SHEET_AREA_BAND` 1e-9 — no terminal was detached (`:2637–2644`); the
+>   cavity wall (tag 401, 40 CAD surfaces, **19 894 facets**,
+>   4.052771523e-02 m²) reproduces the solid route's whole conductor
+>   interface 4.052769926e-02 m² (19 877 facets) to **3.942e-07**, band
+>   1e-5 — step 2a's two-torus reading was 3.70e-07 (`:2650`); the hole
+>   census is `{2, 3, 101–104, 201–204}` with tag 1 **absent** and present
+>   in the control, both censuses summing to their owned cell count.
+>   The pre-registered `GEO-23` stop did not fire. **One band was
+>   *re-registered by measurement*, not loosened** (MAG-10/MAG-15
+>   precedent, recorded in the test's docstring): the partition anchor's
+>   1e-9 was stated against the *analytic* box, and the first window
+>   measured the **solid** route — which this chunk does not touch and
+>   which has no cut in it — missing the analytic box by **3.379e-08**
+>   relative, the hole missing `box − coil` by **3.408e-08**, i.e. the same
+>   ~3.9e-10 m³ that is OCC's own mass quadrature on the tori and cylinders
+>   (3.9e-06 of the coil's 9.939e-05 m³;
+>   `20260906T213704Z_TH-15.log:2647`, Status 1). The chunk's own identity
+>   is now stated where both sides are the same OCC numbers — hole groups +
+>   conductor = solid groups, ratio **1.000000000000** at 1e-9 — and the
+>   analytic comparison is asserted on **both** routes at a measured
+>   `CAD_ANALYTIC_BAND` = 1e-7 (`20260906T213913Z_TH-15.log:2647`). Scope
+>   held: no solve, no S-matrix, no PEC gate, no 16-leg variant; the row
+>   stays 🟡.
 > * **Step 3 (the birdcage, heavy).** `birdcage_port_domain` with the coil
 >   as a hole, phantom present, `PORT-9`/`PORT-11`'s three gates at 10 / 64
 >   / 128 MHz with every band imported, plus **`Re P_in = ½∫_phantom σ|E|²`
@@ -7226,7 +7260,16 @@ was a prediction and the executor was right to stop).
    censuses, stop. Retires the 2026-09-06 known-issues entry in the same
    commit.
 
-4. **`TH-15` step 3a — the birdcage as a hole: `birdcage_port_domain(as_hole=True)`
+4. ✅ **DONE 2026-09-06 (16:30 implementer slot)** — `as_hole=True` landed with
+   `BIRDCAGE_CONDUCTOR_SURFACE_TAG = 401` and
+   `tests/mesh/test_birdcage_conductor_hole.py`, 6 passed / 54 s at `-n 2`
+   (`20260906T213913Z_TH-15.log:2655`): hole **80 181** cells vs the control's
+   **116 085** (ratio 1.000000), four sheets at 1.120000000e-04 m² to 3.3e-16,
+   cavity wall 4.052771523e-02 m² against the solid interface to **3.942e-07**
+   (band 1e-5), tag 1 absent. The partition anchor's comparand was corrected by
+   measurement (the untouched solid route misses the analytic box by 3.379e-08 —
+   OCC quadrature on the tori); full digits in the `TH-15` §7 entry, step 3a.
+   ~~**`TH-15` step 3a — the birdcage as a hole: `birdcage_port_domain(as_hole=True)`
    on step 2a's pattern, the sheet, partition and surface-area identities
    as executed asserts on the F-small 4-leg fixture** (standard, `-n 2`,
    real build; `main`; independent; scoped by this review, ruling (4)).
@@ -7277,7 +7320,7 @@ was a prediction and the executor was right to stop).
    **Negative result:** a sheet off 1.12e-4 at 1e-9 means the cut
    detached a terminal — known-issues with the four areas, park, stop;
    an area identity off by > 1e-5 means the surface group differs from
-   the interface — known-issues, park, stop.
+   the interface — known-issues, park, stop.~~
 
 *(The per-review journal — slot recap, completion audits, plan-work notes,
 §10 assessment — lives in the review commits and
