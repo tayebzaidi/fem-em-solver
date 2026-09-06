@@ -19632,3 +19632,98 @@ for the two slots before the 03:00 review, so the queue does not drain
 tonight. No new blocker, no known-issues entry (no example/test divergence:
 the example path reproduced the module's β to 1e-3 relative and its control
 factor to the digit).
+
+---
+
+## 2026-09-06T03:30Z — `EX-51` — complete
+
+**Slot.** Scheduled implementer run, started 2026-09-05 22:30 CDT
+(2026-09-06 03:30 UTC), 60-minute timebox. Preflight clean on `79ef902`,
+`main`, container Up 2 days. §9 item 1 (`PORT-14` step 1d) and item 2
+(`EX-50`) were already marked DONE, so the first open item was **item 3,
+`EX-51`** — taken as written, no substitution. Executor: **`example-runner`**,
+spawned **foreground** with the never-background rule, the emit-then-harness
+rule, both census windows through the harness, full-filename guide
+references and standing rule (e) in the spawn prompt.
+
+**Outcome: complete, first run, one compute window.** New
+`examples/meshing/12_birdcage_f_human_rung.py` + same-stem `.md`
+(`mesh:12`), both rungs built from the imported
+`_params(F_HUMAN_RING_RADIUS, scale_sizing=…)` of
+`tests/validation/test_birdcage_f_human_rung.py` through
+`MeshGenerator.birdcage_port_domain`. Real build, a mesh and no solve.
+`20260906T033712Z_EX-51.log`, **Status 0, Elapsed 196 s**, `-n 2`, standard
+by host-runner window against the 600 s ceiling; mesh wall times **109.73 s**
+(fixture) and **62.98 s** (control) (`:9722`, `:20000`).
+
+**Digits, re-read from the log by this slot (not taken from the executor's
+report).** Every anchor is an executed `assert` on a band imported from the
+gate module, none restated:
+
+| reading | log line | value |
+|---|---|---|
+| fixture (branch B) cells vs `F_HUMAN_BRANCH_B_CELL_RECORD` | `:20003` | **504642**, relative **0.000e+00** (band 0.01) |
+| `GEO-18` volume partition | `:20004` | **1.000000000000** (band 1e-09) |
+| `GEO-19` terminal ratios, 32 ring ports | `:20005` | min **0.974454791** / max **0.974455230**, inside (0.95, 1.0) |
+| meshed/CAD conductor mass, fixture | `:20006` | **0.965414** ≥ gate 0.95 |
+| control (branch A) cells vs `F_HUMAN_BRANCH_A_CELL_RECORD` | `:20009` | **204977**, relative **0.000e+00** |
+| control meshed/CAD conductor mass | `:20012` | **0.893028** |
+| two-sided separation | `:20014–20017` | control **0.056972 BELOW** the 0.95 gate, fixture **0.015414 ABOVE** it, **separation 0.072387** |
+
+The negative control is **asserted**, not printed:
+`assert control["cad_ratio"] < CAD_MASS_GATE <= fixture["cad_ratio"]`
+(`examples/meshing/12_birdcage_f_human_rung.py:251`), backed as the item
+required by the gate module's own measurement of the same comparison on the
+same rungs (`20260905T183654Z_GEO-25.log:20024–20027`) — and it reproduces
+that reading **to the digit** (0.893028 / 0.965414 / 0.072387). Cell counts
+likewise reproduce `GEO-25` step 2's records exactly rather than at the band.
+
+**`src/`-adjacent diff, disclosed under standing rule (a).** The gate module
+`tests/validation/test_birdcage_f_human_rung.py` gained one **additive**
+keyword on `_build_rung`: `keep_mesh: bool = False`, which when set also
+returns `mesh`, `cell_tags` and `ring_ports` so the example can export the
+mesh without rebuilding it or re-deriving the port ids. Default `False`, so
+the gate's own two tests see the identical dict. Verified additive by reading
+the diff, and the gate was **re-run green in the same slot**: `2 passed in
+194.37s`, Status 0, 196 s
+(`20260906T034048Z_EX-51-gate-rerun.log:54, 60–61`). No `src/` change at all;
+no band moved; no tolerance touched.
+
+**Artifact.** One combined XDMF of the **fixture** mesh only — `CellTags`,
+the 32 sheet facet tags via `write_xdmf_with_tags(…, facet_tags=…)`, and a
+DG0 `cell_diameter` array so the fixed absolute sizing is visible against the
+0.15 m coil. The control mesh is deliberately not written; its numbers live
+in the log and the guide.
+
+**Census.** Pre `20260906T033641Z_EX-51-precensus.log:117` reads
+`dead=1 guide=0 stale=77 exit=1`; post
+`20260906T034041Z_EX-51-postcensus.log:116` reads
+`dead=0 guide=0 stale=77 exit=2`, **45 runnable examples** (`:114`), up from
+the 44 the `EX-50` slot left. `stale=77` and `exit=2` match `main`'s known
+baseline; the `stale` entries are the pre-existing `time_harmonic/08_*`
+artifact ages, not this chunk's.
+
+**One deviation, disclosed.** The pre-census window was taken *after* the
+guide file had been written but before the example had run, so it recorded a
+transient `dead=1` (the guide referencing an artifact that did not exist
+yet) and exited 1. It is a true reading of that moment and it cleared on the
+post-census, but it is not the clean before/after baseline the census pair is
+for: the pre-census belongs **before any file is written**. Nothing else
+deviated — no docker-socket denial, no allowlist denial, no compute-safety
+event, no container wedge, all four windows footered and foreground, and no
+new implementation work started after minute 45.
+
+**Scope held.** A mesh, not a solve: no field, no port gate, no physics claim,
+and **no Phase 6 cost claim** — the 64 MHz solve on this rung stays unpriced
+and is the weekly's to date. No known-issues entry: there was no example/test
+divergence, the example path reproducing the module's records exactly.
+
+**Next.** §9 items 1, 2 and 3 are done. Open, in order: **item 4 `TH-15`
+step 2a** (implementer, real build, `timeout -k 30 300`, the two-torus hole
+as a `MeshGenerator` route) and **item 5 `MAT-6` step 11** as the spare and
+the largest. One item plus the spare remain for the 00:00 slot before the
+03:00 review — the queue does not drain tonight, but it is one slot from
+doing so, which the 03:00 review should note. For that review: the
+pre-census-ordering deviation above is worth a line in the `example-runner`
+protocol (take the pre-census as the *first* action of the slot, before the
+example or guide file exists), since it has now cost a clean baseline once.

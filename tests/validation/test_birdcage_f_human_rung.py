@@ -136,13 +136,19 @@ def _ring_ports() -> list[int]:
     return list(range(LEG_COUNT + 1, LEG_COUNT + 2 * LEG_COUNT + 1))
 
 
-def _build_rung(radius: float, *, scale_sizing: bool) -> dict:
+def _build_rung(radius: float, *, scale_sizing: bool, keep_mesh: bool = False) -> dict:
     """One rung: mesh it and read the scale-free CAD identities off it.
 
     Every reduction here is global. ``_tag_volume``, ``_total_volume`` and
     ``_port_boundary_partition`` each take ``comm`` and reduce internally —
     cell tags and facet areas are rank-local, and at `-n 2` rank 0 does not
     own every port (`GEO-9` step 2b paid for that once already).
+
+    ``keep_mesh`` (`EX-51`, additive, default ``False`` so this gate's own
+    two tests see the identical dict they always have) also returns the
+    ``mesh``/``cell_tags`` objects and the ring-port id list, so a caller that
+    needs to export the mesh (a ParaView write) does not have to rebuild it
+    or re-derive the ring-port ids from `LEG_COUNT`.
     """
     comm = MPI.COMM_WORLD
     kwargs = _params(radius, scale_sizing=scale_sizing)
@@ -167,7 +173,7 @@ def _build_rung(radius: float, *, scale_sizing: bool) -> dict:
         [areas[CONDUCTOR_IFACE + i] / terminal_analytic for i in ring_ports]
     )
 
-    return {
+    result = {
         "radius": radius,
         "scale_sizing": scale_sizing,
         "n_cells": mesh.topology.index_map(3).size_global,
@@ -178,6 +184,11 @@ def _build_rung(radius: float, *, scale_sizing: bool) -> dict:
         "terminal_ratios": ratios,
         "cad_ratio": volumes[1] / diag["cad_mass_by_group"]["conductor"],
     }
+    if keep_mesh:
+        result["mesh"] = mesh
+        result["cell_tags"] = cells
+        result["ring_ports"] = ring_ports
+    return result
 
 
 # One gmsh build per branch per process, not per assert. The `GEO-25` §7 row
