@@ -15743,3 +15743,80 @@ step 3a) is mesh-route work and is **unaffected** by this — it does not touch
 current port extraction validated against the solid's `Im Z₁₂` first — after
 which the parked module needs only its current extraction swapped and its
 anchors are unchanged.
+
+## 2026-09-06T20:10Z — `OPS-39` — **complete**
+
+**Slot:** 15:00 CDT scheduled implementer. Preflight clean on `3f0142c`,
+container Up 3 days, no `recovered/*`, no `attempt/*` other than the `TH-15`
+step-2 park item 2 records. §9 On-deck: item 1 already ✅ DONE (12:00 slot),
+item 2 🚫 BLOCKED (13:30 slot), so **item 3 — `OPS-39` — was the first open
+item** and was taken as written. Executor: `implementer`, one foreground
+spawn, no concurrency.
+
+**Outcome: the probe's census is rank-safe and gated on an exact conservation
+identity.** Committed on `main` at **`c0fa892`**; tree clean, §7 `OPS-39` row
+⬜ → ✅, §9 item 3 marked DONE, the 2026-09-06 known-issues entry retired — all
+in the same commit.
+
+**What changed.** `tests/mesh/probe_two_torus_conductor_hole.py::_census`
+gained two optional keyword arguments — `_census(values, comm, *,
+indices=None, n_owned=None)` — masking `values[indices < n_owned]` before
+counting, plus a probe-local `_owned_census(msh, tags, dim, comm)` wrapper now
+used at all three probe call sites (`cell_census`, `facet_census`, variant-A
+`cond_counts`). The **positional `(values, comm)` call and the `{tag: count}`
+return type are unchanged**, so the gate module's import needed no edit — the
+one-direction constraint the item named is honoured. New unit module
+`tests/mesh/test_probe_census_rank_safety.py` (3 tests). No `src/` change, no
+generator change, no band, no record; `TH-15` untouched.
+
+**Measured (real build, foreground, one window at a time):**
+
+- **Anchor (asserted, exact):** on a 3072-cell `create_box` 8³ tet mesh with
+  `GhostMode.shared_facet` and a geometry-keyed 3-tag array on every local
+  cell, the masked census sums to `index_map(tdim).size_global` **exactly —
+  3072 at `-n 1` and 3072 at `-n 2`**
+  (`20260906T200217Z_OPS-39.log:43–45`, `20260906T200227Z_OPS-39.log:51–52`).
+- **Negative control (asserted, computed not predicted):** the naive census
+  (the old code path, kept as this module's private `_naive_census`) overshoots
+  `size_global` by **exactly `Σ_ranks index_map.num_ghosts` — 0 at `-n 1`,
+  256 at `-n 2`** (naive `{1: 774, 2: 770, 3: 1784}` = 3328,
+  `…200227Z:51, 53` — verified by this slot against the log, not the
+  executor's report).
+- **Third assert:** per-tag owned counts against the closed form `6·N²` per
+  grid column — 768 / 768 / 1536, identical at both widths (`…200227Z:52, 56`).
+- **Probe solid variant A re-run at `-n 2`, no assertion, read only:** cell
+  census `{1: 9471, 2: 9348, 3: 110696, 101: 13661, 102: 13648, 111: 13658,
+  112: 13694}` (sum 184 176), 184 176 cells / 31 550 vertices, sheet-area
+  rel_dev 3.7e-16 / 9.3e-16 (`20260906T200239Z_OPS-39.log:950–952`) —
+  **step 0's `-n 1` digits to the integer**, so the 2972 overshoot was purely
+  the ghost double-count and there is **no rank-count mesh difference**. The
+  item's negative-result branch did not fire.
+
+**Harness logs (all Status 0, all footered):**
+`20260906T200217Z_OPS-39.log` (smoke, `-n 1`, **5 s**, 3 passed);
+`20260906T200227Z_OPS-39.log` (smoke, `-n 2`, **2 s**, 3 passed);
+`20260906T200239Z_OPS-39.log` (standard, `-n 2`, **33 s**, probe variant A);
+`20260906T200326Z_OPS-39.log` (standard, `-n 2`, **57 s**,
+`tests/mesh/test_two_torus_conductor_hole.py` **5 passed** — the import-green
+regression the item required). Four `test-results.md` rows. Total compute
+**~97 s**, every window far inside its tier and its 660 000 ms host window.
+
+**Disclosed deviation / scope note.** `_facet_area` / `_exterior_facet_area` in
+the probe still use an unmasked `count_nonzero(facet_tags.values == tag)`.
+That is a **presence** check (`> 0` vs `== 0`), which is ghost-insensitive, and
+the areas were already exact on the failed run — left alone deliberately as
+out of the chunk's scope. Flagging it so the review can decide whether it wants
+a follow-up; this slot's position is that it needs none.
+
+**Reading note for the review:** the gate module window reports `5 passed`
+here against the `12 passed, 4 skipped` in the older `TH-15` log — that older
+window ran additional modules, not just this one. Not a regression.
+
+**Process:** no `run_in_background` anywhere, no turn ended with a command in
+flight, no docker-socket denial, no allowlist denial, no compute-safety event,
+no container wedge. One chunk, one executor, foreground. Every headline digit
+above was re-read from the log files by this slot before committing.
+
+**Next attempt, one line:** §9 item 4 (`TH-15` step 3a, the birdcage as a hole)
+is the only remaining open item and is untouched by items 2 and 3 — the 16:30
+slot takes it, after which the queue is drained.
