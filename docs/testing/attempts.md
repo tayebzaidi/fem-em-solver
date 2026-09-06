@@ -15504,3 +15504,56 @@ quoting **0.280% filament / ≈ −0.40% finite-wire-corrected** plus the §7 an
 
 **Queue note for the review:** with item 5 now BLOCKED, §9 has **no open
 item**. The next slot drains and must be refilled by the 10:30 review.
+
+---
+
+## 2026-09-06T14:00Z — (no chunk) — outcome: **anomaly (queue drained)**
+
+**Scheduled implementer slot, 09:00 CDT.** Preflight clean: `git status`
+empty on `main` at `ee48bc9`; container `fem-em-solver` Up 2 days
+(`docker compose ps`). No dirty tree, no `recovered/*`; one
+`attempt/MAT-6-step11-20260906T125700Z` branch present, left deliberately by
+the 07:30 slot and not this slot's to touch.
+
+**Why nothing was executed.** Protocol step 2: take the first §9 On-deck item
+not marked done or blocked. All five are closed out —
+
+| item | state |
+|---|---|
+| 1 `PORT-14` step 1d | DONE ✅ 2026-09-05 19:30 slot |
+| 2 `EX-50` | DONE 2026-09-05 21:00 slot |
+| 3 `EX-51` | DONE ✅ 2026-09-05 22:30 slot |
+| 4 `TH-15` step 2a | DONE ✅ 2026-09-06 00:00 slot |
+| 5 `MAT-6` step 11 (spare) | BLOCKED 🚫 2026-09-06 07:30 slot — two rulings for the review |
+
+so the queue is drained. Step 2's fallback is "the chunk named in §9's
+'obvious next entry' sentence"; §9 (PROJECT_PLAN.md:9035–9041) names none —
+"**stop and journal.** There is no fallback chunk: `PORT-9` step 3's legs are
+serial by design … `EX-36` … closed 2026-09-01 and **nothing replaces it as a
+fallback**." The 07:30 slot's entry above pre-registered exactly this
+outcome. Per step 2's last clause, this entry is the whole slot; no chunk was
+chosen, no compute was issued, no branch was created.
+
+**Explicitly not done, and why.** Item 5's two blockers (re-pin `ans:1`'s
+`DELTA_R_PIN_OHM`; does the no-op control's 5.28e-05 clear the "≤ 5e-5"
+done-when?) are both **review** decisions — one a §5.4 benchmark-publication
+call, one a standing-rule-(e) label ruling. Deciding either in-slot to
+manufacture work is precisely what rule (e) and the 07:30 escalation forbid,
+so item 5 was left BLOCKED and untouched. No item was self-scoped, and no
+`PORT-9` step 3 leg was invented from a previous leg's number.
+
+**Compute:** none. No harness log for this slot (nothing was run). No
+docker-socket denial, no allowlist denial, no compute-safety event, no
+container wedge. Tree returned clean on `main` with only this entry committed.
+
+**For the 10:30 review:** §9 needs a full refill — five items, none of which
+exist right now. The cheapest re-opener is item 5: it is ~15 min of compute
+away from landing (`bc159c9` on `attempt/MAT-6-step11-20260906T125700Z` holds
+the measured physics), and both blockers are rulings, not work. Everything
+else on the "for the weekly" list (PROJECT_PLAN.md:8684–8698) is
+weekly-scoped, and the 2026-09-06 weekly review has not yet run against this
+interval.
+
+**Next attempt, one line:** rule on `MAT-6` step 11's two questions and refill
+§9; until then every implementer slot drains identically and costs a slot each
+time.
