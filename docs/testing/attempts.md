@@ -15820,3 +15820,88 @@ above was re-read from the log files by this slot before committing.
 **Next attempt, one line:** §9 item 4 (`TH-15` step 3a, the birdcage as a hole)
 is the only remaining open item and is untouched by items 2 and 3 — the 16:30
 slot takes it, after which the queue is drained.
+
+## 2026-09-06T21:45Z — `TH-15` step 3a — **complete**
+
+**Slot:** 2026-09-06 16:30 CDT scheduled implementer run. Preflight clean on
+`53af00d`, container Up 3 days. §9 On deck: items 1 and 3 ✅ DONE, item 2 🚫
+BLOCKED, so the first actionable item was **item 4** — `TH-15` step 3a, the
+birdcage as a hole. Delegated to the `implementer` agent, one foreground spawn,
+no concurrency. **Landed on `main` as `ff69ed1`; the queue is now drained.**
+
+**What landed.** `MeshGenerator.birdcage_port_domain` gains an additive
+keyword-only `as_hole=False` (every caller unchanged) and a new exported
+`BIRDCAGE_CONDUCTOR_SURFACE_TAG = 401`: the ring and leg solids are cut from
+the air box with `removeTool=False` and dropped, the phantom / port boxes /
+port sheets stay volumes, and the cavity wall is built from `getBoundary` of
+the **meshed** volumes (single-use, non-wall faces), never the retained tools'
+faces — step 0's abort trap, avoided as the item required. Conductor grading
+samples the same surface set on both routes. New gate
+`tests/mesh/test_birdcage_conductor_hole.py`; `tests/mesh/test_birdcage_port_sheets.py`
+`_build` gains the same additive keyword.
+
+**Measured (green window `20260906T213913Z_TH-15.log`, Status 0, Elapsed 54 s,
+6 passed / 51.71 s, standard, `-n 2`, real build), every digit re-read from the
+log by this slot before committing:**
+- hole **80 181** cells / 19 369 vertices, mesh 23.02 s; solid control
+  **116 085** = the `PORT-9` record, ratio **1.000000** at the imported 0.01
+  band; hole/solid **0.690709** (`:2628–2632`). The hole count is a **first
+  measurement — no band**, opening the version-tagged (1\*) record.
+- all four port sheets **1.120000000e-04 m²** on **both** routes, rel_dev
+  ≤ **3.331e-16** against the imported `SHEET_AREA_BAND` 1e-9 (`:2637–2644`)
+  — the terminals survive the cut.
+- cavity wall tag 401: 40 CAD surfaces, **19 894** facets,
+  **4.052771523e-02 m²**, against the solid route's whole conductor interface
+  **4.052769926e-02 m²** (19 877 facets) → **3.942e-07**, band 1e-5
+  (`:2650`); step 2a read 3.70e-07 on the two-torus.
+- CAD partition: hole groups **1.142060902107e-02** + coil
+  **9.939058968205e-05** vs solid groups **1.151999961076e-02**, ratio
+  **1.000000000000** at 1e-9 (`:2647`).
+- census `{2, 3, 101–104, 201–204}` with conductor tag 1 **absent** (present in
+  the control), both censuses masked on `size_local` and summing to the owned
+  cell count.
+
+**Pre-registered stop did not fire.** No gmsh `Invalid boundary mesh
+(overlapping facets)` on the ring/leg junctions — the `GEO-23` family stayed
+away; no known-issues entry, no park.
+
+**Band re-registered by measurement — for the review to check, not a
+loosening.** The item stated anchor (ii)'s 1e-9 against the **analytic** air
+box. The first window (`20260906T213704Z_TH-15.log`, Status 1, Elapsed 58 s,
+1 failed / 5 passed, `:2647`) measured the **solid** route — untouched by this
+commit, no cut in it — missing the analytic box by **3.379e-08** relative while
+the hole misses box−coil by **3.408e-08**: the same ~3.9e-10 m³, OCC's mass
+quadrature on the tori and cylinders (3.9e-06 of the coil's 9.939e-05 m³). The
+commit asserts the identity where both sides are the same OCC numbers (hole
+groups + conductor = solid groups, **1e-9**, green above) and additionally
+asserts the analytic comparison on **both** routes at a measured
+`CAD_ANALYTIC_BAND = 1e-7`. Nothing that was ever green was widened and the
+1e-9 anchor is still executed; the review owns the final word on the
+re-registration.
+
+**Second disclosed reading.** Anchor (iii)'s comparand is the coil's **whole**
+boundary — air + phantom + the eight port-terminal disks — not the item's
+literal "conductor/air + conductor/phantom". Excluding the terminals would drop
+**8.944785405e-04 m²**, ~2.2% of the wall, and step 2a's two-torus comparand
+likewise carried the conductor/gap-box faces. Same 1e-5 band; the air+phantom
+subtotal **3.963322072e-02** is printed beside it (`:2650`).
+
+**Harness logs:** `20260906T213704Z_TH-15.log` (Status 1, 58 s — the band
+measurement), `20260906T213913Z_TH-15.log` (Status 0, 54 s — the gate). Both
+footered, both inside the standard tier and the 660 000 ms host window. Two
+`test-results.md` rows. Total compute **~112 s**.
+
+**Scope held.** No solve, no S-matrix, no PEC-gate re-run, no 16-leg or F-human
+variant; the `TH-15` §7 row stays 🟡 and §9 item 4 is marked ✅ in the same
+commit.
+
+**Process:** no `run_in_background` anywhere, no turn ended with a command in
+flight, no docker-socket denial, no allowlist denial, no compute-safety event,
+no container wedge. One chunk, one executor, foreground.
+
+**Next attempt, one line:** the §9 queue is **drained** — every item 1–4 is
+done or blocked, so the next slot stops and journals unless the 18:00 review
+refills it; the natural next chunk is the one both step 2's blocker and step
+3a's landing point at — a **surface-current port extraction**
+(`I = ∮ H·dl`, or `n × H` over tag 401 / tag 301) so a PEC hole can carry a
+gap-voltage port at all, which no review has yet scoped.
