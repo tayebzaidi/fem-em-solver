@@ -44,9 +44,10 @@ What this script adds over `mat:1`:
   the reaction integral is taken per solve; their difference is algebraically
   the ΔZ the gate asserts.
 - **A second anchor leg: the fixture-identity pin.** ΔR must land within
-  **1e-3 relative** of `+3.2770406e-01 Ω` — the value `EX-11` reproduced digit
-  for digit on 2026-08-09. The first leg (2% against the closed form) says we
-  got the right *answer*; the pin says we solved the *same problem the gate
+  **1e-3 relative** of `+3.2170989e-01 Ω` — the projected-drive gate's own ΔR on
+  the slab-refined fixture (`MAT-6` step 11, 2026-09-06; the pin moved with the
+  mesh, the 1e-3 band did not). The first leg (2% against the closed form) says
+  we got the right *answer*; the pin says we solved the *same problem the gate
   solved*, not merely one with the same closed-form answer.
 - **The operator-facing deliverables**: `metrics.json`, `COMPARISON.md`, and the
   |J| field export.
@@ -55,23 +56,24 @@ What this script adds over `mat:1`:
 the regime where our number is gated, on purpose. PROJECT_PLAN §2.1 is explicit
 that the saline/Larmor case is an extrapolation, not a result.
 
-On record at `-n 2` (`20260809T183731Z_ANS-1.log`, exit 0, **70 s**
-harness-wall / 68.4 s in-script, 2026-08-09 13:30 slot; 138 619 cells meshed in
-11.0 s, solves 28.4 s loaded + 26.8 s free — matching `EX-11`'s 74 s for the
-same path):
+On record at `-n 8` (`20260906T170116Z_MAT-6.log`, exit 0, **262 s**
+harness-wall / 260.0 s in-script, 2026-09-06 17:00 slot, slab-refined fixture
+`FEM_RESOLUTION_NEAR`; 418 888 cells meshed in 14.8 s, solves 118.4 s loaded +
+124.0 s free). `-n 2` does not return inside a heavy window on this mesh
+(`MAT-6` step 11):
 
 | Quantity | Value | Bound |
 | --- | --- | --- |
-| ΔR vs Dodd–Deeds (+3.2259615e-01 Ω, regenerated at run time) | **1.5834%** | 2% |
-| ΔR vs the pinned +3.2770406e-01 Ω | **1.387e-08** relative | 1e-3 |
+| ΔR vs Dodd–Deeds (+3.2259615e-01 Ω, regenerated at run time) | **0.2747%** | 2% |
+| ΔR vs the pinned +3.2170989e-01 Ω | **3.529e-10** relative | 1e-3 |
 | ΔR sign | **+** (a conductor dissipates) | asserted |
 | ΔX sign | **−** (induced currents expel flux) | asserted |
-| ΔX ratio to closed form | **0.9200** | *reported, never gated* |
+| ΔX ratio to closed form | **0.9161** | *reported, never gated* |
 | Ohmic power, σ = 0 control | **0.0** W | `== 0.0`, no tolerance |
 | max \|J\|, σ = 0 control | **0.0** A/m² | `== 0.0`, no tolerance |
-| max \|J\|, loaded | **6.84e+02** A/m² | — |
+| max \|J\|, loaded | **6.678e+02** A/m² | — |
 | ½ΔR\|I′\|² vs ∫(σ/2)\|E\|² dV | ratio **1.0000** | reported |
-| Mesh | 138 619 cells | — |
+| Mesh | 418 888 cells | — |
 
 The gate of record is `MAT-6` step 3. The 2% ceiling is the example's, not the
 gate's (the gate's own is 5%); it is what this fixture delivers and it is **not
@@ -80,12 +82,12 @@ a knob** — a miss is a regression finding.
 ## 2. How to run it
 
 ```
-./run_examples.sh -e ans:1 -n 2 -t 180
+./run_examples.sh -e ans:1 -n 8 -t 430
 ```
 
 **Complex build required** — the `ans:` group sources it automatically (one case
-directory per benchmark), and a real build raises. Tier: **standard**; 70 s
-harness-wall on record, of which 11.0 s is meshing and 55.2 s is the two solves.
+directory per benchmark), and a real build raises. Tier: **heavy**; 262 s
+harness-wall on record, of which 14.8 s is meshing and 242.4 s is the two solves.
 
 Each run rewrites `metrics.json` and `COMPARISON.md` in this directory and
 regenerates `paraview_output/ans1_loop_over_lossy_slab_combined.xdmf` (untracked,
@@ -96,8 +98,8 @@ like every `paraview_output/` in the repo).
 **Step 1 — both legs of the anchor, in the console output.**
 
 ```
-  [ΔR]  relative error 1.5834% against the 2% ceiling
-  [ΔR]  against the pinned +3.2770406e-01 Ω: 1.387e-08 relative, ceiling 1e-3
+  [ΔR]  relative error 0.2747% against the 2% ceiling
+  [ΔR]  against the pinned +3.2170989e-01 Ω: 3.529e-10 relative, ceiling 1e-3
 ```
 
 Leg one is physics: we match the closed form. Leg two is identity: we match the
@@ -125,11 +127,11 @@ that is expected and is not the adjudication.
 **Step 3 — ΔX, the row the case was actually commissioned for.**
 
 ```
-  [ΔX]  ratio 0.9200 — reported, never gated: not converged in box size
+  [ΔX]  ratio 0.9161 — reported, never gated: not converged in box size
         (`MAT-6` step 4). This row is why the case was commissioned.
 ```
 
-ΔX is 8% low against Dodd–Deeds because it is **not converged in box size**:
+ΔX is 8.4% low against Dodd–Deeds because it is **not converged in box size**:
 `MAT-6` step 4 measured 5.57% still moving between `W = 0.15` and `W = 0.20`.
 The reactive term samples the field far from the loop, where a finite PEC box
 truncates it; ΔR converges much faster because dissipation is local to the skin
@@ -141,8 +143,8 @@ ours would).
 **Step 4 — the negative control, in-fixture and exact.**
 
 ```
-  [control] ohmic power in the slab: loaded 1.385836e-01 W, free 0.000000e+00 W
-  [paraview] max |J| = 6.84e+02 A/m² loaded, 0.000000e+00 A/m² in the control
+  [control] ohmic power in the slab: loaded 1.362234e-01 W, free 0.000000e+00 W
+  [paraview] max |J| = 6.678046e+02 A/m² loaded, 0.000000e+00 A/m² in the control
 ```
 
 The σ = 0 solve is the free half of the same pair, so it shares the mesh, the
@@ -179,7 +181,7 @@ then colour by `J_magnitude` (A/m²).
 2. **What to look at:** an annular bright band on the slab's top surface under
    the loop, decaying downward over the printed skin depth
    δ = 1/√(πfμ₀σ) ≈ 1.59 mm ≈ 0.032 a. Peak should be the printed
-   `max |J| = 6.84e+02` A/m².
+   `max |J| = 6.678e+02` A/m².
 3. **For the AED half:** export the current-density magnitude on the **same
    cut** so the spatial distributions can be compared, not only the terminal
    numbers. Two solvers can agree on ΔR while disagreeing about where the
@@ -194,7 +196,7 @@ reaching the assembly; compare against the σ = 0 control, which is that exact
 failure. ΔR negative → the loaded and free solves are swapped. Energy ratio away
 from 1.0000 → extraction and field disagree. Control power or control `max |J|`
 not exactly `0.0` → the σ field is not identically zero outside the slab and
-every number above is suspect. Cell count away from 138 619 → the mesh changed
+every number above is suspect. Cell count away from 418 888 → the mesh changed
 and this record does not apply; `SPEC.md`'s mesh guidance is what the AED half
 was sized against.
 

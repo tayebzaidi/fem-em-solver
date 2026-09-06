@@ -113,8 +113,15 @@ Report all digits AED prints; do not round.
 
 | Quantity | Dodd–Deeds closed form | Our FEM (gated) | Notes |
 |---|---|---|---|
-| ΔR | see `COMPARISON.md` | **+3.2770406e-01 Ω** (projected drive; +3.276882e-01 pinned) | gated to 1.58% vs closed form |
-| ΔX | see `COMPARISON.md` | ratio 0.9200 of closed form (projected drive) | **not converged in our box**; sign/magnitude gate only |
+| ΔR | see `COMPARISON.md` | **+3.2170989e-01 Ω** (projected drive) | 0.2747% vs closed form, ceiling 2% |
+| ΔX | see `COMPARISON.md` | ratio 0.9161 of closed form (projected drive) | **not converged in our box**; sign/magnitude gate only |
+
+**Our column moved on 2026-09-06** (`MAT-6` step 11): the fixture's near-field
+resolution was refined behind `FEM_RESOLUTION_NEAR`, 418 888 cells instead of
+138 619, and our ΔR moved with it (`20260906T170116Z_MAT-6.log:246–247`). The
+specified problem — geometry, materials, frequency, box — is **unchanged**, so
+nothing on the AED side moves; the 2026-09-02 verdict is re-checked against our
+new column by the next weekly review.
 
 The closed-form numbers and the exact provenance logs are filled into
 `COMPARISON.md` by the `ANS-1` runnable-half chunk, which regenerates them

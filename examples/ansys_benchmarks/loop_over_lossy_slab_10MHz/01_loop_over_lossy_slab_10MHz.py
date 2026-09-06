@@ -112,14 +112,14 @@ DELTA_R_RTOL = 0.02
 #: benchmark is solving the same problem the gate solved, not merely a problem
 #: with the same closed-form answer.
 #:
-#: **Re-pinned by `MAT-6` step 11 (2026-09-06) — UNVERIFIED, see attempts.md.**
-#: The pin follows the fixture: ``FEM_RESOLUTION_NEAR`` moved 0.005 → 0.0025,
-#: so the projected gate's ΔR moved +3.2770406e-01 → **+3.2170989e-01** Ω
-#: (`20260906T124022Z_MAT-6.log:402`, 418 888 cells, the identical value this
-#: example printed at ``20260906T124601Z_MAT-6.log:281``). The 1e-3
-#: fixture-identity tolerance is untouched — the record moved with the mesh,
-#: the band did not. This edit has NOT been re-run: the slot expired before a
-#: confirming ``ans:1`` window.
+#: **Re-pinned by `MAT-6` step 11 (2026-09-06), licensed by the 2026-09-06 10:30
+#: review's ruling (1)** — a fixture-identity record follows the fixture, and
+#: step 11 *is* the fixture move; the band is untouched. ``FEM_RESOLUTION_NEAR``
+#: was refined, so the projected gate's ΔR moved +3.2770406e-01 →
+#: **+3.2170989e-01** Ω, printed independently twice at 418 888 cells
+#: (`20260906T124022Z_MAT-6.log:402`, the projected-drive gate, and
+#: `20260906T124601Z_MAT-6.log:281`, this example) and reproduced by the landing
+#: run to 3.529e-10 relative (`20260906T170116Z_MAT-6.log:247`).
 DELTA_R_PIN_OHM = 3.2170989e-01
 DELTA_R_PIN_RTOL = 1e-3
 
@@ -397,6 +397,12 @@ spatial distributions can be compared, not just the terminal numbers.
   `coil_impedance_change(f={FEM_FREQUENCY_HZ:.0f}, a={FEM_LOOP_RADIUS},
   h={FEM_LIFTOFF}, σ={FEM_SIGMA_SLAB})`.
 * Gate of record: `MAT-6` step 3 (PROJECT_PLAN §7), ΔR to 1.5834%.
+* **2026-09-06 (`MAT-6` step 11):** our ΔR column moved with the fixture — the
+  near-field resolution was refined behind `FEM_RESOLUTION_NEAR` (418 888 cells
+  instead of 138 619) and ΔR moved +3.2770406e-01 → +3.2170989e-01 Ω, 1.5834% →
+  0.2747% against the same closed form. The specified problem is unchanged, so
+  the AED side does not move; the 2026-09-02 verdict is re-checked against this
+  column by the next weekly review.
 """
     )
     return path

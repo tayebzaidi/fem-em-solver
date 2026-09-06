@@ -43,24 +43,25 @@ inherits that boundary exactly: it is a quantitative statement about a
 conductive half-space at 10 MHz and about nothing else. The example's own report
 text says so on screen.
 
-On record at `-n 2` (`20260809T110326Z_EX-11-gate.log`, exit 0, 74 s
-harness-wall / 70.8 s example-internal, 2026-08-09 06:00 slot; every figure
-byte-matching the `MAT-6` step-3 gate record):
+On record at `-n 8` (`20260906T170548Z_MAT-6.log`, exit 0, 273 s
+harness-wall / 271.5 s example-internal, 2026-09-06 17:00 slot, on the
+slab-refined fixture `MAT-6` step 11 promoted; `-n 2` does not return inside a
+heavy window on this mesh):
 
 | Quantity | Closed form (filament) | Closed form (finite wire) | Measured | Bound |
 | --- | --- | --- | --- | --- |
-| ΔR | +3.2259615e-01 Ω | +3.2296790e-01 Ω (+0.115237%) | **+3.2770406e-01** Ω | **1.5838%** vs filament (2%); 1.4669% vs finite wire, *not gated* |
-| ΔX | −6.1586749e-01 Ω | −6.1675934e-01 Ω (+0.144814%) | **−5.6657895e-01** Ω | ratio **0.9200** vs filament, *not gated* |
+| ΔR | +3.2259615e-01 Ω | +3.2296790e-01 Ω (+0.115237%) | **+3.2170989e-01** Ω | **0.2747%** vs filament (2%); 0.3895% vs finite wire, *not gated* |
+| ΔX | −6.1586749e-01 Ω | −6.1675935e-01 Ω (+0.144814%) | **−5.6416824e-01** Ω | ratio **0.9161** vs filament, *not gated* |
 | Sign of ΔR | > 0 (a conductor dissipates) | — | **+** | asserted |
 | Sign of ΔX | < 0 (induced currents expel flux) | — | **−** | asserted |
 | Finite-wire correction, r_wire = 0 | equals filament exactly | — | **1.785e-16** rel. diff | `< 1e-12`, asserted (negative control) |
-| Drive current `I′` | 1.0 A nominal | **0.919666** A | reported |
-| Ohmic power in slab, from the field | — | **1.385836e-01** W | — |
-| Same, as ½ΔR·I′² from the reaction integral | — | **1.385836e-01** W | ratio **1.0000**, reported |
+| Drive current `I′` | 1.0 A nominal | **0.920256** A | reported |
+| Ohmic power in slab, from the field | — | **1.362234e-01** W | — |
+| Same, as ½ΔR·I′² from the reaction integral | — | **1.362234e-01** W | ratio **1.0000**, reported |
 | Ohmic power, σ = 0 control | 0 exactly | **0.0** W | `== 0.0`, no tolerance |
 | max \|J\|, σ = 0 control | 0 exactly | **0.0** A/m² | `== 0.0`, no tolerance |
-| max \|J\|, loaded | — | **6.8396e+02** A/m² | — |
-| Mesh | — | 138 619 cells, 10.8 s | solves 29.4 s + 26.9 s |
+| max \|J\|, loaded | — | **6.678046e+02** A/m² | — |
+| Mesh | — | 418 888 cells, 14.8 s | solves 126.7 s + 127.4 s |
 
 The gate is `MAT-6` step 3 (✅ 2026-07-31, step 3 record 2026-08-04). Its own
 ceiling on ΔR is **5%**; the example gates at **2%**, which is what this fixture
@@ -72,23 +73,24 @@ it does not absorb the FEM discrepancy.** The filament form used above ignores
 the wire's own cross-section; `utils/dodd_deeds.coil_impedance_change_finite_wire`
 adds that back at this fixture's `r_wire = 2.5` mm and shifts both ΔR and ΔX
 **up** in magnitude by +0.115237% / +0.144814% — moving the closed form *toward*
-the FEM measurement on ΔR (from 1.5838% away down to 1.4669%), which is
-reported here but not gated: `MAT-6` still stays at 1.5834% against the
-filament form until step 11.
+the FEM measurement on ΔR. On the step-11 fixture the FEM ΔR sits *below* both
+closed forms, so the correction moves the reference away from it (0.2747%
+against the filament form, 0.3895% against the finite-wire form); both are
+reported, and `MAT-6` gates on the filament form only.
 
 This example closes nothing; Phase-3 §5.4 backfill.
 
 ## 2. How to run it
 
 ```
-./run_examples.sh -e mat:1 -n 2 -t 180
+./run_examples.sh -e mat:1 -n 8 -t 430
 ```
 
 **Complex build required** — the `mat:` group sources it automatically, and a
 real build raises with a message naming
-`/usr/local/bin/dolfinx-complex-mode`. Tier: **standard**; 74 s harness-wall on
-record, of which 10.8 s is meshing and 56.3 s is the two solves. This is the
-most expensive example in the tree, and the cost is the 138 619-cell graded mesh
+`/usr/local/bin/dolfinx-complex-mode`. Tier: **heavy**; 273 s harness-wall on
+record, of which 14.8 s is meshing and 254.1 s is the two solves. This is the
+most expensive example in the tree, and the cost is the 418 888-cell graded mesh
 that resolves a 1.59 mm skin depth under a 50 mm loop.
 
 ## 3. How to analyze it, step by step
@@ -96,12 +98,12 @@ that resolves a 1.59 mm skin depth under a 50 mm loop.
 **Step 1 — ΔR against the closed form. This is the anchor.**
 
 ```
-  [ΔZ]    FEM   = +3.2770406e-01 + j(-5.6657895e-01) Ω
+  [ΔZ]    FEM   = +3.2170989e-01 + j(-5.6416824e-01) Ω
   [ΔZ]    exact = +3.2259615e-01 + j(-6.1586749e-01) Ω
-  [ΔR]    relative error 1.5834% against the 2% ceiling
+  [ΔR]    relative error 0.2747% against the 2% ceiling
 ```
 
-Read the **ΔR** column and ignore ΔX for the moment. 1.5834% is the `MAT-6`
+Read the **ΔR** column and ignore ΔX for the moment. 0.2747% is the `MAT-6`
 step-3 record reproduced through the example path, digit for digit; the example
 and the gate are the same computation, which is the point of importing rather
 than restating. A number that has moved at this fixture means the gate has
@@ -122,7 +124,7 @@ right magnitude while describing a physically impossible material.
 **Step 3 — ΔX, which is printed and deliberately not gated.**
 
 ```
-  [ΔX]    ratio 0.9200 — reported, never gated
+  [ΔX]    ratio 0.9161 — reported, never gated
 ```
 
 The reactive part is **8% low against Dodd–Deeds and that is not a defect in the
@@ -130,7 +132,7 @@ solver**: ΔX is not converged in box size on this fixture — `MAT-6` step 4
 measured 5.57% still moving between `W = 0.15` and `W = 0.20`, because the
 reactive term samples the field far from the loop where a finite PEC box
 truncates it. ΔR converges much faster because dissipation is local to the skin
-layer. Do not quote the 0.9200 as a physics result, and do not "fix" it by
+layer. Do not quote the 0.9161 as a physics result, and do not "fix" it by
 tightening the mesh; the fix is a bigger box, which costs more than the gate is
 worth. This is exactly the row `ANS-1` commissions an Ansys number for.
 
@@ -138,8 +140,8 @@ worth. This is exactly the row `ANS-1` commissions an Ansys number for.
 two ways that share no arithmetic:
 
 ```
-  [control] ½ ΔR I'² = 1.385836e-01 W from the reaction integral
-            vs        1.385836e-01 W from the field  [ratio 1.0000]
+  [control] ½ ΔR I'² = 1.362234e-01 W from the reaction integral
+            vs        1.362234e-01 W from the field  [ratio 1.0000]
 ```
 
 The right-hand number is `∫_slab (σ/2)|E|² dV` assembled from the **solved
@@ -154,8 +156,8 @@ other half of the same pair, so it shares the mesh, the drive, the solver and
 every constant:
 
 ```
-  [control] ohmic power in the slab: loaded 1.385836e-01 W, free 0.000000e+00 W
-  [paraview] max |J| = 6.8396e+02 A/m² loaded, 0.000000e+00 A/m² in the control
+  [control] ohmic power in the slab: loaded 1.362234e-01 W, free 0.000000e+00 W
+  [paraview] max |J| = 6.678046e+02 A/m² loaded, 0.000000e+00 A/m² in the control
 ```
 
 Both control values are asserted `== 0.0` with **no tolerance**. That is
@@ -174,7 +176,7 @@ density onto the discrete divergence-free space — and the projection does not
 conserve the nominal amplitude exactly on this mesh. That is why ΔZ is
 normalised by the **measured** `I′` and not by 1.0 A: normalising by the nominal
 value would put an 8% error straight into ΔR. If this number drifts far from
-0.92 at the same mesh, suspect the drive or the wire tagging before the solver.
+0.9161 at the same mesh, suspect the drive or the wire tagging before the solver.
 
 **Step 7 — open it in ParaView.**
 `File → Open → examples/materials/paraview_output/materials_01_dodd_deeds_coil_loading_combined.xdmf`,
@@ -189,7 +191,7 @@ then colour by `J_magnitude` (A/m²).
    current is flowing there.
 3. **Clip** through `y = 0` and colour by `J_magnitude` on a log scale to see
    the exponential fall-off with depth. Peak magnitude should agree with the
-   printed `max |J| = 6.84e+02` A/m²; the array ParaView reads is the array the
+   printed `max |J| = 6.678e+02` A/m²; the array ParaView reads is the array the
    run checked, not a separately written one.
 
 **Step 8 — what a deviation means.** ΔR outside 2% at this fixture → a
@@ -200,7 +202,7 @@ against the σ = 0 control of step 5, which is that exact failure. ΔR *negative
 convention has been changed. Energy ratio away from 1.0000 → the extraction path
 and the field disagree; trust neither ΔR nor the picture. Control power or
 control `max |J|` not exactly `0.0` → the σ field is not identically zero
-outside the slab, and every number above is suspect. `max |J|` far from 6.84e+02
+outside the slab, and every number above is suspect. `max |J|` far from 6.678e+02
 with ΔR intact → the mesh under the loop has changed and the skin layer is
 under-resolved even though the integrated quantity survived.
 
