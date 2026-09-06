@@ -60,7 +60,10 @@ from fem_em_solver.ports.lumped import (
 from fem_em_solver.ports.sparameters import _power_waves
 
 from tests.complex_mode import complex_only
+from tests.mesh.test_birdcage_leg_gaps import LEG_GAP_LENGTH
 from tests.mesh.test_birdcage_port_sheet_prerequisite import CONDUCTOR_RESOLUTION
+from tests.mesh.test_birdcage_port_sheets import SHEET_IFACE
+from tests.mesh.test_birdcage_port_tags import PORT_BOX_SIZE
 from tests.validation.test_port_birdcage_four_port import (
     PASSIVITY_SIGMA_TOLERANCE,
     build_four_port_sweep,
@@ -861,4 +864,468 @@ def test_the_zero_gamma_control_misses_on_the_width_sweep(width_sweep_case):
             f"{miss:.3e}, under {CONTROL_MISS_FACTOR:g}x the "
             f"{REDUCTION_BAND:.0e} band, though the 4x4 predicts a coupling term "
             f"Delta = {delta:.3e}"
+        )
+
+
+# ---------------------------------------------------------------------------
+# `PORT-14` step 1d — where does eps* come from, and does the fit hold on a
+# fourth point?
+# ---------------------------------------------------------------------------
+#
+# Step 1c measured the residual at three told widths (eps = 0, +5%, -5%) on the
+# fixed 116 085-cell gate mesh and a three-point fit of `|r0 + k*eps|` put the
+# zero-crossing at eps* ~ -1.1% for *both* lossless elements.  Step 1d does two
+# things with that, and **tunes nothing**:
+#
+#   (a) reads the sheet geometry `build_four_port_sweep` already measures and
+#       expresses each ratio as a candidate `eps_geom` — a *prediction* of eps*
+#       from geometry alone.  The pre-registered comparison is
+#       |eps_geom - eps*| <= 0.3*|eps*| for **one** candidate; none there means
+#       the origin is not geometric.
+#   (b) recomputes eps* **in code** from step 1c's printed residuals (below,
+#       constants — eps* is never typed in) and runs configuration **D**, every
+#       told width scaled by (1 + mean eps*), through the same `reuse` route.
+#       The fit predicts a residual ~ 0; whether it lands under `REDUCTION_BAND`
+#       is **printed, not asserted**, because the width was fitted *to* that
+#       residual and asserting it would be circular.
+#
+# Asserted here (imported bands, none moved): D is still a valid passive
+# reciprocal four-port on the bitwise-unchanged mesh, and the same ceiling-first
+# Gamma = 0 control step 1 / 1c ran.
+STEP1D_ENV = STEP1C_ENV
+
+# Step 1c's six printed residuals, `20260905T213322Z_PORT-14-step1c.log`
+# (`:1943` and the per-configuration blocks `:1985-1986`, `:2054-2055`), keyed by
+# the told-width perturbation that produced them.  These are *logged records*,
+# not module constants any other file exports, so they are restated here with
+# their source.  eps* is derived from them below and never written down.
+STEP1C_RESIDUALS = {
+    "C = 100 pF": ((0.0, 1.595580e-03), (+0.05, 9.260556e-03), (-0.05, 5.980286e-03)),
+    "L = 1 uH": ((0.0, 3.370512e-03), (+0.05, 1.965102e-02), (-0.05, 1.255208e-02)),
+}
+
+# The pre-registered geometric-match window: a candidate ratio predicts eps* if
+# it lands within this fraction of |eps*| of it (~0.3 pp at eps* ~ -1.1%).
+GEOM_MATCH_FRACTION = 0.3
+
+
+def _epsilon_star(points):
+    """The vertex of ``r^2(eps)`` through three ``(eps, r)`` points.
+
+    Step 1c's model is ``r(eps) = |r0 + k*eps|``, so ``r^2`` is an exact
+    parabola in ``eps`` and three points determine it.  The zero-crossing of the
+    linear model is the vertex of that parabola, ``eps* = -b/(2a)``.  Returned
+    with the fitted minimum ``r^2(eps*)`` so the log can show how close to zero
+    the fit itself claims to get.
+    """
+    eps = np.array([float(p[0]) for p in points], dtype=float)
+    r2 = np.array([float(p[1]) ** 2 for p in points], dtype=float)
+    vandermonde = np.vstack([eps**2, eps, np.ones_like(eps)]).T
+    a, b, c = np.linalg.solve(vandermonde, r2)
+    star = float(-b / (2.0 * a))
+    return star, float(a * star * star + b * star + c), float(a), float(b), float(c)
+
+
+def _geometric_candidates(sheet):
+    """Candidate ``eps_geom`` values for one sheet, from measured geometry only.
+
+    Every quantity here is already reduced across ranks by
+    `build_four_port_sweep` (`area` and `w_bbox` come from
+    `_facet_group_area` / `_sheet_extents`, both of which allreduce), so nothing
+    below is rank-local and no facet vertex is touched on this rank.
+
+    The law is ``R = Z_p * w / h`` with ``w = area/h_bbox``.  If the *effective*
+    terminal separation is ``h_true`` rather than the bounding box ``h_bbox``,
+    the width the law should have been told is ``area/h_true``, i.e.
+    ``eps_geom = h_bbox/h_true - 1``.  Both orientations of each ratio are
+    listed, labelled, because which way round a candidate enters the law is
+    exactly what a match would establish.
+    """
+    area = float(sheet["area"])
+    h_bbox = float(sheet["h"])
+    w_bbox = float(sheet["w_bbox"])
+    w_law = float(sheet["w"])
+    h_mean = area / w_bbox
+    return {
+        # The bounding box's fill fraction; algebraically identical to
+        # w_law/w_bbox - 1 and to h_mean/h_bbox - 1 (step 2b's "ragged edge").
+        "area/(w_bbox*h_bbox) - 1": area / (w_bbox * h_bbox) - 1.0,
+        "w_law/w_bbox - 1": w_law / w_bbox - 1.0,
+        "h_mean/h_bbox - 1": h_mean / h_bbox - 1.0,
+        "h_bbox/h_mean - 1": h_bbox / h_mean - 1.0,
+        "h_bbox/leg_gap_told - 1": h_bbox / float(LEG_GAP_LENGTH) - 1.0,
+        "leg_gap_told/h_bbox - 1": float(LEG_GAP_LENGTH) / h_bbox - 1.0,
+        "h_bbox/port_box_z_told - 1": h_bbox / float(PORT_BOX_SIZE[2]) - 1.0,
+        "port_box_z_told/h_bbox - 1": float(PORT_BOX_SIZE[2]) / h_bbox - 1.0,
+    }
+
+
+@pytest.fixture(scope="module")
+def step1d_fit():
+    """eps* per element from step 1c's constants — arithmetic, no solve."""
+    fit = {}
+    for label, points in STEP1C_RESIDUALS.items():
+        star, r2_star, a, b, c = _epsilon_star(points)
+        fit[label] = {
+            "eps_star": star,
+            "r2_star": r2_star,
+            "a": a,
+            "b": b,
+            "c": c,
+        }
+    mean_star = float(np.mean([v["eps_star"] for v in fit.values()]))
+    return {"per_element": fit, "mean_eps_star": mean_star}
+
+
+@pytest.fixture(scope="module")
+def step1d_baseline():
+    """The unperturbed gate rung: the mesh, its sheet geometry, its told widths."""
+    if not _width_sweep_enabled():
+        pytest.skip(
+            f"{STEP1D_ENV} unset — `PORT-14` step 1d runs only when a slot asks "
+            "for it, so `main`'s red set is unchanged"
+        )
+    comm = MPI.COMM_WORLD
+    comm.Barrier()
+    t0 = time.perf_counter()
+    sweep = build_four_port_sweep(frequency_hz=FREQUENCY_HZ)
+    comm.Barrier()
+    seconds = time.perf_counter() - t0
+    widths = [float(spec.sheet_width_m) for spec in sweep["specs"]]
+    if comm.rank == 0:
+        print(
+            f"\n[PORT-14 step1d] baseline (unperturbed) gate rung: "
+            f"{int(sweep['cells'])} cells (record {STEP1_CELL_RECORD}); "
+            f"mesh + four 50 Ohm drives in {seconds:.2f} s wall; "
+            "sheet_width_m per port = " + ", ".join(f"{w:.9e}" for w in widths),
+            flush=True,
+        )
+    return {"sweep": sweep, "widths": widths, "seconds": float(seconds)}
+
+
+@pytest.fixture(scope="module")
+def step1d_configuration_d(step1d_baseline, step1d_fit):
+    """Configuration **D**: every told width scaled by ``(1 + mean eps*)``.
+
+    Ten solves on the same mesh, through the same `reuse` route step 1c used —
+    `sheets[k]["w"]` is the only thing `build_four_port_sweep` reads to fill
+    `LumpedSheetPortSpec.sheet_width_m`, so the mesh, the facet tags and the
+    measured areas/heights are bit-identical to the baseline's by construction.
+    """
+    comm = MPI.COMM_WORLD
+    base = step1d_baseline["sweep"]
+    eps = float(step1d_fit["mean_eps_star"])
+
+    perturbed_sheets = []
+    for sheet in base["sheets"]:
+        entry = dict(sheet)
+        entry["w"] = float(sheet["w"]) * (1.0 + eps)
+        perturbed_sheets.append(entry)
+
+    reuse = {
+        "mesh": base["mesh"],
+        "cell_tags": base["cell_tags"],
+        "facet_tags": base["facet_tags"],
+        "sheets": perturbed_sheets,
+        "halves": base["halves"],
+        "cells": base["cells"],
+    }
+
+    comm.Barrier()
+    t0 = time.perf_counter()
+    sweep = build_four_port_sweep(frequency_hz=FREQUENCY_HZ, reuse=reuse)
+    comm.Barrier()
+    baseline_seconds = time.perf_counter() - t0
+
+    cases = []
+    for label, element in STEP1B_TERMINATIONS:
+        z_term = series_rlc_impedance(FREQUENCY_HZ, **element)
+        comm.Barrier()
+        t1 = time.perf_counter()
+        measured, kept_ids, _results = _terminated_three_port(sweep, z_term)
+        comm.Barrier()
+        elapsed = time.perf_counter() - t1
+        predicted = reduce_terminated_ports(
+            sweep["s"], float(REFERENCE_IMPEDANCE_OHM), {TERMINATED_PORT_INDEX: z_term}
+        )
+        residual = float(
+            np.linalg.norm(measured - predicted) / np.linalg.norm(predicted)
+        )
+        cases.append(
+            {
+                "label": label,
+                "z": z_term,
+                "gamma": termination_reflection_coefficient(
+                    z_term, float(REFERENCE_IMPEDANCE_OHM)
+                ),
+                "measured": measured,
+                "predicted": predicted,
+                "residual": residual,
+                "kept_ids": kept_ids,
+                "seconds": float(elapsed),
+            }
+        )
+
+    return {
+        "epsilon": eps,
+        "sweep": sweep,
+        "baseline_widths": list(step1d_baseline["widths"]),
+        "widths": [float(spec.sheet_width_m) for spec in sweep["specs"]],
+        "cases": cases,
+        "baseline_seconds": float(baseline_seconds),
+        "baseline_cells": int(base["cells"]),
+    }
+
+
+@complex_only
+def test_step1d_the_sheet_geometry_candidates_are_printed(step1d_baseline, step1d_fit):
+    """**(a) Name a geometric origin** — printed, not asserted.
+
+    Per port: the measured `area`, `h` (= `h_bbox`), `w` (= area/h_bbox, the
+    number the law is told), `w_bbox`, `facets`, the reduced mean height
+    `area/w_bbox`, and the gap length the *generator* was told — each ratio
+    expressed as a candidate `eps_geom`.  A candidate within
+    `GEOM_MATCH_FRACTION*|eps*|` of the fitted eps* would be a geometric origin
+    for the 1.1%; none there means the offset is not geometric (pre-registered
+    reading (2)).  Nothing is asserted: this is a measurement.
+    """
+    if MPI.COMM_WORLD.rank != 0:
+        return
+    sheets = step1d_baseline["sweep"]["sheets"]
+    fit = step1d_fit
+    print(
+        "\n[PORT-14 step1d] (a) sheet geometry on the "
+        f"{int(step1d_baseline['sweep']['cells'])}-cell gate mesh, per port "
+        f"(leg_gap_length told to the generator = {float(LEG_GAP_LENGTH):.9e} m, "
+        f"port_box z told = {float(PORT_BOX_SIZE[2]):.9e} m). Printed, not "
+        "asserted:",
+        flush=True,
+    )
+    for sheet in sheets:
+        area = float(sheet["area"])
+        h_bbox = float(sheet["h"])
+        w_bbox = float(sheet["w_bbox"])
+        print(
+            f"    P{int(sheet['tag']) - SHEET_IFACE}: facets = {int(sheet['facets'])}   "
+            f"area = {area:.9e} m^2   h_bbox = {h_bbox:.9e} m   "
+            f"w_law = area/h_bbox = {float(sheet['w']):.9e} m   "
+            f"w_bbox = {w_bbox:.9e} m   h_mean = area/w_bbox = "
+            f"{area / w_bbox:.9e} m   out_of_plane = "
+            f"{float(sheet['out_of_plane']):.9e} m",
+            flush=True,
+        )
+
+    for label, entry in fit["per_element"].items():
+        print(
+            f"    fit {label:<12s} eps* = {entry['eps_star']:+.6f}   "
+            f"r^2(eps*) = {entry['r2_star']:+.6e}   "
+            f"(r^2 = {entry['a']:.6e} eps^2 + {entry['b']:.6e} eps + "
+            f"{entry['c']:.6e}, from step 1c's three printed residuals)",
+            flush=True,
+        )
+    eps_star = float(fit["mean_eps_star"])
+    window = GEOM_MATCH_FRACTION * abs(eps_star)
+    print(
+        f"    mean eps* = {eps_star:+.6f}; pre-registered match window "
+        f"+-{window:.6f} ({GEOM_MATCH_FRACTION:g} x |eps*|)",
+        flush=True,
+    )
+
+    matches = []
+    for sheet in sheets:
+        pid = f"P{int(sheet['tag']) - SHEET_IFACE}"
+        for name, value in _geometric_candidates(sheet).items():
+            hit = abs(value - eps_star) <= window
+            if hit:
+                matches.append((pid, name, value))
+            print(
+                f"    {pid} candidate {name:<28s} eps_geom = {value:+.6f}   "
+                f"|eps_geom - eps*| = {abs(value - eps_star):.6f}   "
+                f"({'MATCH' if hit else 'no'})",
+                flush=True,
+            )
+    if matches:
+        print(
+            "    READING: at least one measured geometric ratio predicts eps* "
+            "on its own — " + "; ".join(
+                f"{pid} {name} = {value:+.6f}" for pid, name, value in matches
+            ),
+            flush=True,
+        )
+    else:
+        print(
+            "    READING: no measured geometric ratio predicts eps* within the "
+            "pre-registered window — the origin is not one of these geometric "
+            "quantities",
+            flush=True,
+        )
+
+
+@complex_only
+def test_step1d_configuration_d_is_a_valid_four_port(step1d_configuration_d):
+    """Anchor: the fitted width still gives a passive, reciprocal 4x4.
+
+    Imported bands, neither touched; the cell count asserted **bitwise** equal
+    to the record, because the whole measurement is fixed-mesh.  A failure here
+    is a fixture finding (known-issues with its widths, stop) and D's residual
+    would mean nothing.
+    """
+    case = step1d_configuration_d
+    sweep = case["sweep"]
+    reciprocity = float(sweep["reciprocity"])
+    sigma_max = float(np.max(sweep["sigma"]))
+    cells = int(sweep["cells"])
+    if MPI.COMM_WORLD.rank == 0:
+        print(
+            f"\n[PORT-14 step1d] configuration D (all four told widths x "
+            f"(1 + mean eps* = {1.0 + case['epsilon']:.9f})): {cells} cells "
+            f"(record {STEP1_CELL_RECORD}, same mesh); four 50 Ohm drives in "
+            f"{case['baseline_seconds']:.2f} s wall",
+            flush=True,
+        )
+        for idx, (w0, w1) in enumerate(
+            zip(case["baseline_widths"], case["widths"]), start=1
+        ):
+            print(
+                f"    P{idx}: sheet_width_m {w0:.9e} -> {w1:.9e} m "
+                f"(ratio {w1 / w0:.9f})",
+                flush=True,
+            )
+        print(
+            f"    50 Ohm baseline: ||S - S^T||/||S|| = {reciprocity:.9e} "
+            f"(band {RECIPROCITY_BAND:.0e}); sigma_max = {sigma_max:.9f} "
+            f"(band 1 + {PASSIVITY_SIGMA_TOLERANCE:.0e})",
+            flush=True,
+        )
+    assert cells == STEP1_CELL_RECORD, (
+        f"configuration D solved on {cells} cells, not the "
+        f"{STEP1_CELL_RECORD}-cell gate mesh — the width perturbation moved the "
+        "mesh, so this is not a fixed-mesh measurement"
+    )
+    assert reciprocity <= RECIPROCITY_BAND, (
+        f"configuration D's 50 Ohm 4x4 is reciprocal only to {reciprocity:.3e} "
+        f"against the imported {RECIPROCITY_BAND:.0e} band — the fitted width "
+        "does not give a valid four-port and its residual means nothing "
+        "(§7 `PORT-14` step 1d: known-issues with its widths, stop)"
+    )
+    assert sigma_max <= 1.0 + PASSIVITY_SIGMA_TOLERANCE, (
+        f"configuration D's 4x4 has sigma_max = {sigma_max:.9f} > 1 + "
+        f"{PASSIVITY_SIGMA_TOLERANCE:.0e}: a passive network cannot"
+    )
+
+
+@complex_only
+def test_step1d_configuration_d_residuals_are_printed(
+    step1d_configuration_d, step1d_fit
+):
+    """**(b) The fit on a fourth point** — printed, not asserted.
+
+    D's told width was *fitted to* this residual, so asserting the residual
+    would be circular; it is printed beside step 1's record and beside
+    `REDUCTION_BAND`, and the pre-registered reading it selects is printed with
+    it.  The readings are (1) D <= band on both **and** a geometric candidate
+    predicts eps*; (2) D <= band with no geometric candidate; (3) D above the
+    band — the linear model fails beyond three points.
+    """
+    case = step1d_configuration_d
+    if MPI.COMM_WORLD.rank != 0:
+        return
+    print(
+        f"[PORT-14 step1d] configuration D reduction identity residuals at "
+        f"f = {FREQUENCY_HZ:.3e} Hz on the {int(case['sweep']['cells'])}-cell "
+        "gate mesh. Printed, not asserted (the width was fitted to these "
+        "numbers):",
+        flush=True,
+    )
+    under = []
+    for entry in case["cases"]:
+        record = STEP1_RESIDUAL_RECORD[entry["label"]]
+        residual = float(abs(entry["residual"]))
+        under.append(residual <= REDUCTION_BAND)
+        print(
+            f"    {entry['label']:<12s} |Gamma| = {abs(entry['gamma']):.6f}   "
+            f"residual = {residual:.6e}   "
+            f"(step 1 record {record:.6e}; factor {residual / record:.6f})   "
+            f"(band {REDUCTION_BAND:.0e}; ratio to band "
+            f"{residual / REDUCTION_BAND:.6f}; "
+            f"{'UNDER' if residual <= REDUCTION_BAND else 'OVER'})   "
+            f"three drives in {entry['seconds']:.2f} s wall",
+            flush=True,
+        )
+    print(
+        f"    r(eps*) predicted ~ 0 by the fit; measured "
+        + ", ".join(
+            f"{entry['label']} = {float(abs(entry['residual'])):.6e}"
+            for entry in case["cases"]
+        )
+        + f" at eps* = {case['epsilon']:+.6f}",
+        flush=True,
+    )
+    if all(under):
+        print(
+            "    READING: D is under the band on both elements — reading (1) or "
+            "(2), decided by whether a geometric candidate above matched eps*",
+            flush=True,
+        )
+    else:
+        print(
+            "    READING (3): D is not under the band on both elements — the "
+            "linear |r0 + k eps| model does not hold beyond step 1c's three "
+            "points; r(eps*) is printed above and step 1d stops here",
+            flush=True,
+        )
+
+
+@complex_only
+def test_step1d_the_zero_gamma_control_misses_on_configuration_d(
+    step1d_configuration_d,
+):
+    """**Negative control, ceiling first**, exactly as step 1 / 1c ran it.
+
+    Asserted, and backed by the same comparison measured on this mesh
+    (`20260905T213322Z_PORT-14-step1c.log:1990-1991`, Delta = 0.31-0.33): Delta
+    is computed from D's own 4x4 first and printed as the ceiling, and the
+    >= 5x-band miss is asserted only where Delta reaches the floor.
+    """
+    case = step1d_configuration_d
+    s4 = np.asarray(case["sweep"]["s"], dtype=np.complex128)
+    kept = [i for i in range(s4.shape[0]) if i != TERMINATED_PORT_INDEX]
+    s_aa = s4[np.ix_(kept, kept)]
+
+    rows = []
+    for entry in case["cases"]:
+        predicted = entry["predicted"]
+        delta = float(np.linalg.norm(predicted - s_aa) / np.linalg.norm(predicted))
+        miss = float(
+            np.linalg.norm(entry["measured"] - s_aa) / np.linalg.norm(predicted)
+        )
+        rows.append((entry["label"], delta, miss))
+
+    reached = [row for row in rows if row[1] >= CONTROL_DELTA_FLOOR]
+    if MPI.COMM_WORLD.rank == 0:
+        print(
+            "[PORT-14 step1d] configuration D Gamma = 0 control (ceiling first), "
+            f"floor {CONTROL_DELTA_FLOOR:.0e}:",
+            flush=True,
+        )
+        for label, delta, miss in rows:
+            print(
+                f"    {label:<12s} Delta = {delta:.6e}   "
+                f"||S'_meas - S_aa||_F/||S'_pred||_F = {miss:.6e}   "
+                f"({'asserted' if delta >= CONTROL_DELTA_FLOOR else 'below floor'})",
+                flush=True,
+            )
+        if not reached:
+            print(
+                "    FINDING: no termination reaches the Delta floor on "
+                "configuration D",
+                flush=True,
+            )
+
+    for label, delta, miss in reached:
+        assert miss >= CONTROL_MISS_FACTOR * REDUCTION_BAND, (
+            f"{label}: on configuration D the Gamma = 0 prediction S_aa misses "
+            f"the measured terminated 3x3 by only {miss:.3e}, under "
+            f"{CONTROL_MISS_FACTOR:g}x the {REDUCTION_BAND:.0e} band, though the "
+            f"4x4 predicts a coupling term Delta = {delta:.3e}"
         )

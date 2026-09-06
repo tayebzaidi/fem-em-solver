@@ -5271,6 +5271,78 @@ lineage. Standard tier.
 >   pre-registered — record it in this entry and in the known-issues
 >   disposition and stop; a D whose 4×4 fails reciprocity/passivity is a
 >   fixture finding (known-issues with its widths, stop).
+> * **Step 1d executed 2026-09-05, 19:30 implementer slot — the data select
+>   pre-registered reading (2): the three-point fit holds on a fourth point,
+>   and the origin of ε\* is *not* one of the measured geometric ratios.**
+>   One window, one mesh, band untouched, row still 🟡, no record moved, no
+>   `src/` change. `20260906T003627Z_PORT-14-step1d.log`, heavy tier by
+>   ceiling (`timeout -k 30 400`), `-n 2`, complex build,
+>   `FEM_EM_PORT14_WIDTH_SWEEP=1`, `-k step1d`: `tests/environment`
+>   **`11 passed … 24.23s`** (`:116`) then **`4 passed, 15 deselected in
+>   110.42s`, Status 0, 137 s** (`:2114`, `:2120–2121`) — 14 solves on the
+>   one 116 085-cell gate mesh (baseline 4×4 + D's 4×4 + 2 × 3 terminated);
+>   a `--collect-only` smoke first, `20260906T003614Z_PORT-14-step1d-smoke.log`
+>   (`4/19 tests collected (15 deselected)`), Status 0, 4 s.
+>
+>   **(b) The fit on a fourth point.** ε\* is recomputed **in code** from
+>   `STEP1C_RESIDUALS` (step 1c's six printed digits) by solving the exact
+>   parabola through the three `(ε, r²)` points — never typed in:
+>   **ε\* = −0.010735 (C = 100 pF)**, **−0.010970 (L = 1 µH)**, fitted minima
+>   −1.375055e-07 / −1.178493e-06 in `r²`, mean **ε\* = −0.010852**
+>   (`:2005–2007`). Configuration **D** — all four told widths
+>   7.294123600e-03 → **7.214965819e-03 m**, ratio **0.989147732**
+>   (`:2094–2098`) — through the same `reuse` route on the same mesh gives,
+>   **printed not asserted** (the width was fitted *to* these residuals, so
+>   asserting them would be circular):
+>
+>   | element | residual at ε\* | vs step 1's record | vs `REDUCTION_BAND` = 1e-3 |
+>   |---|---|---|---|
+>   | C = 100 pF | **5.756561e-05** | 1.595580e-03 → **×0.036078** | **0.057566×** the band |
+>   | L = 1 µH | **1.196780e-04** | 3.370512e-03 → **×0.035507** | **0.119678×** the band |
+>
+>   (`:2103–2105`.) The linear model predicted ≈ 0 at a point 5% outside the
+>   fitted interval's centre and the measurement lands 17× / 28× below the
+>   record — **reading (3) is excluded**: `|r₀ + kε|` holds beyond step 1c's
+>   three points. It does not go to zero (5.8e-05 / 1.2e-04 remain), which is
+>   the residual the width constant cannot explain.
+>
+>   **(a) No geometric origin.** Every sheet is identical to nine digits
+>   (26 facets, area 5.835298880e-05 m², `h_bbox` 8.000000000e-03 m,
+>   `w = A/h` 7.294123600e-03 m, `w_bbox` 9.167340025e-03 m, mean height
+>   `A/w_bbox` 6.365313018e-03 m, out-of-plane 0.0) (`:2001–2004`, all from
+>   `build_four_port_sweep`'s own comm-reduced `area`/`_sheet_extents`, so
+>   nothing rank-local is read). Against the pre-registered window
+>   **±0.003256** (0.3 × |ε\*|), the candidates read (`:2008–2040`, the same
+>   on all four ports): `area/(w_bbox·h_bbox) − 1` = `w/w_bbox − 1` =
+>   `h_mean/h_bbox − 1` = **−0.204336** (miss 0.193484; step 2b's ragged edge,
+>   here 20.4% on the narrowed sheet), its inverse **+0.256812** (miss
+>   0.267664), `h_bbox/port_box_z_told − 1` = **−0.200000** / **+0.250000**,
+>   and the told gap length **matched exactly** — `h_bbox` = the generator's
+>   `leg_gap_length` = 8.000000000e-03 m to nine digits, ε_geom = **+0.000000**,
+>   miss **0.010852**. Nearest candidate 0.010852 = 3.3× the window. So the
+>   1.09% is **not** a mis-measured terminal separation and not the ragged
+>   edge: **reading (2)** — a field effect of the sheet (edge fringing, the
+>   single-mode residual proper). Per the pre-registration **no constant
+>   enters the law**, there is no step 1e, and re-registering the band on this
+>   evidence is the weekly's call.
+>
+>   **Asserted and green** (imported bands, none moved): cells **116 085
+>   bitwise**, reciprocity **9.998294990e-15** vs 1e-3, `σ_max` =
+>   **0.999993774** vs 1 + 1e-9 (`:2099`) — D is a valid passive reciprocal
+>   four-port, so its residual means something. The ceiling-first Γ = 0
+>   control is asserted on both terminations: Δ = **0.321025 / 0.324791**
+>   (above the 5e-3 floor), miss **0.321023 / 0.324743** = 321× / 325× the
+>   band (`:2110–2111`) — the same 0.31–0.33 step 1 and 1c measured.
+>
+>   **Not claimed.** `REDUCTION_BAND` stays **1e-3**; the gate test stays
+>   deliberately red on `main` and **was not re-run** (15 deselected); the row
+>   stays 🟡; no §2 change; no `src/` change; 10 MHz only. D's residual is a
+>   **fitted** number and closes nothing — what would close step 1 is a
+>   residual ≤ 1e-3 on *unfitted* input. Code is additive and gate-neutral:
+>   `tests/validation/test_port_lumped_rlc_termination.py` gains
+>   `STEP1C_RESIDUALS`, `_epsilon_star`, `_geometric_candidates`, three
+>   fixtures and four `step1d` tests, all skipping unless
+>   `FEM_EM_PORT14_WIDTH_SWEEP` is set.
 
 **`PORT-15` — the circuit layer (HFSS + Circuit)** 🟡 *(**step 1 ✅
 2026-09-05, 22:30 slot** — the algebra and its three identities; digits in
@@ -8658,7 +8730,36 @@ reports the negative result; it does not decide in-slot** (`EX-49`,
 the factor was a prediction, but the item should have said so).
 
 
-1. **`PORT-14` step 1d — the origin of ε\*: the sheet geometry the fixture
+1. **DONE ✅ 2026-09-05, 19:30 slot** — `PORT-14` step 1d executed as
+   scoped, on the first run, in one window (implementer, foreground;
+   `20260906T003627Z_PORT-14-step1d.log`, `4 passed, 15 deselected in
+   110.42s`, Status 0, **137 s**, `-n 2`, complex build, heavy by ceiling,
+   `tests/environment` `11 passed` first in the same window; collect smoke
+   `20260906T003614Z_PORT-14-step1d-smoke.log`, Status 0, 4 s). **The data
+   select pre-registered reading (2): the fit holds on a fourth point, and
+   the origin is *not* geometric.** (b) ε\* recomputed in code from
+   `STEP1C_RESIDUALS` — **−0.010735** (C) / **−0.010970** (L), mean
+   **−0.010852** (`:2005–2007`) — and configuration D (all four told widths
+   ×0.989147732, `:2094–2098`) lands at **5.756561e-05** (C) and
+   **1.196780e-04** (L), i.e. **0.058× / 0.120× the 1e-3 band** and
+   **×0.036 / ×0.036** of step 1's records (`:2103–2105`) — the three-point
+   linear model predicted ≈ 0 and the fourth point confirms it, so
+   reading (3) is excluded. Printed, not asserted (the width was fitted to
+   these numbers). (a) No candidate `ε_geom` lands inside the pre-registered
+   ±0.003256 window: the bounding-box fill / ragged-edge ratio reads
+   **−0.204336** (its inverse +0.256812) and the told gap length is matched
+   **exactly** by `h_bbox` (8.000000000e-03 m, ε_geom = +0.000000, off by
+   0.010852); nearest miss 0.010852 (`:2008–2040`). So the 1.09% is a field
+   effect of the sheet, not one of the measured geometric quantities — **no
+   constant enters the law**; re-registering the band on this evidence is
+   the weekly's call. Anchors green: cells **116 085** bitwise, reciprocity
+   **9.998294990e-15**, σ_max **0.999993774** (`:2099`); Γ = 0 control
+   asserted on both terminations, Δ = 0.321025 / 0.324791, miss 0.321023 /
+   0.324743 = 321× / 325× the band (`:2110–2111`). `REDUCTION_BAND` stays
+   1e-3, the row stays 🟡, the red gate test was not re-run, no `src/`
+   change, no §2 change. Digits in the `PORT-14` §7 entry, "Step 1d
+   executed", and in the known-issues disposition.
+   ~~**`PORT-14` step 1d — the origin of ε\*: the sheet geometry the fixture
    already measures, read per port against the fitted zero-crossing, and
    the fit tested on a fourth point (told widths × (1 + ε\*)), residuals
    printed, nothing tuned** (heavy by ceiling, `-n 2`, complex build;
@@ -8702,7 +8803,7 @@ the factor was a prediction, but the item should have said so).
    reading is pre-registered — record it in the §7 entry and the
    known-issues disposition and stop; a D whose 4×4 fails
    reciprocity/passivity is a fixture finding (known-issues with its
-   widths, stop).
+   widths, stop).~~
 
 2. **`EX-50` — the conductor as a hole in ParaView: the PEC sphere cut from
    the box beside `th:3`'s solved-inside dielectric sphere, β asserted
