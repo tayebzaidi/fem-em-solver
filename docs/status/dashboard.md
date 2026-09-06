@@ -1,82 +1,98 @@
 # FEM-EM Solver — status
 
-**Updated:** 2026-09-06 10:30 daily review. Headline: **the account session
-limit cost four scheduled sessions overnight — the weekly review lost its
-plan work after committing the archive rotation, the 03:00 review never
-ran, and two implementer slots never started — and the queue then drained
-at 09:00.** The slots that did fire all landed: the lumped-RLC sheet's
-1.1% is now fully diagnosed as a field effect of the sheet, not a
-mis-measured geometry (no constant enters the law); the PEC sphere as a
-hole and the human-scale coil mesh are both in ParaView as examples; the
-two-torus hole is a `MeshGenerator` route with every count and area
-identity asserted; and the refined Dodd–Deeds fixture reproduced its
-0.28% on the current image but parked on two questions this review has
-now ruled — it lands next slot. **Still a self-consistency story on one
-fixture family at 10 MHz at fixed `h`: no absolute SAR, no homogeneity,
-no C95.3, no Larmor coil claim, no convergence claim beyond the
-PEC-sphere ladder, no resonance or tuning claim, and no solve has touched
-the human-scale mesh.** Source of truth is `PROJECT_PLAN.md`; this page
-is a read-only digest for the human operator.
+**Updated:** 2026-09-06 weekly review, run interactively by the operator's
+session (the scheduled 02:15 weekly died on the account session limit after
+its rotation commit). Headline: **`ANS-4` is adjudicated — AGREE at 10 MHz,
+inconclusive at 64 / 128 MHz, and element order is excluded as the cause;
+the first XL slot goes to the discriminating run.** Phase 5 exits on
+F-small one item from now (`MAT-4` step 2). Phase 6 has started on the
+feature ladder with its mesh prerequisites all gated and the r³ cost premise
+dead. The §7 archive rotation the cut-off weekly owed is done (nine
+narratives, 1 872 lines). **Still a self-consistency story at the Larmor
+frequencies: no absolute SAR, no homogeneity, no C95.3, no Larmor coil
+accuracy claim, no resonance or tuning claim, and no solve has touched the
+human-scale mesh.** Source of truth is `PROJECT_PLAN.md`; this page is a
+read-only digest for the human operator.
 
-## Weekly review digest (2026-09-02; the 2026-09-06 session was cut off)
+## Weekly review digest (2026-09-06, interactive)
 
-- **Pace, 08-30 → 09-02 (2.68 d):** 26 §4-✅ items (10 chunks + 16 steps),
-  9.7/day, 62% physics; 30 of 32 implementer slots fired, every loss
-  launcher-side (login, CLI pin), none on limits. Full ledger in §10.
-- **Phase 5 exit re-assessed to ≈ 09-05…09 on F-small** — watch condition
-  met 09-02; the SAR gate itself landed 09-02 19:30.
-- **2026-09-06 weekly (02:15):** committed the `attempts.md` rotation
-  (4 448 lines archived, the rotation tool landed) and then hit the
-  session limit. **Everything else carries to 2026-09-09:** the
-  `POWER_BALANCE_BAND` ruling; `ANS-4`'s adjudication and the first XL
-  slot; the `GEO-25` re-dating and `TH-16` cost probe; the `PORT-14` band
-  re-registration on step 1d's evidence; `TH-15` step 3 proper; the
-  `TH-14` step 1 anchor (annotated in §7 by this review); the §7 archive
-  rotation and the `attempts.md` window (15 559 lines vs 6 000); and,
-  new, re-confirming the `ANS-1` AGREE verdict once the promoted fixture
-  lands.
+- **Pace, 09-02 → 09-06 (4.33 d):** 34 §4-✅ items (23 chunks + 11 steps),
+  7.9/day, 44 % physics; 2 of 14 governing sessions died on the account
+  limit (the weekly and the 03:00 review), 2 implementer slots with them.
+  Full ledger in §10.
+- **`ANS-4` adjudicated:** AGREE at 10 MHz, INCONCLUSIVE at 64/128 MHz;
+  the miss grows with frequency and is several times HFSS's own
+  order-sensitivity, so it is not element order — our unconverged 116 k
+  mesh is the first suspect. Numeric ruling in `docs/private/`; nothing
+  promoted at Larmor. `ANS-1` AGREE survives the `MAT-6` step 11 landing
+  (arithmetic in the private file).
+- **XL slot spent:** `ANS-4` step 2 — four conductor-resolution rungs plus
+  one degree-2 solve at 128 MHz in one window at `-n 16`, Richardson h→0
+  printed, decision rule pre-registered (§7 `ANS-4`, §9 item 5). **It needs
+  `fem-em-solver-xl` Up** — see Waiting-on-you.
+- **Phase 5:** watch condition met on 09-02 (the SAR gate landed); exit on
+  F-small ≈ 09-07…08, one item (`MAT-4` step 2; its stall rule trips 09-07,
+  the 18:00 review queues it). The B1+ literature target is replaced by a
+  computable closed form (`WF-6` step 4, the unloaded-coil line-current
+  superposition).
+- **Phase 6:** started on the feature ladder; r³ cost model given its
+  epitaph (`GEO-25`: 504 642 cells, exponent 0.84); `TH-16`'s "62 GiB wall"
+  re-dated to an 11–33 GiB bracket for the first F-human solve; `PORT-14`
+  ruled — the 3.4e-3 single-mode floor becomes a fixture record and a named
+  systematic, `REDUCTION_BAND` not widened; `POST-6` (iii) re-registered
+  common-mode, `PORT-16` opened for the 1 %-of-supplied gap; `TH-17` first
+  mode number ≈ 09-12…14 if slots fire; no completion date.
+- **Examples:** 45/45 green within 6 days; Phase 3 one short → `EX-52`.
+  Agents: all six stay; pathologist stays at opus (it ran 0 times — the
+  limit deaths were at session start, not agent-side).
 
 ## Waiting on you
 
-1. 🔴 **The account session limit ate four scheduled sessions between
-   02:15 and 06:00 today** (`logs/automation/…` for the weekly review, the
-   03:00 review and the 04:30 / 06:00 slots all read `You've hit your
-   session limit · resets 7:10am`). Nothing broke and nothing was left
-   dirty — the weekly's commit-first checkpoint did its job — but the
-   weekly's plan work is lost until Wednesday and the schedule's densest
-   window (the weekly at 02:15 plus the 03:00 review) sits right where the
-   limit bites. Two things only you can decide: whether the 02:15 / 03:00
-   pair should move later in the reset cycle, and whether the plan
-   allowance is the constraint to relax.
-2. ✅ **`ANS-4` replicated 2026-09-04** — both orders in the gitignored
-   `aed_results/`, the private-mode run filled `COMPARISON_private.md`,
-   the pre-read is in `docs/private/`. No AED number reached a tracked
-   file. Nothing for you to do; the 2026-09-09 weekly adjudicates (it was
-   the 09-06 weekly's job and was lost with it).
-3. 🟢 **`ANS-3` AED run** — the top of your queue. Same low-order rule,
+1. 🔴 **The account session limit ate four scheduled sessions on 09-06
+   (02:15 weekly, 03:00 review, 04:30 and 06:00 slots) — schedule
+   decision, yours only.** They died *at start*, in the band right after
+   the 02:00 reset, so the limit was consumed by the preceding implementer
+   slots, not by the reviews. Two options, either is fine: move the
+   02:15 / 03:00 pair later (e.g. 07:15 / 08:00, after the 07:10 reset —
+   `scripts/automation/crontab`, then `crontab scripts/automation/crontab`)
+   or thin the 21:00 / 22:30 / 00:00 implementer slots that drain the
+   window before it. The weekly review's plan work was completed
+   interactively today, so nothing is lost this time.
+2. 🟠 **Bring the XL service up for `ANS-4` step 2 (§9 item 5, `xl`)** —
+   `docker compose -f docker/docker-compose.yml --profile xl up -d`, then
+   the next implementer slot takes it (one window, ≤ 2 h, ≤ 512 GiB,
+   `-n 16`); stop it afterwards. If the profile is on the allowlist the
+   slot brings it up itself and skips otherwise. The ledger row is
+   appended by the harness at start.
+3. ✅ **`ANS-4` adjudicated 2026-09-06** — AGREE at 10 MHz, inconclusive at
+   Larmor pending item 2's run; nothing for you to do. The private ruling
+   is `docs/private/ans4-adjudication-2026-09-06.md`.
+4. 🟢 **`ANS-3` AED run** — the top of your queue. Same low-order rule,
    same private-results handling; the tracked table's AED cells are blank
    by construction.
-4. 🟡 **`ANS-1` note, no action yet:** the refined Dodd–Deeds fixture
+5. 🟡 **`ANS-1` note, no action yet:** the refined Dodd–Deeds fixture
    lands next slot and moves our ΔR column by ~1.8% relative (the pin
    follows the fixture — ruled today, nothing on the AED side changes).
    The 2026-09-02 AGREE verdict is re-checked privately by the 09-09
    weekly; if the private margin was inside that move you will hear it
    there.
-5. 🟡 **Agent-definition edits the sandbox cannot make** (unchanged): two
-   lines for `.claude/agents/example-runner.md` (census windows through
-   the harness; full-filename guide references), one for `mesh-probe.md`
-   (row stays 🧪 until a gate step lands), one for `implementer.md`
-   (parking marks the §9 item BLOCKED in the same commit — rule (d)), and
-   one for both (an unlabelled failing factor is a negative to report,
-   not a call to make in-slot — rule (e); honoured correctly by the 07:30
-   slot today).
-6. **Information — automation fix from the 08-30 10:30 review, still
+6. 🟡 **Agent-definition edits — still open, and you declined one today.**
+   The interactive session's edit to `implementer.md` (rules (d) and (e))
+   was denied at the permission prompt, so all five one-liners remain:
+   two for `example-runner.md` (census windows through the harness,
+   pre-census before any file is written; full-filename guide
+   references), one for `mesh-probe.md` (row stays 🧪 until a gate step
+   lands), one for `implementer.md` (parking marks the §9 item BLOCKED —
+   rule (d)), and rule (e) for both. Say which you want and an interactive
+   session applies them; the auditor and log-pathologist edits from 09-03
+   did land. `implementer.md` also has no "Last verified against" footer.
+7. **Information — automation fix from the 08-30 10:30 review, still
    awaiting your OK:** `docs/automation/weekly-review.md` has a commit-first
    checkpoint (rotation committed before plan edits). It is what saved
    the rotation today; revert only if you want the single-commit form.
-7. **One click: does ParaView open a DG1 `.bp`?** (unchanged since
+8. **One click: does ParaView open a DG1 `.bp`?** (unchanged since
    2026-08-12; `scripts/probes/post4_step5_probe.py` regenerates.)
-8. FYI, no action — physics worth a glance. **(a)** The lumped sheet's
+9. FYI, no action — physics worth a glance. **(a)** The lumped sheet's
    1.1% termination-reduction miss is not geometric: every measured sheet
    ratio misses the fitted zero-crossing by ≥ 3.3× the window, and the
    told gap length is reproduced exactly. It is edge fringing — the

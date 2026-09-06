@@ -28,6 +28,17 @@ unless fixing it is the task.
 
 ## Failing tests
 
+### 🟡 OPEN 2026-09-06 (`ANS-4` adjudication, weekly review run interactively) — the 4-leg birdcage's 4×4 S-matrix **agrees with HFSS at 10 MHz and is inconclusive at 64 / 128 MHz**: a miss that grows with frequency, several times larger than HFSS's own Zero-vs-First-Order shift, on a fixed 116 085-cell mesh that has never had a convergence ladder on this fixture
+
+| | |
+|---|---|
+| **Test** | None red: every gate on the fixture is a self-consistency identity (reciprocity / passivity / C4) and all pass at all three frequencies (`PORT-9`, `PORT-11`, `ANS-4` runnable half). This entry records that the **absolute** comparison is open at the Larmor frequencies, so no absolute-accuracy claim may cite the 64 / 128 MHz S-matrix. |
+| **Log** | Ours: `docs/testing/logs/20260905T041254Z_ANS-4-private.log` (Status 0, 128 s at `-n 2`). AED side: private (`aed_results/`, `COMPARISON_private.md`, `docs/private/ans4-adjudication-2026-09-06.md` — licence terms; no number here). |
+| **Symptom** | Qualitative only: at 10 MHz couplings, self term and the S-derived terminated-drive input impedance agree to the few-percent level the two AED orders bracket; at 64 and 128 MHz the miss grows with frequency on every C4 class. AED's two orders agree with each other to well under the gap everywhere. |
+| **Cause** | Not diagnosed by measurement. Element order is **excluded** (the AED order shift is several times smaller than the gap). First suspect: our mesh — ≈ 12 cells/λ and ≈ 5 cells/δ in the 800 S/m legs at 128 MHz, no h-ladder on this fixture, and the sign of the miss matches more conductor loss being resolved inside the legs. Second: a Larmor-frequency feed-model systematic of the lumped sheet. Only moving *our* discretisation separates them. |
+| **What is unmoved** | No band, record or gate moved. The 10 MHz 4×4 gains "externally checked, AGREE" (§2.2, §6). `ANS-1`'s AGREE verdict is unaffected. |
+| **Disposition** | **`ANS-4` step 2 (`xl`)** — the first XL-slot run (§5.1): four degree-1 conductor-resolution rungs plus one degree-2 solve at 128 MHz in one window, Richardson h→0 printed; decision rule pre-registered in the §7 row (≥ 50 % of the private gap closed → discretisation; < 25 % → feed model → a birdcage-sheet Larmor systematics chunk; between → one more rung). Retire this entry when the 09-09 or a later weekly rules. |
+
 ### 🟡 OPEN 2026-09-06 (`TH-15` step 2a, 00:00 implementer slot; filed by the 10:30 review) — the step-0 mesh probe's `_census` **double-counts ghost entities at any rank count above 1**: under `GhostMode.shared_facet` the solid two-torus tag census overshot the owned cell count by **2972** at `-n 2`, reading tag 2 at **9448 against 9348** (1.0697% > the 1% band)
 
 | | |
