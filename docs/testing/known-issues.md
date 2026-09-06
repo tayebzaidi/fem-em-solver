@@ -28,6 +28,17 @@ unless fixing it is the task.
 
 ## Failing tests
 
+### 🟡 OPEN 2026-09-06 (`TH-15` step 2a, 00:00 implementer slot; filed by the 10:30 review) — the step-0 mesh probe's `_census` **double-counts ghost entities at any rank count above 1**: under `GhostMode.shared_facet` the solid two-torus tag census overshot the owned cell count by **2972** at `-n 2`, reading tag 2 at **9448 against 9348** (1.0697% > the 1% band)
+
+| | |
+|---|---|
+| **Test** | None red on `main`: the gate module `tests/mesh/test_two_torus_conductor_hole.py` masks its own census on `size_local` (`_owned_census`, `:119–134`) and asserts the per-tag census sums to the global owned count (`:219`), so it is green. The defect lives in `tests/mesh/probe_two_torus_conductor_hole.py::_census` (`:431–440`), a measurement-only probe that asserts nothing — and in anything else that imports it at width > 1. |
+| **Log** | `docs/testing/logs/20260906T050521Z_TH-15.log` — the raw solid census at `:1464` (9556 / 9448 / 113 483 / 13 661 / 13 648 / 13 658 / 13 694, sum 187 148 against `n_cells` 184 176), the failing assert at `:1483–1485`, Status 1 / Elapsed 130 s at `:1632–1634`. The green re-run with the masked census, same tree: `20260906T050829Z_TH-15.log:1464` reads 9471 / 9348 / 110 696, `12 passed, 4 skipped` at `:1543`. |
+| **Symptom** | `_census` calls `np.unique(values)` on the rank-local `tags.values`, which on a `shared_facet`-ghosted mesh includes every ghost cell the rank holds, then `allreduce`s the counts — so a cell shared by *k* ranks is counted *k* times. The total cell count, the sheet areas and the cavity area were already exact on the failed run; only the per-tag counts drifted, by exactly the ghost count. |
+| **Cause** | Rank-safety: `cell_tags.values` is rank-local *and* ghost-inclusive (CLAUDE.md hard rule); the probe was written for and read at `-n 1` (step 0, 2026-09-05), where owned = local and the two censuses agree. |
+| **What is unmoved** | No record moved: step 0's `-n 1` digits (161 461 / 184 176; 9471 / 9348; areas to 3.7e-7) are the ones the gate module now holds at `-n 2`. No band moved — the measurement was wrong, not the record. |
+| **Disposition** | **`OPS-39`** (§7; §9 item 3 of the 2026-09-06 10:30 review) fixes the probe in place (mask on `index_map(dim).size_local` before counting) and gates it on the exact count identity `Σ_tag census[tag] == size_global` at `-n 1` and `-n 2`, with the naive overshoot asserted equal to `Σ num_ghosts`. Until then: do not import the probe's `_census` at width > 1; use the gate module's `_owned_census`. Expected on `main` only in the sense that the probe is unsafe, not that any test is red; **not yours**. This entry leaves with the `OPS-39` commit. |
+
 ### 🟡 OPEN 2026-09-05 (`PORT-14` step 1, 21:00 implementer slot) — the lumped sheet is **single-mode to 3.4e-03, not 1e-3**: the field-solved terminated 3×3 misses the circuit reduction of the 50 Ω 4×4 by **1.596e-03 (C = 100 pF)**, **3.371e-03 (L = 1 µH)** and **7.250e-04 (R = 200 Ω)** against the pre-stated 1e-3 band
 
 | | |
