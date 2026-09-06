@@ -428,7 +428,26 @@ def _exterior_facet_area(msh, facet_tags, tag, comm) -> float:
     return float(np.real(comm.allreduce(local, op=MPI.SUM)))
 
 
-def _census(values, comm):
+def _census(values, comm, *, indices=None, n_owned=None):
+    """Per-tag global counts.
+
+    ``OPS-39`` (2026-09-06): the two optional keyword arguments are the
+    rank-safety mask.  This fixture is partitioned with
+    ``GhostMode.shared_facet``, so a rank's ``MeshTags`` also carries the ghost
+    layer; summing ``tags.values`` across ranks counts every shared entity once
+    per rank that holds it, and the per-tag census then depends on the rank
+    width (measured 2026-09-06 at ``-n 2``: the solid route's tag sum overshot
+    the global cell count by 2972, and tag 2 read 9448 against step 0's ``-n 1``
+    9348).  Passing ``indices=tags.indices`` and
+    ``n_owned=msh.topology.index_map(dim).size_local`` restricts the count to
+    **owned** entities, which is what makes the census width-invariant.  The
+    positional signature and the ``{tag: count}`` return type are unchanged, so
+    the gate module's ``_owned_census`` (which masks the array itself before
+    calling) keeps working untouched.
+    """
+    values = np.asarray(values)
+    if indices is not None and n_owned is not None:
+        values = values[np.asarray(indices) < int(n_owned)]
     local_tags, local_counts = np.unique(values, return_counts=True)
     all_tags = sorted({int(t) for t in comm.allreduce(list(local_tags),
                                                       op=MPI.SUM)})
@@ -438,6 +457,16 @@ def _census(values, comm):
                  if tag in local_tags else 0)
         out[tag] = comm.allreduce(local, op=MPI.SUM)
     return out
+
+
+def _owned_census(msh, tags, dim, comm):
+    """``_census`` over owned entities of dimension ``dim`` only (``OPS-39``)."""
+    return _census(
+        tags.values,
+        comm,
+        indices=tags.indices,
+        n_owned=msh.topology.index_map(dim).size_local,
+    )
 
 
 def main() -> None:
@@ -469,8 +498,8 @@ def main() -> None:
 
     n_cells = comm.allreduce(msh.topology.index_map(tdim).size_local, op=MPI.SUM)
     n_verts = comm.allreduce(msh.topology.index_map(0).size_local, op=MPI.SUM)
-    cell_census = _census(cell_tags.values, comm)
-    facet_census = _census(facet_tags.values, comm)
+    cell_census = _owned_census(msh, cell_tags, tdim, comm)
+    facet_census = _owned_census(msh, facet_tags, tdim - 1, comm)
 
     # The conductor surface: in B the tagged cavity facets, in A the facets
     # between a conductor cell and anything else (air or gap).
@@ -480,7 +509,7 @@ def main() -> None:
             {311: ((1, 3), (1, 101), (1, 111)),
              312: ((2, 3), (2, 102), (2, 112))},
         )
-        cond_counts = _census(cond_ft.values, comm)
+        cond_counts = _owned_census(msh, cond_ft, tdim - 1, comm)
         cond_n = {1: cond_counts.get(311, 0), 2: cond_counts.get(312, 0)}
         cond_area = {1: _facet_area(msh, cond_ft, 311, comm),
                      2: _facet_area(msh, cond_ft, 312, comm)}

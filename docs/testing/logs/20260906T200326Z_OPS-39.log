@@ -1,0 +1,68 @@
+# Test Run
+- Chunk: OPS-39
+- Commit: 3f0142c639b49942d7aea7fd77d82d303d399a15
+- Time (UTC): 2026-09-06 20:03:26
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 400 mpiexec -n 2 python3 -m pytest tests/mesh/test_two_torus_conductor_hole.py -v --tb=short'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Sep  4 23:31 .
+drwxr-xr-x 16 taz5297 taz5297 4096 Sep  6 15:03 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  721 Sep  3 13:49 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 2801 Sep  4 23:31 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 400 mpiexec -n 2 python3 -m pytest tests/mesh/test_two_torus_conductor_hole.py -v --tb=short'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... collected 5 items
+
+tests/mesh/test_two_torus_conductor_hole.py::test_hole_route_reproduces_the_step0_cell_record collected 5 items
+
+tests/mesh/test_two_torus_conductor_hole.py::test_hole_route_reproduces_the_step0_cell_record PASSED [ 20%]
+tests/mesh/test_two_torus_conductor_hole.py::test_hole_route_drops_the_conductor_cell_tags PASSED [ 40%]
+tests/mesh/test_two_torus_conductor_hole.py::test_hole_route_keeps_both_port_sheets_exact PASSED [ 60%]
+tests/mesh/test_two_torus_conductor_hole.py::test_cavity_area_equals_the_solid_routes_conductor_interface PASSED [ 80%]
+tests/mesh/test_two_torus_conductor_hole.py::test_as_hole_requires_the_gapped_sheet_fixture PASSED [100%]PASSED [ 20%]
+tests/mesh/test_two_torus_conductor_hole.py::test_hole_route_drops_the_conductor_cell_tags PASSED [ 40%]
+tests/mesh/test_two_torus_conductor_hole.py::test_hole_route_keeps_both_port_sheets_exact PASSED [ 60%]
+tests/mesh/test_two_torus_conductor_hole.py::test_cavity_area_equals_the_solid_routes_conductor_interface PASSED [ 80%]
+tests/mesh/test_two_torus_conductor_hole.py::test_as_hole_requires_the_gapped_sheet_fixture PASSED [100%]
+
+============================== 5 passed in 55.71s ==============================
+
+
+============================== 5 passed in 55.68s ==============================
+
+## Exit
+- Status: 0
+- Elapsed (s): 57
+- Filtered lines (gmsh optimisation chatter): 0

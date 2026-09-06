@@ -1,0 +1,69 @@
+# Test Run
+- Chunk: OPS-39
+- Commit: 3f0142c639b49942d7aea7fd77d82d303d399a15
+- Time (UTC): 2026-09-06 20:02:28
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 120 mpiexec -n 2 python3 -m pytest tests/mesh/test_probe_census_rank_safety.py -v --tb=short -s'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Sep  4 23:31 .
+drwxr-xr-x 16 taz5297 taz5297 4096 Sep  6 15:02 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  721 Sep  3 13:49 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 2801 Sep  4 23:31 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 120 mpiexec -n 2 python3 -m pytest tests/mesh/test_probe_census_rank_safety.py -v --tb=short -s'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... collected 3 items
+
+tests/mesh/test_probe_census_rank_safety.py::test_the_owned_census_sums_to_the_global_cell_count collected 3 items
+
+tests/mesh/test_probe_census_rank_safety.py::test_the_owned_census_sums_to_the_global_cell_count 
+[OPS-39] ranks=2 size_global=3072 Σ_ranks(size_local+num_ghosts)=3328 Σ_ranks num_ghosts=256
+[OPS-39] owned census {1: 768, 2: 768, 3: 1536} sum=3072
+[OPS-39] naive census {1: 774, 2: 770, 3: 1784} sum=3328 overshoot=256
+PASSEDPASSED
+tests/mesh/test_probe_census_rank_safety.py::test_the_masked_census_is_width_invariant_per_tag 
+tests/mesh/test_probe_census_rank_safety.py::test_the_masked_census_is_width_invariant_per_tag [OPS-39] per-tag owned census {1: 768, 2: 768, 3: 1536} expected {1: 768, 2: 768, 3: 1536} (ranks=2)
+PASSEDPASSED
+tests/mesh/test_probe_census_rank_safety.py::test_the_census_positional_signature_is_unchanged 
+tests/mesh/test_probe_census_rank_safety.py::test_the_census_positional_signature_is_unchanged PASSEDPASSED
+
+============================== 3 passed in 1.26s ===============================
+
+
+============================== 3 passed in 1.30s ===============================
+
+## Exit
+- Status: 0
+- Elapsed (s): 2
+- Filtered lines (gmsh optimisation chatter): 0
