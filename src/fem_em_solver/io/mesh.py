@@ -73,6 +73,15 @@ _WALL_TOL_FRACTION = 0.01
 #: control measured it at +35.4560% of the outside cell count.
 GAP_BOX_THICKNESS_CAP_M = 5.0e-3
 
+#: `TH-15` step 2a: the dim-2 physical-group tag ``two_torus_domain(
+#: as_hole=True)`` puts on the conductor cavity wall — the surface a PEC
+#: boundary condition is imposed on when the conductor is a hole rather than a
+#: meshed solid.  It is an *exterior* facet group (the cavity is outside the
+#: mesh), unlike the interior port/sheet groups ``201``/``202``/``211``/``212``,
+#: so it is emitted as a gmsh physical group directly and not rebuilt from cell
+#: tags.  Value carried over from `TH-15` step 0's probe.
+TWO_TORUS_CONDUCTOR_SURFACE_TAG = 301
+
 
 def _interface_facet_tags(
     mesh: "dolfinx.mesh.Mesh",
@@ -1007,6 +1016,7 @@ class MeshGenerator:
         gap_arc_tube_radius: Optional[float] = None,
         gap_box_resolution: Optional[float] = None,
         emit_port_sheet: bool = False,
+        as_hole: bool = False,
     ) -> Tuple[dolfinx.mesh.Mesh, dolfinx.mesh.MeshTags, dolfinx.mesh.MeshTags]:
         """Generate mesh with two tori inside a box domain.
 
@@ -1175,7 +1185,42 @@ class MeshGenerator:
             gap box crosses a round arc, so the "number of squares" that
             ``R = Z_p * w / h`` needs is a measured quantity on this fixture,
             not the box's nominal dimensions.
+        as_hole:
+            Opt in to the **PEC-hole** variant (`TH-15` step 2a): the two
+            conductors are *cut* out of the air box instead of fragmented into
+            it, their volumes are dropped from the model, and the cavity wall
+            arrives as facet tag :data:`TWO_TORUS_CONDUCTOR_SURFACE_TAG`
+            (``301``).  Default ``False`` leaves every existing caller — every
+            `PORT-1` / `PORT-10` / `PORT-12` record — meshing exactly as before.
+
+            The meshed cell set is then air (tag ``3``) plus the four gap-box
+            halves (``101`` / ``111`` / ``102`` / ``112``) only: cell tags ``1``
+            and ``2`` do not exist, and neither do the gap<->conductor port
+            facet groups ``201`` / ``202``, which are cell-tag interfaces of a
+            conductor that is no longer meshed.  The port-sheet mid-planes
+            (``211`` / ``212``) are unchanged in construction and in area.
+
+            Requires ``port_gap`` and ``emit_port_sheet``: the hole route exists
+            to carry the lumped-sheet ports of `TH-15` step 2, and a hole with
+            no sheet has no port at all.
+
+            Two rules, both measured by `TH-15` step 0
+            (`tests/mesh/probe_two_torus_conductor_hole.py`):
+
+            * ``removeTool=False`` on both cuts.  With ``True`` the cut deletes
+              the tool's surfaces, and any group standing on them goes with it.
+            * the conductor-surface group is built from ``getBoundary`` of the
+              **meshed** volumes, never from the retained tool's own faces.  The
+              retained solid's faces are *not* the cavity's: tagging them made
+              ``_model_to_mesh`` abort with 716 ``nodes not attached to any
+              tet``.
         """
+        if as_hole and not (port_gap and emit_port_sheet):
+            raise ValueError(
+                "as_hole needs port_gap and emit_port_sheet: the hole route is "
+                "the lumped-sheet port fixture with the conductors removed "
+                f"(got port_gap={port_gap!r}, emit_port_sheet={emit_port_sheet!r})"
+            )
         if emit_port_sheet and not port_gap:
             raise ValueError(
                 "emit_port_sheet needs port_gap: the sheet is the gap box's "
@@ -1291,23 +1336,63 @@ class MeshGenerator:
                 2.0 * box_half_z,
             )
 
-            tool_tags = [wire_1, wire_2]
-            if port_gap:
-                tool_tags += [gap_1, gap_2]
-            tool_dimtags = [(3, tag) for tag in tool_tags]
-            if port_gap and emit_port_sheet:
-                tool_dimtags += [(2, sheet_1), (2, sheet_2)]
-            _, fragment_map = gmsh.model.occ.fragment(
-                [(3, domain)], tool_dimtags
-            )
-            gmsh.model.occ.synchronize()
+            cond_of: Dict[int, int] = {}
+            if as_hole:
+                # `TH-15` step 2a, step 0's measured sequence verbatim:
+                #   conductors = cut(arcs, gap boxes)   # gap wins over metal
+                #   air        = cut(box, conductors)   # the cavity
+                #   fragment(air, [gap boxes, sheets])  # gap groups + mid-plane
+                # `removeTool=False` throughout — the first cut keeps the gap
+                # boxes for the fragment below, the second keeps the conductor
+                # solids alive so their surfaces stay addressable until the
+                # cavity wall has been identified from the *meshed* volumes.
+                conductors, _ = gmsh.model.occ.cut(
+                    [(3, wire_1), (3, wire_2)],
+                    [(3, gap_1), (3, gap_2)],
+                    removeObject=True,
+                    removeTool=False,
+                )
+                gmsh.model.occ.synchronize()
+                for dim, tag in conductors:
+                    _, _, zc = gmsh.model.occ.getCenterOfMass(dim, tag)
+                    cond_of[tag] = 1 if zc < 0.0 else 2
+                if sorted(cond_of.values()) != [1, 2]:
+                    raise RuntimeError(
+                        "two_torus_domain(as_hole=True): the arc cut did not "
+                        f"leave one conductor solid per side (got {conductors}, "
+                        f"z-classification {cond_of})"
+                    )
+                air_pieces, _ = gmsh.model.occ.cut(
+                    [(3, domain)],
+                    conductors,
+                    removeObject=True,
+                    removeTool=False,
+                )
+                tool_dimtags = [(3, gap_1), (3, gap_2),
+                                (2, sheet_1), (2, sheet_2)]
+                _, fragment_map = gmsh.model.occ.fragment(
+                    air_pieces, tool_dimtags
+                )
+                gmsh.model.occ.synchronize()
+                input_dimtags = list(air_pieces) + tool_dimtags
+            else:
+                tool_tags = [wire_1, wire_2]
+                if port_gap:
+                    tool_tags += [gap_1, gap_2]
+                tool_dimtags = [(3, tag) for tag in tool_tags]
+                if port_gap and emit_port_sheet:
+                    tool_dimtags += [(2, sheet_1), (2, sheet_2)]
+                _, fragment_map = gmsh.model.occ.fragment(
+                    [(3, domain)], tool_dimtags
+                )
+                gmsh.model.occ.synchronize()
+                input_dimtags = [(3, domain)] + tool_dimtags
 
             if port_gap:
                 # Groups re-derived from the fragment out-map (`GEO-9` step 2b
                 # machinery): fragment renumbers, so absolute tags from before
                 # the call mean nothing after it. The out-map is positional,
                 # objects first then tools.
-                input_dimtags = [(3, domain)] + tool_dimtags
                 if len(fragment_map) != len(input_dimtags):
                     raise RuntimeError(
                         "two_torus_domain: occ.fragment returned an out-map of "
@@ -1320,7 +1405,10 @@ class MeshGenerator:
                         if dim == 3:
                             ancestors.setdefault(piece, set()).add(input_dimtag)
 
-                wire_of = {(3, wire_1): 1, (3, wire_2): 2}
+                # With `as_hole` the conductors were cut away before the
+                # fragment, so no piece descends from a wire and every non-gap
+                # piece is air.
+                wire_of = {} if as_hole else {(3, wire_1): 1, (3, wire_2): 2}
                 # `GEO-16`: with the sheet in, each gap box is two pieces —
                 # below and above its own mid-plane. The sheet is a dim-2
                 # input, so it is never an *ancestor* of a 3-D piece; the
@@ -1357,10 +1445,16 @@ class MeshGenerator:
                 group_names = {1: "wire_1", 2: "wire_2", 3: "domain",
                                101: "gap_1", 102: "gap_2",
                                111: "gap_1_upper", 112: "gap_2_upper"}
-                required_groups = (1, 2, 3, 101, 102)
+                required_groups = (3, 101, 102) if as_hole else (1, 2, 3, 101, 102)
                 if emit_port_sheet:
                     required_groups = required_groups + (111, 112)
-                volumes = gmsh.model.getEntities(dim=3)
+                # The retained conductor solids are still in the model at this
+                # point (`removeTool=False`); they are not meshed volumes and
+                # must not enter the mass census or the ungrouped-entity check.
+                volumes = [
+                    vt for vt in gmsh.model.getEntities(dim=3)
+                    if vt[1] not in cond_of
+                ]
                 masses = {tag: gmsh.model.occ.getMass(3, tag) for _, tag in volumes}
                 missing = [group_names[g] for g in required_groups
                            if g not in pieces_by_group]
@@ -1403,7 +1497,10 @@ class MeshGenerator:
                     flush=True,
                 )
 
-                wire_volumes = {1: pieces_by_group[1], 2: pieces_by_group[2]}
+                wire_volumes = (
+                    {1: [], 2: []} if as_hole
+                    else {1: pieces_by_group[1], 2: pieces_by_group[2]}
+                )
 
                 # `PORT-1` step 3b-iv: the port facet groups (`201` / `202`)
                 # are the surfaces each gap piece shares with its conductor
@@ -1437,8 +1534,9 @@ class MeshGenerator:
                 gap_groups = {101: (101, 111), 102: (102, 112)}
 
                 cad_areas = {}
-                for gap_group, wire_group, facet_group in ((101, 1, 201),
-                                                           (102, 2, 202)):
+                for gap_group, wire_group, facet_group in (
+                    () if as_hole else ((101, 1, 201), (102, 2, 202))
+                ):
                     gap_boundary = _boundary_surfaces(
                         gap_groups[gap_group] if emit_port_sheet
                         else (gap_group,)
@@ -1500,6 +1598,87 @@ class MeshGenerator:
                             f"nominal_area={4.0 * gap_half_xz * gap_half_y:.9e}",
                             flush=True,
                         )
+
+                cavity_surfaces: List[int] = []
+                if as_hole:
+                    # `TH-15` step 2a.  The cavity wall must be identified from
+                    # the *meshed* volumes alone: the retained conductor solids
+                    # are still in the model, and testing a face against a set
+                    # that includes them is self-satisfying (step 0's abort:
+                    # 716 `nodes not attached to any tet`).  A cavity wall is a
+                    # face that bounds exactly ONE meshed volume and is not flat
+                    # against an outer wall — the air/gap interfaces and the
+                    # sheet mid-planes bound two, the outer walls bound one but
+                    # lie on a wall.
+                    def _face_on_wall(surf: int) -> bool:
+                        bb = gmsh.model.getBoundingBox(2, surf)
+                        return any(
+                            abs(bb[i] - lo) < 1e-6 and abs(bb[i + 3] - lo) < 1e-6
+                            for i, lo in ((0, -box_half_x), (0, box_half_x),
+                                          (1, -box_half_y), (1, box_half_y),
+                                          (2, -box_half_z), (2, box_half_z))
+                        )
+
+                    face_use: Dict[int, int] = {}
+                    for _, vol in volumes:
+                        for _, surf in gmsh.model.getBoundary(
+                            [(3, vol)], oriented=False, recursive=False
+                        ):
+                            face_use[surf] = face_use.get(surf, 0) + 1
+                    cavity_surfaces = sorted(
+                        s for s, n in face_use.items()
+                        if n == 1 and not _face_on_wall(s)
+                    )
+                    if not cavity_surfaces:
+                        raise RuntimeError(
+                            "two_torus_domain(as_hole=True): the meshed volumes "
+                            "have no single-use non-wall boundary face, so the "
+                            "conductor cavity surface is missing"
+                        )
+                    cavity_area = sum(
+                        gmsh.model.occ.getMass(2, s) for s in cavity_surfaces
+                    )
+
+                    # Drop the conductor solids: the cavity IS the hole.
+                    # `recursive=False` so the faces survive for the group.
+                    gmsh.model.occ.remove(
+                        [(3, t) for t in cond_of], recursive=False
+                    )
+                    gmsh.model.occ.synchronize()
+                    still_present = [
+                        t for t in cond_of
+                        if (3, t) in gmsh.model.getEntities(dim=3)
+                    ]
+                    if still_present:
+                        # occ.remove + synchronize did not propagate; drop them
+                        # model-side (step 0 needed this fallback).
+                        gmsh.model.removeEntities(
+                            [(3, t) for t in still_present], recursive=False
+                        )
+                    cavity_surfaces = [
+                        s for s in cavity_surfaces
+                        if (2, s) in gmsh.model.getEntities(dim=2)
+                    ]
+                    if not cavity_surfaces:
+                        raise RuntimeError(
+                            "two_torus_domain(as_hole=True): every cavity "
+                            "surface was destroyed with the conductor solids"
+                        )
+                    gmsh.model.addPhysicalGroup(
+                        2, cavity_surfaces, tag=TWO_TORUS_CONDUCTOR_SURFACE_TAG
+                    )
+                    gmsh.model.setPhysicalName(
+                        2, TWO_TORUS_CONDUCTOR_SURFACE_TAG, "conductor_surface"
+                    )
+                    print(
+                        "[two-torus-mesh] conductor cavity (CAD) tag "
+                        f"{TWO_TORUS_CONDUCTOR_SURFACE_TAG}: "
+                        f"{len(cavity_surfaces)} surface(s) "
+                        f"area={cavity_area:.9e}; volumes after the drop="
+                        f"{len(gmsh.model.getEntities(dim=3))} "
+                        f"(conductor solids removed: {len(cond_of)})",
+                        flush=True,
+                    )
 
             else:
                 # Fragment renumbers volumes; identify them by mass and centroid
@@ -1598,8 +1777,12 @@ class MeshGenerator:
                     for group in required_groups:
                         if group >= 101:
                             refine_volumes += pieces_by_group[group]
+                # `TH-15` step 2a: with the conductors gone there is no wire
+                # volume to refine towards, so the cavity wall — the same
+                # surface, now a boundary — carries the conductor field.
                 wire_surfaces = sorted(
-                    {
+                    (set(cavity_surfaces) if as_hole else set())
+                    | {
                         surf
                         for vol in refine_volumes
                         for _, surf in gmsh.model.getBoundary(
@@ -1815,7 +1998,13 @@ class MeshGenerator:
             # distributed cell tags (see the CAD-side comment above and
             # known-issues 9). gap_1 <-> wire_1 is port 201, gap_2 <-> wire_2
             # is port 202.
-            if emit_port_sheet:
+            if as_hole:
+                # `TH-15` step 2a: the conductor is not meshed, so `201`/`202`
+                # — gap<->conductor cell-tag interfaces — do not exist. The
+                # cavity wall arrives as the exterior gmsh group `301`; only the
+                # sheets still have to be rebuilt from the distributed tags.
+                interfaces = {211: ((101, 111),), 212: ((102, 112),)}
+            elif emit_port_sheet:
                 # `GEO-16`: the mid-plane cuts the arc-end discs too, so each
                 # port group is the union of its two half-box interfaces; the
                 # sheet groups (`211` / `212`) are the halves against each

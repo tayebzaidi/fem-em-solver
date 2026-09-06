@@ -4470,6 +4470,43 @@ review confirms that reading before step 1 runs.
 >   one image); a tag-301 area off the interface area by > 1e-5 is the
 >   finding that the `MeshGenerator` port differs from the probe's cut —
 >   known-issues, park on `attempt/*`, stop.
+> * **Step 2a ✅ done 2026-09-06 (05:00 implementer slot) — every anchor and
+>   the control green on the executed route, and the census had to be made
+>   rank-safe before any of them could be compared.** `as_hole` landed as one
+>   additive keyword on `MeshGenerator.two_torus_domain`
+>   (`io/mesh.py`; `TWO_TORUS_CONDUCTOR_SURFACE_TAG = 301` exported),
+>   requiring `port_gap and emit_port_sheet`; the cut sequence, the
+>   `removeTool=False` rule and the cavity group from `getBoundary` of the
+>   **meshed** volumes are step 0's verbatim. New module
+>   `tests/mesh/test_two_torus_conductor_hole.py`, **12 passed, 4 skipped in
+>   123.72 s** (standard, `-n 2`, real build, `tests/environment` first),
+>   `20260906T050829Z_TH-15.log:1543`, elapsed 126 s. Readings, all at
+>   `…050829Z:1463–1477`: hole **161 461** cells / 29 345 vertices, ratio
+>   **1.000000** at the imported `CELL_COUNT_BAND` (0.01); cell census
+>   `{3: 110778, 101: 12585, 102: 12632, 111: 12740, 112: 12726}` — tags 1
+>   and 2 **absent**; facet census `{1: 1344, 211: 1579, 212: 1579,
+>   301: 7642}`; both sheets `1.451325262e-04` at `rel_dev` **8.882e-16 /
+>   6.661e-16** against the imported `SHEET_AREA_BAND` 1e-9; tag-301 area
+>   **1.515910101e-02** against the solid route's conductor/air interface
+>   **1.515909540e-02** (7.579509813e-03 + 7.579585585e-03, 3830 + 3828
+>   facets), **3.704e-07** relative against the 1e-5 band — step 0's figure
+>   to the digit. Control: `as_hole=False` reproduces **184 176** cells with
+>   tags 1 / 2 present at **9471 / 9348** and the sheets at 1583 facets;
+>   hole < solid. Every one of those per-tag numbers equals step 0's `-n 1`
+>   reading exactly.
+>   **The one finding.** The first run failed the control's per-tag counts
+>   (`20260906T050521Z_TH-15.log:1485`: solid tag 2 read **9448** vs 9348,
+>   1.0697% > the 1% band; tag 1 9556 vs 9471; air 113 483 vs 110 696) —
+>   *not* a mesh difference (total cells, sheet areas and the cavity area
+>   were already exact) but the probe's `_census` summing `tags.values`
+>   across ranks, which under this fixture's `GhostMode.shared_facet`
+>   counts every shared entity twice: the tag sum overshot the owned cell
+>   count by **2972**. The census is now masked on `size_local`
+>   (`_owned_census`) and an executed assert requires the per-tag census to
+>   sum to the global owned cell count on both routes, so a width-dependent
+>   census fails rather than drifts. No band was moved. Step 0's probe read
+>   at `-n 1`, where the two agree; anything importing that probe's
+>   `_census` at width > 1 has the same defect.
 > * **Step 2 (identities on the PEC two-torus).** The `PORT-1` package on
 >   the hollow two-torus: reciprocity ≤ 1e-3 (imported), passivity, and the
 >   new identity a lossless coil buys — **`Re P_in = 0` to 1e-9-class
