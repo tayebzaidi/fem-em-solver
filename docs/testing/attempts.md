@@ -15376,3 +15376,131 @@ driven straight off this route — the open question the executor names is
 whether the PEC condition on the *exterior* facet group 301 needs a
 `locate_dofs_topological` path different from the interior 201 / 202 ports
 the `PORT-1` package assumes.
+
+---
+
+## 2026-09-06T12:30Z — `MAT-6` step 11 — **incomplete (parked, blocked on two rulings)**
+
+Scheduled implementer slot, 07:30 CDT. Preflight clean on `70a2a79`, container
+Up 2 days, no `attempt/*` and no `recovered/*` at start. §9 items 1–4 were
+already DONE, so this slot took **item 5**, the spare and the largest on the
+list. Executor: `implementer`, spawned **foreground**, one spawn.
+
+**Outcome: the physics reproduced and the promotion is sound, but two
+done-when questions cannot be answered inside a slot. Parked, nothing landed
+on `main` but this record and the §9 BLOCKED marking.**
+
+**Branch:** `attempt/MAT-6-step11-20260906T125700Z` at `bc159c9` — code +
+all three harness logs + the `test-results.md` rows. `main` is clean at
+`70a2a79`; PROJECT_PLAN §2 / §7 and known-issues are **untouched**, because
+the promotion did not land.
+
+### Measured (re-read from the logs by this slot, not taken from the report)
+
+Heavy tier, `-n 8`, complex build, `timeout -k 30 560`, `tests/environment`
+first in both gate windows; both windows foreground and footered.
+
+| quantity | measured | target | evidence |
+|---|---|---|---|
+| cells | **418 888** | 417 914 is the 0.7.2 digit; 0.11 reads 418 888 (`OPS-27` step 2) | `20260906T123319Z_MAT-6.log:579` |
+| ΔR, unprojected gate | FEM **3.216929e-01** Ω vs exact **3.225961e-01** Ω | — | `:574, :581` |
+| ΔR deviation | **0.27998%** | 0.2829% ⇒ **0.0029 pp**, inside the 0.05 pp done-when | `:574, :581–582` |
+| σ = 0 exact-zero control | ‖ΔZ_null‖/‖ΔZ‖ = **2.511e-07**, real part `-0.000e+00` | unchanged | `:614` |
+| ΔR, projected (production) | **0.2747%** (3.2170989e-01 Ω) | — | `20260906T124022Z_MAT-6.log:402` |
+| I′/I | 0.999973 | — | `…124022Z:396` |
+| no-op control (projected vs unprojected ΔR) | **5.28e-05** | item says ≤ 5e-5 — **misses** | derived from `…123319Z:574` + `…124022Z:402` |
+
+Window 1 `21 passed … 398.65s` (`…123319Z:707`); window 2 `15 passed …
+298.72s` (`…124022Z:548`). Both well inside the 600 s the item sized, so the
+item's "if the fixture window alone passes 600 s, that is the finding" reads
+**negative — the refined fixture fits a foreground window at `-n 8`.**
+
+### Blocker 1 — `ans:1` carries a second record the item did not pre-register
+
+`ans:1` exits **1** (`20260906T124601Z_MAT-6.log:307`, Elapsed 248 s):
+
+```
+AssertionError: ΔR = 3.2170989e-01 Ω drifts 1.829e-02 relative from the
+pinned 3.2770406e-01 Ω that `EX-11` reproduced digit for digit on 2026-08-09
+… the benchmark must not be published against a moved number
+```
+(`:245`, and the printed form at `:282` — `1.829e-02 relative, ceiling 1e-03`.)
+
+`examples/ansys_benchmarks/loop_over_lossy_slab_10MHz/01_loop_over_lossy_slab_10MHz.py:113`
+carries `DELTA_R_PIN_OHM = 3.2770406e-01` at `DELTA_R_PIN_RTOL = 1e-3`. The
+four sites **do** share one `resolution_near` constant, as the §7 row says —
+but `ans:1` carries an *independent* absolute-ΔR fixture-identity pin that the
+promotion invalidates by construction. **The pin worked exactly as designed:
+it detected the fixture move.** The executor staged the re-pin on the branch
+(`3.2170989e-01`, the value the projected gate printed at `…124022Z:402` and
+`ans:1` independently reproduced at `…124601Z:281`, 1e-3 band untouched) and
+marked it UNVERIFIED in the source; it has **not** been re-run.
+
+**Why this slot did not just re-run it.** The pin's own message says the
+benchmark must not be published against a moved number, and this is an
+`examples/ansys_benchmarks/` case. Moving a benchmark-publication record is a
+§5.4 decision that sits with the weekly review, not with an implementer slot
+executing an item that never mentioned this constant. Escalating.
+
+### Blocker 2 — the no-op control misses, and its label is missing (standing rule (e))
+
+The item lists "the projected-drive no-op control ≤ 5e-5" as a done-when. It
+measures **5.28e-05**, ~6% over. It is **asserted nowhere**, so nothing was
+loosened and nothing was rounded away. Recomputing the coarse fixture's own
+record from its recorded digits (3.2770406e-01 projected vs 3.276882e-01
+unprojected) gives **4.84e-05** — the two drives still agree at the same
+order, and the "5e-5" reads as a rounded record of the *coarse* fixture, not
+a gate on the refined one. But it carries **no asserted/predicted label**, and
+**standing rule (e)** (§9, added 2026-09-05 18:00) is explicit: an executor
+that meets a failing pre-registered figure whose label is missing *stops and
+reports the negative result; it does not decide in-slot*. So this slot reports
+it. Whether 5.28e-05 clears the done-when is the review's call.
+
+### Deviations, disclosed
+
+1. **Executor split collapsed into one spawn.** The item names
+   `record-reconciler` for the record sites and implementer for the fixture;
+   this slot gave both halves to the implementer. Reasons: the row says the
+   four sites import one constant from one place; two sequential foreground
+   executors do not fit one slot; and a half-landed promotion (fixture moved,
+   importers not) leaves `main` inconsistent, which the protocol forbids. The
+   slot owner owns this call. **In hindsight it was right on the
+   `resolution_near` constant and wrong on nothing** — but note that a
+   `record-reconciler` pass is precisely what would have surfaced blocker 1
+   *before* 248 s of compute, so the split had a purpose this slot did not see.
+2. `ans:1`'s emitted command adjusted from `-n 2`/`timeout -k 30 1200` to
+   `-n 8`/`430`; `-n 2` on a 418 888-cell mesh does not return inside a
+   foreground window. Emit-then-harness path followed; no socket denial.
+3. Gate windows split per module rather than one combined run, so the gate
+   reading survived independently of the second window.
+
+Not executed: `mat:1` (its own 2% ceiling is satisfied by 0.2747%, but it was
+not run), the confirming `ans:1` window, and the census.
+
+### Scope held
+
+No band moved anywhere. No assertion loosened. ΔX untouched. §2's 1.58%
+headline **not** moved — it moves only in the commit that lands the
+promotion. `MAT-6` stays ✅ at 1.58%. No AED number from `aed_results/`,
+`COMPARISON_private.md` or `docs/private/` appears in this entry, the branch
+commit message, or any tracked file; only the qualitative fact that `ans:1`
+exited 1 on its own public ΔR pin.
+
+### Process
+
+No docker-socket denial, no allowlist denial, no compute-safety event, no
+container wedge. Executor foreground, never backgrounded; three windows, all
+footered (398.65 s / 298.72 s / 248 s). No new implementation work started
+after minute 45. Housekeeping: this file is ~15 500 lines after the
+2026-09-06 weekly rotation, against the 6 000 budget.
+
+### Next attempt, one line
+
+Get the two rulings (re-pin `ans:1`'s `DELTA_R_PIN_OHM`? does 5.28e-05 clear
+the no-op done-when?), then cherry-pick `bc159c9`, re-run `ans:1` at `-n 8`
+(~250 s) with the staged pin, `mat:1` and the census, and land with §2
+quoting **0.280% filament / ≈ −0.40% finite-wire-corrected** plus the §7 and
+§9 flips — ~15 min of compute, everything else is measured and on the branch.
+
+**Queue note for the review:** with item 5 now BLOCKED, §9 has **no open
+item**. The next slot drains and must be refilled by the 10:30 review.

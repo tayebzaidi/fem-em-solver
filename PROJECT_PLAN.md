@@ -8962,7 +8962,34 @@ the factor was a prediction, but the item should have said so).
    the interface by > 1e-5 means the port differs from the probe's cut —
    known-issues, park on `attempt/*`, stop.~~
 
-5. **`MAT-6` step 11 — promote the step-8 slab-refined Dodd–Deeds fixture
+5. **BLOCKED 🚫 2026-09-06, 07:30 slot — two rulings needed before this can
+   land; the compute is done and parked on
+   `attempt/MAT-6-step11-20260906T125700Z` (`bc159c9`).** The physics
+   reproduced: **418 888** cells, ΔR deviation **0.27998%** vs the 0.2829%
+   target — **0.0029 pp**, inside the 0.05 pp done-when — σ = 0 control
+   **2.511e-07**, projected ΔR **0.2747%**
+   (`20260906T123319Z_MAT-6.log:574, 579, 581–582, 614`;
+   `20260906T124022Z_MAT-6.log:402`). Both gate windows footered inside the
+   sized 600 s (398.65 s / 298.72 s at `-n 8`), so the fixture-cost finding
+   is negative — it fits. **Unblock conditions, both for the review:**
+   (i) **`ans:1` carries a second record the item never named** —
+   `01_loop_over_lossy_slab_10MHz.py:113` pins `DELTA_R_PIN_OHM =
+   3.2770406e-01` at 1e-3 as a *fixture-identity* pin, and the promotion
+   moves it, so `ans:1` exits 1 (`20260906T124601Z_MAT-6.log:245, 282, 307`).
+   The pin worked as designed. Its message says the benchmark must not be
+   published against a moved number, and this is an
+   `examples/ansys_benchmarks/` case, so re-pinning is a §5.4 call, not an
+   implementer's; the re-pin to 3.2170989e-01 is staged UNVERIFIED on the
+   branch. (ii) **the no-op control reads 5.28e-05 against the item's
+   "≤ 5e-5"** — asserted nowhere, so nothing was loosened, and the coarse
+   fixture's own record recomputes to 4.84e-05, i.e. the same order; but the
+   figure carries no *asserted*/*predicted* label, and **standing rule (e)**
+   requires the executor to report the negative rather than decide in-slot.
+   Once both are ruled: cherry-pick `bc159c9`, re-run `ans:1` at `-n 8`
+   (~250 s), then `mat:1` and the census, and land with §2 quoting **0.280%
+   filament / ≈ −0.40% finite-wire-corrected**. Full record in
+   `docs/testing/attempts.md`, 2026-09-06T12:30Z.
+   ~~**`MAT-6` step 11 — promote the step-8 slab-refined Dodd–Deeds fixture
    to production: `resolution_near` 0.005 → 0.0025 in the gate fixture and
    every importer, ΔR re-recorded at the step-8 reading** (heavy, `-n 8`,
    complex build; `main`; independent; **spare**; scoped 2026-09-02 weekly
@@ -8998,7 +9025,7 @@ the factor was a prediction, but the item should have said so).
    gated; the §2 sentence is the only §2 edit and it quotes two figures.
    **Negative result:** 0.2829% not reproducing within 0.05 pp on 0.11 is
    a known-issues entry with the measured figure and the promotion stops;
-   the old fixture stays production, nothing widened.
+   the old fixture stays production, nothing widened.~~
 
 
 *(The per-review journal — slot recap, completion audits, plan-work notes,
