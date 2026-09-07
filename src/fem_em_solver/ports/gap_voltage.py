@@ -51,6 +51,7 @@ from dolfinx import default_scalar_type, fem
 
 from ..core import TimeHarmonicProblem, TimeHarmonicSolver
 from ..core.solvers import DEFAULT_GAUGE_PENALTY
+from ..utils.constants import EPSILON_0
 from ..post.evaluation import evaluate_vector_field_parallel
 from .definitions import PortDefinition
 from .excitation import (
@@ -63,6 +64,8 @@ __all__ = [
     "GapVoltagePortSpec",
     "run_gap_voltage_port_case",
 ]
+
+_CURRENT_ROUTES = frozenset({"conduction", "gap_displacement"})
 
 
 @dataclass(frozen=True)
@@ -110,6 +113,18 @@ class GapVoltagePortSpec:
     conductor_cross_section_m2: Optional[float] = None
     drive_direction: tuple[float, float, float] = (0.0, 1.0, 0.0)
     drive_current_a: float = 1.0
+    # `TH-15` step 2c.  ``"conduction"`` (the default, and the route every
+    # pre-existing caller takes) is ``I = sigma/L int_conductor E . that dV``.
+    # ``"gap_displacement"`` reads the port current at the gap face instead,
+    # by continuity of the total current across it:
+    #     ``I_k = [I_drive if driven] + (1/g_k) int_{gap k} (sigma + j w eps)
+    #             E . hhat_k dV``
+    # with the gap material taken from the problem, ``g_k = gap_length_m`` and
+    # ``hhat_k`` the unit ``drive_direction``.  This definition needs no
+    # conductor cells, which is why it exists (a PEC conductor solved as a hole
+    # has none) — and its error scales with the *port's own* current rather
+    # than with the drive.
+    current_route: str = "conduction"
 
     def validate(self) -> None:
         if not self.port_id or not self.port_id.strip():
@@ -139,6 +154,11 @@ class GapVoltagePortSpec:
             raise ValueError(
                 f"port '{self.port_id}': path_weights must be (n,) for (n, 3) points"
             )
+        if self.current_route not in _CURRENT_ROUTES:
+            raise ValueError(
+                f"port '{self.port_id}': current_route must be one of "
+                f"{sorted(_CURRENT_ROUTES)}, got {self.current_route!r}"
+            )
 
 
 def _reduce(form, comm) -> complex:
@@ -153,6 +173,64 @@ def _tag_measure(msh, cell_tags, tag):
 def _tag_volume(msh, cell_tags, tag, comm) -> float:
     one = fem.Constant(msh, default_scalar_type(1.0))
     return float(np.real(_reduce(one * _tag_measure(msh, cell_tags, tag), comm)))
+
+
+def _unit(direction) -> np.ndarray:
+    vec = np.asarray(direction, dtype=float)
+    norm = float(np.linalg.norm(vec))
+    if norm <= 0.0:
+        raise ValueError("direction must be non-zero")
+    return vec / norm
+
+
+def _tag_material(problem: TimeHarmonicProblem, tag: int):
+    """The ``(sigma, epsilon_r)`` the *solve* used on cell tag ``tag``.
+
+    Read off the problem rather than re-declared, so the current this route
+    reports cannot silently disagree with the material the field was solved in.
+    """
+    tag = int(tag)
+    if problem.phantom_material is not None and tag == int(problem.phantom_tag):
+        raise ValueError(
+            f"the gap_displacement route cannot read the gap material on tag {tag}: "
+            "it is the phantom tag, whose dispersive material this route does not "
+            "unpack — put the port gap on its own tag"
+        )
+    material = None
+    if problem.material_map is not None:
+        material = problem.material_map.get(tag)
+    if material is None:
+        material = problem.material
+    return float(material.sigma), float(material.epsilon_r)
+
+
+def _gap_displacement_current(
+    e_field,
+    problem: TimeHarmonicProblem,
+    spec: GapVoltagePortSpec,
+    comm,
+) -> tuple[complex, float, float]:
+    """``(1/g) int_gap (sigma + j w eps) E . hhat dV`` — the *field* part of ``I``.
+
+    Continuity of the total current across the gap face: whatever conduction
+    current the wire carries into the gap leaves it as the sum of the impressed
+    drive and the gap's own conduction + displacement current.  The caller adds
+    ``drive_current_a`` on the driven port.
+
+    ``hhat`` is the unit ``drive_direction``; ``ufl.inner`` conjugates its
+    second argument, which is a no-op here because ``hhat`` is a real constant.
+    """
+    sigma_gap, epsilon_r_gap = _tag_material(problem, spec.gap_cell_tag)
+    omega = 2.0 * np.pi * float(problem.frequency_hz)
+    admittivity = complex(sigma_gap + 1j * omega * EPSILON_0 * epsilon_r_gap)
+
+    msh = problem.mesh
+    h_hat = ufl.as_vector([float(c) for c in _unit(spec.drive_direction)])
+    integral = _reduce(
+        ufl.inner(e_field, h_hat) * _tag_measure(msh, problem.cell_tags, spec.gap_cell_tag),
+        comm,
+    )
+    return admittivity * integral / float(spec.gap_length_m), sigma_gap, epsilon_r_gap
 
 
 def _path_voltage(e_field, spec: GapVoltagePortSpec, comm) -> complex:
@@ -244,34 +322,59 @@ def run_gap_voltage_port_case(
 
     responses: dict[str, PortVoltageCurrentEstimate] = {}
     solve_context: dict[str, PortSolveContext] = {}
+    gap_material_note: dict[str, tuple[float, float]] = {}
     for idx, port in enumerate(ports):
         spec = spec_by_id[port.port_id]
-        conductor_volume = _tag_volume(msh, cell_tags, spec.conductor_cell_tag, comm)
-        if spec.conductor_length_m is not None:
-            length = float(spec.conductor_length_m)
-        else:
-            length = conductor_volume / float(spec.conductor_cross_section_m2)
-        if length <= 0.0:
-            raise ValueError(f"port '{port.port_id}': non-positive conductor length")
+        is_driven = port.port_id == driven_port_id
 
-        current = (
-            spec.conductor_sigma_s_per_m
-            * _reduce(
-                ufl.inner(e, spec.conductor_direction(x_ufl))
-                * _tag_measure(msh, cell_tags, spec.conductor_cell_tag),
-                comm,
+        def _conduction_current() -> complex:
+            """Today's route, unchanged: ``I = sigma/L int_conductor E . that``."""
+            conductor_volume = _tag_volume(msh, cell_tags, spec.conductor_cell_tag, comm)
+            if spec.conductor_length_m is not None:
+                length = float(spec.conductor_length_m)
+            else:
+                length = conductor_volume / float(spec.conductor_cross_section_m2)
+            if length <= 0.0:
+                raise ValueError(f"port '{port.port_id}': non-positive conductor length")
+            return (
+                spec.conductor_sigma_s_per_m
+                * _reduce(
+                    ufl.inner(e, spec.conductor_direction(x_ufl))
+                    * _tag_measure(msh, cell_tags, spec.conductor_cell_tag),
+                    comm,
+                )
+                / length
             )
-            / length
-        )
+
+        diagnostics: Optional[dict] = None
+        if spec.current_route == "conduction":
+            current = _conduction_current()
+        else:
+            field_part, sigma_gap, epsilon_r_gap = _gap_displacement_current(
+                e, problem, spec, comm
+            )
+            gap_material_note[port.port_id] = (sigma_gap, epsilon_r_gap)
+            drive_part = complex(spec.drive_current_a) if is_driven else 0.0 + 0.0j
+            current = drive_part + field_part
+            # The conduction current is the cross-check wherever the conductor
+            # is actually meshed; on a PEC hole it is absent by construction.
+            diagnostics = {
+                "gap_field_part": complex(field_part),
+                "drive_part": complex(drive_part),
+            }
+            if _tag_volume(msh, cell_tags, spec.conductor_cell_tag, comm) > 0.0:
+                diagnostics["conduction"] = complex(_conduction_current())
+            else:
+                diagnostics["conduction"] = None
         voltage = _path_voltage(e, spec, comm)
 
-        is_driven = port.port_id == driven_port_id
         responses[port.port_id] = PortVoltageCurrentEstimate(
             port_id=port.port_id,
             voltage_v=voltage,
             current_a=current,
             is_driven=is_driven,
             termination_ohm=float(port.z0_ohm),
+            current_diagnostics=diagnostics,
         )
         solve_context[port.port_id] = PortSolveContext(
             port_id=port.port_id,
@@ -293,10 +396,19 @@ def run_gap_voltage_port_case(
         )
         for port in ports:
             r = responses[port.port_id]
+            spec = spec_by_id[port.port_id]
+            extra = ""
+            if port.port_id in gap_material_note:
+                sigma_gap, epsilon_r_gap = gap_material_note[port.port_id]
+                cond = (r.current_diagnostics or {}).get("conduction")
+                extra = (
+                    f" [route {spec.current_route}: gap sigma = {sigma_gap:.6e} S/m, "
+                    f"eps_gap/eps_0 = {epsilon_r_gap:.6f}, I_cond = {cond!r}]"
+                )
             print(
                 f"    {r.port_id}: V = {r.voltage_v.real:+.9e}{r.voltage_v.imag:+.9e}j V, "
                 f"I = {r.current_a.real:+.9e}{r.current_a.imag:+.9e}j A "
-                f"({'driven' if r.is_driven else 'undriven'})"
+                f"({'driven' if r.is_driven else 'undriven'}){extra}"
             )
 
     return SinglePortExcitationResult(

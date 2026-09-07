@@ -1,0 +1,54 @@
+# Test Run
+- Chunk: TH-15
+- Commit: 8ef690ad083748644c0ab289295f8ae853a2f753
+- Time (UTC): 2026-09-07 17:02:50
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'source /usr/local/bin/dolfinx-complex-mode && cd /workspace && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 timeout -k 30 120 python3 -m pytest tests/validation/test_two_torus_gap_displacement_current.py --collect-only -q'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Sep  4 23:31 .
+drwxr-xr-x 16 taz5297 taz5297 4096 Sep  7 12:02 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  721 Sep  3 13:49 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 2801 Sep  4 23:31 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''source /usr/local/bin/dolfinx-complex-mode && cd /workspace && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 timeout -k 30 120 python3 -m pytest tests/validation/test_two_torus_gap_displacement_current.py --collect-only -q'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collected 3 items
+
+<Dir workspace>
+  <Dir tests>
+    <Dir validation>
+      <Module test_two_torus_gap_displacement_current.py>
+        <Function test_the_undriven_port_is_open_at_its_terminals>
+        <Function test_the_gap_current_is_the_conduction_current_on_the_driven_port>
+        <Function test_the_gap_route_sweep_is_reciprocal_and_lands_on_the_mutual>
+
+========================== 3 tests collected in 2.35s ==========================
+
+## Exit
+- Status: 0
+- Elapsed (s): 4
+- Filtered lines (gmsh optimisation chatter): 0

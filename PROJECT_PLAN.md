@@ -3452,6 +3452,52 @@ review confirms that reading before step 1 runs.
 >   and `attempt/TH-15-step2c-…` (its code is landed) and retires the
 >   step-2c known-issues entry. `TH-15` stays 🟡; no §2 change; no band
 >   moved.
+>   **✅ LANDED 2026-09-07 (12:00 implementer slot).** Path checkout of
+>   `f942dc2`'s two `src/fem_em_solver/ports/` files, the test module and
+>   its three logs (`main` had not touched `ports/` since `2f65cbe` —
+>   verified empty before the checkout); the branch's three
+>   `test-results.md` rows copied by hand into chronological place.
+>   Module change exactly as ruled: `test_the_gap_current_is_the_
+>   conduction_current_on_the_undriven_port` and `test_the_gap_route_
+>   beats_the_loop_route_on_the_undriven_port` **deleted** with their
+>   readings (9.998674e-01 / 9.993525e-01, separation 0.99×,
+>   `20260907T093741Z_TH-15.log:1000, 1005, 1022–1025`) kept in the module
+>   docstring as the record and the reason; `LOOP_ROUTE_UNDRIVEN_RATIO`
+>   removed with the test that consumed it. **Windows:** a 4 s
+>   collect-only smoke (`20260907T170250Z_TH-15.log`, 3 collected), then
+>   one `-n 4` complex window with `tests/environment` first, `-s -v
+>   --tb=short`, `timeout -k 30 500` — **14 passed in 134.38 s**, elapsed
+>   **136 s**, `Status: 0` (`20260907T170302Z_TH-15.log:1150, 1348–1349`);
+>   standard by measurement, heavy by ceiling. **Anchors, all asserted,
+>   all green.** (v) the new `OPEN_CIRCUIT_BAND` = 1e-4 on
+>   `|I_disp,undriven| / I_drive`: **1.541112e-06** on drive P1 / port P2
+>   *and* on drive P2 / port P1 — the predicted 1e-6 class, printed with
+>   `V_undriven` = 1.067373e+00 V and 1.091649e+00 V
+>   (`…170302Z:1050–1053`, `:1057–1060`); the asserted separation control
+>   `|I_cond,undriven| / |I_disp,undriven| ≥ 100` reads **782.9×** and
+>   **1096.8×** (`:1055`, `:1062`), reproducing the step-2c 783× / 1097×
+>   to the digit. (ii) driven continuity **2.243038e-02** / **2.236565e-02**
+>   against 0.10 (`:1071`, `:1076`) — the `ρ̂ × (−ẑ) = φ̂` sign confirmed.
+>   (iii) reciprocity **5.2613e-04** inside the imported `S_SYMMETRY_BAND`
+>   1e-3, conduction route 4.76e-05 printed beside (`:1079`). (iv) the
+>   corrected mutual **0.909618** (raw 0.865226, −13.48% → −9.04%) inside
+>   the imported `MUTUAL_TOLERANCE` 10%, the conduction record 0.939822
+>   printed beside (`:1078`). Every (ii)–(iv) digit is `f942dc2`'s,
+>   unmoved by the five-commit rebase. **Rule (c)'s re-run — and a
+>   correction to the item's sizing.** At the item's `-n 4` the package
+>   gate fails **three digit-reproduction records** (`3 failed / 3 passed`
+>   in 145.46 s, `20260907T170528Z_TH-15.log:743–749`); its records were
+>   set at `-n 2` (`20260904T110501Z_OPS-37.log:12`, 17 passed / 171.42 s),
+>   the misses are 1e-4-class repartitioning of the 184 176-cell mesh, and
+>   **no band or physics gate is among them**. Re-run at `-n 2` on the same
+>   tree: **17 passed in 187.37 s**, elapsed 188 s, `Status: 0`
+>   (`20260907T170838Z_TH-15.log:146, 214–215`) — rule (c) discharged, the
+>   conduction route provably untouched (the diff leaves its arithmetic
+>   byte-identical). The `-n 4` width sensitivity is filed as its own
+>   known-issues entry, not fixed in passing. Step-2c known-issues entry
+>   retired in this commit; `attempt/TH-15-step2b-20260907T021500Z` and
+>   `attempt/TH-15-step2c-20260907T094500Z` deleted. `TH-15` stays 🟡 (step
+>   2 proper and step 3 open); no §2 change; no band moved.
 > * **Step 3a (the birdcage hole as a `MeshGenerator` route — scoped
 >   2026-09-06 10:30 review, §9 item 4; step 2a's pattern on
 >   `birdcage_port_domain`).** One additive `as_hole=False` keyword: the
@@ -7526,9 +7572,23 @@ it** (`TH-15` step 3a, 16:30 slot — ratified above, ruling (2)); it is
 never widened silently and never on a quantity that was already green.
 
 
-1. **`TH-15` step 2d — land the gap-displacement port current on the
+1. **✅ DONE 2026-09-07 (12:00 implementer slot) — `TH-15` step 2d — land
+   the gap-displacement port current on the
    driven-port definition: `f942dc2`'s route as it is, the undriven
-   anchor replaced by the open-circuit condition** (heavy by ceiling,
+   anchor replaced by the open-circuit condition.** Closure digits and
+   the rule-(c) sizing correction are in the §7 `TH-15` step-2d bullet:
+   (v) `|I_disp,undriven|/I_drive` = **1.541112e-06** ≤ 1e-4 on both
+   drives with separation **782.9×** / **1096.8×** ≥ 100×, (ii)
+   2.243038e-02 / 2.236565e-02, (iii) 5.2613e-04, (iv) 0.909618 —
+   **14 passed in 134.38 s at `-n 4`**, elapsed 136 s
+   (`20260907T170302Z_TH-15.log:1150, 1349`). Rule (c)'s package-gate
+   re-run is green at **`-n 2`** (17 passed, 188 s,
+   `20260907T170838Z_TH-15.log:146, 215`), not at the item's `-n 4`,
+   where three *digit-reproduction records* (no band, no physics gate)
+   miss at 1e-4 because the records were set at `-n 2` — filed as a new
+   known-issues entry for a review to dispose of. Both step-2b and
+   step-2c `attempt/*` branches deleted; the step-2c known-issues entry
+   retired in the same commit. Original item follows. (heavy by ceiling,
    `-n 4`, complex build; `main`; independent; scoped by this review,
    ruling (1) — the third attempt on the step-2 lineage and a *rescope*,
    not a retry: the two failing asserts tested a false premise, and the

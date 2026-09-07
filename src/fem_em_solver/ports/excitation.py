@@ -55,6 +55,13 @@ class PortVoltageCurrentEstimate:
     # cross-route band of step 2/2b is measured against, off the same solve.
     # ``None`` on every route that has no path to integrate along.
     path_voltage_v: Optional[complex] = None
+    # Optional named *second readings of this port's current*, off the same
+    # solve (`TH-15` step 2c): the gap-voltage route's ``gap_displacement``
+    # route fills ``"conduction"`` whenever the conductor is meshed, plus the
+    # split of its own reading into drive and field parts.  Diagnostics only —
+    # nothing in this package assembles a matrix from them.  ``None`` on every
+    # route that has a single current definition.
+    current_diagnostics: Optional[dict] = None
 
 
 @dataclass(frozen=True)
