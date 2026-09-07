@@ -16824,3 +16824,99 @@ return path that is not the rings at all, the σ = 800 S/m conductor's ~36 Ω le
 resistance being comparable to the 50 Ω port. Item 3 is 🚫 until a review
 rules; the next open §9 items are 4 (`TH-15` step 2 proper, unblocked by the
 12:00 landing) and 5 (`GEO-27`); item 6 is XL and the XL service is not Up.
+
+## 2026-09-07T22:00Z (2026-09-07 16:30 CDT slot) — `TH-15` step 2 proper — **incomplete** (rule (e) stop on an unlabelled negative result)
+
+**Preflight.** Tree clean on `aa5ffa0`, container Up 4 days, no `recovered/*`,
+three `attempt/*`. §9 items 1 and 2 read DONE and item 3 reads 🚫 BLOCKED
+(15:00 slot), so the first open item was **item 4, `TH-15` step 2 proper** —
+serial on item 1, which I verified landed on `main` (`a6480ec`,
+`src/fem_em_solver/ports/gap_voltage.py` in its diff) before starting. Taken
+as written, delegated to the `implementer` agent in the **foreground**, one
+executor, no concurrency.
+
+**Outcome.** The hole port **solves** and the lossless identity is *exact*, but
+two asserted anchors miss on a mechanism the item did not label, so standing
+rule (e)'s stop was taken — the item pre-registered the *opposite* combination
+(`Re Z` outside `LOSSLESS_BAND` with the mutual inside), and the measured one
+is `Re Z` identically zero with the mutual outside. Code parked on
+`attempt/TH-15-step2proper-20260907T213739Z` (`144feff`); `main` (`0c0b2fb`)
+took the record only — the §7 `TH-15` step-2-proper bullet, the known-issues
+entry, and §9 item 4 marked 🚫 with its unblock condition, all in one commit
+(rule (d), **fifth consecutive**). `git show 0c0b2fb --stat` is
+`PROJECT_PLAN.md` + `known-issues.md` and nothing else; **no `src/` change was
+made or needed** — the item's anticipated `non-positive conductor length` trap
+does not exist, step 2d's branch already guards its conduction diagnostic on
+`_tag_volume(...) > 0` (`gap_voltage.py:365–368`), so rule (c) was vacuous and
+no package-gate re-run was owed. `TH-15` stays 🟡. `LOSSLESS_BAND`,
+`S_SYMMETRY_BAND`, `PASSIVITY_SIGMA_TOLERANCE` and `MUTUAL_TOLERANCE` all
+unmoved. `attempt/TH-15-step2-20260906T183305Z` **not** deleted — deletion was
+licensed only on landing.
+
+**Measured** — `20260907T213308Z_TH-15.log`, `-n 4` complex,
+`tests/environment` first, `timeout -k 30 500`, **2 failed / 14 passed in
+215.30 s**, elapsed **217 s**, Status 1 (all lines re-read by this slot against
+the log on the branch, not taken from the executor's report):
+- green, asserted: hole mesh **161 461 / 161 461 = 1.000000** at the imported
+  band, 24.22 s to mesh (`:590`, `:616`);
+- green, asserted: **`max_ij |Re Z_ij|/|Z_ij| = 0.000000e+00`** against
+  `LOSSLESS_BAND` 1e-9 (`:627`) — `Z` is purely imaginary to the bit on the
+  PEC hole, the first exact lossless identity this lineage has had on a
+  *solved* hole port;
+- green, asserted: `‖S − Sᵀ‖/‖S‖` **4.286714e-04** inside the imported 1e-3
+  (`:632`);
+- green: the σ = 800 S/m solid control dissipates — `Re Z₁₁ = +3.771673e+00 Ω`
+  asserted > 0, `|Re Z₁₁|/|Z₁₁| = 0.469192` against the *predicted* 0.5,
+  printed only (`:1572`);
+- **red, asserted, not loosened**: unitarity `‖SᴴS − I‖_F` **7.538037e-03** vs
+  1e-9, `σ_max` **1.002865051123** (`:633–634`);
+- **red, asserted, not loosened**: the mutual `Im Z₂₁ = +1.028789564e+00 Ω` vs
+  `ωM₁₂ = 1.241755 Ω`, ratio **0.828497 (−17.15 %)** against the imported 10 %
+  (`:636`), with step 2c's solid gap-route 0.909618 and the conduction 0.939822
+  printed beside;
+- the item's new **printed** reading, first ever on a hole mesh:
+  `|I_disp,undriven| / I_drive` = **1.463859e-06** on *both* drives
+  (`:606–615`), beside step 2d's solid record 1.541112e-06 — the hole's
+  undriven port is open at its terminals to the same 1e-6 class, so ruling (1)'s
+  driven-port `Z` definition transfers to the hole. `I_cond` is `None` on the
+  hole and finite on the solid (`:1559`, `:1561`), as the route's guard intends.
+
+A collect-only smoke preceded the main window (`20260907T213256Z_TH-15.log`,
+5 tests, 4 s, Status 0). Both logs are on the branch, not `main` — they are
+this run's record and travel with the parked code.
+
+**The mechanism, one line.** `Z` is **not symmetric**: `Z₁₂ = 1.05007456j` vs
+`Z₂₁ = 1.02878956j`, **2.07 %** apart (`:624–626`), and for a purely imaginary
+`Z` the scattering matrix `S = (jX − Z₀)(jX + Z₀)⁻¹` is unitary exactly iff
+`X = Xᵀ` — so the 2.07 % asymmetry *is* the 7.5e-3 non-unitarity, not an
+independent failure. Two asserted anchors, one cause.
+
+**Worth a review's attention independently** (found by the executor, verified
+here against `:624–626` and `:632`): `‖S − Sᵀ‖/‖S‖` **passes at 4.29e-04 on a
+matrix whose `Z` is 2.07 % asymmetric**, because the S off-diagonals (~0.02)
+are diluted by the near-unit diagonal in `‖S‖`. On a near-totally-reflecting
+port pair, S-reciprocity is ~50× weaker than Z-reciprocity — which bears on
+every use of `S_SYMMETRY_BAND` as a reciprocity gate, including `PORT-9` /
+`PORT-11`'s C4 gates. This is a *sensitivity* observation, not a claim that
+anything already green is wrong.
+
+**Automation health.** One executor, foreground, never concurrent; two harness
+windows, both foreground and footered, `timeout -k 30` sized inside the
+660 000 ms host window, ≈ 221 s of compute at widths 4 / 1 (ceiling 12). No
+allowlist denial, no docker-socket denial, no compute-safety event, no wedge.
+The executor's last compute window closed well inside minute 45; the remainder
+was verification and record work. Tier: heavy by ceiling, standard by
+measurement (217 s).
+
+**Next.** Hypothesis (one line): the 2.07 % `Z` asymmetry is the *route's*, not
+the mesh's — the two gap tags' effective `A_gap/g` differ slightly on the hole
+CAD, and the displacement current reads that difference directly where the
+conduction route averaged it away — so the next attempt should re-run at `-n 2`
+and print the **solid**'s own `Z₁₂/Z₂₁` on this same route (step 2d printed
+S-reciprocity but never Z-symmetry), which separates "this route is 2 %
+asymmetric everywhere" from "the hole is". The −17.15 % mutual is a second,
+possibly physical question a review must scope separately: the PEC cavity wall
+genuinely excludes flux that the filament `ωM₁₂` comparand counts, which would
+make the comparand wrong on a hole rather than the solve. Items 4 and 3 are now
+both 🚫; the next open §9 item is **5 (`GEO-27`)**; item 6 is XL and the XL
+service is not Up.
