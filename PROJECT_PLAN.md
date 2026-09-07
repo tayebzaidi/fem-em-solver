@@ -3332,6 +3332,66 @@ review confirms that reading before step 1 runs.
 >   **Negative result:** (i) outside 0.10 ⇒ the gap's discrete field is
 >   not the port current at this `h` — known-issues, park, stop; the
 >   `n × H` facet form is then the last candidate, a review's to scope.
+>   **🚫 Attempted 2026-09-07 (04:30 implementer slot): anchor (i) misses
+>   by construction and the asserted negative control fails; the
+>   negative-result exit was taken, nothing loosened, nothing fitted.**
+>   Parked on `attempt/TH-15-step2c-20260907T094500Z` (`f942dc2`) — the
+>   additive `current_route` keyword and its displacement branch in
+>   `ports/gap_voltage.py`, the cherry-picked `current_diagnostics` field
+>   in `ports/excitation.py` (the only thing taken from `ae79a4f`), the
+>   new module `tests/validation/test_two_torus_gap_displacement_current.
+>   py`, and the three logs. Windows: a 4 s collect-only smoke
+>   (`20260907T093428Z_TH-15.log`, 15 collected), then `-n 4` complex
+>   `-v --tb=short` with `tests/environment` — **2 failed / 13 passed in
+>   129.69 s**, elapsed 131 s (`20260907T093440Z_TH-15.log:1140`) — then
+>   an `-s` window to capture the passing anchors' digits, **2 failed / 2
+>   passed in 102.27 s**, elapsed 103 s (`20260907T093741Z_TH-15.log:1069`).
+>   Gap material read off the problem as required, never re-declared:
+>   `σ_gap = 0.000000e+00 S/m`, `ε_gap/ε₀ = 1.000000` (`…093741Z:982–986`).
+>   **What passed.** (ii) continuity on the *driven* port:
+>   `|(I_drive + I_disp)/I_cond − 1|` = **2.243038e-02** (drive P1) and
+>   **2.236565e-02** (drive P2) against 0.10 (`:1013`, `:1018`) — the
+>   predicted percent class, the sign convention confirmed. (iii)
+>   reciprocity `‖S − Sᵀ‖/‖S‖` = **5.2613e-04** inside the imported
+>   `S_SYMMETRY_BAND` 1e-3 (`:1030`), where the loop route missed at
+>   1.4338e-03 and the conduction route holds 4.76e-05. (iv) the mutual:
+>   raw 0.865226 (−13.48%) → corrected **0.909618** (−9.04%) inside the
+>   imported `MUTUAL_TOLERANCE` (`:1029`), beside the conduction record
+>   0.939822. **What missed, asserted, not loosened.** (i) continuity on
+>   the **undriven** port: `|I_disp/I_cond − 1|` = **9.998674e-01** (drive
+>   P1, port P2, `:1000`) and **9.993525e-01** (drive P2, port P1,
+>   `:1005`) against the pre-registered 0.10 — the ratio is
+>   `1.3337e-04 + 1.2703e-03j`, i.e. the two currents differ by their own
+>   size. The asserted negative control fails with them: the loop route's
+>   record `0.032 + 0.190j` reads **9.860947e-01** on the identical port
+>   of the identical solve, separation **0.99×** against the predicted
+>   ~50× (`:1022–1025`) — the gap route is *not* better conditioned on
+>   the undriven port's current than the route it was scoped to replace.
+>   **Mechanism, and it is not `h`.** The undriven gap current
+>   **1.5407e-06 A** is correct as a gap-capacitor current,
+>   `jω(ε₀A_gap/g)V₂` with V₂ = 1.067 V (`:983`), 1e-6 class. What it
+>   fails to equal is the *conduction* route's `σ/L ∫_conductor E·φ̂ dV`,
+>   a **volume average around a ring that is open at the gap**: on an
+>   open-circuited port the wire current vanishes at the gap faces and
+>   peaks opposite them, so the volume average and the gap-face current
+>   are different quantities and continuity between them does not hold at
+>   any `h`. On the driven port the impressed 1 A dominates both, which
+>   is why (ii) reads 2.2%. The step-2c item's stop text ("not the port
+>   current at this `h`") is therefore too kind — no refinement closes
+>   (i), and the review should read this as a statement about the two
+>   *definitions*, not about resolution. **Caveat on (iii)/(iv):** they
+>   pass on off-diagonal currents 1e-3 of the conduction route's, which
+>   is a scale-invariance of the two-port reduction, not evidence for the
+>   route. Rule (c)'s package-gate re-run was **not** executed — nothing
+>   landed on `main` to regress. `main` untouched, no band moved,
+>   `TH-15` stays 🟡. **Unblock condition (a review's, not an
+>   implementer's):** the surviving honest use of this route is what
+>   (ii)/(iv) actually support — the **driven** port's current on a mesh
+>   with no conductor cells; whether a full 2×2 can be assembled from
+>   driven-port currents alone (one solve per port, each read at its own
+>   driven gap) is the ruling step 2 now waits on, with the `n × H` facet
+>   form the remaining alternative. Both the step-2b and step-2c branches
+>   are now kept until that ruling.
 > * **Step 3a (the birdcage hole as a `MeshGenerator` route — scoped
 >   2026-09-06 10:30 review, §9 item 4; step 2a's pattern on
 >   `birdcage_port_domain`).** One additive `as_hole=False` keyword: the
@@ -7320,7 +7380,22 @@ it** (`TH-15` step 3a, 16:30 slot — ratified above, ruling (2)); it is
 never widened silently and never on a quantity that was already green.
 
 
-1. **`TH-15` step 2c — the gap-displacement port current: `I = I_drive δ +
+1. 🚫 **BLOCKED — attempted 2026-09-07 04:30 slot, negative-result exit
+   taken.** Anchor (i) missed at **9.998674e-01 / 9.993525e-01** against
+   the pre-registered 0.10 and the asserted negative control failed at
+   **0.99×** against the predicted ~50×; (ii) 2.24e-02, (iii) 5.2613e-04,
+   (iv) corrected 0.909618 all passed. Parked on
+   `attempt/TH-15-step2c-20260907T094500Z` (`f942dc2`); full readings and
+   the mechanism in the §7 `TH-15` step-2c 🚫 paragraph and the
+   known-issues entry. **The miss is a statement about the two current
+   *definitions*, not about `h`** — the conduction route is a volume
+   average around a ring open at the gap, so it does not equal the
+   gap-face current on an open-circuited port at any resolution.
+   **Unblock:** a review ruling on whether a full 2×2 may be assembled
+   from **driven**-port gap currents alone (which (ii)/(iv) do support),
+   or the `n × H` facet form. **Item 6 below is serial on this and is
+   therefore blocked too.** Original item text follows unchanged.
+   **`TH-15` step 2c — the gap-displacement port current: `I = I_drive δ +
    (1/g)∫_gap (σ + jωε) E·ĥ dV` as `current_route="gap_displacement"` on
    `GapVoltagePortSpec`, anchored on the solid two-torus against the
    conduction current, reciprocity and the closed-form mutual** (heavy by
@@ -7566,7 +7641,11 @@ never widened silently and never on a quantity that was already green.
    found — known-issues with the module name, do not weaken the guard,
    stop.
 
-6. **`TH-15` step 2 proper — the parked PEC-hole 2×2 module re-run on the
+6. 🚫 **BLOCKED — serial on item 1, which took its negative-result exit on
+   2026-09-07 (04:30 slot): there is no landed `gap_displacement` route to
+   swap this module's current extraction onto. Unblocked by the same
+   review ruling item 1 now waits on.** Original item text follows.
+   **`TH-15` step 2 proper — the parked PEC-hole 2×2 module re-run on the
    displacement route** (heavy by ceiling, `-n 4`, complex build; `main`;
    **serial on item 1 — if item 1 did not land on `main`, skip this item
    unmarked and take the next**). Executor: implementer. Cherry-pick

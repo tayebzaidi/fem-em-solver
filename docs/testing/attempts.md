@@ -16256,3 +16256,85 @@ factor is mesh-converged — i.e. whether `C/sheets_terminal − 1` falls with `
 on `PORT-14` step 1b's ×0.75 / ×0.6 conductor rungs — is the question that
 decides `POWER_BALANCE_BAND`, and it is a cheaper `PORT-16` step 2 than the
 one the row currently describes.
+
+## 2026-09-07T09:55Z (2026-09-07 04:30 CDT slot) — `TH-15` step 2c — **blocked (parked, negative-result exit)**
+
+**Item.** §9 item 1 of the 2026-09-07 03:00 review — the gap-displacement port
+current `I_k = I_drive δ + (1/g_k) ∫_gap (σ + jωε) E·ĥ_k dV` as
+`current_route="gap_displacement"` on `GapVoltagePortSpec`, gated on the solid
+two-torus. Preflight clean on `a2d21b2`, container Up 3 days. Executed by the
+`implementer` agent in the foreground; the slot verified every quoted digit
+against the logs itself (report and logs agree).
+
+**Outcome: the pre-registered anchor (i) misses by ~100% and the *asserted*
+negative control fails. The item's negative-result exit was taken — nothing
+loosened, nothing fitted, no band moved, `main` untouched.** Code + module +
+three logs parked on `attempt/TH-15-step2c-20260907T094500Z` (`f942dc2`).
+
+**Windows** (all foreground, harness, complex build, `tests/environment` first,
+`-n 4`, container `timeout -k 30`): 4 s collect-only smoke, 15 collected
+(`20260907T093428Z_TH-15.log`); `-v --tb=short`, **2 failed / 13 passed in
+129.69 s**, elapsed **131 s** (`20260907T093440Z_TH-15.log:1140`); `-s` to
+capture the passing anchors' digits, **2 failed / 2 passed in 102.27 s**,
+elapsed **103 s** (`20260907T093741Z_TH-15.log:1069`). Heavy by ceiling,
+measured standard-class. Rule (c)'s `test_port_package_sparameters.py` re-run
+**not** executed — nothing landed on `main` to regress.
+
+**Readings** (all `…093741Z_TH-15.log`; solid two-torus, 184 176 cells, 10 MHz;
+gap material read off the problem, never re-declared: `σ_gap = 0.000000e+00`,
+`ε_gap/ε₀ = 1.000000`, `:982–986`):
+
+| anchor | measured | band | verdict |
+| --- | --- | --- | --- |
+| (i) undriven, drive P1 → P2 | `\|I_disp/I_cond − 1\|` = **9.998674e-01** (`:1000`) | 0.10 | **MISS** |
+| (i) undriven, drive P2 → P1 | **9.993525e-01** (`:1005`) | 0.10 | **MISS** |
+| (ii) driven P1 / P2 | **2.243038e-02** / **2.236565e-02** (`:1013`, `:1018`) | 0.10 | pass |
+| (iii) reciprocity | `‖S−Sᵀ‖/‖S‖` = **5.2613e-04** (`:1030`) | `S_SYMMETRY_BAND` 1e-3 | pass |
+| (iv) mutual | raw 0.865226 → corrected **0.909618** (`:1029`) | `MUTUAL_TOLERANCE` | pass |
+| control vs loop route | gap 9.998674e-01 vs loop 9.860947e-01, separation **0.99×** (`:1022–1025`) | predicted ~50× | **FAIL** |
+
+Conduction records for comparison on this same mesh: reciprocity 4.76e-05,
+mutual 0.939822; the loop route (step 2b) read 1.4338e-03 / 0.946178.
+
+**Diagnosis — a definition mismatch, not `h`.** The undriven gap current
+**1.5407e-06 A** is correct as the gap capacitor's own current,
+`jω(ε₀A_gap/g)V₂` with V₂ = 1.067 V (`:983`). What it fails to equal is the
+*conduction* route's `σ/L ∫_conductor E·φ̂ dV` — a **volume average around a
+ring that is open at the gap**. On an open-circuited port the wire current
+vanishes at the gap faces and peaks opposite them, so the volume average and
+the gap-face current are different quantities and continuity between them does
+not hold at any resolution. On the driven port the impressed 1 A dominates
+both, which is exactly why (ii) reads 2.2%. The 03:00 ruling (1)'s premise
+(the undriven gap field is the port's own, by two decades) is **true**; what
+does not follow is that the two routes measure the same current. The §7 item's
+stop text ("not the port current at this `h`") is therefore too kind — this is
+not a refinement question, and the review should not commission an `h` ladder
+on it.
+
+**Caveat the slot flags rather than banks:** (iii)/(iv) pass on off-diagonal
+currents ~1e-3 of the conduction route's. Both `Z₁₂ = V₁/I₂` reductions consume
+only the *driven* current, so this is a scale-invariance of the two-port
+reduction, not evidence for the route. Do not read (iii)/(iv) as validating the
+undriven readout.
+
+**Plan work landed on `main` this slot (documentation only, no `src/`, no
+`tests/`):** §7 `TH-15` gains the step-2c 🚫 paragraph with all six readings and
+the mechanism; §9 item 1 marked 🚫 with its unblock condition **in this same
+commit** (rule (d)); §9 item 6 marked 🚫 as serial on it; a new known-issues
+entry carrying the four readings, the failed control, the cause and the caveat.
+Neither `attempt/TH-15-step2b-…` nor `attempt/TH-15-step2c-…` was deleted — 2b
+was to be deleted by the slot that *landed* 2c, which did not happen, and both
+are now evidence for the same ruling.
+
+**Automation health.** No compute-safety event, no container wedge, no
+allowlist denial, no docker-socket trap. The executor ran foreground and
+returned with no window in flight — the foreground-executor rule held this
+slot. Every window inside its container `timeout -k 30` and the 660 000 ms host
+window.
+
+**Next attempt, one line:** the surviving honest use of this route is the
+**driven** port's gap current — one solve per port, each read at its own driven
+gap, needing no conductor cells and therefore working on the PEC hole — so the
+review's question is whether a full 2×2 assembled from driven-port currents
+alone is admissible; if it is not, the `n × H` facet form is the last candidate
+and `TH-15` step 2 stays blocked behind it.
