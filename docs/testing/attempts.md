@@ -16598,3 +16598,98 @@ independent, and the trap this example ran on top of; item 7 (`ANS-4` step 2)
 stays skipped while `fem-em-solver-xl` is not Up. Hypothesis for the review: the
 `stale` census will keep drifting upward at ~2 names/interval until the
 artifact refresh lands, so it is worth scheduling ahead of the next weekly.
+
+## 2026-09-07T17:15Z (2026-09-07 12:00 CDT slot) — `TH-15` step 2d — **complete**
+
+**Item.** §9 On deck item 1, the first item not marked done or blocked — the
+10:30 review's rescope of the step-2 lineage under its ruling (1). Executor:
+`implementer`, spawned **foreground** with the no-background rule stated
+verbatim in the spawn prompt; it ended no turn with a window in flight.
+Preflight clean on `8ef690a`, container Up 3 days, and the item's own
+precondition checked before delegating: `git diff --stat 2f65cbe..HEAD --
+src/fem_em_solver/ports/` **empty**, so the path checkout from `f942dc2`
+lands on untouched code.
+
+**Outcome.** Landed on `main` as **`a6480ec`**. Tree clean;
+`attempt/TH-15-step2b-20260907T021500Z` and `…step2c-20260907T094500Z`
+deleted as the item directs, `attempt/TH-15-step2-20260906T183305Z` left
+standing (item 4's, out of scope). `TH-15` stays 🟡.
+
+**Main window** — `20260907T170302Z_TH-15.log`, `-n 4`, complex build +
+`FEM_EM_REQUIRE_COMPLEX=1`, `tests/environment` first, `timeout -k 30 500`:
+**14 passed in 134.38 s**, elapsed **136 s**, `Status: 0` (`:1150`,
+`:1348–1349`). Heavy by ceiling, standard by measurement. A 4 s collect-only
+smoke preceded it (`20260907T170250Z_TH-15.log`, 3 collected).
+
+**Anchors, all asserted, all green — digits re-read by this slot from the log,
+not taken from the executor's report.**
+- (v) the new pre-registered `OPEN_CIRCUIT_BAND` = 1e-4 on
+  `|I_disp,undriven| / I_drive`: **1.541112e-06** on drive P1 / port P2 and
+  **1.541112e-06** on drive P2 / port P1 (`:1052–1053`, `:1059–1060`), the
+  predicted 1e-6 class, with `V_undriven` = 1.067373e+00 / 1.091649e+00 V
+  printed beside.
+- Asserted separation control `|I_cond,undriven| / |I_disp,undriven| ≥ 100`:
+  **782.9×** (`:1055`) and **1096.8×** (`:1062`) — reproducing step 2c's
+  783× / 1097× to the digit.
+- (ii) driven continuity **2.243038e-02** (`:1071`) / **2.236565e-02**
+  against 0.10; (iii) reciprocity **5.2613e-04** inside the imported
+  `S_SYMMETRY_BAND` (`:1079`); (iv) corrected mutual **0.909618** (raw
+  0.865226) inside the imported `MUTUAL_TOLERANCE` (`:1078`), the conduction
+  record 0.939822 printed beside. Every (ii)–(iv) digit is `f942dc2`'s,
+  unmoved by the five-commit rebase — which is the evidence the checkout is
+  clean rather than re-derived.
+
+**Deleted, not loosened.** The two anchors the 04:30 slot's negative-result
+exit reported —
+`test_the_gap_current_is_the_conduction_current_on_the_undriven_port` and
+`test_the_gap_route_beats_the_loop_route_on_the_undriven_port` — are removed
+with `LOOP_ROUTE_UNDRIVEN_RATIO`, their readings (9.998674e-01 /
+9.993525e-01, separation 0.99×, `20260907T093741Z_TH-15.log:1000, 1005,
+1022–1025`) kept in the module docstring as the record and the reason. No
+band moved, no `src/` default changed, no §2 change.
+
+**Disclosed deviation from the item — rule (c)'s re-run was sized wrong and
+the slot corrected the width, not the assertion.** The item specified
+`tests/validation/test_port_package_sparameters.py` at `-n 4`. There it gave
+**3 failed / 3 passed in 145.46 s**, elapsed 147 s, `Status: 1`
+(`20260907T170528Z_TH-15.log:743–749, 755, 882–883`): `raw mutual
+0.8942257288323762` vs record `0.8945163786446685` (missed by 3.249e-04),
+`passivity_max_sigma 0.864692569` vs `0.864809`, and the
+reciprocity-perturbation probe at 9.988682e-02 vs 1.000000e-01. All three are
+**digit-reproduction records at 1e-6 relative**; no band and no physics gate
+is among them, and the mutual / reciprocity / passivity bands are green in
+that same `-n 4` run. The records were set at `-n 2`
+(`20260904T110501Z_OPS-37.log:12`, 17 passed / 171.42 s). Re-run at `-n 2` on
+the same tree, `tests/environment` first: **17 passed in 187.37 s**, elapsed
+**188 s**, `Status: 0` (`20260907T170838Z_TH-15.log:146, 214–215`) — rule (c)
+discharged at the width the records were set at. The step-2d diff leaves the
+`current_route="conduction"` arithmetic byte-identical, which is the
+independent reason the `-n 4` misses cannot be this chunk's.
+
+**New known-issues entry (🟡 OPEN, top of "Failing tests"), not fixed in
+passing.** `test_port_package_sparameters.py` is rank-width-sensitive at 1e-4
+— four decades above its 1e-6 reproduction bands — so its digit records only
+reproduce at `-n 2`. The adjacent `OPS-18` "same command, different digits"
+entry is same-width run-to-run at 1e-10, six decades smaller, so they are
+probably not the same defect. **For the review:** this needs a ruling —
+either (a) a docstring / marker declaring those three records `-n 2`-only, or
+(b) a width-invariance measurement on the 184 176-cell two-torus. Until it is
+disposed of, any future item's rule-(c) gate on this module must be written
+`-n 2`. The `TH-15` step-2c entry is retired in the same commit, with the
+fixing commit, per the entries-leave-with-the-fix discipline.
+
+**Automation health.** One executor, foreground, no concurrency. All four
+harness windows foreground and footered, each with `timeout -k 30` sized
+inside the 660 000 ms host window. No allowlist denial, no docker-socket
+denial, no compute-safety event, no wedge. `mpiexec` widths 4 and 2, both
+inside the 12-rank ceiling. Slot finished well inside the timebox; no work
+started after minute 45.
+
+**Next.** §9's remaining ordinary items are 2 (`OPS-40`, the
+`evaluate_vector_field_parallel` cross-rank point-list guard — independent),
+3 (`WF-6` step 4) and 5 (`GEO-27`); item 4 (`TH-15` step 2 proper) is now
+unblocked, since it was serial on this landing. Hypothesis for item 4: the
+2×2 assembled from driven-port gap currents alone should survive on the
+PEC-hole mesh unchanged — the open-circuit anchor is the only undriven
+reading `Z` needs and it holds at 1.5e-06 — but its rule-(c) gate must be
+sized at `-n 2` until the width-sensitivity entry is disposed of.
