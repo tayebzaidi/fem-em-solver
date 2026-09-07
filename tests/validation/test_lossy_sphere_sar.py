@@ -149,8 +149,23 @@ def _interior_probe_points() -> np.ndarray:
     return np.vstack([np.atleast_2d(points[0]), points[1], points[2]])
 
 
-def _solve_lossy_sphere(sigma: float, resolution_sphere: float, resolution_far: float):
-    """Solve at conductivity ``sigma`` and return the SAR/field measurements."""
+def _solve_lossy_sphere(
+    sigma: float,
+    resolution_sphere: float,
+    resolution_far: float,
+    *,
+    return_fields: bool = False,
+):
+    """Solve at conductivity ``sigma`` and return the SAR/field measurements.
+
+    ``return_fields=False`` (default) is exactly the pre-`EX-52` behaviour and
+    return dict — every existing caller is unaffected. ``return_fields=True``
+    additionally returns ``mesh``, ``cell_tags``, ``sigma_field``, ``e_complex``,
+    ``e_real`` and ``e_imag`` alongside the existing keys, so a caller that
+    needs the raw fields (e.g. to write a ParaView export) does not have to
+    re-solve or restate the fixture (`EX-52`, additive per PROJECT_PLAN §9
+    standing rule (a)).
+    """
     comm = MPI.COMM_WORLD
     msh, cell_tags, _ = MeshGenerator.sphere_in_box_domain(
         sphere_radius=SPHERE_RADIUS,
@@ -200,7 +215,7 @@ def _solve_lossy_sphere(sigma: float, resolution_sphere: float, resolution_far: 
     ncells = comm.allreduce(
         msh.topology.index_map(msh.topology.dim).size_local, op=MPI.SUM
     )
-    return {
+    result = {
         "sigma": sigma,
         "mean_sar": sar["mean_sar_w_per_kg"],
         "sphere_volume_m3": sar["volume_m3"],
@@ -209,6 +224,18 @@ def _solve_lossy_sphere(sigma: float, resolution_sphere: float, resolution_far: 
         "ez_spread": float(np.max(np.abs(ez - ez_mean)) / abs(ez_mean)),
         "ncells": int(ncells),
     }
+    if return_fields:
+        result.update(
+            {
+                "mesh": msh,
+                "cell_tags": cell_tags,
+                "sigma_field": fields.sigma_field,
+                "e_complex": fields.e_complex,
+                "e_real": fields.e_real,
+                "e_imag": fields.e_imag,
+            }
+        )
+    return result
 
 
 @complex_only

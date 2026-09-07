@@ -16099,3 +16099,82 @@ event, no container wedge. Two windows: collect-only smoke `-n 2` 4 s
 of point-sampling a piecewise-constant `B` on 30 mm cells — the ~1e-2 A floor
 is a sampling artifact, and an assembled form should drop it far enough to make
 the undriven currents, and hence reciprocity, usable.
+
+---
+
+## 2026-09-07T03:30Z — `EX-52` — **complete**
+
+**Slot:** 2026-09-06 22:30 local implementer run. Preflight clean on `5d95cf9`,
+container Up 3 days. §9 items 1 (`MAT-4` step 4) and 2 (`TH-15` step 2b) were
+already marked DONE / 🚫 BLOCKED, so item 3 — `EX-52` — was the first open item.
+
+**Executor.** `example-runner`, spawned foreground per step 3. It **ended its
+turn with its first runner window still running** and was SIGKILLed — the exact
+trap the protocol names in step 3's fourth rule and in the "never end your turn
+while a harness command is running" non-negotiable. Cost: one footerless log
+(`20260907T033551Z_EX-52.log`, 402 lines, no `## Exit` footer, no
+`test-results.md` row) and a dirty tree handed back mid-chunk. The spawn prompt
+did carry the rule verbatim; the executor acknowledged it and violated it
+anyway. Foreground-executor streak breaks at 54.
+
+**Recovery, in-slot.** The killed log had already reached the physics, and all
+of it was green; the traceback was in the XDMF-writing step:
+`post.sar.point_sar` → `evaluate_vector_field_parallel` raised
+`IndexError: index 36378 is out of bounds for axis 0 with size 36378`
+(`…033551Z_EX-52.log:400`). Diagnosis: `evaluate_vector_field_parallel` is a
+**collective over a point list that must be identical on every rank** — it
+sizes its rank-0 buffer by the caller's `points` and scatters each rank's hits
+into it by index (`src/fem_em_solver/post/evaluation.py:68–77`) — and the
+example handed each rank only its own local centroids, so rank 1's indices
+overran rank 0's buffer. Fix (5 lines, in the example, `point_sar` kept as the
+operator the item names): `comm.allgather` the owned centroids, evaluate once
+on the concatenated global list, slice the owned segment back out by rank
+offset. The failure and its log line are recorded in a code comment at the fix.
+
+**Result — green, §4-complete.** `mat:2` exit 0, **48 s** at `-n 2`, complex
+(`20260907T034158Z_EX-52.log`); 74 020 cells, three solves in 40.1 s. Emitted
+via `./scripts/run_examples.sh -e mat:2 -n 2 -t 300 --dry-run` and run through
+the harness verbatim — no socket denial (0 of the last 32 slots).
+
+Measured, all **asserted** against the gate module's *imported* bounds:
+
+| quantity | σ = 0.05 | σ = 0.57 | bound |
+|---|---|---|---|
+| mean SAR vs closed form | **3.422 %** | **3.536 %** | 10 % (imported) |
+| interior `E_z` spread | 0.067 % | 0.107 % | 2 % |
+| `Im/Re E_z` meas. vs closed | 0.1752 / 0.1755 | 1.9900 / 2.0011 | 10 % |
+
+The §7 record 3.42 % / 3.54 % is reproduced to the printed digits and printed
+beside the measurement, **not** asserted (it is a plan figure, not a module
+constant). Negative controls, both asserted, both held: two-σ separation
+**4.850×** against the 3× floor (σ-blind 11.4000; the module's own 4.855×
+ceiling printed, not asserted), and the σ = 0 vacuum sphere at
+`dissipated_power_w` **exactly 0.0** with mean SAR 0.0 ≤ 1e-12. One combined
+XDMF written: `materials_02_lossy_sphere_sar_combined.xdmf`
+(`SAR_pointwise`, `SAR_closed_form`, `CellTags`).
+
+**Census** unchanged across the pair, pre-census before any file was written:
+`dead=0 guide=0 stale=79 stale_severity=report exit=2` in both
+(`…033328Z_EX-52-precensus.log`, `…034407Z_EX-52-postcensus.log`). Note for the
+review: `stale` reads **79** here against the 18:00 review's 75 at `237a7af` —
+unchanged by this chunk, but it drifted between the two.
+
+**Rule (a) — the one additive gate change.** `_solve_lossy_sphere` in
+`tests/validation/test_lossy_sphere_sar.py` gains keyword-only
+`return_fields=False`; the default path is the pre-`EX-52` behaviour and return
+dict byte-for-byte, so no existing caller moves. Re-run green in the same slot:
+`12 passed` / **56 s** at `-n 2` (`…034300Z_EX-52-gate.log`, Status 0). No band
+moved, no tolerance touched, no `src/` change.
+
+**Logs:** `20260907T033328Z_EX-52-precensus.log`,
+`20260907T033551Z_EX-52.log` (the executor's, footerless — kept as the record
+of the trap), `20260907T034158Z_EX-52.log`, `20260907T034300Z_EX-52-gate.log`,
+`20260907T034407Z_EX-52-postcensus.log`. Tier: standard, every window inside
+its container `timeout -k 30` and the 660 000 ms host window. No compute-safety
+event, no container wedge, no denial.
+
+**Next attempt, one line:** none for `EX-52` (✅); for the review — `point_sar`
+on per-rank local points is a **live foot-gun** with no guard, and a two-line
+shape check in `evaluate_vector_field_parallel` (assert `n_points` agrees
+across ranks) would turn a confusing `IndexError` into a named error, worth an
+`OPS-*` item.
