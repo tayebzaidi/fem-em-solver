@@ -3223,6 +3223,55 @@ review confirms that reading before step 1 runs.
 >   A DG0 loop sample off the conduction current by > 20% at both loop
 >   radii is the finding that the next candidate is the surface form
 >   `n × H` over tag 301 — known-issues, park, stop.
+>   **🚫 Attempted 2026-09-06 (21:00 implementer slot): the capability
+>   works and clears step 2's blocker; two of the four asserted anchors
+>   miss, both on the same mechanism.** Parked on
+>   `attempt/TH-15-step2b-20260907T021500Z` (`ae79a4f`) — code
+>   (`GapVoltagePortSpec.loop_points/loop_tangents/loop_weights`, the
+>   additive `diagnostic_loops` + `PortVoltageCurrentEstimate.
+>   current_diagnostics` that make the empty-loop control and the
+>   loop-independence reading cost no extra solve, and the loop branch in
+>   `run_gap_voltage_port_case`), the new module
+>   `tests/validation/test_two_torus_ampere_loop_current.py`, and the log.
+>   One window, `-n 4`, complex, **3 failed / 12 passed in 220.50 s**,
+>   elapsed 222 s (`20260907T020614Z_TH-15.log:1678, 1939`); a 4 s
+>   collect-only smoke first (`…020602Z`). **What the window bought.**
+>   The `as_hole=True` PEC mesh now returns a **full 2×2** — 161 461 cells
+>   at the imported band (`:1567`, `:1857`), the sweep completes and the
+>   13:30 slot's `non-positive conductor length` is gone, i.e. the missing
+>   capability is built. The closed-form mutual holds on **both** routes
+>   inside the imported `MUTUAL_TOLERANCE`: solid raw 0.900681 → corrected
+>   **0.946178** (−5.38%, `:1074`), hole raw 0.885484 → corrected
+>   **0.930508** (−6.95%, `:1858`), beside the conduction route's 0.939822
+>   — anchor (iv)'s mutual leg and anchor (i)'s mutual leg both pass, and
+>   the "(iv) outside 0.10" stop did **not** fire. Anchor (ii) passes:
+>   `I_loop/I_cond = 0.981664 + 0.004919j` on the driven port, i.e.
+>   `|I_loop/I_cond − 1| = **1.86%**` (`:1048`), the *predicted*
+>   percent-class, and the 3.5 × `MINOR_RADIUS` loop reproduces the 2.5 ×
+>   one to **0.53%** (`:1049`) — the > 20% negative-result stop did not
+>   fire at either radius. **What missed, asserted, not loosened.**
+>   Anchor (iii), the empty loop: **8.874e-03** against the pre-stated
+>   1e-3 ceiling (`:1088`), predicted 1e-6-class; in absolute terms
+>   `I_empty = 8.467e-03 A`, which is not a displacement current but the
+>   **DG0 contour quadrature's own floor** out in the `H_FAR` = 30 mm
+>   region. Anchors (i)/(iv), reciprocity: **1.4338e-03** solid (`:1075`)
+>   and **4.4523e-03** hole (`:1092`) against the imported
+>   `S_SYMMETRY_BAND` = 1e-3, which the *conduction* route holds at
+>   4.76e-05 on the same mesh. **One mechanism explains both**: the
+>   undriven port's true current is ~1.2e-03 A (`:1052`) while the loop
+>   reading's absolute floor is ~1e-02 A, so the off-diagonal currents are
+>   noise (`I_loop/I_cond = 0.032 + 0.190j` on the undriven P2, `:1052`)
+>   while the driven current — the only one `Z₁₂ = V₁/I₂` consumes — is
+>   good to 1.9%. That is why the mutual passes and reciprocity does not.
+>   No band moved, nothing loosened, `main` untouched; the package gate
+>   re-run (rule (c)) was **not** executed — nothing landed to regress.
+>   **Unblock condition (a review's to rule on, not an implementer's):**
+>   either a current definition whose floor scales with the port's own
+>   current rather than with the drive — the surface form `n × H` over
+>   tag 301, or the loop integrated as a *facet* form instead of a
+>   256-point DG0 point sample — or a ruling that the loop route's
+>   reciprocity is asserted at its own measured band with the conduction
+>   route's 4.76e-05 kept as the separation control. `TH-15` stays 🟡.
 > * **Step 3a (the birdcage hole as a `MeshGenerator` route — scoped
 >   2026-09-06 10:30 review, §9 item 4; step 2a's pattern on
 >   `birdcage_port_domain`).** One additive `as_hole=False` keyword: the
@@ -7301,7 +7350,26 @@ never widened silently and never on a quantity that was already green.
    masses, park on `attempt/*`, stop, never re-band; (i) failing at 1e-10
    is a defect in the operator's cell coverage — known-issues, stop.
 
-2. **`TH-15` step 2b — the Ampère-loop port current: `I = ∮ H·dl` as an
+2. **🚫 BLOCKED 2026-09-06 (21:00 slot) — the capability landed and works
+   (a full 2×2 off the PEC hole, both mutuals inside `MUTUAL_TOLERANCE`,
+   `|I_loop/I_cond − 1|` = 1.86% and loop-independence 0.53%), but two
+   asserted anchors miss on one mechanism: the empty loop reads
+   **8.874e-03** against the pre-stated 1e-3 (`20260907T020614Z_TH-15.log:1088`)
+   and reciprocity **1.4338e-03** solid / **4.4523e-03** hole against the
+   imported 1e-3 `S_SYMMETRY_BAND` (`:1075, :1092`) — the DG0 loop
+   sample's absolute floor is ~1e-02 A while the undriven port's true
+   current is ~1.2e-03 A (`:1052`), so the off-diagonal currents are
+   noise while the driven one (all `Im Z₁₂` consumes) is good to 1.9%.
+   Parked on `attempt/TH-15-step2b-20260907T021500Z` (`ae79a4f`);
+   `-n 4`, complex, 3 failed / 12 passed in 220.50 s, elapsed 222 s.
+   Neither pre-registered stop fired. Nothing loosened, no band moved,
+   `main` carries no code. **Unblock condition:** a review must rule
+   between (a) a current definition whose error scales with the port's
+   own current — the surface form `n × H` over tag 301, or the contour
+   as a facet form rather than a 256-point DG0 point sample — and (b)
+   asserting the loop route's reciprocity at its own measured band with
+   the conduction route's 4.76e-05 kept as the separation control. Full
+   record in the §7 `TH-15` step 2b bullet.** ~~`TH-15` step 2b — the Ampère-loop port current: `I = ∮ H·dl` as an
    additive route on `GapVoltagePortSpec`, anchored on the solid
    two-torus against the conduction current and the closed-form mutual,
    then read once on the hole** (heavy by ceiling, `-n 4`, complex build;
@@ -7376,7 +7444,7 @@ never widened silently and never on a quantity that was already green.
    for a port current at this `h` — known-issues with the four readings,
    park, stop (the surface form `n × H` over the tag-301 facets is the
    next candidate, a review's to scope); (iv) outside 0.10 is a
-   known-issues finding about the hole's mutual, stop.
+   known-issues finding about the hole's mutual, stop.~~
 
 3. **`EX-52` — imposed-field SAR on the lossy sphere against its closed
    form in ParaView** (standard, host-runner window ≤ 500 s, `-n 2`,
