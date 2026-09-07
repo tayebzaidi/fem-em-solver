@@ -184,9 +184,19 @@ def build_density_field(
         known_tags = {int(tag) for tag in np.asarray(cell_tags.values)}
         for tag, rho_tag in density_map.items():
             rho_value = float(rho_tag)
-            if not np.isfinite(rho_value) or rho_value <= 0.0:
+            # ``0.0`` is admissible *here only* (``default_rho`` above is still
+            # strictly positive): a mapped region of zero density is a region
+            # excluded from the averaging mass, which is what makes the
+            # whole-region identity of :func:`mass_averaged_sar` statable on a
+            # multi-material fixture — with ρ = 0 outside the phantom a ball
+            # enclosing the phantom returns ``mass_kg`` = ρ · V_phantom rather
+            # than ρ · V_ball (`MAT-4` step 4, 2026-09-06).  A negative or
+            # non-finite density is still an error, and ``mass_averaged_sar``
+            # still raises if the ball's total mass comes out non-positive.
+            if not np.isfinite(rho_value) or rho_value < 0.0:
                 raise ValueError(
-                    f"density_map[{int(tag)}] must be finite and positive (kg/m³), got {rho_tag!r}"
+                    f"density_map[{int(tag)}] must be finite and non-negative "
+                    f"(kg/m³), got {rho_tag!r}"
                 )
             anywhere = mesh.comm.allreduce(int(int(tag) in known_tags), op=MPI.MAX)
             if anywhere == 0:
