@@ -16693,3 +16693,65 @@ unblocked, since it was serial on this landing. Hypothesis for item 4: the
 PEC-hole mesh unchanged — the open-circuit anchor is the only undriven
 reading `Z` needs and it holds at 1.5e-06 — but its rule-(c) gate must be
 sized at `-n 2` until the width-sensitivity entry is disposed of.
+
+## 2026-09-07T18:45Z (2026-09-07 13:30 CDT slot) — `OPS-40` — **complete**
+
+**Item.** §9 On deck item 2, the first item not marked done or blocked (item 1,
+`TH-15` step 2d, was landed by the 12:00 slot and is marked DONE). Opened by the
+03:00 review's ruling (3) out of `EX-52`'s 22:30 slot; full plan in the §7
+`OPS-40` row. Executor: `implementer`, spawned **foreground** with the
+no-background rule and the runner-emit rule stated verbatim in the spawn
+prompt; it ended no turn with a window in flight. Preflight clean on `c0433fa`,
+container Up 3 days.
+
+**Outcome.** Landed on `main` as **`9bbeccd`**. Tree clean, no branch parked,
+no known-issues entry needed — the pre-registered negative result (the guard
+tripping inside an existing green consumer) did not occur.
+
+**The change.** One guard at the top of `evaluate_vector_field_parallel`
+(`src/fem_em_solver/post/evaluation.py:38–55`), after the shape check and
+before any bounding-box work: `counts = comm.allgather(n_points)`; if the
+counts differ, **every** rank raises `ValueError` naming each rank's count and
+the rule. No consumer, band, record or valid-input behaviour touched; the
+comment carries `EX-52`'s original `IndexError` reading and its log line.
+
+**Anchors, all green.**
+- (i) `20260907T183121Z_OPS-40.log`, `-n 2` real, `timeout -k 30 120`, smoke,
+  elapsed **4 s**: **4 passed / 1.58 s**. The `n = 3 + rank` list gives
+  `allgather(raised) == [True, True]` — no one-rank raise ahead of the next
+  collective, which was the trap — and every rank's message carries
+  `rank 0: 3`, `rank 1: 4`, `collective` and `allgather your points first`
+  (`test_evaluation_collective_guard.py:60, 65–67`).
+- (ii) valid path bit-unchanged, measured in the same window: the interpolated
+  P1 field against the closed form `(x, 2y, 3z)` at 5 shared points, max
+  deviation **< 1e-12**, mask all true, result bit-identical across ranks
+  (`:80, 83, 88`); the pre-existing shape check still fires.
+- (iii) rule (c), both re-runs green this slot: the `EX-52` gate
+  `tests/validation/test_lossy_sphere_sar.py` at `-n 2` complex,
+  **12 passed / 55.56 s** against the 12 passed / 56 s record
+  (`20260907T183143Z_OPS-40.log`, elapsed 57 s); and `mat:2`, Status 0,
+  **47 s** against the 48 s record, SAR errors **3.422%** / **3.536%** against
+  the imported 10% bound with both negative controls held
+  (`20260907T183248Z_OPS-40.log`). Bounds unmoved in both.
+- **Negative control (asserted)** — `20260907T183132Z_OPS-40.log`, `-n 1`,
+  elapsed **2 s**: the same `n = 3 + rank` construction does **not** raise,
+  4 passed / 0.63 s (`:56`).
+
+**Automation health.** One executor, foreground, no concurrency. All four
+harness windows foreground and footered (`Status: 0`, elapsed 4 / 2 / 57 / 47 s
+≈ 110 s of compute), each with `timeout -k 30` sized inside the 660 000 ms host
+window. The `mat:2` window went through the emitted-command route
+(`run_examples.sh --dry-run`, then the string verbatim through
+`run_and_log.sh`) — no direct host-runner invocation, no docker-socket denial.
+No allowlist denial, no compute-safety event, no wedge. `mpiexec` widths 2 and
+1, both inside the ceiling. Slot finished well inside the timebox; no work
+started after minute 45.
+
+**Next.** §9's remaining ordinary items are 3 (`WF-6` step 4), 4 (`TH-15`
+step 2 proper, unblocked by the 12:00 landing) and 5 (`GEO-27`); item 6 is the
+XL item and the XL service is not Up. Hypothesis for the next slot (item 3):
+the unloaded F-small solves should land inside `CLOSED_FORM_BAND = 5e-2` at
+the predicted 2–3%, and the additive `phantom_material` keyword's rule-(c)
+gate on `test_port_birdcage_four_port.py` is unaffected by the `-n 2`
+width-sensitivity entry, which is confined to
+`test_port_package_sparameters.py`.
