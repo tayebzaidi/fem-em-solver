@@ -15995,3 +15995,107 @@ has scoped; (c) the `QUADRATURE_DEGREE` provenance slip above.
 **Next attempt, one line:** §9 items 2–5 are open and independent — the next
 slot takes item 2 (`TH-15` step 2b, the Ampère-loop port current), which
 unblocks the parked step-2 module.
+
+## 2026-09-07 02:15 UTC (2026-09-06 21:00 CDT slot) — `TH-15` step 2b — **blocked (parked)**
+
+**Preflight clean** (`main` at `42171e3`, no `recovered/*`, container Up 3
+days). §9 item 1 was already DONE (19:30 slot), so this slot took **item 2**,
+the first item not done or blocked. Executor: `implementer`, foreground, one
+chunk.
+
+**Outcome: the capability works and clears step 2's blocker; two asserted
+anchors miss on one mechanism, so the slot stopped and parked.** Neither
+pre-registered negative-result stop fired. Nothing was loosened, no band moved,
+`main` carries no code from this slot.
+
+**What was built** (`attempt/TH-15-step2b-20260907T021500Z`, `ae79a4f`):
+`GapVoltagePortSpec` gains the additive `loop_points` / `loop_tangents` /
+`loop_weights` route, `I = (1/μ₀) ∮ B·dl` on a DG0 `B` read through
+`evaluate_vector_field_parallel`, a 256-point trapezoid circle at
+2.5 × `MINOR_RADIUS` past `φ_gap + GAP_ANGLE`; plus the new module
+`tests/validation/test_two_torus_ampere_loop_current.py`. The
+`non-positive conductor length` raise that blocked step 2 now fires only on the
+conduction route, so a PEC hole yields `conduction_current = None` and returns
+a full 2×2 — that is the blocker gone.
+
+**Measured** — all `20260907T020614Z_TH-15.log` (on the branch; the parked-log
+precedent is `4dedf89`):
+- footer **3 failed / 12 passed in 220.50 s**, Status 1, elapsed **222 s**,
+  `-n 4`, complex, `timeout -k 30 500` (`:1678`, `:1939`).
+- hole mesh **161 461** cells / record 161 461 = **1.000000**, 24.30 s
+  (`:1567`, `:1857`); solid mesh **184 176** cells, 29.96 s (`:1045`).
+- solid loop route: `Im Z₁₂` = **+1.118424593e+00 Ω**, raw 0.900681 (−9.93%) →
+  corrected **0.946178** (−5.38%) against the imported `MUTUAL_TOLERANCE` 0.10
+  — **passes**; the conduction record on the same fixture is 0.939822
+  (`:1074`).
+- hole loop route: raw 0.885484 → corrected **0.930508** (−6.95%), inside 0.10
+  — **passes** (`:1858`).
+- anchor (ii), driven port: `I_loop` = +9.542972727e-01+2.250163481e-04j A vs
+  `I_cond` = +9.720984086e-01−4.641523624e-03j A ⇒ ratio 0.981664+0.004919j,
+  **|ratio − 1| = 1.86%** (`:1047–1048`); the 3.5r loop reads
+  9.593300801e-01 A ⇒ loop-independence **0.53%** (`:1049`). Both are the
+  *printed, predicted* percent-class readings the item asked for, and both are
+  three decades inside the 0.2 stop.
+- **anchor (iii) FAIL:** empty loop `I_empty` = 8.466996e-03 A,
+  `|I_empty|/|I_loop|` = **8.874371e-03** against the pre-stated 1e-3 ceiling
+  (`:1050`, `:1088`) — predicted 1e-6-class, read three decades high.
+- **anchor (i) FAIL:** solid reciprocity ‖S − Sᵀ‖/‖S‖ = **1.4338e-03** against
+  the imported `S_SYMMETRY_BAND` 1e-3 (`:1075`).
+- **anchor (iv) FAIL** (reciprocity leg only; its mutual passes): hole
+  **4.4523e-03** (`:1092`).
+- the mechanism, in one line (`:1052`): on the undriven port `I_loop` =
+  2.313503399e-04 A against a true `I_cond` = 9.868522122e-05−1.202497802e-03j A
+  — ratio 0.032+0.190j.
+
+**Diagnosis.** The DG0 contour sample has an **absolute** floor of ~1e-2 A —
+the empty loop reads 8.5e-3 A of nothing, out where `H_FAR` = 30 mm — so every
+quantity that consumes only the driven current (≈0.95 A, both corrected
+mutuals) is good to 1.9%, while the undriven port's ~1.2e-3 A current is below
+the floor and is pure noise. That is exactly and only what breaks reciprocity.
+The floor is set by the **coarse far mesh**, not by the wire resolution, which
+is why more quadrature points would not help.
+
+**Second window not run:** the standing-rule-(c) re-run of
+`tests/validation/test_port_package_sparameters.py` was skipped — nothing
+landed on `main` to regress, and the slot was at its 45-minute hard stop. A
+future slot that lands this code owes it.
+
+**Disclosed design note, one field beyond the item's enumeration.** To get
+anchors (ii)/(iii) and the 3.5r reading without two extra ~90 s solves (which
+would have blown the 500 s window), the executor added an additive
+`diagnostic_loops` field on the spec plus
+`PortVoltageCurrentEstimate.current_diagnostics`, following the existing
+`path_voltage_v` diagnostic precedent. The item's field list was meant to be
+exhaustive; flagged here for the review. It is on the branch only.
+
+**Orientation trap paid for:** right-handedness about `conductor_direction`
+needs `ρ̂ × (−ẑ) = φ̂`, not `ρ̂ × ẑ`; a runtime assert in `_plane_basis` guards
+it, and anchor (ii)'s sign came out positive first try.
+
+**Plan edits on `main`** (`63ccfc6`, record only): §7's `TH-15` step 2b bullet
+gains a 🚫 attempt paragraph with every number above and its `:line`; §9 item 2
+gains a `🚫 BLOCKED 2026-09-06 (21:00 slot)` header with the four key readings
+and the unblock condition, the original scoping struck through so the review
+can re-scope from it. **Rule (d) honoured** — the item is marked in the same
+commit as the record.
+
+**Unblock condition (for the review to rule).** Choose between (a) a current
+definition whose error scales with the **port's own** current — the surface
+form `n × H` over tag 301, or the contour assembled as a facet form rather than
+a 256-point DG0 point sample — and (b) asserting the loop route's reciprocity
+at its own measured band, keeping the conduction route's 4.76e-05 as the
+separation control. Note that `TH-15` step 2's parked module
+(`attempt/TH-15-step2-20260906T183305Z`) still waits on whichever wins; **both
+`attempt/*` branches are kept**, neither deleted.
+
+**Process:** no `run_in_background` anywhere, no turn ended with a command in
+flight, no docker-socket denial, **no allowlist denial**, no compute-safety
+event, no container wedge. Two windows: collect-only smoke `-n 2` 4 s
+(`20260907T020602Z_TH-15.log`, Status 0), the gate `-n 4` 222 s. Total compute
+**~226 s**, both inside the 660 000 ms host window.
+
+**Next attempt, one line:** assemble the contour as a **facet/surface form**
+(`n × H` over tag 301, or `∮B·dl` as a UFL form on a tagged facet ring) instead
+of point-sampling a piecewise-constant `B` on 30 mm cells — the ~1e-2 A floor
+is a sampling artifact, and an assembled form should drop it far enough to make
+the undriven currents, and hence reciprocity, usable.
