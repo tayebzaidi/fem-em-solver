@@ -16755,3 +16755,72 @@ the predicted 2–3%, and the additive `phantom_material` keyword's rule-(c)
 gate on `test_port_birdcage_four_port.py` is unaffected by the `-n 2`
 width-sensitivity entry, which is confined to
 `test_port_package_sparameters.py`.
+
+## 2026-09-07T21:10Z (2026-09-07 15:00 CDT slot) — `WF-6` step 4 — **incomplete** (pre-registered negative result)
+
+**Preflight.** Tree clean on `b328185`, container Up 4 days, no `recovered/*`.
+§9 item 1 (`TH-15` step 2d) and item 2 (`OPS-40`) both read DONE, so the first
+open item was **item 3, `WF-6` step 4** — taken as written, delegated to the
+`implementer` agent in the **foreground**, one executor, no concurrency.
+
+**Outcome.** The item's third pre-registered negative-result exit — *"the
+centre missing with conventions verified"*. Code parked on
+`attempt/WF-6-step4-20260907T205600Z` (`499c527`); `main` (`c833d20`) took the
+record only — three logs, `test-results.md` rows, the known-issues entry, the
+§7 `WF-6` step-4 paragraph and §9 item 3 marked 🚫 with its unblock condition
+(rule (d)), all in one commit. `git diff --stat b328185..c833d20 -- src tests`
+is **empty**; §2's B₁⁺ row did **not** take the authorized clause; `WF-6` stays
+🟡. `CLOSED_FORM_BAND = 5.0e-2` unmoved, nothing under `src/`.
+
+**Measured** — `20260907T200630Z_WF-6.log`, `-n 4` complex,
+`timeout -k 30 570`, **11 failed / 16 passed in 90.55 s**, elapsed **93 s**,
+Status 1 (re-read by this slot at `:1918–1938` and the footer):
+- the anchor misses at **16.7641 % … 27.3560 %** over the eleven `z = 0`
+  points against 5.0 % (`:1924–1934`); centre FEM **8.097478100e-08 T** vs
+  closed form **1.103500413e-07 T**, dev **26.6201 %** (`:1924`);
+- **exit 1 (> 50 %, convention error) is excluded by the run itself**: fixture
+  leg azimuths **360.0000 / 90.0000 / 180.0000 / 270.0000 deg** at one common
+  offset, spread **0.000e+00 deg** (`:1919–1920`), every sheet's
+  `drive_direction` asserted `(0,0,1)`, and control (β) mode-2 **green** at
+  **7.743627e-03** of the mode-1 centre against 5.00e-02 (`:1938`) — the FEM
+  reproduces step 4a's exact centre zero;
+- **the discriminator is control (α)** (`:1937`, sign asserted, size
+  predicted): legs-only closed form **7.356669419e-08 T**, so the filament's
+  Kirchhoff rings add exactly **50 %** at the centre (4a's `R²/ρ² = 0.5`)
+  while the FEM's coil adds only **10.0699 %** — **FEM/legs-only 1.1007 vs the
+  filament's 1.500**. The FEM sits far nearer an *open* coil than a closed one;
+- the four superposed leg currents agree to four digits — 1.820730e-02 /
+  1.820756e-02 / 1.820518e-02 / 1.820726e-02 A (`:1921`) — so the **terminal
+  leg** current is not the discrepancy, and the zero-mean projection was a
+  no-op (`|mean I|/max|I|` **9.337148e-07**, predicted ~1e-2, printed only).
+
+**Rule (c).** `tests/validation/test_port_birdcage_four_port.py` re-run green
+at `-n 4`: **5 passed / 44.01 s**, elapsed **46 s**, Status 0
+(`20260907T200858Z_WF-6.log:84, 96–97`). The additive `phantom_material`
+keyword is a no-op on the gate. A collect-only smoke preceded the main window
+(`20260907T200619Z_WF-6.log`, 16 items, 5 s, `-n 1`).
+
+**Sizing correction for the review.** The item costed "four unloaded + four
+loaded solves"; `build_four_port_sweep` runs its **own** four-drive
+S-parameter sweep before the module's four field solves, so each rung is
+**eight** solves and the full spec is **16**, not 8. The executor ran
+unloaded-only (93 s) and put the loaded print behind `WF6_STEP4_LOADED`
+(default off, documented in the module) — a re-scope should cost the loaded
+rung at eight solves.
+
+**Automation health.** One executor, foreground, never concurrent; three
+harness windows, all foreground and footered, `timeout -k 30` sized inside the
+660 000 ms host window, ≈ 144 s of compute at widths 4 / 4 / 1 (ceiling 12).
+No allowlist denial, no docker-socket denial, no compute-safety event, no
+wedge. No implementation work started after minute 45 — the executor's last
+compute window closed at 20:09 Z (minute 9) and the remainder was record work.
+
+**Next.** Hypothesis (one line, from the executor and consistent with the
+logs): the FEM's **end-ring** current is ~5× below `cumsum(I) − mean(cumsum(I))`
+on the same measured leg currents — measure it directly (surface integral of
+`J` over a ring cross-section, step 3g's machinery) to separate (a) a leg
+current non-uniform in `z`, which the sheet reads only at the gap, from (b) a
+return path that is not the rings at all, the σ = 800 S/m conductor's ~36 Ω leg
+resistance being comparable to the 50 Ω port. Item 3 is 🚫 until a review
+rules; the next open §9 items are 4 (`TH-15` step 2 proper, unblocked by the
+12:00 landing) and 5 (`GEO-27`); item 6 is XL and the XL service is not Up.
