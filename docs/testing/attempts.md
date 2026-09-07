@@ -16424,3 +16424,102 @@ container `timeout -k 30` and the 660 000 ms host window.
 open item is §9 item 3 (`WF-6` step 4a, the pure-numpy birdcage Biot–Savart
 anchor, smoke tier) — and `PORT-16` step 3, the gap's `h`-exponent on the ×0.75 /
 ×0.6 rungs, is now optional and the weekly's to commission or drop.
+
+## 2026-09-07T12:45Z (2026-09-07 07:30 CDT slot) — `WF-6` step 4a — **complete**
+
+**Item.** §9 items 1 and 6 are 🚫 BLOCKED (the 04:30 slot's negative-result exit
+on `TH-15` step 2c, and item 6 serial on it) and item 2 is ✅ DONE (06:00 slot),
+so the first open item is **item 3 — `WF-6` step 4a**, the pure-numpy birdcage
+Biot–Savart closed form. Executor: `implementer`, foreground, one chunk. Tree
+clean at preflight on `7a82688`, container Up 3 days.
+
+**Outcome: §4-complete on the first run.** Commit `4d651ef`;
+`docs/testing/logs/20260907T123926Z_WF-6.log`, `7 passed` / Status 0 / **4 s**
+(pytest 1.90 s), **smoke**, `-n 1`, real build, `timeout -k 30 120`, one
+foreground window. Log header commit `7a82688` = the closer's parent.
+
+**What was changed.** One additive function plus two private kernels in
+`src/fem_em_solver/utils/analytical.py` —
+`birdcage_filament_field(points, *, ring_radius, coil_length, leg_currents,
+ring_currents=None)`, pure numpy with **no `dolfinx` import in the module** (the
+unit tier stays seconds). `N` legs at azimuths `2πn/N` from `−L/2` to `+L/2`,
+two end rings of `N` arcs each; ring currents from Kirchhoff at every leg–ring
+node, `J_n = J_{n−1} + I_n`, whose unique zero-mean solution is
+`J = cumsum(I) − mean(cumsum(I))`, raising unless `Σ I_n = 0`; bottom ring `−J`;
+finite segments in closed form, arcs by 64-point Gauss–Legendre. The
+`ring_currents` keyword accepts `(N,)` (top, bottom `= −`top) or `(2, N)`
+(independent) — that is what makes the ring-limit and open-circuit cases
+expressible. New module `tests/unit/test_birdcage_filament_field.py`, 7 tests,
+F-small constants imported from `tests/mesh/test_birdcage_port_tags.py`.
+
+**Measured — every anchor asserted and green on the first run** (log lines
+re-traced by this slot, not taken on the executor's report):
+- (i) infinite-line limit at `L = 10³R` — **9.999875e-07** vs band 1e-5 (`:42`)
+- (ii) ring limit on axis — **2.830785e-16** axial / 2.653861e-17 transverse vs
+  1e-10 (`:44`)
+- (iii) `∇·B` on the mode-1 F-small pattern, 20 interior points — **4.510963e-10**
+  `|B|/R` vs 1e-8 (`:46`)
+- (iv) C4 covariance — **2.431697e-16** vs 1e-12 (`:48`)
+- (v) finite-length factor — **0.707106781** against `L/√(L²+4R²)` = 0.707106781,
+  band 1e-6 (`:50`)
+- (vi) mode-2 transverse zero at the centre — **1.048150e-16** of the mode-1
+  centre field (`|B|` = 6.060915e-06 T at 1 A) vs 1e-12 (`:53`)
+- control (asserted, ceiling computed) — Ampère deviation closed **1.887379e-15**,
+  legs-only **1.761971e-02**, **9.336e+12×** vs the item's ≥ 100×, and inside the
+  computed O(1) ceiling 1.941932e-02 at 0.907× (`:55`)
+
+`grep -n "assert"` on the module confirms all of these are executed `assert`s,
+not prints; the two printed-only readings are labelled as such in the log
+(`:56`).
+
+**Two of the item's own clauses were measured wrong and corrected in the code —
+nothing loosened, both strictly stronger.**
+1. *The end rings do **not** contribute zero transverse field at the centre.*
+   The item said so "by symmetry"; reflection through `z = 0` flips a transverse
+   source's transverse field and the bottom ring carries `−J`, so the two rings'
+   transverse contributions **add**. The exact closed form
+   `B_ring(0) = (0, −μ₀IRh/(πρ³), 0)`, `h = L/2`, `ρ = √(R²+h²)`, is derived in
+   the test docstring and asserted in place of the false zero: **−2.020305089e-06
+   T**, rel dev 4.192599e-16, exactly `R²/ρ² = 0.500000000` of the legs' own
+   centre field on F-small (`:51`). **This is the finding the planner needs: on
+   F-small the centre anchor is legs + a 50% ring contribution, so a legs-only
+   comparison in step 4 proper would read ~33% low.**
+2. *The `∇·B` negative control cannot separate an open circuit.* Biot–Savart is
+   `curl A` for an open filament as much as a closed one, so `∇·B ≡ 0` either
+   way — measured and printed as the evidence, 4.510963e-10 closed vs
+   7.300842e-10 open `|B|/R`, same order. The control is re-pointed at the
+   identity an open circuit *does* break, Ampère's law on a `0.2 R` contour about
+   leg 0 in `z = 0`; the closed coil reads `∮B·dl = μ₀I₀` to 1.887379e-15
+   (asserted ≤ 1e-9 — an exact identity in its own right, so the substitution
+   *adds* a gate), the legs alone 1.761971e-02, bracketed [0.5, 1.5]× of the
+   computed ceiling `1 − L/√(L²+4a²)` (the shortfall is the other three open
+   legs' own `grad(div A)` flux through the same disc). Labelled **asserted**
+   with a computed ceiling per standing rule (e).
+
+Item (v) *did* read 0.7071, so the geometry convention is right — the item's
+negative-result clause pointed at the convention, and the arithmetic re-check
+located the error in the parenthetical instead.
+
+**Nothing widened.** No band moved, no existing assertion touched, no
+known-issues change (no unrelated failure was met), §2 unchanged, `WF-6` stays
+🟡 — this is a closed form and its identities, no FEM, no `|B₁⁺|` comparison, no
+homogeneity or absolute claim. The only `src/` change is the one additive
+function.
+
+**Plan work landed with the code.** §7 `WF-6` gains the step-4a paragraph with
+every digit and both corrections, tier cell gains `step 4a 4 s smoke, -n 1,
+real`; §9 item 3 marked ✅ DONE in the same commit (rule (d)'s converse);
+`test-results.md` row added by the harness.
+
+**Automation health.** No compute-safety event, no container wedge, no allowlist
+denial, no docker-socket trap. The executor ran foreground and returned with no
+window in flight — the foreground-executor rule held (second consecutive slot).
+The single window was inside its container `timeout -k 30 120` and the 660 000 ms
+host window. `attempts.md` is over the `OPS-36` budget and remains the
+Wednesday weekly's call.
+
+**Next attempt, one line:** §9's next open item is 4 (`EX-53`, the coil-driven
+10 g SAR example, `mri:3`) — and for the review: step 4 proper is now scopable
+with `birdcage_filament_field` in hand, provided its anchor includes the end
+rings per correction (1); items 1 and 6 stay blocked on the review's ruling
+about assembling the 2×2 from driven-port gap currents alone.
