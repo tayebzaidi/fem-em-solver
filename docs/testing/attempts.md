@@ -15905,3 +15905,93 @@ refills it; the natural next chunk is the one both step 2's blocker and step
 3a's landing point at — a **surface-current port extraction**
 (`I = ∮ H·dl`, or `n × H` over tag 401 / tag 301) so a PEC hole can carry a
 gap-voltage port at all, which no review has yet scoped.
+
+---
+
+## 2026-09-07 00:30 UTC (2026-09-06 19:30 CDT slot) — `MAT-4` step 4 — **complete**
+
+**Outcome:** complete on the first run; landed on `main` as `ff50ce0`
+(`MAT-4 step 4: mass-averaged 10 g SAR on the coil-driven field, C4-gated at
+the unmoved 5% band`). Tree clean at preflight (`5a7fe19`) and at exit; no
+`attempt/*` branch created; the pre-existing
+`attempt/TH-15-step2-20260906T183305Z` untouched (§9 keeps it).
+
+**Item:** §9 On-deck item 1, the 18:00 review's ruling (3) — the C95.3
+mass-averaging operator applied to the **coil-driven** field, the one item the
+weekly's §10 assessment named between F-small and the Phase 5 exit. Executor:
+`implementer`, foreground, one chunk.
+
+**Built:** `tests/validation/test_birdcage_sar_mass_averaged.py` (592 lines) —
+`post.sar.mass_averaged_sar` at the imported `quadrature_degree` 16 on the four
+single-drive F-small solves at `PHANTOM_RESOLUTION_FINE`; 21 operator calls
+(the 4×4 of 10 g averages, four 1 g, one whole-phantom ball). No estimator, no
+projection, no mass solve — integrals of the primal `E` only, which is what the
+09-02 / 09-03 rulings put the SAR gate on.
+
+**Measured** (all `20260907T003548Z_MAT-4-step4.log:1930–1952`, re-read by this
+slot, not taken from the executor's report):
+- **(i)** whole-phantom ball (r = 0.0501 m, P1): ball and tagged integrals both
+  **5.587038273302e-08 W**, relative **1.576517e-14** against the 1e-10 bound;
+  `mass_kg` vs ρ·V_phantom **4.096723e-14**; vs the imported fine-rung record
+  **5.398570e-11** (`:1934–1937`).
+- **(ii) the gate** — four cyclic 10 g C4 pairs **0.3303 / 0.0756 / 0.0574 /
+  0.3132 %** against the imported, *unmoved* 5% band, ~15× headroom on the
+  worst (`:1943–1947`).
+- **(iii)** 120 499 / 2 746 cells at exact equality.
+- **Control** (sign asserted, size predicted — rule (e)): the mis-paired 180°
+  centre reads **86.0132 / 85.9249 / 85.9671 / 85.9582 %** against the ~90%
+  prediction, ceiling 100%.
+- **Printed, not gated:** 1 g pairs **6.8383 / 2.9297 / 0.4116 / 4.7159 %** →
+  pre-registered verdict **(b)**, outside 5% but inside the predicted 2–10%
+  pointwise class (a 6.2 mm ball on a 7.5 mm `h` is a ~10-cell integral).
+  Kernel masses 1.0940 / 0.1985 / 0.4766 / 0.6128 % (1 g) and 0.0611 / 0.0257 /
+  0.0874 / 0.2234 % (10 g) against the imported 0.1% budget as a *predicted*
+  comparison — 10 g inside on three of four centres, 1 g outside on all four:
+  exactly the `h/a` transfer the item declined to assume. Per-drive 10 g peaks
+  6.348 / 6.327 / 6.332 / 6.328e-07 W/kg, labelled not a compliance figure.
+  Ball radii 6.2035 / 13.3650 mm; containment 28.3650 mm < 30 mm asserted.
+
+**Harness logs / elapsed:** `20260907T003536Z_MAT-4-step4-smoke.log`
+(collect-only, 23 collected, Status 0, **4 s**, smoke);
+`20260907T003548Z_MAT-4-step4.log` (`23 passed`, Status 0, **132 s harness /
+129.71 s pytest**, `-n 4`, complex, `timeout -k 30 540` — commissioned heavy by
+ceiling, **measured standard**); `20260907T003812Z_MAT-4-step4-src-regression.log`
+(`6 passed`, Status 0, **53 s**, `-n 2`). Total compute **~189 s**. All three
+footered, header commit `5a7fe19` = the closer's parent, all inside the
+660 000 ms host window.
+
+**One `src/` change, disclosed under standing rule (c):**
+`src/fem_em_solver/post/sar.py::build_density_field` now accepts `0.0` in
+`density_map` (`default_rho` still strictly positive). The item's "ρ in the
+phantom, 0 elsewhere" was not constructible through the existing API, and ρ = 0
+outside tag 3 is what makes anchor (i) a statement about ρ·V_phantom rather
+than ρ·V_ball. Permissiveness only; the three pre-existing consumers pass no
+`density_map` and re-ran green in-slot (the regression log above).
+
+**One deviation from the item's letter, no bound touched:** the item said to
+import `QUADRATURE_DEGREE` "(16)" from `test_birdcage_sar_integral.py`, whose
+constant is in fact **4** (its partition measure). The 16 the item names is
+`test_mass_averaged_sar_standard_masses.QUADRATURE_DEGREE`, the `MAT-4` step-3
+measured value, and that is what is imported — value as specified, provenance
+corrected. The review may want to note this in the item's post-mortem.
+
+**Status moved:** `MAT-4` §7 row 🟡 → ✅ with the scope stated verbatim
+("mass-averaged 10 g SAR on the coil-driven field: C4 identity at fixed `h` on
+F-small at 10 MHz; the 1 g column a printed record"); §2 gains the matching
+bullet **and** the open-claim paragraph is rewritten so the absolute /
+compliance SAR claim stays explicitly open; §6 Phase 3 row updated; §9 item 1
+marked DONE — all in the same commit. `known-issues.md` unchanged: nothing red
+was met and nothing was fixed.
+
+**Process:** no `run_in_background` anywhere, no turn ended with a command in
+flight, no docker-socket denial, no allowlist denial, no compute-safety event,
+no container wedge. Container Up 3 days at preflight.
+
+**Owed follow-ups for the review:** (a) §5.4 — a `MAT-4` capability gate owes an
+example the day it lands, and none was opened; (b) the 1 g column's route to a
+gate is `h`, not the operator (verdict (b)), which is a convergence step nobody
+has scoped; (c) the `QUADRATURE_DEGREE` provenance slip above.
+
+**Next attempt, one line:** §9 items 2–5 are open and independent — the next
+slot takes item 2 (`TH-15` step 2b, the Ampère-loop port current), which
+unblocks the parked step-2 module.
