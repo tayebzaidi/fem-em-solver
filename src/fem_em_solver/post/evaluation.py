@@ -36,6 +36,24 @@ def evaluate_vector_field_parallel(function, points: np.ndarray, comm: MPI.Intra
         raise ValueError(f"points must have shape (N, 3), got {points.shape}")
 
     n_points = points.shape[0]
+
+    # OPS-40: this routine is collective — rank 0's output buffer is sized by
+    # ``n_points`` and every rank's hits are scattered into it by index, so a
+    # caller that hands each rank its own *local* points corrupts the gather
+    # (it died with ``IndexError: index 36378 is out of bounds for axis 0 with
+    # size 36378`` at -n 2, EX-52, 20260907T033551Z_EX-52.log:400) and passes
+    # silently at -n 1. Refuse it on EVERY rank — a rank-0-only raise ahead of
+    # the gather below would hang the other ranks.
+    counts = comm.allgather(n_points)
+    if len(set(counts)) > 1:
+        per_rank = ", ".join(f"rank {r}: {c}" for r, c in enumerate(counts))
+        raise ValueError(
+            "evaluate_vector_field_parallel received a different number of "
+            f"points on different ranks ({per_rank}). This routine is "
+            "collective: the point list must be identical on every rank — "
+            "allgather your points first."
+        )
+
     value_shape = function.function_space.element.value_shape
     value_size = int(np.prod(value_shape)) if len(value_shape) > 0 else 1
 
