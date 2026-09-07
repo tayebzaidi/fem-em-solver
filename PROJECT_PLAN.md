@@ -3498,6 +3498,75 @@ review confirms that reading before step 1 runs.
 >   retired in this commit; `attempt/TH-15-step2b-20260907T021500Z` and
 >   `attempt/TH-15-step2c-20260907T094500Z` deleted. `TH-15` stays 🟡 (step
 >   2 proper and step 3 open); no §2 change; no band moved.
+> * **Step 2 proper (the parked PEC-hole 2×2 re-run on the displacement
+>   route — §9 item 4 of the 2026-09-07 10:30 review).**
+>   **🚫 Attempted 2026-09-07 (16:30 implementer slot): the hole port
+>   *solves*, the lossless identity is exact, and two asserted anchors miss
+>   on a mechanism the item did not pre-register — stopped under standing
+>   rule (e), nothing loosened.** Parked on
+>   `attempt/TH-15-step2proper-20260907T213739Z` (`144feff`) — `4dedf89`'s
+>   `tests/validation/test_two_torus_pec_hole_ports.py` path-checked-out
+>   with `current_route="gap_displacement"` in `_specs()` for both the hole
+>   and the solid control, plus the item's printed open-circuit reading —
+>   and its two logs. **No `src/` change was needed or made:** the step-2d
+>   displacement branch already guards its conduction diagnostic on
+>   `_tag_volume(...) > 0` (`ports/gap_voltage.py:365–368`), so the 13:30
+>   slot's `non-positive conductor length` never fires on a hole. Windows:
+>   a 4 s collect-only smoke (`20260907T213256Z_TH-15.log`, 5 tests), then
+>   one `-n 4` complex window with `tests/environment` first, `-s -v
+>   --tb=short`, `timeout -k 30 500` — **2 failed / 14 passed in 215.30 s**,
+>   elapsed **217 s**, `Status: 1` (`20260907T213308Z_TH-15.log:1904,
+>   1907–1908`); heavy by ceiling, standard by measurement.
+>   **What passed, asserted.** (v) cells **161 461 / 161 461 = 1.000000** at
+>   the imported `CELL_COUNT_BAND`, 24.22 s to mesh (`:590`, `:616`) — step
+>   2a's record to the integer. (i) **the lossless identity, exactly**:
+>   `max_ij |Re Z_ij|/|Z_ij|` = **0.000000e+00** against the pre-stated
+>   `LOSSLESS_BAND` 1e-9 (`:624–627`); `Z` is purely imaginary to the bit,
+>   `[[6.51916156j, 1.05007456j], [1.02878956j, 6.42566429j]]` Ω. (ii)
+>   reciprocity `‖S − Sᵀ‖/‖S‖` = **4.286714e-04** inside the imported
+>   `S_SYMMETRY_BAND` 1e-3 (`:632`). The control: the σ = 800 S/m solid
+>   through the identical sweep reads `Re Z₁₁` = **+3.771673e+00 Ω > 0**
+>   (asserted), `|Re Z₁₁|/|Z₁₁|` = **0.469192** against the *predicted*
+>   order 0.5, printed only (`:1572`). **What missed, asserted, not
+>   loosened.** (iii) unitarity `‖SᴴS − I‖_F` = **7.538037e-03** against
+>   `LOSSLESS_BAND` 1e-9 and `σ_max` = **1.002865051123** against
+>   `1 + PASSIVITY_SIGMA_TOLERANCE` (`:633–634`); (iv) the mutual
+>   `Im Z₂₁` = **+1.028789564e+00 Ω** against `ωM₁₂` = 1.241755 Ω, ratio
+>   **0.828497 (−17.15%)** outside the imported `MUTUAL_TOLERANCE` 10%
+>   (`:636`), beside the solid gap route's 0.909618 and the conduction
+>   route's 0.939822. **One mechanism, and it is not dissipation.** `Re Z`
+>   is identically zero, so nothing dissipates; what fails is that `Z` is
+>   not **symmetric** — `Z₁₂ = 1.05007456j` against `Z₂₁ = 1.02878956j`,
+>   **2.07%** apart. For purely imaginary `Z`, `S = (jX − Z₀)(jX + Z₀)⁻¹`
+>   is unitary exactly iff `X = Xᵀ`, and 2% of asymmetry lands 7.5e-3 of
+>   non-unitarity — the reading. (ii) passes on the *same* matrix only
+>   because the S off-diagonals (~0.02) are diluted by the diagonal (~0.97)
+>   in `‖S‖`, so S-reciprocity is ~50× weaker than Z-reciprocity on this
+>   network; the asymmetry is visible upstream of the reduction as
+>   `V_undriven` = 1.0224 V (drive P1) vs 1.0437 V (drive P2) on a nominally
+>   mirror-symmetric fixture (`:593`, `:595`). **The item's pre-registered
+>   negative result was `Re Z` outside the band with the mutual inside; the
+>   measured combination is the opposite one and carries no label, so this
+>   slot stopped and reported (standing rule (e)) rather than deciding.**
+>   **New measurement (printed, not gated — the item's ask):** the
+>   open-circuit reading on the hole, `|I_disp,undriven| / I_drive` =
+>   **1.463859e-06** on *both* drives (`:606–615`), beside step 2d's solid
+>   record 1.541112e-06 — the first reading of that quantity on a hole
+>   mesh, where the gap's end caps are the cavity wall; there is no
+>   conduction volume average to separate against (`I_cond` diagnostic
+>   `None`, as the route's guard intends). Rule (c) is vacuous — no `src/`
+>   diff. `main` untouched, no band moved, `TH-15` stays 🟡.
+>   **Unblock condition (a review's, not an implementer's):** whether the
+>   2.07% `Z` asymmetry is (a) the mesh's — the two tori are not mirror
+>   images after distribution, testable by re-running at `-n 2` and by the
+>   solid's own `Z₁₂/Z₂₁` on the same route (step 2d printed `S`
+>   reciprocity 5.2613e-04 but never `Z` symmetry), or (b) the
+>   displacement route's, the two gap tags reading different effective
+>   `A_gap/g`; and separately whether the −17.15% mutual is the PEC cavity
+>   wall genuinely excluding flux the filament `ωM₁₂` closed form counts
+>   (in which case the comparand, not the band, is what must change) or the
+>   same asymmetry seen once. **Neither `LOSSLESS_BAND` nor
+>   `MUTUAL_TOLERANCE` is widened, and (i)/(ii) are already green.**
 > * **Step 3a (the birdcage hole as a `MeshGenerator` route — scoped
 >   2026-09-06 10:30 review, §9 item 4; step 2a's pattern on
 >   `birdcage_port_domain`).** One additive `as_hole=False` keyword: the
@@ -7828,8 +7897,39 @@ never widened silently and never on a quantity that was already green.
    not the filament's — known-issues, park, stop. `CLOSED_FORM_BAND` is
    never widened.
 
-4. **`TH-15` step 2 proper — the parked PEC-hole 2×2 module re-run on the
-   displacement route** (heavy by ceiling, `-n 4`, complex build; `main`;
+4. **🚫 BLOCKED 2026-09-07 (16:30 implementer slot) — the hole port solves
+   and the lossless identity is *exact*, but two asserted anchors miss on
+   an unlabelled mechanism, so rule (e)'s stop was taken.** Parked on
+   `attempt/TH-15-step2proper-20260907T213739Z` (`144feff`); no `src/`
+   change was needed (the displacement branch already guards its
+   conduction diagnostic on `_tag_volume > 0`). `-n 4`, complex,
+   `tests/environment` first, **2 failed / 14 passed in 215.30 s**,
+   elapsed 217 s (`20260907T213308Z_TH-15.log:1904, 1907`). Green,
+   asserted: cells **161 461** at ratio 1.000000 (`:616`); **`max_ij
+   |Re Z_ij|/|Z_ij| = 0.000000e+00`** against `LOSSLESS_BAND` 1e-9
+   (`:627`) — `Z` purely imaginary to the bit; `‖S − Sᵀ‖/‖S‖`
+   **4.286714e-04** inside the imported 1e-3 (`:632`); the σ = 800 solid
+   control `Re Z₁₁ = +3.771673e+00 Ω > 0`, ratio 0.469192 against the
+   predicted 0.5 (`:1572`). Red, asserted, not loosened: unitarity
+   **7.538037e-03** and `σ_max` **1.002865051123** (`:633–634`); the
+   mutual **0.828497 (−17.15%)** against the imported 10% (`:636`). One
+   mechanism: `Z` is not symmetric — `Z₁₂ = 1.05007456j` vs
+   `Z₂₁ = 1.02878956j`, **2.07%** apart, which for purely imaginary `Z` is
+   exactly what breaks unitarity at 7.5e-3. **The item pre-registered the
+   opposite combination** (`Re Z` outside with the mutual inside), so the
+   measured one is unlabelled and the slot stopped. New printed reading:
+   `|I_disp,undriven|/I_drive` = **1.463859e-06** on both drives
+   (`:606–615`), beside step 2d's solid 1.541112e-06 — the first on a hole
+   mesh. **Unblock condition (a review's):** rule on whether the 2.07% `Z`
+   asymmetry is the mesh's (re-run at `-n 2`; read the *solid*'s own
+   `Z₁₂/Z₂₁` on this route, which step 2d never printed) or the
+   displacement route's (the two gap tags' effective `A_gap/g`), and
+   whether the −17.15% mutual is the PEC cavity wall genuinely excluding
+   flux the filament `ωM₁₂` comparand counts. Full record in the §7
+   `TH-15` step-2-proper bullet; known-issues entry filed. Neither band is
+   widened. Original item follows.
+   ~~**`TH-15` step 2 proper — the parked PEC-hole 2×2 module re-run on the
+   displacement route**~~ (heavy by ceiling, `-n 4`, complex build; `main`;
    **serial on item 1 — if item 1 did not land on `main`, skip this item
    unmarked and take the next**). Executor: implementer. Path-checkout
    `4dedf89`'s `tests/validation/test_two_torus_pec_hole_ports.py` (the
