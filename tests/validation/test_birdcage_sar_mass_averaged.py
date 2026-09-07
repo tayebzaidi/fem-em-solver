@@ -206,8 +206,7 @@ def _one_gram_verdict(pairs, band):
     )
 
 
-@pytest.fixture(scope="module")
-def mass_averaged():
+def _build_mass_averaged():
     """One finer-phantom mesh, four drives, and the C95.3 operator on each.
 
     Four curl-curl solves and no mass solve, no projection and no estimator:
@@ -215,6 +214,14 @@ def mass_averaged():
     is called 21 times — the 4x4 of 10 g averages (four centres x four drives),
     the four 1 g averages at each drive's own centre, and the one whole-phantom
     ball of anchor (i).
+
+    Module-level by the `EX-53` rule-(a) licence (2026-09-07): the body is
+    unchanged from the fixture it was lifted from, and the fixture below is now
+    a one-line wrapper, so every existing assertion still runs against exactly
+    this construction.  The additive part is the four extra return keys
+    (``mesh``, ``cell_tags``, ``rho_field``, ``solves``) an example caller needs
+    to render the same fixture in ParaView — nothing existing was removed or
+    renamed.
     """
     sweep = build_four_port_sweep(phantom_resolution=PHANTOM_RESOLUTION_FINE)
     msh = sweep["mesh"]
@@ -441,7 +448,20 @@ def mass_averaged():
         "peaks": peaks,
         "verdict": verdict,
         "verdict_text": verdict_text,
+        # Additive (EX-53, rule (a)): the solved fields and mesh/tags a caller
+        # needs to render this fixture, exposed nowhere else. Nothing above
+        # this comment changed.
+        "mesh": msh,
+        "cell_tags": cell_tags,
+        "rho_field": rho_field,
+        "solves": solves,
     }
+
+
+@pytest.fixture(scope="module")
+def mass_averaged():
+    """Pytest entry point — see :func:`_build_mass_averaged` for the body."""
+    return _build_mass_averaged()
 
 
 @complex_only

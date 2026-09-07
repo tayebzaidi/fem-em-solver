@@ -16523,3 +16523,78 @@ Wednesday weekly's call.
 with `birdcage_filament_field` in hand, provided its anchor includes the end
 rings per correction (1); items 1 and 6 stay blocked on the review's ruling
 about assembling the 2×2 from driven-port gap currents alone.
+
+## 2026-09-07T14:15Z (2026-09-07 09:00 CDT slot) — `EX-53` — **complete**
+
+**Item.** §9 On deck item 4, the first item not marked done or blocked: items 1
+and 6 are 🚫 (the `TH-15` step-2c current-definition ruling the 04:30 slot
+parked), items 2 and 3 landed in the 06:00 and 07:30 slots. Item 4 is an `EX-*`
+chunk, so it went to `example-runner`, spawned **foreground** with the
+no-background rule stated verbatim in the spawn prompt; the runner ended no
+turn with a window in flight and needed no recovery (the 22:30 failure did not
+repeat). Preflight clean on `f700f5e`, container Up 3 days.
+
+**Outcome.** `examples/mri/03_birdcage_mass_averaged_sar.py` + same-stem guide
+(`mri:3`), green at `-n 4` in **91 s** harness-wall / 87.9 s in-script,
+Exit 0 — `20260907T140658Z_EX-53.log`. Predicted ≈ 150 s from the gate's 132 s;
+the example is cheaper because it runs the four solves once and reuses them.
+Standard tier by host-runner window, well inside it.
+
+**Measured, all asserted on constants imported from
+`tests/validation/test_birdcage_sar_mass_averaged.py` and never restated.**
+Gate reproduced through the example path at 120 499 cells / 2 746 tag-3, four
+solves + 21 operator calls in 86.4 s. Anchor (i): whole-phantom ball
+**5.587038273e-08 W** vs the tagged `½∫σ|E|²` at **1.688e-14** relative against
+`EXACT_IDENTITY_RTOL` = 1e-10, and vs step 3f's own record at 5.403e-11 against
+1e-03; containment `r0 + a_10g = 28.3650 mm < 30.0 mm` asserted. Anchor (ii):
+the four cyclic 10 g C4 pairs **0.3303 / 0.0756 / 0.0574 / 0.3132 %** against
+the imported unmoved 5.0 % band — the `MAT-4` step 4 records to the printed
+digits, printed beside and not asserted as records.
+
+**Negative control, rule (e) labels honoured.** The mis-paired 180° centre on
+all four drives: **86.0132 / 85.9249 / 85.9671 / 85.9582 %** — sign **asserted**
+above the band and below the 100 % ceiling (backed by the same comparison on the
+same fixture, `20260907T003548Z_MAT-4-step4.log:1943–1946`), size **printed as
+predicted** (~90 %). Printed, not gated: the 1 g column (6.8383 / 2.9297 /
+0.4116 / 4.7159 %, verdict (b) unchanged from the gate), the kernel-mass errors,
+and the four per-drive 10 g peaks ~6.33e-07 W/kg, each labelled "not a C95.3
+compliance figure" in both log and guide.
+
+**Rule (a) diff, disclosed.** The module-scoped fixture body was lifted verbatim
+to `_build_mass_averaged()` and the fixture reduced to a one-line wrapper, plus
+four **additive** return keys (`mesh`, `cell_tags`, `rho_field`, `solves`) the
+example needs to render the fixture. 22 insertions / 2 deletions, nothing
+removed or renamed; re-run green in the same slot — **23 passed / 113.87 s**,
+`20260907T140233Z_MAT-4-step4-rerun.log`. No band moved, no `src/` change.
+
+**Disclosed deviation from the §7 entry.** The pointwise `SAR` field written to
+the XDMF weights by the phantom's physical `PHANTOM_RHO_KG_PER_M3`, not the
+gate's zero-elsewhere `rho_field` — that field exists only to exclude
+non-phantom cells from a ball's *mass denominator* and would divide by zero used
+pointwise. This is exactly what the gate's own `tagged` anchor does
+(`mean_sar(..., rho=PHANTOM_RHO_KG_PER_M3)`), so it is not a new modelling
+choice; documented in the script docstring and guide §3 step 6.
+
+**Census, both windows through the harness, before any file was written and
+after.** `dead=0 guide=0 stale=81 stale_severity=report exit=2` on both, runnable
+**46 → 47**, `guide=0` on the new pair
+(`20260907T140219Z_EX-53-census-pre.log`, `20260907T140926Z_EX-53-census-post.log`).
+**Note for the review:** the pre-census already read `stale=81` where the 03:00
+review recorded 79 at `5d95cf9` — the two new names are age-based
+`time_harmonic` artifacts (169.5 h old against the 48 h limit), present before
+this chunk touched anything and not attributable to it. The `EX-30`-class
+refresh the weekly already owns is the fix; severity stays `report`.
+
+**Logs.** `20260907T140219Z_EX-53-census-pre.log`,
+`20260907T140233Z_MAT-4-step4-rerun.log`, `20260907T140658Z_EX-53.log`,
+`20260907T140926Z_EX-53-census-post.log`. All four foreground, all footered.
+No allowlist denial, no docker-socket denial, no wedge. The emit-then-harness
+path (`--dry-run` first, then `run_and_log.sh` on the emitted string) worked
+without reconstruction.
+
+**Next.** With items 1, 4 and 6 disposed, §9's remaining ordinary item is 5
+(`OPS-40`, the `evaluate_vector_field_parallel` cross-rank point-list guard) —
+independent, and the trap this example ran on top of; item 7 (`ANS-4` step 2)
+stays skipped while `fem-em-solver-xl` is not Up. Hypothesis for the review: the
+`stale` census will keep drifting upward at ~2 names/interval until the
+artifact refresh lands, so it is worth scheduling ahead of the next weekly.
