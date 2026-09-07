@@ -6320,6 +6320,49 @@ therefore one small `post/` addition plus a gate module. Degree 1, per the
 > the FEM's leg current is not the filament's (non-uniform along the
 > conductor) — known-issues, park, stop. `CLOSED_FORM_BAND` is never
 > widened.
+>
+> **Step 4 executed 2026-09-07 15:00 slot — the third pre-registered exit
+> fired, and the run's own control names the mechanism more precisely than
+> the exit did.** `11 failed, 16 passed` / Status 1 / **93 s** at `-n 4`
+> complex (`20260907T200630Z_WF-6.log`, wrapped `timeout -k 30 570`,
+> collect-only smoke first at `…200619Z`, 16 items, 5 s). The eleven
+> centre-plane points miss the unmoved `CLOSED_FORM_BAND = 5.0e-2` at
+> **26.6201% (centre) / 26.2742 / 26.4648 / 24.5583 / 21.6815 / 19.4760
+> (+x̂, r = 0.1R…0.5R) / 26.9033 / 27.3560 / 24.9922 / 21.2489 / 16.7641
+> (+ŷ)** — FEM centre **8.097478100e-08 T** against the closed form's
+> **1.103500413e-07 T** (`:1924–1934, :2499–2520`). **The band was not
+> widened and nothing landed on `main`.** *Exit 1 (a convention error) is
+> excluded by the run itself:* the fixture's leg azimuths are
+> **360.0000 / 90.0000 / 180.0000 / 270.0000 deg**, the closed form's
+> `2πn/N` lattice up to one common offset whose spread over the four legs
+> is **0.000e+00 deg** (`:1919–1920`); every sheet's `drive_direction` is
+> asserted `(0, 0, 1)`, the closed form's `+ẑ` leg convention; and control
+> (β), the mode-2 drive, is **green** at **7.743627e-03** of the mode-1
+> centre against 5.00e-02 (`:1938`) — the FEM reproduces step 4a's exact
+> centre zero, so it is tracking the closed form's *structure*. *What the
+> miss is:* control (α) reads the legs-only closed form at
+> **7.356669419e-08 T**, so the filament's Kirchhoff rings add exactly
+> **50%** at the centre (step 4a's `R²/ρ² = 0.5`) while the FEM's coil adds
+> only **10.07%** — **FEM/legs-only 1.1007 against the filament's 1.500**,
+> the FEM sitting far closer to an *open* coil than to a closed one. The
+> four superposed leg currents are equal to four digits
+> (1.820730e-02 / 1.820756e-02 / 1.820518e-02 / 1.820726e-02 A, `:1921`),
+> so the terminal leg current is not the discrepancy; the **ring** current
+> the FEM's coil carries is ~5× below `cumsum(I) − mean(cumsum(I))` on
+> those same currents, and that is the next measurement. Rule (c) held: the
+> additive `phantom_material` keyword is a no-op on the gate module,
+> `5 passed / 44.01 s` at `-n 4`, Status 0, 46 s
+> (`20260907T200858Z_WF-6.log:84, 96–97`). **No absolute `|B₁⁺|` claim
+> exists, §2's B₁⁺ row does not gain the authorized clause, and `WF-6`
+> stays 🟡** — the chunk's existing gates are symmetry identities, every
+> one of them invariant to a uniform 27% scale, which is why this
+> comparison was scoped in the first place. Parked on
+> `attempt/WF-6-step4-20260907T205600Z` (`499c527`), known-issues entry
+> filed, §9 item 3 marked 🚫 in the same commit (rule (d)). **Sizing
+> correction:** the item's "four unloaded + four loaded solves" missed that
+> `build_four_port_sweep` runs its own four-drive S-parameter sweep before
+> the module's four field solves, so each rung costs **eight**; the loaded
+> print sits behind `WF6_STEP4_LOADED` (default off) and was not solved.
 
 ### EX — Examples (§5.4 ramp)
 
@@ -7698,7 +7741,28 @@ never widened silently and never on a quantity that was already green.
    found — known-issues with the module name, do not weaken the guard,
    stop.
 
-3. **`WF-6` step 4 — the FEM `|B₁⁺|` of the unloaded F-small birdcage
+3. **🚫 BLOCKED 2026-09-07 (15:00 implementer slot) — the pre-registered
+   negative result fired, exit 3 ("the centre missing with conventions
+   verified").** The eleven asserts miss at **16.7641 … 27.3560%** against
+   the unmoved `CLOSED_FORM_BAND = 5.0e-2`, centre **26.6201%**
+   (`20260907T200630Z_WF-6.log:1924, 2499`); all three conventions verified
+   in the same run (azimuths 360 / 90 / 180 / 270 deg, one common offset
+   with **0.000e+00 deg** spread; `drive_direction` asserted `(0,0,1)`;
+   control (β) green at **7.743627e-03** ≤ 5e-2); the discriminator is
+   control (α) — the FEM's end rings add **10.07%** of the legs' centre
+   field where the filament's Kirchhoff rings add exactly **50%**
+   (FEM/legs-only **1.1007** vs **1.500**). Parked on
+   `attempt/WF-6-step4-20260907T205600Z` (`499c527`); known-issues entry
+   added; rule (c)'s gate re-run green on the additive keyword (5 passed /
+   44.01 s, `20260907T200858Z_WF-6.log:84`). **Unblock condition:** a review
+   scoping the ring-current measurement named in the known-issues entry —
+   the FEM's actual end-ring current against `cumsum(I) − mean(cumsum(I))`
+   on the same measured leg currents. **Sizing correction for whoever takes
+   it:** the item's "four unloaded + four loaded solves" missed that
+   `build_four_port_sweep` runs its own four-drive S-parameter sweep before
+   the module's four field solves, so each rung costs **eight**; the
+   unloaded-only window measured 93 s at `-n 4`. Original item follows.
+   **`WF-6` step 4 — the FEM `|B₁⁺|` of the unloaded F-small birdcage
    against `birdcage_filament_field` at the centre plane, legs + rings,
    the leg currents read from the FEM** (heavy by ceiling, `-n 4`, complex
    build; `main`; independent; scoped by this review, ruling (2) — full
