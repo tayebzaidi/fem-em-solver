@@ -1,0 +1,64 @@
+# Test Run
+- Chunk: WF-6
+- Commit: 7a82688971314f902791eb76ec5ed656f1857d1d
+- Time (UTC): 2026-09-07 12:39:26
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 120 mpiexec -n 1 python3 -m pytest tests/unit/test_birdcage_filament_field.py -v --tb=short -s'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Sep  4 23:31 .
+drwxr-xr-x 16 taz5297 taz5297 4096 Sep  7 07:37 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  721 Sep  3 13:49 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 2801 Sep  4 23:31 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 120 mpiexec -n 1 python3 -m pytest tests/unit/test_birdcage_filament_field.py -v --tb=short -s'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... collected 7 items
+
+tests/unit/test_birdcage_filament_field.py::test_infinite_line_limit_reproduces_the_straight_wire_closed_form (i) infinite-line limit: rel dev 9.999875e-07 (band 1.0e-05)
+PASSED
+tests/unit/test_birdcage_filament_field.py::test_ring_limit_reproduces_the_circular_loop_on_axis_closed_form (ii) ring limit: axial rel dev 2.830785e-16, on-axis transverse 2.653861e-17 (band 1.0e-10)
+PASSED
+tests/unit/test_birdcage_filament_field.py::test_mode_one_field_is_solenoidal (iii) mode-1 div B: max 4.510963e-10 |B|/R over 20 interior points (band 1.0e-08)
+PASSED
+tests/unit/test_birdcage_filament_field.py::test_mode_one_pattern_is_c4_covariant (iv) C4 covariance: rel dev 2.431697e-16 (band 1.0e-12)
+PASSED
+tests/unit/test_birdcage_filament_field.py::test_finite_length_factor_and_the_end_ring_contribution_at_the_centre (v) finite-length factor: 0.707106781 against closed form 0.707106781 (band 1.0e-06)
+(v) end-ring transverse at the centre: -2.020305089e-06 T against closed form -2.020305089e-06 T, rel dev 4.192599e-16; ring/leg = 0.500000000 (R^2/rho^2 = 0.500000000)
+PASSED
+tests/unit/test_birdcage_filament_field.py::test_mode_two_drive_has_no_transverse_field_at_the_centre (vi) mode-2 transverse at the centre: 1.048150e-16 of the mode-1 centre field (band 1.0e-12); mode-1 |B| = 6.060915e-06 T
+PASSED
+tests/unit/test_birdcage_filament_field.py::test_open_circuit_negative_control control: Ampere deviation closed 1.887379e-15, open 1.761971e-02 (9.336e+12x), computed ceiling 1.941932e-02
+control (printed, NOT asserted): div B closed 4.510963e-10, open 7.300842e-10 |B|/R -- both machine level, which is the point: div B is blind to circuit closure
+PASSED
+
+============================== 7 passed in 1.90s ===============================
+
+## Exit
+- Status: 0
+- Elapsed (s): 4
+- Filtered lines (gmsh optimisation chatter): 0

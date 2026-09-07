@@ -3,6 +3,8 @@
 import numpy as np
 from typing import Union, Callable
 
+from .constants import MU_0
+
 
 class AnalyticalSolutions:
     """Collection of analytical solutions for EM validation."""
@@ -384,6 +386,210 @@ class AnalyticalSolutions:
         )
         
         return B1 + B2
+
+
+_ARC_GAUSS_ORDER = 64
+_ARC_GAUSS_NODES, _ARC_GAUSS_WEIGHTS = np.polynomial.legendre.leggauss(
+    _ARC_GAUSS_ORDER
+)
+
+
+def _finite_segment_kernel(
+    points: np.ndarray, start: np.ndarray, end: np.ndarray
+) -> np.ndarray:
+    """B per unit current of one straight filament from ``start`` to ``end``.
+
+    The closed form is the standard finite-segment Biot--Savart result written
+    without any trigonometry (Jin 3e §2.2 in vector form)::
+
+        B = (mu_0 I / 4 pi) * (|r1| + |r2|)
+            / ( |r1||r2| (|r1||r2| + r1.r2) ) * (r1 x r2)
+
+    with ``r1 = r - start`` and ``r2 = r - end``.  The denominator vanishes
+    only on the segment itself (where ``r1 x r2 = 0`` *and* the scalar factor
+    diverges); on the *extension* of the segment it stays positive and the
+    cross product is zero, so those points return an exact zero.
+    """
+    r1 = points - start
+    r2 = points - end
+    n1 = np.linalg.norm(r1, axis=1)
+    n2 = np.linalg.norm(r2, axis=1)
+    denom = n1 * n2 * (n1 * n2 + np.einsum("ij,ij->i", r1, r2))
+    if np.any(denom <= 0.0):
+        raise ValueError(
+            "birdcage_filament_field: an evaluation point lies on a leg "
+            "filament (the Biot-Savart integrand is singular there)"
+        )
+    scale = (MU_0 / (4.0 * np.pi)) * (n1 + n2) / denom
+    return scale[:, None] * np.cross(r1, r2)
+
+
+def _arc_kernel(
+    points: np.ndarray,
+    radius: float,
+    z_plane: float,
+    phi_start: float,
+    phi_end: float,
+) -> np.ndarray:
+    """B per unit current of one circular arc, by Gauss-Legendre quadrature.
+
+    ``_ARC_GAUSS_ORDER`` nodes per arc: the integrand is analytic on any point
+    set that keeps a finite distance from the ring, so the rule is spectrally
+    accurate and the residual is at machine level for the fixtures used here.
+    """
+    half = 0.5 * (phi_end - phi_start)
+    mid = 0.5 * (phi_end + phi_start)
+    phi = mid + half * _ARC_GAUSS_NODES
+    weights = half * _ARC_GAUSS_WEIGHTS
+
+    source = np.stack(
+        [radius * np.cos(phi), radius * np.sin(phi), np.full_like(phi, z_plane)],
+        axis=1,
+    )
+    # dl/dphi = radius * phi_hat
+    tangent = radius * np.stack(
+        [-np.sin(phi), np.cos(phi), np.zeros_like(phi)], axis=1
+    )
+
+    delta = points[:, None, :] - source[None, :, :]
+    dist = np.linalg.norm(delta, axis=2)
+    if np.any(dist <= 0.0):
+        raise ValueError(
+            "birdcage_filament_field: an evaluation point lies on a ring arc "
+            "(the Biot-Savart integrand is singular there)"
+        )
+    integrand = np.cross(np.broadcast_to(tangent, delta.shape), delta)
+    integrand /= (dist**3)[:, :, None]
+    return (MU_0 / (4.0 * np.pi)) * np.einsum("nqi,q->ni", integrand, weights)
+
+
+def birdcage_filament_field(
+    points: np.ndarray,
+    *,
+    ring_radius: float,
+    coil_length: float,
+    leg_currents,
+    ring_currents=None,
+) -> np.ndarray:
+    """Biot-Savart B of an ideal filament birdcage: N legs plus two end rings.
+
+    `WF-6` step 4a.  This is the closed-form anchor the coil-driven ``|B1+|``
+    work needs: pure numpy, no mesh, no FEM (keep it that way -- importing
+    dolfinx here would move the unit tier off the smoke tier).
+
+    Geometry.  ``N = len(leg_currents)`` straight filaments of length
+    ``coil_length`` sit at radius ``ring_radius`` and azimuths
+    ``theta_n = 2 pi n / N``, each running from ``z = -coil_length/2`` to
+    ``z = +coil_length/2``; ``leg_currents[n]`` is that leg's current in the
+    **+z** direction.  Two end rings of the same radius close the circuit at
+    ``z = +-coil_length/2``, each split into ``N`` arcs, arc ``n`` running from
+    ``theta_n`` to ``theta_{n+1}`` in the **+phi** direction.
+
+    Ring currents.  With ``ring_currents=None`` they come from Kirchhoff's
+    current law at every leg-ring node.  At top node ``n`` the leg delivers
+    ``I_n`` and the arcs carry it away::
+
+        I_n + J_{n-1} - J_n = 0   =>   J_n = J_{n-1} + I_n
+
+    which closes around the ring only if ``sum(I_n) = 0`` (raised otherwise),
+    and then fixes ``J`` up to one constant.  The unique zero-mean solution is
+    ``J = cumsum(I) - mean(cumsum(I))``.  The bottom ring's node equation is
+    the same with the leg current leaving instead of arriving, so its zero-mean
+    solution is exactly ``-J``: the two rings are opposite.
+
+    Passing ``ring_currents`` explicitly overrides the Kirchhoff solve (and
+    with it the zero-sum requirement, since the caller is then no longer
+    claiming a closed circuit): shape ``(N,)`` gives the top-ring arc currents
+    with the bottom ring at ``-``that; shape ``(2, N)`` gives top and bottom
+    independently.  ``ring_currents=np.zeros(N)`` is the open-circuit negative
+    control -- legs with no return path.
+
+    Parameters
+    ----------
+    points : np.ndarray
+        ``(n, 3)`` evaluation points [m].
+    ring_radius : float
+        Leg / ring radius ``R`` [m].
+    coil_length : float
+        Leg length ``L`` [m]; the rings sit at ``z = +-L/2``.
+    leg_currents : array_like
+        ``(N,)`` leg currents [A], +z positive.  Complex is allowed (a phased
+        drive); the returned field is then complex.
+    ring_currents : array_like, optional
+        ``(N,)`` or ``(2, N)`` arc currents [A], +phi positive.  Default
+        ``None`` solves Kirchhoff as above.
+
+    Returns
+    -------
+    np.ndarray
+        ``(n, 3)`` magnetic flux density [T], complex if any current is.
+    """
+    points = np.asarray(points, dtype=float)
+    if points.ndim != 2 or points.shape[1] != 3:
+        raise ValueError("points must have shape (n, 3)")
+    if ring_radius <= 0.0:
+        raise ValueError("ring_radius must be > 0")
+    if coil_length <= 0.0:
+        raise ValueError("coil_length must be > 0")
+
+    legs = np.asarray(leg_currents)
+    if legs.ndim != 1 or legs.size == 0:
+        raise ValueError("leg_currents must be a non-empty 1-D array")
+    n_legs = legs.size
+
+    if ring_currents is None:
+        scale = np.max(np.abs(legs))
+        residual = np.abs(np.sum(legs))
+        if scale > 0.0 and residual > 1e-12 * scale:
+            raise ValueError(
+                "leg_currents must sum to zero for the ring currents to close "
+                f"around the ring (sum = {np.sum(legs)!r}); pass ring_currents "
+                "explicitly to model an open circuit"
+            )
+        cumulative = np.cumsum(legs)
+        top = cumulative - np.mean(cumulative)
+        bottom = -top
+    else:
+        rings = np.asarray(ring_currents)
+        if rings.shape == (n_legs,):
+            top = rings
+            bottom = -rings
+        elif rings.shape == (2, n_legs):
+            top, bottom = rings[0], rings[1]
+        else:
+            raise ValueError(
+                "ring_currents must have shape (N,) or (2, N) with "
+                f"N = {n_legs}; got {rings.shape}"
+            )
+
+    dtype = np.result_type(float, legs.dtype, np.asarray(top).dtype,
+                           np.asarray(bottom).dtype)
+    field = np.zeros((points.shape[0], 3), dtype=dtype)
+
+    theta = 2.0 * np.pi * np.arange(n_legs) / n_legs
+    half_length = 0.5 * coil_length
+
+    for n in range(n_legs):
+        if legs[n] == 0:
+            continue
+        foot = np.array(
+            [ring_radius * np.cos(theta[n]), ring_radius * np.sin(theta[n]),
+             -half_length]
+        )
+        head = foot + np.array([0.0, 0.0, coil_length])
+        field += legs[n] * _finite_segment_kernel(points, foot, head)
+
+    for n in range(n_legs):
+        phi_start = theta[n]
+        phi_end = theta[n] + 2.0 * np.pi / n_legs
+        for z_plane, current in ((half_length, top[n]), (-half_length, bottom[n])):
+            if current == 0:
+                continue
+            field += current * _arc_kernel(
+                points, ring_radius, z_plane, phi_start, phi_end
+            )
+
+    return field
 
 
 def complex_permittivity(
