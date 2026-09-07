@@ -2414,6 +2414,7 @@ Independent of the §2.1 physics defect; meshes are meshes.
 | `GEO-23` | The 0.11 "Invalid boundary mesh (overlapping facets)" family: one owner for the three `OPS-26` census reds (coil+phantom generator, `birdcage_port_domain` partition test, and the **rank-dependent** `test_boundary_condition_selection.py` deadlock) plus the dead `test_cylindrical_domain.py` module — classify each as geometry-deterministic or partition-dependent, ladder the resolution, land no fix (commissioned 2026-08-27 03:00 review; four known-issues entries of 2026-08-27). ***Step 1 ✅ 2026-08-28 (09:00 slot)** — all four sites are **geometry-deterministic**, red at `-n 1` (2–4 s, Status 1); the two "rank-dependent" claims are **log-interleave artifacts, withdrawn by measurement**; the `-n 2` deadlock is a **raise-path** property (row 2's wrapped re-raise footers at Status 1 in 5 s where the three unwrapped sites cost 120 s each); both laddered generators are **monotone**, each failing exactly one 0.8-step above a meshing sizing (`cylindrical_domain` 0.040 → meshes 0.032/1 213 cells; `coil_phantom_domain` 0.030 → meshes 0.024/5 464 cells); the four sites are **three generators** (the two phantom modules share one byte-identical call); the recorded `IndexError … size 0` signature is **in-process gmsh contamination, not a second defect**; control green at unmoved bands; the dead module is now one asserting 1e-9 partition test. Step 2 (a review's call) has two measured, separable levers — sizing and raise-path.* ***Step 2a ✅ 2026-08-28 (12:00 slot)** — the raise-path lever landed: one shared `_raise_geometry_failure_on_every_rank` helper wraps the rank-0 gmsh build in `straight_wire_domain`, `cylindrical_domain` and `coil_phantom_domain` (`git diff -w` = +76 lines, 0 deletions — the rest is indentation). All three deadlocking rows of the step-1 table now footer at **Status 1 in 2–3 s** where step 1 recorded **Status 124 at 120–121 s**, summaries unchanged, each non-building rank's traceback ending in the wrapped `RuntimeError` naming generator and `resolution`; `GEO-22`'s gate (`tests/mesh/test_geometry_failure_is_collective.py`, the `allreduce`d caught flag at `h = 0.00875`) is `1 passed in 0.91s` at `-n 2`. Controls green and unmoved: the three modules at `-n 1` exactly as step 1, `mag:1` at **21 830 cells / 6.666667e-05 T**, `test_cylindrical_domain.py` 1 passed, `test_coil_phantom_mesh.py` 3 passed, the `GEO-21` control 36.76 s. Twelve windows, 72 s. The three census reds stay red (geometry reds, step 2b's) but cost seconds to observe. **Step 2b (sizing) is the only step left.*** ***Step 2b ✅ 2026-08-28 (13:30 slot) ⇒ chunk ✅** — the sizing lever landed and **all three census reds are green**: three call sites moved to step 1's coarsest measured meshing rung (`test_boundary_condition_selection.py:26` 0.04 → **0.032**, `test_phantom_material_model.py:110` and `test_phantom_field_metrics.py:35` 0.03 → **0.024**), each with the step-1 ladder in-comment and a reduced global cell-count print. Every module green at **both** widths: bcsel `3 passed, 1 skipped` at `-n 1` (0.94 s) and `-n 2` (0.80 s) real, phantom-material `4 passed` at `-n 1` (2.66 s) and `-n 2` (1.63 s) complex, phantom-metrics `2 passed` at `-n 1` (1.71 s) and `-n 2` (1.67 s) complex — against the census reds' `1 failed, 2 passed, 1 skipped` / `1 failed, 3 passed` / `1 failed, 1 passed`. The printed counts are **1213** and **5464 / 5464**, reproducing the step-1 ladder's 1 213 / 5 464 **exactly** (0.00% against the pre-stated ±1%), so the sizing is stable run-to-run and across rank width. **No physics assertion moved** — the negative result this step existed to expose did not occur, and since no module pins a cell count the only assertions at risk were physics ones. Controls: `test_cylindrical_domain.py` at its unmoved 0.02 `1 passed in 1.29s` at `-n 2`, and the complex `tests/environment` gate `11 passed` before the complex windows. `src/` untouched; `git diff --stat` is three test files plus docs. Eight footered windows, 40 s recorded elapsed, FFCx stub sweep clean before window 1 and no exit 124 in the slot. The three geometry known-issues entries are **RETIRED** (both halves closed — 2a's deadlock, 2b's geometry). **Residual, and a review's call, not this chunk's:** the fourth site the chunk was commissioned over — `test_birdcage_volumes_partition_the_box` on `birdcage_port_domain` — is **still red** and was never laddered here, because its resolution floor is already `GEO-21`'s open entry and its fixture is `GEO-20`'s; no `GEO-23` step remains for it.* ***Demoted ✅ → 🧪 by the 2026-08-28 18:00 review audit (§4 clause 3).** The step-2b anchor — 1213 / 5464 cells reproducing step 1's ladder at ±1% — is a `print` at each of the three call sites, compared by the reader against a comment; no test asserts it. The only assertion 2a/2b *added* (`test_geometry_failure_is_collective.py:60`, `total_caught == comm.size`) is a did-raise property, and the three re-greened modules' own gates are finiteness/positivity except a pre-existing σ/ε DG0 identity (`test_phantom_material_model.py:139,185`) that 2b did not add. Logs, agent execution and elapsed all check out (20 footered windows, 112 s); nothing was loosened; `src/` untouched. **Step 2c (queued, §9 item 1):** turn each of the three prints into an asserted `abs(n_global / N_REF − 1) ≤ 0.01` against the step-1 ladder value (a documented reference from a prior run, §4 3(iv)), `allreduce`d before the assert; on green the chunk returns to ✅.* ***Step 2c ✅ 2026-08-29 (19:30 slot, 2026-08-28 local) ⇒ chunk back to ✅** — the anchor is now asserted, not printed. Each of the three moved call sites carries a module constant `N_CELLS_REF` (1213 / 5464 / 5464, the step-1 `-n 1` ladder values, version-tagged in-comment with the 0.7.2-era sizing that no longer meshes) and one gate `abs(n_global / N_CELLS_REF - 1) <= 0.01`, where `n_global` is `mesh.topology.index_map(dim).size_global` — already global on every rank, so the step-2b `comm.allreduce(size_local)` was **removed rather than kept under the assert** (summing a global would have read `size * n` and the gate would have failed at `-n 2` for the wrong reason). Six windows green at both widths: bcsel `3 passed, 1 skipped` at `-n 1` (3 s) and `-n 2` (3 s) real, phantom-material `4 passed` at `-n 1` (3 s) and `-n 2` (4 s) complex, phantom-metrics `2 passed` at `-n 1` (3 s) and `-n 2` (3 s) complex, every one printing its reference count **exactly** (1213 / 5464 / 5464, 0.00% against the ±1% band) on both rank streams. **Negative control executed and footered:** `N_CELLS_REF` 1213 → 1300 (7.2% off) gives `1 failed, 2 passed, 1 skipped` / Status 1 / 2 s at `-n 2`, the new `AssertionError` naming generator, measured count and reference on **both** ranks while the modules' pre-existing assertions stay green — so the gate is load-bearing and rank-symmetric; the constant was restored and re-run green (`3 passed, 1 skipped`, Status 0, 2 s). Complex `tests/environment` gate `11 passed` (21 s) before the complex windows; FFCx 0-byte stub sweep clean before window 1, zero stray `python3`, no exit 124 in the slot. `src/` untouched; the diff is the three test modules. Nine footered windows, **44 s** recorded elapsed. The `GEO-21` residual (`test_birdcage_volumes_partition_the_box`) is unchanged and still not this chunk's.* | ✅ | smoke (`-n 1` probes) + standard (`-n 2` ladders) |
 | `GEO-24` | **Give `birdcage_port_domain` the `shared_facet` ghost layer, and re-read every module that reconstructs a sheet on it at `-n 2` and `-n 12`** — the diagnosed cause of the `GEO-20` step 2 rank-width defect (known-issues re-headed 2026-08-28; commissioned by the human operator, interactive session, 2026-08-28) | ✅ *(**step 1a ✅ 2026-08-28, 21:00 slot** — the `main`-side "before" table for the seven `tests/mesh/` consumers is measured at both widths in 14 windows / **668 s**, no `src/` change: **every cell count identical across widths** (116 085 / 98 666 / 128 111 / 114 655 / 116 085+116 475 / 98 666 / 307 296), **`-n 2` green in all seven**, and **two `-n 12` reds, both facet reconstruction** — `test_birdcage_ring_gaps` on `port P8 closure 0.990103697427`, the width probe's digit exactly, and `test_birdcage_port_terminals` on its phantom↔air positive control, **245 facets / 0.935322 against 255 / 0.979885**, outside the `[0.95, 1.0]` band. That second red is the step's new information: the `GhostMode.none` gap is **not** port-sheet-specific — any interior material interface on this fixture inherits it, so **step 2a's gate must also require 255 facets / 0.979885 at `-n 12`**. Pre-stated negative control holds: every terminal ratio and port-volume identity (no facet reconstruction in either) is identical at both widths in every module, including the 16-leg scale-up's three azimuth classes and its C16 sheet spread (1.331e-15 vs 1.210e-15, the only digit that moves anywhere, at the 1e-15 floor). Consumer list re-derived by construction — **no difference** from the review's seven. **Cost finding: nothing unmeasured** — `test_birdcage_port_scaleup` at `-n 12` took **108 s** inside `-k 30 570` (`GEO-19` step C's exit 124 was a bundled window, not this module's price), and `-n 12` costs the same wall clock as `-n 2` throughout (±2 s), the mesh being built on rank 0 either way. Step 1b (validation family) and step 2a (the plumb + this family re-read) are unblocked; full table in the known-issues entry)* ***step 1b ✅ 2026-08-29, 22:30 slot** — the `main`-side "before" table for the five `tests/validation/` consumers is measured at both widths in 13 windows / **660 s**, complex, no `src/` change, and the family is **clean**: every cell count identical across widths (116 085 in four modules, 116 085 + 116 475 in `_leg_offset_sweep`), **green at `-n 2` and at `-n 12` in all five**, and every gated digit identical — `Z_{11,21,31,41}` reproducing their `PORT-9` records at 1.07e-10–2.57e-10, `sigma_max(S)` **0.999992805** and max column power sum **0.793823974** unchanged, C4 class spreads **0.0553 / 0.0353 / 0.0214 %** unchanged, `||S−S^T||/||S||` 8.141422487e-15 → 1.116856988e-13 (band 1e-3), the termination margin **2256.9707×** / spread **0.0040%** unchanged, and `_leg_offset_sweep`'s displaced rung still breaking (iii′) at 6.2219 / 7.1142 / 2.8474 %. So the `GhostMode.none` gap costs this family **nothing** at `-n 12` — it is confined to the modules that read a facet group directly (step 1a's two reds). Consumer list re-derived by construction, no difference from the review's five; the two `_larmor_gate*` modules are correctly outside the intersection. **The pre-stated negative control is the step's finding and it did *not* hold:** `test_port_lumped_two_torus.py` — already `shared_facet`-plumbed — is green at `-n 2` (gap ratio **0.894141**, the record exactly) and **red at `-n 12`** (**0.894274**, moved 1.33e-04 against a 1e-04 band) at an unchanged **184 176** cells, with the other four tests passing; the moving quantity is a *solved* line integral (`Im Z12` 1.110303775 → 1.110469250, 1.5e-4), not a facet reconstruction. **Step 2b's gate must therefore separate reconstruction readings (must be exactly 1.000000000000) from solve-derived digits, which this fixture shows can drift at 1e-4 with rank width even when the ghost layer is present**; whether the two-torus band should be width-qualified is a review's call. Nothing loosened, no record re-written; step 2b unblocked)* ***step 2a 🟡 2026-08-29, 00:00 slot — the plumb works and is NOT landed; blocked on a review's re-record ruling.** The one-keyword `partitioner=create_cell_partitioner(GhostMode.shared_facet, 2)` at `io/mesh.py:3356` (the `two_torus_domain` kwarg and comment, nothing else in `src/`) was applied, the seven `tests/mesh/` consumers re-read at `-n 2` and `-n 12` in 14 windows, and the patch then **reverted on `main` and parked on `attempt/GEO-24-step2a-20260829T052300Z` (`e1dede8`)**. ≈ 870 s of compute over 16 windows + 1 control window. **Two of the three gate clauses pass outright:** every cell count is identical to step 1a at both widths and every kwarg-off control reproduces (`cells 116085 vs 116085, delta 0, relative 0.000e+00`); and **both previously-red `-n 12` readings are repaired** — `ring_gaps` port P8 back to **176 air facets / closure 1.000000000000** from 175 / **0.990103697427**, and `port_terminals`' phantom↔air control back to **256 facets** from 245 — all seven modules `passed` at both widths. **The third clause is what stops the step:** `port_terminals`' `-n 2` phantom↔air digit **moves, 255 facets / 0.979885 → 256 / 0.984183**, and item 4's pre-stated negative result is that a moving `-n 2` digit is a review's, so the slot reverted rather than landed. Every other `-n 2` digit in all seven modules is identical (C4 spread 6.050e-16, leg terminals 0.988615825–0.988615858, ring terminals 0.974454791/0.974454832, Pappus 1.000000000000, the 16-leg classes 0.989367514/0.989449735/0.988615772 and C16 1.331e-15). **The moved digit is diagnosed, not left open:** two serial windows read **256 / 0.984183 at `-n 1` on the plumbed tree *and* at `-n 1` on `main`** — a single rank needs no ghost layer, so 256 is the truth and step 1a's 255 was itself one facet short of it at every parallel width. The record was **defective, not partition-dependent**; after the plumb the reading is 256 / 0.984183 at `-n 1`, `-n 2` and `-n 12` alike. Pre-stated untouched-fixture controls green with the plumb applied (`test_two_torus_port_sheet` + `test_cylindrical_domain`, `4 passed`, `GEO-16` control 79 070 cells). **Owed by a review:** rule on re-recording 255 → 256 / 0.984183 with its `-n 1` provenance (that is step 3's business, which item 4's scope excludes), after which the parked branch lands unchanged. Nothing loosened, no record re-written, no band moved)* ***RULED 2026-08-29 03:00 review: defect repair, not re-baseline.** The `-n 1` reading on `main` with no plumb (`…050535Z_…-terminals-n1-main.log`, 256 / 0.984183) is the serial truth and needs no ghost layer, so step 1a's 255 / 0.979885 was one facet short at every parallel width from the same `GhostMode.none` gap — the record was defective, and no test carried it (`test_birdcage_port_terminals` gates a `[0.95, 1.0]` band). Landing the parked commit with the re-read is **step 2a′** (§9 item 1); step 2b (validation family, §9 item 2) closes the chunk and retires the known-issues entry; the two-torus `-n 12` finding from step 1b is split out as its own chunk, `PORT-12`, and is not this chunk's. A second lesson recorded for step 2b: step 1a treated `-n 2` as the reference width, and this fixture can be one facet short at `-n 2` too — reconstruction digits are checked against the digit, solved digits against their band.* ***step 2a ✅ 2026-08-29, 04:30 slot (step 2a′ — the landing)** — `e1dede8` cherry-picked onto `31a4e0b` as `470f410`; `git diff HEAD~1 -- src/` is that one `io/mesh.py:3356` kwarg + comment hunk alone and the tree is clean after. Re-read on the **landed** tree in six windows / **246 s**: `test_birdcage_port_terminals` at `-n 1` / `-n 2` / `-n 12` (23 / 21 / 22 s) and `test_birdcage_ring_gaps` at `-n 2` / `-n 12` (75 s each), all Status 0, logs `20260829T0930…–0934…_GEO-24-step2aP-*`. **Every pre-stated anchor met:** phantom↔air **256 facets / 0.984183 at all three widths** on **98 666** cells (the serial truth now reproduced in parallel — the repair), `ring_gaps` port P8 at `-n 12` **176 air facets / closure 1.000000000000** (was 175 / 0.990103697427) on **128 111** cells with all 12 `volume/analytic` and all 8 sheets 1.000000000000, the ring-gapped rung **110 786** cells, Pappus 1.000000000000 gapped and uncut, and every other digit identical to the step-2a table (leg terminals 0.988615826–0.988615858, ring terminals 0.974454791 / 0.974454832, port boxes air 24 facets / closure 1.000000000000, kwarg-off control 98 666 / 0.966977). **Negative control green and unmoved:** `test_two_torus_port_sheet` + `test_cylindrical_domain` `4 passed` / 30 s with the `GEO-16` control at **79 070** cells — no cell count moved anywhere, so the landed commit is the measured one. **Step 1a's `-n 2` `255 / 0.979885` is annotated *defective* (one facet short; `-n 1` truth 256 / 0.984183) in the known-issues table**, per the 03:00 ruling; no band, tolerance or record in `tests/` moved. `attempt/GEO-24-step2a-20260829T052300Z` deleted. The chunk stays 🟡 on **step 2b** (the five `tests/validation/` consumers), which closes it and retires the known-issues entry.* ***step 2b ✅ 2026-08-29, 06:00 slot — the validation family re-reads clean on the plumbed tree at both widths; CHUNK CLOSED and the known-issues entry RETIRED.** Eleven windows / **485 s** at `470f410`, complex, `FEM_EM_REQUIRE_COMPLEX=1`, `-s`, `-k 30 480`, one module per width per window, **no `src/` change in the slot**; env gate `11 passed` / 21 s, then all ten module windows **Status 0** (`20260829T1100…–1108…Z_GEO-24-step2b-*`): `_lumped_column` 33 / 30 s, `_four_port` 49 / 39 s, `_larmor_probe` 38 / 33 s, `_termination_probe` 38 / 33 s, `_leg_offset_sweep` 97 / 74 s at `-n 2` / `-n 12`. **Both pre-stated gate classes met.** *(i) Reconstruction readings identical to the digit:* all four `_lumped_column` sheets **26 facets / 5.835298880e-05 m² / `w = A/h` 7.294123600e-03 m / out-of-plane 0.000e+00 m** at both widths, every cell count identical across widths and equal to step 1b's records at ratio **1.000000** (**116 085** in four modules, 116 085 + **116 475** in `_leg_offset_sweep`). *(ii) Solved digits inside each module's own in-file band at both widths:* `Z_{11,21,31,41}` at rel. deviation **1.071e-10–2.568e-10** of their `PORT-9` records, `sigma_max(S)` **0.999992805**, max column power sum **0.793823974**, C4 class spreads **0.0553 / 0.0353 / 0.0214 %** (band 0.5%) with separation 166.6766×, `||S−S^T||/||S||` 1.044e-14 / 1.897e-14 (band 1e-3), termination margin **2256.9707×** / spread **0.0040%**, displaced rung **6.2219 / 7.1142 / 2.8474 %** (amplifications 112.58× / 201.52× / 133.11×). The **only** `-n 12` movement anywhere is `_lumped_column`'s `Z_11` at **4.1e-9** relative and the two Frobenius residuals at the 1e-14 floor — reported, orders inside every band and far below `PORT-12`'s 1e-4. **Negative control** (this family has no kwarg-off control; the control is step 1b's own table): every `-n 2` digit reproduces step 1b's `main`-side reading, so the plumb changed nothing this family could see — expected, step 1b having shown the family took no damage from `GhostMode.none`. The two-torus control was deliberately **not** re-run (its `-n 12` red is `PORT-12`'s, unmoved by this patch). **Disposition:** `GEO-20` step 1's "1.000000000000 on all 12" **loses its width-conditional caveat** (measured true at 12 ranks on the landed tree), `GEO-20` step 2 becomes an unblocked re-run of the parked 32-port module, and step 1a's `-n 2` 255 / 0.979885 stands annotated *defective*. Nothing loosened, no band moved, no record in `tests/` touched.* | standard |
 | `GEO-25` | **F-human cost probe** — `birdcage_port_domain` at `ring_radius` 0.07 → 0.15 m (30 cm coil, the operator's 2026-08-25 directive), a parameter set on the existing constructor, not a new one; cell count and mesh time per rung, conductor sizing **not** coarser than the 4.8 mm floor without re-measuring it (known-issues `GEO-21` ruling) | ✅ **step 2 closed 2026-09-05 13:30 implementer slot — the §3 route back was walked, the row is ✅ again.** New `tests/validation/test_birdcage_f_human_rung.py`, `2 passed in 194.05s`, Elapsed 196 s, heavy by ceiling (`timeout -k 30 560`), `-n 2`, real build, `docs/testing/logs/20260905T183654Z_GEO-25.log:20030`. **Every step-1 reading now reproduces at `-n 2` as an executed assert, to the digit.** Branch B (the fixture, `scale_sizing=False`): cells **504 642 vs record 504 642, relative 0.000e+00** at the imported `CELL_COUNT_BAND` = 0.01; volume partition **1.000000000000** at the imported `GEO-18` `EXACT` = 1e-9; terminal-area ratio **0.974454791 … 0.974455230 on all 32 ring ports**, inside the `GEO-19` closed-form [0.95, 1.0]; meshed/CAD conductor **0.965414**, clearing the imported `CAD_MASS_GATE` = 0.95 by **+0.015414** (`:9730–9735`, mesh 109.35 s). Branch A (the negative control, `scale_sizing=True`): cells **204 977 vs record 204 977, relative 0.000e+00**; the same partition and terminal identities hold (0.974445583 … 0.974446474); meshed/CAD **0.893028**, i.e. **0.056972 BELOW** the same gate (`:20017–20022`, mesh 63.50 s). The separation assert `control < CAD_MASS_GATE <= fixture` reads **0.893028 < 0.95 ≤ 0.965414, separation 0.072387** (`:20024–20027`) — **fixed absolute mesh sizing is now a gated conclusion, not an ungated reading**: a similar-mesh F-human coil fails the existing `GEO-15`/`GEO-21` conductor-mass gate and the fixed-sizing one clears it. Two version-tagged cell records registered under the (1\*) licence at `tests/validation/test_birdcage_f_human_rung.py` (`F_HUMAN_BRANCH_B_CELL_RECORD`, `F_HUMAN_BRANCH_A_CELL_RECORD`), both asserted at the imported band and never at equality (the `OPS-27` stale-exact class). **The step-1 determinism worry is answered for this rung**: the repeat was on the 0.10 m branch-A rung, and both 0.15 m rungs now reproduce at `-n 2` in a different process at 0.000e+00 — no known-issues entry needed. `_params` moved verbatim into the gate module, which is now the single source of the F-human parameter set, and `scripts/probes/geo25_ring_radius_cost_probe.py` imports it (plus `BASE_RING_RADIUS`, `LEG_COUNT`) back; all 16 printed parameters verified unmoved against step 1's own log (`20260905T184025Z_GEO-25.log` vs `20260904T214031Z_GEO-25.log:36–50`). Two builds per process, cached — the module never rebuilds a rung for a second assert. Nothing in `src/` changed; no solve, no port gate, no physics claim. The step-1 measurement block below is untouched. ~~🧪 **demoted ✅ → 🧪 by the 2026-09-04 18:00 review on the §3 rule**~~ — a measurement-only step is 🧪, never ✅: the probe script says "asserts nothing" in its own docstring (`scripts/probes/geo25_ring_radius_cost_probe.py:3`) and contains no `assert`, so no executed quantitative assertion exists (audit DEMOTE, evidence re-read by the review). The commission text below said "anchors, asserted per rung" while naming `mesh-probe` as executor, whose definition says "never an assertion" — the two were in conflict and the executor followed its definition; the review's fault, not the slot's. **Every measurement below stands untouched**; the route back is **step 2 (the gate)** scoped at the end of this row. **Rungs 1, 2 and 3 all measured, 2026-09-04 16:30 implementer slot** (`mesh-probe`, six foreground windows, all Status 0, 554 s total). **Negative control passed exactly:** the 0.07 m rung reproduces `mesh:9`'s **265 621 cells at relative 0.000e+00** (`20260904T213333Z_GEO-25.log:10182,10190`), terminal-ratio range 0.974454791–0.974455668 matching `EX-35`'s record digit for digit. Volume partition **1.000000000000** and terminal ratio in [0.95, 1.0] on all 32 ports at every rung and both branches — the `GEO-18`/`GEO-19` identities are genuinely scale-free. The row's phrase "phantom/air **sizing** scaled with the radius" is ambiguous (mesh size field vs geometric size), so the probe measured **both branches** rather than guess; the choice inverts the sign of the answer. **Branch A** (global `resolution` scales too — geometrically similar meshes): 0.07 m **265 621** cells / 72.35 s / 0.548 GiB (`…213333Z:10182–10189`); 0.10 m **244 056** / 67.82 s / 0.538 GiB (`20260904T213508Z_GEO-25.log:10126–10133`); 0.15 m **204 977** / 69.98 s / 0.505 GiB (`20260904T213646Z_GEO-25.log:10331–10338`). **Branch B** (`resolution` held at `mesh:9`'s 0.015 m — fixed absolute element size, the only reading under which the `r³` prediction is testable): 0.10 m **352 984** / 90.21 s / 0.627 GiB (`20260904T213833Z_GEO-25.log:10248–10255`); 0.15 m **504 642** / 112.27 s / 0.752 GiB (`20260904T214031Z_GEO-25.log:9733–9740`). **The pre-registered `r³` prediction is wrong on both readings** — branch A 0.07→0.15 measures 204 977 against a predicted 2 613 618 (0.0784×, fitted exponent **−0.34**), branch B 0.0784→0.1931× (fitted exponent **+0.84**, time exponent +0.58). The mesh is dominated by the pinned 1.6 mm conductor refinement region, whose count grows roughly *linearly* with conductor length, not with domain volume; **≈ 0.84 is the honest cost exponent** for the same coil made bigger at fixed absolute fidelity, and §10 Phase 6 should date itself from that, not from `r³`. **The stop rule was never approached** — worst rung 504 642 cells (17% of the 3 M ceiling), 112.27 s (19% of 600 s), peak RSS 0.752 GiB; conductor sizing never coarsened; rung 3 was licensed by the row's own arithmetic on both branches (`3.375 × 67.816 = 228.9 s` and `3.375 × 90.205 = 304.4 s`, both < 600 s) and run. **Determinism:** the 0.10 m branch-A rung re-run in a fresh process reproduces every reported digit (`20260904T214248Z_GEO-25.log:10126–10133`); only wall time (67.82 → 68.55 s) and `ru_maxrss` move. **No `GEO-21`-class negative result** — every rung meshes, no mesher fallback and no invalid-boundary line in any log. **One ungated reading for the weekly review:** under branch A the conductor's meshed/CAD mass recovery falls monotonically **0.976465 → 0.959483 → 0.893028**, so at 0.15 m it is *below* `CAD_MASS_GATE = 0.95` — an F-human coil built by scaling the mesh sizing with the radius would **fail the existing `GEO-15`/`GEO-21` conductor-mass gate**, while branch B stays 0.976465 → 0.972185 → 0.965414. That is an independent argument that **fixed absolute sizing is the right scaling for this generator**; nothing was asserted or moved on it. Probe script `scripts/probes/geo25_ring_radius_cost_probe.py` (measurement only, asserts nothing, imported by nothing). Two deviations, both disclosed: (a) `conductor_resolution` pinned at `mesh:9`'s **1.6e-3 m**, which is *finer* than the 4.8 mm `GEO-21` figure — the rule as written is "not **coarser** than the floor", 4.8e-3 is `GEO-21`'s coarse *control* (0.846 mass recovery), and 1.6 mm is the only value that reproduces the mandated 265 621-cell control; (b) `leg_spacing` scaled with `coil_length` (the row names only `coil_length`) — an unscaled 11 cm ring separation inside a 30 cm coil is not a similar geometry. **Also unscaled and worth the weekly's attention: the conductor *cross-section* (`leg_width`, `ring_minor_radius`) is held at the 7 cm coil's values at every rung**, so these are cost figures for a human-sized cage built from small-coil stock, not a re-proportioned conductor. A price, not a fixture: no record moved, no default changed, no solve, no assertion written. Original commission text follows. *(commissioned 2026-08-30 02:15 weekly review; **the ruling text was lost with that session** — what survived is the dashboard summary and the `GEO-21` known-issues ruling's two sentences. **Re-scoped 2026-09-02 weekly review — queueable.** Executor `mesh-probe`, measurement only, no solve. Ladder on the existing constructor: `ring_radius` 0.07 → 0.10 → 0.15 m with `coil_length` and the phantom radius scaled by the same factor (a 6 cm phantom in a 30 cm coil is not a load), 16 legs, ring-gap (high-pass) layout as `mesh:9`, conductor sizing pinned at the 4.8 mm `GEO-21` floor, phantom/air sizing scaled with the radius. **Anchors, asserted per rung:** the scale-free CAD identities `GEO-18`/`GEO-19` already gate — volume partition 1.000000000000 and terminal-area ratio in [0.95, 1.0] on every port; the cell count per rung against the r³ prediction from the 0.07 m rung (report the fitted exponent; `GEO-19` measured 2.6472× cells / 3.2357× mesh time for 4 → 16 legs at fixed radius, the only cost rung above F-small on record). **Stop rule (pre-registered):** a rung whose mesh exceeds **3 M cells** or **600 s** is the finding — record it and stop, do not shrink the conductor sizing to make it fit. **Negative control:** the 0.07 m rung reproduces `mesh:9`'s 265 621 cells at 0.000e+00 relative. Tier heavy by ceiling (`timeout -k 30 1200`, gmsh is serial so `-n 1`), three windows ≈ 5 + 12 + 30 min predicted from the r³ scaling. **Scope:** a price, not a fixture — no record moves, no default changes, no solve; the exponent and the 0.15 m cell count are what §10 Phase 6 dates itself from. **Negative result:** a rung that does not mesh is a `GEO-21`-class known-issues entry; §10 subgoal 4 is explicitly **not** blocked on it. **Queued 2026-09-03 18:00 review as §9 item 5 (spare), sized to the 20-minute rule:** rungs 1 and 2 only, rung 3 attempted only if `3.375 × t_2 < 600 s` from rung 2's mesh time; otherwise the prediction is the finding and the 0.15 m rung is the weekly's to re-rung)* **Step 2 — the gate (scoped 2026-09-04 18:00 review, the §3 route back to ✅; §9 item 6).** New `tests/validation/test_birdcage_f_human_rung.py`, `-n 2`, heavy by ceiling (`timeout -k 30 600`; the two builds measured 112.27 + 69.98 s at `-n 1`, so ≈ 200–250 s expected). Move the probe's `_params(radius, scale_sizing=…)` verbatim into the module as the single source of the F-human parameter set and have the probe import it (additive; the probe's printed digits must not move). Build the **branch-B 0.15 m rung** (`scale_sizing=False`) and assert, every band imported: (i) cells = **504 642** at `CELL_COUNT_BAND` — a new version-tagged record `F_HUMAN_BRANCH_B_CELL_RECORD` registered by this step under the (1\*) licence; (ii) volume partition 1.000000000000 at the `GEO-18` band; (iii) terminal-area ratio in [0.95, 1.0] on all 32 ports (the `GEO-19` band); (iv) meshed/CAD conductor mass recovery ≥ `CAD_MASS_GATE` (0.95, imported from `tests/mesh/test_birdcage_conductor_sizing.py:63`) — measured 0.965414. **Negative control:** the **branch-A** 0.15 m rung (`scale_sizing=True`, second build in the same window) must read *below* `CAD_MASS_GATE` — measured 0.893028, 5.7 pp under against the fixture's 1.5 pp over; assert `control < CAD_MASS_GATE <= fixture`, margins printed, and its cells 204 977 reproduced at `CELL_COUNT_BAND` (a second record, control only). **Traps:** `cell_tags.values` and facet areas are rank-local — reduce before asserting (the probe already does); gmsh builds on rank 0; a build that fails at `-n 2` deadlocks — both rungs are known to mesh, so `-n 2` is licensed. **Scope:** registers the F-human branch-B rung's CAD identities and its cell record — *not* a solve, not a port gate, not a physics fixture; F-human physics stays Phase 6's and the weekly's. **Negative result:** cells not reproducing 504 642 at the band (the probe's determinism repeat was on the 0.10 m rung, not this one) is a known-issues entry with the measured spread and the record registered at the observed value with its band stated — never widened to swallow it; mass recovery below 0.95 on branch B is the finding that the F-human coil needs its own conductor sizing, known-issues entry, row stays 🧪. | heavy (probe first) |
+| `GEO-27` | **Phantom-resolution cost probe for the 1 g SAR rung** — opened 2026-09-07 10:30 review from `MAT-4` step 4's printed 1 g column (worst C4 pair 6.8383% on the 7.5 mm rung, `20260907T003548Z_MAT-4-step4.log:1934–1947`: a 6.2 mm ball spanning ~1.7 cells is a mesh statement, not an operator one, and the route to a 1 g gate is `h`). Executor **`mesh-probe`**, measurement-only, asserts nothing — 🧪 by the §3 rule until a gate consumes it. A ladder on `MeshGenerator.birdcage_port_domain(phantom_resolution=…)` exactly as `tests/mesh/test_birdcage_phantom_resolution.py` calls it (F-small defaults, real build, no solve): rungs **0.0075** (the record rung — the control that must reproduce 120 499 cells / 2 746 phantom cells, `20260907T140658Z_EX-53.log:1875`), **0.005**, **0.00375**, **0.0025**; per rung print total cells, phantom cells (tag 3), mesh wall time, the phantom share of the cells, and the cells across the two C95.3 balls, `2a_1g/h` and `2a_10g/h` (`a_1g` = 6.2 mm, `a_10g` = 13.4 mm at ρ = 1000 kg/m³, the gate's own `averaging_ball_radius`); the table lands in this row and the script as `scripts/probes/geo27_phantom_resolution_probe.py`. **Stop rule:** a rung above 300 k cells or 120 s to mesh is recorded and the ladder stops there — no finer rung is attempted. **Tier / cost:** the 120 499-cell mesh builds in ~23–29 s (`20260906T213913Z_TH-15.log:2628`, `…093741Z_TH-15.log` solid 28.70 s); four rungs ≈ 200 s class ⇒ `-n 2`, `timeout -k 30 600`, heavy by ceiling, standard by expectation. **Traps:** the meshing happens on rank 0 and the counts are `size_global` after distribution — print the global count, never `cell_tags.values` lengths; the `PHANTOM_GROWTH_BAND` in the resolution module is a gate on the 0.0075 rung only and is not re-asserted here. **Question the probe answers:** the first rung with ≥ 4 cells across the 1 g ball and its cell count — the input to a `MAT-4` step 5 (the 1 g column gated at that rung, or ruled ungateable on this box) that a review scopes from the table, never the slot that runs it. **Negative result:** the 0.0075 control not reproducing 120 499 is a mesher-drift finding (`OPS-18` class) — record, stop. | 🧪 *(opened 2026-09-07; measurement-only, no band, no `src/`)* | standard by expectation (heavy by ceiling) |
 | `GEO-26` | **Longitudinal ring-gap port sheets for `birdcage_port_domain`** — `PORT-13` step 1 (2026-09-03, 22:30 slot) measured that `GEO-20`'s ring sheets are the gap's *transverse* section at `φ = φ_c` (every one of the 8 sheets on the 4-leg rung spans ≤ 1.43e-17 m along its own `φ̂` and exactly `w` along `û` and `ẑ`, `20260903T033437Z_PORT-13.log:6959–6966`), so the lumped-sheet port model (`ports/lumped.py`, `R_s = Z_p·w/h`, `I = (1/R_s)∫E·ĥ dS / h`) has no `h` on the ring ports and `E·ĥ` on that sheet is the normal trace of an H(curl) field on an interior facet — not a defined quantity (`log-pathologist` ruling, 03:00 review). The `GEO-18` pattern was carried to the rings by the wrong analogy: the leg sheet contains the *drive direction* and the radial direction (normal `φ̂`); the ring analogue contains `φ̂` and one transverse direction. **Design (ruled):** a keyword-only `ring_sheet_orientation: str = "transverse"` (today's emission, default, every `GEO-20` record frozen) with `"longitudinal"` emitting per ring gap the planar rectangle in the plane `u = R` — normal `û(φ_c)`, spanning the gap chord `2R·tan α` along `φ̂` (`α = ring_gap_length/2R`; the chord, not the arc, is what the box's planar radial caps deliver — +0.10% at 0.008 m / 0.07 m, both diagnostics emitted) and `w = ring_port_box_width_m` along `ẑ`, corners in global coordinates (`GEO-19` (4\*)), splitting the box into inner/outer halves with closed-form volumes `w·tan α·(R·w ∓ w²/4)`. The horizontal trapezoid at `z = z_ring` was rejected: planar and box-spanning too, but its `h(u) = 2u·tan α` varies ±7% across the sheet and the port model needs one `h`. **Step 1** (4-leg rung, `RING_GAP_LENGTH = 0.008`, `-n 2` and `-n 12`): the five identities in the §9 item — sheet area / (chord·w), `φ̂`-extent / chord and `ẑ`-extent / w at 1e-9, out-of-plane ≤ 1e-12 m, both half-volumes at 1e-9, C4 / top-bottom spreads ≤ 1e-12, every `GEO-20` step-1 identity still exact — plus a version-tagged cell record; negative control: the default reproduces 110 786 at ratio 1.000000 with its transverse sheets at `φ̂`-extent ≤ 1e-12 m (the parked `tests/mesh/test_birdcage_ring_sheet_orientation.py`, `attempt/PORT-13-20260903T033437Z` `30756cf`, cherry-picked as this chunk's control). **Step 2** (16 legs, `EX-35`'s parameters): the same family on 32 sheets, C16, new cell record — the control `PORT-13` step 1 re-opens on. Mesh only; no solve, no port-model change, no `GEO-20` record moves, `EX-35` unchanged. Negative result: a sheet that does not split its box or reconstructs off 1e-9 at either width is a known-issues entry with both widths' readings; the kwarg lands only if the default's control holds. Opened 2026-09-03 03:00 review, §9 item 1. **Step 1 ✅ 2026-09-03 (04:30 implementer slot)** — `ring_sheet_orientation` landed on `birdcage_port_domain` (keyword-only, validated, refused without `ring_gap_length`), plus the two new diagnostics `ring_port_gap_chord_m` and `ring_port_sheet_longitudinal_area_m2`; `tests/mesh/test_birdcage_ring_sheet_orientation.py` gates both modes. **Measured on the 4-leg rung, identical at `-n 2` (`20260903T093852Z_GEO-26.log`, Status 0, 51 s) and `-n 12` (`…093949Z_GEO-26.log`, Status 0, 50 s), standard tier:** chord `8.008718871e-03` m against the arc `8.000000000e-03` m (+0.1090%, as designed); all 8 sheets read `φ̂`-extent/chord = **1.000000000000**, `ẑ`-extent/w = 1.000000000000, area/(chord·w) = 1.000000000000, out-of-plane along `û` ≤ 1.53e-16 m, flatness ≤ 1.43e-16 m; both halves `V_in = 3.861346599e-07` / `V_out = 4.147372273e-07` m³ meshed/analytic = 1.000000000000 on all 8 with sum/`ring_port_volume_m3` = 1.000000000000; C8 sheet spread 4.273e-16 (`-n 12`: 4.477e-16); `GEO-9` partition, air-box closure, Pappus arcs all 1.000000000000; terminals 0.974219–0.974235 of the closed form, inside [0.95, 1.0] (`…093852Z:13904–13915`). **`RING_LONGITUDINAL_CELL_RECORD = 111 898`** (0.11 image, `-n 2`; the transverse rung is 110 786). **Negative control green**: the default reproduces `RING_GAP_CELL_RECORD` 110 786 at ratio 1.000000 with `φ̂`-extent ≤ 1e-12 m (`…093852Z:6956`). **One measured difference, recorded not absorbed** — the longitudinal sheet's two `φ` edges lie in the terminal planes `φ_c ± α` and run `w = 1e-2` m through each disk's centre, i.e. they are *diameters* of the two `2r = 8e-3` m terminal disks (the transverse sheet sits mid-gap and touches neither), so the inscribed triangulation of a terminal is constrained and its C4 covariance drops from 4.198e-08 to **1.605e-05**; every terminal stays inside the [0.95, 1.0] band and every exact (polyhedral) form is unmoved. `TERMINAL_INTRA_CLASS_BAND` (1e-6) is **not** widened — `_assert_ring_identity_family` grew a `terminal_intra_band` kwarg defaulting to it, and only this one call site passes the measured `LONGITUDINAL_TERMINAL_INTRA_BAND = 2.0e-5`, with the reading and the mechanism in the constant's comment (MAG-10/MAG-15 precedent). **A review should adjudicate whether that constrained-diameter triangulation is acceptable for the port model** — it is a terminal-*area* reading, not a sheet reading, and `PORT-13` integrates over the sheet. Helper edits proved inert by re-running `GEO-20` step 1 + step 2 at their defaults: 3 passed, 260 s (`20260903T094101Z_GEO-26.log`, Status 0). Discovery window (record unmeasured, 1 failed 1 passed) is `…093604Z_GEO-26.log`. **Step 2 (16 legs) not started** — the slot ran out; it is the next queue item and `PORT-13` stays 🚫 until its record exists. **Audited PASS 2026-09-03 10:30 review** (eight checks; `TERMINAL_INTRA_CLASS_BAND` untouched in the diff, the new band confined to `test_birdcage_ring_sheet_orientation.py:141,412`; the discovery red `1.605441790373545e-05 < 1e-06` is a genuine pre-kwarg failure at `5202f75`; the 262 s regression window inherits `GEO-20`'s heavy label, not this step's). **Ruled, same review — the constrained-diameter terminal triangulation is acceptable for the port model:** every terminal stays inside its [0.95, 1.0] band, every polyhedral identity is exact, and the 1.605e-05 per-class terminal-*area* covariance sits four decades under the coarsest port-level band it could feed (`PORT-9` reciprocity 1e-3, C4 class spread 5%); it is a record at 2.0e-5, not a defect, and no known-issues entry is opened. Step 2 re-measures it on the 16-leg rung's four azimuth classes with the band **unmoved** — a class above 2.0e-5 there is a stop, not a widening (§9 item 1, queued 10:30). `PORT-13` step 1 is pre-queued as §9 item 5, serial on step 2's record. **Step 2 executed 2026-09-03 (12:00 implementer slot) and hit its pre-registered STOP.** The 16-leg rung landed as a second parametrised leg count in the same module (`SCALED_LEG_COUNT`, `EX-35`'s parameters; no constant or helper renamed, so `EX-44`'s imports are unaffected), and every anchor but one is green at **both** widths (`-n 2` `20260903T170351Z_GEO-26.log`, Status 1, 160 s; `-n 12` `…170701Z_GEO-26.log`, Status 1, 158 s; heavy tier declared, 158–160 s measured): all 32 sheets at `φ̂`-extent/chord = `ẑ`-extent/`w` = area/(chord·`w`) = 1.000000000000 with out-of-plane ≤ 1e-12 m, both halves at their closed forms summing to `ring_port_volume_m3`, **C32 sheet spread 6.035e-16 / 5.998e-16 and top/bottom mirror spread 5.551e-16** against 1e-12, the `GEO-9` partition / air-box closure / Pappus arcs / terminal ratio band all exact, inter-class spread inside 5e-3, and the **negative control green** — the default orientation at 16 legs reproduces `EX-35`'s 265 621 cells at ratio 1.000000 with all 32 transverse sheets at `φ̂`-extent ≤ 1.741094e-17 m (`…170351Z:26462–26494`). **`RING_LONGITUDINAL_SCALED_CELL_RECORD = 270 728`** (0.11 image, identical at `-n 2` `:53400` and `-n 12` `:53490`). **The stop:** the four azimuth classes' intra-class terminal-*area* covariance reads **9.989957e-05 / 3.792060e-11 / 3.792129e-11 / 9.990206e-05** at `-n 2` and **9.989957e-05 / 3.792088e-11 / 3.792129e-11 / 9.990206e-05** at `-n 12` (`…170351Z:53436–53439`, `…170701Z:53526–53529`) — two classes five times over the unmoved 2.0e-5 band. **`LONGITUDINAL_TERMINAL_INTRA_BAND` is not widened** (10:30 pre-registration), the `[16]` case is a **deliberate red on `main`** with a known-issues entry carrying all four readings at both widths, and `PORT-13` stays 🚫. Mechanism measured, not inferred: the 32 terminals take exactly **two** areas (9.791961125e-05 / 9.792939386e-05 m², 9.99e-05 apart) with the low one taken by **5 of the 16** gap azimuths (11.25 / 78.75 / 101.25 / 191.25 / 281.25 deg) — 5 is no subgroup of C16, so this is not `GEO-19` step C's azimuth-class effect but the **bistable** constrained-diameter triangulation step 1 recorded, resolving one of two ways against the surrounding air mesh; at four legs all four gaps happened to land the same way. **A review owns the next move** — either rule the bistability acceptable and re-register the band on this measurement (it is a terminal-*area* reading; every terminal is inside [0.95, 1.0] and `PORT-13` integrates over the **sheet**, exact to 1e-16 here) or classify by the two-valued partition rather than `_azimuth_class`. **The parametrisation is inert on step 1**, re-run at its own rung after the refactor: `2 passed`, Status 0, 51 s, 110 786 and 111 898 both at ratio 1.000000, C8 spread 4.273e-16 and terminal 1.605442e-05 — step 1's digits to the digit (`20260903T171154Z_GEO-26.log:6956,13904,13915–13916,13919`) **Ruled 2026-09-03 18:00 review — the bistable triangulation is acceptable; the 16-leg rung gets its own record band; the `_azimuth_class` fold is kept.** The reading is a terminal-*area* covariance — a mesh-reproducibility record, not a physics band or a closed-form comparison; all 32 terminals sit inside [0.95, 1.0]; the sheet `PORT-13` integrates over is exact to 1e-16 on all 32; the 9.99e-05 two-state amplitude is a decade under `PORT-9`'s 1e-3 reciprocity band and three under the 5% class band; and the mechanism is measured (two discrete areas, 5 of 16 azimuths), not inferred. Classifying by the two-valued partition was rejected — it fits the assertion to the artifact and would hide a third state. **Step 3 (§9 item 3):** `LONGITUDINAL_TERMINAL_INTRA_BAND_16 = 2.0e-4`, version-tagged with all four class readings and both areas, passed for the `[16]` case only; the `[4]` band 2.0e-5 and `TERMINAL_INTRA_CLASS_BAND` 1e-6 do not move; the low-state terminal count (expected 10 of 32) printed; negative control = the `[16]` case pointed back at 2.0e-5 reading step 2's `1 failed` (5.0× separation is this measurement's ceiling); on green the known-issues entry retires and the chunk closes. **`PORT-13` step 1 is unblocked by the ruling alone** (§9 item 4) — it reads the 270 728 record and the sheet, not this test's colour. **Step 3 ✅ 2026-09-03 (22:30 implementer slot) — the 16-leg rung's band is registered and `[16]` is green at both widths; `GEO-26` closes.** `LONGITUDINAL_TERMINAL_INTRA_BAND_16 = 2.0e-4` landed version-tagged (0.11 image) with all four class readings, both terminal areas and the five low-state azimuths in its comment, passed as `terminal_intra_band` for the `[16]` case **only** through a `LONGITUDINAL_TERMINAL_BAND` rung→band table; `LONGITUDINAL_TERMINAL_INTRA_BAND` stays 2.0e-5, `TERMINAL_INTRA_CLASS_BAND` stays 1e-6, no helper or step-1 name changed (`EX-44`'s imports untouched) and no `src/` change. **Negative control, run first and footered**: the `[16]` case pointed back at the unmoved 2.0e-5 reads exactly step 2's failure — `assert np.float64(9.989956525036291e-05) < 2e-05`, `1 failed, 3 passed`, Status 1, 226 s (`20260904T033238Z_GEO-26.log:26282,26286,26303–26304`); the one-line edit was reverted before the recorded windows, so the 5.0× separation is executed, not asserted. **Recorded windows, `4 passed` / Status 0 at both widths, heavy by measurement (221–224 s, over standard's 180 s — the whole module, four cases, two 16-leg meshes):** `-n 2` `20260904T034052Z_GEO-26.log` (222 s) and `-n 12` `20260904T034441Z_GEO-26.log` (224 s). Class readings identical to step 2 and to each other across widths: **9.989957e-05 / 3.792060e-11 (`-n 12`: 3.792088e-11) / 3.792129e-11 / 9.990206e-05** against 2.0e-4 (`…034052Z:26267–26270`, `…034441Z:26377–26380`). **State census, now printed:** exactly **2** discrete terminal areas at 16 legs — 9.791961125e-05 m² ×**10** and 9.792939386e-05 m² ×22, i.e. **10 of 32 on the low area**, at both widths (`…034052Z:26271–26272`, `…034441Z:26381–26382`) — the pre-registered expectation to the count, no third state. Every step-2 anchor unmoved: all 32 sheets at `φ̂`-extent/chord = `ẑ`-extent/`w` = area/(chord·`w`) = 1.000000000000 with out-of-plane ≤ 1.94e-16 m, both halves `V_in`/`V_out` at their closed forms summing to `ring_port_volume_m3` = 1.000000000000, C32 spread 6.035e-16 / 5.998e-16 and mirror 5.551e-16 against 1e-12, `RING_LONGITUDINAL_SCALED_CELL_RECORD` **270 728** at ratio 1.000000 (that assert reachable for the first time), the default controls 265 621 and 110 786 both at ratio 1.000000, and the `[4]` case green with step 1's digits — 111 898 at ratio 1.000000, C8 4.273e-16 (`-n 12`: 4.477e-16), terminal 1.605442e-05. **One measurement corrected in passing, not absorbed:** the state census shows the **4-leg** rung is two-state as well (6 terminals at 9.793917647e-05 m², 2 at 9.794074883e-05 m², `…034052Z:15663`), so step 2's "at four legs all four gaps happened to land the same way" is wrong — the states there are merely 1.605e-05 apart rather than 9.99e-05, which is why that rung reads inside 2.0e-5. The 4-leg band did not move; only the comment now says what was measured. Known-issues entry for `test_the_longitudinal_ring_sheets_span_the_gap_chord_and_split_the_box[16]` retired in the same commit. | ✅ | standard (step 1 ≈ 50 s per width, measured; step 2 declared heavy, 158–160 s per width measured; step 3 heavy by measurement, 221–226 s per window) |
 
 
@@ -3400,6 +3401,57 @@ review confirms that reading before step 1 runs.
 >   driven gap) is the ruling step 2 now waits on, with the `n × H` facet
 >   form the remaining alternative. Both the step-2b and step-2c branches
 >   are now kept until that ruling.
+>   **Ruling, 2026-09-07 10:30 review — candidate (a): the 2×2 is
+>   assembled from driven-port currents alone, and that is not a new
+>   choice but the package's existing definition.**
+>   `_assemble_impedance_matrix` (`ports/sparameters.py:234–253`) builds
+>   `Z[i, k] = V_i / I_k` with `I_k` the *driven* port's current in solve
+>   `k` and `V_i` the path voltage read on every port of that solve; the
+>   undriven current has never entered `Z` on any route. Anchor (i)
+>   therefore gated a quantity no consumer reads, and the 03:00 ruling's
+>   premise — that the gap-face current and the conduction volume average
+>   are "the same current" on an open ring — is refuted by the measurement
+>   and by the definitions: the volume average (1.2e-3 A) is the induced
+>   current closing through the undriven ring's own stray capacitance, the
+>   gap face carries the gap capacitor's 1.5e-6 A, and an open-circuit `Z`
+>   needs the *terminal* current to vanish — which is exactly what the gap
+>   route reads. Two consequences. **(1) The right undriven-port anchor is
+>   the open-circuit condition itself**, pre-registered here:
+>   `|I_disp,undriven| / I_drive ≤ 1e-4` (measured **1.5407e-06** on both
+>   solves, `…093741Z:983, 1000, 1005`; predicted 1e-6 class, printed) —
+>   the hypothesis `Z = V / I_driven` rests on, asserted for the first
+>   time. Its separation control is the conduction volume average on the
+>   same undriven ring, **asserted ≥ 100×** the gap-face current (backed by
+>   the same comparison on the same fixture, `:1000`, `:1005`: 1.2065e-03
+>   / 1.6903e-03 A against 1.5407e-06, i.e. 783× / 1097×, the ceiling),
+>   read as the record that an open ring's induced current is not a
+>   terminal current. **(2) Anchor (i) and the loop-record control are
+>   deleted, not loosened**: each compared two different quantities to a
+>   third that neither is, so no `h`, band or fit could make them agree;
+>   the test docstring keeps both readings (9.998674e-01 / 9.993525e-01,
+>   separation 0.99×) with their log lines as the reason. Nothing that was
+>   ever green is touched; (ii)–(iv) stay asserted exactly as
+>   pre-registered on the branch, where they are already green. The
+>   `n × H` facet form is not needed and is not scoped. Step 2d (§9 item
+>   1) lands `f942dc2` under this ruling; step 2 proper (§9 item 4)
+>   follows on it, serial.
+> * **Step 2d (the gap-displacement route landed on the driven-port
+>   definition — scoped 2026-09-07 10:30 review; §9 item 1, full item
+>   there).** Take `f942dc2`'s `src/` and `tests/` content and its three
+>   logs (path checkout, not a whole-commit cherry-pick — the branch's
+>   plan/journal hunks conflict with `main`). In
+>   `tests/validation/test_two_torus_gap_displacement_current.py` replace
+>   the undriven-continuity test and the loop-record control by the
+>   open-circuit anchor and its separation control above; keep (ii) driven
+>   continuity ≤ 0.10, (iii) reciprocity at the imported
+>   `S_SYMMETRY_BAND`, (iv) the corrected mutual inside the imported
+>   `MUTUAL_TOLERANCE`, the conduction records printed beside. Solid
+>   fixture only, `-n 4`, ≈ 131 s measured (`…093440Z:1140`) plus rule
+>   (c)'s `test_port_package_sparameters.py` re-run. Landing deletes both
+>   `attempt/TH-15-step2b-…` (its numbers are in the 🚫 paragraph above)
+>   and `attempt/TH-15-step2c-…` (its code is landed) and retires the
+>   step-2c known-issues entry. `TH-15` stays 🟡; no §2 change; no band
+>   moved.
 > * **Step 3a (the birdcage hole as a `MeshGenerator` route — scoped
 >   2026-09-06 10:30 review, §9 item 4; step 2a's pattern on
 >   `birdcage_port_domain`).** One additive `as_hole=False` keyword: the
@@ -4019,6 +4071,7 @@ until that check returns.
 *Audit.* `auditor` PASS on all eight checks at `a2f8db0`: headers `fcfd101` = the closer's parent; 20 of 20 digits traced (`20260907T051231Z_PORT-16.log:1882–1893, 1895–1910, 1912–1915, 1917–1920, 1922–1924, 1997, 2065–2066`; window 1's sign signature `rel dev 2.000e+00` at `…050816Z:1882, 1885, 1888, 1891, 1917`); (i) and (iv) are executed asserts (`test_birdcage_power_identity.py::test_the_discrete_power_identity_closes_on_every_drive`, `::test_the_cauchy_schwarz_deficit_of_the_terminal_form_reproduces_the_gap`); `POWER_BALANCE_BAND` is imported nowhere in the module; `test_port_drive_superposition.py` is absent from the diff; no `src/`; 131 s inside standard. Re-traced by this review: `:1882` `rel dev 6.760e-15`; `:1917` `C - sheets_terminal 6.716202469e-05 W … rel dev 3.212e-13`. Both derivation repairs are ratified — the driven sheet's field-only form is not a theorem (its terminal current is driven by `E_t + E_src ĥ`), and a sign fixed in the test's own helper with the red window committed beside the green one is the MAG-10 / MAG-15 precedent. The control's 0.484102 outside the predicted [0.5, 2] window was printed, not asserted, exactly as rule (e) requires; the prediction was wrong by 3% and is not relied on anywhere.
 *Ruling (1) — `POWER_BALANCE_BAND` is a record, not a conservation band.* The quantity it bounds, `|P_acc − P_vol|/P_acc` with `P_acc` built from terminal currents, is not an identity for the discrete solution: it misses by the terminal form's Cauchy–Schwarz deficit, now measured at 1.0106× the terminal sheet dissipation on every drive and reproduced to 1e-13. The three green single-drive asserts (`test_birdcage_b1_plus_map.py:432`, `test_port_birdcage_ring_matrix.py:273, 466`, `test_port_drive_superposition.py:682, 713`) **stay exactly as they are** — nothing green is touched — but are henceforth read as records of a ~1% fixed offset at fixed `h`; a future red on any of them is attributed through step 1's split before anyone re-bands it. The **drive-level** assertion (`test_port_drive_superposition.py::test_the_drive_level_power_identity_closes`, the deliberate red at 11.648%) was asserting a fixed absolute deficit against a 5× smaller denominator; it is re-pointed at the identity that *is* exact — step 2. This is not a loosened bound: the replacement asserts two identities at 1e-6 and 1e-1 (measured 1e-14 / 1e-13 class on the singles) on the same solve where the old line asserted a non-identity at 1e-2, and the old residual stays printed with the band beside it. The `POST-6` known-issues entry stays open until step 2's commit retires it. The 18:00 review had listed this ruling for the 09-09 weekly; step 1's attribution is decisive enough to act on now, and the weekly may overrule it with step 3 in hand.
 *Ruling (2) — step 2 rescoped* (§9 item 2, full item there): the exact identity (i) at the imported `DISCRETE_IDENTITY_RTOL` and the attribution (ii) at the imported `ATTRIBUTION_RTOL` on the **superposed** ccw / cw drives in the module that holds the red, with `w = e_k` reproducing step 1's single-drive integrals to 1e-12 as the control of the generalisation; the row closes ✅ when it lands, and its example is `ports:9`'s power table — no new one. *Step 3 (named, not queued):* the `h`-exponent of `C/sheets_terminal − 1` on `PORT-14` step 1b's ×0.75 / ×0.6 conductor rungs — the only physics question left in this row, worth a slot only if the weekly wants the offset's `h`-dependence on record before ruling on the band's future.
+*Audit of the closure (step 2), 2026-09-07 10:30 review — PASS on all eight checks at `7a82688`.* Header `2f65cbe` = the closer's parent (`20260907T110826Z_PORT-16.log:1–16`); 10 of 10 digits traced (`:1942–1943`, `:1945–1946`, `:1948–1951`, `:2038`, `:2106–2107`); the disposed red's baseline `20260905T004202Z_POST-6.log` sits on `2d8ce09`, a strict ancestor; the anchors are executed asserts (`test_port_drive_superposition.py:959`, `:974`) against bounds imported from step 1's module; `POWER_BALANCE_BAND` (`test_birdcage_b1_plus_map.py:101`, 1e-2) is absent from the commit's diff and its single-drive assert at `test_port_drive_superposition.py:895–896` is unedited; no `src/`, `test_birdcage_power_identity.py` untouched; 104 s inside standard. Re-traced by this review: `:1942` `rel dev 5.877e-15`, `:1945` `P_acc − P_vol 3.511221378e-04 W … C − sheets_terminal 3.511221378e-04 W`. The auditor's one caveat — the `timeout -k 30 400` wrapper exceeds the 180 s standard figure — is the step-1 precedent (tier by measured elapsed) and changes nothing. Step 3 stays the weekly's; not queued.
 
 **`PORT-12` step 2 — width-qualify the record and bound the parallel drift
 (ruled 2026-08-30 02:15 weekly review, option (i) with a bounded envelope;
@@ -6152,6 +6205,75 @@ therefore one small `post/` addition plus a gate module. Degree 1, per the
 > for its sign — the closed form is exactly zero — predicted for its
 > size). Standard tier, `-n 2`, the 116 085-cell fixture. No homogeneity
 > or literature claim enters §2 from either step.
+>
+> **Step 4 — scoped 2026-09-07 10:30 review (§9 item 3), with step 4a's
+> correction (1) built in: on F-small the end rings contribute exactly
+> `R²/ρ² = 0.5` of the legs' own centre field (`−μ₀IRh/(πρ³)`,
+> `20260907T123926Z_WF-6.log:51`), so the anchor is the full
+> `birdcage_filament_field` (legs + rings) and a legs-only comparison
+> reads ~33% low by construction.** New module
+> `tests/validation/test_birdcage_b1_plus_closed_form.py`. **Fixture:**
+> `build_four_port_sweep` gains one additive keyword
+> `phantom_material=None` (default: today's saline; rule (c), gate module
+> re-run green in the same slot); the unloaded sweep passes
+> `HomogeneousMaterial(sigma=0.0, epsilon_r=1.0, mu_r=1.0)` on the same
+> 116 085-cell mesh at 10 MHz. Four single-drive solves through the map
+> module's `_solve_driven` (fields + `sheet_terminal_current` per sheet),
+> the quadrature weights through `ports.superpose_drives` (`POST-6`), the
+> superposed leg currents by the same linearity, `I_w,j = Σ_k w_k I_j^(k)`,
+> projected onto zero mean before they enter the closed form
+> (`|mean I| / max|I|` printed — predicted the C4-spread class ~1e-2,
+> never asserted; 4a raises on a non-zero sum). **Anchor (asserted):** the
+> CG1 `|B₁⁺|` of `WF-6` step 1b's estimator at eleven points in `z = 0` —
+> `r = 0, 0.1R … 0.5R` along `x̂`, and `0.1R … 0.5R` along `ŷ` — against
+> `|B₁⁺|` of `birdcage_filament_field(points, ring_radius=0.07,
+> coil_length=0.14, leg_currents=I_w)` (both `(B_x + jB_y)/2`), every
+> point inside a new pre-registered `CLOSED_FORM_BAND = 5.0e-2` —
+> predicted 2–3% (the CG1 map's own C4 record 0.9818%, the filament vs
+> the 2.5 mm wire ≈ (a/d)² ≲ 0.5% at `r ≤ 0.5R`, and the terminal-vs-
+> volume current split the two-torus measured at 2.2%), the worst point
+> printed. **Negative controls (rule (e) labels):** (α) the legs-only
+> closed form (`ring_currents` forced to zero) misses the FEM centre
+> field by more than `CLOSED_FORM_BAND` — **asserted** for its sign,
+> backed by 4a's exact identity at `…123926Z:51`; size **predicted**
+> ~33%, printed; (β) the mode-2 drive `w = (1, −1, 1, −1)` — the closed
+> form's centre `B₁⁺` is exactly zero (4a's (vi)), so the FEM's mode-2
+> centre `|B₁⁺|` is **asserted** ≤ `CLOSED_FORM_BAND` × the mode-1 centre
+> value; size **predicted** ~1e-2, ratio printed. The loaded (saline)
+> profile at the same points is printed beside the unloaded one, never
+> asserted. **Tier / ranks / cost:** four unloaded + four loaded solves on
+> 116 085 cells — `MAT-4` step 4 measured 132 s for four solves at `-n 4`
+> on the 120 499-cell rung (`20260907T003548Z_MAT-4-step4.log:2260`) ⇒
+> one window `-n 4`, `timeout -k 30 600`, heavy by ceiling, ≈ 270 s
+> class; the gate re-run `test_port_birdcage_four_port.py` at `-n 4`,
+> `timeout -k 30 400` (the same four solves, ≈ 115 s class per
+> `20260907T140233Z_MAT-4-step4-rerun.log`). **Traps already paid for:**
+> the leg azimuths and the leg-current sign are conventions — assert first
+> that the generator's leg azimuths (`tests/mesh/test_birdcage_port_tags.py`,
+> the constants 4a imported) equal 4a's `2πn/N` up to one common offset,
+> and rotate the evaluation points, never the currents, if they differ;
+> the sheet's terminal current is signed along the sheet's drive direction
+> — map it to "+ẑ along the leg" explicitly; the port gap is bridged by
+> the sheet's own surface current, so the closed form's leg is the full
+> `coil_length`, not the leg minus the gap (an 8 mm gap at the centre
+> plane is ~8% of the centre field — dropping it is the first wrong
+> answer); `evaluate_vector_field_parallel` is a collective over an
+> identical point list on every rank; `assemble_scalar` is rank-local;
+> `-k a or b`; complex build + `FEM_EM_REQUIRE_COMPLEX=1`,
+> `tests/environment` first; no `run_in_background`. **Scope:** the
+> closed-form gate at the centre plane of the *unloaded* coil at 10 MHz,
+> fixed `h`, CG1 — no homogeneity, CV, literature, absolute or Larmor
+> claim; `WF-6` stays 🟡 (its homogeneity target is still open); §2's B₁⁺
+> row gains one clause, "closed-form-gated at the centre plane of the
+> unloaded coil", only when this lands. **Negative result:** the centre
+> point missing by > 50% is a convention error — re-check azimuths and
+> sign before anything is committed (4a's (v) clause); the centre inside
+> the band with `r = 0.5R` outside is a statement about the CG1 map at
+> the wire's near field — known-issues with the eleven-point table, park,
+> stop; the centre missing with conventions verified is the finding that
+> the FEM's leg current is not the filament's (non-uniform along the
+> conductor) — known-issues, park, stop. `CLOSED_FORM_BAND` is never
+> widened.
 
 ### EX — Examples (§5.4 ramp)
 
@@ -6219,7 +6341,7 @@ demonstrates a **gated** capability from an angle no existing example covers.
 | `EX-51` | **The F-human birdcage in ParaView — the 16-leg, 32-ring-port coil at `ring_radius` 0.15 m (the 30 cm coil of the operator's 2026-08-25 directive) meshed at fixed absolute sizing, its 504 642 cells beside the similar-mesh control that fails the conductor-mass gate** (`GEO-25` step 2's newly gated capability, 2026-09-05: the F-human rung as a gated fixture — the **geometry / scale** angle: `mesh:8` / `mesh:9` / `mesh:11` show the 16-leg coil at 0.07 m only; no example shows the human-scale coil or *why* the sizing must not scale with the radius; opened 2026-09-05 18:00 review, §5.4 ramp). Executor `example-runner`, spawned foreground, both census windows through the harness; **real build** (a mesh, no solve). `examples/meshing/12_birdcage_f_human_rung.py` / `.md` (`mesh:12`): both rungs from the imported `_params(F_HUMAN_RING_RADIUS, scale_sizing=…)` of `tests/validation/test_birdcage_f_human_rung.py` — the single source of the parameter set — through `MeshGenerator.birdcage_port_domain`. **Anchors (asserted, imported, never restated):** branch-B cells vs `F_HUMAN_BRANCH_B_CELL_RECORD` (504 642) at `CELL_COUNT_BAND`; volume partition at the `GEO-18` `EXACT` 1e-9; all 32 ring-port terminal ratios inside `TERMINAL_RATIO_BAND` [0.95, 1.0]; meshed/CAD conductor mass ≥ `CAD_MASS_GATE` (0.95; record 0.965414). **Negative control (asserted — backed by the gate module's measurement of the same comparison on the same rungs, `20260905T183654Z_GEO-25.log:20024–20027`):** branch A (`scale_sizing=True`) reads `cad_ratio < CAD_MASS_GATE` (record 0.893028) with its cells at `F_HUMAN_BRANCH_A_CELL_RECORD` (204 977) at the band; assert `control < CAD_MASS_GATE <= fixture` and print the separation (record 0.072387). **Writes** one combined XDMF of the **fixture** mesh — `CellTags`, the 32 sheet facet tags through `write_xdmf_with_tags(…, facet_tags=…)`, and a DG0 `cell_diameter` array so the fixed sizing is visible against the coil's size; the control's mesh is *not* written (its numbers go to the log and the guide — the picture is the fixture, the control is the reason). **Tier / ranks / cost:** the gate module's two builds took 109 + 63 s at `-n 2` (`20260905T183654Z_GEO-25.log:9728, 20019`) ⇒ ≈ 200 s plus a ~15 s write; standard by host-runner window, `./scripts/run_examples.sh -e mesh:12 -n 2 -t 600`, real build, foreground. **Traps already paid for:** counts, areas and CAD masses are rank-local — the module's helpers reduce, use them; both rungs in one process is what the gate module does (no gmsh contamination seen there); full-filename guide references; `EX-47`'s runner-socket fallback; tag and DG0 arrays need distinct `name`s. **Scope:** a mesh, not a solve — no field, no port gate, no physics claim, **no Phase 6 cost claim** (the 64 MHz solve on this rung is unpriced and is the weekly's to date); no band moved. **Negative result:** a cell count off the record at the band through the example path while the module holds it is an example/test divergence — known-issues entry, stop. **Executed 2026-09-05 22:30 slot (`example-runner`, foreground, one 196 s window at `-n 2`, real build; `20260906T033712Z_EX-51.log`, Status 0):** every anchor an executed `assert` on an imported band — fixture cells **504 642** vs the record at relative **0.000e+00** (`:20003`), volume partition **1.000000000000** at `EXACT` 1e-9 (`:20004`), all **32** ring-port terminal ratios in **[0.974454791, 0.974455230]** inside [0.95, 1.0] (`:20005`), meshed/CAD conductor **0.965414** ≥ 0.95 (`:20006`); control cells **204 977** at relative **0.000e+00** (`:20009`), its ratio **0.893028** (`:20012`), and the two-sided `control < CAD_MASS_GATE <= fixture` asserted with the separation **0.072387** printed — 0.056972 below / 0.015414 above the gate (`:20014–20017`) — reproducing `20260905T183654Z_GEO-25.log:20024–20027` to the digit. Mesh wall times 109.73 s (fixture) / 62.98 s (control) (`:9722, :20000`). Under standing rule (a) the gate module gained one additive `keep_mesh: bool = False` keyword on `_build_rung` (three extra dict keys, populated only when set; its own two tests unchanged) and was re-run green in the same slot — `2 passed in 194.37s`, Status 0, 196 s (`20260906T034048Z_EX-51-gate-rerun.log:54, 60–61`). Census `dead=0 guide=0 stale=77 exit=2`, 44 → **45** examples (`20260906T034041Z_EX-51-postcensus.log:114, 116`). No band moved, no `src/` change, no solve, no Phase 6 cost claim. | ✅ | standard (host-runner, ≤ 600 s window; measured **196 s** at `-n 2`) |
 | `EX-40` | `\|B₁⁺\|` maps at 64 and 128 MHz — the Larmor frequency ladder in ParaView (`WF-6` step 2b's newly gated capability, 2026-08-31: the five identities hold at 64/128 MHz on one mesh at 21.89 / 12.50 phantom cells/λ — the **frequency** angle: `EX-38`/`EX-39` are 10 MHz only, `EX-34` runs the ladder but stops at S-matrices; commissioned 2026-08-31 10:30 review, §5.4 ramp; **queued 18:00 review, §9 item 2**) | ✅ *(2026-08-31 21:00 slot, `20260901T020415Z_EX-40.log`, Status 0, **113 s** at `-n 2` — every anchor met on the first run: gate (i) 9.5231e-03 / 9.2445e-03 reproducing step 2b to 4.4e-08 / 5.4e-08; gate (ii) 2.2187% / 2.1315% inside the 5% band, records to 1.1e-05 / 1.8e-06; the mis-rotated P3@+90° control 24.7535% / 25.2589% outside it, 11.2× / 11.9× separation; cells/λ 21.8936 / 12.5024 above the imported floor of 10; 51/51 valid; one mesh, ratio 1.000000, `reused_mesh`)* | standard (≈ 130 s; measured 113 s) |
 | `EX-52` | **Imposed-field SAR on the lossy sphere against its closed form in ParaView** — the `MAT-4` step 1 gate (lossy-sphere SAR to 3.5 % on an imposed uniform field at 64 / 128 MHz) has no example of its own: `th:6` shows the field, `mri:2` the mass-averaging operator on a coil, `ports:9` coil-driven quadrant powers; the SAR-on-an-imposed-field angle (Phase 3's ramp is one short: 2 examples + the `ans:1` benchmark against a bar of 3 — 2026-09-06 weekly audit) is uncovered. Same-stem guide; every record and band imported from the `MAT-4` gate module, never restated; the closed-form SAR profile and the FEM `σ\|E\|²/2ρ` written to one combined XDMF; negative control per rule (e), *asserted*: the vacuum sphere's SAR at 0 to 1e-12. Census both windows through the harness, pre-census before any file is written. **Queued 2026-09-06 18:00 review as §9 item 3** (`mat:2`, `examples/materials/02_lossy_sphere_sar.py`; the full rubric item — imports, the two-σ ratio control backed by `20260803T020448Z_MAT-4-step1-gate.log`, the 40 s cost — lives there). **✅ 2026-09-06 (22:30 slot).** `examples/materials/02_lossy_sphere_sar.py` + same-stem guide, `mat:2`, exit 0 in **48 s** at `-n 2`, complex (`20260907T034158Z_EX-52.log`); 74 020 cells, three solves in 40.1 s. Anchors all asserted on the gate module's *imported* bounds and all held: mean SAR **3.422 %** (σ = 0.05) and **3.536 %** (σ = 0.57) against the imported 10 % bound — reproducing the §7 record 3.42 % / 3.54 % to the printed digits, printed not asserted; interior `E_z` spread 0.067 % / 0.107 % against 2 %; `Im/Re E_z` 0.1752 vs 0.1755 and 1.9900 vs 2.0011 inside 10 %. Both negative controls asserted and held: the two-σ separation **4.850×** against the 3× floor (σ-blind 11.4000; the 4.855× ceiling printed, not asserted), and the σ = 0 vacuum sphere at `dissipated_power_w` **exactly 0.0** with mean SAR 0.0 ≤ 1e-12. One combined XDMF written (`materials_02_lossy_sphere_sar_combined.xdmf`: `SAR_pointwise`, `SAR_closed_form`, `CellTags`). Census unchanged across the pair — `dead=0 guide=0 stale=79 exit=2` both windows (`…033328Z_EX-52-precensus.log`, `…034407Z_EX-52-postcensus.log`). One **additive** change to the gate module under standing rule (a): `_solve_lossy_sphere` gains keyword-only `return_fields=False` (default = the pre-`EX-52` behaviour and return dict exactly), re-run green in the same slot — `12 passed` / 56 s (`…034300Z_EX-52-gate.log`). No band moved, no `src/` change. **Scope:** an example of the gated capability on an **imposed uniform field** at 64 MHz — no coil, no mass averaging, no Larmor-coil claim. | ✅ | standard (host-runner, ≤ 500 s window) |
-| `EX-53` | **Mass-averaged 10 g SAR on the coil-driven field in ParaView — four C95.3 averaging balls on the loaded F-small birdcage, the 4×4 of 10 g averages beside the pointwise map, the C4 covariance identity asserted at the imported band** (`MAT-4` step 4's newly gated capability, 2026-09-06 — the **output-quantity** angle: `mri:2` shows the averaging operator on an *imposed* uniform field, `ports:9` the coil-driven quadrant *powers*; no example shows a mass-averaged SAR on a *solved coil field*, nor the ball placement that makes the C4 identity a statement; opened 2026-09-07 03:00 review, §5.4 ramp — the example `MAT-4` step 4 owed the day it landed). Executor `example-runner`, spawned foreground (the spawn prompt states verbatim that the runner ends no turn while a window is running — the 22:30 slot's runner did and was killed), both census windows through the harness; complex build. `examples/mri/03_birdcage_mass_averaged_sar.py` / `.md` (`mri:3`): the four single-drive solves on the finer-phantom rung exactly as the gate builds them — every constant imported from `tests/validation/test_birdcage_sar_mass_averaged.py` (`CENTRE_RADIUS_M`, `WHOLE_PHANTOM_BALL_RADIUS_M`, `EXACT_IDENTITY_RTOL`, the ball masses, the quadrature degree, the C4 band through its import chain); if the module's solve helper does not expose the solved fields and ball geometry to a caller, one additive keyword under rule (a), gate re-run green in the same slot (132 s at `-n 4`). **Anchors (asserted, imported, never restated):** the four cyclic 10 g C4 pairs ≤ the imported 5% band (records 0.3303 / 0.0756 / 0.0574 / 0.3132% printed beside, not asserted); the whole-phantom ball reproduces the tagged `½∫σ\|E\|²` at `EXACT_IDENTITY_RTOL`; the four balls lie inside the phantom as the gate asserts it. **Negative control (asserted — backed by the gate's own measurement of the same comparison on the same fixture, `20260907T003548Z_MAT-4-step4.log:1943–1946`):** the mis-paired 180° centre reads above the band (sign asserted; its ~86% size printed as predicted, ceiling 100%). **Printed, not gated:** the 1 g column (verdict (b), the gate's own), the per-drive 10 g peaks labelled "not a C95.3 compliance figure" in the log and the guide. **Writes** one combined XDMF `mri_03_birdcage_mass_averaged_sar_combined.xdmf`: the P1-drive pointwise `SAR` (DG0), a DG0 integer `AveragingBall` field (0 outside, `k+1` inside 10 g ball `k`; the whole-phantom ball is the phantom and is not written), and `CellTags` — the guide's ParaView recipe thresholds on `AveragingBall` to show the four balls sitting in the SAR map. **Tier / ranks / cost:** the gate's four solves + 21 operator calls measured **132 s at `-n 4`** (`20260907T003548Z_MAT-4-step4.log:2260`) ⇒ `./scripts/run_examples.sh -e mri:3 -n 4 -t 600`, standard by host-runner window, predicted ≈ 150 s. **Traps already paid for:** `evaluate_vector_field_parallel` / `point_sar` are collectives over an identical point list on every rank (`EX-52`, `20260907T033551Z_EX-52.log:400`) — build any point list globally; `build_density_field` accepts a mapped `0.0` since `ff50ce0`; `mass_averaged_sar` at the imported degree 16, not the library default 12 (`mri:2`'s measured insufficiency); the census before any file is written. **Scope:** demonstrates the gated 10 g identity from the output-quantity angle; no absolute SAR, no compliance, no 1 g gate, no Larmor, no convergence; §2 unchanged. **Negative result:** any imported anchor missing through the example path while the module holds it is an example/test divergence — known-issues entry, stop. **✅ 2026-09-07 (09:00 implementer slot, `example-runner` foreground, first run).** `examples/mri/03_birdcage_mass_averaged_sar.py` / `.md` (`mri:3`) ran green at `-n 4` in **91 s** harness-wall / 87.9 s in-script (`20260907T140658Z_EX-53.log`, Exit 0, predicted ≈ 150 s). The gate reproduced exactly through the example path — 120 499 cells / 2 746 tag-3, four solves + 21 operator calls in 86.4 s (`:log tail`). Anchors, all **asserted on the module's imported constants, never restated**, all held: anchor (i) the whole-phantom ball **5.587038273e-08 W** vs the tagged `½∫σ|E|²` at **1.688e-14** relative (budget `EXACT_IDENTITY_RTOL` 1e-10) and vs step 3f's own record at 5.403e-11 (budget 1e-03); containment `r₀ + a₁₀g = 28.3650 mm < 30.0 mm`; anchor (ii) the four cyclic 10 g C4 pairs **0.3303 / 0.0756 / 0.0574 / 0.3132 %** against the imported unmoved 5.0 % band, reproducing the `MAT-4` step 4 records to the printed digits. Negative control asserted per rule (e): the mis-paired far-side centre reads **86.0132 / 85.9249 / 85.9671 / 85.9582 %** on the four drives — sign asserted `>` band and `≤` the 100 % ceiling, size printed as predicted (~90 %). Printed, not gated: the 1 g column (6.8383 / 2.9297 / 0.4116 / 4.7159 %, verdict (b) unchanged), the kernel-mass errors, and the four per-drive 10 g peaks (~6.33e-07 W/kg) labelled "not a C95.3 compliance figure". One combined XDMF written (`mri_03_birdcage_mass_averaged_sar_combined.xdmf`: pointwise `SAR`, the DG0 integer `AveragingBall` indicator, `CellTags`). One **additive** change to the gate module under standing rule (a): the module-scoped fixture body lifted verbatim to `_build_mass_averaged()` with the fixture reduced to a one-line wrapper, plus four additive return keys (`mesh`, `cell_tags`, `rho_field`, `solves`) — nothing removed or renamed, re-run green in the same slot at **23 passed / 113.87 s** (`20260907T140233Z_MAT-4-step4-rerun.log`). No band moved, no `src/` change. **Disclosed deviation:** the pointwise `SAR` field written to the XDMF weights by the phantom's physical `PHANTOM_RHO_KG_PER_M3`, not the gate's zero-elsewhere `rho_field` (which would divide by zero outside the phantom and exists only as a ball-mass denominator) — the same choice the gate's own `tagged` anchor makes, documented in the script docstring and guide §3 step 6. Census through the harness both sides: `dead=0 guide=0 stale=81 exit=2`, **46 → 47** runnable, `guide=0` on the new pair (`20260907T140219Z_EX-53-census-pre.log`, `…140926Z_EX-53-census-post.log`) — the `stale` drift from the 03:00 review's 79 is age-based on `time_harmonic` artifacts, present *before* any file of this chunk was written and not attributable to it (the weekly's `EX-30`-class refresh). | ✅ | standard *(host-runner window ≤ 600 s; measured 91 s at `-n 4`)* |
+| `EX-53` | **Mass-averaged 10 g SAR on the coil-driven field in ParaView — four C95.3 averaging balls on the loaded F-small birdcage, the 4×4 of 10 g averages beside the pointwise map, the C4 covariance identity asserted at the imported band** (`MAT-4` step 4's newly gated capability, 2026-09-06 — the **output-quantity** angle: `mri:2` shows the averaging operator on an *imposed* uniform field, `ports:9` the coil-driven quadrant *powers*; no example shows a mass-averaged SAR on a *solved coil field*, nor the ball placement that makes the C4 identity a statement; opened 2026-09-07 03:00 review, §5.4 ramp — the example `MAT-4` step 4 owed the day it landed). Executor `example-runner`, spawned foreground (the spawn prompt states verbatim that the runner ends no turn while a window is running — the 22:30 slot's runner did and was killed), both census windows through the harness; complex build. `examples/mri/03_birdcage_mass_averaged_sar.py` / `.md` (`mri:3`): the four single-drive solves on the finer-phantom rung exactly as the gate builds them — every constant imported from `tests/validation/test_birdcage_sar_mass_averaged.py` (`CENTRE_RADIUS_M`, `WHOLE_PHANTOM_BALL_RADIUS_M`, `EXACT_IDENTITY_RTOL`, the ball masses, the quadrature degree, the C4 band through its import chain); if the module's solve helper does not expose the solved fields and ball geometry to a caller, one additive keyword under rule (a), gate re-run green in the same slot (132 s at `-n 4`). **Anchors (asserted, imported, never restated):** the four cyclic 10 g C4 pairs ≤ the imported 5% band (records 0.3303 / 0.0756 / 0.0574 / 0.3132% printed beside, not asserted); the whole-phantom ball reproduces the tagged `½∫σ\|E\|²` at `EXACT_IDENTITY_RTOL`; the four balls lie inside the phantom as the gate asserts it. **Negative control (asserted — backed by the gate's own measurement of the same comparison on the same fixture, `20260907T003548Z_MAT-4-step4.log:1943–1946`):** the mis-paired 180° centre reads above the band (sign asserted; its ~86% size printed as predicted, ceiling 100%). **Printed, not gated:** the 1 g column (verdict (b), the gate's own), the per-drive 10 g peaks labelled "not a C95.3 compliance figure" in the log and the guide. **Writes** one combined XDMF `mri_03_birdcage_mass_averaged_sar_combined.xdmf`: the P1-drive pointwise `SAR` (DG0), a DG0 integer `AveragingBall` field (0 outside, `k+1` inside 10 g ball `k`; the whole-phantom ball is the phantom and is not written), and `CellTags` — the guide's ParaView recipe thresholds on `AveragingBall` to show the four balls sitting in the SAR map. **Tier / ranks / cost:** the gate's four solves + 21 operator calls measured **132 s at `-n 4`** (`20260907T003548Z_MAT-4-step4.log:2260`) ⇒ `./scripts/run_examples.sh -e mri:3 -n 4 -t 600`, standard by host-runner window, predicted ≈ 150 s. **Traps already paid for:** `evaluate_vector_field_parallel` / `point_sar` are collectives over an identical point list on every rank (`EX-52`, `20260907T033551Z_EX-52.log:400`) — build any point list globally; `build_density_field` accepts a mapped `0.0` since `ff50ce0`; `mass_averaged_sar` at the imported degree 16, not the library default 12 (`mri:2`'s measured insufficiency); the census before any file is written. **Scope:** demonstrates the gated 10 g identity from the output-quantity angle; no absolute SAR, no compliance, no 1 g gate, no Larmor, no convergence; §2 unchanged. **Negative result:** any imported anchor missing through the example path while the module holds it is an example/test divergence — known-issues entry, stop. **✅ 2026-09-07 (09:00 implementer slot, `example-runner` foreground, first run).** `examples/mri/03_birdcage_mass_averaged_sar.py` / `.md` (`mri:3`) ran green at `-n 4` in **91 s** harness-wall / 87.9 s in-script (`20260907T140658Z_EX-53.log`, Exit 0, predicted ≈ 150 s). The gate reproduced exactly through the example path — 120 499 cells / 2 746 tag-3, four solves + 21 operator calls in 86.4 s (`:log tail`). Anchors, all **asserted on the module's imported constants, never restated**, all held: anchor (i) the whole-phantom ball **5.587038273e-08 W** vs the tagged `½∫σ|E|²` at **1.688e-14** relative (budget `EXACT_IDENTITY_RTOL` 1e-10) and vs step 3f's own record at 5.403e-11 (budget 1e-03); containment `r₀ + a₁₀g = 28.3650 mm < 30.0 mm`; anchor (ii) the four cyclic 10 g C4 pairs **0.3303 / 0.0756 / 0.0574 / 0.3132 %** against the imported unmoved 5.0 % band, reproducing the `MAT-4` step 4 records to the printed digits. Negative control asserted per rule (e): the mis-paired far-side centre reads **86.0132 / 85.9249 / 85.9671 / 85.9582 %** on the four drives — sign asserted `>` band and `≤` the 100 % ceiling, size printed as predicted (~90 %). Printed, not gated: the 1 g column (6.8383 / 2.9297 / 0.4116 / 4.7159 %, verdict (b) unchanged), the kernel-mass errors, and the four per-drive 10 g peaks (~6.33e-07 W/kg) labelled "not a C95.3 compliance figure". One combined XDMF written (`mri_03_birdcage_mass_averaged_sar_combined.xdmf`: pointwise `SAR`, the DG0 integer `AveragingBall` indicator, `CellTags`). One **additive** change to the gate module under standing rule (a): the module-scoped fixture body lifted verbatim to `_build_mass_averaged()` with the fixture reduced to a one-line wrapper, plus four additive return keys (`mesh`, `cell_tags`, `rho_field`, `solves`) — nothing removed or renamed, re-run green in the same slot at **23 passed / 113.87 s** (`20260907T140233Z_MAT-4-step4-rerun.log`). No band moved, no `src/` change. **Disclosed deviation:** the pointwise `SAR` field written to the XDMF weights by the phantom's physical `PHANTOM_RHO_KG_PER_M3`, not the gate's zero-elsewhere `rho_field` (which would divide by zero outside the phantom and exists only as a ball-mass denominator) — the same choice the gate's own `tagged` anchor makes, documented in the script docstring and guide §3 step 6. Census through the harness both sides: `dead=0 guide=0 stale=81 exit=2`, **46 → 47** runnable, `guide=0` on the new pair (`20260907T140219Z_EX-53-census-pre.log`, `…140926Z_EX-53-census-post.log`) — the `stale` drift from the 03:00 review's 79 is age-based on `time_harmonic` artifacts, present *before* any file of this chunk was written and not attributable to it (the weekly's `EX-30`-class refresh). *Audited PASS, 2026-09-07 10:30 review, at `1b8d8e6`:* all four logs footered on header `f700f5e` = the parent; 25 of 25 digits traced (`20260907T140658Z_EX-53.log:1858, 1865–1868, 1875–1879, 1882–1887, 1897–1902`; `…140233Z_MAT-4-step4-rerun.log:2126`; both census logs `:118–120`); the anchors are executed asserts in the script (`03_birdcage_mass_averaged_sar.py:220, 249, 254, 280, 284, 289`) on constants imported from the gate module, which the example imports via `_build_mass_averaged` rather than re-implementing; the gate diff is the verbatim fixture lift plus four additive keys, nothing renamed; no `src/`; 91 s inside its declared 600 s host-runner window. Re-traced by this review: `:1865` `k=0->1  10 g    0.3303%   1 g    6.8383% (PRINTED NOT GATED)`, `:1878` `5.587038273e-08 W vs tagged integral 5.587038273e-08 W [1.688e-14 relative]`. | ✅ | standard *(host-runner window ≤ 600 s; measured 91 s at `-n 4`)* |
 
 **`EX-26` — Poynting power-balance audit** ✅ *(2026-08-20, 12:00 slot; commissioned 2026-08-20 03:00 review, §5.4 ramp on `POST-5` step 4; audited COMPLIANT 2026-08-21 18:00 review)*. `examples/time_harmonic/08_poynting_power_balance.py` + same-stem guide, `th:8`. **Closed as written, both fixtures on one run, no band moved.** Driven cylinder three-term **16.7465%** inside the imported `POYNTING_IMBALANCE_MAX` = 25%, two-term 116.7465% asserted to *miss* (inverted control); `TH-6` plane wave source-free **8.185716%**, legs 8.1205% / 0.0711% inside `POST5_STEP3_LEG_BAND` = 10%; J = 0 source term `== 0.0` W with 7 other keys bit-identical; σ-blind residual 83.2535% = **4.97×** (floor 3.0×, ceiling 5.97×); impressed-source term = 100.0% of the largest term. All 8 records inside a 1% band, worst drift 3.00e-04. Restated with provenance: `TH6_RECORD_IMBALANCE` = 0.08185716, `TH6_RECORD_FLUX_ERROR` = 0.081205, `TH6_RECORD_DISSIPATED_ERROR` = 0.000711, `TH6_CELLS` = 10368. Two combined XDMFs (`E` CG1; `B` and `½Re(E×H̄)` as DG0 — honest resolution of a degree-1 `curl E`, faceted in ParaView by choice). 1 405 / 10 368 cells, 4.7 s in-script, 8 s harness at `-n 2`.
 **Logs:** `20260820T170422Z_EX-26-example-n2.log` (exit 0), `20260820T170540Z_EX-26-docrefs.log` (`dead=0 guide=0 stale=0 exit=0`).
@@ -7144,189 +7266,205 @@ may reappear. If every item is done or blocked, the drain instruction at the
 end of this section applies: **stop and journal**.
 
 
-Last reviewed **2026-09-07, 03:00 review**. Interval (since the 18:00
+Last reviewed **2026-09-07, 10:30 review**. Interval (since the 03:00
 review): **four implementer slots scheduled, four fired, three landed on
-the first run, one parked correctly on a measured floor.** 19:30 `MAT-4`
-step 4 (implementer, 4 / 132 / 53 s at `-n 4` / `-n 2`): the C95.3 10 g
-operator on the four coil-driven F-small solves, C4 pairs **0.3303 /
-0.0756 / 0.0574 / 0.3132%** at the unmoved 5% band, whole-phantom identity
-1.576517e-14, mis-paired control ~86%, 1 g printed at 6.8383% worst
-(`20260907T003548Z_MAT-4-step4.log:1934–1947`); `MAT-4` 🟡 → ✅ with §2 /
-§6 / §7 moved in the landing. 21:00 `TH-15` step 2b (implementer, 222 s
-at `-n 4`): the Ampère-loop current gives a PEC hole a full 2×2 and both
-corrected mutuals land inside `MUTUAL_TOLERANCE` (0.946178 solid /
-0.930508 hole), but the DG0 point-sampled loop has an absolute floor of
-~1e-2 A — empty loop 8.874e-03 vs 1e-3, reciprocity 1.4338e-03 /
-4.4523e-03 vs 1e-3 — so the undriven currents are noise
-(`20260907T020614Z_TH-15.log:1050–1052, 1075, 1088, 1092`, on the
-branch); parked on `attempt/TH-15-step2b-20260907T021500Z` (`ae79a4f`),
-§9 item marked in the same commit (rule (d), third time). 22:30 `EX-52`
-(`example-runner` + the slot, 48 s at `-n 2`): `mat:2` lands the
-imposed-field SAR example, mean SAR **3.422 / 3.536%** vs the imported 10%,
-separation 4.850× vs 3×, σ = 0 at exactly 0.0 W
-(`20260907T034158Z_EX-52.log:254–268`), census unchanged at `stale=79` —
-after the runner ended its turn with a window in flight and was killed
-(`…033551Z`, footerless; the slot recovered in the foreground). 00:00
-`PORT-16` step 1 (implementer, 4 / 149 / 131 s at `-n 2`): the exact
-discrete power identity closes at **6.760e-15 … 1.048e-14** on all four
-drives and the ~6.7e-05 W gap **is** the terminal form's Cauchy–Schwarz
-deficit, reproduced to 3.212e-13 … 5.086e-13
-(`20260907T051231Z_PORT-16.log:1882–1893, 1917–1920`); `POST-6`'s
-mechanism (b) excluded, known-issues row added, row 🟡 pending the band
-ruling. Tree at review start: clean on `1e7a69a`; two `attempt/*`
-(`TH-15` steps 2 and 2b), no `recovered/*`; container Up 3 days;
-`fem-em-solver-xl` **not** Up; this 03:00 session itself fired (the
-09-06 session-limit pattern did not repeat overnight).
+the first run, one took its pre-registered negative-result exit.** 04:30
+`TH-15` step 2c (implementer, 4 / 131 / 103 s at `-n 4`): the
+gap-displacement port current lands as code but its anchor (i) — the
+undriven gap-face current equal to the conduction volume average —
+misses at **9.998674e-01 / 9.993525e-01** against 0.10, and the asserted
+loop-record control fails at 0.99× (`20260907T093741Z_TH-15.log:1000,
+1005, 1022–1025`, on the branch); (ii) 2.243038e-02, (iii) 5.2613e-04,
+(iv) 0.909618 all pass; parked on `attempt/TH-15-step2c-20260907T094500Z`
+(`f942dc2`), §9 items 1 and 6 marked in the same commit (rule (d),
+fourth consecutive), known-issues entry added. 06:00 `PORT-16` step 2
+(implementer, 4 / 106 / 4 / 104 s at `-n 2`): the exact discrete power
+identity on the superposed ccw / cw drive closes at **5.877e-15 /
+1.435e-14** against 1e-6 and its attribution at **9.881e-14 / 1.581e-13**
+against 1e-1, `w = e_k` bit for bit on twelve readings
+(`20260907T110826Z_PORT-16.log:1942–1951`); `PORT-16` 🟡 → ✅, the
+`POST-6` known-issues entry retired, `POWER_BALANCE_BAND` unmoved with
+its three green asserts. 07:30 `WF-6` step 4a (implementer, 4 s at
+`-n 1`, real): `birdcage_filament_field` lands with six exact identities
+green (`20260907T123926Z_WF-6.log:42–55`), and two of the item's own
+clauses measured wrong and corrected upward — the end rings contribute
+exactly `R²/ρ² = 0.5` of the legs' centre field on F-small (asserted at
+4.19e-16), and the `∇·B` control cannot separate an open circuit, so the
+control is Ampère's law (closed 1.887379e-15, legs-only 1.761971e-02,
+inside the computed O(1) ceiling). 09:00 `EX-53` (`example-runner`,
+foreground, 91 s at `-n 4`): `mri:3` reproduces the 10 g gate through the
+example path — whole-phantom identity 1.688e-14, C4 pairs 0.3303 / 0.0756
+/ 0.0574 / 0.3132% vs the imported 5%, far-side control ~86% asserted for
+sign (`20260907T140658Z_EX-53.log:1865–1879`), gate re-run 23 passed /
+115 s; census 46 → 47 runnable, `stale=81`. Tree at review start: clean
+on `1b8d8e6`; three `attempt/*` (`TH-15` steps 2, 2b, 2c), no
+`recovered/*`; container Up 3 days; `fem-em-solver-xl` **not** Up; every
+scheduled session since the 09-06 outage has fired, this one included.
 
 **Stalled tree (step 2).** None — clean at every preflight and at review
-start; no `recovered/*` branch. Both `attempt/*` branches are **kept**
-this interval, each with a named end: `…step2b…` (`ae79a4f`) is deleted by
-the slot that lands step 2c (ruling (1) below — its loop route is not
-landed, its numbers are fully in the §7 🚫 paragraph); `…step2…`
-(`4dedf89`) is the module step 2 proper re-runs (item 6) and is deleted by
-that landing.
+start; no `recovered/*` branch. All three `attempt/*` branches are
+**kept** this interval, each with a named end: `…step2c…` (`f942dc2`) is
+the code step 2d (item 1) lands by path checkout and is deleted by that
+landing; `…step2b…` (`ae79a4f`) is deleted by the same landing (its loop
+route is not landed and its numbers are fully in the §7 🚫 paragraph);
+`…step2…` (`4dedf89`) is the module step 2 proper re-runs (item 4) and
+is deleted by that landing.
 
-**Audit (§4).** Two chunks went ✅ this interval (`MAT-4`, `EX-52`) and
-one step landed a finding inside a 🟡 row (`PORT-16` step 1); one
-`auditor` ran on each — **three PASS**, nothing demoted. **`MAT-4`** at
-`ff50ce0`: three logs, headers `5a7fe19` = the closer's parent; 13 of 13
-digits traced (`20260907T003548Z_MAT-4-step4.log:1932–1937, 1943–1946`);
-the gate is an executed `assert` (`test_birdcage_sar_mass_averaged.py:563`,
-control `:587`, identity `:511, 519`); `C4_COVARIANCE_BAND` imported from
-`test_birdcage_b1_plus_map.py:120` and untouched; the one `src/` diff is
-exactly the disclosed `<= 0.0` → `< 0.0`; 132 s inside standard.
-Re-traced here: `:1943–1946`. One correction banked in the §7 entry — the
-footer says **132 s** (`:2260`), the row's 130 s is pytest's 129.71 s
-rounded. **`EX-52`** at `fcfd101`: 13 of 13 digits at
-`20260907T034158Z_EX-52.log` (Exit 48 s), the gate re-run `…034300Z` (`12
-passed`, 56 s), both headers `5d95cf9` = the parent; every anchor and
-both controls are `assert`s on bounds imported from
-`test_lossy_sphere_sar.py` (`02_lossy_sphere_sar.py:284–328`), the plan
-record printed only (`:350–354`); the gate diff is the additive keyword
-alone; the footerless `…033551Z` is disclosed as the trap record.
-Re-traced here: `:254` `3.422% vs 10% bound`, `:258` `separation 4.850x`.
-One auditor caveat, accepted: that log ends in the `IndexError`
-traceback — the runner's *process* died on the exception and the SIGKILL
-took the runner's *turn*; both are true, the journal's wording conflates
-them. **`PORT-16` step 1** at `a2f8db0`: 20 of 20 digits, both derivation
-repairs ratified — full citation in the §7 `PORT-16` ruling block.
+**Audit (§4).** Two chunks went ✅ this interval (`PORT-16`, `EX-53`);
+one `auditor` ran on each — **two PASS**, nothing demoted. **`PORT-16`**
+at `7a82688`: header `2f65cbe` = the closer's parent
+(`20260907T110826Z_PORT-16.log:1–16`); 10 of 10 digits traced
+(`:1942–1946`, `:1948–1951`, `:2038`, `:2106–2107`); the disposed red's
+baseline log sits on `2d8ce09`, a strict ancestor, so this is not a
+same-tree "reproduce and declare fixed"; the anchors are executed asserts
+(`test_port_drive_superposition.py:959`, `:974`) on bounds imported from
+step 1's module; `POWER_BALANCE_BAND` (`test_birdcage_b1_plus_map.py:101`)
+is absent from the diff and its single-drive assert (`:895–896`) is
+unedited; no `src/`; 104 s inside standard. Re-traced here: `:1942`
+`rel dev 5.877e-15`, `:1945` `P_acc − P_vol 3.511221378e-04 W … C −
+sheets_terminal 3.511221378e-04 W`. **`EX-53`** at `1b8d8e6`: four logs,
+headers `f700f5e` = the parent; 25 of 25 digits traced
+(`20260907T140658Z_EX-53.log:1858, 1865–1868, 1875–1879, 1882–1887,
+1897–1902`; `…140233Z_MAT-4-step4-rerun.log:2126`; census logs
+`:118–120`); the anchors are executed asserts in the script
+(`03_birdcage_mass_averaged_sar.py:220, 249, 254, 280, 284, 289`) on
+constants imported from the gate module, which the example imports via
+`_build_mass_averaged` rather than re-implementing; the gate diff is the
+verbatim fixture lift plus four additive keys; no `src/`; 91 s inside
+its declared 600 s host-runner window. Re-traced here: `:1865` `10 g
+0.3303%   1 g    6.8383% (PRINTED NOT GATED)`, `:1878` `1.688e-14
+relative`. `WF-6` step 4a is a step inside a 🟡 row and was not audited
+as a closure; its seven asserts and the 4 s footer were re-read by this
+review (`20260907T123926Z_WF-6.log:42–55`) when scoping step 4.
 
-**Rulings banked this review (step 4).** (1) **`TH-15` step 2b's unblock
-is a third route — the displacement current through the port's own gap
-— not (a) as offered and not (b).** (b) would fit a band to a floor the
-slot itself diagnosed as a sampling artifact; both (a) candidates read the
-discrete curl at the undriven wire, where the field is the driven wire's,
-so their error would still scale with the drive. The gap box is tagged
-cells on both meshes and its field is the port's own by two decades;
-continuity makes `I_k = I_drive δ + (1/g)∫_gap (σ + jωε) E·ĥ dV` the port
-current on solid and hole alike. Step 2c (item 1) lands it on the solid
-with the conduction current as the diagnostic; step 2 proper (item 6)
-re-runs the parked module on it. Full text in the §7 `TH-15` entry. (2)
-**`POWER_BALANCE_BAND` is a record, not a conservation band** — the
-terminal form misses by its own Cauchy–Schwarz deficit (1.0106×,
-reproduced to 1e-13), so the deliberate red at 11.648% was asserting a
-fixed absolute offset against a 5× smaller denominator. The three green
-single-drive asserts stay untouched as records; the drive-level assertion
-is re-pointed at the exact identity (`PORT-16` step 2, item 2), which
-asserts two identities at 1e-6 / 1e-1 where the old line asserted a
-non-identity at 1e-2 — stronger, not looser. The 18:00 review had listed
-this ruling for the weekly; step 1's attribution is decisive enough to act
-on now, and the weekly may overrule it with the ×0.75 / ×0.6 rungs (step
-3) in hand. (3) **`EX-52`'s `IndexError` is a live foot-gun and gets a
-guard** — `OPS-40` (item 5): the collective refuses a point list that
-differs across ranks, on every rank. (4) **`MAT-4` step 4 owes its
-example** — `EX-53` (`mri:3`, item 4), the output-quantity angle no
-example covers. (5) **The step 2b design deviation (the additive
-`diagnostic_loops` field) is moot** — the branch is not landed; the
-7-line `current_diagnostics` field on the estimate is the one piece step
-2c may cherry-pick. (6) **`ANS-4` step 2 stays listed and skipped** — the
-XL service is not Up.
+**Rulings banked this review (step 4).** (1) **`TH-15` step 2c's
+unblock is candidate (a) — the 2×2 from driven-port currents alone — and
+it is not a new choice but the package's existing definition.**
+`_assemble_impedance_matrix` (`ports/sparameters.py:234–253`) has always
+built `Z[i, k] = V_i / I_k` from the *driven* port's current; the
+undriven current never entered `Z` on any route, so anchor (i) gated a
+quantity no consumer reads. The 03:00 ruling's premise — that the
+gap-face current and the conduction volume average are the same current
+on an open ring — is refuted by the measurement and by the definitions:
+the volume average (1.2e-3 A) is the induced current closing through the
+undriven ring's own stray capacitance, the gap face carries the gap
+capacitor's 1.5e-6 A, and an open-circuit `Z` needs the *terminal*
+current to vanish, which is what the gap route reads. Anchor (i) and the
+loop-record control are **deleted, not loosened** (each compared two
+different quantities to a third that neither is — no `h`, band or fit
+could reconcile them; the readings stay in the docstring with their log
+lines), and the undriven port gets the anchor it should have had: the
+open-circuit condition `|I_disp,undriven| / I_drive ≤ 1e-4` (measured
+1.5407e-06), with the volume average asserted ≥ 100× above it as the
+separation control (783× / 1097× measured, `…093741Z:1000, 1005`).
+(ii)–(iv), already green on the branch, are untouched. The `n × H` facet
+form is not scoped. Step 2d (item 1) lands `f942dc2` under this ruling;
+step 2 proper (item 4) follows, serial. Full text in the §7 `TH-15`
+entry. (2) **`WF-6` step 4 proper is scoped with 4a's correction built
+in** — the anchor is the full legs + rings closed form (the rings are
+exactly half the legs' centre field on F-small), on the *unloaded*
+116 085-cell fixture through an additive `phantom_material` keyword on
+`build_four_port_sweep`, eleven points at `r ≤ 0.5R` inside a
+pre-registered `CLOSED_FORM_BAND = 5e-2` (predicted 2–3%), the legs-only
+form and the mode-2 drive as the two labelled controls (item 3). (3)
+**The 1 g SAR column gets its cost probe** — `GEO-27` (item 5,
+`mesh-probe`): a four-rung `phantom_resolution` ladder printing cells,
+mesh time and cells-across-the-ball, asserting nothing, so that a `MAT-4`
+step 5 can be scoped from numbers rather than the "≈ 8× cells" guess.
+(4) **`PORT-16` step 3 stays the weekly's** — named twice as optional
+(03:00 ruling, 06:00 journal); not queued. (5) **`ANS-4` step 2 stays
+listed and skipped** — the XL service is not Up. (6) **No example chunk
+opens** — `PORT-16` step 2's example is `ports:9`'s power table by the
+03:00 ruling (2); `WF-6` step 4a is a closed form inside a 🟡 row and its
+example arrives with step 4; `EX-53` is itself an example.
 
-**Plan work this review.** (1) §7: the `TH-15` entry gains the ruling and
-step 2c; the `PORT-16` row gains a ruling block (audit, the band ruling,
-step 2 rescoped, step 3 named); the `MAT-4` entry gains its audit record
-and the 132 s correction; new rows `OPS-40` and `EX-53`. (2) §9: four
-DONE/BLOCKED items removed, six ordinary items queued, the XL item kept
-last. (3) §2: the `POST-6` clause gains the attribution and the ruling.
-(4) known-issues: the `POST-6` entry gains the ruling row (retired by step
-2's commit, not by this one); no new entry — nothing red was found. (5)
-`docs/status/dashboard.md` refreshed.
+**Plan work this review.** (1) §7: the `TH-15` entry gains ruling (1)
+and step 2d; the `WF-6` entry gains step 4's scope; the `PORT-16` ruling
+block and the `EX-53` row gain their audit records; new row `GEO-27`.
+(2) §9: three DONE and two BLOCKED items removed, five ordinary items
+queued, the XL item kept last. (3) §2: unchanged — nothing gated moved
+(the `PORT-16` clause was moved by the 06:00 landing). (4)
+known-issues: the `TH-15` step-2c entry gains the ruling row (retired by
+step 2d's commit, not by this one); no new entry — nothing red was found.
+(5) `docs/status/dashboard.md` refreshed.
 
 **Automation health.** **Four of four scheduled slots fired and returned
-a journal** (`logs/automation/20260907T003001Z`, `…020001Z`, `…033001Z`,
-`…050001Z_implementer.log`, all ending `exit=0`); three landed first-run,
-one parked on a measured floor with the §9 item marked in the same commit
-(rule (d), third consecutive). First-run streak **35 of 35** over the
-slots that fired since the 09-03 18:00 review. **Foreground-executor
-rule: broken at 54** — the 22:30 slot's `example-runner` ended its turn
-with its first `./run_examples.sh` window running despite the rule in its
-spawn prompt; the slot diagnosed and recovered in the foreground (~15 min,
-one footerless log kept as evidence). Second `example-runner` occurrence
-(2026-09-01 00:00 was the first); the agent-definition edits waiting on
-the operator (dashboard item 5) are the fix, and `EX-53`'s item restates
-the rule. No docker-socket denial (3 of 75 slots overall; 0 of the last
-35); no allowlist denial; no compute-safety event; no container wedge;
-container Up 3 days; this 03:00 review fired on schedule. Tier labels:
-`MAT-4` step 4 commissioned heavy by ceiling, measured 132 s (standard);
-`TH-15` step 2b heavy by ceiling, 222 s at `-n 4`; `EX-52` standard, 48 /
-56 s; `PORT-16` step 1 standard, 131 s — every window inside its container
-timeout and the 660 000 ms host window. Housekeeping (`OPS-36`):
-`attempts.md` is **16 258 lines** against the 6 000 budget (the Wednesday
-weekly's call); `docs/testing/logs` holds 1 209 files; the example census
-reads `stale=79` (75 at `237a7af`), severity `report`, the drift not
-attributable to any chunk — the weekly's `EX-30`-class refresh.
+a journal** (`logs/automation/20260907T093001Z`, `…110001Z`, `…123001Z`,
+`…140001Z_implementer.log`, all ending `exit=0`); three landed first-run,
+one took its pre-registered negative-result exit with the §9 items marked
+in the same commit (rule (d), fourth consecutive). First-run streak **39
+of 39** over the slots that fired since the 09-03 18:00 review.
+**Foreground-executor rule: held on all four slots**, including the
+09:00 `example-runner` spawn that had broken it twice before — the
+spawn prompt carried the rule verbatim and the runner ended no turn with
+a window in flight; 4 held since the break at 54. No docker-socket denial
+(3 of 79 slots overall; 0 of the last 39); no allowlist denial; no
+compute-safety event; no container wedge; container Up 3 days; this
+10:30 review fired on schedule. Tier labels: `TH-15` step 2c heavy by
+ceiling, measured 131 / 103 s at `-n 4` (standard class); `PORT-16` step
+2 standard by measurement, 104 s at `-n 2`; `WF-6` step 4a smoke, 4 s at
+`-n 1`; `EX-53` standard, 91 s at `-n 4` inside its 600 s runner window
+— every window inside its container timeout and the 660 000 ms host
+window. Housekeeping (`OPS-36`): `attempts.md` is **16 600 lines**
+against the 6 000 budget (the Wednesday weekly's call);
+`docs/testing/logs` holds 1 218 files; the example census reads
+`stale=81` (79 at `5d95cf9`, 75 at `237a7af`), severity `report`, the
+two new names age-based `time_harmonic` artifacts present before `EX-53`
+touched anything — the drift is ~2 names per interval and the weekly's
+`EX-30`-class refresh is the fix.
 
-**Example chunk (§5.4).** `MAT-4` step 4 closed a quantitative gate on a
-capability no example demonstrates (`mri:2` is imposed-field, `ports:9`
-is quadrant powers) — `EX-53` opened, item 4. `EX-52` is itself an
-example. `PORT-16` step 1 is a step inside a 🟡 diagnosis row whose
-capability `ports:9` already shows; no example.
+**Example chunk (§5.4).** None opened — ruling (6): `PORT-16`'s closure
+is a power-accounting identity whose example is `ports:9`'s power table
+(03:00 ruling (2), "no new one"); `WF-6` step 4a is a pure-numpy closed
+form inside a 🟡 row, and its example is the step-4 comparison itself
+once gated; `EX-53` is an example.
 
-**§10 check (step 5).** Phase 5 (current) subgoal 4: the one item the
-weekly named between F-small and the Phase 5 exit (`MAT-4`'s coil-field
-step) **landed** this interval; what remains on that subgoal is the B₁⁺
-closed-form anchor (`WF-6` step 4a, item 3, carried) and the example the
-gate owes (item 4). The conductor lineage (operator directive 2026-09-04)
-has both hole meshes, its first gate and a working-but-floored hole
-current; item 1 is the current definition that unblocks step 2 (item 6)
-and, after it, step 3 proper. The Tier A ladder's accounting gap is
-attributed and item 2 closes its row. The backlog reaches §10 without new
-physics chunks; `OPS-40` is a guard the interval paid for. **For the
-weekly (2026-09-09):** re-confirm the `ANS-1` AGREE verdict against the
-promoted fixture (private); `ANS-4` step 2 once the XL service is Up;
-ratify or overrule ruling (2), with `PORT-16` step 3 (the ×0.75 / ×0.6
-rungs) if wanted; `TH-15` step 3 proper (the birdcage hole, 80 181 cells,
-costable from `PORT-9`'s records) once item 6 lands; `WF-6` step 4 proper
-after 4a; the 1 g SAR column's `h` rung (≈ 8× cells, above standard by
-construction — a cost probe first); the `TH-14` step 1 anchor; §6's Phase
-5 row (it still reads "one item away — `MAT-4` step 2", which landed as
-step 4) and Phase 6 row (still "serial on `TH-15` step 3a", which landed);
-the `attempts.md` window; the `stale=79` census drift. Not
-implementer-ready and not queued: `PORT-15` step 2, `PORT-14` step 2,
-`PORT-4`…`PORT-8`, `WF-7` / `WF-8`, `TH-5`, `TH-14`, `TH-16`…`TH-18`,
-`ANS-6`, `PORT-13` step 4, `ANS-2`.
+**§10 check (step 5).** Phase 5 (current) subgoal 4: the B₁⁺ closed-form
+anchor (`WF-6` step 4a) **landed** this interval and step 4 proper — the
+FEM against it on the unloaded coil — is item 3, the last item this
+review can see between F-small and the Phase 5 exit on that subgoal; the
+example `MAT-4` owed (`EX-53`) landed. The conductor lineage (operator
+directive 2026-09-04) has both hole meshes, its first gate, and now a
+port-current definition that is admissible by ruling (1); item 1 lands
+it, item 4 solves the first hole port on it, and step 3 proper (the
+birdcage hole, 80 181 cells) is the weekly's once item 4 lands. The Tier
+A ladder's accounting row (`PORT-16`) closed ✅ this interval. The SAR
+subgoal's open question — whether 1 g is gateable on this box — gets its
+cost probe (`GEO-27`, item 5). The backlog reaches §10 without new
+physics chunks; `OPS-40` (item 2) is a guard the 09-06 interval paid for.
+**For the weekly (2026-09-09):** re-confirm the `ANS-1` AGREE verdict
+against the promoted fixture (private); `ANS-4` step 2 once the XL
+service is Up; ratify or overrule the 03:00 `POWER_BALANCE_BAND` ruling,
+with `PORT-16` step 3 (the ×0.75 / ×0.6 rungs) if wanted; `TH-15` step 3
+proper once item 4 lands; a `MAT-4` step 5 from `GEO-27`'s table; the
+`TH-14` step 1 anchor; §6's Phase 5 row (it still reads "one item away —
+`MAT-4` step 2", which landed as step 4) and Phase 6 row (still "serial
+on `TH-15` step 3a", which landed); the `attempts.md` window; the
+`stale=81` census drift. Not implementer-ready and not queued: `PORT-15`
+step 2, `PORT-14` step 2, `PORT-4`…`PORT-8`, `WF-7` / `WF-8`, `TH-5`,
+`TH-14`, `TH-16`…`TH-18`, `ANS-6`, `PORT-13` step 4, `ANS-2`.
 
-**Residual `main` reds at `-n 2`: 5 deliberate/known, unchanged** — the
-two entry-3 names, `test_birdcage_volumes_partition_the_box`,
-`test_port_drive_superposition.py::test_the_drive_level_power_identity_closes`
-(item 2 re-points it by ruling (2)) and
+**Residual `main` reds at `-n 2`: 4 deliberate/known** (5 → 4: the
+drive-level power test is green on `main` since `7a82688`) — the two
+entry-3 names, `test_birdcage_volumes_partition_the_box` and
 `test_port_lumped_rlc_termination.py::test_the_terminated_solve_matches_the_circuit_reduction`
 (known-issues 🟡, the weekly's band ruling); plus the two degree-2 coil
 identity tests at 1e-9, `-n 8` only. The example-corpus census on `main`
-reads `dead=0 guide=0 stale=79 exit=2` at `5d95cf9`
-(`20260907T034407Z_EX-52-postcensus.log`), 46 examples.
+reads `dead=0 guide=0 stale=81 exit=2` at `f700f5e`
+(`20260907T140926Z_EX-53-census-post.log`), 47 examples.
 
-**Six ordinary items plus the XL item — items 1–5 independent of each
-other's results; item 6 is serial on item 1 and says so.** Files are
-disjoint: 1 `src/ports/gap_voltage.py` (one additive field, one additive
-branch) + a new `tests/validation/` module; 2
-`tests/validation/test_port_drive_superposition.py` (+ read-only imports
-from `test_birdcage_power_identity.py`); 3 `src/utils/analytical.py` (one
-additive function) + a new `tests/unit/` module; 4 `examples/mri/03_*`
-(+ guide); 5 `src/post/evaluation.py` (one guard) + a new `tests/post/`
-module; 6 the parked `tests/validation/test_two_torus_pec_hole_ports.py`.
-Item 5's guard sits in a function item 1 calls; it is a no-op on valid
-input, so the order does not matter.
+**Five ordinary items plus the XL item — items 1, 2, 3 and 5 independent
+of each other's results; item 4 is serial on item 1 and says so.** Files
+are disjoint: 1 `src/ports/gap_voltage.py` + `ports/excitation.py` (the
+parked additive keyword, branch and field) + the parked
+`tests/validation/test_two_torus_gap_displacement_current.py`; 2
+`src/post/evaluation.py` (one guard) + a new `tests/post/` module; 3
+`tests/validation/test_port_birdcage_four_port.py` (one additive keyword)
++ a new `tests/validation/` module; 4 the parked
+`tests/validation/test_two_torus_pec_hole_ports.py`; 5
+`scripts/probes/geo27_*.py` only. Item 2's guard sits in a function items
+1, 3 and 4 call; it is a no-op on valid input, so the order does not
+matter.
 
 **⚠️ Standing constraint on the compose allow — read before editing that
 file.** `docker-compose.yml` line 9 is `- ..:/workspace`, so write access
@@ -7388,275 +7526,90 @@ it** (`TH-15` step 3a, 16:30 slot — ratified above, ruling (2)); it is
 never widened silently and never on a quantity that was already green.
 
 
-1. 🚫 **BLOCKED — attempted 2026-09-07 04:30 slot, negative-result exit
-   taken.** Anchor (i) missed at **9.998674e-01 / 9.993525e-01** against
-   the pre-registered 0.10 and the asserted negative control failed at
-   **0.99×** against the predicted ~50×; (ii) 2.24e-02, (iii) 5.2613e-04,
-   (iv) corrected 0.909618 all passed. Parked on
-   `attempt/TH-15-step2c-20260907T094500Z` (`f942dc2`); full readings and
-   the mechanism in the §7 `TH-15` step-2c 🚫 paragraph and the
-   known-issues entry. **The miss is a statement about the two current
-   *definitions*, not about `h`** — the conduction route is a volume
-   average around a ring open at the gap, so it does not equal the
-   gap-face current on an open-circuited port at any resolution.
-   **Unblock:** a review ruling on whether a full 2×2 may be assembled
-   from **driven**-port gap currents alone (which (ii)/(iv) do support),
-   or the `n × H` facet form. **Item 6 below is serial on this and is
-   therefore blocked too.** Original item text follows unchanged.
-   **`TH-15` step 2c — the gap-displacement port current: `I = I_drive δ +
-   (1/g)∫_gap (σ + jωε) E·ĥ dV` as `current_route="gap_displacement"` on
-   `GapVoltagePortSpec`, anchored on the solid two-torus against the
-   conduction current, reciprocity and the closed-form mutual** (heavy by
-   ceiling, `-n 4`, complex build; `main`; independent; scoped by this
-   review, ruling (1) — the loop route on `ae79a4f` is **not** landed).
-   Executor: implementer. **The route.** One additive keyword-only field
-   `current_route: str = "conduction"` on the frozen spec (validate:
-   `{"conduction", "gap_displacement"}`); in `run_gap_voltage_port_case`
-   the conduction branch is today's code verbatim when the route is
-   `"conduction"` (the `non-positive conductor length` raise stays there),
-   and the displacement branch reads, per port `k`, `I_k = [I_drive if
-   driven] + (1/g_k) ∫_{gap k} (σ_gap + jωε_gap) E·ĥ_k dV` — `g_k` =
-   `spec.gap_length_m`, `ĥ_k` = the unit `spec.drive_direction`, the gap
-   material from the problem's material on `gap_cell_tag` (the two-torus
-   gap is the vacuum background: assert `σ_gap == 0` and print
-   `ε_gap/ε₀`; never hard-code ε₀), `_reduce` for the rank-safe sum. When
-   the conductor tag has volume, compute the conduction current too and
-   return it on `PortVoltageCurrentEstimate.current_diagnostics` (the
-   7-line additive field in `ae79a4f`'s `excitation.py` may be
-   cherry-picked; nothing else from that branch). **Module:** new
-   `tests/validation/test_two_torus_gap_displacement_current.py` on the
-   **solid** two-torus (`_build` from `test_port_lumped_two_torus`, the
-   184 176-cell mesh of `20260907T020614Z_TH-15.log:1045`), one 2×2 sweep
-   through `run_n_port_sparameter_sweep` on the displacement route with
-   the conduction current carried as the diagnostic — two solves, no
-   hole. **Anchors (asserted):** (i) *continuity on the undriven port* —
-   `|I_disp/I_cond − 1|` on P2 of the P1 drive and P1 of the P2 drive
-   ≤ **0.10**, a new pre-registered bound at the class of the imported
-   `MUTUAL_TOLERANCE`, predicted percent-class (gap fringing at `g ≪`
-   the wire radius), printed; (ii) *continuity on the driven port* —
-   `|(I_drive + I_disp)/I_cond − 1|` ≤ 0.10, predicted a few % (the loop
-   route read 1.86% here, `:1048`); (iii) *reciprocity* — `‖S − Sᵀ‖/‖S‖`
-   ≤ the imported `S_SYMMETRY_BAND` 1e-3, which the conduction route
-   holds at 4.76e-05 on this mesh and the loop route missed at
-   1.4338e-03 (`:1075`); (iv) *the closed-form mutual* — the corrected
-   `Im Z₁₂/ωM₁₂` inside the imported `MUTUAL_TOLERANCE` through the
-   systematics ladder exactly as `test_port_package_sparameters` applies
-   it, the conduction record 0.939822 printed beside. **Negative control
-   (asserted — backed by `…020614Z:1052`, the same comparison on the same
-   mesh):** the loop route's undriven-port ratio `0.032 + 0.190j` is the
-   record to beat — import it as a constant with its log line, assert
-   `|I_disp/I_cond − 1| < |I_loop/I_cond − 1|` and print the separation;
-   predicted ~50×, ceiling `1/(anchor (i)'s reading)`. **Why this is
-   conditioned on the right current:** the undriven gap field is the
-   port's own gap voltage over the gap length (V₂ = 1.07 V at `:1051`
-   across a gap far thinner than the wire) against an ambient field of
-   the driven wire's order ~1e2 V/m — two decades, where the loop route's
-   sample was the driven wire's field with the port's current at 1e-3 of
-   it. **Tier / ranks / cost:** the two solid solves are ~90 s each at
-   `-n 4` (`:1045–1075`) ⇒ one window `-n 4`, `timeout -k 30 500`, heavy
-   by ceiling, ≈ 220 s class; then rule (c)'s re-run of
+1. **`TH-15` step 2d — land the gap-displacement port current on the
+   driven-port definition: `f942dc2`'s route as it is, the undriven
+   anchor replaced by the open-circuit condition** (heavy by ceiling,
+   `-n 4`, complex build; `main`; independent; scoped by this review,
+   ruling (1) — the third attempt on the step-2 lineage and a *rescope*,
+   not a retry: the two failing asserts tested a false premise, and the
+   package's `Z` never consumed the quantity they gated). Executor:
+   implementer. **What to take:** path-checkout from `f942dc2` (not a
+   whole-commit cherry-pick — its plan / journal / `test-results.md`
+   hunks conflict with `main`): `src/fem_em_solver/ports/gap_voltage.py`
+   (the additive `current_route` keyword and its displacement branch),
+   `src/fem_em_solver/ports/excitation.py` (the additive
+   `current_diagnostics` field),
+   `tests/validation/test_two_torus_gap_displacement_current.py`, and the
+   three logs `docs/testing/logs/20260907T093428Z_TH-15.log`,
+   `…093440Z_TH-15.log`, `…093741Z_TH-15.log` with the branch's three
+   `test-results.md` rows copied by hand (`git show
+   f942dc2:docs/testing/test-results.md | tail -3`). `main` has not
+   touched `src/fem_em_solver/ports/` since `2f65cbe` — verify with `git
+   diff --stat 2f65cbe..HEAD -- src/fem_em_solver/ports/` empty before
+   the checkout. **The module change:** delete
+   `test_the_gap_current_is_the_conduction_current_on_the_undriven_port`
+   and `test_the_gap_route_beats_the_loop_route_on_the_undriven_port`,
+   recording in the module docstring why (ruling (1): the conduction
+   volume average of an open ring closes through the ring's stray
+   capacitance and is not a terminal current; the readings 9.998674e-01
+   / 9.993525e-01 and the 0.99× separation at `…093741Z:1000, 1005,
+   1022–1025` are kept there as the record). Add
+   `test_the_undriven_port_is_open_at_its_terminals`. **Anchors
+   (asserted):** (v) *the open-circuit condition* — on P2 of the P1 drive
+   and P1 of the P2 drive, `|I_disp,undriven| / I_drive ≤
+   OPEN_CIRCUIT_BAND = 1e-4`, a new pre-registered bound; measured
+   **1.5407e-06** on both (`…093741Z:983, 1000, 1005`), predicted 1e-6
+   class (it is `jω(ε₀A_gap/g)V_undriven`), printed with `V_undriven`
+   beside; (ii) *continuity on the driven port* `|(I_drive +
+   I_disp)/I_cond − 1| ≤ 0.10` — unchanged, green at 2.243038e-02 /
+   2.236565e-02 (`:1013`, `:1018`); (iii) *reciprocity* `‖S − Sᵀ‖/‖S‖` ≤
+   the imported `S_SYMMETRY_BAND` — unchanged, green at 5.2613e-04
+   (`:1030`); (iv) *the closed-form mutual* — the corrected `Im Z₁₂/ωM₁₂`
+   inside the imported `MUTUAL_TOLERANCE` — unchanged, green at
+   0.909618 (`:1029`), the conduction record 0.939822 printed beside.
+   **Negative control (asserted — backed by the same comparison on the
+   same fixture, `…093741Z:1000, 1005`):** the conduction volume average
+   on the *undriven* ring, `|I_cond,undriven| / |I_disp,undriven| ≥
+   100` — measured 783× / 1097× (1.2065e-03 / 1.6903e-03 A over
+   1.5407e-06), which is also the ceiling; printed beside. It is the
+   record that an open ring's induced current is not its terminal
+   current, and it is what makes the old anchor (i) a category error
+   rather than a resolution question. **Tier / ranks / cost:** the two
+   solid solves measured **131 s** at `-n 4` (`…093440Z:1140`) ⇒ one
+   window `-n 4`, `timeout -k 30 500`, heavy by ceiling, standard by
+   measurement; then rule (c)'s re-run of
    `tests/validation/test_port_package_sparameters.py` (the default
    keyword leaves the conduction route untouched by construction — this
-   window is the proof; `-n 4`, `timeout -k 30 600`). **Traps already
-   paid for:** `evaluate_vector_field_parallel` is a collective over an
-   identical point list on every rank (`EX-52`); `_tag_volume` /
-   `_reduce` are the rank-safe reductions; the sign convention is
-   `ρ̂ × (−ẑ) = φ̂` (`ae79a4f`'s `_plane_basis` assert) — anchor (ii)'s
-   sign is the check; `-k a or b`; complex build +
-   `FEM_EM_REQUIRE_COMPLEX=1`, `tests/environment` first; no
-   `run_in_background`. **Scope:** a second current definition, gated on
-   the solid fixture only — no hole solve, no `Re Z = 0` claim, no §2
-   change, no band moved; `TH-15` stays 🟡; the landing slot deletes
-   `attempt/TH-15-step2b-20260907T021500Z` (its numbers are in §7).
-   **Negative result:** (i) outside 0.10 means the gap's discrete field is
-   not the port current at this `h` — known-issues with all four
-   readings, park on `attempt/*`, mark this item 🚫 in the same commit,
-   stop; the remaining candidate is the `n × H` facet form, a review's to
-   scope. (iii) missing while (i)/(ii) pass is recorded as the route's
-   measured reciprocity, printed, never asserted at a fitted band — park,
-   stop.
+   window is the proof; `-n 4`, `timeout -k 30 600`, ≈ 134 s class from
+   `EX-18`'s record). **Traps already paid for:** the branch's code was
+   written against `a2d21b2` and `main` is five commits on, none in
+   `ports/` — check, do not assume; `evaluate_vector_field_parallel` is a
+   collective over an identical point list on every rank (`EX-52`);
+   `_tag_volume` / `_reduce` are the rank-safe reductions; the sign
+   convention is `ρ̂ × (−ẑ) = φ̂` — anchor (ii)'s sign is the check;
+   `-k a or b`; complex build + `FEM_EM_REQUIRE_COMPLEX=1`,
+   `tests/environment` first; no `run_in_background`. **Scope:** a
+   second current definition, gated on the solid fixture only — no hole
+   solve, no `Re Z = 0` claim, no §2 change, no band moved (nothing
+   green is touched; two asserts on a refuted premise are removed with
+   their readings kept); `TH-15` stays 🟡; the landing slot deletes
+   **both** `attempt/TH-15-step2b-20260907T021500Z` and
+   `attempt/TH-15-step2c-20260907T094500Z` and **retires the `TH-15`
+   step-2c known-issues entry in the same commit** (discipline: entries
+   leave only with the fixing commit). **Negative result:** (v) missing
+   — the undriven gap current above 1e-4 of the drive — means the
+   fixture's undriven port is *not* open at its terminals and the
+   hypothesis `Z = V / I_driven` rests on fails on this fixture: a real
+   finding, known-issues with the reading, park, mark this item 🚫 in
+   the same commit (rule (d)), stop. (ii)–(iv) are already green on this
+   exact code at `f942dc2`, so a miss there is a checkout or regression
+   finding — stop and report, do not debug the physics.
 
-2. ✅ **DONE — landed 2026-09-07, 06:00 implementer slot, first run.**
-   (i) closes at **5.877e-15 / 1.435e-14** against the imported 1e-6 and
-   (ii) at **9.881e-14 / 1.581e-13** against 1e-1 on the ccw / cw
-   quadrature drives; the `w = e_k` control reproduces step 1's exact
-   shares at **rel dev 0.000e+00 on all twelve readings** against 1e-12
-   (`20260907T110826Z_PORT-16.log:1942–1946, 1948–1951`); `23 passed …
-   101.91s`, 104 s at `-n 2`. `POWER_BALANCE_BAND` unmoved with its three
-   green asserts, the 1.164806e-01 terminal residual printed and asserted
-   nowhere; `PORT-16` ✅, the `POST-6` known-issues entry retired in the
-   same commit. Original item text follows unchanged.
-   **`PORT-16` step 2 — the exact discrete power identity and its
-   attribution on the *superposed* drive, the deliberate red re-pointed
-   by ruling (2)** (standard, `-n 2`, complex build; `main`; independent;
-   rescoped by this review). Executor: implementer. **The change, in
-   `tests/validation/test_port_drive_superposition.py` only:**
-   `test_the_drive_level_power_identity_closes` stops asserting the
-   terminal form `|P_acc − P_vol|/P_acc ≤ POWER_BALANCE_BAND` on the ccw /
-   cw quadrature drives and asserts instead, on the same superposed field
-   `E_w`: **(i)** `P_src,exact(w) = P_vol(w) + P_sheet,exact(w)` at the
-   imported `DISCRETE_IDENTITY_RTOL` (1e-6; step 1 measured 1e-14 class
-   on singles, `20260907T051231Z_PORT-16.log:1882–1893`), and **(ii)** the
-   attribution `P_acc(w) − P_vol(w) = C(w) − sheets_terminal(w)` at the
-   imported `ATTRIBUTION_RTOL` (1e-1; measured 1e-13 class on singles,
-   `:1917–1920`), digits printed. The helpers are
-   `test_birdcage_power_identity.py`'s `_source_power_w`,
-   `_sheet_field_dissipation_w`, `_sheet_total_field_dissipation_w`,
-   `_exact_shares`, `_terminal_sheet_powers`, generalised to a weight
-   vector by linearity — the source functional is `Σ_s conj(w_s)·L_s`-
-   shaped in the module's own sign convention (its docstring records the
-   sign it paid for), and sheet `s` of the superposed drive carries the
-   impressed `w_s E_src,s ĥ` — import them read-only; if a signature must
-   change, change it in the step-1 module and re-run that module green in
-   the same slot (131 s). **Control of the generalisation (asserted):**
-   `w = e_k` reproduces step 1's single-drive `P_src,exact`, `P_sheet,
-   exact` and `C` for drive `k` to **1e-12** (the same solves, the same
-   integrals — bit-for-bit is the expectation, 1e-12 the bound). **The
-   record:** the terminal residual (11.648% ccw, its cw twin) is
-   **printed** with `POWER_BALANCE_BAND` beside it, labelled a record of
-   the terminal form's Cauchy–Schwarz deficit against a drive-dependent
-   denominator, asserted nowhere on the superposed drives; the four
-   single-drive asserts in the module and every other consumer of the
-   band are **not edited**. The module's existing blind-sum negative
-   control stays as it is. **Tier / ranks / cost:** `POST-6` step 1b ran
-   this module at 104 s / `-n 2` (`20260905T110305Z_POST-6.log:2112`); the
-   new integrals add no solve ⇒ `-n 2`, `timeout -k 30 400`, standard by
-   measurement, heavy by ceiling. **Traps already paid for:** the
-   `_source_power_w` sign (window 1 of step 1 read `rel dev` exactly
-   2.000e+00 — that signature means the sign, not the physics);
-   `assemble_scalar` is rank-local; `-k a or b`; the deliberate red is
-   red on purpose — do not "fix" it by any route other than the two
-   identities above. **Scope:** closes `PORT-16` ✅ (row status moved in
-   the landing commit; §2's `POST-6` clause moved to say the drive-level
-   identity is gated in its exact form) and **retires the `POST-6`
-   known-issues entry in the same commit** (discipline: entries leave
-   only with the fixing commit); no `src/` change, no band widened —
-   `POWER_BALANCE_BAND` keeps its value and its three green asserts;
-   step 3 (the `h`-exponent on the ×0.75 / ×0.6 rungs) is not this item.
-   **Negative result:** (i) missing on the superposed field while holding
-   on every single drive means the sheet terms do not superpose as
-   written (a cross-term in the impressed field) — known-issues with the
-   four `w = e_k` readings and the ccw / cw residuals, the old assertion
-   left in place, park, stop.
-
-3. ✅ **DONE 2026-09-07 (07:30 implementer slot) — `7 passed` / Status 0 /
-   4 s, `20260907T123926Z_WF-6.log`; all six identities green on the first
-   run, and two of this item's own clauses measured wrong and corrected in
-   the code (the end rings' centre transverse field is **not** zero — it is
-   `−μ₀IRh/(πρ³)`, exactly half the legs' own on F-small — and the `∇·B`
-   negative control cannot separate an open circuit, so the control is now
-   Ampère's law; digits and derivations in the §7 `WF-6` entry).** Original
-   item text follows.
-   **`WF-6` step 4a — the birdcage mode-1 Biot–Savart closed form as
-   pure numpy: finite legs plus ring arcs, gated on exact identities, no
-   FEM** (smoke, `-n 1`, real build; `main`; independent; scoped by this
-   review, ruling (4) — the anchor the weekly's B1+ target needs before
-   step 4 proper can be stated). Executor: implementer. One additive
-   function in `src/fem_em_solver/utils/analytical.py` beside
-   `straight_wire_magnetic_field` / `circular_loop_magnetic_field_on_axis`:
-   `birdcage_filament_field(points, *, ring_radius, coil_length,
-   leg_currents, ring_currents=None)` — `N` = `len(leg_currents)` straight
-   filaments of length `coil_length` at radius `ring_radius`, azimuths
-   `2πn/N`, complex currents allowed; two end rings as `N` arcs each,
-   arc currents from Kirchhoff at every leg–ring node with zero mean
-   around the ring (the unique closed solution when `Σ I_n = 0`; raise
-   otherwise), the top and bottom rings opposite; Biot–Savart of a finite
-   segment in closed form, of an arc by Gauss–Legendre (64 points per
-   arc); returns `B` (T) at the points. New module
-   `tests/unit/test_birdcage_filament_field.py`. **Anchors (asserted,
-   all exact):** (i) *the infinite-line limit* — one leg with
-   `coil_length` = 10³ × `ring_radius` reproduces the imported
-   `straight_wire_magnetic_field` at the centre plane to **1e-5**
-   (truncation `2(R/L)²` = 2e-6); (ii) *the ring limit* — one ring's `N`
-   arcs with a uniform current reproduce the imported
-   `circular_loop_magnetic_field_on_axis` at five on-axis points to
-   **1e-10**; (iii) *the mode-1 pattern on the F-small geometry*
-   (`ring_radius` 0.07, `coil_length` 0.14 — the generator's defaults,
-   imported, `N` = 4, `I_n = I cos(2πn/N)`): `∇·B` by central differences
-   at 20 interior points ≤ **1e-8** × `|B|/R` (a closed circuit's
-   Biot–Savart field is solenoidal); (iv) *C4 covariance* — rotating the
-   points by 90° and the pattern by one leg gives `R₉₀ B` to 1e-12; (v)
-   *the finite-length factor* — the centre field over the infinite-line
-   sum equals `L/√(L² + 4R²)` = **0.7071** to 1e-6 (rings contribute zero
-   transverse field at the centre by symmetry — assert that too); (vi)
-   *the mode-2 zero* — `I_n = I cos(4πn/N)` gives `B_x = B_y = 0` at the
-   centre to 1e-12 × the mode-1 centre field (step 4's negative control,
-   closed-form side). **Negative control (asserted — the ceiling is
-   computed):** the legs *without* their ring arcs (`ring_currents`
-   forced to zero through the keyword) are not a closed circuit and (iii)
-   reads ≥ **100×** the closed pattern's — ceiling `O(1)`; print both.
-   **Tier / ranks / cost:** pure numpy, `PORT-15` step 1's shape (10
-   passed in 1.8 s) ⇒ smoke, `-n 1`, `timeout -k 30 120`. **Traps already
-   paid for:** `pytest -k a or b` argv splitting; the `-n 1` window still
-   goes through the harness; no FEM import in the module (keep
-   `dolfinx` out of it so the unit tier stays seconds). **Scope:** the
-   closed form and its identities only — no FEM solve, no comparison to
-   any `|B₁⁺|` map, no homogeneity claim, no §2 change; step 4 proper
-   (the unloaded F-small solve — phantom σ = 0, εᵣ = 1 — its
-   `|B₁⁺|` radial profile at r ≤ 0.5 R against this function with the
-   leg current read from the FEM, the loaded map printed beside, the
-   mode-2 drive as the ≥ 10× control) is queued by the next review with
-   4a's function name in hand. **Negative result:** any exact identity
-   failing is a defect in the function — fix in-slot (pure numpy, no
-   band involved); if (v) does not read 0.7071 the geometry convention is
-   wrong and the item's arithmetic is re-checked before anything is
-   committed.
-
-
-4. ✅ **DONE — landed 2026-09-07, 09:00 implementer slot, first run**
-   (`example-runner`, foreground, no window left running). `mri:3` green at
-   `-n 4` in **91 s** (`20260907T140658Z_EX-53.log`): anchor (i)
-   5.587038273e-08 W vs the tagged integral at **1.688e-14** relative
-   (budget 1e-10); anchor (ii) the four cyclic 10 g C4 pairs **0.3303 /
-   0.0756 / 0.0574 / 0.3132 %** against the imported unmoved 5 % band; the
-   mis-paired far-side control asserted above the band at 86.0132 /
-   85.9249 / 85.9671 / 85.9582 % (size printed as predicted). Rule-(a)
-   additive lift on the gate fixture, re-run green **23 passed / 113.87 s**
-   (`20260907T140233Z_MAT-4-step4-rerun.log`); census 46 → 47 runnable,
-   `dead=0 guide=0 stale=81` both windows. `EX-53` ⬜ → ✅. Original item
-   text follows unchanged.
-   **`EX-53` — mass-averaged 10 g SAR on the coil-driven field in
-   ParaView** (standard, host-runner window ≤ 600 s, `-n 4`, complex
-   build; `main`; independent; opened by this review under §5.4 — the
-   example `MAT-4` step 4 owed the day it landed; full item in the §7
-   `EX-53` row). **Executor `example-runner`, spawned foreground; the
-   spawn prompt states, verbatim, that the runner ends no turn while a
-   harness or `./run_examples.sh` window is running — the 22:30 slot's
-   runner did and was SIGKILLed, and the slot paid ~15 min to recover.**
-   `examples/mri/03_birdcage_mass_averaged_sar.py` / `.md` (`mri:3`): the
-   gate's four single-drive F-small solves on the finer-phantom rung, the
-   4×4 of 10 g averages at the four C4 centres, the whole-phantom ball,
-   the P1 pointwise SAR and a DG0 `AveragingBall` indicator field written
-   to one combined XDMF with `CellTags`. **Anchors (asserted, imported
-   from `tests/validation/test_birdcage_sar_mass_averaged.py`, never
-   restated):** the four cyclic 10 g pairs ≤ the imported 5% band (the
-   records 0.3303 / 0.0756 / 0.0574 / 0.3132% printed beside, not
-   asserted); the whole-phantom ball vs the tagged integral at
-   `EXACT_IDENTITY_RTOL`; ball containment as the gate asserts it.
-   **Negative control (asserted — backed by
-   `20260907T003548Z_MAT-4-step4.log:1943–1946`):** the mis-paired 180°
-   centre reads above the band (sign asserted, ~86% size printed as
-   predicted, ceiling 100%). **Printed, not gated:** the 1 g column, the
-   per-drive 10 g peaks labelled "not a C95.3 compliance figure". **Rule
-   (a):** if the gate's solve helper does not expose fields and ball
-   geometry to a caller, one additive keyword, gate re-run green in the
-   same slot (132 s at `-n 4`). **Cost:** the gate measured **132 s at
-   `-n 4`** for the same four solves (`…-step4.log:2260`) ⇒
-   `./scripts/run_examples.sh -e mri:3 -n 4 -t 600`, predicted ≈ 150 s.
-   **Traps:** `point_sar` / `evaluate_vector_field_parallel` are
-   collectives over an identical point list on every rank
-   (`20260907T033551Z_EX-52.log:400`); the quadrature degree is the
-   imported 16, not the library's 12; census before any file is written.
-   **Scope:** the gated 10 g identity from the output-quantity angle — no
-   absolute SAR, no compliance, no 1 g gate, no Larmor, no convergence,
-   §2 unchanged. **Negative result:** an imported anchor missing through
-   the example path while the module holds it is an example/test
-   divergence — known-issues, stop.
-
-5. **`OPS-40` — `evaluate_vector_field_parallel` refuses a point list
+2. **`OPS-40` — `evaluate_vector_field_parallel` refuses a point list
    that differs across ranks, on every rank** (smoke + two standard
-   re-runs, `-n 2`; `main`; independent; opened by this review, ruling
-   (3); full item in the §7 `OPS-40` row). Executor: implementer. One
+   re-runs, `-n 2`; `main`; independent; opened by the 03:00 review, its
+   ruling (3), carried unchanged; full item in the §7 `OPS-40` row).
+   Executor: implementer. One
    guard at the top of the collective: `counts = comm.allgather(n_points)`;
    if they differ, raise `ValueError` on **every** rank naming each
    rank's count and the rule ("collective: the point list must be
@@ -7679,14 +7632,76 @@ never widened silently and never on a quantity that was already green.
    found — known-issues with the module name, do not weaken the guard,
    stop.
 
-6. 🚫 **BLOCKED — serial on item 1, which took its negative-result exit on
-   2026-09-07 (04:30 slot): there is no landed `gap_displacement` route to
-   swap this module's current extraction onto. Unblocked by the same
-   review ruling item 1 now waits on.** Original item text follows.
-   **`TH-15` step 2 proper — the parked PEC-hole 2×2 module re-run on the
+3. **`WF-6` step 4 — the FEM `|B₁⁺|` of the unloaded F-small birdcage
+   against `birdcage_filament_field` at the centre plane, legs + rings,
+   the leg currents read from the FEM** (heavy by ceiling, `-n 4`, complex
+   build; `main`; independent; scoped by this review, ruling (2) — full
+   scope in the §7 `WF-6` "Step 4" paragraph). Executor: implementer.
+   **Fixture:** `build_four_port_sweep` gains one additive keyword
+   `phantom_material=None` (default today's saline; the unloaded case
+   passes `HomogeneousMaterial(sigma=0.0, epsilon_r=1.0, mu_r=1.0)`),
+   rule (c): `tests/validation/test_port_birdcage_four_port.py` re-run
+   green in the same slot. New module
+   `tests/validation/test_birdcage_b1_plus_closed_form.py`: four
+   single-drive solves through the map module's `_solve_driven` (fields +
+   `sheet_terminal_current` per sheet), the quadrature weights through
+   `ports.superpose_drives`, the superposed leg currents by the same
+   linearity `I_w,j = Σ_k w_k I_j^(k)`, projected onto zero mean before
+   the closed form (`|mean I| / max|I|` printed, predicted ~1e-2, never
+   asserted). **Anchor (asserted):** the CG1 `|B₁⁺|` of `WF-6` step 1b's
+   estimator at eleven `z = 0` points (`r = 0, 0.1R … 0.5R` along `x̂`,
+   `0.1R … 0.5R` along `ŷ`) against `|(B_x + jB_y)/2|` of
+   `birdcage_filament_field(points, ring_radius=0.07, coil_length=0.14,
+   leg_currents=I_w)`, every point inside a new pre-registered
+   `CLOSED_FORM_BAND = 5.0e-2` — predicted 2–3% (the CG1 C4 record
+   0.9818%, the filament vs the 2.5 mm wire ≲ 0.5% at `r ≤ 0.5R`, the
+   terminal-vs-volume current split 2.2% on the two-torus), the worst
+   point printed. **Negative controls (rule (e)):** (α) the legs-only
+   closed form (`ring_currents` zero) misses the FEM centre field by more
+   than `CLOSED_FORM_BAND` — sign **asserted**, backed by 4a's exact
+   `R²/ρ² = 0.5` identity (`20260907T123926Z_WF-6.log:51`); size
+   **predicted** ~33%, printed; (β) the mode-2 drive `w = (1, −1, 1, −1)`:
+   the closed form's centre `B₁⁺` is exactly zero (4a's (vi)), so the FEM
+   mode-2 centre `|B₁⁺|` is **asserted** ≤ `CLOSED_FORM_BAND` × the
+   mode-1 centre value; size **predicted** ~1e-2, printed. The loaded
+   (saline) profile printed beside, never asserted. **Tier / ranks /
+   cost:** four unloaded + four loaded solves on 116 085 cells; `MAT-4`
+   step 4 measured 132 s for four solves at `-n 4` on the 120 499-cell
+   rung (`20260907T003548Z_MAT-4-step4.log:2260`) ⇒ one window `-n 4`,
+   `timeout -k 30 600`, heavy by ceiling, ≈ 270 s class; the gate re-run
+   `-n 4`, `timeout -k 30 400` (≈ 115 s class,
+   `20260907T140233Z_MAT-4-step4-rerun.log`). **Traps already paid for:**
+   leg azimuths and leg-current sign are conventions — assert first that
+   the generator's azimuths (`tests/mesh/test_birdcage_port_tags.py`, the
+   constants 4a imported) equal 4a's `2πn/N` up to one common offset, and
+   rotate the evaluation points, never the currents, if they differ; the
+   sheet's terminal current is signed along the sheet's drive direction —
+   map it to "+ẑ along the leg" explicitly; the port gap is bridged by
+   the sheet's own surface current, so the closed form's leg is the full
+   `coil_length` (an 8 mm gap at the centre plane is ~8% of the centre
+   field — dropping it is the first wrong answer); 4a raises on a
+   non-zero current sum — project first; `evaluate_vector_field_parallel`
+   is a collective over an identical point list on every rank;
+   `assemble_scalar` is rank-local; `-k a or b`; complex build +
+   `FEM_EM_REQUIRE_COMPLEX=1`, `tests/environment` first; no
+   `run_in_background`. **Scope:** the closed-form gate at the centre
+   plane of the *unloaded* coil at 10 MHz, fixed `h`, CG1 — no
+   homogeneity, CV, literature, absolute or Larmor claim; `WF-6` stays 🟡;
+   §2's B₁⁺ row gains one clause ("closed-form-gated at the centre plane
+   of the unloaded coil") in the landing commit only. **Negative
+   result:** the centre point missing by > 50% is a convention error —
+   re-check azimuths and sign before anything is committed; the centre
+   inside the band with `r = 0.5R` outside is a statement about the CG1
+   map in the wire's near field — known-issues with the eleven-point
+   table, park, mark this item 🚫 (rule (d)), stop; the centre missing
+   with conventions verified is the finding that the FEM's leg current is
+   not the filament's — known-issues, park, stop. `CLOSED_FORM_BAND` is
+   never widened.
+
+4. **`TH-15` step 2 proper — the parked PEC-hole 2×2 module re-run on the
    displacement route** (heavy by ceiling, `-n 4`, complex build; `main`;
    **serial on item 1 — if item 1 did not land on `main`, skip this item
-   unmarked and take the next**). Executor: implementer. Cherry-pick
+   unmarked and take the next**). Executor: implementer. Path-checkout
    `4dedf89`'s `tests/validation/test_two_torus_pec_hole_ports.py` (the
    log and `test-results.md` row stay on the branch — they are the
    13:30 slot's record, not this run's), set `current_route=
@@ -7696,19 +7711,57 @@ never widened silently and never on a quantity that was already green.
    the PEC hole at `LOSSLESS_BAND` 1e-9 relative to `|Z|` (its own
    pre-stated band, unmoved), reciprocity and unitarity at the imported
    `S_SYMMETRY_BAND` / `PASSIVITY_SIGMA_TOLERANCE`, the corrected mutual
-   inside `MUTUAL_TOLERANCE` (step 2b's loop reading 0.930508 printed
-   beside), and the lossy solid control dissipating. **Cost:** step 2b's
-   hole 2×2 plus the solid control ≈ 222 s at `-n 4` (`…020614Z:1939`) ⇒
-   `-n 4`, `timeout -k 30 500`. **Traps:** those of item 1; the hole's gap
-   end caps are PEC facets — `E·ĥ` there is the normal field, which is
-   the point. **Scope:** closes step 2 (the row's first *solved* hole
-   port), `TH-15` stays 🟡 until step 3 proper; the landing slot deletes
+   inside `MUTUAL_TOLERANCE` (step 2b's loop reading 0.930508 and step
+   2c's solid gap-route reading 0.909618 printed beside), and the lossy
+   solid control dissipating. Add item 1's open-circuit reading on the
+   hole — `|I_disp,undriven| / I_drive`, **printed** (the solid's
+   1.5407e-06 is the only record; on the hole the gap's end caps are the
+   cavity wall, so this is the first measurement, not a gate). **Cost:**
+   step 2b's hole 2×2 plus the solid control ≈ 222 s at `-n 4`
+   (`…020614Z:1939`) ⇒ `-n 4`, `timeout -k 30 500`. **Traps:** those of
+   item 1; the hole's gap end caps are PEC facets — `E·ĥ` there is the
+   normal field, which is the point; if the displacement branch still
+   computes the conductor `length` before choosing a route and raises
+   `non-positive conductor length` on the hole, move that raise inside
+   the conduction branch — a three-line `src/` change under rule (c),
+   `test_port_package_sparameters.py` re-run green in the same slot.
+   **Scope:** closes step 2 (the row's first *solved* hole port), `TH-15`
+   stays 🟡 until step 3 proper; the landing slot deletes
    `attempt/TH-15-step2-20260906T183305Z`. **Negative result:** `Re Z`
    outside `LOSSLESS_BAND` with the mutual inside is the finding that the
    gauge penalty or the ABC dissipates on the hole — known-issues with
-   the reading, park, stop; never widen `LOSSLESS_BAND`.
+   the reading, park, mark 🚫 (rule (d)), stop; never widen
+   `LOSSLESS_BAND`.
 
-7. **`ANS-4` step 2 — the Larmor discriminator, `xl`** *(commissioned by
+5. **`GEO-27` — phantom-resolution cost probe for the 1 g SAR rung**
+   (standard by expectation, heavy by ceiling, `-n 2`, real build;
+   `main`; independent; opened by this review, ruling (3); full item in
+   the §7 `GEO-27` row). **Executor `mesh-probe`, spawned foreground with
+   the no-background rule stated verbatim in the spawn prompt** —
+   measurement-only, asserts nothing, 🧪 by the §3 rule. The ladder:
+   `MeshGenerator.birdcage_port_domain(phantom_resolution=…)` exactly as
+   `tests/mesh/test_birdcage_phantom_resolution.py` calls it, at
+   **0.0075** (control — must reproduce 120 499 cells / 2 746 phantom
+   cells, `20260907T140658Z_EX-53.log:1875`), **0.005**, **0.00375**,
+   **0.0025**; per rung print total cells, phantom cells (tag 3), mesh
+   wall time, the phantom share, and the cells across the 1 g and 10 g
+   balls (`2a/h`, `a_1g` = 6.2 mm, `a_10g` = 13.4 mm from the gate's
+   `averaging_ball_radius`). **Stop rule:** a rung above 300 k cells or
+   120 s to mesh is recorded and the ladder stops there. **Cost:** the
+   120 499-cell mesh builds in 23–29 s (`20260906T213913Z_TH-15.log:2628`)
+   ⇒ four rungs ≈ 200 s class, one window `-n 2`, `timeout -k 30 600`.
+   **Traps:** print `size_global` after distribution, never a rank-local
+   count; the resolution module's `PHANTOM_GROWTH_BAND` gates the 0.0075
+   rung only and is not re-asserted; a rung that fails to mesh
+   ("overlapping facets") is a `GEO-23`-class record, not a fix — note
+   and continue to the next rung. **Deliverable:** the table in the §7
+   `GEO-27` row and `scripts/probes/geo27_phantom_resolution_probe.py`;
+   the question it answers is the first rung with ≥ 4 cells across the
+   1 g ball and its cost — the input to a `MAT-4` step 5 that a review
+   scopes. **Negative result:** the control not reproducing 120 499 is
+   an `OPS-18`-class mesher-drift finding — record, stop.
+
+6. **`ANS-4` step 2 — the Larmor discriminator, `xl`** *(commissioned by
    the 2026-09-06 weekly review under §5.1's XL tier — the only item any
    review may place here without being the daily review; take it in the
    first slot after the operator has brought `fem-em-solver-xl` up, or
