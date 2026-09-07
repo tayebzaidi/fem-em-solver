@@ -16178,3 +16178,81 @@ on per-rank local points is a **live foot-gun** with no guard, and a two-line
 shape check in `evaluate_vector_field_parallel` (assert `n_points` agrees
 across ranks) would turn a confusing `IndexError` into a named error, worth an
 `OPS-*` item.
+
+## 2026-09-07T05:20Z (2026-09-07 00:00 CDT slot) — `PORT-16` step 1 — **complete**
+
+**Slot.** 2026-09-07 00:00 local implementer run. Preflight **clean** on
+`fcfd101`, container Up 3 days, `main`. §9 items 1 (`MAT-4` step 4) and 3
+(`EX-52`) already DONE and item 2 (`TH-15` step 2b) 🚫 BLOCKED, so **item 4 —
+`PORT-16` step 1** — was the first open item. Executor: `implementer`, spawned
+foreground per step 3; it returned with no window in flight and a clean tree.
+Foreground-executor rule honoured. Landed on `main` as **`a2f8db0`**, §7 row
+and §9 item flipped in the same commit. Elapsed to close: ~25 min of the 60.
+
+**Outcome: §4-done.** Three windows, all through `run_and_log.sh PORT-16`,
+standard tier, `-n 2`, complex build, `timeout -k 30 300`:
+
+| log | what | elapsed | status |
+|---|---|---|---|
+| `20260907T050807Z_PORT-16.log` | collect-only smoke, 15 collected | 4 s | 0 |
+| `20260907T050816Z_PORT-16.log` | window 1, `3 failed, 12 passed … 146.73s` | 149 s | 1 |
+| `20260907T051231Z_PORT-16.log` | window 2, `16 passed … 129.04s` (`:1997`) | 131 s (`:2065–2066`) | 0 |
+
+**Measured (window 2; every digit re-traced by this slot against the log, not
+taken from the executor's report).**
+
+- **(i) the exact discrete identity `P_src,exact = P_vol + P_sheet,exact`**
+  (`:1882–1893`): rel dev **6.760e-15 / 9.656e-15 / 1.048e-14 / 4.414e-15** on
+  P1–P4 against the pre-registered 1e-6; control (`Z_p`×2) **1.369e-15**
+  (`:1922`). The assembly does not leak power ⇒ `POST-6` mechanism (b), a real
+  un-accounted loss channel, is **excluded by measurement**.
+- **(ii) Cauchy–Schwarz** (`:1895–1910`): holds on all sixteen sheet readings,
+  `ceiling/terminal` = **1.010592–1.010593** everywhere; driven-sheet
+  field-only ratio 0.229190–0.229422 (printed).
+- **(iii) the item's attribution** (`:1912–1915`): reproduces the gap to
+  3.148e-13 but **attributes nothing** — given (i) the split is an algebraic
+  tautology, and it reads **−54.2765×** / **+55.2765×** the gap.
+- **(iv) the finding** (`:1917–1920`): the gap **is** the terminal form's
+  Cauchy–Schwarz deficit. `C ≡ Σ_sheets ½Re(Y_s)∫|E_t + E_src ĥ|² dA` =
+  6.407962372e-03 W (P1); `C − sheets_terminal` reproduces the gap
+  **6.716202469e-05 W** to **3.212e-13 / 4.770e-13 / 5.086e-13 / 2.276e-13**,
+  and `P_vol + C = supplied_terminal` to all ten printed digits. `POST-6`
+  step 1b's 6.716e-05 W record reproduced in-run.
+- **Negative control** (`:1922–1924`): `P_sheet,exact` factor **0.484102**,
+  **just outside** the item's predicted [0.5, 2.0] window — printed, asserted
+  nowhere, per rule (e); asserted were the sign of the move (≥1e-3 relative)
+  and the exact ceiling `P_sheet,exact ≤ P_src,exact`. Phantom/conductor
+  1.633092e-04 (control) vs 1.257803e-04 (P1).
+
+**Two derivation repairs, both disclosed in the §7 row, the module docstring
+and the commit message; neither is a loosened band.** (1) The item's
+pre-registered *field-only* form of (ii) is **not a theorem on the driven
+sheet** — `I` there is driven by `E_t + E_src ĥ` while `P_sheet,exact` carries
+`E_t` alone. The executor found this on paper before the first run, asserts the
+provable total-field form on all four sheets and the item's literal form on the
+twelve undriven ones, and prints the driven sheet's field-only ratio. (2)
+Window 1 read `rel dev` = *exactly* 2.000e+00 on every drive and the control —
+the signature of `P_src = −(P_vol + P_sheet)`, a sign transcription in the
+test's own `_source_power_w` (`L = −jωμ₀∫K·conj(E)` already carries the load
+minus). Fixed **in the test, not in `src/`**, and not by touching a band;
+window 1 is committed as the evidence.
+
+**No band moved**, no `src/` change, `POWER_BALANCE_BAND` untouched, the
+deliberate `test_port_drive_superposition.py` red still red. The `POST-6`
+known-issues entry gained a `PORT-16 step 1` row excluding mechanism (b) and
+stays open. `PORT-16` stays 🟡 (step 1 ✅) — the row needs a review disposition.
+No compute-safety event, no container wedge, no denial, no docker-socket trap;
+every window inside its container `timeout -k 30 300` and the 660 000 ms host
+window.
+
+**For the review, two dispositions this slot deliberately did not make.**
+(a) `POWER_BALANCE_BAND` is now a *measured* 1.06% sheet-field non-uniformity,
+not an unexplained loss — band or record is the review's call. (b) Step 2's
+`h` rungs are **no longer needed to attribute the gap**; their remaining value
+is the gap's `h`-exponent.
+
+**Next attempt, one line:** whether the 1.0106 sheet-field non-uniformity
+factor is mesh-converged — i.e. whether `C/sheets_terminal − 1` falls with `h`
+on `PORT-14` step 1b's ×0.75 / ×0.6 conductor rungs — is the question that
+decides `POWER_BALANCE_BAND`, and it is a cheaper `PORT-16` step 2 than the
+one the row currently describes.
