@@ -16338,3 +16338,89 @@ gap, needing no conductor cells and therefore working on the PEC hole — so the
 review's question is whether a full 2×2 assembled from driven-port currents
 alone is admissible; if it is not, the `n × H` facet form is the last candidate
 and `TH-15` step 2 stays blocked behind it.
+
+---
+
+## 2026-09-07T11:20Z (2026-09-07 06:00 CDT slot) — `PORT-16` step 2 — **complete**
+
+**Item.** §9 item 1 (`TH-15` step 2c) is 🚫 BLOCKED by the 04:30 slot and item 6
+is 🚫 serial on it, so the first open item is **item 2 — `PORT-16` step 2**, the
+deliberate red re-pointed by the 03:00 review's ruling (2). Executor:
+`implementer`, foreground, one chunk.
+
+**Outcome: §4-complete on the first run, and `PORT-16` closes ✅.**
+
+**What was changed.** One file, `tests/validation/test_port_drive_superposition.py`
+— no `src/`, no edit to `tests/validation/test_birdcage_power_identity.py`.
+`test_the_drive_level_power_identity_closes` stops asserting the terminal form
+`|P_acc − P_vol|/P_acc ≤ POWER_BALANCE_BAND` on the ccw / cw quadrature drives and
+asserts instead, on the same superposed field, **(i)** `P_src,exact(w) = P_vol(w)
++ P_sheet,exact(w)` at the imported `DISCRETE_IDENTITY_RTOL` (1e-6) and **(ii)**
+`P_acc(w) − P_vol(w) = C(w) − sheets_terminal(w)` at the imported
+`ATTRIBUTION_RTOL` (1e-1), with sign guards on `P_src,exact` and on the deficit.
+New `_exact_shares_w` generalises step 1's `_source_power_w` /
+`_sheet_field_dissipation_w` / `_sheet_total_field_dissipation_w` to a weight
+vector purely by linearity — sheet `s` is `replace(spec.sheet(driven=True),
+source_voltage_v=w_s·V_src)`, so the `_source_power_w` sign is never
+re-transcribed and window 1 of step 1's `rel dev 2.000e+00` signature cannot
+recur. New asserted control test at `UNIT_WEIGHT_CONTROL_RTOL = 1e-12`.
+
+**Measured — `docs/testing/logs/20260907T110826Z_PORT-16.log`, the citable window:**
+- **(i)** `:1942–1943` — ccw `P_src,exact 3.837471142e-03 W`, `P_vol
+  2.663302665e-03 W`, `P_sheet,exact 1.174168477e-03 W`, **rel dev 5.877e-15**;
+  cw **1.435e-14**. Against 1e-6.
+- **(ii)** `:1945–1946` — ccw `P_acc 3.014424803e-03`, `P_vol 2.663302665e-03`,
+  `P_acc − P_vol 3.511221378e-04 W`; `C 3.349922619e-02`, `sheets_terminal
+  3.314810405e-02`, `C − sheets_terminal 3.511221378e-04 W`, **rel dev
+  9.881e-14**; cw **1.581e-13**. Against 1e-1 — the *whole* of the drive-level
+  residual is step 1's Cauchy–Schwarz deficit, on a drive none of step 1's four
+  solves is.
+- **Control `w = e_k`** `:1948–1951` — `p_src`, `sheet_field_total`,
+  `sheet_ceiling_total` vs step 1's `_exact_shares`, **rel dev 0.000e+00 on all
+  twelve readings** (bit-for-bit, as predicted), against 1e-12.
+- **Record, printed and asserted nowhere** `:1917`, `:1921` —
+  `|P_acc − P_vol|/P_acc = 1.164806e-01` on both senses, `POWER_BALANCE_BAND
+  1e-02` printed beside it.
+- **The band's surviving asserts still green** `:1914` — single-drive residuals
+  `9.795751e-03 / 9.796209e-03 / 9.794985e-03 / 9.795283e-03`.
+- `23 passed … 101.91s` (`:2038`), Status 0 / Elapsed **104 s** (`:2106–2107`).
+  Standard by measurement (heavy by ceiling), `timeout -k 30 400`, `-n 2`,
+  complex build, `FEM_EM_REQUIRE_COMPLEX=1`, `tests/environment` first.
+
+**Windows (all foreground, all footered).** `20260907T110534Z_PORT-16.log`
+collect-only smoke, 17 collected, 4 s; `20260907T110545Z_PORT-16.log` first green
+main window, `23 passed … 104.33s`, 106 s — same digits to the last place ((i)
+3.006e-14 / 2.599e-15, (ii) 3.113e-13 / 9.881e-15 there);
+`20260907T110815Z_PORT-16.log` re-collect after two docstring corrections, 4 s;
+`20260907T110826Z_PORT-16.log` the re-run on the final bytes, cited above. Four
+logs committed.
+
+**One design note the slot verified rather than took on report.** The step-1
+import is **lazy** (`_step1()`): `test_birdcage_power_identity` imports
+`_loss_power_w` from the superposition module at its `:162` and pytest collects
+it first alphabetically, so a top-level import here would have been a genuine
+collection-order cycle. Nothing in step 1 was edited, and because no helper
+signature changed, rule (c)'s re-run of the step-1 module was not triggered.
+
+**Nothing widened, checked in the diff and not only in the report.**
+`POWER_BALANCE_BAND` keeps its value, its import and its three green asserts;
+every new assertion is against a bound imported from step 1's module or the new
+1e-12 control constant; the blind-sum cross-term negative control is unchanged;
+`git diff --stat` is the one test file plus four untracked logs and four
+`test-results.md` rows.
+
+**Plan work landed with the code.** §7 `PORT-16` gains the step-2 paragraph and
+flips 🟡 → ✅; §2's `POST-6` clause now states the drive-level identity is gated
+in its exact form and labels the 11.648% a record; §9 item 2 marked ✅ DONE in
+this same commit (rule (d)'s converse); the `POST-6` known-issues entry
+**retired** here, with the fixing commit, per the discipline.
+
+**Automation health.** No compute-safety event, no container wedge, no allowlist
+denial, no docker-socket trap. The executor ran foreground and returned with no
+window in flight — the foreground-executor rule held. Every window inside its
+container `timeout -k 30` and the 660 000 ms host window.
+
+**Next attempt, one line:** with the ladder's accounting row closed, the next
+open item is §9 item 3 (`WF-6` step 4a, the pure-numpy birdcage Biot–Savart
+anchor, smoke tier) — and `PORT-16` step 3, the gap's `h`-exponent on the ×0.75 /
+×0.6 rungs, is now optional and the weekly's to commission or drop.

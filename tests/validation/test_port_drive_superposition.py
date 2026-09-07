@@ -42,15 +42,25 @@ modules that gated them.
   port voltages and currents are the weighted sums of the single-drive ones to
   1e-12, and the mapping and sequence spellings of the weights agree exactly.
 
-* **(iii) the drive-level power identity.**  ``P_acc = ½ aᴴ(I − SᴴS)a``, from
-  the sweep's own power-wave ``S`` at ``z0 = 50 Ω``, against ``½∫σ|E_w|²`` over
-  phantom **+** conductor of the superposed field.  Asserted at the imported
-  ``POWER_BALANCE_BAND`` (1e-2): the item's 1e-3 sits *below* this fixture's own
-  single-drive accounting floor of 9.795751e-03 (``…step2.log:4684``), so 1e-3
-  is printed against and never asserted (scoped before measurement — see the
-  `POST-6` §7 row note).  The **blind sum** ``Σ_k |w_k|²P_k`` — the same
-  accounting with the cross terms dropped — is printed beside it, and asserted
-  to miss only when the in-run cross-term share exceeds 10× the band.
+* **(iii) the drive-level power identity — re-pointed by `PORT-16` step 2.**
+  The terminal form ``|P_acc − P_vol|/P_acc ≤ POWER_BALANCE_BAND`` was a
+  deliberate red at 11.648% (ccw).  `PORT-16` step 1 attributed that residual:
+  it is the sheets' Cauchy–Schwarz deficit — ~0.98% of *supplied* power on every
+  single drive — read against ``P_acc``, a ~13× smaller denominator.  The
+  2026-09-06 weekly review ruled the drive-level use of the band **retired, not
+  widened**, and what is asserted here now, on the same superposed field, is the
+  pair step 1 proved on the singles: **(i)** the exact discrete identity
+  ``P_src,exact(w) = P_vol(w) + P_sheet,exact(w)`` at the imported
+  ``DISCRETE_IDENTITY_RTOL`` (1e-6), and **(ii)** the attribution
+  ``P_acc(w) − P_vol(w) = C(w) − sheets_terminal(w)`` at the imported
+  ``ATTRIBUTION_RTOL`` (1e-1).  The 11.648% and the item's 1e-3 are **printed**
+  beside ``POWER_BALANCE_BAND`` as records and asserted nowhere on the
+  superposed drives; the band keeps its value and its single-drive asserts
+  ((iv) below) untouched.  The generalisation of step 1's helpers to a weight
+  vector is itself gated at ``w = e_k`` to 1e-12.  The **blind sum**
+  ``Σ_k |w_k|²P_k`` — the same accounting with the cross terms dropped — is
+  printed beside it, and asserted to miss only when the in-run cross-term share
+  exceeds 10× the band.
 
 * **(iv) the fixture.**  All four single-drive residuals reproduce step 1's
   ``STEP1_GATE_I_P1_RESIDUAL`` = 9.795751e-03 at 1e-3, which is what says these
@@ -79,8 +89,11 @@ smaller denominator.  That is an identity of the power-wave definition at
   floor asserted is ``STEP1B_CONTROL_MIN_MISS`` = 1e-3, 1000× the band, and
   nothing above the computed value is claimed.
 
-``POWER_BALANCE_BAND`` is **not** re-pointed here — the §7 disposition rule
-names the next review as the actor, on these printed numbers.
+``POWER_BALANCE_BAND`` was **not** re-pointed by step 1b — the §7 disposition
+rule named the next review as the actor, on these printed numbers.  That review
+ran on 2026-09-06 and ruled (see (iii) above): the band's *drive-level* use is
+retired, its value and its single-drive asserts stand unchanged, and nothing
+here or anywhere else widens it.
 
 **Scope.**  One entry point and its identities, on the 4-leg fixture at 10 MHz.
 No tuning, no 32-port drive (step 2), no re-pointing of `WF-6`/`WF-7`, no band
@@ -97,6 +110,8 @@ Run (complex build required)::
 """
 
 from __future__ import annotations
+
+from dataclasses import replace
 
 import numpy as np
 import pytest
@@ -127,7 +142,10 @@ from tests.validation.test_birdcage_b1_quadrature import (
     _superpose_dg0,
     quadrature_phase_weights,
 )
-from tests.validation.test_port_birdcage_four_port import build_four_port_sweep
+from tests.validation.test_port_birdcage_four_port import (
+    TERMINATED_PORT_IMPEDANCE_OHM,
+    build_four_port_sweep,
+)
 from tests.validation.test_port_birdcage_lumped_column import (
     CONDUCTOR_CELL_TAG,
     PHANTOM_CELL_TAG,
@@ -136,7 +154,10 @@ from tests.validation.test_port_birdcage_lumped_column import (
 # The item's pre-stated power figure.  **Printed, never asserted**: it is below
 # this fixture's own single-drive accounting floor (9.795751e-03), so asserting
 # it would be asserting that the superposed accounting beats the single-drive
-# one.  ``POWER_BALANCE_BAND`` (imported, 1e-2) is the assertion.
+# one.  Since `PORT-16` step 2 *neither* it nor ``POWER_BALANCE_BAND`` is
+# asserted on the superposed drives — both are printed beside the terminal
+# residual as records, and the assertions there are the exact identity and its
+# attribution.
 PRINTED_POWER_TARGET = 1.0e-3
 
 # Two paths through the *same* stored solves must agree to round-off: the
@@ -191,6 +212,88 @@ def _loss_power_w(sweep, e_complex, sigma_field):
         ]
     )
     return phantom, conductor
+
+
+def _step1():
+    """`PORT-16` step 1's module, imported **lazily and read-only**.
+
+    A module-level import would be a cycle:
+    ``test_birdcage_power_identity`` imports :func:`_loss_power_w` from *this*
+    module (its line 162), and pytest collects it first (alphabetical), so a
+    top-level ``from tests.validation.test_birdcage_power_identity import ...``
+    here would resolve against a half-initialised module and fail on collection
+    order rather than on physics.  Deferring the import to call time removes the
+    order dependence without touching the step-1 module at all — no helper
+    signature in it changes, and nothing here writes to it.
+    """
+    from tests.validation import test_birdcage_power_identity as step1
+
+    return step1
+
+
+def _exact_shares_w(sweep, e_w, w_by_pid, omega, *, step1):
+    """Step 1's exact accounting, generalised to a **weight vector** by linearity.
+
+    The superposed drive ``E_w = Σ_k w_k E_k`` is the Galerkin solution of
+    ``a(E_w, v) = Σ_s w_s L_s(v)`` — the four solves share one operator, so the
+    weighted sum of the right-hand sides is the right-hand side of the weighted
+    sum.  Sheet ``s`` of that drive therefore carries the impressed source
+    ``w_s V_src``, which is spelled here as ``replace(spec.sheet(driven=True),
+    source_voltage_v=w_s·V_src)`` — the *same* frozen ``LumpedPortSheet`` step 1
+    builds, with the one field the weights touch scaled.  Consequences:
+
+    * ``P_sheet,exact(w) = Σ_s ½Re(Y_s)∫|n̂×E_w|²`` — the sheet **bilinear** term
+      does not read ``source_voltage_v`` at all, so this is step 1's helper on
+      the superposed field, unweighted.
+    * ``C(w) = Σ_s ½Re(Y_s)∫|E_t,w + w_s E_src,s ĥ|²`` — the Cauchy–Schwarz
+      ceiling, which *does* read it.
+    * ``P_src,exact(w) = Im(Σ_s w_s L_s(E_w))/(2ωμ₀) = Σ_s Im(w_s L_s(E_w))/(2ωμ₀)``.
+      ``Im`` is additive, and ``L_s`` is **linear** in ``source_voltage_v``, so
+      the weighted source functional is the plain sum of step 1's
+      ``_source_power_w`` over the *scaled* sheets.  No new primitive, no
+      signature change, and no hand-written form: the trap the step-1 window 1
+      log recorded (a transcribed sign, ``rel dev`` exactly 2.000e+00) cannot
+      recur because the sign is never re-transcribed here.
+
+    ``w = e_k`` collapses every line above to step 1's own single-drive call,
+    which is what
+    :func:`test_the_unit_weight_generalisation_reproduces_step_1s_exact_shares`
+    asserts at 1e-12.
+    """
+    specs = {spec.port_id: spec for spec in sweep["specs"]}
+    sheets = {
+        pid: replace(
+            specs[pid].sheet(driven=True),
+            source_voltage_v=complex(w_by_pid[pid]) * complex(specs[pid].drive_voltage_v),
+        )
+        for pid in w_by_pid
+    }
+    field = {
+        pid: step1._sheet_field_dissipation_w(sweep, sheet, e_w, omega)
+        for pid, sheet in sheets.items()
+    }
+    ceiling = {
+        pid: step1._sheet_total_field_dissipation_w(sweep, sheet, e_w)
+        for pid, sheet in sheets.items()
+    }
+    p_src = float(
+        sum(step1._source_power_w(sweep, sheet, e_w, omega) for sheet in sheets.values())
+    )
+    return {
+        "sheet_field": field,
+        "sheet_ceiling": ceiling,
+        "sheet_field_total": float(sum(field.values())),
+        "sheet_ceiling_total": float(sum(ceiling.values())),
+        "p_src": p_src,
+    }
+
+
+# The `w = e_k` control on the generalisation above.  The superposed field at a
+# unit weight vector is drive k's own array bit for bit (asserted separately in
+# ``test_a_unit_weight_vector_returns_that_drives_own_field``) and the scaled
+# sheets are then literally ``spec.sheet(driven=(pid == k))``, so the two paths
+# assemble identical forms — 1e-12 is the bound, bit-for-bit the expectation.
+UNIT_WEIGHT_CONTROL_RTOL = 1.0e-12
 
 
 @pytest.fixture(scope="module")
@@ -302,8 +405,10 @@ def superposition_case():
     # fixture's own ``z0`` normalisation and is not renormalised here — and
     # re-derived in closed form from the assembled 4×4 beside it.  The closed
     # form is what the negative control perturbs.
+    step1 = _step1()
     s_matrix = np.asarray(result.s_matrix, dtype=np.complex128)
     single_power = {}
+    unit_weight_control = {}
     for index, pid in enumerate(port_ids):
         unit = np.zeros(len(port_ids), dtype=np.complex128)
         unit[index] = 1.0
@@ -343,6 +448,22 @@ def superposition_case():
             "reflected_fraction": reflected_fraction,
         }
 
+        # --- `PORT-16` step 2, the control of the generalisation ------------
+        # ``w = e_k`` through the weighted path vs step 1's own single-drive
+        # call on the *same* stored solve.
+        unit_by_pid = {p: (1.0 + 0.0j if p == pid else 0.0j) for p in port_ids}
+        generalised = _exact_shares_w(
+            sweep, drive_k.e_complex, unit_by_pid, omega, step1=step1
+        )
+        reference = step1._exact_shares(
+            sweep,
+            {"omega": omega, "fields": result.fields[pid], "driven": pid},
+        )
+        unit_weight_control[pid] = {
+            key: (float(generalised[key]), float(reference[key]))
+            for key in ("p_src", "sheet_field_total", "sheet_ceiling_total")
+        }
+
     mean_single_vol_residual = float(
         np.mean([single_power[pid]["vol_residual"] for pid in port_ids])
     )
@@ -367,6 +488,41 @@ def superposition_case():
             "cross_share": abs(accepted - blind) / abs(accepted),
             "blind_miss": abs(accepted - blind) / abs(accepted),
         }
+
+    # --- `PORT-16` step 2: the exact identity and its attribution, on the
+    # superposed drive itself.  Ruling (2) of the 2026-09-06 weekly review
+    # retired the *terminal* form of (iii) here — it read the fixture's own
+    # ~1%-of-supplied Cauchy-Schwarz deficit against a 13x smaller denominator,
+    # so it measured the denominator.  What replaces it are the two statements
+    # step 1 proved on the single drives, re-asked of the superposed field.
+    exact_w = {}
+    for sense in ("ccw", "cw"):
+        drive = drives[sense]
+        w_by_pid = {pid: complex(drive.weights[i]) for i, pid in enumerate(port_ids)}
+        ex = _exact_shares_w(sweep, drive.e_complex, w_by_pid, omega, step1=step1)
+        p_vol = float(power[sense]["volume"])
+        sheets_terminal = float(
+            sum(
+                step1._terminal_sheet_powers(
+                    {"currents": drive.currents}, TERMINATED_PORT_IMPEDANCE_OHM
+                ).values()
+            )
+        )
+        accepted = float(power[sense]["accepted"])
+        attribution_lhs = accepted - p_vol
+        attribution_rhs = ex["sheet_ceiling_total"] - sheets_terminal
+        ex.update(
+            p_vol=p_vol,
+            sheets_terminal=sheets_terminal,
+            accepted=accepted,
+            identity_dev=abs(ex["p_src"] - p_vol - ex["sheet_field_total"])
+            / abs(ex["p_src"]),
+            attribution_lhs=attribution_lhs,
+            attribution_rhs=attribution_rhs,
+            attribution_dev=abs(attribution_lhs - attribution_rhs)
+            / abs(attribution_lhs),
+        )
+        exact_w[sense] = ex
 
     if comm.rank == 0:
         print(
@@ -406,9 +562,12 @@ def superposition_case():
                 f"        volume 1/2 int sigma|E_w|^2  = {p['volume']:.9e} W "
                 f"(phantom {p['phantom']:.9e}, conductor {p['conductor']:.9e})\n"
                 f"        residual |P_acc - P_vol|/P_acc = {p['residual']:.6e}  "
-                f"ASSERTED <= {POWER_BALANCE_BAND:.0e}; against the item's "
-                f"{PRINTED_POWER_TARGET:.0e} it is "
-                f"{p['residual'] / PRINTED_POWER_TARGET:.2f}x (printed, not asserted)\n"
+                f"(PRINTED, ASSERTED NOWHERE since `PORT-16` step 2; the "
+                f"terminal form's Cauchy-Schwarz deficit against a "
+                f"drive-dependent denominator, cf. POWER_BALANCE_BAND "
+                f"{POWER_BALANCE_BAND:.0e} which keeps its single-drive "
+                f"asserts); against the item's {PRINTED_POWER_TARGET:.0e} it is "
+                f"{p['residual'] / PRINTED_POWER_TARGET:.2f}x\n"
                 f"        blind sum sum_k |w_k|^2 P_k = {p['blind']:.9e} W, "
                 f"cross-term share {p['cross_share'] * 100:.4f}% "
                 f"(trigger {CROSS_TERM_TRIGGER * 100:.1f}%)",
@@ -448,6 +607,57 @@ def superposition_case():
             "review posed)",
             flush=True,
         )
+        print(
+            "    [PORT-16 step2] (i) the exact discrete power identity on the "
+            "*superposed* drive: P_src,exact(w) = P_vol(w) + P_sheet,exact(w) "
+            f"(ASSERTED rel <= {step1.DISCRETE_IDENTITY_RTOL:g})",
+            flush=True,
+        )
+        for sense in ("ccw", "cw"):
+            ex = exact_w[sense]
+            print(
+                f"        {sense}  P_src,exact {ex['p_src']:.9e} W   "
+                f"P_vol {ex['p_vol']:.9e} W   "
+                f"P_sheet,exact {ex['sheet_field_total']:.9e} W   "
+                f"rel dev {ex['identity_dev']:.3e}",
+                flush=True,
+            )
+        print(
+            "    [PORT-16 step2] (ii) the attribution: P_acc(w) - P_vol(w) = "
+            "C(w) - sheets_terminal(w), C = sum_s 1/2 Re(Y_s) int "
+            "|E_t,w + w_s E_src,s h|^2 dA "
+            f"(ASSERTED rel <= {step1.ATTRIBUTION_RTOL:g})",
+            flush=True,
+        )
+        for sense in ("ccw", "cw"):
+            ex = exact_w[sense]
+            print(
+                f"        {sense}  P_acc {ex['accepted']:.9e} W   "
+                f"P_vol {ex['p_vol']:.9e} W   "
+                f"P_acc - P_vol {ex['attribution_lhs']:.9e} W   "
+                f"C {ex['sheet_ceiling_total']:.9e} W   "
+                f"sheets_terminal {ex['sheets_terminal']:.9e} W   "
+                f"C - sheets_terminal {ex['attribution_rhs']:.9e} W   "
+                f"rel dev {ex['attribution_dev']:.3e}",
+                flush=True,
+            )
+        print(
+            "    [PORT-16 step2] control of the generalisation: w = e_k vs "
+            "step 1's own single-drive `_exact_shares` (ASSERTED rel <= "
+            f"{UNIT_WEIGHT_CONTROL_RTOL:g})",
+            flush=True,
+        )
+        for pid in port_ids:
+            fields = unit_weight_control[pid]
+            print(
+                f"        {pid}  "
+                + "   ".join(
+                    f"{key} {gen:.9e} vs {ref:.9e} (rel dev "
+                    f"{abs(gen - ref) / abs(ref):.3e})"
+                    for key, (gen, ref) in fields.items()
+                ),
+                flush=True,
+            )
 
     return {
         "sweep": sweep,
@@ -466,6 +676,10 @@ def superposition_case():
         "power": power,
         "single_power": single_power,
         "mean_single_vol_residual": mean_single_vol_residual,
+        "exact_w": exact_w,
+        "unit_weight_control": unit_weight_control,
+        "discrete_identity_rtol": float(step1.DISCRETE_IDENTITY_RTOL),
+        "attribution_rtol": float(step1.ATTRIBUTION_RTOL),
     }
 
 
@@ -694,28 +908,78 @@ def test_the_single_drive_power_residuals_reproduce_step_1(superposition_case):
 
 @complex_only
 def test_the_drive_level_power_identity_closes(superposition_case):
-    """**(iii)** ``½aᴴ(I − SᴴS)a`` equals the superposed field's volume loss.
+    """**(iii)**, re-pointed by `PORT-16` step 2 at the *exact* discrete identity.
 
-    The first *drive-level* power statement in this repo: the accepted power of
-    a four-port drive, computed from the terminal network alone, against the
-    ``½∫σ|E_w|²`` of the field that drive actually produces.  Band: the imported
-    ``POWER_BALANCE_BAND`` — the single-drive accounting on this fixture reads
-    9.795751e-03 against it, so a superposed identity cannot be held to the
-    item's 1e-3 without holding the fixture to something it never met.  The 1e-3
-    is printed in the fixture's summary and asserted nowhere.
+    What this used to assert was the **terminal** form
+    ``|P_acc − P_vol|/P_acc ≤ POWER_BALANCE_BAND``, a deliberate red at 11.648%
+    (ccw, `20260905T004202Z_POST-6.log:1915–1917`).  `PORT-16` step 1 then
+    measured what that 11.6% is: the fixture's terminal sheet power
+    ``½|I|²Re Z_p`` is the *uniform-field lower bound* on the dissipation the
+    sheet's own constitutive law deposits, short of it by the sheets'
+    Cauchy–Schwarz deficit — ~0.98% of supplied power on every single drive,
+    reproduced to 1e-13 (`20260907T051231Z_PORT-16.log:1917–1920`).  Read
+    against ``P_acc``, a denominator ~13× smaller than supplied, that same
+    absolute deficit is ~11.6%.  The 2026-09-06 weekly review therefore ruled
+    the drive-level use of the band **retired, not widened**: an assertion that
+    re-reads a known deficit against a drive-dependent denominator measures the
+    denominator.  ``POWER_BALANCE_BAND`` keeps its value and its single-drive
+    asserts in this module (:func:`test_the_single_drive_power_residuals_reproduce_step_1`)
+    and everywhere else; the terminal residual is *printed* beside it here as a
+    record and asserted nowhere on the superposed drives.
+
+    What is asserted instead, on the same superposed field ``E_w``:
+
+    **(i)** ``P_src,exact(w) = P_vol(w) + P_sheet,exact(w)`` at the imported
+    ``DISCRETE_IDENTITY_RTOL`` (1e-6).  This is the real part of
+    ``a(E_w, E_w) = L_w(E_w)`` — the weak form tested with its own solution, an
+    exactness statement about the *assembly* under superposition, not a
+    discretisation reading.  Step 1 measured it at 1e-14 class on the four
+    single drives; if it fails here while holding there, the sheet terms do not
+    superpose as written and the finding is a cross-term in the impressed field.
+
+    **(ii)** the attribution ``P_acc(w) − P_vol(w) = C(w) − sheets_terminal(w)``
+    at the imported ``ATTRIBUTION_RTOL`` (1e-1), with ``C`` the Cauchy–Schwarz
+    ceiling summed over the four sheets, each carrying its own ``w_s E_src,s``.
+    Unlike (i) this is not arithmetic on one side: the left is an S-matrix
+    reading minus a volume integral, the right a facet integral minus a terminal
+    reading.  It says the whole of the printed 11.6% is the deficit step 1
+    named, on a drive none of step 1's solves is.
     """
     for sense in ("ccw", "cw"):
         p = superposition_case["power"][sense]
+        ex = superposition_case["exact_w"][sense]
         assert p["accepted"] > 0.0, (
             f"[{sense}] the drive accepts {p['accepted']:.9e} W — a passive "
             "structure cannot deliver power back through every port at once"
         )
-        assert p["residual"] <= POWER_BALANCE_BAND, (
-            f"[{sense}] the drive-level power identity misses by {p['residual']:.6e}: "
-            f"P_acc = {p['accepted']:.9e} W from the S-matrix against "
-            f"{p['volume']:.9e} W of volume loss (phantom {p['phantom']:.9e}, "
-            f"conductor {p['conductor']:.9e}); band {POWER_BALANCE_BAND:.0e}. This "
-            "is an accounting defect in the superposition, not a band to widen"
+        assert ex["p_src"] > 0.0, (
+            f"[{sense}] P_src,exact is {ex['p_src']:.9e} W — the weighted source "
+            "functional is not delivering power into the structure"
+        )
+        assert ex["identity_dev"] <= superposition_case["discrete_identity_rtol"], (
+            f"[{sense}] the exact discrete power identity misses by "
+            f"{ex['identity_dev']:.6e} against "
+            f"{superposition_case['discrete_identity_rtol']:g} — "
+            f"P_src,exact {ex['p_src']:.9e} W, P_vol {ex['p_vol']:.9e} W, "
+            f"P_sheet,exact {ex['sheet_field_total']:.9e} W.  It closes at 1e-14 "
+            "on every single drive, so a miss here says the sheet terms do not "
+            "superpose as written (a cross-term in the impressed field), not "
+            "that the tolerance is wrong"
+        )
+        assert ex["attribution_rhs"] > 0.0, (
+            f"[{sense}] the Cauchy-Schwarz deficit C - sheets_terminal is "
+            f"{ex['attribution_rhs']:.9e} W — it must be positive, the terminal "
+            "form is a lower bound"
+        )
+        assert ex["attribution_dev"] <= superposition_case["attribution_rtol"], (
+            f"[{sense}] the attribution misses by {ex['attribution_dev']:.6e} "
+            f"against {superposition_case['attribution_rtol']:g} — "
+            f"P_acc - P_vol = {ex['attribution_lhs']:.9e} W against "
+            f"C - sheets_terminal = {ex['attribution_rhs']:.9e} W "
+            f"(C {ex['sheet_ceiling_total']:.9e} W, sheets_terminal "
+            f"{ex['sheets_terminal']:.9e} W).  The drive-level residual is then "
+            "*not* the single drives' Cauchy-Schwarz deficit and something else "
+            "enters under superposition"
         )
 
         # Negative control, pre-registered: the blind sum drops every cross term
@@ -728,6 +992,37 @@ def test_the_drive_level_power_identity_closes(superposition_case):
                 f"P_acc by only {p['blind_miss']:.6e} although the cross terms "
                 f"are worth {p['cross_share'] * 100:.4f}% — the identity is then "
                 "insensitive to the interference it exists to account for"
+            )
+
+
+@complex_only
+def test_the_unit_weight_generalisation_reproduces_step_1s_exact_shares(
+    superposition_case,
+):
+    """`PORT-16` step 2's control: ``w = e_k`` is step 1's single drive.
+
+    :func:`_exact_shares_w` generalises step 1's three exact quantities to a
+    weight vector by linearity, and every conclusion drawn from it on the
+    superposed drive rests on that generalisation being the identity at a unit
+    weight.  Here it is asserted: ``P_src,exact``, ``P_sheet,exact`` and ``C``
+    computed through the weighted path on ``superpose_drives(result, e_k)``
+    against ``test_birdcage_power_identity._exact_shares`` on drive k's own
+    stored solve.  Same field (asserted bit-for-bit elsewhere), same sheets,
+    same package form builders — 1e-12 is a bound on an expectation of exactness,
+    and a miss localises the defect in the *weighting*, not in the physics, before
+    any superposed number is believed.
+    """
+    for pid, fields in superposition_case["unit_weight_control"].items():
+        for key, (generalised, reference) in fields.items():
+            assert reference != 0.0, f"[{pid}] step 1's {key} is exactly zero"
+            deviation = abs(generalised - reference) / abs(reference)
+            assert deviation <= UNIT_WEIGHT_CONTROL_RTOL, (
+                f"[{pid}] the weighted path reads {key} = {generalised:.12e} W at "
+                f"w = e_k where step 1's single-drive path reads "
+                f"{reference:.12e} W, {deviation:.3e} apart against "
+                f"{UNIT_WEIGHT_CONTROL_RTOL:g} — the generalisation to a weight "
+                "vector is not the identity on a unit vector, so nothing it says "
+                "about the superposed drive can be read"
             )
 
 

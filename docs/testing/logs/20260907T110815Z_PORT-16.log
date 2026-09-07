@@ -1,0 +1,69 @@
+# Test Run
+- Chunk: PORT-16
+- Commit: 2f65cbe2272d179a11a2534c40c79b4065a3fd5e
+- Time (UTC): 2026-09-07 11:08:15
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && source /usr/local/bin/dolfinx-complex-mode && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 timeout -k 30 60 python3 -m pytest tests/validation/test_birdcage_power_identity.py tests/validation/test_port_drive_superposition.py --collect-only -q'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Sep  4 23:31 .
+drwxr-xr-x 16 taz5297 taz5297 4096 Sep  7 06:07 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  721 Sep  3 13:49 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 2801 Sep  4 23:31 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && source /usr/local/bin/dolfinx-complex-mode && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 timeout -k 30 60 python3 -m pytest tests/validation/test_birdcage_power_identity.py tests/validation/test_port_drive_superposition.py --collect-only -q'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collected 17 items
+
+<Dir workspace>
+  <Dir tests>
+    <Dir validation>
+      <Module test_birdcage_power_identity.py>
+        <Function test_the_discrete_power_identity_closes_on_every_drive>
+        <Function test_the_terminal_sheet_power_is_a_lower_bound_on_every_sheet>
+        <Function test_the_terminal_minus_exact_split_reproduces_the_accounting_gap>
+        <Function test_the_cauchy_schwarz_deficit_of_the_terminal_form_reproduces_the_gap>
+        <Function test_doubling_the_sheet_resistivity_keeps_the_identity_and_moves_the_sheet_term>
+      <Module test_port_drive_superposition.py>
+        <Function test_the_sweep_kept_one_field_per_drive_on_one_space>
+        <Function test_a_unit_weight_vector_returns_that_drives_own_field>
+        <Function test_the_drive_is_linear_in_its_weight_vector>
+        <Function test_the_combined_terminals_are_the_weighted_sums_of_the_single_drives>
+        <Function test_the_package_path_and_the_fixture_dg0_path_agree>
+        <Function test_the_quadrature_identities_reproduce_step_2s_records>
+        <Function test_the_single_drive_power_residuals_reproduce_step_1>
+        <Function test_the_drive_level_power_identity_closes>
+        <Function test_the_unit_weight_generalisation_reproduces_step_1s_exact_shares>
+        <Function test_the_single_drive_power_wave_identity_closes>
+        <Function test_the_superposed_accepted_power_reproduces_step_1>
+        <Function test_zeroing_the_reflection_diagonal_breaks_the_power_wave_identity>
+
+========================= 17 tests collected in 1.22s ==========================
+
+## Exit
+- Status: 0
+- Elapsed (s): 2
+- Filtered lines (gmsh optimisation chatter): 0
