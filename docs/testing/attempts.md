@@ -16920,3 +16920,51 @@ genuinely excludes flux that the filament `ωM₁₂` comparand counts, which wo
 make the comparand wrong on a hole rather than the solve. Items 4 and 3 are now
 both 🚫; the next open §9 item is **5 (`GEO-27`)**; item 6 is XL and the XL
 service is not Up.
+
+## 20260908T004458Z — WF-6 (step 4b) — incomplete
+- Tried: the 18:00 review's rule-(f) re-registration of the step-4 comparand.
+  Took the parked step-4 artifacts from `attempt/WF-6-step4-20260907T205600Z`
+  (`499c527`) by path checkout; added `birdcage_filament_field_in_pec_box` and
+  `birdcage_image_leg_currents` to `src/fem_em_solver/utils/analytical.py` (the
+  free-space filament form summed over the PEC box's image lattice, leg
+  currents permuted and signed by the mirror parity); pointed the gate at it at
+  `coil_length = LEG_SPACING` with the box read off the mesh; kept
+  `CLOSED_FORM_BAND = 5.0e-2` unmoved; added anchor (ii)'s three numpy
+  identities to `tests/unit/test_birdcage_filament_field.py`.
+- Result / measured: **the ruling is confirmed and the miss collapses from
+  26.62% to 2.33% at the centre, but the pre-registered `r = 0.5R` exit fires.**
+  Eleven points: centre 2.3345%, +x 2.5175 / 1.3374 / 2.3495 / 3.8483 /
+  3.5983%, +y 1.6429 / 0.1095 / 1.7611 / 4.4223 / **7.0875%**, median 2.3495%
+  (`20260908T004020Z_WF-6.log:1889–1900`), 1 failed / 15 passed / 68.81 s,
+  elapsed 71 s, Status 1. Centre comparands in units of L (free-space legs-only
+  at COIL_LENGTH, 7.356669419e-08 T): 1.5000 / 1.4140 / 0.7321 / **1.0756**
+  against the FEM's 1.1007 — every one of the review's predicted figures
+  (1.500 / 1.414 / 0.74 / ~1.04 + corners), `:1902–1907`. Control (alpha')
+  asserted green, 26.6201% (`:1901`, reproducing `…200630Z:1924`); control
+  (beta) green, 7.743627e-03 (`:1909`). Unpredicted: the box measures
+  +-0.120 / +-0.120 / +-0.100 m, not +-0.11 / +-0.11 / +-0.10 (`:1882–1883`);
+  the lattice truncation drift is **4.642e-02 at N = 3, 3.297e-02 at N = 4**
+  against the predicted <= 1e-2 (`:1908`), i.e. the comparand's own error bar is
+  the size of the band; the FEM's own +x / +y pair at r = 0.5R differ by 3.4%.
+  Anchor (ii) (`20260908T003713Z_WF-6.log`, -n 1, 1 failed / 9 passed / 5.44 s,
+  elapsed 7 s): (ii-a) N = 0 bit-for-bit green, (ii-b) the P_11 rotation green,
+  (ii-c) the wall-normal identity converges 9.990e-02 -> 1.077e-02 (9.3x) but
+  lands above its pre-registered 1e-2 (`:60–61`) — the same truncation. No band
+  widened, no assertion loosened, nothing landed on main. One disclosed
+  definition correction inside (ii-c): the item's literal |B_n|/|B_total| is
+  degenerate (reads 1.000e+00 at every N on a wall where the field is normal by
+  symmetry, `20260908T003604Z_WF-6.log:60–61`), so the denominator is the N = 0
+  field and the drive is (1, 2, -3, 0). Anchor (iii) and the rule-(c) four-port
+  window were not run — the slot ended at the exit.
+- Logs: 20260908T003604Z_WF-6.log, 20260908T003713Z_WF-6.log,
+  20260908T003808Z_WF-6.log, 20260908T004020Z_WF-6.log
+- Branch (if parked): attempt/WF-6-step4b-20260908T004458Z
+- Next-attempt hypothesis: the binding uncertainty is the **comparand**, not
+  the coil, for the third time. The cube-truncated image lattice is only
+  conditionally convergent and its drift (3.3e-2 at N = 4) is the size of the
+  band, so the honest gate is either an accelerated / larger-N lattice with the
+  drift asserted below the band, or "band + measured drift" re-registered by a
+  review. Independently, the FEM's own 3.4% C4 asymmetry at r = 0.5R is the
+  same order as the last point's 7.09% miss and should be compared against
+  WF-6 step 2's 0.9818% C4 record before the point is attributed to the CG1
+  near field.

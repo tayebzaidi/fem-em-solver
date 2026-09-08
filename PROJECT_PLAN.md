@@ -6628,6 +6628,56 @@ therefore one small `post/` addition plus a gate module. Degree 1, per the
 > ring planes are *not* the mechanism — known-issues, park, 4c becomes
 > the diagnosis, stop. `CLOSED_FORM_BAND` never widens.
 >
+> **Step 4b executed 2026-09-07 19:30 slot — the 18:00 ruling is confirmed by
+> measurement (26.62% → 2.33% at the centre, every predicted comparand landing
+> on the nose), and the pre-registered `r = 0.5R` exit fires on one point of
+> eleven; the binding uncertainty is now the comparand's own truncation.**
+> `20260908T004020Z_WF-6.log`, **1 failed / 15 passed in 68.81 s** at `-n 4`
+> complex, elapsed **71 s**, `Status: 1` (`:1881–1909` the table, `:1998` the
+> footer); the same module with `tests/environment` at
+> `20260908T003808Z_WF-6.log`, **1 failed / 26 passed in 100.06 s**, elapsed
+> **102 s** (`:176–177`, `:473`). **Anchor (i):** centre **2.3345%**, `+x̂`
+> 2.5175 / 1.3374 / 2.3495 / 3.8483 / 3.5983%, `+ŷ` 1.6429 / 0.1095 / 1.7611 /
+> 4.4223 / **7.0875%**; median 2.3495%, worst point [10] = `r = 0.5R` along
+> `+ŷ` (`:1889–1900`). Ten of eleven inside the unmoved 5%; **the band was not
+> widened and nothing landed on `main`**. **The re-registration is vindicated
+> quantitatively:** in units of `L` = the free-space legs-only centre field at
+> `COIL_LENGTH` (7.356669419e-08 T), free space at `COIL_LENGTH` reads
+> **1.5000 L** (review 1.500), free space at `LEG_SPACING` **1.4140 L** (review
+> 1.414), boxed legs-only **0.7321 L** (review ≈ 0.74), boxed legs + rings
+> **1.0756 L** against the FEM's **1.1007 L** (review ≈ 1.04 + corners) —
+> `:1902–1907`. Control (α′) **asserted green**: the step-4 free-space comparand
+> still misses by **26.6201%** (`:1901`), `…200630Z:1924` to the digit, so the
+> gate discriminates between the two comparands. Control (β) green at
+> **7.743627e-03** (`:1909`). **Three unpredicted readings.** (a) The PEC box
+> measured off the mesh is **±0.120 / ±0.120 / ±0.100 m**, not the predicted
+> ±0.11 / ±0.11 / ±0.10 (`:1882–1883`); the review's radial arithmetic was 1 cm
+> short. (b) **The lattice truncation drift is 4.642e-02 at `N = 3` and
+> 3.297e-02 at `N = 4`** against the predicted ≤ 1e-2 (`:1908`) — the
+> comparand's own error bar is the size of the band, which the item's clause
+> pre-registers as the finding, and a 7.09% point against a ±3–5% comparand is
+> not evidence about the FEM. (c) The FEM's own `+x̂` / `+ŷ` pair at `r = 0.5R`
+> differ by **3.4%**, a C4 asymmetry of the same order as the miss.
+> **Anchor (ii)** (`20260908T003713Z_WF-6.log`, `-n 1`, 1 failed / 9 passed in
+> 5.44 s, elapsed 7 s): (ii-a) `N = 0` equals `birdcage_filament_field` bit for
+> bit (`np.array_equal`) — green; (ii-b) `P_11 I` = the currents rotated two
+> legs, each mirror an involution with zero sum — green; (ii-c) the wall-normal
+> identity converges by 9.3× (max **9.990e-02** at `N = 2` → **1.077e-02** at
+> `N = 3`, `:60–61`) but lands **above** its pre-registered 1e-2 — the same
+> truncation as (b). One disclosed definition correction: the item's literal
+> `|B_n|/|B_total|` is degenerate (at the `+ŷ` wall of a mode-1 drive the field
+> is purely normal by symmetry and the ratio reads 1.000e+00 at every `N`,
+> `20260908T003604Z_WF-6.log:60–61`), so the denominator is the source coil's
+> own `N = 0` field and the drive is `(1, 2, −3, 0)`. **Anchor (iii) and the
+> rule-(c) window were not run** — the slot ended at the exit. Parked on
+> `attempt/WF-6-step4b-20260908T004458Z`; §9 item 1 marked 🚫 in the same
+> commit (rule (d)). §2's B₁⁺ row gains nothing; `WF-6` stays 🟡. **What a
+> review must rule on next:** the comparand's truncation, not the coil — either
+> accelerate the lattice (or raise `N`) until the drift is asserted below the
+> band, or re-register the gate as "band + measured drift"; the FEM's own 3.4%
+> C4 asymmetry at `r = 0.5R` is a second, independent candidate for the last
+> point and `WF-6` step 2's C4 record (0.9818%) is the comparison to make.
+>
 > **Step 4c — the coil's conduction currents measured, a Kirchhoff check
 > (scoped 2026-09-07 18:00 review, §9 item 4).** Independent of 4b (it
 > does not consume the boxed form). On `main` if 4b landed, else on the
@@ -7911,7 +7961,22 @@ it** (`TH-15` step 3a, 16:30 slot — ratified above, ruling (2)); it is
 never widened silently and never on a quantity that was already green.
 
 
-1. **`WF-6` step 4b — the FEM `|B₁⁺|` of the unloaded F-small coil
+1. 🚫 **BLOCKED — executed 2026-09-07 19:30 slot, the pre-registered
+   `r = 0.5R` exit fired; do not re-run as written.** Ten of eleven points
+   inside the unmoved 5% (centre **2.3345%**, median 2.3495%), the eleventh
+   **7.0875%** at `r = 0.5R` along `+ŷ`; every re-registered comparand landed
+   on the review's arithmetic (1.5000 / 1.4140 / 0.7321 / **1.0756** L against
+   the FEM's 1.1007 L), control (α′) asserted green at 26.6201%
+   (`20260908T004020Z_WF-6.log:1881–1909`, 71 s). **Unblock condition: a review
+   ruling on the *comparand's* truncation** — the lattice drift measures
+   **4.642e-02 at `N = 3`** and **3.297e-02 at `N = 4`** (`:1908`), the size of
+   the band itself, and anchor (ii-c)'s wall identity lands at 1.077e-02
+   against its 1e-2 for the same reason (`20260908T003713Z_WF-6.log:60–61`).
+   Parked on `attempt/WF-6-step4b-20260908T004458Z`; full record in the §7
+   `WF-6` "Step 4b executed" paragraph and the known-issues entry. Original
+   item below, for the review.
+
+   **`WF-6` step 4b — the FEM `|B₁⁺|` of the unloaded F-small coil
    against the filament closed form *at the fixture's ring planes and
    inside its PEC box*, the eleven centre-plane points at the unmoved
    5% band** (heavy by ceiling, `-n 4`, complex build; `main` by path
