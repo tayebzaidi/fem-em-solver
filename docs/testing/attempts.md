@@ -17619,3 +17619,104 @@ service is not Up.
   instead** (`GEO-29`, §9 item 5, prices that ladder — and the same ladder is
   what `ANS-4`'s inconclusive verdict waits on). (a) and (b) are multi-slot.
   What is *not* available is a wider band or gating on the `N = 5` crossing.
+
+## 2026-09-08T18:45Z (2026-09-08 13:30 CDT slot) — `GEO-28` — **complete**
+
+**Preflight.** Clean tree on `18d3243`; both containers Up (`fem-em-solver`
+4 days, `fem-em-solver-xl` 17 h — the operator's 09-07 bring-up, again
+unused by this slot). §9 item 1 (`WF-6` step 4e) is marked 🚫 by the 12:00
+slot under rule (d), so the first item that is neither done nor blocked is
+**item 2, `GEO-28`** — taken as written, no substitution.
+
+**Executor.** `mesh-probe`, spawned **foreground** (`run_in_background:
+false`) with the no-background rule, the repo-relative `run_and_log.sh`
+allowlist trap, the `-k 30` rule and the 660 000 ms host window stated
+verbatim in the spawn prompt. Foreground-executor rule **held**. I verified
+every reported digit against the log myself before committing (the executor's
+table is faithful line for line) and read the probe script in full.
+
+**Outcome — measurement-only, the negative-result branch of the §7 row.**
+🧪 by the §3 rule, never ✅: the probe asserts nothing beyond printing the
+control. Two windows, `-n 2`, real build, no solve, **29 s / 30 s**, both
+`Status: 0`, footered: `20260908T183317Z_GEO-28.log`,
+`20260908T183401Z_GEO-28.log`. Every count, volume, ratio and spread is
+**character-identical** between the two runs over `:1787–1830` (they differ
+only in wall-time fields) — the census is reproducible, not a one-draw read.
+
+**Control (holds; no `OPS-18`-class drift).** `size_global=116085`, record
+116 085, ratio **1.000000**, mesh 23.15 s (`…183317Z:1786`). Owned cells
+assigned to no quadrant: **0** (`:1791`) — the squared-projection sector test
+partitions the owned set exactly. Core tags sum 110 780 vs 116 085; the
+balance is the port-box tags 100+i / 200+i, which are not core tags
+(`:1830`). Ring CAD 4.421582772e-05 m³ against analytic `2·2π²Rr²` to ratio
+**1.000000000** (`:1794`) — an independent check that the generator's own
+parameters were read correctly.
+
+**The table** (Q1 / Q2 / Q3 / Q4, spread `(max−min)/mean`, `:1798–1816`):
+
+| row | Q1 | Q2 | Q3 | Q4 | spread |
+|---|---|---|---|---|---|
+| coil cells | 9116 | 9006 | 9083 | **8712** | 4.4993e-02 |
+| coil volume [m³] | 2.410808e-05 | 2.411316e-05 | 2.410442e-05 | 2.409004e-05 | **9.5943e-04** |
+| phantom cells | 155 | 124 | 121 | 137 | 2.5326e-01 |
+| phantom volume [m³] | 5.637544e-05 | 5.495989e-05 | 5.344115e-05 | 5.475299e-05 | 5.3465e-02 |
+| air cells | 18779 | 18497 | 18477 | 18573 | 1.6253e-02 |
+| air volume [m³] | 2.793005e-03 | 2.801239e-03 | 2.792245e-03 | 2.811294e-03 | 6.8048e-03 |
+| meshed / CAD quarter | 0.970235759 | 0.970440489 | 0.970088615 | 0.969509780 | 9.5943e-04 |
+| shell cells | 30 | 22 | **19** | 25 | 4.5833e-01 |
+| shell mean h [m] | 2.125110e-02 | 2.302944e-02 | **2.627863e-02** | 2.310792e-02 | 2.1470e-01 |
+| shell max h [m] | 2.532223e-02 | 2.745158e-02 | **3.195599e-02** | 2.753950e-02 | 2.3635e-01 |
+| leg cells | 3158 | 3108 | 3207 | **2983** | 7.1933e-02 |
+| leg volume [m³] | 1.023516e-05 | 1.023494e-05 | 1.023644e-05 | **1.020585e-05** | 2.9902e-03 |
+| leg vol / 2-stub CAD | 0.983681379 | 0.983660190 | 0.983803942 | **0.980864617** | 2.9902e-03 |
+
+**The answer to the row's question: NO — quadrant 2 is not the different
+one.** `Q2` is never the outlier: largest coil volume of the four, leg volume
+equal to `Q1` / `Q3` to 2e-5 relative, mid-range shell statistics. Where an
+outlier exists it is elsewhere and in a different quantity — **`Q4` in every
+conductor *count*** (coil −4.1% off the max, leg −7.0%, the only leg whose
+volume/CAD ratio drops, 0.98086 against 0.98366–0.98380) and **`Q3` in the
+shell `h`** (mean 2.63e-02 m, max 3.20e-02 m) on a 19-cell sample. Crucially
+the *counts* move while the *volumes* do not: every mass spread is ≲ 0.1%
+(coil 9.5943e-04, leg 2.9902e-03) or ≤ 0.7% (air 6.8048e-03) — **an order of
+magnitude below the 3.4% field effect it was opened to explain**, and
+`meshed/CAD quarter` reads 0.96951–0.97044 across all four quadrants. The
+mesher redistributes cells between quadrants without moving material. So the
+§7 row's negative-result branch applies verbatim: **the mesh is not the
+mechanism** for `WF-6` step 4b's `+ŷ` `r = 0.5R` miss or step 4c's junction 2,
+and the near-field miss stays with the degree-1 N1curl solve read through a
+CG1 projection of `curl E`.
+
+**Two caveats the review should not over-read.** (1) The shell rows rest on
+**19–30 cells per quadrant** and the phantom rows on **121–155** — the large
+count spreads there (4.5833e-01, 2.5326e-01) are small-sample artefacts, and
+the corresponding volume spreads are an order smaller (5.3465e-02 for the
+phantom). Neither is evidence of azimuthal structure. (2) More usefully, the
+shell's mean `h` of 2.1–2.6e-02 m across a shell only 1.4e-02 m thick is
+**direct evidence for `GEO-29`'s premise** — the global 0.015 m resolution
+puts on the order of *one cell* across the near field `WF-6` step 4b
+evaluates in. That is the second independent pointer at the `h` ladder this
+week, and it is the same ladder `ANS-4`'s inconclusive 64 / 128 MHz verdict
+is waiting on.
+
+**Landed on `main`:** `scripts/probes/geo28_birdcage_c4_census.py`, both
+harness logs, the harness's two `test-results.md` rows, the §7 `GEO-28` row
+(table + verdict, status 🧪 **measured 2026-09-08**), and §9 item 2 marked
+done — one commit. No `src/` change, no test edited, no assertion, no band,
+no record, no known-issues row retired or added (the row this informs, `WF-6`
+step 4, is unchanged by a negative mesh finding — its diagnosis simply loses
+one candidate).
+
+**Denials / anomalies:** none. No docker-socket denial, no allowlist denial,
+no compute-safety event, no container wedge. `mpiexec -n 2`, both windows
+inside `timeout -k 30 300` and inside the 660 000 ms host window; nothing
+backgrounded.
+
+**Hypothesis for the next attempt.** The mesh-side explanation is now
+eliminated by measurement, so the near-field discrepancy has exactly one
+untested candidate left: resolution. **`GEO-29` (§9 item 5) is the natural
+next probe on this fixture** and this census has already pre-paid part of its
+motivation (≈ 1 cell across the shell); its `h`-ladder, not another
+comparand, is what `WF-6` step 4f needs. Expect the `+ŷ`/`+x̂` 3.4% spread at
+`r = 0.5R` to fall with `h` if the estimator is the mechanism — that is the
+falsifiable prediction this negative result leaves behind.
