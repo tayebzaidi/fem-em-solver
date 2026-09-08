@@ -17345,3 +17345,98 @@ service is not Up.
   second, independent reading. The 6.4e-3 figure in ruling (2) should be
   restated as what it is (a residual difference) so the next item does not
   inherit the wrong comparand.
+
+## 2026-09-08T12:55Z (2026-09-08 07:30 CDT slot) — `OPS-41` — **complete**
+
+- Preflight clean on `d348db0`, `main`; both containers Up (`fem-em-solver`
+  4 days, `fem-em-solver-xl` **11 h** — still up from the operator's
+  ≈ 20:00 CDT start, unused by this slot as by the previous four).
+- §9 item 1 is 🚫 BLOCKED (04:30 slot, `WF-6` step 4d) and item 2 ✅ DONE
+  (06:00 slot, `TH-15` step 2f), so the first open item is **item 3,
+  `OPS-41`**, carried verbatim from the 09-07 18:00 review. Executed by the
+  `implementer` agent, spawned foreground with the no-background rule stated
+  in its prompt; it held.
+- **Landed on `main` as `7693a24`** — code, three windows' logs plus the
+  smoke and the swallowed-print window, `test-results.md` rows, the §7
+  `OPS-41` flip to ✅, the known-issues retirement and §9 item 3 struck
+  through, one commit. Test module only
+  (`tests/validation/test_port_package_sparameters.py`): `RECORD_RANK_WIDTH
+  = 2`, `FEM_EM_RECORD_WIDTH_OVERRIDE`, `_gate_on_record_width()`, a strict
+  `record_width_xfail` marker, `_print_port_quantities()`. **No `src/`
+  change; `REPRODUCTION_BAND_RELATIVE`, `PASSIVITY_REPRODUCTION_BAND`,
+  `SYMMETRY_RATIO_BAND`, `MUTUAL_TOLERANCE` and `HEURISTIC_SEPARATION_FLOOR`
+  untouched.**
+- **Disclosed refinement beyond the item's literal text, deliberate:** the
+  width gate sits *after* every assertion in each record test that is not a
+  digit record, so the item's `-n 4` anchor "every physics band is green" is
+  genuinely **asserted** at `-n 4` rather than skipped past — the mutual band
+  and its blind-fixture control (test 1), the report-vs-`norm(S,2)`
+  agreement, the no-warning assert and the column-power inequality (test 2),
+  the warning-fires and untouched-clean controls (test 3) all still run at
+  every width. The three tests still *report* as skipped off the record
+  width. Nothing was weakened; strictly more is asserted at `-n 4` than the
+  item asked for.
+- **Windows (all foreground, `timeout -k 30 400`, complex build,
+  `tests/environment` first, `Status: 0`):**
+  `20260908T123350Z_OPS-41.log` collect-only smoke, 6 items, **none
+  parametrised** (the item's trap, checked), 4 s.
+  **`-n 2` `20260908T123716Z_OPS-41.log`** — `17 passed in 179.30s` (`:813`),
+  elapsed **181 s** (`:881–882`); records 4.269e-10 / 4.190e-10 (`:716`),
+  2.616e-10 / 4.889e-11 (`:735`), 4.070e-04 (`:743`).
+  **`-n 4` `20260908T124026Z_OPS-41.log`** — `3 passed, 3 skipped in 134.84s`
+  (`:759`), elapsed **136 s** (`:771–772`); skips fire *after* the readings;
+  width-independent asserts green at that width — mutual −10.58% raw /
+  −6.05% corrected against the unmoved 10% (`:714`), heuristic separation
+  3.031654e-01 vs the 2.0e-3 floor (`:737`).
+  **`-n 4` + `FEM_EM_RECORD_WIDTH_OVERRIDE=1`
+  `20260908T124317Z_OPS-41.log`** — `3 passed, 3 xfailed in 140.38s`
+  (`:751`), elapsed **142 s** (`:763–764`); the negative control reproduces
+  `20260907T170528Z_TH-15.log:743–749` **to the digit**: raw mutual
+  **3.249e-04** (`:702`), `passivity_max_sigma` **1.169e-04** and symmetry
+  ratio 8.634e-05 (`:738`), perturbation recovery **1.132e-03** (`:748`).
+  Strict, so a module that became width-invariant XPASSes rather than going
+  quietly green. One extra `-n 2` window (`20260908T123400Z_OPS-41.log`, 17
+  passed / 176.48 s, Status 0) was green but run without `-s`, so pytest
+  swallowed the prints — re-run, ≈ 3 min lost, kept for the record. Heavy by
+  ceiling, standard by measurement (181 / 136 / 142 s), as the item priced.
+- **The attribution, which is the point of the chunk (`…123716Z:709–715` vs
+  `…124026Z:719–725`):** predicted `V` at 1e-4 and `I` at ≤ 1e-8 —
+  **confirmed by six to eight decades.** `|ΔI|/|I|` = **5.8e-11** (`I_P1`
+  driven), 1.5e-10 (`I_P2` driven), 7.6e-10 (`I_P2^(P1)`), 3.6e-09
+  (`I_P1^(P2)`). `|ΔV|/|V|` = **3.249e-04** on `V_P2^(P1)` — *numerically
+  identical to the raw-mutual miss, i.e. the miss **is** that voltage* —
+  1.176e-04 (`V_P1^(P2)`), 5.617e-04 (`V_P1^(P1)`), and **2.287e-02** on
+  `V_P2^(P2)`, the ungated `Z₂₂` diagonal, the largest mover by two decades
+  and read by nothing in this module. The pre-registered negative result
+  (`I` moving while `V` holds) did **not** occur. The facet-integrated
+  current is partition-invariant to ~1e-10; the point-sampled
+  `_path_voltage` carries the whole sensitivity.
+- Verified by the slot itself against the logs, not the executor's report:
+  the three footers and `Status:` lines, the three override misses at
+  `…124317Z:702, 738, 748`, and the attribution recomputed by hand from the
+  raw `repr()` prints — `V_P2^(P2)` 6.95237045775221j → 6.77168809419959j
+  over |V| ≈ 7.897 gives **2.288e-02** (report: 2.287e-02), and `I_P1^(P1)`
+  0.9719306759544322 → 0.9719306758980023 gives **5.8e-11**. Both match.
+- Independent corroboration of the 06:00 slot's `TH-15` step 2f (`d348db0`),
+  which measured the same carrier on a different fixture (gap-averaged read
+  collapses `|Z₁₂−Z₂₁|/|Z₁₂|` 2.03e-02 → 1.51e-04). Two fixtures, two
+  routes, one mechanism.
+- `main` clean and green after the landing; six `attempt/*` branches
+  unchanged, no `recovered/*`, none deleted (this chunk owned none). The
+  2026-09-07 width-sensitivity known-issues entry is retired in the landing
+  commit, replaced by the module docstring's record. One markdown fix by the
+  slot after the executor's commit: the §9 item-3 strikethrough had lost its
+  opening `**`, restored to match items 1 and 2.
+- No allowlist denial, no docker-socket denial, no container wedge, no
+  timeout abort.
+- Next-attempt hypothesis / for the review: **the `_path_voltage` fix chunk
+  now has two independent measurements licensing it** — this slot's 1e-4
+  width sensitivity and step 2f's 2% `Z` asymmetry, same carrier. Scope it as
+  an `src/` chunk replacing the point sample with an edge-integrated or
+  face-averaged read, and gate it on *both* — `OPS-41`'s three records
+  reproducing at `-n 4` under the override (an XPASS is the signal, and the
+  strict marker makes it automatic) and step 2f's gap-averaged
+  `|Z₁₂−Z₂₁|/|Z₁₂|`. Start from the **diagonal**: `V_P2^(P2)` moves 2.287e-02
+  across widths, two decades above anything gated, so the driven gap — where
+  the path runs through the impressed source — is where the sampling error
+  lives and where a candidate fix will show first.

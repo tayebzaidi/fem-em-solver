@@ -8550,7 +8550,7 @@ never widened silently and never on a quantity that was already green.
    no `src/` change; the 2026-09-07 width known-issues entry is retired in
    the same commit. Follow-on (not commissioned here): an edge-integrated
    or face-averaged `_path_voltage`. Readings in the §7 `OPS-41` row.**
-   ~~`OPS-41` — declare `test_port_package_sparameters.py`'s three
+   ~~**`OPS-41` — declare `test_port_package_sparameters.py`'s three
    digit-reproduction records `-n 2` records, and attribute the 1e-4
    width sensitivity to `V` or `I`** (standard by measurement, heavy by
    ceiling, `-n 2` and `-n 4`, complex build; `main`; independent;
