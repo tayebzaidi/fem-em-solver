@@ -17097,3 +17097,75 @@ service is not Up.
   (only 0.0075 has a cross-process repeat) and none may be pinned as a
   record without its own repeat. A solve at 0.0025 has not been costed —
   this probe meshed only.
+
+## 2026-09-08T05:20Z (2026-09-08 00:00 CDT slot) — `WF-6` (step 4c) — **complete**
+
+- Preflight: `main` clean at `14b965b`, container Up 4 days (`fem-em-solver-xl`
+  also Up 4 hours — left as found; this slot's item is not `xl`). §9 item 1 is
+  🚫 BLOCKED and items 2 and 3 are ✅ DONE, so the first open item is **item 4**,
+  `WF-6` step 4c. Executor: `implementer`, foreground, one chunk.
+- Branch choice per the item's own test: `git diff --stat 499c527 main --
+  tests/validation/test_port_birdcage_four_port.py` is **not** empty (2 ins /
+  15 del), so item 1 never landed the additive `phantom_material` keyword on
+  `main` and step 4c runs on `attempt/WF-6-step4-20260907T205600Z`. Work branch
+  `attempt/WF-6-step4c-20260908T050135Z`, commit `0ac18d7`; `main` untouched by
+  the executor and clean at hand-back.
+- What was tried: new measurement module
+  `tests/validation/test_birdcage_conductor_currents.py` — the four unloaded
+  single-drive solves of step 4 plus the ccw mode-1 superposition, then twenty
+  volume-averaged currents built from the solver's own DG0 material map
+  (`J = (σ + jωε)E`, coil tag 1): three 10 mm axial slabs per leg at
+  z = 11 / 26 / 41 mm and the middle half of each quarter arc of each end ring
+  (ring cells `|z| > 0.051 m`, sector membership without `atan2`,
+  `quadrature_degree` 2, every `assemble_scalar` reduced with `MPI.SUM`).
+  Nothing asserted — 🧪 by the §3 rule, as pre-registered; no band, no `src/`,
+  no §2 change.
+- Measured (all `20260908T051300Z_WF-6.log`; 116 085 cells, ω = 6.283185e+07
+  rad/s, header `:1918–1921`). **(1)** `I_leg(11 mm)` vs
+  `sheet_terminal_current`, predicted 2%: **0.6053 / 2.5672 / 0.6384 /
+  3.0871 %** on legs 0–3, volume `|I|` 1.829947e-02 / 1.867466e-02 /
+  1.831125e-02 / 1.876886e-02 A against a terminal `|I|` flat at
+  1.8205–1.8208e-02 A, phases to ≤ 0.2° (`:1922–1926`). **(2)** fall
+  11 → 41 mm: **1.2217 / 2.7207 / −1.5808 / 3.3921 %**, all inside the ≲ 6%
+  displacement bound (`:1927–1931`) — the item's one negative-result branch
+  (a leg current falling by more than 6% ⇒ known-issues) **did not fire**, so
+  no entry opens. **(3)** arcs vs `cumsum(I) − mean`, predicted ~6%:
+  `|diff|/max|I_leg|` top **1.1433 / 1.1477 / 1.0683 / 1.2382 %**, bottom
+  **1.0288 / 1.0419 / 1.1235 / 1.2734 %** (`:1932–1940`) — this **retires
+  hypothesis (b) of the 15:00 slot's entry**. **(4)** Kirchhoff
+  (`max|I_leg|` = 1.876886e-02 A): top **0.6203 / 0.1032 / 2.1877 /
+  0.3636 %**; bottom **193.24 / 193.67 / 196.05 / 193.43 %** under the item's
+  literal sign, **0.6334 / 0.0900 / 2.1635 / 0.2467 %** with the leg sign
+  flipped (`:1941–1949`). Both printed, neither chosen in-slot.
+- Verification of the executor's report against the logs (rule: the logs win):
+  I re-read `:1916–1949` and the footer myself — every digit above is
+  transcribed from the log text, and the report agreed with it line for line.
+- **One disclosed correction to the item's recipe.** The literal sector test
+  `proj > sqrt(x²+y²)·cos(Δφ/2)` raises `ComplexComparisonError` even with
+  purely real `SpatialCoordinate` operands — UFL's `comparison_checker` types
+  `Sqrt` as complex unconditionally. It cost the first `-n 4` window
+  (`20260908T050511Z_WF-6.log:1983`, Status 124 at the 400 s ceiling). The
+  executed module uses the equivalent squared form
+  `proj > 0 ∧ proj² > r² cos²(Δφ/2)` — exact for `r ≥ 0`, `cos(Δφ/2) > 0` —
+  and smoked the compile standalone (`20260908T051248Z_WF-6.log`, Status 0,
+  6 s) before spending the second solve window. The §7 ordering-comparison
+  trap note should read "no `sqrt` inside the comparison", not "real operands".
+- Logs (all on the branch): 20260908T050457Z_WF-6.log (collect-only smoke,
+  Status 0, 5 s); 20260908T050511Z_WF-6.log (first `-n 4` window, **aborted**,
+  Status 124, 400 s); 20260908T051248Z_WF-6.log (form-compile smoke `-n 2`,
+  Status 0, 6 s); **20260908T051300Z_WF-6.log** (the record, `-n 4` complex,
+  12 passed in 144.07 s, Status 0, elapsed 146 s).
+- Branch (if parked): `attempt/WF-6-step4c-20260908T050135Z` (`0ac18d7`) — the
+  code and logs live there because the fixture keyword is not on `main`; the
+  record lands on `main` in the §7 "Step 4c EXECUTED" paragraph, as the item
+  scoped it. All four `attempt/*` branches kept; none deleted.
+- Next-attempt hypothesis / for the review: (i) adopt the **flipped** bottom-ring
+  Kirchhoff sign (`I_arc,n − I_arc,n−1 + I_leg,n = 0`) before scoping any gate
+  from this table — the 193% is the item's recipe meeting a z-mirrored ring,
+  not a physics finding; (ii) ratify the `sqrt` correction; (iii) index **2** is
+  the worst junction on both rings (2.19% / 2.16%) and leg 2 is the only leg
+  whose current *rises* with `z` (−1.58%) — a leg-2-quadrant mesh asymmetry is
+  a candidate shared with step 4b's `r = 0.5R` miss and is checkable against
+  `WF-6` step 2's C4 record (0.9818%) before any comparand is blamed. Step 4c
+  closes nothing on its own; `WF-6` stays 🟡 pending the review's ruling on
+  step 4b's comparand truncation (item 1's unblock condition).

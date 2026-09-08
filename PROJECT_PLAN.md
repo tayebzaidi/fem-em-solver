@@ -6797,6 +6797,59 @@ therefore one small `post/` addition plus a gate module. Degree 1, per the
 > entry; a leg current falling along `z` by more than the 6% bound is the
 > finding that the PEC box takes displacement current at a level that
 > matters for the 5% band — known-issues with the table.
+>
+> **Step 4c EXECUTED (2026-09-08 00:00 slot) — the coil's conduction
+> currents are the sheet's to 3.1%, flat along `z` to 3.4%, and Kirchhoff
+> closes at every junction to 2.2%.** One record window, `-n 4`, complex,
+> **12 passed in 144.07 s**, footer `Status: 0` / `Elapsed (s): 146`
+> (`20260908T051300Z_WF-6.log`, on the branch). Nothing asserted — 🧪 as
+> pre-registered; no band, no `src/`, no §2 change. Fixture header
+> (`:1918–1921`): the step-4 unloaded F-small birdcage, **116 085 cells**,
+> ω = 6.283185e+07 rad/s, mode-1 (ccw) superposition, `J = (σ + jωε)E`
+> off the DG0 material map on tag 1; legs at 360 / 90 / 180 / 270°, arc
+> centres 405 / 135 / 225 / 315°, slabs at (0.011, 0.026, 0.041) m ×
+> 10 mm, ring cells `|z| > 0.051 m`, arc span 45°, `quadrature_degree` 2.
+> **(1) `I_leg(11 mm)` vs `sheet_terminal_current`** (predicted 2%;
+> `:1922–1926`): **0.6053 / 2.5672 / 0.6384 / 3.0871 %** on legs 0–3,
+> volume `|I|` 1.829947e-02 / 1.867466e-02 / 1.831125e-02 /
+> 1.876886e-02 A against a terminal `|I|` flat at 1.8205–1.8208e-02 A,
+> phases agreeing to ≤ 0.2°. **(2) `I_leg(z)`** (predicted flat to a few
+> %, displacement bound ≲ 6%; `:1927–1931`): fall 11 → 41 mm
+> **1.2217 / 2.7207 / −1.5808 / 3.3921 %**, every reading inside the
+> bound — the PEC-box displacement finding did **not** fire and no
+> known-issues entry opens. **(3) ring arcs vs `cumsum(I) − mean`**
+> (predicted ~6%; `:1932–1940`): `|diff|/max|I_leg|` = top
+> **1.1433 / 1.1477 / 1.0683 / 1.2382 %**, bottom
+> **1.0288 / 1.0419 / 1.1235 / 1.2734 %** — measured arc `|I|`
+> 1.2837–1.2885e-02 A against a comparand 1.2987–1.3014e-02 A. This
+> **retires hypothesis (b) of the 15:00 slot's entry**: the rings carry
+> the current the leg currents predict. **(4) Kirchhoff residual**
+> (`max|I_leg|` = 1.876886e-02 A; `:1941–1949`): top junctions
+> **0.6203 / 0.1032 / 2.1877 / 0.3636 %**; the bottom ring reads
+> **193.24 / 193.67 / 196.05 / 193.43 %** under the item's *literal*
+> sign and **0.6334 / 0.0900 / 2.1635 / 0.2467 %** with the leg sign
+> flipped — both printed, neither chosen. **For the review, three
+> readings to rule on:** (i) the bottom ring is the top's `z`-mirror, so
+> its Kirchhoff statement is `I_arc,n − I_arc,n−1 + I_leg,n = 0`; the
+> 193% is the item's recipe, not the fixture — adopt the flipped sign
+> before any gate is scoped from this table. (ii) **A disclosed
+> correction to the recipe:** the literal sector test
+> `proj > sqrt(x²+y²)·cos(Δφ/2)` raises `ComplexComparisonError` even on
+> purely real `SpatialCoordinate` operands, because UFL types `Sqrt` as
+> complex unconditionally (`20260908T050511Z_WF-6.log:1983`, the aborted
+> first window, Status 124); the executed module uses the equivalent
+> squared form `proj > 0 ∧ proj² > r² cos²(Δφ/2)`, exact for `r ≥ 0` and
+> `cos(Δφ/2) > 0`, smoked standalone at `20260908T051248Z_WF-6.log`
+> (`Status: 0`, 6 s) before the second solve window was spent — the
+> ordering-comparison trap note wants "no `sqrt` in the comparison", not
+> "real operands". (iii) Index **2** is the worst on both rings
+> (2.19% / 2.16%) and leg 2 is the only leg whose current *rises* with
+> `z` (−1.58%); a leg-2-quadrant mesh asymmetry is a candidate shared
+> with step 4b's `r = 0.5R` miss, checkable against `WF-6` step 2's C4
+> record (0.9818%) before any comparand is blamed. Code + four logs on
+> `attempt/WF-6-step4c-20260908T050135Z` (`0ac18d7`), based on
+> `attempt/WF-6-step4-20260907T205600Z` (item 1 never landed the
+> `phantom_material` keyword on `main`). `WF-6` stays 🟡.
 
 ### EX — Examples (§5.4 ramp)
 
@@ -8227,7 +8280,30 @@ never widened silently and never on a quantity that was already green.
    scopes. **Negative result:** the control not reproducing 120 499 is
    an `OPS-18`-class mesher-drift finding — record, stop.
 
-4. **`WF-6` step 4c — the coil's conduction currents measured: leg
+4. ✅ **DONE — executed 2026-09-08 00:00 slot; do not re-run.** One record
+   window, `-n 4`, complex, **12 passed in 144.07 s**, footer `Status: 0` /
+   `Elapsed (s): 146` (`20260908T051300Z_WF-6.log`, on the branch); nothing
+   asserted, as pre-registered. All four groups printed and all four land
+   inside their predicted class: (1) `I_leg(11 mm)` vs the sheet terminal
+   current **0.6053 / 2.5672 / 0.6384 / 3.0871 %** (`:1922–1926`); (2) fall
+   11 → 41 mm **1.2217 / 2.7207 / −1.5808 / 3.3921 %**, inside the ≲ 6%
+   displacement bound, so the PEC-box finding did not fire and no
+   known-issues entry opens (`:1927–1931`); (3) arcs vs `cumsum(I) − mean`
+   **1.03–1.27%** of `max|I_leg|` on all eight, **retiring hypothesis (b)**
+   of the 15:00 slot's entry (`:1932–1940`); (4) Kirchhoff top
+   **0.6203 / 0.1032 / 2.1877 / 0.3636 %**, bottom **193%** under the item's
+   literal sign and **0.6334 / 0.0900 / 2.1635 / 0.2467 %** with the leg
+   sign flipped — the bottom ring is the top's `z`-mirror, both printed,
+   neither chosen (`:1941–1949`). Code + four logs on
+   `attempt/WF-6-step4c-20260908T050135Z` (`0ac18d7`), based on
+   `attempt/WF-6-step4-20260907T205600Z`. **For the review:** adopt the
+   flipped bottom-ring sign; ratify the disclosed `sqrt`-in-comparison
+   correction to the recipe (`ComplexComparisonError` on real operands,
+   `20260908T050511Z_WF-6.log:1983`); index 2 is worst on both rings and
+   leg 2 is the only leg rising with `z`. Full record in the §7 `WF-6`
+   "Step 4c EXECUTED" paragraph. Original item below.
+
+   **`WF-6` step 4c — the coil's conduction currents measured: leg
    current at three stations, ring current on eight arcs, the Kirchhoff
    residual at the eight junctions** (heavy by ceiling, `-n 4`, complex
    build; `main` if item 1 landed — `git diff 499c527 main --
