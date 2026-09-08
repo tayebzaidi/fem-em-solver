@@ -17539,3 +17539,83 @@ service is not Up.
   not implementer work. What step 5 does **not** give: two rungs of one
   quantity are no convergence rate, and there is still no absolute SAR, no
   compliance, no homogeneity and nothing at a Larmor frequency.
+
+## 2026-09-08T17:25Z (2026-09-08 12:00 CDT slot) — `WF-6` (step 4e) — **blocked**
+
+- Preflight clean on `089ebdd`, container Up 4 days (`fem-em-solver-xl` also
+  Up ~16 h, unused by this slot). §9 On-deck item 1 taken as written; executed
+  by the `implementer` agent, foreground, no `run_in_background`. Landed
+  `7b73d54` on `main` (docs + log only) and parked
+  `attempt/WF-6-step4e-20260908T170345Z` (`ee87b1b`).
+- **Outcome: anchor (i) RED at the pre-registered first stop, and the failure
+  refutes the comparand route itself, not just `N = 11`.** One window spent:
+  `-n 1`, complex build, `FEM_EM_REQUIRE_COMPLEX=1`, `tests/environment` +
+  `tests/unit/test_birdcage_filament_field.py`, `-v -s`, `timeout -k 30 300` —
+  **1 failed / 21 passed in 128.05 s**, `Status: 1`, elapsed **130 s**
+  (`20260908T170345Z_WF-6.log:173, 176–177`). The priced second window (the
+  `-n 4` / 560 s lattice-gate) was **not spent**: the module stops at the first
+  red, so anchors (ii), (iii), (iv) and controls (α′), (β) are unmeasured.
+- **The measurement** (`:85–99`): max over the six wall centres of
+  `|B_n|/|B_(N=0)|`, drive `(1, 2, −3, 0)`, box ±0.11/±0.11/±0.10, one `N = 12`
+  ladder call (56 953 filament evaluations, 97.19 s of the window):
+
+  | N | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 |
+  |---|---|---|---|---|---|---|---|---|---|---|---|---|
+  | max | 7.508e-02 | 9.990e-02 | 1.077e-02 | 7.082e-02 | **6.046e-03** | 5.980e-02 | 1.384e-02 | 5.399e-02 | 1.834e-02 | 5.040e-02 | **2.127e-02** | 4.796e-02 |
+
+  `N ≤ 6` reproduce 4d's `20260908T093523Z_WF-6.log:66–71` **to the digit**.
+  Anchor (i) reads **2.127e-02 at `N = 11` against the unmoved 1.0e-02** — red
+  by 2.1×, and 7× the 10:30 review's ≤ 3e-3 prediction.
+- **Why this closes the route.** The odd sub-sequence is *not* monotone: it has
+  a minimum at `N = 5` and rises, increments **+7.79e-03 / +4.50e-03 /
+  +2.93e-03**; the even sub-sequence falls with the mirror-image decrements
+  **−5.81e-03 / −3.59e-03 / −2.44e-03**. Both parities approach a **common
+  non-zero limit ≈ 3.2–3.5e-02**, exactly where the shell averages sit and stay
+  (`S̄_N` maxima 3.682e-02 / 3.392e-02 / 3.617e-02 / 3.437e-02 / 3.584e-02 /
+  3.462e-02 at `N = 7…12`, `:98`). So **`S_5`'s 6.046e-03 was a crossing, not a
+  convergence**, and the 10:30 ruling (1)'s extrapolation is refuted by
+  measurement. Mechanism named, not proved: the lattice is conditionally
+  convergent, so its value depends on summation order — `B·n̂ = 0` at a wall
+  comes from pairing image `i` with image `1 − i` about that wall, a symmetric
+  cube truncated at `|i| ≤ N` never pairs its outermost shell, and that
+  unpaired shell subtends a *fixed* solid angle at the wall for every `N`, i.e.
+  a contribution tending to a constant — which is the two-sided 1/N² approach
+  to a constant that the table shows.
+- **Supporting identities all green in the same run**, so the red is the
+  lattice's and not the plumbing's: (ii-a) `N = 0` == `birdcage_filament_field`
+  bit for bit; (ii-a′) `ladder[m] == default(image_order=m)` bit for bit with
+  `S̄` 1-based; (ii-b) `P_11` is the two-leg rotation; 4a's six anchors and the
+  Ampère control unchanged. Per-wall structure matches 4d: `+ŷ` is always the
+  max, the two `z` walls read machine zero (~1e-16) by symmetry.
+- **Landing branch: the item's negative-result clause for (i)** ("print the
+  ladder, known-issues, park, stop"), not either pre-registered (iii) branch.
+  Because (i) is red the unit module cannot land green, so the `src/` half did
+  **not** land either — `main` carries docs and the log only, and the branch
+  carries `analytical.py` (4d's `return_partial_sums` +
+  `shell_averaged_lattice_sum`), the 4e unit module, 4b's gate module **still at
+  `IMAGE_ORDER = 3`, never reached**, the `phantom_material` keyword, and 4d's
+  probe. The gate module's 4e edits were deliberately not written: an
+  unverifiable gate is a doc-only edit. §9 item 1 marked 🚫 with its unblock
+  condition in the same commit (rule (d)).
+- **Nothing loosened:** `WALL_NORMAL_BAND` 1.0e-2, `CLOSED_FORM_BAND` 5.0e-2,
+  `IMAGE_ORDER` 3 all unmoved on `main`.
+- Verified by the slot against the log, not the executor's report: the footer
+  (`Status: 1`, elapsed 130 s), `1 failed, 21 passed … 128.05s` at `:173`, and
+  the twelve-order ladder at `:85–99` including the three machine-zero `z`-wall
+  columns. Every load-bearing digit matches the report.
+- Deviations / not done: the pre-registered deletion of
+  `attempt/WF-6-step4-…`, `…4b-…`, `…4d-…` was conditioned on the two (iii)
+  outcomes and this slot exited on the (i) clause, so **nothing was deleted** —
+  seven `attempt/*` branches now, their material subsumed on 4e's branch; the
+  disposal is the review's. No allowlist denial, no docker-socket denial, no
+  container wedge, no timeout abort, no `run_in_background`, no XL use. Rule (g)
+  held (`-s` on the window; the readings are in the log).
+- Next-attempt hypothesis / for the review: **the comparand cannot be fixed by
+  a larger `N` in any parity, so step 4f's premise changes.** The routes the
+  measurement leaves are (a) a **point-dipole tail** — near images exact, far
+  lattice by its multipole limit, absolutely convergent and order-independent;
+  (b) an **Ewald-style split**; or (c) the cheaper structural move, **abandon
+  the closed-form comparand on this fixture and gate `|B₁⁺|` by `h`-convergence
+  instead** (`GEO-29`, §9 item 5, prices that ladder — and the same ladder is
+  what `ANS-4`'s inconclusive verdict waits on). (a) and (b) are multi-slot.
+  What is *not* available is a wider band or gating on the `N = 5` crossing.
