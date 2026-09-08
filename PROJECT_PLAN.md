@@ -105,10 +105,12 @@ What is validated, to what tolerance, and what must not be trusted.
   one fixture at fixed `h` at 10 MHz — not an absolute SAR number, not a
   C95.3 compliance or limit claim, not Larmor, not converged in `h`; the
   1 g column misses the same band at 6.84% on that rung and is a printed
-  record — on the 2.5 mm phantom rung (`MAT-4` step 5, 2026-09-08,
-  199 920 cells) the 1 g pairs read 0.0957 / 0.1199 / 0.1305 / 0.1065%,
-  printed inside the band and gated by nothing yet (step 5b, §9 item 3,
-  registers the gate).**
+  record — but on the 2.5 mm phantom rung (`MAT-4` step 5b, 2026-09-08,
+  199 920 cells) **both columns are gated at that same unmoved 5% band**:
+  the 1 g pairs read 0.0957 / 0.1199 / 0.1305 / 0.1065%, asserted, with
+  the mis-paired 1 g control at 87.01–87.06% and the rung's mesh pinned as
+  a version-tagged record at the 1% band. Still one fixture, one
+  frequency, two rungs — not a convergence rate.**
 - **S-parameters, two-torus validation fixture only** (`PORT-1` ✅
   2026-08-15): field-derived through `run_n_port_sparameter_sweep`,
   reciprocity `‖S−Sᵀ‖/‖S‖ = 2.5494e-05` vs the 1e-3 gate — carrying the
@@ -398,9 +400,12 @@ What is validated, to what tolerance, and what must not be trusted.
   self-consistency statement on one fixture at fixed `h` at 10 MHz. No
   drive normalisation, no `h` convergence, no Larmor rung and no
   compliance comparison exists; the 1 g column misses the same band at
-  6.84% on that rung and is a printed record (on the 2.5 mm phantom rung,
-  `MAT-4` step 5, 2026-09-08, it reads 0.0957–0.1305% — printed, not yet
-  gated; step 5b registers the gate). The first
+  6.84% on that rung and is a printed record there, while on the 2.5 mm
+  phantom rung (`MAT-4` step 5b, 2026-09-08,
+  `tests/validation/test_birdcage_sar_1g_rung.py`) the 1 g column **is
+  gated** at the same unmoved 5% band, reading 0.0957–0.1305% — a second
+  self-consistency identity on the same fixture at the same frequency, and
+  still not an absolute or compliance number. The first
   coil-driven SAR *symmetry* readings exist (`WF-6` step 3, 2026-08-31)
   and miss their band by 5–8× read **pointwise** off the primal `E`. Since
   `WF-6` step 3h (2026-09-02) the repo gates exactly one coil-driven SAR
@@ -4170,7 +4175,7 @@ stack. Last in Tier B; do not queue before B1–B3 have landed.
 | `MAT-1` | Gelled saline presets (low/mid/high σ) | ⚠️ | smoke |
 | `MAT-2` | Materials demonstrably affect solved fields | ✅ | standard |
 | `MAT-3` | Debye/Cole-Cole dispersion models — **feature ladder C3** (operator directive 2026-09-04; matters once tissue-property maps replace the gel, Phase 7) | ⬜ | smoke |
-| `MAT-4` | SAR computation `σ|E|²/(2ρ)` | ✅ *(step 4 closed 2026-09-06: the C95.3 mass-averaging operator on the **coil-driven** F-small field — 10 g C4 identity 0.3303 / 0.0756 / 0.0574 / 0.3132% at the imported unmoved 5% band, whole-phantom identity 1.58e-14, `23 passed` / 130 s at `-n 4`, `20260907T003548Z_MAT-4-step4.log`. **Scope: 10 g at fixed `h` on one fixture at 10 MHz; the 1 g column is a printed record at 6.8383% worst, verdict (b); no absolute SAR, no C95.3 compliance claim, no Larmor, no convergence claim**. Step 5, 2026-09-08: on the 0.0025 phantom rung the 10 g pairs re-assert at 0.0309–0.0644% and the 1 g pairs read **0.0957–0.1305%**, printed; step 5b (§9 item 3) registers the 1 g gate there)* | standard *(step 4 heavy by ceiling, measured 130 s; step 5 251 s at `-n 4`)* |
+| `MAT-4` | SAR computation `σ|E|²/(2ρ)` | ✅ *(step 4 closed 2026-09-06: the C95.3 mass-averaging operator on the **coil-driven** F-small field — 10 g C4 identity 0.3303 / 0.0756 / 0.0574 / 0.3132% at the imported unmoved 5% band, whole-phantom identity 1.58e-14, `23 passed` / 130 s at `-n 4`, `20260907T003548Z_MAT-4-step4.log`. **Scope: 10 g at fixed `h` on one fixture at 10 MHz; the 1 g column is a printed record at 6.8383% worst, verdict (b); no absolute SAR, no C95.3 compliance claim, no Larmor, no convergence claim**. Step 5, 2026-09-08: on the 0.0025 phantom rung the 10 g pairs re-assert at 0.0309–0.0644% and the 1 g pairs read **0.0957–0.1305%**, printed. **Step 5b ✅ 2026-09-08: 1 g and 10 g are both C4-gated on the 0.0025 rung** at the same imported unmoved 5% band, and the rung's mesh (199 920 / 58 866) is a version-tagged record at the 1% `CELL_COUNT_BAND`; `26 passed` / Status 0 / 313 s at `-n 4`, `20260908T200629Z_MAT-4-step5b.log`)* | standard *(step 4 heavy by ceiling, measured 130 s; step 5 251 s at `-n 4`)* |
 | `MAT-5` | Temperature-dependent conductivity | ⬜ | smoke |
 | `MAT-6` | **Dodd–Deeds coil-over-lossy-half-space impedance** | ✅ *(step 11 scoped 2026-09-02 weekly review — promote the step-8 slab-refined fixture to production now that `ANS-1`'s external check is adjudicated: `resolution_near` 0.005 → 0.0025 in the gate fixture and every importer (`mat:1`, `ans:1`, the two `dodd_deeds_*` gate modules); done-when ΔR re-records at the step-8 reading **0.2829%** (417 914 cells) within 0.05 pp on the 0.11 image, the projected-drive no-op control (≤ 5e-5) and the σ = 0 exact-zero control unchanged, `ans:1` exit 0 and the census `exit != 1`; §2's headline moves 1.58% → the re-recorded figure in the same commit. Executor `record-reconciler` for the record sites, implementer for the fixture. Cost: `MAT-6` step 8 measured the 417 914-cell pair at `-n 8` inside the standard ceiling ×2 — heavy tier, `-n 8`, `timeout -k 30 900`. Scope: the fixture moves, no band moves; ΔX stays reported. Negative result: the 0.28% not reproducing on 0.11 is a known-issues entry and the promotion stops. **Finite-wire framing, 2026-09-02 10:30 review, from `MAT-8`:** the closed form's finite-wire term is **+0.115237%** on ΔR at this fixture, and the refined FEM's −0.2829% is *below* the filament form, so the refined discrepancy against the corrected closed form is ≈ **−0.40%** — the term widens it, it does not absorb it. Step 11's done-when stays a record against the filament form (the gate's anchor); the §2 sentence it moves must quote both the filament and the corrected figures, and any claim tighter than 0.5% on this fixture is bounded below by the 0.115% term. **Step 11 executed 2026-09-06 07:30 slot and parked on `attempt/MAT-6-step11-20260906T125700Z` (`bc159c9`) on two questions — the physics reproduced: 418 888 cells, ΔR deviation 0.27998% vs the 0.2829% target (0.0029 pp), σ = 0 control 2.511e-07, projected ΔR 0.2747% (`20260906T123319Z_MAT-6.log:574–582, 614`; `…124022Z:402`); `ans:1` exited 1 on its own fixture-identity pin `DELTA_R_PIN_OHM = 3.2770406e-01` (`…124601Z:245, 282, 307`); the no-op control read 5.28e-05 against the "≤ 5e-5" above. Rulings, 2026-09-06 10:30 review: (i) the pin is our own record, not an AED number — it follows the fixture under the (1\*) licence, `COMPARISON.md` is regenerated and gains a dated line, and the 2026-09-09 weekly re-checks the 2026-09-02 AGREE verdict against the private results; (ii) the "≤ 5e-5" was the coarse fixture's own 4.84e-05 rounded — a predicted figure, never asserted or imported — so under §9 rule (e) it is printed beside the coarse record and 5.28e-05 clears "unchanged"; the executed asserts on that control are the gate module's own (I′/I in (0.95, 1.05), drive mismatch < 1e-24), green. Nothing loosened. **Step 11 LANDED 2026-09-06 17:00 slot** — `bc159c9` cherry-picked onto `main`, the two gate windows on the branch standing as its gate evidence, and the three landing windows executed at `-n 8` on the 418 888-cell fixture: `ans:1` **exit 0, 262 s** with ΔR **0.2747%** against the 2% ceiling and **3.529e-10** relative to the re-pinned `+3.2170989e-01 Ω` at the unmoved 1e-3 (`20260906T170116Z_MAT-6.log:246–247`, ΔX ratio 0.9161 reported never gated, energy cross-check ratio 1.0000 at `:251`, σ = 0 control exactly 0.0 W / 0.0 A/m² at `:250, 254`); `mat:1` **exit 0, 273 s** with the same ΔR 0.2747% vs the filament form and **0.3895%** vs the finite-wire-corrected form, reported not gated (`20260906T170548Z_MAT-6.log:244`, `:289–290`); census `dead=0 guide=0 stale=75 exit=2` — `exit != 1` as anchored (`20260906T171312Z_MAT-6.log`, 1 s). Record sites moved in the same commit: both guides, `COMPARISON.md` (regenerated + a dated provenance line, also added to the generator so it survives regeneration), `SPEC.md`'s Reference-values table, §2's coil-loading sentence (0.280% filament / ≈ −0.40% finite-wire / 418 888 cells) and the §6 phase row. No band moved; ΔX still reported never gated; no AED-side change; the 2026-09-02 AGREE verdict is the next weekly's to re-check against the moved column.**)* | heavy |
 | `MAT-8` | **Finite-wire correction to the Dodd–Deeds closed form** — eq. (1) of `utils/dodd_deeds.py` evaluated for a filament; the fixture is a 5 mm wire whose cross-section spans lift-off 17.5–22.5 mm and radius 37.5–42.5 mm, a second-order-in-`r/a` (≈ 0.06) modelling term nobody has quantified and the floor under any sub-0.5% ΔR claim (`ANS-1` adjudication, 2026-09-02) | ✅ *(scoped 2026-09-02 weekly review; smoke, closed form only, no solve. Add `coil_impedance_change_finite_wire(f, a, h, σ, r_wire)` averaging eq. (1) over the uniform-current disc (2-D quadrature in the wire cross-section, `mutual` kernel already in the module). **Anchors:** (i) `r_wire → 0` recovers the filament value to **1e-8** relative (asserted, three radii 1e-4/1e-5/1e-6 m); (ii) the perfect-conductor limit of the corrected form equals the disc-averaged image mutual inductance from `utils/analytical.py` to 1e-6 (the same constant-pinning check step 1 used); (iii) the correction at the fixture's `r_wire = 0.0025` is **printed and recorded**, ungated, beside the FEM ΔR's 1.58% / 0.28% — the reading everyone wants is whether it is 0.1% or 0.5%. **Negative control:** the correction changes sign of the ΔX term's second derivative … no — keep it simple: the correction vanishes for `h ≫ r_wire` faster than `(r/a)²` (assert monotone decay across three lift-offs). Cost < 30 s. Scope: a closed-form term and a record; no gate re-registers on it until `MAT-6` step 11 lands. Negative result: a limit not recovering is a bug in the quadrature, not physics)* — **✅ 2026-09-02 (07:30 slot).** `coil_impedance_change_finite_wire` + `image_limit_inductance_change_finite_wire` added to `utils/dodd_deeds.py` (purely additive, 198 lines, nothing existing modified); 7 asserts in `tests/validation/test_dodd_deeds_finite_wire.py`. **The kernel factorises** — the generalised eq. (1) is separable in source and observation filament, so the double disc average is one 2-D fixed Gauss–Legendre polar rule applied twice (`ΔZ = jωπμ₀∫Γ(α)F(α)²dα`), never a 4-D quadrature. Measured (`20260902T123618Z_MAT-8.log:42–87`, `7 passed`, Status 0, **4 s** — smoke by footer): `r_wire = 0` reproduces the filament form to **1.785e-16**; (i) r→0 residuals **2.2222e-06 / 2.2222e-08 / 2.2222e-10** at r = 1e-4/1e-5/1e-6 with decade ratios **100.0001 / 100.0002**; GL 16×16 vs 24×24 **9.819e-15**; (ii) PEC limit vs the 4-D elliptic disc-averaged image mutual **5.7833e-08** (ΔL −1.9786839059e-08 vs −1.9786840203e-08 H) with spurious-loss ratio 5.78e-08. **(iii) The ungated record, `MAT-6` fixture** (10 MHz, a = 0.04, h = 0.02, σ = 100, r_wire = 0.0025, r/a = 0.0625): ΔR 3.22596150e-01 → 3.22967899e-01 Ω, correction **+0.115237%**; ΔX −6.15867486e-01 → −6.16759345e-01 Ω, **+0.144814%**. So the answer to "0.1% or 0.5%" is **0.115% on ΔR** — negligible against the 1.58% production discrepancy but **≈ 41% of the 0.2829% step-8 slab-refined one**, which `MAT-6` step 11 must account for. **Two scoping deviations, both forced by measurement and neither a loosened bound.** (1) Anchor (i) as scoped is arithmetically impossible: the r→0 residual *is* the leading finite-wire term and scales as exactly r² (ratios above), so a 1e-8 bound at r = 1e-4 would require the very correction this chunk computes to be absent; the plan's bound is asserted at the tightest radius (r = 1e-6, 2.2222e-10) **plus** the second-order rate, which is strictly stronger than a single tolerance. (2) **The scoped negative control's premise is false** — the correction does not decay with lift-off, it *rises* monotonically (1.152e-3 → 1.946e-3 across h = 20…640 mm) to the closed-form limit **`r_wire²/(2a²)` = 1.953125e-03**: the *coupling's* lift-off dependence vanishes, but the wire's own mean-square-radius shift is a property of the loop, not of the half-space. Replaced by asserting monotone increase, every value below the closed form, monotone gap closure, and agreement to 0.38% at h = 640 mm — a closed-form anchor where the scoped control was only a monotonicity check. Both deviations are documented verbatim in the test docstrings with log filenames (MAG-10/MAG-15 precedent) and are the review's to ratify. Regression `20260902T123643Z_MAT-8.log`: `14 passed, 3 skipped` with `test_dodd_deeds_impedance.py` (the 3 are complex-only FEM tests), Status 0, 4 s. **Scope held:** no gate re-registers, no band moves, `MAT-6` stays ✅ at 1.58%, `ANS-1` untouched. *Audited 2026-09-02 10:30 review — `auditor` PASS on all eight checks: the record log's `Commit:` is the closing commit's parent, 15 of 15 digits traced to `20260902T123618Z_MAT-8.log:42–91` (the review itself re-read `:71–72`, `+0.115237%`), the `dodd_deeds.py` diff is `+` lines only, anchors (i)/(ii) are asserts at `test_dodd_deeds_finite_wire.py:101,130,165–166`, and the 4 s footer sits inside the declared smoke ceiling. **Both scoping deviations are ratified**: an r² residual cannot meet 1e-8 at r = 1e-4 by arithmetic, and a bound at the tightest radius plus the asserted second-order rate is stronger than the single tolerance; and a control whose premise the measurement refutes is correctly replaced by the closed-form limit `r_wire²/(2a²)` it actually converges to — a sharper anchor, not a loosened one. **One correction to the slot's journal:** the sign. Step 8's slab-refined FEM reads **−0.2829%** — *below* the filament form — and the finite-wire term *raises* the closed form by 0.115%, so against the corrected form the refined discrepancy is ≈ **−0.40%**, not "nearer 0.17%"; the 10 MHz h → 0 bracket shifts to ≈ [−2.26%, −1.02%]. `MAT-6` step 11's framing is annotated accordingly. The module docstring's "Tier: standard" is corrected to smoke in this review's commit.* | smoke |
@@ -4439,6 +4444,48 @@ without the mesh or module changing (two windows agree to the digit) —
 report, do not re-point, stop; a record missing the band is an
 `OPS-18`-class drift — known-issues with the three readings, register
 nothing, stop.
+
+**Step 5b EXECUTED 2026-09-08 (15:00 slot) ✅ — the 1 g column is a gate and
+the rung's mesh is pinned.** `tests/validation/test_birdcage_sar_1g_rung.py`
+only; no `src/` change, step 4's module untouched (rule (c) vacuous), no band
+moved. `26 passed` / Status 0 / **313.23 s** at `-n 4`, complex build
+(`20260908T200629Z_MAT-4-step5b.log`; collect-only smoke
+`20260908T200614Z_MAT-4-step5b-smoke.log`, 15 items in the module, 4 s).
+**(a) The 1 g gate.** `test_the_one_gram_average_is_c4_covariant_on_the_finer_rung`
+(parametrized `k = 0…3`, replacing step 5's printed-record test) asserts each
+cyclic 1 g C4 pair `<= C4_COVARIANCE_BAND` — imported and **unmoved** at the
+same 5% the 10 g column has always carried — and reads **0.0957 / 0.1199 /
+0.1305 / 0.1065%**, reproducing step 5's two windows to every printed digit
+(`…200629Z:1990–1993` against `…140457Z:1990–1993`), a factor 38 of headroom.
+The print labels are flipped to `ASSERTED <= 5.0%` and the pre-registered
+clause's (A) text now says the review ruled, so the log claims exactly what
+the module runs (`:1989, 2001–2002`). The 10 g pairs re-assert unchanged at
+0.0309 / 0.0060 / 0.0394 / 0.0644% (`:1985–1988`) and the whole-phantom ball
+identity holds at **5.262457e-14** vs the imported 1e-10 (`:1999`, step 5 read
+8.126833e-14 — MPI reduction order on the same partition).
+**The mis-paired 1 g control, printed and predicted only (rule (e)):**
+`SAR₁g(c_{k+2}; k)` against `SAR₁g(c_k; k)` reads **87.0143 / 87.0546 /
+87.0506 / 87.0592%** against a predicted ~85% (the 85.25–85.29% on record is
+the **10 g** control on this rung, `…140457Z:1969–1972`) — a new quantity, so
+its *size* is asserted by nothing. `_build_mass_averaged` computes only the 1 g
+diagonal, so these four balls are integrated in this module off the
+construction's own returned fields (`solves`, `rho_field`, `centres`,
+`radii`, the imported `QUADRATURE_DEGREE`) — no re-solve, no re-implementation.
+What **is** asserted about them is attribution: re-integrating the diagonal
+`SAR₁g(c_k; drive P{k+1})` reproduces the value the construction already
+returned at **0.000e+00** relative on all four (`:1990–1993`), which is what
+establishes the `P{k+1} ↔ drive k` map the control is built on; a wrong map
+misses by an order of magnitude.
+**(b) The two records, at the band and never at equality.**
+`ONE_GRAM_RUNG_CELL_RECORD = 199_920` and
+`ONE_GRAM_RUNG_PHANTOM_CELL_RECORD = 58_866`, version-tagged to dolfinx
+0.11.0.post0 / gmsh 4.15.2-git-657c8e9 under the (1\*) licence and asserted at
+the imported `CELL_COUNT_BAND` = 1% (`OPS-27`'s stale-exact class). The rung
+meshes to **199 920 / 58 866**, i.e. **0.0000% / 0.0000%** — the fourth and
+fifth agreeing readings (`:1981–1982`). **Scope:** `MAT-4`'s ✅ gains "1 g and
+10 g C4-gated on the 0.0025 rung" and §2's two SAR clauses carry it; still no
+absolute SAR, no C95.3 compliance or limit claim, no homogeneity, no Larmor,
+and two rungs of one quantity are **not** a convergence rate.
 
 **`MAT-2` — conductivity demonstrably drives the solved field** ✅ *(2026-07-31,
 `tests/validation/test_lossy_plane_wave.py::test_conductivity_measurably_changes_the_field`,
@@ -8994,8 +9041,15 @@ noticed; a log without the readings is a window not spent.
    record, stop; every spread ≲ 1% is itself the finding (the mesh is not
    the mechanism) — record, stop.
 
-3. **`MAT-4` step 5b — the 1 g column promoted to a gate on the `GEO-27`
-   rung, and the rung's mesh pinned as a record** (heavy by ceiling,
+3. ~~**`MAT-4` step 5b — the 1 g column promoted to a gate on the `GEO-27`
+   rung, and the rung's mesh pinned as a record**~~ **DONE 2026-09-08
+   (15:00 slot)** — the four 1 g C4 pairs are asserted at the imported
+   unmoved 5% band and read 0.0957 / 0.1199 / 0.1305 / 0.1065%, the two
+   records are asserted at the 1% `CELL_COUNT_BAND` and read 199 920 /
+   58 866 exactly, the mis-paired 1 g control is printed at 87.01–87.06%
+   against its ~85% prediction; `26 passed` / Status 0 / 313 s at `-n 4`
+   (`20260908T200629Z_MAT-4-step5b.log`). Full record in the §7 `MAT-4`
+   "Step 5b EXECUTED" paragraph. *(original item text follows)* (heavy by ceiling,
    `-n 4`, complex build; `main`; independent; scoped by this review,
    ruling (3); full plan in the §7 `MAT-4` "Step 5b" paragraph).
    Executor: implementer. Test module only,
