@@ -17808,3 +17808,85 @@ question this slot leaves for the 18:00 review is whether the mis-paired 1 g
 control's measured **87.05 ± 0.02%** should be re-registered as the
 *predicted* figure for future rungs, since ~85% was borrowed from the 10 g
 column and missed by 2 points.
+
+## 2026-09-08T21:55Z (2026-09-08 16:30 CDT slot) — `TH-15` (step 2g) — **blocked**
+
+**Item:** §9 item 4 as queued, taken because items 1 (🚫), 2 (✅) and 3 (✅)
+were already disposed of. Preflight clean on `66b5ba0`; both containers Up
+(`fem-em-solver` 5 days, `fem-em-solver-xl` 20 h — untouched, no XL window).
+Executor: `implementer`, spawned foreground with the no-background rule
+stated verbatim; it held.
+
+**Outcome: blocked by the item's own pre-registered negative-result clause,
+with the deliverable served.** The item said "C's reciprocity worse than 1e-2
+⇒ table here and in known-issues, mark 🚫 (rule (d)), stop". C's rebuilt-`Z`
+reciprocity reads **8.594116e-01** (hole) / **7.135082e-01** (solid). So 🚫 —
+but the table it was scoped to produce *does* specify the `src/` chunk, and
+it names **reading B**, which the item did not separately predict.
+
+**Run.** One compute window (collect-only smoke first, 13 tests):
+`20260908T213405Z_TH-15.log`, `-n 4`, complex build +
+`FEM_EM_REQUIRE_COMPLEX=1`, `tests/environment` first, `-s -v --tb=short`,
+`timeout -k 30 560` — **1 failed / 23 passed in 383.64 s**, `Status: 1`,
+elapsed **386 s** (heavy by ceiling and by measurement). The single red is
+step 2's pre-registered raw-`S` unitarity gate, `‖SᴴS − I‖_F = 7.538037e-03
+> 1e-09`, **byte-identical to 2f**. Test module only
+(`tests/validation/test_two_torus_pec_hole_ports.py`), no `src/`, no band
+moved, nothing loosened.
+
+**Anchor (iii), asserted and green:** reading A's rebuilt `Z` reciprocity
+**1.510600e-04** (hole) / **1.925424e-04** (solid) against the new
+`READING_A_RECIPROCITY_BAND` = 1e-3 (`:1666–1667`), reproducing 2f's
+1.510620e-04 / 1.925413e-04. (i) and (ii) green as 2f.
+
+**Measured table** (printed, rule (e)). Undriven `|V_path − V̄_X|/|V̄_X|`
+(`:1674–1675, 1686–1687`): `A` 50.577 / 53.716 / 49.341 / 52.725 %, **`B`
+2.736 / 7.414 / 2.535 / 6.267 %**, `C` 114.867 / 307.792 / 108.537 /
+265.311 %. Driven-port miss (no prediction): A 100.23 %, B ≈ 102.2 %,
+C ≈ 100.5 %. Rebuilt `Z` (`:1677–1679, 1689–1691`), reciprocity then
+`Im Z₂₁/ω` against the ratified `M(a, a − r_w, d)` = 1.654508076658e-08 H:
+**A** 1.5106e-04 / 1.9254e-04, 1.087396e-08 (−34.28 %) / 1.144938e-08
+(−30.80 %); **B** 2.434274e-02 / 1.412485e-02, 1.593762e-08 (**−3.67 %**) /
+1.667684e-08 (**+0.80 %**), inside the unmoved 10 %; **C** 8.594116e-01 /
+7.135082e-01, 7.620397e-09 (−53.94 %) / 8.197867e-09 (−50.45 %). Indicated
+volumes (`:1671–1672, 1683–1684`): `V_A` = 754.689 mm³ on all four,
+`V_B` 553.436–556.300, `V_C` 475.336–477.301 mm³ ⇒ `V_C`/CAD 938.947 mm³ =
+0.5069 (−49.3 %). `‖S_wave − z_to_s(Z_X)‖_F` (`:1680–1682, 1692–1694`): hole
+2.811093 / 2.826628 / 2.817232, solid 2.613614 / 2.627881 / 2.620246.
+
+**Two readings for the 18:00 review, neither ruled in-slot.** (α) The item's
+CAD comparand is likely **2× too large for this tag**: `V_A` = 754.689 mm³
+is exactly half the naive box (108.16 mm² × 13.955 mm = 1509.4 mm³) and the
+fixture's own `A_gap = V_gap/g` = 5.408000e-05 m² is exactly half
+`(2(r_w + GAP_OVERHANG))²` (`:1603–1604`) — the gap cell tag looks like a
+**half-domain**. Against the halved 469.5 mm³, `V_C` is **+1.39 %**, inside
+the predicted 5 %. That is arithmetic on printed numbers, not a measurement,
+and it matters because the same factor 2 sits in every `V̄` normalisation on
+this fixture. (β) The chord slab drops ≈ 14 % of the volume (`V_C/V_B` ≈
+0.859) but ≈ 52 % of the reading, so the field is concentrated in the
+`GAP_BURIAL` overhang beyond the chord and C amputates it asymmetrically —
+a mechanism, untested here. (γ) Prediction (5) is **uninformative as posed**:
+the O(1) norms are not comparable to 2f's 2.915842e-02, which was `z_to_s`
+of the *sweep's* `Z_raw`, not of a `V̄` route.
+
+**Landed.** On `main`, records only: the §7 `TH-15` "Step 2g EXECUTED"
+bullet, the known-issues step-2 row, this entry, and §9 item 4 marked 🚫 with
+its unblock condition (rule (d), same commit). Code and log stay on
+`attempt/TH-15-step2proper-20260907T213739Z`, now **`6f68956`** — 2e/2f's
+arrangement, branch kept. `main` clean and unchanged in `src/` and `tests/`.
+Every digit above re-traced from the log by this slot, not taken from the
+executor's report.
+
+**Denials / anomalies:** none — no docker-socket denial, no allowlist denial,
+no compute-safety event, no container wedge, nothing backgrounded, no XL
+window; one window at `-n 4` in the foreground.
+
+**Hypothesis for the next attempt.** §9 item 5 (`GEO-29`, the
+global-`resolution` cost ladder, `mesh-probe`) is the only open ordinary item
+left in the queue and is the next slot's; item 6 is HELD for a headless slot.
+The standing question this slot leaves the 18:00 review is the half-domain
+reading (α): settle it, then scope the `src/` `_path_voltage` replacement
+from **reading B** — the footprint restriction is the one that lands the
+mutual inside the unmoved 10 % on both fixtures, and the chord restriction is
+refuted, so the fix is geometric after all but the geometry is the wire's
+cross-section, not the chord.

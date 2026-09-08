@@ -3982,6 +3982,66 @@ review confirms that reading before step 1 runs.
 >   not geometric — the table here and in known-issues, mark 🚫 (rule
 >   (d)), stop; C's reciprocity worse than 1e-2 means the restriction
 >   re-introduces the sampling sensitivity — same disposition.
+> * **Step 2g EXECUTED 2026-09-08 (16:30 implementer slot) — the
+>   calibrated reading is the footprint restriction B, not the chord
+>   restriction C; C's negative-result clause fires and the item is
+>   marked 🚫, but the deliverable (the `src/` specification) is served.**
+>   On the branch, now `6f68956`; nothing on `main` but this record, the
+>   known-issues row and the §9 marking. One window,
+>   `20260908T213405Z_TH-15.log`, `-n 4`, complex build +
+>   `FEM_EM_REQUIRE_COMPLEX=1`, `tests/environment` first, `-s -v
+>   --tb=short`, `timeout -k 30 560`: **1 failed / 23 passed in 383.64 s**,
+>   `Status: 1`, elapsed **386 s** (heavy by ceiling; collect-only smoke
+>   first, 13 tests). The single red is step 2's pre-registered raw-`S`
+>   unitarity gate, `‖SᴴS − I‖_F = 7.538037e-03 > 1e-09`, **byte-identical
+>   to 2f and unmoved**. Test module only; no `src/`; no band moved.
+>   **Anchors:** (i) and (ii) green as 2f; **(iii), the new assert:**
+>   reading A's rebuilt `Z` reciprocity **1.510600e-04** (hole) /
+>   **1.925424e-04** (solid) against `READING_A_RECIPROCITY_BAND` = 1e-3
+>   (`:1666–1667`), reproducing 2f's digits. **The table** (all printed,
+>   rule (e)) — undriven `|V_path − V̄_X|/|V̄_X|` (`:1674–1675,
+>   1686–1687`): `A` 50.577 / 53.716 / 49.341 / 52.725 %, **`B` 2.736 /
+>   7.414 / 2.535 / 6.267 %**, `C` 114.867 / 307.792 / 108.537 /
+>   265.311 %; driven-port miss (no prediction) A 100.23 %, B ≈ 102.2 %,
+>   C ≈ 100.5 % (`:1673, 1676, 1685, 1688`). Rebuilt `Z` (`:1677–1679,
+>   1689–1691`), reciprocity then `Im Z₂₁/ω` against the ratified
+>   `M(a, a − r_w, d)` = 1.654508076658e-08 H: **A** 1.5106e-04 /
+>   1.9254e-04, 1.087396e-08 H (−34.28 %) / 1.144938e-08 H (−30.80 %);
+>   **B** 2.434274e-02 / 1.412485e-02, 1.593762e-08 H (**−3.67 %**) /
+>   1.667684e-08 H (**+0.80 %**) — inside the unmoved 10 %; **C**
+>   8.594116e-01 / 7.135082e-01, 7.620397e-09 H (−53.94 %) /
+>   8.197867e-09 H (−50.45 %). Indicated volumes (`:1671–1672,
+>   1683–1684`): `V_A` = 754.689 mm³ on all four, `V_B` 553.436–556.300,
+>   `V_C` 475.336–477.301 mm³ ⇒ `V_C`/CAD 938.947 mm³ = 0.5069 (−49.3 %).
+>   `‖S_wave − z_to_s(Z_X)‖_F` (`:1680–1682, 1692–1694`): hole 2.811093 /
+>   2.826628 / 2.817232, solid 2.613614 / 2.627881 / 2.620246 — all O(1),
+>   not comparable to 2f's 2.915842e-02 (which is `z_to_s` of the
+>   *sweep's* `Z_raw`, not of a `V̄` route), so **prediction (5) is
+>   uninformative as posed**. **Predictions (1), (2) and (3) all fail for
+>   C and all but hold for B**, which the item did not separately predict:
+>   the footprint restriction alone lands the mutual inside the unmoved
+>   10 % on both fixtures where the whole tag misses by −34 % / −31 %.
+>   **Two readings for a review, neither ruled here.** (α) The item's CAD
+>   comparand looks **2× too large for this tag**: `V_A` = 754.689 mm³ is
+>   exactly half the naive box (108.16 mm² × 13.955 mm = 1509.4 mm³) and
+>   the fixture's own `A_gap = V_gap/g` = 5.408000e-05 m² is exactly half
+>   `(2(r_w + GAP_OVERHANG))²` (`:1603–1604`) — the gap cell tag appears
+>   to be a half-domain; against the halved comparand 469.5 mm³, `V_C` is
+>   **+1.39 %**, inside the predicted 5 %, and `V_B/(π r_w² ℓ_B)` = 0.505
+>   for the same reason. This is arithmetic on printed numbers, not a
+>   measurement. (β) The chord slab drops ≈ 14 % of the volume
+>   (`V_C/V_B` ≈ 0.859) but ≈ 52 % of the reading, so the field is
+>   concentrated in the `GAP_BURIAL` overhang beyond the chord and C
+>   amputates it asymmetrically — a mechanism, untested in this slot.
+>   **Disposition:** C's reciprocity 8.6e-01 / 7.1e-01 exceeds the item's
+>   own 1e-2 threshold ⇒ §9 item 4 marked 🚫 per rule (d), table into
+>   known-issues, stop. Step 2 stays open on the unitarity gate, `TH-15`
+>   stays 🟡, both branches kept, nothing loosened. **For the review:** the
+>   `src/` `_path_voltage` replacement should be specified from **reading
+>   B** (wire-footprint-restricted, whole-`y` slab), with (α) settled
+>   first — if the tag is a half-domain, every `V̄` normalisation on this
+>   fixture carries a factor 2 that reading B's mutual agreement does not
+>   currently reflect.
 > * **Step 3a (the birdcage hole as a `MeshGenerator` route — scoped
 >   2026-09-06 10:30 review, §9 item 4; step 2a's pattern on
 >   `birdcage_port_domain`).** One additive `as_hole=False` keyword: the
@@ -9093,7 +9153,30 @@ noticed; a log without the readings is a window not spent.
    the band is an `OPS-18`-class drift — known-issues with the three
    readings, register nothing, stop.
 
-4. **`TH-15` step 2g — the calibrated gap average: footprint- and
+4. 🚫 **EXECUTED 2026-09-08 16:30 slot — the table landed and the
+   deliverable is served, but the item's own negative-result clause
+   fires on reading C, so it is marked per rule (d).**
+   `20260908T213405Z_TH-15.log` (branch `6f68956`), `-n 4`, **1 failed /
+   23 passed in 383.64 s**, `Status: 1`, elapsed 386 s; the red is step
+   2's pre-registered unitarity gate, byte-identical to 2f. Anchor (iii)
+   asserted and green (1.510600e-04 / 1.925424e-04 against 1e-3,
+   `:1666–1667`). **Predictions (1), (2), (3) fail for C and all but hold
+   for B** (undriven miss `B` 2.736 / 7.414 / 2.535 / 6.267 % vs `C`
+   114.9–307.8 %; reciprocity `B` 2.43e-02 / 1.41e-02 vs `C` 8.59e-01 /
+   7.14e-01; mutual `B` **−3.67 % / +0.80 %**, inside the unmoved 10 %,
+   vs `C` −53.9 % / −50.5 %); `V_C`/CAD = 0.5069, and the printed
+   `A_gap = V_gap/g` is exactly half the box cross-section, so the gap
+   tag looks like a **half-domain** and the item's 938.6 mm³ comparand 2×
+   too large (arithmetic, not measured). Prediction (5) is uninformative
+   as posed (2f's 2.9e-02 was `z_to_s` of the sweep's `Z_raw`). C's
+   reciprocity > 1e-2 ⇒ 🚫 per the item's clause; table in the §7 `TH-15`
+   "Step 2g EXECUTED" bullet and the known-issues row; no band moved, no
+   `src/`, `TH-15` stays 🟡, both branches kept. **Unblock condition:** a
+   review specifies the `src/` `_path_voltage` replacement from **reading
+   B**, having first settled whether the gap tag is a half-domain (that
+   factor 2 is in every `V̄` normalisation on this fixture). Not
+   re-runnable as written.**
+   **`TH-15` step 2g — the calibrated gap average: footprint- and
    chord-restricted volume reads beside 2f's, `Z` and the mutual rebuilt
    on each, reading A's reciprocity asserted** (heavy by ceiling, `-n 4`,
    complex build; on `attempt/TH-15-step2proper-20260907T213739Z`
