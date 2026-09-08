@@ -1,0 +1,178 @@
+# Test Run
+- Chunk: WF-6
+- Commit: 089ebdd260965e8b0a50e5e3fafc4ee18a11d56d
+- Time (UTC): 2026-09-08 17:03:45
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && source /usr/local/bin/dolfinx-complex-mode && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 timeout -k 30 300 mpiexec -n 1 python3 -m pytest tests/environment tests/unit/test_birdcage_filament_field.py -v -s --tb=short'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Sep  4 23:31 .
+drwxr-xr-x 16 taz5297 taz5297 4096 Sep  8 12:01 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  721 Sep  3 13:49 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 2801 Sep  4 23:31 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && source /usr/local/bin/dolfinx-complex-mode && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 timeout -k 30 300 mpiexec -n 1 python3 -m pytest tests/environment tests/unit/test_birdcage_filament_field.py -v -s --tb=short'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... collected 22 items
+
+tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build 
+[TH-1 step 0] PETSC_ARCH='linux-gnu-complex128-32' ScalarType=complex128 dolfinx=/usr/local/dolfinx-complex/lib/python3.12/dist-packages/dolfinx/__init__.py version=0.11.0.post0
+PASSED
+tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form PASSED
+tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not [TH-1 step 0] inner=(11+2.0000000000000013j) dot=(-5.000000000000001+10.000000000000002j)
+PASSED
+tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly [TH-1 step 0] ||M||_F=1.041233e+00 ||M_c - eps_c*M||_F=8.062e-16
+PASSED
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites PASSED
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations PASSED
+tests/environment/test_dolfinx_api_migration.py::test_filed_survivors_outside_the_gated_roots_are_unchanged PASSED
+tests/environment/test_dolfinx_version.py::test_adopted_dolfinx_version_is_exact 
+[OPS-18 step 1] dolfinx=0.11.0.post0 file=/usr/local/dolfinx-complex/lib/python3.12/dist-packages/dolfinx/__init__.py python=3.12.3 ScalarType=complex128
+PASSED
+tests/environment/test_dolfinx_version.py::test_resolved_dolfinx_path_matches_mode_and_interpreter [OPS-18 step 1] expect /dolfinx-complex/ and /python3.12/ in /usr/local/dolfinx-complex/lib/python3.12/dist-packages/dolfinx/__init__.py
+PASSED
+tests/environment/test_dolfinx_version.py::test_h5py_built_against_the_image_hdf5 [OPS-18 step 1] h5py=3.16.0 built=(2, 1, 1) linked=(2, 1, 1)
+PASSED
+tests/environment/test_dolfinx_version.py::test_complex_build_is_complex128 PASSED
+tests/unit/test_birdcage_filament_field.py::test_infinite_line_limit_reproduces_the_straight_wire_closed_form (i) infinite-line limit: rel dev 9.999875e-07 (band 1.0e-05)
+PASSED
+tests/unit/test_birdcage_filament_field.py::test_ring_limit_reproduces_the_circular_loop_on_axis_closed_form (ii) ring limit: axial rel dev 2.830785e-16, on-axis transverse 2.653861e-17 (band 1.0e-10)
+PASSED
+tests/unit/test_birdcage_filament_field.py::test_mode_one_field_is_solenoidal (iii) mode-1 div B: max 4.510963e-10 |B|/R over 20 interior points (band 1.0e-08)
+PASSED
+tests/unit/test_birdcage_filament_field.py::test_mode_one_pattern_is_c4_covariant (iv) C4 covariance: rel dev 2.431697e-16 (band 1.0e-12)
+PASSED
+tests/unit/test_birdcage_filament_field.py::test_finite_length_factor_and_the_end_ring_contribution_at_the_centre (v) finite-length factor: 0.707106781 against closed form 0.707106781 (band 1.0e-06)
+(v) end-ring transverse at the centre: -2.020305089e-06 T against closed form -2.020305089e-06 T, rel dev 4.192599e-16; ring/leg = 0.500000000 (R^2/rho^2 = 0.500000000)
+PASSED
+tests/unit/test_birdcage_filament_field.py::test_mode_two_drive_has_no_transverse_field_at_the_centre (vi) mode-2 transverse at the centre: 1.048150e-16 of the mode-1 centre field (band 1.0e-12); mode-1 |B| = 6.060915e-06 T
+PASSED
+tests/unit/test_birdcage_filament_field.py::test_open_circuit_negative_control control: Ampere deviation closed 1.887379e-15, open 1.761971e-02 (9.336e+12x), computed ceiling 1.941932e-02
+control (printed, NOT asserted): div B closed 4.510963e-10, open 7.300842e-10 |B|/R -- both machine level, which is the point: div B is blind to circuit closure
+PASSED
+tests/unit/test_birdcage_filament_field.py::test_the_image_lattice_at_order_zero_is_the_free_space_field (ii-a) N = 0 vs free space: max|dB| = 0.000e+00 T (exact 0 required)
+PASSED
+tests/unit/test_birdcage_filament_field.py::test_the_partial_sum_ladder_reproduces_the_default_path_bit_for_bit (ii-a') ladder[0] vs default(N=0): max|d| 0.000e+00 T (exact 0 required)
+(ii-a') ladder[1] vs default(N=1): max|d| 0.000e+00 T (exact 0 required)
+(ii-a') ladder[2] vs default(N=2): max|d| 0.000e+00 T (exact 0 required)
+PASSED
+tests/unit/test_birdcage_filament_field.py::test_the_image_map_composes_to_the_two_leg_rotation (ii-b) P_11 I = [-3.  0.  1.  2.] vs currents rotated two legs [-3.  0.  1.  2.]
+PASSED
+tests/unit/test_birdcage_filament_field.py::test_the_image_lattice_cancels_the_normal_field_on_every_pec_wall (i) the N = 12 ladder at six wall centres took 97.19 s (56 953 filament evaluations)
+(i) plain S_ 1 (odd ): |B_n|/|B_(N=0)| at the six wall centres = 4.610e-02, 1.887e-02, 4.614e-02, 7.508e-02, 1.731e-16, 3.936e-16   max 7.508e-02
+(i) plain S_ 2 (even): |B_n|/|B_(N=0)| at the six wall centres = 6.134e-02, 2.511e-02, 6.139e-02, 9.990e-02, 2.019e-16, 4.437e-16   max 9.990e-02
+(i) plain S_ 3 (odd ): |B_n|/|B_(N=0)| at the six wall centres = 6.613e-03, 2.707e-03, 6.619e-03, 1.077e-02, 1.839e-16, 5.110e-16   max 1.077e-02
+(i) plain S_ 4 (even): |B_n|/|B_(N=0)| at the six wall centres = 4.348e-02, 1.780e-02, 4.352e-02, 7.082e-02, 8.971e-17, 4.302e-16   max 7.082e-02
+(i) plain S_ 5 (odd ): |B_n|/|B_(N=0)| at the six wall centres = 3.712e-03, 1.519e-03, 3.716e-03, 6.046e-03, 1.314e-16, 3.765e-16   max 6.046e-03
+(i) plain S_ 6 (even): |B_n|/|B_(N=0)| at the six wall centres = 3.672e-02, 1.503e-02, 3.675e-02, 5.980e-02, 1.261e-16, 4.298e-16   max 5.980e-02
+(i) plain S_ 7 (odd ): |B_n|/|B_(N=0)| at the six wall centres = 8.497e-03, 3.478e-03, 8.505e-03, 1.384e-02, 1.380e-16, 4.002e-16   max 1.384e-02
+(i) plain S_ 8 (even): |B_n|/|B_(N=0)| at the six wall centres = 3.315e-02, 1.357e-02, 3.318e-02, 5.399e-02, 8.327e-17, 4.144e-16   max 5.399e-02
+(i) plain S_ 9 (odd ): |B_n|/|B_(N=0)| at the six wall centres = 1.126e-02, 4.609e-03, 1.127e-02, 1.834e-02, 1.589e-16, 3.055e-16   max 1.834e-02
+(i) plain S_10 (even): |B_n|/|B_(N=0)| at the six wall centres = 3.095e-02, 1.267e-02, 3.097e-02, 5.040e-02, 1.626e-16, 3.956e-16   max 5.040e-02
+(i) plain S_11 (odd ): |B_n|/|B_(N=0)| at the six wall centres = 1.306e-02, 5.345e-03, 1.307e-02, 2.127e-02, 5.686e-17, 3.708e-16   max 2.127e-02
+(i) plain S_12 (even): |B_n|/|B_(N=0)| at the six wall centres = 2.945e-02, 1.205e-02, 2.948e-02, 4.796e-02, 9.625e-17, 3.834e-16   max 4.796e-02
+(i) shell-averaged S_bar_N maxima (PRINTED, NOT ASSERTED -- the 4d negative): N=1: 4.625e-01, N=2: 1.241e-02, N=3: 4.457e-02, N=4: 3.002e-02, N=5: 3.843e-02, N=6: 3.292e-02, N=7: 3.682e-02, N=8: 3.392e-02, N=9: 3.617e-02, N=10: 3.437e-02, N=11: 3.584e-02, N=12: 3.462e-02
+(i) ANCHOR (i): the plain odd-order S_11 max 2.127e-02 (ASSERTED <= 1.0e-02; PREDICTED <= 3.0e-03); negative control, the plain S_3 of step 4b, max 1.077e-02 (ASSERTED > the band; the 1.077e-02 of 20260908T003713Z_WF-6.log:60-61)
+FAILED
+
+=================================== FAILURES ===================================
+______ test_the_image_lattice_cancels_the_normal_field_on_every_pec_wall _______
+tests/unit/test_birdcage_filament_field.py:667: in test_the_image_lattice_cancels_the_normal_field_on_every_pec_wall
+    assert gate <= WALL_NORMAL_BAND, (
+E   AssertionError: the odd-order cube sum at N = 11 leaves 2.127e-02 of the source field normal to a PEC wall, outside the 1.0e-02 band
+E   assert 0.02127126945515149 <= 0.01
+=============================== warnings summary ===============================
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_four_port.py:1: SyntaxWarning: invalid escape sequence '\*'
+    """`PORT-9` step 3 leg (d) — the 4x4 on the gapped birdcage at 50 Ohm.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_lumped_column.py:1: SyntaxWarning: invalid escape sequence '\*'
+    """`PORT-9` step 3 leg (c) — the first port solve on the gapped birdcage.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_lumped_column.py:458: SyntaxWarning: invalid escape sequence '\*'
+    """**Leg (c)'s gate.**  ``|Z₂₁ − Z₄₁|/|Z₂₁| ≤ 0.5%``, with ``Z₃₁`` apart.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_termination_probe.py:1: SyntaxWarning: invalid escape sequence '\*'
+    """`PORT-9` step 3 leg (d0) — the termination probe on the gapped birdcage.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_termination_probe.py:432: SyntaxWarning: invalid escape sequence '\*'
+    """**Negative control (1).**  Z_p = 1e6 Ω reproduces leg (c)'s ``I₁``.
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-6pyegrnh/tests/validation/test_port_birdcage_four_port.py:1: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-6pyegrnh/tests/validation/test_port_birdcage_lumped_column.py:1: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-6pyegrnh/tests/validation/test_port_birdcage_lumped_column.py:458: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-6pyegrnh/tests/validation/test_port_birdcage_termination_probe.py:1: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-6pyegrnh/tests/validation/test_port_birdcage_termination_probe.py:432: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_filed_survivors_outside_the_gated_roots_are_unchanged
+tests/environment/test_dolfinx_api_migration.py::test_filed_survivors_outside_the_gated_roots_are_unchanged
+  /workspace/examples/ansys_benchmarks/two_torus_gap_ports_10MHz/03_two_torus_gap_ports_10MHz.py:398: SyntaxWarning: invalid escape sequence '\*'
+    """
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/unit/test_birdcage_filament_field.py::test_the_image_lattice_cancels_the_normal_field_on_every_pec_wall - AssertionError: the odd-order cube sum at N = 11 leaves 2.127e-02 of the source field normal to a PEC wall, outside the 1.0e-02 band
+assert 0.02127126945515149 <= 0.01
+============ 1 failed, 21 passed, 32 warnings in 128.05s (0:02:08) =============
+
+## Exit
+- Status: 1
+- Elapsed (s): 130
+- Filtered lines (gmsh optimisation chatter): 0

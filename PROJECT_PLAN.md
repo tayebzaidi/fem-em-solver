@@ -7517,6 +7517,66 @@ therefore one small `post/` addition plus a gate module. Degree 1, per the
 > red *beyond* the predicted points (the `+x̂` column too) is still the
 > second landing branch, with the table. Nothing loosens; the eleven
 > points are never pruned.
+>
+> **Step 4e executed 2026-09-08 12:00 slot — anchor (i) is RED at the
+> pre-registered first stop, and the finding is larger than the anchor:
+> the cube-truncated image lattice's wall-normal residual does not go to
+> zero at all. The odd orders bottom at `N = 5` and turn around, the even
+> orders fall, and the two parities converge on a common limit of
+> ≈ 3.4e-02 — three times the unmoved 1e-02 band.** No FEM window was
+> spent (the module stops at the first red, rule (e)); nothing landed on
+> `main` beyond this record, the log and the known-issues row; the code
+> is parked on `attempt/WF-6-step4e-20260908T170345Z`.
+> `20260908T170345Z_WF-6.log`, **1 failed / 21 passed in 128.05 s** at
+> `-n 1` complex with `tests/environment`, elapsed **130 s**, `Status: 1`.
+> **The measurement** (`:86–99`) — max over the six wall centres of
+> `|B_n|/|B_(N=0)|`, drive `(1, 2, −3, 0)`, box ±0.11 / ±0.11 / ±0.10, one
+> `N = 12` ladder call (56 953 filament evaluations, **113.9 s**, `:85`):
+>
+> | `N` | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 |
+> |---|---|---|---|---|---|---|---|---|---|---|---|---|
+> | max `\|B_n\|/\|B_(N=0)\|` | 7.508e-02 | 9.990e-02 | 1.077e-02 | 7.082e-02 | **6.046e-03** | 5.980e-02 | 1.384e-02 | 5.399e-02 | 1.834e-02 | 5.040e-02 | **2.127e-02** | 4.796e-02 |
+>
+> `N = 1 … 6` reproduce 4d's `…093523Z:66–71` to the digit. **The odd
+> sub-sequence is not monotone**: 7.508e-02 → 1.077e-02 → 6.046e-03 →
+> 1.384e-02 → 1.834e-02 → **2.127e-02**, i.e. it has a *minimum at
+> `N = 5`* and rises thereafter with increments +7.79e-03 / +4.50e-03 /
+> +2.93e-03 that are themselves decaying like ≈ 1/N². The even
+> sub-sequence falls monotonically with decrements −5.81e-03 / −3.59e-03 /
+> −2.44e-03 of the same size and opposite sign. Both parities are
+> therefore converging, from below and from above, on a **common non-zero
+> limit ≈ 3.2–3.5e-02** — which is exactly where the shell averages sit
+> and stay (`S̄_N` maxima 3.682e-02 / 3.392e-02 / 3.617e-02 / 3.437e-02 /
+> 3.584e-02 / 3.462e-02 at `N = 7 … 12`, `:98`). **`S_5`'s 6.046e-03 was
+> a crossing, not a convergence**, and the 10:30 review's extrapolation
+> "the odd sequence extrapolates below 3e-3" is refuted by measurement.
+> **Cause — measured, one mechanism named, not proved.** The lattice is
+> only *conditionally* convergent (copies fall as `1/d³`, shells grow as
+> `d²`), so its sum depends on the *summation order*, and a symmetric
+> cube is a choice. The wall-normal functional is the one that sees that
+> choice: `B·n̂ = 0` at `x = +X_b` comes from pairing image `i` with image
+> `1 − i` about that wall, and a cube truncated at `|i| ≤ N` never pairs
+> the ends — the unpaired outermost shell subtends a *fixed* solid angle
+> at the wall no matter how large `N` is, so its contribution tends to a
+> constant rather than to zero. That is consistent with every number
+> above: a constant limit approached from both sides with `1/N²`
+> oscillation. **Consequence.** The comparand question is **not** closed
+> by a bigger `N` in any parity: there is no cube order at which the
+> lattice satisfies the PEC identity to 1e-02 except the accidental
+> crossing at `N = 5`, and gating on an accidental crossing is fitting.
+> Step 4 does not land; §2's B₁⁺ row gains nothing; `WF-6` stays 🟡;
+> `CLOSED_FORM_BAND` 5.0e-2, `WALL_NORMAL_BAND` 1.0e-2 and `IMAGE_ORDER`
+> 3 are all unmoved on `main`. §9 item 1 marked 🚫 in this commit (rule
+> (d)). **Resolves with** a review scoping a summation whose order is not
+> a free choice — the two candidates the measurement leaves are (a) the
+> **point-dipole tail** the 03:00 review already named (sum the near
+> images exactly, replace the far lattice by its multipole limit, which is
+> summed as an absolutely convergent integral), and (b) an **Ewald-style
+> split** of the same lattice. Both are real work and neither is a
+> one-slot fix; a third, cheaper option a review may prefer is to
+> **abandon the closed-form comparand for this fixture** and gate `|B₁⁺|`
+> by `h`-convergence instead (`GEO-29` prices the ladder). What is *not*
+> available is widening a band or picking `N = 5`.
 
 ### EX — Examples (§5.4 ramp)
 
@@ -8799,7 +8859,18 @@ never widened silently and never on a quantity that was already green.
 noticed; a log without the readings is a window not spent.
 
 
-1. **`WF-6` step 4e — the odd-order comparand `S_11`: its wall identity
+1. 🚫 **ATTEMPTED 2026-09-08 12:00 — anchor (i) RED at the first stop
+   (`20260908T170345Z_WF-6.log`, 130 s, `-n 1`); the odd-order wall
+   residual bottoms at `N = 5` (6.046e-03) and *rises* to 2.127e-02 at
+   `N = 11`, both parities converging on a common non-zero ≈ 3.4e-02, so
+   the cube-truncated lattice never meets the unmoved 1e-02 and no `N`
+   fixes it. No FEM window spent; parked on
+   `attempt/WF-6-step4e-20260908T170345Z`; table in the §7 `WF-6` entry
+   and the known-issues row. Unblock condition: a review scopes a
+   summation whose order is not a free choice (point-dipole tail or Ewald
+   split) — or drops the closed-form comparand for this fixture in favour
+   of `h`-convergence. Not re-runnable as written.**
+   **`WF-6` step 4e — the odd-order comparand `S_11`: its wall identity
    and Leibniz bound asserted first, then the eleven points measured
    against a converged lattice (anchor (iii) predicted red at [9] and
    [10]), with a landing rule for both outcomes** (heavy by ceiling,
