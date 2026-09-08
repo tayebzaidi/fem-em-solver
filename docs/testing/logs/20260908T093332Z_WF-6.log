@@ -1,0 +1,51 @@
+# Test Run
+- Chunk: WF-6
+- Commit: 00106fb56c974d1156925d6277c5b40bb068de3a
+- Time (UTC): 2026-09-08 09:33:32
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 150 python3 scripts/probes/wf6_step4d_lattice_probe.py'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Sep  4 23:31 .
+drwxr-xr-x 16 taz5297 taz5297 4096 Sep  8 04:33 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  721 Sep  3 13:49 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 2801 Sep  4 23:31 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 150 python3 scripts/probes/wf6_step4d_lattice_probe.py'\'''
+points: 22
+ladder shape (7, 22, 3), N = 6 ladder took 13.46 s
+bit-for-bit ladder[-1] == default(N): True
+shell-averaged shape (6, 22, 3) (row m-1 = S_bar_m)
+plain    drift |S_N - S_{N-1}|/|S_N|:  N=1: 3.259e-01, N=2: 5.249e-02, N=3: 4.642e-02, N=4: 3.297e-02, N=5: 2.712e-02, N=6: 2.208e-02
+averaged drift |Sb_N - Sb_{N-1}|/|Sb_N|: N=2: 1.316e-01, N=3: 4.160e-03, N=4: 6.058e-03, N=5: 3.329e-03, N=6: 2.242e-03
+signed shell terms (S_N - S_{N-1}).yhat at the centre, in units of |S_0(centre)| = 8.079753e-06 T:
+    N=1: +1.737937e-01  (|term| 1.738e-01)
+    N=2: -2.954646e-02  (|term| 2.955e-02)
+    N=3: +2.496714e-02  (|term| 2.497e-02)
+    N=4: -1.833887e-02  (|term| 1.834e-02)
+    N=5: +1.468487e-02  (|term| 1.468e-02)
+    N=6: -1.222862e-02  (|term| 1.223e-02)
+
+## Exit
+- Status: 0
+- Elapsed (s): 24
+- Filtered lines (gmsh optimisation chatter): 0

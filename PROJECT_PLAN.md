@@ -7068,6 +7068,45 @@ therefore one small `post/` addition plus a gate module. Degree 1, per the
 > miss is the mesh finding — known-issues with the 20-point table, park,
 > mark 🚫, stop, `GEO-28` becomes the diagnosis. `CLOSED_FORM_BAND` never
 > widens.
+>
+> **Step 4d executed 2026-09-08, 04:30 implementer slot — 🚫 the premise is
+> confirmed and anchor (i) would pass at 2.242e-03, but anchor (ii) is red at
+> 3.292e-02: cube-shell averaging accelerates the *interior* field and
+> *destroys* the PEC wall identity.** Two harness windows, no FEM window spent
+> (the module stops at the red anchor and (iii)/(iv) were not measured).
+> (1) The 03:00 ruling's premise is now measurement: the signed shell terms
+> `(S_N − S_{N−1})·ŷ` at the box centre, in units of the free-space `S_0`
+> centre field, are **+1.737937e-01, −2.954646e-02, +2.496714e-02,
+> −1.833887e-02, +1.468487e-02, −1.222862e-02** for `N = 1 … 6` —
+> strict alternation, magnitudes ≈ 1/N (`20260908T093332Z_WF-6.log:40–46`,
+> measurement-only probe `scripts/probes/wf6_step4d_lattice_probe.py`,
+> `Status: 0`, elapsed **24 s**, the `N = 6` ladder itself 13.46 s at 22
+> points).  (2) At the interior points the acceleration is real: plain drift
+> 3.259e-01 / 5.249e-02 / 4.642e-02 / 3.297e-02 / 2.712e-02 / **2.208e-02**
+> at `N = 1 … 6` (4b's 4.642e-02 and 3.297e-02 reproduced to the digit),
+> shell-averaged **2.242e-03** at `N = 6` — 9.8× better and inside both the
+> ≤ 1e-2 anchor and the ≤ 3e-3 prediction (`:38–39`).  (3) **Anchor (ii)
+> fails**: `|B_n|/|B_(N=0)|` on `S̄_6` at the six wall centres is
+> **3.292e-02** against the unmoved 1e-02 (`20260908T093523Z_WF-6.log:78`,
+> `1 failed / 10 passed in 10.08 s` at `-n 1` complex, elapsed **12 s**,
+> `Status: 1`).  The plain sums show why: max **7.508e-02 / 9.990e-02 /
+> 1.077e-02 / 7.082e-02 / 6.046e-03 / 5.980e-02** at `N = 1 … 6` (`:66–71`) —
+> the wall residual has an **even/odd parity**, not an alternating tail, so
+> averaging pairs a converging odd order with a stalled even one and `S̄_6`
+> inherits half of `S_6` (`:72–77`).  The three supporting identities are green
+> in the same run — (ii-a) bit for bit, (ii-a′) `ladder[m]` equals the default
+> path at `image_order = m` bit for bit with `S̄` 1-based, (ii-b) the `P_11`
+> rotation.  No band moved; `IMAGE_ORDER` stays 3 on `main`.  Code parked on
+> `attempt/WF-6-step4d-20260908T094500Z` (the two `analytical.py` additions —
+> `return_partial_sums` and `shell_averaged_lattice_sum` — the step-4b material
+> path-checked out of `…step4b-…`, and the probe); `main` carries this record,
+> the known-issues row and the two logs.  **The cheap next route the
+> measurement names:** the odd-order cube sums alone — `S_5` reads 6.046e-03 on
+> the wall, *inside* the band, and an odd-parity average `(S_N + S_{N−2})/2`
+> keeps the interior cancellation while never mixing parities.  A review's to
+> scope, and it must assert the interior drift **and** the wall identity
+> together, because this slot's finding is that the two disagree about which
+> truncation is good.
 
 ### EX — Examples (§5.4 ramp)
 
@@ -8298,10 +8337,21 @@ it** (`TH-15` step 3a, 16:30 slot — ratified above, ruling (2)); it is
 never widened silently and never on a quantity that was already green.
 
 
-1. **`WF-6` step 4d — the accelerated image lattice: the eleven
+1. 🚫 **BLOCKED 2026-09-08, 04:30 slot — anchor (ii) is red at 3.292e-02
+   against the unmoved 1e-02: cube-shell averaging accelerates the interior
+   field (drift 2.242e-03 at `N = 6`, anchor (i) would pass) and *destroys*
+   the PEC wall identity, whose residual has an even/odd parity in `N`
+   rather than an alternating sign.  Unblocks with a review ruling on a
+   comparand that is green on the interior drift **and** the wall identity
+   at once — the measurement names the odd-order sums (`S_5` reads
+   6.046e-03 on the wall) as the cheap candidate.  Full record in the §7
+   `WF-6` "Step 4d executed" paragraph and the known-issues step-4d row;
+   code on `attempt/WF-6-step4d-20260908T094500Z`; logs
+   `20260908T093332Z_WF-6.log`, `20260908T093523Z_WF-6.log`.  Do not
+   re-run this item as written.** ~~**`WF-6` step 4d — the accelerated image lattice: the eleven
    centre-plane points against the shell-averaged boxed form `S̄_6` at
    the unmoved 5% band, with the comparand's own drift asserted first,
-   and step 4 lands** (heavy by ceiling, `-n 4`, complex build; `main` by
+   and step 4 lands**~~ (heavy by ceiling, `-n 4`, complex build; `main` by
    path checkout from `attempt/WF-6-step4b-20260908T004458Z` (which
    carries `499c527`'s step-4 material); independent; scoped by this
    review, ruling (1); full plan in the §7 `WF-6` "Step 4d" paragraph).
