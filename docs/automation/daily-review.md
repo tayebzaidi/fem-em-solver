@@ -165,7 +165,11 @@ version-bump record sweeps) says so in its first line:
    complex build — the error surfaces either as a UFL `ComplexComparisonError`
    or as a swallowed FFCx "root node" failure, and three fixture
    `current_density` callables carried it (`OPS-22`, 2026-08-19; regularise
-   inside the `sqrt` instead); a killed compile leaves a **0-byte `.c` stub**
+   inside the `sqrt` instead) — and **real operands do not save a comparison
+   that contains a `sqrt`**: UFL types `Sqrt` as complex whatever its
+   argument, so `proj > sqrt(x² + y²)·c` on a real `SpatialCoordinate` raised
+   the same error and cost a 400 s window (`WF-6` step 4c, 2026-09-08; compare
+   squares — `proj > 0 ∧ proj² > (x² + y²)·c²`); a killed compile leaves a **0-byte `.c` stub**
    in `/root/.cache/fenics` that is a *live lock* — later runs (even in the
    same session) stall in `MPI_Bcast` or fail blaming the cache, and three
    windows went to it on 2026-08-18/19 — sweep
