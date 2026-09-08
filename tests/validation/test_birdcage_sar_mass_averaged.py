@@ -206,7 +206,7 @@ def _one_gram_verdict(pairs, band):
     )
 
 
-def _build_mass_averaged():
+def _build_mass_averaged(phantom_resolution: float = PHANTOM_RESOLUTION_FINE):
     """One finer-phantom mesh, four drives, and the C95.3 operator on each.
 
     Four curl-curl solves and no mass solve, no projection and no estimator:
@@ -222,8 +222,14 @@ def _build_mass_averaged():
     (``mesh``, ``cell_tags``, ``rho_field``, ``solves``) an example caller needs
     to render the same fixture in ParaView — nothing existing was removed or
     renamed.
+
+    Additive again for `MAT-4` step 5 (2026-09-08, §9 rule (c) disclosure): the
+    ``phantom_resolution`` keyword defaults to ``PHANTOM_RESOLUTION_FINE``, so
+    every reading and every printed line of this module at the default is
+    byte-identical to step 4's; ``tests/validation/test_birdcage_sar_1g_rung.py``
+    passes 0.0025 m to run the same construction on the `GEO-27` rung.
     """
-    sweep = build_four_port_sweep(phantom_resolution=PHANTOM_RESOLUTION_FINE)
+    sweep = build_four_port_sweep(phantom_resolution=phantom_resolution)
     msh = sweep["mesh"]
     comm = msh.comm
     cell_tags = sweep["cell_tags"]
@@ -340,15 +346,28 @@ def _build_mass_averaged():
     }
     verdict, verdict_text = _one_gram_verdict(one_pairs, C4_COVARIANCE_BAND)
 
+    # The step-4 module asserts the cell counts (anchor (iii)); a caller running
+    # this construction on another rung does not, so the line is labelled by the
+    # resolution actually meshed.  At the default the printed bytes are step 4's.
+    if phantom_resolution == PHANTOM_RESOLUTION_FINE:
+        mesh_line = (
+            f"    ASSERTED (iii) mesh == {FINE_CELL_COUNT} / "
+            f"{FINE_PHANTOM_CELL_COUNT} exactly\n"
+        )
+    else:
+        mesh_line = (
+            "    cell counts NOT asserted here — this is not the "
+            f"PHANTOM_RESOLUTION_FINE rung; the caller owns them\n"
+        )
+
     if comm.rank == 0:
         print(
             f"\n[MAT-4 step 4] the C95.3 mass-averaging operator on the "
             f"COIL-DRIVEN field: {cells} cells ({phantom_cells} tag-3) at "
-            f"phantom_resolution = {PHANTOM_RESOLUTION_FINE} m, f = "
+            f"phantom_resolution = {phantom_resolution} m, f = "
             f"{sweep['problem'].frequency_hz:.3e} Hz, degree 1, "
             f"quadrature_degree {QUADRATURE_DEGREE} (imported from MAT-4 step 3)\n"
-            f"    ASSERTED (iii) mesh == {FINE_CELL_COUNT} / "
-            f"{FINE_PHANTOM_CELL_COUNT} exactly\n"
+            + mesh_line +
             f"    ball radii a_1g = {radii['1 g'] * 1e3:.4f} mm, a_10g = "
             f"{radii['10 g'] * 1e3:.4f} mm at rho = {PHANTOM_RHO_KG_PER_M3:.1f} "
             f"kg/m3; centres at r0 = {CENTRE_RADIUS_M * 1e3:.1f} mm on the four "
@@ -373,7 +392,15 @@ def _build_mass_averaged():
             f"(ASSERTED <= {EXACT_IDENTITY_RTOL:.0e}); against step 3f's record "
             f"{STEP3F_FINE_PRIMAL_PHANTOM_POWER_W:.9e} W "
             f"{abs(whole['dissipated_power_w'] / STEP3F_FINE_PRIMAL_PHANTOM_POWER_W - 1.0):.6e} "
-            f"(ASSERTED <= {CG1_RECORD_RTOL:.0e})",
+            + (
+                f"(ASSERTED <= {CG1_RECORD_RTOL:.0e})"
+                if phantom_resolution == PHANTOM_RESOLUTION_FINE
+                # step 3f's record is the 0.0075 mesh's; on another rung the same
+                # figure is a rung-to-rung move and this module asserts nothing
+                # about it (`MAT-4` step 5).
+                else "(NOT asserted — step 3f's record is the "
+                f"{PHANTOM_RESOLUTION_FINE} m mesh's, this is a rung-to-rung move)"
+            ),
             flush=True,
         )
         print(

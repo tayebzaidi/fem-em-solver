@@ -4228,6 +4228,65 @@ paragraph, no known-issues (nothing red), stop; the 10 g identity failing
 on the finer rung is a mesh finding — known-issues with both columns,
 mark 🚫 (rule (d)), stop.
 
+**Step 5 EXECUTED 2026-09-08 (09:00 slot), green on the first run — and the
+1 g prediction lands: every 1 g C4 pair falls INSIDE the 5% band the 10 g
+column is gated at.** `tests/validation/test_birdcage_sar_1g_rung.py`,
+`18 passed` / Status 0 / **251 s** at `-n 4`, complex build
+(`20260908T140457Z_MAT-4-step5.log`; collect-only smoke
+`20260908T140443Z_MAT-4-step5-smoke.log`, 30 items, 4 s; second window
+`20260908T141147Z_MAT-4-step5-rerun.log`, `18 passed` / Status 0 / **245 s**,
+run after the one print-label correction below and reproducing every printed
+digit of the first). The module is step 4's construction, not a
+re-implementation: `_build_mass_averaged(phantom_resolution=0.0025)`.
+**Anchors, both asserted at the imported unmoved bands.** **(i)** the four
+cyclic **10 g** C4 pairs read **0.0309 / 0.0060 / 0.0394 / 0.0644%** against
+the imported `C4_COVARIANCE_BAND` = 5% — every pair *better* than step 4's
+0.3303 / 0.0756 / 0.0574 / 0.3132% (ratios 0.0936 / 0.0792 / 0.6872 /
+0.2057×), a factor 78 of headroom on the worst
+(`…140457Z:1985–1988`). **(ii)** the whole-phantom ball on this rung's
+partition reads `½∫σ|E|²` = **5.503204728560e-08 W** against the tag-3
+integral's identical **5.503204728560e-08 W** — relative **8.126833e-14** at
+the imported 1e-10 (8.149037e-14 in the rerun, MPI reduction order) — and
+`mass_kg` = 2.259978941111e-01 kg vs ρ·V_phantom at **5.284662e-14**
+(`:1962, 1999`). Containment re-asserted (r₀ + a₁₀g = 28.3650 mm <
+30.0 mm). **Printed, predicted, asserted by nothing (rule (e)).** (1) the
+four **1 g** C4 pairs read **0.0957 / 0.1199 / 0.1305 / 0.1065%** —
+predicted inside 5% on every pair and **inside on every pair**, worst
+**0.1305%** against step 4's worst 6.8383% (ratios 0.0140 / 0.0409 / 0.3171
+/ 0.0226×); the module's own pre-registered clause resolves to **(A)** and
+says verbatim that *registering* a 1 g gate at this rung is the **next
+review's** ruling, never in-slot (`:1990–1993, 2001`). (2) the four 10 g
+peaks **6.178300937 / 6.176390316 / 6.176760066 / 6.174323671e-07 W/kg**,
+the rung-to-rung move **−2.6703 / −2.3780 / −2.4459 / −2.4283%** against
+step 4's — the predicted "few %"; the 1 g averages at each drive's own
+centre **5.515422939 / 5.510146420 / 5.516752827 / 5.509553429e-07 W/kg**
+(step 4's log printed no 1 g absolute, only the pairs, so these have no
+comparand); **not a C95.3 compliance figure on either rung**. Also printed:
+the phantom power **+1.5005%** from step 4's rung — a rung-to-rung move,
+explicitly *not* re-asserted against `STEP3F_FINE_PRIMAL_PHANTOM_POWER_W`,
+which belongs to the 0.0075 mesh. (3) **the `GEO-27` repeat: `size_global`
+199 920 and phantom tag-3 58 866, EQUAL to the integer on both windows**
+against `GEO-27`'s single reading (`20260908T033218Z_GEO-27.log`) — a review
+may now pin it; no drift, nothing asserted here. Solve times 17.98 / 17.08 /
+18.59 / 17.31 s. **Two `tests/` changes to step 4's module, disclosed under
+§9 rule (c) and re-run green in the same slot** — `23 passed` / Status 0 /
+**114 s**, every step-4 record reproduced digit-for-digit (120 499 / 2 746,
+0.3303%, 1 g 6.8383%, control 86.0132%, identity 2.087219e-14)
+(`20260908T140935Z_MAT-4-step5-step4-regression.log:1930–1944, 2061`): (a)
+`_build_mass_averaged` gains a keyword `phantom_resolution` defaulting to
+`PHANTOM_RESOLUTION_FINE`, so the default is step 4 byte-for-byte; (b) two
+printed lines that carry the word ASSERTED — the anchor-(iii) cell-count
+line and the step-3f record comparison — are labelled by the rung, because
+neither is asserted off the default and a log must not claim a gate the
+module does not run. **No band moved, no `src/` change, no §2 change; the
+1 g column stays a PRINTED record and `MAT-4`'s ✅ keeps step 4's scope.**
+**What this measures and what it does not:** the operator's C4 covariance
+and cell coverage survive `h/3` (199 920 cells, 4.96 vs 1.65 `2a/h` cells
+across the 1 g ball), and the 1 g column's step-4 verdict (b) is explained
+by `h` exactly as predicted — two rungs of one quantity, **no convergence
+rate**, no absolute SAR, no compliance, no homogeneity, no Larmor. A 1 g
+*gate* at this rung is a review's ruling from these numbers.
+
 **`MAT-2` — conductivity demonstrably drives the solved field** ✅ *(2026-07-31,
 `tests/validation/test_lossy_plane_wave.py::test_conductivity_measurably_changes_the_field`,
 log `20260731T020427Z_TH-6-gate3.log`, 21 s at `-n 2`, complex build)*
@@ -8590,7 +8649,20 @@ never widened silently and never on a quantity that was already green.
    current-integral partition dependence — a rank-safety finding,
    known-issues with the readings, do not skip, mark 🚫 (rule (d)), stop.~~
 
-4. **`MAT-4` step 5 — the 1 g column on the `GEO-27` rung: the C95.3
+4. ✅ **DONE 2026-09-08 (09:00 slot), green on the first run — the 1 g pairs
+   land INSIDE the 5% band: 0.0957 / 0.1199 / 0.1305 / 0.1065% (worst
+   0.1305% against step 4's 6.8383%), with anchor (i) the 10 g pairs at
+   0.0309 / 0.0060 / 0.0394 / 0.0644% and anchor (ii) the ball identity at
+   8.126833e-14; the `GEO-27` mesh repeat is EQUAL to the integer on both
+   windows (199 920 / 58 866). `18 passed` / Status 0 / 251 s at `-n 4`
+   (`20260908T140457Z_MAT-4-step5.log`; rerun after one print-label fix
+   `…141147Z_MAT-4-step5-rerun.log`, 245 s, same digits; smoke
+   `…140443Z_MAT-4-step5-smoke.log`), and step 4's own gate re-run green for
+   the two disclosed `tests/` changes — `23 passed` / 114 s
+   (`…140935Z_MAT-4-step5-step4-regression.log`). No band moved, no `src/`
+   change; the 1 g column stays a printed record and a 1 g *gate* at this
+   rung is the next review's ruling from these numbers. Full record in the
+   §7 `MAT-4` "Step 5 EXECUTED" paragraph.** ~~**`MAT-4` step 5 — the 1 g column on the `GEO-27` rung: the C95.3
    operator on the coil-driven field at `phantom_resolution = 0.0025`,
    the 10 g C4 identity asserted at the unmoved band, the 1 g pairs
    printed against a < 5% prediction, the rung's cell count repeated**
@@ -8630,7 +8702,7 @@ never widened silently and never on a quantity that was already green.
    at 4.96 cells is the finding that five cells is not enough for a
    6.2 mm ball — record in the §7 paragraph, stop (nothing red, no
    known-issues); the 10 g identity failing on the finer rung is a mesh
-   finding — known-issues with both columns, mark 🚫 (rule (d)), stop.
+   finding — known-issues with both columns, mark 🚫 (rule (d)), stop.~~
 
 5. **`GEO-28` — C4 census of the unloaded F-small birdcage mesh: is
    quadrant 2 different?** (standard by expectation, heavy by ceiling,
