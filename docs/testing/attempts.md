@@ -17169,3 +17169,90 @@ service is not Up.
   `WF-6` step 2's C4 record (0.9818%) before any comparand is blamed. Step 4c
   closes nothing on its own; `WF-6` stays 🟡 pending the review's ruling on
   step 4b's comparand truncation (item 1's unblock condition).
+
+## 2026-09-08T09:50Z (2026-09-08 04:30 CDT slot) — `WF-6` (step 4d) — **blocked**
+
+- Item: §9 item 1, the first unmarked On-deck entry, taken as written. Executor:
+  `implementer` (foreground, rule held). Preflight clean on `00106fb`; both
+  containers Up (`fem-em-solver` 4 days, `fem-em-solver-xl` 8 h — still the
+  operator's 09-07 ≈ 20:00 CDT bring-up, untouched by this slot).
+- Outcome: **anchor (ii) is red and the item stops there per rule (e).** The
+  03:00 review's ruling (1) is *half* confirmed: shell averaging is a real
+  acceleration of the **interior** lattice and a **destroyer** of the PEC
+  **wall** identity. Step 4 does not land; `IMAGE_ORDER` stays 3 and the gate
+  module `test_birdcage_b1_plus_closed_form.py` still is not on `main`.
+- What was tried: the item's change verbatim —
+  `birdcage_filament_field_in_pec_box(…, return_partial_sums=False)` returning
+  the ladder `S_0 … S_N`, the numpy helper `shell_averaged_lattice_sum`
+  (`S̄_N = (S_N + S_{N−1})/2`, 1-based), `IMAGE_ORDER = 6`, and the anchors in
+  the pre-registered order. **No FEM window was spent** — anchors (iii) and (iv)
+  were never reached, so the eleven-point comparison and the rule-(c) re-run
+  are unmeasured.
+- Measured — **anchor (i) (would pass)**, `20260908T093332Z_WF-6.log`: ladder
+  `[-1]` bit-for-bit against the default path `True` (`:36`); plain drift
+  `max|S_N − S_{N−1}|/|S_N|` over 22 interior points = 3.259e-01 / 5.249e-02 /
+  **4.642e-02** / **3.297e-02** / 2.712e-02 / 2.208e-02 for `N = 1…6` (`:38`) —
+  4b's `N = 3` and `N = 4` records reproduced to the digit; averaged drift
+  = 1.316e-01 / 4.160e-03 / 6.058e-03 / 3.329e-03 / **2.242e-03** for
+  `N = 2…6` (`:39`), inside both the asserted 1e-2 and the predicted 3e-3.
+  Signed shell terms `(S_N − S_{N−1})·ŷ` at the centre, in units of
+  `|S_0(centre)| = 8.079753e-06 T`: **+1.737937e-01, −2.954646e-02,
+  +2.496714e-02, −1.833887e-02, +1.468487e-02, −1.222862e-02** (`:41–46`) —
+  strict alternation with `|term| ∼ 1/N`, exactly the ruling's premise.
+- Measured — **anchor (ii) (RED)**, `20260908T093523Z_WF-6.log`: drive
+  `(1, 2, −3, 0)`, `|B_n|/|B_{N=0}|` at the six wall centres. Plain sums,
+  `N = 1…6`: 7.508e-02 / 9.990e-02 / **1.077e-02** / 7.082e-02 /
+  **6.046e-03** / 5.980e-02 (`:66–71`; the `N = 3` value reproduces the
+  asserted negative control, 1.077e-02 of `20260908T003713Z_WF-6.log:60–61`).
+  Shell-averaged: 4.625e-01 / 1.241e-02 / 4.457e-02 / 3.002e-02 / 3.843e-02 /
+  **3.292e-02** (`:72–77`). Anchor (ii) asserts `S̄_6 ≤ 1.0e-02` and reads
+  **3.292e-02** (`:78`, failure at `:85–86`) — three times *worse* than the
+  plain `S_3` step 4b used. (ii-a) bit-for-bit, (ii-a′) `ladder[m] ==
+  default(m)` for `m = 0,1,2` at max|d| exactly 0 (`:60–62`), and (ii-b) the
+  `P_11` two-leg rotation (`:64`) are all green: **1 failed / 10 passed in
+  10.08 s** (`:90`).
+- **The finding (the reason the acceleration fails).** The wall-normal
+  residual is not an alternating tail — it has a hard **even/odd parity in
+  `N`**: odd orders converge (7.508e-02 → 1.077e-02 → **6.046e-03**, the last
+  already inside the band), even orders barely move (9.990e-02 → 7.082e-02 →
+  5.980e-02). `S̄_6` pairs a good odd order with a stalled even one and
+  inherits half of `S_6`'s residual. The interior field and the wall-normal
+  field are different functionals of the same truncation and disagree about
+  which truncation is good; a single scalar drift criterion cannot certify
+  both. No band moved: `CLOSED_FORM_BAND` 5.0e-2 and `WALL_NORMAL_BAND`
+  1.0e-2 are untouched.
+- Verification of the executor's report against the logs (rule: the logs win):
+  I re-read `20260908T093332Z_WF-6.log:34–50` and
+  `20260908T093523Z_WF-6.log:60–95` myself; every digit above is transcribed
+  from the log text and the report agreed with it line for line, including
+  both footers (`Status: 0` / 24 s and `Status: 1` / 12 s).
+- Disclosed implementation note: the ladder re-sums each order with the same
+  private cube loop rather than accumulating shells, because FP addition is
+  not associative and a shell accumulation would match the default path only
+  to ~1e-16, not the bit-for-bit the item asserts. Cost is
+  `Σ(2m+1)³ = 4 753` evaluations at `N = 6` instead of 2 197 — 13.46 s at
+  22 points (`…093332Z:35`), irrelevant beside a solve.
+- Logs: **`20260908T093332Z_WF-6.log`** (probe
+  `scripts/probes/wf6_step4d_lattice_probe.py`, `-n 1`, Status 0, elapsed
+  **24 s**, smoke tier); **`20260908T093523Z_WF-6.log`** (`-n 1` complex,
+  1 failed / 10 passed, Status 1, elapsed **12 s**, smoke tier). Both windows
+  foreground, container-side `timeout -k 30`, well inside their ceilings.
+- Branch parked: **`attempt/WF-6-step4d-20260908T094500Z`** (`c7f6533`) —
+  `analytical.py` (`return_partial_sums`, `shell_averaged_lattice_sum`), the
+  rewritten `tests/unit/test_birdcage_filament_field.py` identities, the
+  step-4b material path-checked out of `attempt/WF-6-step4b-20260908T004458Z`,
+  and the probe script. `main` carries only the record (`8af3d1d`: the two
+  logs, two `test-results.md` rows, the §7 "Step 4d executed" paragraph, a
+  known-issues step-4d row, and §9 item 1 struck through and marked 🚫 with
+  its unblock condition — rule (d), in the same commit). **Branches deleted:
+  none** — `…step4-…`, `…step4b-…`, `…step4c-…` are all still needed because
+  step 4 did not land. Six `attempt/*` branches now; no `recovered/*`.
+- Next-attempt hypothesis / for the review (one line, plus the arithmetic):
+  **average within one parity, or drop averaging and use an odd order alone** —
+  `S̄^odd_N = (S_N + S_{N−2})/2` on odd `N`, or simply `S_5`, which already
+  reads **6.046e-03** at the walls (inside the 1e-2) and 2.712e-02 interior
+  drift; whatever comparand a review picks must be gated on the interior
+  drift **and** the wall identity **together**, since this slot's finding is
+  precisely that the two diverge. The point-dipole tail the 03:00 review named
+  as the fallback route is untouched by this result. Item 1 must not be re-run
+  as written.
