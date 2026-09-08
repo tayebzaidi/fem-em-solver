@@ -17720,3 +17720,91 @@ motivation (≈ 1 cell across the shell); its `h`-ladder, not another
 comparand, is what `WF-6` step 4f needs. Expect the `+ŷ`/`+x̂` 3.4% spread at
 `r = 0.5R` to fall with `h` if the estimator is the mechanism — that is the
 falsifiable prediction this negative result leaves behind.
+
+## 2026-09-08T20:25Z (2026-09-08 15:00 CDT slot) — `MAT-4` (step 5b) — **complete**
+
+Preflight clean on `2fd4241`, both containers Up (`fem-em-solver` 5 days,
+`fem-em-solver-xl` 19 h and untouched by this slot). §9 item 1 is 🚫
+(`WF-6` step 4e, blocked by the 12:00 slot) and item 2 is ✅ (`GEO-28`,
+13:30 slot), so the first open item is **item 3, `MAT-4` step 5b** — taken
+as written, delegated to `implementer` in the **foreground** with the
+no-background rule stated verbatim in the spawn prompt.
+
+**Outcome: §4-done, landed on `main` as `fb64a79`.** Two foreground harness
+windows, both footered `Status: 0`: collect-only smoke **4 s**
+(`20260908T200614Z_MAT-4-step5b-smoke.log`, 15 items in the module against
+step 5's 10) and the gate window `-n 4`, complex build +
+`FEM_EM_REQUIRE_COMPLEX=1`, `tests/environment` first, `-s`,
+`timeout -k 30 560` — **26 passed in 313.23 s**, harness elapsed 316 s
+(`20260908T200629Z_MAT-4-step5b.log:2318, 2321`). Heavy by ceiling, standard
+by measurement; inside the container timeout and inside the 660 000 ms host
+window.
+
+**(a) The 1 g column is now a gate.** The four cyclic 1 g C4 pairs read
+**0.0957 / 0.1199 / 0.1305 / 0.1065 %** and are asserted `<=
+C4_COVARIANCE_BAND` — **imported and unmoved at 5.0%**
+(`…200629Z:1989–1993`). They are digit-for-digit step 5's printed column
+(`20260908T140457Z_MAT-4-step5.log:1990–1993`), so the third agreeing window
+of the same reading; the worst pair keeps a factor 38 of headroom. The
+mis-paired 1 g control is **printed, never asserted** per rule (e) —
+**87.0143 / 87.0546 / 87.0506 / 87.0592 %** against the item's predicted
+~85% (the 85.3% on record is the *10 g* column, so nothing backed an
+assert). The prediction was low by ≈ 2 points; the control's job — an order
+of magnitude of separation from the paired column — is met either way.
+
+**(b) The rung's mesh is a version-tagged record.** `size_global` **199 920**
+and phantom tag-3 **58 866**, each asserted at the imported `CELL_COUNT_BAND`
+(1%, from `tests/mesh/test_birdcage_port_sheet_prerequisite.py:57`) and
+**never at equality**; both read **0.0000%** miss (`…200629Z:1981–1982`) —
+the fourth agreeing window across `20260908T033218Z_GEO-27.log:7155`,
+`…140457Z` and `…141147Z`.
+
+**Anchors carried unchanged.** 10 g pairs **0.0309 / 0.0060 / 0.0394 /
+0.0644 %** at the same band (`:1985–1988`); the whole-phantom ball identity
+**5.262457e-14** against 1e-10 (`:1999`) — step 5 read 8.126833e-14 on the
+same construction, a reduction-order difference at `-n 4`, four orders inside
+the band either way. Pre-registered verdict clause **(A)** at `:2001`.
+
+**One disclosed deviation, inside the item's "test module only" scope.**
+`_build_mass_averaged` returns only the **diagonal** of the 1 g averages, so
+the mis-paired 1 g control did not exist as data and the item's "printed"
+requirement could not be met by re-labelling. The executor integrated the
+four off-diagonal 1 g balls **in the test module**, off the construction's
+own returned `solves` / `rho_field` / `centres` / `radii` at the imported
+`QUADRATURE_DEGREE` — **no re-solve, no `src/` change, step 4's module
+untouched** (`git show fb64a79 --stat`: `PROJECT_PLAN.md`, the two logs,
+`test-results.md`, and `tests/validation/test_birdcage_sar_1g_rung.py`
+only). The `P{k+1} ↔ drive k` map that requires is not assumed: a new
+`test_the_mis_paired_one_gram_control_is_attributed_to_its_own_drive`
+re-integrates the **diagonal** and asserts it reproduces the construction's
+own value, measured **0.000e+00** on all four against a 1e-10 band
+(`:1990–1993`). Cost: **+62 s** over step 5's 251 s. Also disclosed: the
+printed-record test was renamed and parametrized to
+`test_the_one_gram_average_is_c4_covariant_on_the_finer_rung[0..3]`,
+mirroring the 10 g gate — the old id said "is printed" while asserting.
+**For the 18:00 review to ratify or revert.**
+
+**Landed in the one commit:** the test module, both logs, the harness's
+`test-results.md` rows, the §7 `MAT-4` row (✅ gains "1 g and 10 g C4-gated
+on the 0.0025 rung") and a new "Step 5b EXECUTED" paragraph with every digit
+and its log line, **both §2 SAR clauses** (§2.1 SAR bullet, §2.2
+absolute-SAR bullet) rewritten from "the 1 g column misses … printed record"
+to the gate, and §9 item 3 marked done. Nothing loosened, no band or record
+widened, no known-issues row added or retired (nothing red, no drift). Scope
+kept explicit in the docstring and the printed SCOPE line: still **no
+absolute SAR, no C95.3 compliance, no homogeneity, no Larmor**, and two rungs
+are not a convergence rate.
+
+**Denials / anomalies:** none — no docker-socket denial, no allowlist denial,
+no compute-safety event, no container wedge, nothing backgrounded, no XL
+window. `-n 4`, both windows in the foreground.
+
+**Hypothesis for the next attempt.** The SAR subgoal has no queued successor:
+`MAT-4`'s C4 self-consistency is now gated on both mass averages at the
+finer rung, and everything past it (absolute SAR, homogeneity, Larmor,
+a third rung for a rate) is unscoped. The next slot takes §9 item 4
+(`TH-15` step 2g, the calibrated gap average) as queued; the standing
+question this slot leaves for the 18:00 review is whether the mis-paired 1 g
+control's measured **87.05 ± 0.02%** should be re-registered as the
+*predicted* figure for future rungs, since ~85% was borrowed from the 10 g
+column and missed by 2 points.
