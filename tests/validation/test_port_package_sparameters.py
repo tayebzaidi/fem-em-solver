@@ -43,10 +43,41 @@ route, and drive the warning paths with a heuristic and an asymmetrised S.
 claim: `PORT-1` step 2b localised an electric-energy excess on this fixture's
 diagonal, so nothing here reads ``Z_in`` or ``S11``.  The systematics are this
 geometry's at this padding.
+
+**`OPS-41` — the three digit-reproduction records are ``-n 2`` records.**
+This module is rank-width-sensitive at the 1e-4 level, four decades above its
+1e-6 reproduction bands.  Measured at `TH-15` step 2d (2026-09-07, commit
+``8ef690a``), same tree, same mesh, two widths:
+
+  * ``-n 2`` (``20260907T170838Z_TH-15.log:146``) — 17 passed in 187.37 s,
+    every record reproducing inside 1e-6;
+  * ``-n 4`` (``20260907T170528Z_TH-15.log:743-749``, 3 failed / 3 passed in
+    145.46 s) — ``raw mutual 0.8942257288323762`` vs the record
+    ``0.8945163786446685``, **missed by 3.249e-04**;
+    ``passivity_max_sigma 0.8646925685624383`` vs ``0.864809457``, **missed by
+    1.169e-04**; ``reciprocity_max_abs_delta 0.0998868189827916`` vs the
+    0.1 perturbation, **1.1e-03 relative**.
+
+No band and no physics gate moves with width: in that same ``-n 4`` run the
+mutual band (``MUTUAL_TOLERANCE``), reciprocity, passivity and the
+heuristic-vs-field separation floor are all green.  Only the digit strings
+miss.  So the three record tests below print their reading beside the record
+**first** — the reading is never silent — assert everything that is *not* a
+digit record, and then :func:`pytest.skip` when ``comm.size !=
+RECORD_RANK_WIDTH``.  Setting ``FEM_EM_RECORD_WIDTH_OVERRIDE=1`` bypasses the
+skip; at an off-record width the three then carry a **strict** ``xfail``, so
+the sensitivity is a pinned red rather than a forgotten one.
+
+The gap voltages ``V_i^(k)`` and the driven currents ``I_k`` are printed at
+``repr()`` precision beside ``Z`` on every width, so the 1e-4 can be attributed
+to one or the other across two logs.  This module declares the *domain* of its
+records; a fix (an edge-integrated or face-averaged ``_path_voltage``) is a
+separate chunk.
 """
 
 from __future__ import annotations
 
+import os
 import warnings
 
 import numpy as np
@@ -198,6 +229,63 @@ RECORDED_HEURISTIC_MAX_SIGMA = 1.0
 HEURISTIC_MAX_SIGMA_BAND = 5.0e-5
 HEURISTIC_SIGMA_SEPARATION = 0.13
 
+# --- OPS-41: the records' rank width ----------------------------------------
+# Every reproduction record in this module was set at `mpiexec -n 2`
+# (20260904T110501Z_OPS-37.log:12, 17 passed / 171.42 s), the width CI runs.
+# The module docstring carries the measured -n 4 readings.  No band moves here:
+# this constant declares the *domain* of the records, it does not relax one.
+RECORD_RANK_WIDTH = 2
+RECORD_WIDTH_OVERRIDE = os.environ.get("FEM_EM_RECORD_WIDTH_OVERRIDE") == "1"
+_OFF_RECORD_WIDTH = MPI.COMM_WORLD.size != RECORD_RANK_WIDTH
+# Under the override at an off-record width the record asserts run and are
+# expected to fail — strict, so a module that became width-invariant reports
+# XPASS rather than quietly passing an xfail.
+record_width_xfail = pytest.mark.xfail(
+    _OFF_RECORD_WIDTH and RECORD_WIDTH_OVERRIDE,
+    reason=(
+        f"FEM_EM_RECORD_WIDTH_OVERRIDE=1 at -n {MPI.COMM_WORLD.size}: the digit "
+        f"records were set at -n {RECORD_RANK_WIDTH} and this module is "
+        "width-sensitive at 1e-4 (OPS-41)"
+    ),
+    strict=True,
+)
+
+
+def _gate_on_record_width(comm) -> None:
+    """Skip a digit-reproduction record off its record width.
+
+    Called *after* the reading has been printed beside the record and after
+    every assertion that is not a digit reproduction, so an off-record width
+    still exercises the physics bands and still leaves the numbers in the log.
+    """
+    if comm.size == RECORD_RANK_WIDTH or RECORD_WIDTH_OVERRIDE:
+        return
+    pytest.skip(
+        f"digit records set at -n {RECORD_RANK_WIDTH}; this is -n {comm.size} "
+        "(OPS-41; set FEM_EM_RECORD_WIDTH_OVERRIDE=1 to run them as a strict xfail)"
+    )
+
+
+def _print_port_quantities(result, label: str, comm) -> None:
+    """The raw ``V_i^(k)`` and ``I_k`` per drive, at ``repr()`` precision.
+
+    `OPS-41`'s attribution print: ``Z[i, k] = V_i^(k) / I_k``, so comparing
+    these across two rank widths says whether the 1e-4 width sensitivity rides
+    the point-sampled path voltage or the facet-integrated current.
+    """
+    if comm.rank != 0:
+        return
+    lines = [f"[OPS-41] {label} — raw port quantities per drive (repr precision):"]
+    for drive_id, excitation in result.excitation_results.items():
+        i_drive = excitation.responses[drive_id].current_a
+        lines.append(f"    drive {drive_id}: I_{drive_id} = {i_drive!r}")
+        for recv_id, response in excitation.responses.items():
+            lines.append(
+                f"        V_{recv_id}^({drive_id}) = {response.voltage_v!r}, "
+                f"I_{recv_id}^({drive_id}) = {response.current_a!r}"
+            )
+    print("\n".join(lines), flush=True)
+
 
 def _mutual_inductance(a: float, rho: float, z: float) -> float:
     pts = np.array([[rho, 0.0, z]], dtype=float)
@@ -336,8 +424,15 @@ def package_sweep():
     }
 
 
+@record_width_xfail
 def test_package_sweep_reproduces_the_gated_mutual(package_sweep):
-    """The package entry point lands on the 3b-xviii record, raw first."""
+    """The package entry point lands on the 3b-xviii record, raw first.
+
+    `OPS-41`: the reproduction pair is an ``-n 2`` record (see the module
+    docstring).  The mutual *band* and the blind-fixture control below are
+    width-independent and run at every width; the two record asserts and the
+    superseded-pair control run only at ``RECORD_RANK_WIDTH``.
+    """
     result = package_sweep["solved"]
     omega_m12 = package_sweep["omega_m12"]
     comm = package_sweep["comm"]
@@ -373,6 +468,7 @@ def test_package_sweep_reproduces_the_gated_mutual(package_sweep):
             flush=True,
         )
         print(f"[PORT-1 step 4] Z (Ohm) through the package:\n{result.z_matrix}", flush=True)
+    _print_port_quantities(result, f"field route at -n {comm.size}", comm)
 
     raw_miss = abs(ladder["raw"] - RECORDED_RAW_RATIO) / abs(RECORDED_RAW_RATIO)
     corrected_miss = abs(ladder["corrected"] - RECORDED_CORRECTED_RATIO) / abs(
@@ -394,6 +490,20 @@ def test_package_sweep_reproduces_the_gated_mutual(package_sweep):
             flush=True,
         )
 
+    # Width-independent first: the physics band and its blind-fixture control
+    # are asserted at every rank width, before the record gate below.
+    assert abs(ladder["deviation"]) < MUTUAL_TOLERANCE, (
+        f"corrected mutual {ladder['corrected']:.6f} is "
+        f"{100.0 * ladder['deviation']:+.2f}% against the closed form, outside the "
+        f"unmoved {100.0 * MUTUAL_TOLERANCE:.0f}% band"
+    )
+    assert abs(blind["deviation"]) >= MUTUAL_TOLERANCE, (
+        "the blind (unfragmented) fixture's Im Z12 = 0 passed the mutual band — "
+        "the band is gating nothing"
+    )
+
+    _gate_on_record_width(comm)
+
     assert raw_miss < REPRODUCTION_BAND_RELATIVE, (
         f"raw mutual {ladder['raw']!r} does not reproduce the re-based 0.11 record "
         f"{RECORDED_RAW_RATIO!r} within {REPRODUCTION_BAND_RELATIVE:.1e} relative "
@@ -412,15 +522,6 @@ def test_package_sweep_reproduces_the_gated_mutual(package_sweep):
         f"the superseded v0.7.2 corrected record {sup_corrected:.6f} passes the "
         f"tightened {REPRODUCTION_BAND_RELATIVE:.1e} band — the tightening gates "
         "nothing"
-    )
-    assert abs(ladder["deviation"]) < MUTUAL_TOLERANCE, (
-        f"corrected mutual {ladder['corrected']:.6f} is "
-        f"{100.0 * ladder['deviation']:+.2f}% against the closed form, outside the "
-        f"unmoved {100.0 * MUTUAL_TOLERANCE:.0f}% band"
-    )
-    assert abs(blind["deviation"]) >= MUTUAL_TOLERANCE, (
-        "the blind (unfragmented) fixture's Im Z12 = 0 passed the mutual band — "
-        "the band is gating nothing"
     )
 
 
@@ -479,6 +580,7 @@ def test_retiring_heuristic_differs_from_the_solved_field(package_sweep):
 # --- PORT-5 step 1 ----------------------------------------------------------
 
 
+@record_width_xfail
 def test_sanity_report_reproduces_the_gated_metrics_on_the_field_route(package_sweep):
     """The sweep's own sanity report lands on the step-4 records.
 
@@ -489,6 +591,10 @@ def test_sanity_report_reproduces_the_gated_metrics_on_the_field_route(package_s
     ``||S||_2`` through ``numpy.linalg.svd`` rather than
     ``numpy.linalg.norm(s, 2)``, and ``reciprocity_max_abs_delta`` converts to
     the gated Frobenius ratio exactly for a 2x2.
+
+    `OPS-41`: both anchors are ``-n 2`` records (module docstring).  The
+    two-implementation agreement, the no-warning assertion and the
+    column-power inequality are width-independent and run at every width.
     """
     result = package_sweep["solved"]
     comm = package_sweep["comm"]
@@ -519,10 +625,34 @@ def test_sanity_report_reproduces_the_gated_metrics_on_the_field_route(package_s
             f"    warnings: {report.warnings or 'none'}",
             flush=True,
         )
+        # OPS-41: the reading beside the record, always, at every width.
+        print(
+            f"[OPS-41] reproduction at -n {comm.size}: passivity_max_sigma "
+            f"{report.passivity_max_sigma!r} vs record "
+            f"{RECORDED_PASSIVITY_MAX_SIGMA!r}, miss "
+            f"{abs(report.passivity_max_sigma - RECORDED_PASSIVITY_MAX_SIGMA):.3e} "
+            f"(band {PASSIVITY_REPRODUCTION_BAND:.1e}); symmetry ratio "
+            f"{symmetry_ratio!r} vs record {RECORDED_S_SYMMETRY_RATIO!r}, miss "
+            f"{abs(symmetry_ratio - RECORDED_S_SYMMETRY_RATIO):.3e} "
+            f"(band {SYMMETRY_RATIO_BAND:.1e})",
+            flush=True,
+        )
 
     # Same quantity, two implementations: the report must not disagree with the
-    # spectral norm step 4 asserted on this very matrix.
+    # spectral norm step 4 asserted on this very matrix.  Width-independent.
     assert abs(report.passivity_max_sigma - float(np.linalg.norm(s, 2))) < 1.0e-12
+
+    assert report.warnings == (), (
+        "the field route tripped a sanity warning it must not trip: "
+        f"{report.warnings}"
+    )
+    # Passivity as an inequality, on the second metric step 4 never read.
+    assert report.passivity_max_column_power_sum <= 1.0, (
+        "a column of the field-derived S carries more power out than in: "
+        f"{report.passivity_max_column_power_sum:.9f} > 1"
+    )
+
+    _gate_on_record_width(comm)
 
     assert abs(report.passivity_max_sigma - RECORDED_PASSIVITY_MAX_SIGMA) < (
         PASSIVITY_REPRODUCTION_BAND
@@ -534,15 +664,6 @@ def test_sanity_report_reproduces_the_gated_metrics_on_the_field_route(package_s
     assert abs(symmetry_ratio - RECORDED_S_SYMMETRY_RATIO) < SYMMETRY_RATIO_BAND, (
         f"the report's reciprocity delta converts to ||S-S^T||/||S|| = "
         f"{symmetry_ratio:.6e}, not the gated {RECORDED_S_SYMMETRY_RATIO:.4e}"
-    )
-    assert report.warnings == (), (
-        "the field route tripped a sanity warning it must not trip: "
-        f"{report.warnings}"
-    )
-    # Passivity as an inequality, on the second metric step 4 never read.
-    assert report.passivity_max_column_power_sum <= 1.0, (
-        "a column of the field-derived S carries more power out than in: "
-        f"{report.passivity_max_column_power_sum:.9f} > 1"
     )
 
 
@@ -587,12 +708,19 @@ def test_sanity_metrics_separate_the_heuristic_from_the_field_route(package_swee
     )
 
 
+@record_width_xfail
 def test_reciprocity_warning_fires_on_an_asymmetrised_field_smatrix(package_sweep):
     """Negative control: the warning path is reachable, on this very matrix.
 
     "No warnings on the field route" is only evidence if a warning *can* fire.
     Perturbing one off-diagonal of the gated S by twice the absolute warning
     threshold must trip it — and must trip nothing on the untouched copy.
+
+    `OPS-41`: the ``rel=1e-3`` recovery of the perturbation is a digit record —
+    the perturbed off-diagonal rides the field S's own asymmetry, which moves
+    with rank width (module docstring; ``-n 4`` reads 9.988682e-02 against 0.1,
+    1.1e-03 relative).  The warning-path assertions themselves are
+    width-independent and run at every width.
     """
     result = package_sweep["solved"]
     comm = package_sweep["comm"]
@@ -609,11 +737,16 @@ def test_reciprocity_warning_fires_on_an_asymmetrised_field_smatrix(package_swee
             f"{report.reciprocity_max_abs_delta:.6e}, warnings = {report.warnings}",
             flush=True,
         )
+        # OPS-41: the reading beside the record, always, at every width.
+        print(
+            f"[OPS-41] reproduction at -n {comm.size}: reciprocity_max_abs_delta "
+            f"{report.reciprocity_max_abs_delta!r} vs perturbation "
+            f"{perturbation!r}, relative miss "
+            f"{abs(report.reciprocity_max_abs_delta - perturbation) / perturbation:.3e} "
+            "(band 1.0e-03)",
+            flush=True,
+        )
 
-    assert report.reciprocity_max_abs_delta == pytest.approx(perturbation, rel=1.0e-3), (
-        "the perturbation did not land in the reciprocity metric: "
-        f"{report.reciprocity_max_abs_delta:.6e} vs {perturbation:.6e}"
-    )
     assert any("reciprocity abs delta" in w for w in report.warnings), (
         "an S asymmetric by twice the warning threshold produced no reciprocity "
         f"warning: {report.warnings}"
@@ -621,3 +754,10 @@ def test_reciprocity_warning_fires_on_an_asymmetrised_field_smatrix(package_swee
     # The untouched matrix must still be clean — the warning is about the
     # perturbation, not about the fixture.
     assert summarize_sparameter_sanity(result.s_matrix).warnings == ()
+
+    _gate_on_record_width(comm)
+
+    assert report.reciprocity_max_abs_delta == pytest.approx(perturbation, rel=1.0e-3), (
+        "the perturbation did not land in the reciprocity metric: "
+        f"{report.reciprocity_max_abs_delta:.6e} vs {perturbation:.6e}"
+    )
