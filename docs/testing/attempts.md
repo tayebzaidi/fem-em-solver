@@ -17042,3 +17042,58 @@ service is not Up.
   `(1/V_gap) ∫_gap E·d̂ dV` on both ports, on both fixtures. Separately, a
   review should ratify the receiver-inner-edge comparand (now measured to
   0.01%) and rule on which solid mutual reading stands.
+
+## 2026-09-08T03:40Z (2026-09-07 22:30 CDT slot) — `GEO-27` — **complete**
+
+- Item: §9 On deck item 3 (items 1 and 2 already marked BLOCKED / DONE by
+  earlier slots, so this was the first open item). Executor `mesh-probe`,
+  spawned foreground with the no-background rule stated verbatim in the
+  spawn prompt; returned inside the slot, no background task.
+- Preflight: tree clean on `64d7859`, `fem-em-solver` Up 4 days. Note for
+  the review: **`fem-em-solver-xl` was Up (created 2 hours before this
+  slot)** — no XL item was run here (item 6 is last and this slot never
+  reached it), so something else brought it up; the 18:00 review recorded
+  it as *not* Up. Left as found — this slot did not commission it and does
+  not stop it.
+- What was done: the four-rung phantom-resolution ladder on
+  `MeshGenerator.birdcage_port_domain(phantom_resolution=…)`, called through
+  `tests/mesh/test_birdcage_port_sheets._build(True, phantom_resolution=…)`
+  — which is the same helper `tests/mesh/test_birdcage_phantom_resolution.py`
+  itself imports and calls, so the "exactly as that module calls it"
+  condition is met by construction (verified by reading both). F-small
+  defaults, real build, no solve, one window `-n 2`, `timeout -k 30 600`.
+- Numbers (h_p m | cells `size_global` | phantom cells tag 3 | share | mesh s
+  | 2a_1g/h | 2a_10g/h): 0.0075 | 120499 | 2746 | 0.0228 | 25.26 | 1.65 |
+  3.57 — 0.005 | 129505 | 8497 | 0.0656 | 25.94 | 2.48 | 5.36 — 0.00375 |
+  144212 | 18570 | 0.1288 | 28.81 | 3.31 | 7.15 — 0.0025 | 199920 | 58866 |
+  0.2944 | 36.27 | 4.96 | 10.72.
+- Control: **REPRODUCED to the integer** — 120 499 cells / 2 746 tag-3 cells
+  against the record (`20260908T033218Z_GEO-27.log:1803–1810`). No
+  `OPS-18`-class mesher drift, so the ladder proceeded past rung 1.
+- Stop rule: never approached (worst rung 67% of the 300 k cell ceiling and
+  30% of the 120 s mesh ceiling). No rung failed to mesh; no "overlapping
+  facets" and no `MeshAdapt` fallback anywhere in the log, so no
+  `GEO-23`-class record either.
+- Answer to the probe's question: **`h_p` = 0.0025 m**, 4.96 cells across the
+  1 g ball, 199 920 cells, 36.27 s to mesh.
+- Verified by me against the log, not taken from the executor's report:
+  the footer (`Status: 0`, `Elapsed (s): 132`), the control line, the four
+  table rows and the answer line, plus the two source files that establish
+  the call route. Report and log agree.
+- Nothing asserted (🧪 by the §3 rule), no band moved, no `src/` change,
+  `PHANTOM_GROWTH_BAND` not re-asserted. Files: new
+  `scripts/probes/geo27_phantom_resolution_probe.py`, the log, and the
+  harness's own `test-results.md` index line.
+- Logs: 20260908T033218Z_GEO-27.log (132 s)
+- Branch (if parked): none — landed on `main`, §9 item 3 marked DONE in the
+  same commit.
+- Next-attempt hypothesis: n/a, the chunk delivered its table. For the
+  review: this is the input to the `MAT-4` step 5 the 18:00 review already
+  listed for the weekly, and the *shape* of the answer is favourable —
+  1 g resolution costs 1.66× the cells and 1.44× the mesh time because the
+  refinement stays confined to the phantom, so a 1 g gate on F-small looks
+  affordable at ~200 k cells rather than ungateable on this box. The one
+  caveat that step must carry: the three finer rungs are single readings
+  (only 0.0075 has a cross-process repeat) and none may be pinned as a
+  record without its own repeat. A solve at 0.0025 has not been costed —
+  this probe meshed only.
