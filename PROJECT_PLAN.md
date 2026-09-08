@@ -3807,6 +3807,74 @@ review confirms that reading before step 1 runs.
 >   comparand by more than 10% cannot happen on the same mesh (2e's number
 >   is the backing) — if it does, the module or mesh changed: report, do
 >   not re-point, stop.
+> * **Step 2f executed 2026-09-08 06:00 slot (implementer) — the point-
+>   sampled path voltage IS the 2% `Z` asymmetry.** One window, `-n 4`,
+>   complex build, `timeout -k 30 560`: **350 s**, `Status: 1`,
+>   **1 failed / 21 passed** in 348.49 s
+>   (`20260908T111059Z_TH-15.log:1806`, footer `:1957–1958`); the single
+>   failure is step 2's pre-registered raw-`S` unitarity gate,
+>   `7.538037e-03 > 1e-09` (`:1665, 1730`), red and unmoved as scoped. A
+>   first window without `-s` (`20260908T110445Z_TH-15.log`, 355 s, same
+>   1 failed / 21 passed) swallowed the prints and was re-run; both logs
+>   are on the branch. Code and both logs on
+>   `attempt/TH-15-step2proper-20260907T213739Z` at **`10b3af1`** (test
+>   module only, no `src/` — rule (c) vacuous); `main` carries this record.
+>   **(a) The mutual anchor is green on the ratified comparand.**
+>   `Im Z₂₁ = +1.028789564e+00` Ω against `M(a, a − r_w, d) =
+>   1.654508076658e-08` H (`ωM = 1.039558` Ω): **ratio 0.989641 (−1.04%)**,
+>   inside the imported, unmoved `MUTUAL_TOLERANCE` 10% (`:1613`) —
+>   reproduces 2e's number exactly. The superseded `M(a, a, d)` ratio
+>   **0.828497 (−17.15%)** is printed beside it (`:1614, 1618`). The
+>   docstring carries the PEC-tube derivation and the disclosed
+>   source-side omission. (ii) lossless identity `max|Re Z|/|Z| = 0`, and
+>   the symmetrised-`S` identity `4.444549e-16` vs 1e-9 with
+>   `σ_max = 1.000000000000` (`:1584–1585`) — both as 2e.
+>   **(b) Prediction (2) holds sharply and prediction (1) fails**
+>   (`:1629–1646`). Rebuilding `Z` on the gap-averaged voltage collapses
+>   the asymmetry on *both* fixtures: `|Z₁₂ − Z₂₁|/|Z₁₂|` goes
+>   **2.026999e-02 → 1.510620e-04** on the hole (`|Z₁₂/Z₂₁|` 1.020689360 →
+>   **0.999848961**, `:1634–1635`) and **2.236184e-02 → 1.925413e-04** on
+>   the boxed solid (1.022546701 → **0.999807496**, `:1642–1643`) — a
+>   **134× / 116×** reduction from changing the *reading* alone. The probe
+>   re-solve is the sweep's solve to round-off
+>   (`‖Z_path − Z_sweep‖/‖Z_sweep‖` = 5.067176e-08 hole / 8.072266e-08
+>   solid, `:1637, 1645`) and the sweep's own `Z` reproduces the `V_path`
+>   asymmetry to nine digits (`:1636, 1644`), so the two routes differ only
+>   in how the gap voltage is read. The mechanism is visible in the
+>   readings themselves: the two **undriven** `V̄` values agree across
+>   drives to **ten digits** (`6.789932166e-01` vs `6.789932160e-01` on the
+>   hole, `:1631–1632`; `7.146416533e-01` vs `7.146416531e-01` on the
+>   solid) where the `V_path` samples differ by 2% (1.022408810 vs
+>   1.043719436) — the arc sample, not the field, carries the asymmetry.
+>   Prediction (1) is **refuted**: `|V_path − V̄|/|V̄|` is **49–54%** on
+>   undriven ports and **100.2%** on driven ones, not the predicted 1–2%,
+>   because the driven-port `V̄` is dominated by the impressed source
+>   inside the gap volume and the gap box is longer than `g` — `V̄` is
+>   **uncalibrated in magnitude** and only its *reciprocity* is meaningful
+>   here. Disclosed implementation note: the §7 formula
+>   `V̄ = (g/V_gap)∫E·d̂ dV` is `−V` in `_path_voltage`'s convention
+>   (`V = −∫E·dl`, `d̂ = +ŷ` the arc tangent at `φ = 0`), so the sign is
+>   matched and the literal expression retained as `v_bar_raw`; nothing
+>   scaled or fitted. Quadrature pinned at degree 4, `assemble_scalar`
+>   explicitly `MPI.SUM`-reduced, measure restricted to `dx(gap tag)`.
+>   **(c) Prediction (3) misses by 4.6×** (`:1651–1657`):
+>   `‖S_wave − z_to_s(Z_raw)‖_F` = **2.915842e-02**, not the predicted
+>   6.4e-3 (2.061373e-02 relative to `‖S_wave‖_F`), and it is **essentially
+>   all off-diagonal** — `|diff|` = 8.425202e-04 / **2.081315e-02** /
+>   **2.038642e-02** / 8.427208e-04 on [1,1] / [1,2] / [2,1] / [2,2]. The
+>   6.4e-3 prediction was the *difference of two non-unitarity residuals*,
+>   which is not this norm; the wave-vs-`Z` gap is a larger, distinctly
+>   off-diagonal object than the ruling assumed. **Scope respected:** step
+>   2 stays open on the unitarity gate, `TH-15` stays 🟡, no band moved,
+>   both `TH-15` branches kept, the solid conduction spec dropped from the
+>   window as planned (2e's 2.229415e-02 quoted in the docstring).
+>   **For the review:** the `_path_voltage` fix chunk the 03:00 review
+>   named is now licensed by a measurement, and the open question it must
+>   answer is calibration — restrict the average to the `g`-long gap slab
+>   rather than the whole burial/overhang box and exclude the impressed
+>   source on the driven port, then check whether that one change also
+>   moves the 2.9e-2 off-diagonal wave-vs-`Z` gap and the 7.5e-3 raw-`S`
+>   non-unitarity, or whether those are a second, independent reading.
 > * **Step 3a (the birdcage hole as a `MeshGenerator` route — scoped
 >   2026-09-06 10:30 review, §9 item 4; step 2a's pattern on
 >   `birdcage_port_domain`).** One additive `as_hole=False` keyword: the
@@ -8413,7 +8481,19 @@ never widened silently and never on a quantity that was already green.
    known-issues with the 20-point table, park, mark 🚫, stop (item 5 is
    the diagnosis). `CLOSED_FORM_BAND` never widens.
 
-2. **`TH-15` step 2f — the gap voltage two ways on both ports and both
+2. ✅ **DONE 2026-09-08, 06:00 slot — executed as written, all asserted
+   anchors green (mutual 0.989641 vs the ratified comparand inside the
+   unmoved 10%; the symmetrised-`S` identity 4.444549e-16), the one red the
+   pre-registered raw-`S` unitarity gate. The finding is positive: the
+   gap-averaged voltage collapses `|Z₁₂ − Z₂₁|/|Z₁₂|` from 2.026999e-02 to
+   **1.510620e-04** on the hole and 2.236184e-02 → 1.925413e-04 on the
+   solid, so the point-sampled `_path_voltage` *is* the 2% asymmetry.
+   Predictions (1) and (3) both missed and are recorded as such. Code and
+   both logs on `attempt/TH-15-step2proper-20260907T213739Z` (`10b3af1`);
+   logs `20260908T111059Z_TH-15.log` (350 s, `Status: 1`) and
+   `20260908T110445Z_TH-15.log`. Full record in the §7 `TH-15` "Step 2f
+   executed" bullet. The review's next move is the `_path_voltage` fix
+   chunk, now licensed by a measurement.** ~~**`TH-15` step 2f — the gap voltage two ways on both ports and both
    fixtures, `Z` rebuilt on the gap-averaged voltage, the mutual gated
    on the ratified inner-edge comparand, and the wave-vs-`Z` gap
    printed** (heavy by ceiling, `-n 4`, complex build; on
@@ -8458,7 +8538,7 @@ never widened silently and never on a quantity that was already green.
    and `V̄` agreeing to < 0.5% puts the asymmetry in the field, not the
    reading — known-issues with the table, mark 🚫 (rule (d)), stop; the
    mutual missing the ratified comparand by > 10% on the same mesh means
-   the module or mesh changed — report, do not re-point, stop.
+   the module or mesh changed — report, do not re-point, stop.~~
 
 3. **`OPS-41` — declare `test_port_package_sparameters.py`'s three
    digit-reproduction records `-n 2` records, and attribute the 1e-4

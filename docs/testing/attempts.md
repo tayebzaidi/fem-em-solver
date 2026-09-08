@@ -17256,3 +17256,92 @@ service is not Up.
   precisely that the two diverge. The point-dipole tail the 03:00 review named
   as the fallback route is untouched by this result. Item 1 must not be re-run
   as written.
+
+## 2026-09-08T11:25Z (2026-09-08 06:00 CDT slot) — `TH-15` (step 2f) — **complete**
+
+- Preflight: `main` clean at `9f4d484`, both containers Up (`fem-em-solver`
+  4 days; `fem-em-solver-xl` 10 h — still the operator's, untouched by this
+  slot). §9 item 1 (`WF-6` step 4d) is 🚫 BLOCKED by the 04:30 slot, so the
+  first open item is **item 2, `TH-15` step 2f**. Executor: `implementer`,
+  foreground (`run_in_background: false`), spawn prompt stated the
+  foreground/660 000 ms/`timeout -k 30` rule verbatim.
+- Executed as written: test module only
+  (`tests/validation/test_two_torus_pec_hole_ports.py`), no `src/` change
+  (rule (c) vacuous), on `attempt/TH-15-step2proper-20260907T213739Z` at
+  **`10b3af1`** (parent `4275308`). Solid conduction spec dropped from the
+  window as the plan directed.
+- **Anchors, asserted, all green except the pre-registered red.** (i) hole
+  `Im Z₂₁ = 1.028789564e+00` Ω against the ratified
+  `M(a, a − r_w, d) = 1.654508076658e-08` H (`ωM = 1.039558` Ω) → ratio
+  **0.989641 (−1.04%)**, inside the imported, unmoved `MUTUAL_TOLERANCE`
+  10% (`20260908T111059Z_TH-15.log:1613`); reproduces 2e exactly. Superseded
+  `M(a, a, d)` ratio 0.828497 (−17.15%) printed beside (`:1614, 1618`).
+  (ii) lossless `max|Re Z|/|Z| = 0`; symmetrised-`S`
+  `‖S_symᴴ S_sym − I‖_F = 4.444549e-16` vs 1e-9, `σ_max = 1.000000000000`
+  (`:1584–1585`). The one failure is step 2's pre-registered raw-`S`
+  unitarity gate, `7.538037e-03 > 1e-09`, red and unmoved (`:1665, 1730`).
+- **The finding — prediction (2) holds sharply.** Rebuilding `Z` on the
+  gap-averaged voltage collapses `|Z₁₂ − Z₂₁|/|Z₁₂|` from **2.026999e-02 to
+  1.510620e-04** on the hole (`|Z₁₂/Z₂₁|` 1.020689360 → 0.999848961,
+  `:1634–1635`) and **2.236184e-02 to 1.925413e-04** on the boxed solid
+  (1.022546701 → 0.999807496, `:1642–1643`) — 134× / 116× from changing the
+  *reading* alone. Probe control: `‖Z_path − Z_sweep‖/‖Z_sweep‖` =
+  5.067176e-08 / 8.072266e-08 (`:1637, 1645`), and the sweep's own `Z`
+  reproduces the `V_path` asymmetry to nine digits (`:1636, 1644`) — the
+  probe re-solve *is* the sweep's solve. Mechanism visible in the readings:
+  the two **undriven** `V̄` agree across drives to **ten digits**
+  (6.789932166e-01 / 6.789932160e-01 hole, `:1631–1632`; 7.146416533e-01 /
+  7.146416531e-01 solid) where the `V_path` arc samples differ by 2%
+  (1.022408810 / 1.043719436). So the point-sampled `_path_voltage` *is* the
+  2% asymmetry; this is the positive branch of the item, not its negative
+  result (which required `V_path` and `V̄` to agree to < 0.5%).
+- **Prediction (1) refuted** (rule (e), printed not asserted):
+  `|V_path − V̄|/|V̄|` measures **49.341 / 50.577 / 52.725 / 53.716%** on the
+  undriven ports and **100.225 / 100.228 / 100.230 / 100.233%** on the driven
+  ones (`:1630–1641`), not the predicted 1–2%. Cause named by the executor
+  and disclosed in the docstring: the driven-port gap volume contains the
+  impressed source and the gap box is longer than `g`, so **`V̄` is
+  uncalibrated in magnitude** — only its reciprocity is meaningful here.
+  Disclosed sign note: §7's `V̄ = (g/V_gap)∫E·d̂ dV` is `−V` in
+  `_path_voltage`'s convention (`V = −∫E·dl`, `d̂ = +ŷ` the arc tangent at
+  `φ = 0`); the sign is matched and the literal expression kept as
+  `v_bar_raw`. Nothing scaled or fitted. Quadrature pinned at degree 4,
+  `assemble_scalar` explicitly `MPI.SUM`-reduced, measure `dx(gap tag)`.
+- **Prediction (3) missed by 4.6×:** `‖S_wave − z_to_s(Z_raw)‖_F` =
+  **2.915842e-02** (predicted 6.4e-3), 2.061373e-02 relative to
+  `‖S_wave‖_F`, and **essentially all off-diagonal** — `|diff|` 8.425202e-04
+  / **2.081315e-02** / **2.038642e-02** / 8.427208e-04 (`:1651–1657`). The
+  03:00 ruling's 6.4e-3 was the *difference of two non-unitarity residuals*,
+  which is not this norm.
+- Logs (both on the branch): **`20260908T111059Z_TH-15.log`** — `-n 4`,
+  complex build, `tests/environment` first, `-s`, `timeout -k 30 560`:
+  **1 failed / 21 passed in 348.49 s**, `Status: 1`, elapsed **350 s**
+  (`:1806`, footer `:1957–1958`); this is the load-bearing one. **`20260908T110445Z_TH-15.log`** — the same window run
+  *without* `-s`, so pytest swallowed the prints: 1 failed / 21 passed,
+  Status 1, elapsed 355 s (`:455–456`). One wasted window, ≈ 6 min; kept for
+  the record. Both foreground, container-side `timeout -k 30`, inside the
+  660 000 ms host ceiling. Heavy by ceiling, ≈ 350 s measured — the plan
+  priced ≈ 200 s and the two extra specs cost the difference.
+- Verified by the slot itself against the log, not the executor's report:
+  the mutual line, both `V̄` tables, both `Z` route lines, the wave-vs-`Z`
+  block, the footer, and `short test summary` — the single `FAILED` is
+  `::test_pec_hole_network_is_reciprocal_and_unitary` at `:1730`, i.e. the
+  pre-registered red and nothing else.
+- `main` carries only the record (this entry, the §7 `TH-15` "Step 2f
+  executed" bullet, the known-issues step-2f row, and §9 item 2 struck
+  through and marked ✅ DONE in the same commit). Code, both logs and the
+  two `test-results.md` rows stay on the branch, as the item specified.
+  Six `attempt/*` branches, unchanged; no `recovered/*`; no branch deleted
+  — step 2 has not closed. `TH-15` stays 🟡, no band moved, the unitarity
+  assert untouched.
+- No allowlist denial, no docker-socket denial, no container wedge.
+- Next-attempt hypothesis / for the review: **the `_path_voltage` fix chunk
+  is now licensed by a measurement** — replace the 1-D arc sample with a
+  volume-averaged gap voltage *calibrated* by restricting the average to the
+  `g`-long gap slab rather than the whole burial/overhang box and excluding
+  the impressed-source contribution on the driven port, then check whether
+  that single change also moves the 2.915842e-02 off-diagonal wave-vs-`Z`
+  gap and the 7.538037e-03 raw-`S` non-unitarity, or whether those are a
+  second, independent reading. The 6.4e-3 figure in ruling (2) should be
+  restated as what it is (a residual difference) so the next item does not
+  inherit the wrong comparand.
