@@ -17440,3 +17440,102 @@ service is not Up.
   across widths, two decades above anything gated, so the driven gap — where
   the path runs through the impressed source — is where the sampling error
   lives and where a candidate fix will show first.
+
+## 2026-09-08T14:20Z (2026-09-08 09:00 CDT slot) — `MAT-4` (step 5) — **complete**
+
+- Preflight clean on `127f9ef`, `main`; `fem-em-solver` Up 4 days;
+  `fem-em-solver-xl` **Up 13 h** — still the operator's ≈ 20:00 CDT 09-07
+  bring-up, not touched by this slot (§9 item 6 is HELD, do-not-take-headless,
+  and was skipped unmarked as the review instructed). §9 item 1 🚫 BLOCKED
+  (04:30), items 2 and 3 ✅ DONE (06:00, 07:30), so **item 4** is the first
+  open item — taken as written, no substitution. Executor: `implementer`,
+  spawned **foreground** with the no-background rule, the 660 000 ms host
+  window and the `timeout -k 30` sizing stated verbatim in the spawn prompt.
+  Landed on `main` as `c5835d3`; tree clean after.
+- **Complete, green on the first run.** New module
+  `tests/validation/test_birdcage_sar_1g_rung.py` (378 lines) importing step
+  4's construction via `_build_mass_averaged(phantom_resolution=0.0025)` — the
+  `GEO-27` rung — never a re-implementation of the operator.
+- **Four windows, all `Status: 0`, all `-n 4` complex build with
+  `FEM_EM_REQUIRE_COMPLEX=1` and `tests/environment` first (except the smoke):**
+  `20260908T140443Z_MAT-4-step5-smoke.log` collect-only, 30 items, 4 s;
+  **`20260908T140457Z_MAT-4-step5.log`** `18 passed`, elapsed **251 s**
+  (`:2289–2290`); **`20260908T140935Z_MAT-4-step5-step4-regression.log`** step
+  4's own gate under rule (c), `23 passed`, elapsed **114 s** (`:2259–2260`);
+  **`20260908T141147Z_MAT-4-step5-rerun.log`** `18 passed`, elapsed **245 s**
+  (`:2289–2290`). Heavy by ceiling, measured 251 / 114 / 245 s — every window
+  inside its `timeout -k 30` and inside the 660 000 ms host window. The item
+  priced `timeout -k 30 900`, which does **not** fit a foreground host window;
+  the executor sized the container timeout down instead of backgrounding, and
+  the measured 251 s left the shrink unexercised.
+- **Anchors, both asserted at the imported unmoved bands.** (i) the four
+  cyclic **10 g** C4 pairs **0.0309 / 0.0060 / 0.0394 / 0.0644%** against the
+  imported `C4_COVARIANCE_BAND` 5% — every pair better than step 4's 0.3303 /
+  0.0756 / 0.0574 / 0.3132% (ratios 0.0936 / 0.0792 / 0.6872 / 0.2057×), a
+  factor 78 of headroom on the worst (`…141147Z:1985–1988`). (ii) the
+  whole-phantom ball on this rung's partition, `½∫σ|E|²` **5.503204728560e-08 W**
+  vs the identical tag-3 integral, relative **8.126833e-14** at the imported
+  1e-10 (8.149037e-14 in the rerun — MPI reduction order), and `mass_kg` vs
+  ρ·V_phantom at **5.284662e-14** (`:1962, 1999`). Containment re-asserted
+  (r₀ + a₁₀g = 28.3650 mm < 30.0 mm). The mis-paired C4 control fires at
+  85.25 / 85.29 / 85.28 / 85.29% (sign asserted, size predicted, `:1969–1972`).
+- **The finding, printed and predicted, asserted by nothing (rule (e)): the
+  1 g column is band-clean on this rung.** The four **1 g** C4 pairs read
+  **0.0957 / 0.1199 / 0.1305 / 0.1065%** — predicted inside 5% on every pair
+  and inside on every pair, worst **0.1305%** against step 4's worst
+  **6.8383%** at 1.65 `2a/h` cells (ratios 0.0140 / 0.0409 / 0.3171 / 0.0226×,
+  `:1990–1993`). Step 4's 1 g verdict was `h`, exactly as the review
+  predicted; 4.96 cells across the 6.2 mm ball is enough. The module's own
+  pre-registered clause resolves to **(A)** and says verbatim that
+  *registering* a 1 g gate is the next review's ruling, never in-slot.
+- **Also printed, not asserted:** the four 10 g peaks **6.178300937 /
+  6.176390316 / 6.176760066 / 6.174323671e-07 W/kg**, rung-to-rung move
+  **−2.6703 / −2.3780 / −2.4459 / −2.4283%** against step 4's 6.348 / 6.327 /
+  6.332 / 6.328e-07 — the predicted "few %"; the 1 g averages at each drive's
+  own centre **5.515422939 / 5.510146420 / 5.516752827 / 5.509553429e-07 W/kg**
+  (step 4 printed no 1 g absolute, so these have **no comparand**); the phantom
+  power **+1.5005%** from step 4's rung, explicitly a rung-to-rung move and
+  *not* re-asserted against `STEP3F_FINE_PRIMAL_PHANTOM_POWER_W`, which belongs
+  to the 0.0075 mesh. Neither column is a C95.3 compliance figure. Solve times
+  17.98 / 17.08 / 18.59 / 17.31 s.
+- **`GEO-27` repeat (the reading that rung lacked): `size_global` 199 920 and
+  phantom tag-3 58 866, EQUAL to the integer** against `GEO-27`'s single
+  reading (`20260908T033218Z_GEO-27.log`) — reproduced on both step-5 windows
+  (`:1955, 1981–1982`). No drift, so no `OPS-18`-class record; two independent
+  windows now agree and a review may pin it.
+- **Two `tests/` changes to step 4's module, disclosed under §9 rule (c) and
+  re-run green in the same slot** (`23 passed` / 114 s, every step-4 record
+  digit-for-digit: 120 499 / 2 746, 0.3303%, 1 g 6.8383%, control 86.0132%,
+  identity 2.087219e-14): (a) `_build_mass_averaged` gains a
+  `phantom_resolution` keyword defaulting to `PHANTOM_RESOLUTION_FINE`, so the
+  default path is step 4 byte-for-byte; (b) two printed lines carrying the word
+  ASSERTED — the anchor-(iii) cell-count line and the step-3f record comparison
+  — are now labelled by rung, because neither is asserted off the default and a
+  log must not claim a gate the module does not run. **That mislabel is why the
+  rerun exists:** the first window's log carries the old, misleading
+  "(ASSERTED <= 1e-03)" on the step-3f line; the rerun reproduces every printed
+  digit, ≈ 4 min spent to leave a log that does not overclaim. No band moved,
+  no `src/` change, no §2 change; `MAT-4`'s ✅ keeps step 4's scope and the 1 g
+  column stays a **printed** record.
+- Verified by the slot itself against the logs, not the executor's report: all
+  four footers and `Status:` lines; the 10 g and 1 g pair tables at
+  `…141147Z:1968–1972, 1985–1993`; the ball identity and mass at `:1962, 1999`;
+  the mesh repeat at `:1955, 1981–1982`; the step-4 regression's `23 passed` at
+  `…140935Z:2191`. Every load-bearing digit matches. The commit carries code +
+  four logs + `test-results.md` rows + the §7 "Step 5 EXECUTED" paragraph + the
+  §9 item-4 ✅ together, one commit, as §4 requires.
+- Neither negative-result branch fired: the 1 g worst pair is inside 5% (not
+  the "five cells is not enough" finding) and the 10 g identity held on the
+  finer rung (no known-issues entry, nothing red). No allowlist denial, no
+  docker-socket denial, no container wedge, no timeout abort, no
+  `run_in_background`. Six `attempt/*` branches unchanged, no `recovered/*` —
+  this chunk owned none.
+- Next-attempt hypothesis / for the review: **the 1 g question has moved from
+  resolution to registration.** The pairs are inside the band by a factor 38 at
+  4.96 cells, so the open call is whether §7 promotes the 1 g column to an
+  *asserted* gate at `phantom_resolution = 0.0025` (the module is already
+  structured for it — one label change, no new solve) and whether 199 920 /
+  58 866 is now pinned as a record on two agreeing windows. Both are rulings,
+  not implementer work. What step 5 does **not** give: two rungs of one
+  quantity are no convergence rate, and there is still no absolute SAR, no
+  compliance, no homogeneity and nothing at a Larmor frequency.
