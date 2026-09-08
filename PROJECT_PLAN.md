@@ -3655,6 +3655,80 @@ review confirms that reading before step 1 runs.
 >   `Z₁₂/Z₂₁` reading ≲ 0.5% while the hole's is 2% means the asymmetry is
 >   the *hole's* (its gap end caps are the cavity wall) — report and stop.
 >   Either way the 18:00 rulings are re-read, not defended.
+> * **Step 2e EXECUTED 2026-09-07 (21:00 implementer slot) — the assert
+>   is green, prediction (3) lands to 0.01%, and predictions (1) and (2)
+>   both fail in the same direction: mechanism (a) is refuted.** Neither
+>   pre-registered exit fired (the 1e-9 identity held; the solid's
+>   displacement `Z₁₂/Z₂₁` is *not* ≲ 0.5%, it is larger than the hole's,
+>   which is the opposite of that exit's premise). One window, `-n 4`,
+>   complex build, `timeout -k 30 560`, heavy by ceiling, **elapsed 306 s**
+>   (≈ 350 s predicted), **2 failed / 18 passed**
+>   (`20260908T020506Z_TH-15.log`, on the branch; footer `Status: 1`,
+>   `Elapsed (s): 306`). The two failures are step 2's pre-existing red
+>   asserts, byte-identical to the record — raw-`S` unitarity 7.538037e-03
+>   and the mutual 0.828497 / −17.15% (`:1652`, `:1656`). No band moved,
+>   no `src/` change; code, log and `test-results.md` row committed on
+>   `attempt/TH-15-step2proper-20260907T213739Z` (`4275308`), `main`
+>   carrying only this record. Both `TH-15` branches kept.
+>   **Asserted (green):** `test_symmetrised_hole_network_is_exactly_unitary`
+>   — `‖S_symᴴ S_sym − I‖_F = 9.362447e-18` against the 1e-9 band, and
+>   `σ_max(S_sym) = 1.000000000000` against the raw 1.002865051123
+>   (`:1582–1583`). **Caveat the executor printed and the next review must
+>   read (`:1584`):** `result.s_matrix` is assembled from *wave
+>   amplitudes*, not from `z_matrix` (`sparameters.py:194–222`), so what
+>   the symmetrisation repairs is `z_to_s(Z_raw)`, whose non-unitarity is
+>   **1.183730e-03** with `σ_max` 1.000418599355. The identity therefore
+>   proves the asymmetry is the whole of the *Z-route* rung; it does **not**
+>   prove the recorded 7.538037e-03 on the wave-assembled `S` is only the
+>   asymmetry — that number is 6.4× larger, and the 18:00 ruling did not
+>   draw the distinction. The assert as pre-registered passes and was not
+>   changed.
+>   **(1) `Z₁₂/Z₂₁`, printed (`:1608–1610`)** — hole displacement
+>   `|Z₁₂/Z₂₁| = 1.020689360`, asymmetry **2.026999e-02** (reproducing the
+>   2.07% record); solid displacement 1.022546702 / **2.236184e-02**;
+>   solid **conduction** 1.022477321 / **2.229415e-02**. The 2–3%
+>   prediction for the solid displacement route holds; the ≲ 0.5%
+>   prediction for the conduction route **fails** — it reads the same
+>   2.2%.
+>   **(2) Gap geometry, printed (`:1617–1623`)**, `g = 1.395505060e-02` m:
+>   both ports on both meshes identical — `A_sheet = 1.451325262180e-04`
+>   m², `V_gap = 7.546891363338e-07` m³, `A_gap = V_gap/g =
+>   5.408000000000e-05` m², P1/P2 ratios **1.000000000 to twelve digits**.
+>   The ~2% prediction **fails**. (Implementation note: tags 211/212 are
+>   *interior* sheets, so `ds` reads zero on them; the lineage's `dS`-based
+>   `_facet_area`, already `MPI.SUM`-reduced, was used and said so in a
+>   code comment.)
+>   **Together (1)+(2) refute the 18:00 ruling's mechanism (a).** The
+>   asymmetry is not the per-port displacement-gap calibration and not
+>   CAD/mesh gap geometry; it is not the hole's either, since the solid
+>   shows it slightly *larger*. It is common to hole and solid and to both
+>   current routes — i.e. it lives in the voltage/field solution, not in
+>   the current reading. **For the review:** the remaining candidate the
+>   fixture can test is the *voltage* reading — the point-sampled
+>   `_path_voltage` the `OPS-41` width entry already suspects — and a
+>   `c₁/c₂` that survives route-swapping is not a calibration at all.
+>   **(3) Mutual bracket, printed (`:1630–1637`)**, ω = 6.283185e+07 rad/s
+>   — hole `Im Z₂₁/ω = 1.637369444655e-08` H, `Im Z₁₂/ω =
+>   1.671245571251e-08` H, mean **1.654307507953e-08** H; solid
+>   1.709957284323e-08 / 1.748428708228e-08 H. Against
+>   `M(a, a, d) = 1.976313852319e-08` H (the current comparand,
+>   ωM = 1.241755 Ω): hole `Z₂₁` 0.828497 (−17.15%), hole mean 0.837067,
+>   solid `Z₂₁` 0.865226. Against `M(a, a − r_w, d) =
+>   1.654508076658e-08` H (receiver inner edge): hole `Z₂₁` 0.989641
+>   (−1.04%), **hole mean 0.999879 (−0.01%)**, solid 1.033514. Against
+>   `M(a − r_w, a − r_w, d) = 1.412092268826e-08` H: hole `Z₂₁` 1.159534,
+>   hole mean 1.171529, solid 1.210939. `PEC_BOX_SYSTEMATIC = +1.69e-02`
+>   printed beside, **not** applied. Prediction (3) **holds sharply**: the
+>   hole mutual lies between the two inner-edge comparands, and the
+>   symmetrised hole mean matches the receiver-exclusion filament
+>   `M(a, a − r_w, d)` to **0.01%** — the rule-(f) re-registration the
+>   18:00 ruling proposed, now with a number, for a review to ratify.
+>   One discrepancy to note: the hole/solid ratio on the displacement
+>   route reads `Z₂₁` **0.957550** / `Z₁₂` 0.955856, not the 0.911 record
+>   — this window's own solid reads 0.865226 of `M(a, a, d)` where the
+>   ruling assumed 0.909618, so the two are not the same comparison and
+>   the review should say which solid reading stands. Not measured (a
+>   second window): the solid conduction route's `Im Z/ω`.
 > * **Step 3a (the birdcage hole as a `MeshGenerator` route — scoped
 >   2026-09-06 10:30 review, §9 item 4; step 2a's pattern on
 >   `birdcage_port_domain`).** One additive `as_hole=False` keyword: the
@@ -8044,7 +8118,27 @@ never widened silently and never on a quantity that was already green.
    the mechanism — known-issues, park, mark 🚫, stop (item 4 then becomes
    the diagnosis). `CLOSED_FORM_BAND` never widens.
 
-2. **`TH-15` step 2e — attribute the hole's 2.07% `Z` asymmetry, prove
+2. ✅ **DONE — executed 2026-09-07 21:00 slot; do not re-run.** One window,
+   `-n 4`, complex, **306 s**, 2 failed (step 2's unmoved reds) / 18 passed
+   (`20260908T020506Z_TH-15.log`, on the branch). The new assert is green —
+   `‖S_symᴴ S_sym − I‖_F = 9.362447e-18`, `σ_max(S_sym) = 1.000000000000`
+   (`:1582–1583`) — but it repairs `z_to_s(Z_raw)` (non-unitarity
+   1.183730e-03), not the wave-assembled `S` whose 7.538037e-03 is 6.4×
+   larger (`:1584`). Neither pre-registered exit fired. **Predictions (1)
+   and (2) both fail and refute mechanism (a):** the solid's *conduction*
+   route reads the same asymmetry (2.229415e-02) as its displacement route
+   (2.236184e-02) and as the hole (2.026999e-02) (`:1608–1610`), and the two
+   ports' `A_gap/g` agree to twelve digits (`:1617–1623`). The asymmetry is
+   common to both fixtures and both routes — it is in the voltage/field
+   solution, not the current reading. **Prediction (3) holds to 0.01%:** the
+   symmetrised hole mutual is `M(a, a − r_w, d)` to −0.01% (`:1630–1637`).
+   Code + log on `attempt/TH-15-step2proper-20260907T213739Z` (`4275308`);
+   record in the §7 `TH-15` "Step 2e EXECUTED" bullet. **For the review:**
+   ratify the rule-(f) receiver-inner-edge comparand; rule on the
+   wave-vs-`Z` `S`-assembly distinction; the surviving asymmetry candidate
+   is `_path_voltage` (the `OPS-41` entry's suspect). Original item below.
+
+   **`TH-15` step 2e — attribute the hole's 2.07% `Z` asymmetry, prove
    it is the whole non-unitarity, and print the mutual's inner-edge
    comparands** (heavy by ceiling, `-n 4`, complex build; on
    `attempt/TH-15-step2proper-20260907T213739Z` (`144feff`) — a
