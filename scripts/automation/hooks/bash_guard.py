@@ -39,6 +39,7 @@ XL_OVERRIDE = Path(__file__).resolve().parents[1] / "xl-override.env"
 # to come back; the run is postponed, never silently degraded.
 XL_LOAD_HEADROOM_CORES = 4.0
 XL_LOAD_OVERRIDE_ENV = "FEM_EM_XL_IGNORE_LOAD"
+XL_BOX_OK_ENV = "FEM_EM_XL_BOX_OK"
 
 
 def deny(reason: str) -> None:
@@ -155,6 +156,30 @@ def check_xl(cmd: str) -> None:
     busy = xl_load_check(cmd)
     if busy is not None:
         deny(f"XL window postponed — {busy}")
+
+    # The load check above measures **this WSL VM only**. Measured 2026-09-09:
+    # the operator's Task Manager showed 100% CPU with two solves running while
+    # this VM reported load 0.84 and both project containers at 0.00%. There is
+    # no way to probe the Windows host from inside the sandbox (no
+    # powershell.exe on PATH, /mnt unreadable), so a green load reading is not
+    # evidence the box is free and must not be treated as if it were.
+    #
+    # An XL window holds up to 16 cores for up to two hours, so the one thing
+    # that can see the whole machine — the operator — has to say so. This is
+    # deliberately a per-run acknowledgement and not a stored setting: the
+    # question is "is the box free *now*", and a file cannot answer it.
+    if not os.environ.get(XL_BOX_OK_ENV, "").strip():
+        deny(
+            "XL window needs the box confirmed free. This guard can only see "
+            "this WSL VM, and on 2026-09-09 the Windows host was at 100% CPU "
+            "with two solves while this VM read load 0.84 and every container "
+            "0.00% — so a green load reading here is not evidence of anything. "
+            "The host cannot be probed from the sandbox (no powershell.exe, "
+            "/mnt unreadable). Run `scripts/testing/box_check.sh` for what is "
+            "visible, then look at Task Manager for what is not, and re-run "
+            f"with {XL_BOX_OK_ENV}=1 prefixed if the machine is actually free. "
+            "An XL window holds up to 16 cores for up to 2 h on a shared box."
+        )
 
     last = last_xl_run()
     if last is not None:

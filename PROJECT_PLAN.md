@@ -540,6 +540,24 @@ cores.** Every verification command declares a tier and must not exceed it:
   reopened: re-pricing one is a **review** decision, and any revival needs its
   finest rung priced first (the epitaph's own lesson). Do not cite "does not
   fit the box" from a pre-2026-08-24 measurement without re-measuring.
+- **This box cannot be measured from inside the sandbox, and the guard says so
+  rather than pretending (measured 2026-09-09).** This is WSL2: `/proc/loadavg`,
+  `nproc` and `free` describe **this Linux VM only**. Work on the Windows host,
+  in another WSL distro, or in another VM is invisible, and it cannot be probed
+  — there is no `powershell.exe` on PATH and `/mnt` is unreadable. The
+  measurement that settles it: the operator's Task Manager showed **100 % CPU
+  with two solves running** while this VM reported **load 0.84** and both
+  project containers **0.00 %**. A load-average check would have called the box
+  free and started a 16-rank, 2-hour window straight into it. Consequences:
+  (a) `scripts/testing/box_check.sh` reports containers, VM load and VM memory
+  and prints its own blind spot, and its green verdict means only "nothing *I*
+  can see is using the box"; (b) an `xl` command now requires
+  `FEM_EM_XL_BOX_OK=1`, a **per-run** operator acknowledgement that the whole
+  machine was looked at — deliberately not a stored setting, because the
+  question is "is the box free *now*" and a file cannot answer it; (c) the
+  docker socket is reachable from a direct agent command but **not from inside
+  a script** here, so `box_check.sh`'s container section goes blank exactly when
+  run the convenient way and says "unavailable" rather than reporting zero.
 - **An XL window waits for the box (operator directive 2026-09-09).** It holds
   up to 16 of 36 cores for up to two hours, so starting one onto a machine
   somebody else is already using is the rudest thing this project can do.
