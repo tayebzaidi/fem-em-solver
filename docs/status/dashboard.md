@@ -1,6 +1,10 @@
 # FEM-EM Solver — status
 
-**Updated:** 2026-09-08 10:30 daily review. Headline: **the birdcage B₁⁺
+**Updated:** 2026-09-08 10:30 daily review; **Waiting-on-you refreshed
+2026-09-09 02:15 by the weekly planning review** (items 1, 4, 5 and 6 —
+the XL split, the `ANS-1` re-check, the new `ANS-2` case, and the dirty
+tree). The headline below is the 09-08 10:30 review's and has not been
+re-taken; the 03:00 daily review refreshes it. Headline: **the birdcage B₁⁺
 closed-form comparison will not be rescued by fixing the comparand. The
 image-lattice acceleration queued at 03:00 worked on the interior field
 (drift 0.2% at order 6) but broke the PEC-wall identity (3.3% vs 1%),
@@ -29,20 +33,25 @@ operator.
 
 ## Waiting on you
 
-1. 🟠 **The XL service is Up (since ≈ 20:00 on 09-07, 14 h idle) but
-   `ANS-4` step 2 cannot run from a scheduled slot.** Unchanged since
-   03:00: the window is ≈ 15 min of degree-1 rungs plus an uncosted
-   degree-2 solve under a 2 h stop rule; a headless slot's harness window
-   is capped at 11 min and a backgrounded run is killed at 10 min. Two
-   ways forward, yours or the 09-09 weekly's: **(a)** run it from an
-   interactive session (the §7 `ANS-4` step-2 command, one window,
-   `-n 16`, then stop the service and fill the ledger row); **(b)** let
-   the weekly split the degree-1 rungs into heavy-tier windows on the
-   ordinary service. **New this review:** the global-resolution ladder
-   queued for the B₁⁺ question (`GEO-29`, item 5) is the same ladder
-   `ANS-4`'s 64/128 MHz inconclusive verdict needs — one ladder should
-   serve both, and the weekly should say so. Leaving the service Up costs
-   nothing while idle.
+1. 🟠 **One interactive run, when you have 25 minutes: `ANS-4` step 2b on
+   the XL service.** *Answered by the 2026-09-09 02:15 weekly — it took
+   option (b) and then some.* The weekly **split the item**: the four
+   degree-1 mesh rungs turn out **not to need XL at all** (≈ 21 GiB at the
+   finest rung, priced from `PORT-14` step 1b's measured cell counts and
+   `TH-12`'s own memory exponent), so they become **step 2a** and run
+   headless in two ordinary heavy windows — no action from you, and they
+   carry the 64/128 MHz diagnosis on their own. What is left for you is
+   **step 2b**, the single degree-2 solve: it needs ≳ 49 GiB against the
+   ordinary service's ~64 GiB wall and runs ≈ 1 100–1 300 s, which no
+   headless slot can hold. So this is genuinely an interactive run —
+   one window, `-n 16` against `fem-em-solver-xl`, `timeout -k 60 7200`,
+   then stop the service; `run_and_log.sh` writes the ledger row itself.
+   Full spec, readout and decision rule: §10 "XL slot, 2026-09-09".
+   **Heads-up so the result does not look like a failure:** the degree-2
+   complex-power identity **will go red** — `TH-12` step 3 measured that
+   as coil-specific and common-mode, it is pre-registered, and the band
+   must not be touched. Leaving the service Up costs nothing while idle;
+   it has now been idle 28 h.
 2. 🟡 **Agent-definition edits — still pending, still less urgent.** The
    foreground rule has held on sixteen consecutive spawns with the rule
    carried verbatim; the five one-liners (two for `example-runner.md`,
@@ -51,19 +60,49 @@ operator.
    you want and an interactive session applies them.
 3. 🟢 **Session-limit watch, closed:** every scheduled session since the
    09-06 outage has fired (five reviews and twenty slots).
-4. 🟡 **`ANS-1` note, no action yet:** the refined Dodd–Deeds fixture
-   moved our ΔR column on 09-06; the 2026-09-02 AGREE verdict is
-   re-checked privately by the 09-09 weekly.
-5. 🟢 **`ANS-3` AED run** — the top of your queue. Same low-order rule,
+4. 🟢 **`ANS-1` re-check, done, no action:** the 09-09 weekly re-checked
+   the AGREE verdict against the column `MAT-6` step 11 moved. The landed
+   digit matches the arithmetic the 09-06 adjudication had already
+   pre-written, so **AGREE stands, tighter than before** — no
+   re-adjudication, nothing reopened. Numbers stay in `docs/private/`.
+5. 🔵 **New benchmark commissioned, not yet yours: `ANS-2` — coil-driven
+   SAR in the loaded four-leg birdcage at 10 MHz.** The spec is written
+   (`examples/ansys_benchmarks/birdcage_coil_driven_sar_10MHz/SPEC.md`)
+   and it deliberately **reuses your `ANS-4` HFSS project** — same
+   geometry, materials, ports and boundary condition; one frequency, plus
+   a phantom mass density (1000 kg/m³) and a field-calculator export. It
+   is the first thing that can give this repo an *absolute* check on
+   coil-driven SAR: every SAR number we have on a coil today is a
+   four-quadrant symmetry identity, which a computation wrong by a
+   constant factor would pass. **Do not start it yet** — our runnable half
+   does not exist, and sending you a spec without it would waste an AED
+   session. It moves to the top of this list when that box is checked.
+   Worth reading the spec's "which rows adjudicate" section when you do:
+   our averaging ball is a sphere and IEC 62704-1's is a cube, so the
+   mass-averaged rows carry a known systematic and the *pointwise* SAR and
+   phantom power are the rows that decide.
+6. 🟠 **Your uncommitted `ANS-4` step-2 work is sitting in the tree.**
+   Three files from 01:58 tonight — the additive `conductor_resolution` /
+   `degree` keywords and the 390-line ladder module. This review is
+   documentation-only and left them exactly as found, but a dirty tree
+   **stops the next scheduled implementer slot** and gets parked on a
+   `recovered/*` branch by the one after, so it costs two slots if nobody
+   disposes of it. The 03:00 daily review is flagged to handle it; landing
+   it is what unblocks step 2a. (Good news: the module's own
+   `FEM_EM_ANS4_STEP2_RUNGS` knob makes the 2a/2b split above mechanical —
+   nothing needs rewriting.)
+7. 🟢 **`ANS-3` AED run** — still the top of your *AED* queue (`ANS-2`
+   above is commissioned but not yet ready for you). Same low-order rule,
    same private-results handling; the tracked table's AED cells are blank
    by construction.
-6. **Information — automation fix from the 08-30 10:30 review, still
+8. **Information — automation fix from the 08-30 10:30 review, still
    awaiting your OK:** `docs/automation/weekly-review.md` has a commit-first
    checkpoint (rotation committed before plan edits). Revert only if you
-   want the single-commit form.
-7. **One click: does ParaView open a DG1 `.bp`?** (unchanged since
+   want the single-commit form. *(It earned its keep this session: three
+   checkpoint commits, none of them lost.)*
+9. **One click: does ParaView open a DG1 `.bp`?** (unchanged since
    2026-08-12; `scripts/probes/post4_step5_probe.py` regenerates.)
-8. FYI, no action — physics worth a glance. **(a)** The image-lattice
+10. FYI, no action — physics worth a glance. **(a)** The image-lattice
    sum for a coil in a PEC box has two different convergence behaviours
    at once: the interior field's shells alternate in sign and fall as
    1/N (so averaging consecutive orders converges fast), but the
