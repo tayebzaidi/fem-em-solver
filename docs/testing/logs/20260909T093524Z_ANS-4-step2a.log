@@ -1,0 +1,132 @@
+# Test Run
+- Chunk: ANS-4-step2a
+- Commit: d4bde49da0d6d13711cf800efab86d98adc94591
+- Time (UTC): 2026-09-09 09:35:24
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && source /usr/local/bin/dolfinx-complex-mode && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 FEM_EM_ANS4_STEP2_DEGREE2=0 FEM_EM_ANS4_STEP2_RUNGS="1.0 0.75" timeout -k 30 60 python3 -m pytest tests/validation/test_ans4_resolution_ladder.py -v -s --collect-only'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Sep  4 23:31 .
+drwxr-xr-x 16 taz5297 taz5297 4096 Sep  9 04:34 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  721 Sep  3 13:49 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 2801 Sep  4 23:31 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && source /usr/local/bin/dolfinx-complex-mode && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 FEM_EM_ANS4_STEP2_DEGREE2=0 FEM_EM_ANS4_STEP2_RUNGS="1.0 0.75" timeout -k 30 60 python3 -m pytest tests/validation/test_ans4_resolution_ladder.py -v -s --collect-only'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... collected 4 items
+
+<Dir workspace>
+  <Dir tests>
+    <Dir validation>
+      <Module test_ans4_resolution_ladder.py>
+        `ANS-4` step 2 — the Larmor discriminator: does *our* discretisation carry the gap?
+        
+        The 2026-09-06 weekly review adjudicated `ANS-4` **AGREE at 10 MHz** and
+        **INCONCLUSIVE at 64 / 128 MHz**: the miss against the operator's HFSS
+        replication grows with frequency and is several times larger than AED's own
+        Zero-vs-First-Order shift, which **excludes element order as the cause on the
+        AED side**.  Two candidates survive, and only moving *our* discretisation
+        separates them:
+        
+        * **discretisation** — our fixed 116 085-cell mesh has never had a convergence
+          ladder on this fixture (≈ 12 cells/λ and ≈ 5 cells/δ in the 800 S/m legs at
+          128 MHz), and the sign of the miss is what more conductor loss resolved
+          inside the legs would give;
+        * **the feed model** — a Larmor-frequency systematic of the lumped sheet.
+        
+        This module is the pre-registered measurement (§7 `ANS-4` step 2, the first
+        **XL** slot under §5.1): at 128 MHz only, four degree-1 rungs at
+        ``conductor_resolution`` ×1 / ×0.75 / ×0.6 / ×0.45 plus one **degree-2** solve
+        on the ×1 mesh, all on `_four_port_rung` — the same constructor the ANS-4
+        example used to produce the column the operator compared against, which is the
+        only reason these rungs are comparable with it at all.
+        
+        **What is asserted** (every band imported and unmoved): on every rung the C4
+        class spreads against `PORT-11`'s ``ADJACENT_SPREAD_BAND``, passivity against
+        ``PASSIVITY_SIGMA_TOLERANCE``, reciprocity against ``RECIPROCITY_BAND``; the ×1
+        rung reproduces `GEO-19` step B's cell record; and each finer rung actually
+        refines (`PORT-14` step 1b's mechanical control — a keyword that silently did
+        nothing would otherwise read as a converged ladder).
+        
+        **What is printed and asserted nowhere**: the three C4 entries `S₁₁` / `S₂₁` /
+        `S₃₁` on every rung with their relative move from the ×1 record, and a
+        Richardson h → 0 estimate of those three from the three finest degree-1 rungs.
+        Those are the readout the ruling is made from, and the ruling is a **review's**,
+        not this module's — the decision rule is pre-registered in the §7 row and the
+        comparison against the AED column happens only in gitignored ``docs/private/``.
+        
+        **No AED number appears in this file, in its log, or in anything it prints.**
+        Ansys licence terms restrict disclosure of benchmark results (operator
+        directive 2026-09-02); this module measures our side and stops there.
+        
+        Run (XL tier, one window, `-n 16` against ``fem-em-solver-xl``)::
+        
+            scripts/testing/run_and_log.sh ANS-4-step2 "docker compose exec -T \
+              fem-em-solver-xl bash -lc 'cd /workspace && \
+              source /usr/local/bin/dolfinx-complex-mode && PYTHONPATH=/workspace/src \
+              FEM_EM_REQUIRE_COMPLEX=1 timeout -k 60 7200 mpiexec -n 16 python3 -m \
+              pytest tests/environment tests/validation/test_ans4_resolution_ladder.py \
+              -v -s --tb=short'"
+        
+        ``FEM_EM_ANS4_STEP2_RUNGS`` trims the ladder for a cheap smoke on the ordinary
+        container (e.g. ``1.0`` builds the ×1 rung alone); unset — the XL window's
+        value — runs the pre-registered four plus the degree-2 solve.
+        ``FEM_EM_ANS4_STEP2_DEGREE2=0`` suppresses the degree-2 solve, which the rung
+        list alone does not: step 2a runs the four degree-1 rungs in two ordinary
+        windows with it off, step 2b runs the degree-2 solve in the XL slot.
+        <Function test_the_record_rung_reproduces_the_fixture>
+          The x1 rung is the fixture the AED column was replicated against.
+          
+          This is also the control on the two additive keywords: passing
+          ``conductor_resolution=1.0 * CONDUCTOR_RESOLUTION`` explicitly must build
+          the mesh the gate builds with the keyword absent.
+        <Function test_every_finer_rung_actually_refines>
+          `PORT-14` step 1b's mechanical control on the keyword.
+          
+          A ``conductor_resolution`` that silently did nothing would produce four
+          identical rungs, which would read as a perfectly converged ladder — the
+          most dangerous possible false positive for this measurement.
+        <Function test_every_rung_passes_the_imported_port11_gates>
+          Reciprocity, passivity and C4 symmetry on every rung, bands unmoved.
+          
+          A rung that fails these is not a usable point on the ladder, whatever its
+          S entries read — the refinement would have broken the port model rather
+          than resolved it.
+        <Function test_the_ladder_readout_is_printed>
+          The pre-registered readout. Asserts nothing about the S entries.
+          
+          Whether the moves below close the gap against the AED column is the
+          **review's** ruling, made in gitignored ``docs/private/`` against the
+          decision rule written in the §7 row before this ran.  Nothing here
+          compares against an AED number, and nothing here may.
+
+========================== 4 tests collected in 1.19s ==========================
+
+## Exit
+- Status: 0
+- Elapsed (s): 3
+- Filtered lines (gmsh optimisation chatter): 0

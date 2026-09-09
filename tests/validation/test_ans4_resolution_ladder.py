@@ -50,6 +50,9 @@ Run (XL tier, one window, `-n 16` against ``fem-em-solver-xl``)::
 ``FEM_EM_ANS4_STEP2_RUNGS`` trims the ladder for a cheap smoke on the ordinary
 container (e.g. ``1.0`` builds the ×1 rung alone); unset — the XL window's
 value — runs the pre-registered four plus the degree-2 solve.
+``FEM_EM_ANS4_STEP2_DEGREE2=0`` suppresses the degree-2 solve, which the rung
+list alone does not: step 2a runs the four degree-1 rungs in two ordinary
+windows with it off, step 2b runs the degree-2 solve in the XL slot.
 """
 
 from __future__ import annotations
@@ -91,6 +94,13 @@ DEGREE_2_FACTOR = 1.0
 
 RUNG_ENV = "FEM_EM_ANS4_STEP2_RUNGS"
 
+# The degree-2 solve is built **unconditionally whenever the x1 factor is in the
+# ladder**, and `FEM_EM_ANS4_STEP2_RUNGS` does not suppress it — at >= 49 GiB and
+# ~1 100-1 300 s it is step 2b (XL) work and blows an ordinary window.  This
+# second additive knob is step 2a's only edit: default on (the XL window's
+# value), set to "0" for the two ordinary degree-1 windows.
+DEGREE_2_ENV = "FEM_EM_ANS4_STEP2_DEGREE2"
+
 # Richardson: fit S(h) = S_inf + C h^p on the three finest degree-1 rungs and
 # report p with the extrapolant.  A fit outside this bracket is not an
 # asymptotic reading and is reported as such rather than as a number.
@@ -103,6 +113,14 @@ def _ladder_factors():
     if raw is None or not raw.strip():
         return LADDER_FACTORS
     return tuple(float(v) for v in raw.replace(",", " ").split())
+
+
+def _degree2_enabled():
+    """Whether to build the degree-2 solve. Default on; ``0``/``false``/``no`` off."""
+    raw = os.environ.get(DEGREE_2_ENV)
+    if raw is None or not raw.strip():
+        return True
+    return raw.strip().lower() not in ("0", "false", "no", "off")
 
 
 def _class_entries(m):
@@ -185,7 +203,14 @@ def ladder():
     # demonstrably the only knob turned between it and rung x1.
     base = next((r for r in rungs if r["factor"] == DEGREE_2_FACTOR), None)
     degree2 = None
-    if base is not None:
+    if base is not None and not _degree2_enabled():
+        if comm.rank == 0:
+            print(
+                f"[ANS-4 step2] degree-2 solve suppressed by {DEGREE_2_ENV} — "
+                "this is a step-2a degree-1 window; the degree-2 control is 2b",
+                flush=True,
+            )
+    elif base is not None:
         degree2 = _four_port_rung(
             "ANS-4 step2 x1 degree 2",
             zeros,
