@@ -203,6 +203,7 @@ def _four_port_rung(
     reuse=None,
     conductor_resolution=None,
     degree=1,
+    resolution=None,
 ):
     """Build one rung, narrow its four sheets in their own frames, drive all four.
 
@@ -251,7 +252,9 @@ def _four_port_rung(
         t_mesh = 0.0
     else:
         msh, cell_tags, _facet_tags, diag, t_mesh = _build(
-            offsets, conductor_resolution=conductor_resolution
+            offsets,
+            conductor_resolution=conductor_resolution,
+            resolution=resolution,
         )
         tdim = msh.topology.dim
         ncells = int(msh.topology.index_map(tdim).size_global)
@@ -440,6 +443,7 @@ def _four_port_rung(
         "conductor_resolution": (
             None if conductor_resolution is None else float(conductor_resolution)
         ),
+        "resolution": (None if resolution is None else float(resolution)),
         "column_power": column_power,
         "pooled": pooled,
         "result": result,

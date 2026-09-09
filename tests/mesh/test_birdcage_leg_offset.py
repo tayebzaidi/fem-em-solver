@@ -104,8 +104,17 @@ IDENTITY_BAND = 1.0e-12
 SHEET_AREA_BAND = 1.0e-9
 
 
-def _build(offsets, conductor_resolution=None):
+def _build(offsets, conductor_resolution=None, resolution=None):
     """One graded, gapped, sheeted birdcage rung at the given leg offsets.
+
+    ``resolution`` is `ANS-4` step 2c's additive keyword — the **global** cell
+    size, the one knob this fixture has never been refined in (`GEO-29`
+    measured its cost ladder: 116 085 / 149 049 / 197 393 / 281 728 cells at
+    0.015 / 0.012 / 0.0095 / 0.0075, no solve). ``None`` forwards this
+    module's ``RESOLUTION`` unchanged, so every gate's mesh is bit-identical.
+    It is a *different* knob from ``conductor_resolution`` below, and that
+    distinction is the point of 2c: refining the conductor broke the
+    fixture's C4 symmetry (step 2a), and the global size may not.
 
     ``conductor_resolution`` is `ANS-4` step 2's additive keyword, on the
     precedent this repo has used four times over (``frequency_hz`` / ``reuse``
@@ -132,7 +141,7 @@ def _build(offsets, conductor_resolution=None):
         leg_azimuth_offsets_rad=offsets,
         emit_port_sheets=True,
         air_padding=AIR_PADDING,
-        resolution=RESOLUTION,
+        resolution=(RESOLUTION if resolution is None else float(resolution)),
         conductor_resolution=(
             CONDUCTOR_RESOLUTION
             if conductor_resolution is None

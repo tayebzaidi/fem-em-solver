@@ -65,7 +65,7 @@ import pytest
 from mpi4py import MPI
 
 from tests.complex_mode import complex_only
-from tests.mesh.test_birdcage_leg_offset import CONDUCTOR_RESOLUTION
+from tests.mesh.test_birdcage_leg_offset import CONDUCTOR_RESOLUTION, RESOLUTION
 from tests.mesh.test_birdcage_port_tags import LEG_COUNT
 from tests.validation.test_lossy_sphere_fullwave import FREQUENCY_128_HZ
 from tests.validation.test_port_birdcage_four_port import (
@@ -94,6 +94,27 @@ DEGREE_2_FACTOR = 1.0
 
 RUNG_ENV = "FEM_EM_ANS4_STEP2_RUNGS"
 
+# `ANS-4` step 2c: the **global** resolution ladder, the knob step 2a did not
+# turn. 2a refined `conductor_resolution` and broke the fixture's C4 symmetry
+# (class spreads 0.1012/0.0916/0.0654% -> 0.5390/0.4591/1.6886% at x0.75,
+# against an imported 0.5% band that is not to be widened), so that ladder does
+# not exist. The global cell size is a different knob: `GEO-28` measured this
+# fixture's quadrant census as symmetric to <= 0.1% in mass, and `GEO-29`
+# priced the global ladder's mesh side on this very fixture — 116 085 / 149 049
+# / 197 393 / 281 728 cells at 0.015 / 0.012 / 0.0095 / 0.0075, no solve. Set
+# this to a space- or comma-separated list of absolute cell sizes in metres and
+# the ladder is built over `resolution` instead of `conductor_resolution`.
+# Whether it *also* breaks C4 is exactly what the run measures: a break is a
+# negative result under the same imported band, never a reason to widen it.
+RESOLUTION_ENV = "FEM_EM_ANS4_STEP2_RESOLUTION"
+
+# Stop rules for the 2c cost probe, checked after each rung is built so the
+# ladder abandons the next one rather than discovering the wall inside it.
+# Both are deliberately generous: the point is to stop before a 7200 s kill
+# throws away the rungs already measured, not to second-guess the physics.
+STOP_AFTER_S = 5400.0
+STOP_ABOVE_CELLS = 2_200_000
+
 # The degree-2 solve is built **unconditionally whenever the x1 factor is in the
 # ladder**, and `FEM_EM_ANS4_STEP2_RUNGS` does not suppress it — at >= 49 GiB and
 # ~1 100-1 300 s it is step 2b (XL) work and blows an ordinary window.  This
@@ -115,12 +136,37 @@ def _ladder_factors():
     return tuple(float(v) for v in raw.replace(",", " ").split())
 
 
+def _ladder_resolutions():
+    """Step 2c's global cell sizes in metres, or ``()`` when 2c is not selected."""
+    raw = os.environ.get(RESOLUTION_ENV)
+    if raw is None or not raw.strip():
+        return ()
+    return tuple(float(v) for v in raw.replace(",", " ").split())
+
+
 def _degree2_enabled():
     """Whether to build the degree-2 solve. Default on; ``0``/``false``/``no`` off."""
     raw = os.environ.get(DEGREE_2_ENV)
     if raw is None or not raw.strip():
         return True
     return raw.strip().lower() not in ("0", "false", "no", "off")
+
+
+
+def _control_rung(rungs):
+    """The rung that must reproduce the 116 085-cell record, either ladder.
+
+    2a's control is ``conductor_resolution`` ×1; 2c's is the fixture's own
+    global ``RESOLUTION``. Both are "the fixture as every gate builds it", and
+    both must land on the record — that is what makes the finer rungs of
+    either ladder comparable with the AED column.
+    """
+    for r in rungs:
+        if r.get("knob") == "resolution" and r["factor"] == float(RESOLUTION):
+            return r
+        if r.get("knob") != "resolution" and r["factor"] == 1.0:
+            return r
+    return None
 
 
 def _class_entries(m):
@@ -177,9 +223,42 @@ def ladder():
     """Every rung of the pre-registered ladder, built once for the window."""
     comm = MPI.COMM_WORLD
     zeros = np.zeros(LEG_COUNT)
-    factors = _ladder_factors()
+    resolutions = _ladder_resolutions()
+    factors = () if resolutions else _ladder_factors()
     rungs = []
     started = time.perf_counter()
+
+    # --- step 2c: the global-resolution ladder, coarse to fine, with a stop
+    # rule after each rung so a wall costs the next rung and not the ones
+    # already measured.
+    for res in resolutions:
+        rung = _four_port_rung(
+            f"ANS-4 step2c h={res:g} degree 1",
+            zeros,
+            FREQUENCY_128_HZ,
+            resolution=res,
+        )
+        rung["factor"] = float(res)
+        rung["knob"] = "resolution"
+        rungs.append(rung)
+        elapsed = time.perf_counter() - started
+        if comm.rank == 0:
+            print(
+                f"[ANS-4 step2c] rung h={res:g}: {rung['cells']} cells, mesh "
+                f"{rung['mesh_time']:.1f} s, four drives {rung['sweep_time']:.1f} s "
+                f"at -n {comm.size}; ladder elapsed {elapsed:.0f} s",
+                flush=True,
+            )
+        if rung["cells"] > STOP_ABOVE_CELLS or elapsed > STOP_AFTER_S:
+            if comm.rank == 0:
+                print(
+                    f"[ANS-4 step2c] STOP RULE fired after h={res:g}: "
+                    f"{rung['cells']} cells (ceiling {STOP_ABOVE_CELLS}), ladder "
+                    f"elapsed {elapsed:.0f} s (ceiling {STOP_AFTER_S:.0f} s). "
+                    "Remaining rungs not built; the rungs above stand.",
+                    flush=True,
+                )
+            break
 
     for factor in factors:
         h_c = float(factor) * CONDUCTOR_RESOLUTION
@@ -190,6 +269,7 @@ def ladder():
             conductor_resolution=h_c,
         )
         rung["factor"] = float(factor)
+        rung["knob"] = "conductor_resolution"
         rungs.append(rung)
         if comm.rank == 0:
             print(
@@ -245,9 +325,9 @@ def test_the_record_rung_reproduces_the_fixture(ladder):
     the mesh the gate builds with the keyword absent.
     """
     comm = MPI.COMM_WORLD
-    base = next((r for r in ladder["rungs"] if r["factor"] == 1.0), None)
+    base = _control_rung(ladder["rungs"])
     if base is None:
-        pytest.skip("the x1 rung is not in this ladder")
+        pytest.skip("the control rung is not in this ladder")
     ratio = base["cells"] / STEP2_CELL_COUNT
     if comm.rank == 0:
         print(
@@ -344,7 +424,7 @@ def test_the_ladder_readout_is_printed(ladder):
     """
     comm = MPI.COMM_WORLD
     rungs = sorted(ladder["rungs"], key=lambda r: -r["factor"])
-    base = next((r for r in rungs if r["factor"] == 1.0), None)
+    base = _control_rung(rungs)
     if comm.rank != 0:
         return
     names = ("self", "adjacent", "opposite")
@@ -370,7 +450,7 @@ def test_the_ladder_readout_is_printed(ladder):
                 ref = complex(base_entries[n])
                 if abs(ref) > 0.0:
                     move = abs(value - ref) / abs(ref)
-                    line += f"   move from x1 = {move * 100:9.4f}%"
+                    line += f"   move from control = {move * 100:9.4f}%"
             line += f"   S-class spread {s_spreads[n] * 100:.4f}%"
             print(line, flush=True)
 
@@ -411,5 +491,5 @@ def test_the_ladder_readout_is_printed(ladder):
         if base_entries is not None:
             ref = complex(base_entries[n])
             if abs(ref) > 0.0:
-                line += f"   move from x1 = {abs(s_inf - ref) / abs(ref) * 100:9.4f}%"
+                line += f"   move from control = {abs(s_inf - ref) / abs(ref) * 100:9.4f}%"
         print(line, flush=True)
