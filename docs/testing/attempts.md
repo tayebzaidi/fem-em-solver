@@ -15272,3 +15272,88 @@ the generator's documented contract and the latter bakes the asymmetry in, so I
 would expect the review to pick the union. Unrelated and still owed: §9 item 1
 needs the review's ruling on the non-C4-covariant conductor refinement before
 the Larmor front can move at all.
+
+## 2026-09-09T12:50Z (2026-09-09 07:30 CDT slot) — `WF-6` step 4f — **incomplete (executed in full; three asserted anchors RED, code parked on `attempt/WF-6-step4f-20260909T124552Z`)**
+
+**Queue position.** §9 item 1 is 🚫 BLOCKED (`ANS-4` step 2a, 04:30 slot) and
+item 2 is 🧪 DONE (`TH-15` step 2h, 06:00 slot), so item 3 — `WF-6` step 4f —
+was the first open item. Preflight clean, both containers Up. Executor:
+`implementer`, spawned **foreground**, no window in flight on return.
+
+**What ran.** One window, `-n 4`, complex build, `timeout -k 30 560`, `-s`,
+preceded by a `--collect-only` smoke. Harness elapsed **453 s** (pytest
+451.24 s), `Status: 1`, **4 failed / 32 passed / 4 skipped** —
+`20260909T123716Z_WF-6.log` (header `Commit: 8e92482` = the closer's parent,
+footer `:6198–6199`); smoke `20260909T123702Z_WF-6.log`, 40 items, 4 s,
+`Status: 0`. Heavy by ceiling, honest at 453 s inside its 560 s container
+timeout and the 660 000 ms host window. Three rungs of `GEO-29`'s
+global-`resolution` ladder (0.015 / 0.012 / 0.0095 m), four single drives plus
+the ccw and cw quadrature superpositions per rung, unloaded coil, 10 MHz, CG1
+`|B₁⁺|`. The full ×0.0095 rung fitted — no two-rung fallback needed.
+
+**The measurement the item asked for (printed and predicted, never asserted,
+rule (e)).** Worst-radius (0.5R) C4 four-copy spread **5.2506% → 2.0719% →
+1.9514%**, ratios to ×1 **1.0000 / 0.3946 / 0.3717** (`:2085–2086`,
+`:3906–3907`, `:5773–5774`); the *gated* C4 covariance falls with it,
+3.6159 / 1.6815 / 1.5029% against the imported, unmoved 5% band; eleven-point
+drift between successive rungs med 0.36 / max 2.46% then med 0.91 / max 1.84%.
+All three cell counts reproduced `GEO-29` to ratio **1.000000** (116 085 /
+149 049 / 197 393; `:2078`, `:3899`, `:5766`). **The answer is a partial yes:**
+refinement owns ~60% of the effect and then stalls — the ×0.012 → ×0.0095 step
+buys 0.12 pp on a 2 pp spread, an order above `GEO-28`'s ≈ 0.1% mass floor. The
+residual ~2% is the degree-1 N1curl solve's or the CG1 `curl E` estimator's,
+which is exactly the discrimination the 09-13 weekly's dated Phase-5 exit
+clause needs, and it is *not* the "spread falls to the mesh floor" outcome that
+would have licensed a gate.
+
+**The three reds, none absorbed, no band moved and none re-introduced.**
+(1) **Anchor (i)'s second half** — ×1 four-copy spread 5.2506% against the
+pre-registered 3.310633e-02, 58.60% relative, outside the 10% reproduction
+control (`:5821`). The reproduction itself is *exact*: the ×1 rung reproduces
+step 4b's eleven-point table character-for-character (9.805561792e-08 /
+1.013569652e-07 T at 0.5R, `:2085`), and the `−x̂` copy 1.024222080e-07 T is a
+maximum no prior run measured — the anchor equated a **four**-copy spread with
+a **two**-copy record. Mis-specified anchor, not a fixture drift; not re-tuned
+in-slot, per rule (e). (2) **The cw negative control at ×1** — 50.0268% is
+**9.53×** the ccw, just under the 10× bar, which was sized off the same
+mis-specified 3.4% (`:5826`); it passes at 19.52× / 58.38× on the finer rungs.
+(3) **New and undiagnosed: power accounting *degrades* under refinement** —
+residual 9.796e-03 (×1) / 8.114e-03 (×0.012) / **1.853642e-02 and 1.419812e-02
+(×0.0095, P1 / P2)** against the imported, unmoved 1e-02 `POWER_BALANCE_BAND`
+(`:5777–5778`, `:5831`); on that rung the sweep's own `Z` class spreads print
+1.3475 / 0.4544 / 0.9165% against `PORT-9`'s 0.5%. This is the *global*-
+resolution twin of `ANS-4` step 2a's `conductor_resolution` C4 finding from the
+04:30 slot — two independent refinement axes on the same fixture now break an
+identity that holds at ×1.
+
+**Executor's report checked against the log** before this entry was written:
+every digit above is re-read from `20260909T123716Z_WF-6.log` at the cited
+lines, and the commit's scope re-checked with `git show --stat` (no `src/`, no
+`tests/` on `main`).
+
+**Disposition.** Code parked on **`attempt/WF-6-step4f-20260909T124552Z`**
+(`ab2a2cf`) — the ladder module with its additive `resolution` /
+`phantom_material` keywords, `analytical.py` and its unit identities, and 4e's
+own red wall-identity test, deliberately not on `main`. `main` commit
+**`3f2406b`** carries only the two logs, the test-results rows, the §7 `WF-6`
+step-4f annotation, the known-issues row on the existing step-4 entry, and the
+§9 item-3 🚫 marking with its unblock condition (rule (d)). `main` is clean and
+carries no code from this slot; the closed-form comparand path is deleted per
+ruling (1) on the branch only, so §2's B₁⁺ clause and the 5% `CLOSED_FORM_BAND`
+are untouched. `WF-6` stays 🟡, nothing closed, no audit owed.
+
+**Denials / anomalies:** none — no docker-socket denial, no allowlist denial,
+no compute-safety event, no container wedge, nothing backgrounded.
+
+**Hypothesis for the next attempt.** The residual ~2% is not `h`, so the
+discriminator is order, not resolution: re-run the ×1 and ×0.012 rungs at
+**degree 2** with the CG1 estimator unchanged — a spread that collapses puts
+the miss on the degree-1 formulation, one that does not puts it on the
+`curl E` → CG1 projection, which then needs a `project_to_cg1_restricted`-style
+B estimator rather than a finer mesh. **But red (3) is the prerequisite**: the
+×0.0095 rung's power residual makes that rung untrustworthy for `WF-6` *and*
+for `ANS-4`, and with 2a's conductor-axis finding it is now plausible that a
+single mechanism — the refined mesh's port-sheet or gap-tag representation —
+breaks both. A review that scopes them together will get more than two slots
+spent separately. Reds (1) and (2) are pure re-registration on statistics that
+already exist in this log and need no compute.
