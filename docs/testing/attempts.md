@@ -15561,3 +15561,132 @@ is a review's, written from the footer once it exists, and §9 item 7 says
 branch (a) only makes §2.1's Larmor caveat *revisitable*, it does not move it.
 The next slot should take **§9 item 1 (`GEO-30`)**, which is independent of all
 of this.
+
+---
+
+## 2026-09-09T17:00Z — `GEO-30` — **complete** (12:00 implementer slot)
+
+**Preflight — dirty tree, landed rather than stopped, and here is why the
+exception held.** `git status` at slot start: `M
+docs/testing/logs/20260909T153910Z_TH-11-step5d.log`, `M
+docs/testing/test-results.md` (one appended row), `M docs/testing/xl-ledger.md`
+(one column filled on an existing row). This is **not** a human's half-edit: it
+is `run_and_log.sh`'s **own** output from the `TH-11` step 5d XL attempt 2 that
+the 10:30 review's `2026-09-09T15:30Z` anomaly entry journaled in advance
+("Attempt 2 is running: launched 10:39:11, log
+`20260909T153910Z_TH-11-step5d.log` … latest possible finish 12:39 CDT"). It
+**returned at 11:59:48 CDT**, ~1 minute before this slot started, and the
+harness wrote its three artifacts as it always does. Conditions checked one by
+one per implementer-run.md step 1: **documentation only** (no `src/`, `tests/`,
+`scripts/`; no §7 status or done-when change) ✅; **internally consistent and
+complete** ✅ — the log carries a footer (`## Exit`, Status 0, Elapsed 4838 s),
+so unlike attempt 1 this window survived its own wrapper and the `OPS-43(a)`
+redirect fix did what it was landed for; **journaled by a prior entry** ✅,
+though *not byte-identical* to it, since the prior entry necessarily described
+the pre-completion state of a run it watched start. That one literal
+condition is the only one that did not hold, and it could not have: the entry
+predicted these exact three files by name. Committed **by itself** at
+`5fe8971`. **No result was read from it here** — the ruling on step 5d and the
+ledger's remaining columns are a review's, and in the event an interactive
+operator session landed that ruling at `f5071f6` while this slot was running.
+
+**Chunk.** §9 item 1, `GEO-30` — the first On-deck item not done or blocked,
+taken as written. Executor **`mesh-probe`**, spawned **foreground** with the
+no-background rule stated verbatim in the spawn prompt, one executor, never
+concurrent. The probe asserts three *geometric* identities, which is the §9
+item's own explicit and plan-authorised exception to `mesh-probe`'s blanket
+never-assert rule; nothing physical is asserted and the report was checked
+against the log, not taken on trust.
+
+**Executed** `scripts/probes/geo30_birdcage_c4_refinement_census.py`, `-n 2`,
+real build, **no solve**, one window, `timeout -k 30 500`. Landed `fad927f`
+(probe + three logs + three `test-results.md` rows + §7 row), `main` clean.
+
+- `20260909T170649Z_GEO-30-preflight.log` — 2 s, cache sweep + import check.
+- `20260909T170657Z_GEO-30.log` — 196 s, **Status 1**. Same sweep, identical
+  data, failed on **its own negative control**: the mis-pairing was first
+  built as a half-quadrant (45°) sector rotation and read 3.962819e-03 =
+  **4.13×**, under the item's 10× bar. The construction is mass-preserving *by
+  construction* — a 45°-offset sector still spans 0…90°, losing leg *n* and
+  gaining leg *n+1*, and the ring is axisymmetric. **No band was moved to
+  accommodate this.** The control was replaced with the item's own
+  construction (rotate the C4 *pairing* by one quadrant: leg *n*'s cylinder
+  read against quadrant *n+1*), and the 4.13× reading is printed in the final
+  log and asserted nowhere, with its reason.
+- `20260909T171106Z_GEO-30.log` — 133 s, **Status 0**, the deliverable; table
+  at `:7002–7076`, anchors at `:7078–7085`.
+
+**Anchors, all green, every band imported and unmoved** (`…171106Z:7079–7082`):
+(i) ×1 `size_global` **116 085** vs record 116 085, ratio **1.000000**, 1%
+`CELL_COUNT_BAND`; ×1 quadrant **coil-mass** spread **9.594261e-04** against
+`GEO-28`'s 9.5943e-04 — seven figures. (ii) ×1 gap-sheet area spread
+**6.050235e-16** against 1e-3. (iii) mis-paired control **1.000815 = 1043×**
+the ×1 spread, bar 10×.
+
+**The table** (spread = (max−min)/mean over the four C4 images; rungs ×1/h=0.015
+116 085 cells 23.5 s / `conductor_resolution` ×0.75 161 695 31.4 s /
+`resolution` 0.012 149 049 28.3 s / `resolution` 0.0095 197 393 34.4 s):
+coil volume 9.59e-4 / 1.35e-3 / 1.01e-3 / **1.73e-3**; leg volume 2.99e-3 /
+3.28e-3 / 1.57e-3 / 1.06e-3; quadrant volume 7.07e-3 / 7.57e-3 / 4.22e-3 /
+3.15e-3; air volume 6.80e-3 / 7.13e-3 / 2.78e-3 / 2.96e-3; phantom volume
+5.35e-2 / 3.92e-2 / 7.95e-2 / 2.69e-2 (on 121–390 owned cells — small-N,
+present at ×1 too); gap-sheet area 6.05e-16 / 3.63e-16 / 8.47e-16 / 6.05e-16.
+**Repeat: bit-identical** across the two windows in every count, volume, area
+and spread; only mesh wall times differ (23.15 vs 23.48 s at ×1).
+
+**Answer to the item's question: no — the mesh is not the mechanism.** The
+conductor masses stay C4-symmetric to ≤ 0.33% (coil ≤ 0.173%) at every rung:
+the coil spread grows 0.096% → 0.135% (×0.75) → 0.173% (0.0095), a factor
+1.4–1.8, still an order of magnitude under the 0.5% `ADJACENT_SPREAD_BAND` and
+**two orders** under the 1.6886% `Z` spread `ANS-4` step 2a measured on the
+*very same* ×0.75 mesh. This is the item's own pre-registered negative result,
+and per its instruction no mechanism was guessed in-slot: both symptoms move
+onto the degree-1 N1curl solve or the port/sheet reconstruction.
+
+**One correction I made to the executor's own summary, recorded because the
+review reads the §7 row.** The row as first written said "no **mass quantity**
+leaves 0.35% at any rung". The table does not support that: quadrant totals run
+0.315–0.757% and the phantom 2.7–8.0%. Narrowed to "no *conductor* mass
+quantity", with the reason inline — the quadrant total is dominated by the air
+and phantom inside it, the phantom sits on 121–390 cells at every rung
+including ×1, and the anchor `GEO-28` set and this probe reproduced to seven
+figures is the **coil-mass** spread, not the quadrant total. The finding is
+unchanged; the sentence now matches the log. **Logs win over an executor's
+report** — that rule is why this was caught.
+
+**The lead handed to the next review, ungated and deliberately uninterpreted.**
+The gap-sheet **areas** are identical to 1e-15 at every rung, but the gap-sheet
+**facet counts** are C4-equal on the two rungs that behaved (×1 58/58/58/58,
+`resolution` 0.012 62/62/62/62, spread exactly 0) and go **C2, not C4**, on
+**exactly the two rungs that broke** (×0.75 **80/74/80/74**, spread 7.79e-2;
+0.0095 **70/76/70/76**, spread 8.22e-2) — opposite ports equal, adjacent ports
+differing. That is the same adjacent-vs-opposite class split `WF-6` step 4f's
+residual showed between P1 and P2 and `ANS-4` step 2a's `Z` classes showed.
+Four sheets of identical area with different triangulations is a port/sheet
+*reconstruction* question, not a mass question, and it is the one place this
+census found the symmetry actually broken.
+
+**Scope honoured.** Nothing closed, nothing unblocked. No `src/` change, no
+existing test edited, no band widened or re-registered
+(`ADJACENT_SPREAD_BAND` 0.5%, `POWER_BALANCE_BAND` 1e-2, `CELL_COUNT_BAND` 1%
+all untouched). `ANS-4` keeps its ✅ for the runnable half and its INCONCLUSIVE
+Larmor verdict; `WF-6` stays 🟡. §7 `GEO-30` 🔵 → 🧪 (measurement-only, 🧪 by
+the §3 rule, owes no audit); §9 item 1 marked done in the same commit as this
+entry.
+
+**Denials / anomalies:** none beyond the preflight above — no allowlist
+denial, no container wedge, no orphaned ranks, nothing backgrounded, no
+executor left in flight, and `find /root/.cache/fenics -name '*.c' -size 0`
+found no stubs to sweep. Compute: three windows totalling 331 s at `-n 2`,
+comfortably inside the standard tier and the slot.
+
+**Hypothesis for the next attempt.** The facet-count C2 split is the sharpest
+thing on the table and it is cheap to chase: **does the port-sheet
+triangulation itself lose C4 under refinement, and does the lumped-sheet
+port reconstruction depend on facet count at fixed area?** A no-solve probe
+of the four sheets' facet *geometry* (per-facet areas, vertex positions,
+orientation) at the two broken rungs would settle whether the sheets are
+C4-congruent-but-differently-cut or genuinely different surfaces — the first
+is a reconstruction question, the second a geometry bug. That is a review's
+chunk to open, not a slot's to invent; it needs a comparand and a band, and
+neither exists yet.
