@@ -1,0 +1,34 @@
+# Test Run
+- Chunk: TH-11-step5d
+- Commit: 5a0623f345c0490186d616d7af5f2a9af9026462
+- Time (UTC): 2026-09-09 15:39:10
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.13.12
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose --profile xl exec -T fem-em-solver-xl bash -lc 'cd /workspace && source /usr/local/bin/dolfinx-complex-mode && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 TH11_STEP5_RUNG=third TH11_STEP5_MODE=full timeout -k 60 7200 mpiexec -n 8 python3 -m pytest tests/environment tests/validation/test_coil_loading_larmor_third_rung.py -v -s --tb=short > /workspace/logs/th11-step5d-raw.log 2>&1; rc=$?; cat /workspace/logs/th11-step5d-raw.log; echo "[XL] memory.peak bytes:"; cat /sys/fs/cgroup/memory.peak; echo "[XL] rc=$rc"; exit $rc'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Sep  4 23:31 .
+drwxr-xr-x 16 taz5297 taz5297 4096 Sep  9 10:37 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  721 Sep  3 13:49 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 2801 Sep  4 23:31 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
+[harness] XL slot consumed: row appended to xl-ledger.md
++ bash -lc 'docker compose --profile xl exec -T fem-em-solver-xl bash -lc '\''cd /workspace && source /usr/local/bin/dolfinx-complex-mode && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 TH11_STEP5_RUNG=third TH11_STEP5_MODE=full timeout -k 60 7200 mpiexec -n 8 python3 -m pytest tests/environment tests/validation/test_coil_loading_larmor_third_rung.py -v -s --tb=short > /workspace/logs/th11-step5d-raw.log 2>&1; rc=$?; cat /workspace/logs/th11-step5d-raw.log; echo "[XL] memory.peak bytes:"; cat /sys/fs/cgroup/memory.peak; echo "[XL] rc=$rc"; exit $rc'\'''

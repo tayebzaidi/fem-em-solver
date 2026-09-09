@@ -72,6 +72,12 @@ that solves in the frequency domain needs the complex DolfinX build
 - `mpiexec -n 12` is the hard ceiling (16 only inside the XL slot above); use the smallest rank count that fits the
   tier, and keep `-n 2` for anything a rank-local bug could hide in (that is the
   only width where a missing reduction is visible in CI).
+- **A window over ~10 minutes must survive its own wrapper** (§5.1, measured
+  2026-09-09): redirect container-side output to a file under the gitignored
+  `/logs/` first and echo it back, never a bare pipe or `tee`. If a window is
+  killed, **check for orphaned ranks before anything else** — the wrapper
+  dying does not stop the compute, and eight ranks once kept running on
+  260 GiB with nothing consuming their output.
 - A chunk is ✅ only per §4: verification executed by the agent itself, at
   least one quantitative assertion (closed form, convergence rate, or a
   conservation/reciprocity identity), elapsed time recorded. Finiteness-only
