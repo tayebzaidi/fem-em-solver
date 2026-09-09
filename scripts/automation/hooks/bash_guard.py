@@ -19,6 +19,7 @@ Fail-open on malformed input: a broken guard must not brick every Bash call.
 """
 import datetime as dt
 import json
+import os
 import re
 import sys
 from pathlib import Path
@@ -30,6 +31,14 @@ XL_TIMEOUT_CEILING_S = 7200
 XL_INTERVAL_DAYS = 7
 XL_LEDGER = Path(__file__).resolve().parents[3] / "docs" / "testing" / "xl-ledger.md"
 XL_OVERRIDE = Path(__file__).resolve().parents[1] / "xl-override.env"
+
+# Shared-box courtesy for the XL tier (operator directive 2026-09-09). An XL
+# window holds up to 16 of this 36-core box's cores for up to two hours, so
+# starting one onto a box somebody else is already using is the single rudest
+# thing this project can do. Refuse when the cores are not there and say when
+# to come back; the run is postponed, never silently degraded.
+XL_LOAD_HEADROOM_CORES = 4.0
+XL_LOAD_OVERRIDE_ENV = "FEM_EM_XL_IGNORE_LOAD"
 
 
 def deny(reason: str) -> None:
@@ -88,6 +97,50 @@ def xl_interval_override() -> "str | None":
     return f"{reason} (operator override, expires {expiry.isoformat()})"
 
 
+def xl_load_check(cmd: str) -> "str | None":
+    """Reason to postpone an XL window on box load, or None to allow.
+
+    Uses the 1-minute load average against the core count, reserving the ranks
+    this command asks for plus a headroom margin. Fails **open** on anything
+    unreadable — a guard that cannot measure the box must not become the reason
+    no work can run.
+
+    Honest limitation, worth knowing before trusting a refusal: load average is
+    a decaying mean and does not distinguish our own load from anyone else's,
+    so for a minute or two after one of our own runs ends it will read high and
+    postpone the next one. That is the safe direction, and
+    ``FEM_EM_XL_IGNORE_LOAD=1`` is the operator's escape hatch when the load is
+    known to be our own and decaying.
+    """
+    raw = os.environ.get(XL_LOAD_OVERRIDE_ENV, "").strip().lower()
+    if raw and raw not in ("0", "false", "no", "off"):
+        return None
+    try:
+        with open("/proc/loadavg", encoding="utf-8") as fh:
+            load1 = float(fh.read().split()[0])
+        ncpu = float(os.cpu_count() or 0)
+        if ncpu <= 0:
+            return None
+    except Exception:
+        return None
+    m = re.search(r"mpi(?:exec|run)\s+(?:-n|-np)\s+(\d+)", cmd)
+    ranks = float(m.group(1)) if m else float(XL_RANK_CEILING)
+    free = ncpu - load1
+    needed = ranks + XL_LOAD_HEADROOM_CORES
+    if free < needed:
+        return (
+            f"the box is busy: 1-min load {load1:.1f} of {ncpu:.0f} cores leaves "
+            f"{free:.1f} free, and this window wants {ranks:.0f} ranks plus "
+            f"{XL_LOAD_HEADROOM_CORES:.0f} cores of headroom ({needed:.0f}). An XL "
+            "window holds its cores for up to two hours on a shared machine, so it "
+            "waits rather than oversubscribing. Re-check `cat /proc/loadavg` and "
+            f"start when the load is under {ncpu - needed:.1f}. If the load is our "
+            f"own and still decaying, {XL_LOAD_OVERRIDE_ENV}=1 overrides — operator "
+            "judgement only, and never to push past somebody else's work."
+        )
+    return None
+
+
 def check_xl(cmd: str) -> None:
     """The four XL-tier conditions; deny on the first that fails."""
     if "run_and_log.sh" not in cmd:
@@ -99,6 +152,10 @@ def check_xl(cmd: str) -> None:
              f"{XL_TIMEOUT_CEILING_S} (XL tier ceiling 2 h).")
     if max(timeouts) > XL_TIMEOUT_CEILING_S:
         deny(f"timeout {max(timeouts)} s exceeds the XL tier ceiling of {XL_TIMEOUT_CEILING_S} s.")
+    busy = xl_load_check(cmd)
+    if busy is not None:
+        deny(f"XL window postponed — {busy}")
+
     last = last_xl_run()
     if last is not None:
         age = (dt.date.today() - last).days
