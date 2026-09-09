@@ -108,6 +108,25 @@ RUNG_ENV = "FEM_EM_ANS4_STEP2_RUNGS"
 # negative result under the same imported band, never a reason to widen it.
 RESOLUTION_ENV = "FEM_EM_ANS4_STEP2_RESOLUTION"
 
+# `ANS-4` step 2d: the **matched-Ansys** ladder — explicit ``h:degree`` rungs,
+# because matching AED's setup means moving both knobs together and they do not
+# move the same way. By the `ANS-5` correspondence our degree 2 **is** HFSS
+# First Order (20 unknowns/tet), and AED's First Order run is its *converged*
+# one: it needed only 0.49-0.60 M tets (3.1-3.8 M unknowns) where its Zero
+# Order run took 1.28-1.53 M tets, because order buys accuracy per tet. So the
+# rung that approximates the AED design is degree 2 at ~0.5 M cells
+# (~3.0 M unknowns), **not** degree 2 on the Zero Order mesh — that would be
+# ~9.8 M unknowns and ~1.1 TB, past the 512 GiB tier and past anything Ansys
+# ran. Format: space- or comma-separated ``<cell size>:<degree>``, coarse to
+# fine, e.g. "0.015:1 0.015:2 0.0075:2 0.005:2".
+RUNGSPEC_ENV = "FEM_EM_ANS4_STEP2_RUNGSPEC"
+
+# Stop rule for the degree-2 ladder, in **unknowns** rather than cells: cells
+# mean different things at different orders, and memory tracks unknowns. ~4.5 M
+# is ~400 GiB by the `TH-11` step 5d measurement, which leaves headroom inside
+# 512 GiB for the factorisation to overshoot the extrapolation.
+STOP_ABOVE_DOFS = 4_500_000
+
 # Stop rules for the 2c cost probe, checked after each rung is built so the
 # ladder abandons the next one rather than discovering the wall inside it.
 # Both are deliberately generous: the point is to stop before a 7200 s kill
@@ -134,6 +153,29 @@ def _ladder_factors():
     if raw is None or not raw.strip():
         return LADDER_FACTORS
     return tuple(float(v) for v in raw.replace(",", " ").split())
+
+
+def _ladder_rungspec():
+    """Step 2d's explicit ``(cell size, degree)`` rungs, or ``()`` if unselected."""
+    raw = os.environ.get(RUNGSPEC_ENV)
+    if raw is None or not raw.strip():
+        return ()
+    out = []
+    for token in raw.replace(",", " ").split():
+        h, _, deg = token.partition(":")
+        out.append((float(h), int(deg) if deg else 1))
+    return tuple(out)
+
+
+def _estimated_dofs(cells, degree):
+    """N1curl unknowns for a tet mesh: ~1.2 N edges, ~2 N faces.
+
+    degree 1 -> 1 per edge = 1.2 N; degree 2 -> 2 per edge + 2 per face = 6.4 N.
+    The 6.4 is the same ratio AED's own matrix sizes confirmed (`ANS-4` notes,
+    measured 6.34), so this is a cross-checked estimate, not a guess. Printed
+    for the stop rule and the record; nothing is gated on it.
+    """
+    return (1.2 if degree == 1 else 6.4) * float(cells)
 
 
 def _ladder_resolutions():
@@ -223,10 +265,44 @@ def ladder():
     """Every rung of the pre-registered ladder, built once for the window."""
     comm = MPI.COMM_WORLD
     zeros = np.zeros(LEG_COUNT)
-    resolutions = _ladder_resolutions()
-    factors = () if resolutions else _ladder_factors()
+    rungspec = _ladder_rungspec()
+    resolutions = () if rungspec else _ladder_resolutions()
+    factors = () if (rungspec or resolutions) else _ladder_factors()
     rungs = []
     started = time.perf_counter()
+
+    # --- step 2d: the matched-Ansys ladder, explicit (h, degree) per rung.
+    for res, deg in rungspec:
+        rung = _four_port_rung(
+            f"ANS-4 step2d h={res:g} degree {deg}",
+            zeros,
+            FREQUENCY_128_HZ,
+            resolution=res,
+            degree=deg,
+        )
+        rung["factor"] = float(res)
+        rung["knob"] = "resolution"
+        rungs.append(rung)
+        dofs = _estimated_dofs(rung["cells"], deg)
+        elapsed = time.perf_counter() - started
+        if comm.rank == 0:
+            print(
+                f"[ANS-4 step2d] rung h={res:g} degree {deg}: {rung['cells']} cells, "
+                f"~{dofs:,.0f} unknowns, mesh {rung['mesh_time']:.1f} s, four drives "
+                f"{rung['sweep_time']:.1f} s at -n {comm.size}; ladder elapsed "
+                f"{elapsed:.0f} s",
+                flush=True,
+            )
+        if dofs > STOP_ABOVE_DOFS or elapsed > STOP_AFTER_S:
+            if comm.rank == 0:
+                print(
+                    f"[ANS-4 step2d] STOP RULE fired after h={res:g} degree {deg}: "
+                    f"~{dofs:,.0f} unknowns (ceiling {STOP_ABOVE_DOFS:,}), elapsed "
+                    f"{elapsed:.0f} s (ceiling {STOP_AFTER_S:.0f} s). Remaining rungs "
+                    "not built; the rungs above stand.",
+                    flush=True,
+                )
+            break
 
     # --- step 2c: the global-resolution ladder, coarse to fine, with a stop
     # rule after each rung so a wall costs the next rung and not the ones
