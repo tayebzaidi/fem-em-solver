@@ -15898,3 +15898,85 @@ triangulation's C4 class directly** — facet counts, per-facet area
 distributions and the sheet's own quadrature under the C4 rotation map — rather
 than refine the volume mesh again. That is a probe (`mesh-probe`), not a solve,
 and it would serve `ANS-4` and `WF-6` jointly exactly as `GEO-30` did.
+
+## 2026-09-09T21:40Z (2026-09-09 16:30 CDT slot) — `OPS-42` — **complete (green, landed on `main` at `8841177`)**
+
+**Queue position.** §9 items 1 (`GEO-30`) ✅, 2 (`TH-15` step 3) 🚫, 3 (`WF-6`
+step 4g) ✅ and 4 (`ANS-2` step 1) ✅, so item **5 — `OPS-42`** was the first
+item not marked done or blocked and was taken unchanged. (Items 6 and 7 are the
+operator's XL work, 7 explicitly not takeable in a headless slot; item 8 sits
+below them.) Preflight **clean**, both containers Up (`fem-em-solver` 6 days,
+`fem-em-solver-xl` 7 h). Executor: `implementer`, spawned **foreground** with
+the no-background rule stated verbatim; no window in flight on return.
+Committed at minute 19.
+
+**What ran.** Two harness windows, both footered, ≈ 14 s of compute total,
+smoke tier, `-n 1`, `timeout -k 30 120`, `-v -s --tb=short`.
+`20260909T213349Z_OPS-42.log` — full module, **Status 1**, 7 s, 1 failed / 16
+passed; the one red is unrelated (below). `20260909T213444Z_OPS-42.log` —
+closing window, **Status 0** (`:193`), **Elapsed (s): 7** (`:194`), **16 passed
+/ 1 deselected in 5.75 s** (`:190`).
+
+**The change is the item's, unwidened.**
+`scripts/testing/check_example_doc_references.py`'s artifact-age default moves
+172 800 → **1 209 600 s (14 days)**, with the docstring paragraph and the
+`--help` string both carrying the new value and the cadence reason. `OPS-19`'s
+exit-code contract is untouched, `--stale-severity` still defaults to `report`,
+and the `OPS-19` / `EX-29` tests pass unchanged. One disclosed executor
+judgement under standing rule (c): the argparse literal became a named module
+constant `DEFAULT_MAX_AGE_S = 1209600.0` so the anchor test imports the window
+instead of restating the digit (`ANS-1`), and the two former `47 h / 49 h`
+boundary pairs are re-registered as `DEFAULT_MAX_AGE_S ∓ 1 h` and now follow it.
+No assertion was loosened; no artifact was refreshed by hand.
+
+**Measured before/after** (`:170`): at 172 800 s, **88 stale artifacts cited by
+56 of 63 guides across 9 output dirs**; at 1 209 600 s, **0 stale, 0 guides**,
+of **89** artifacts age-checked. **Anchor green** (`:171–186`): the checker's
+reported `stale=` equals the set recomputed in the test from each artifact's own
+`st_mtime` — 0 = 0 at the new window and **88 = 88 at the old one** — with
+`dead=0 guide=0` unchanged against the pre-change census `dead=0 guide=0
+stale=87` (`20260909T141114Z_ANS-2-step1-census.log:126`), plus the monotonicity
+identity `stale(14 d) ⊆ stale(48 h)`. The recomputed and reported sets agreed at
+**both** windows, so the item's negative-result clause did not fire. **Negative
+control green** (`:187`): on a three-artifact `tmp_path` fixture — never a
+committed artifact — backdating one file to 337.0 h against the 336.0 h window
+moves `stale` **0 → 1, a rise of exactly 1**, and the exit code `EXIT_OK →
+EXIT_STALE_ONLY`. A threshold change that quietly disabled the age rule passes
+the anchor and fails this; it did not.
+
+**One unrelated red on `main`, journalled not fixed.**
+`tests/unit/test_doc_reference_exit_codes.py::test_the_in_tree_exemption_cannot_silently_widen`
+fails because its pinned `COMMITTED_EXAMPLE_ARTIFACTS` has three members while
+the tracked set now has five — the two `ans:` `metrics.json` committed since,
+one of them in today's 09:00 slot. Verified independent of this chunk: the
+landing diff touches neither that test nor the pinned set, and the assertion
+compares `git ls-files` output to a hard-coded set and reads no mtime, so no
+window change can reach it. New known-issues row (`known-issues.md:31–40`); it
+was **deselected** for the closing window rather than edited, because this chunk
+does not own that record. That is the fifth `main` red at `-n 2`, not a
+regression from this commit.
+
+**Disposition.** Complete per §4: verification executed through the harness by
+the executor I own, quantitative assertions (an exact set-equality identity at
+two windows, a monotonicity identity, and an exactly-+1 negative control), tier
+and elapsed time recorded. `8841177` on `main` carries the checker, its test
+module, both logs, the test-results rows, the known-issues row, the §7 `OPS-42`
+✅ flip and the §9 item-5 done marker **together**. Tree clean at slot end;
+nothing parked. **Scope held:** no example chunk closed, no artifact refreshed,
+`run_examples.sh` untouched, §2 unmoved.
+
+**Denials / anomalies:** none — no docker-socket denial, no allowlist denial, no
+container wedge, no compute-safety event, nothing backgrounded, no orphaned
+ranks. Two windows rather than the item's one, and the second existed only to
+exclude the unrelated red.
+
+**Hypothesis for the next attempt / for the 18:00 review.** The post-change
+signal reads **0**, not a smaller fraction — the whole corpus has run inside 14
+days (oldest ≈ 178 h ≈ 7.4 d). The item anticipated this reading and called a
+still-large `stale` a finding about cadence; the mirror case is now live: at a
+weekly cadence a 14-day window only ever trips on a **fully missed** cycle, so
+it is a missed-cycle detector rather than a staleness meter. That is arguably
+the right instrument and is exactly what `OPS-42` was asked to produce — but the
+review should say so deliberately rather than inherit it. The cheap follow-on,
+if it wants a graded signal back, is a second severity band (`report` at 14 d,
+plus an informational count at 7 d) rather than another threshold move.
