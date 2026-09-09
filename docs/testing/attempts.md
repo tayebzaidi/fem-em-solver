@@ -18019,3 +18019,77 @@ so the open cost question is the **solve** at `-n 4`/`-n 8`, not the mesh.
 Scope step 4f from this table under the (α) repeat discipline, and note that
 `ANS-4`'s degree-1 rungs may be cheaper on the ordinary service than the
 09-06 weekly assumed when it commissioned them for XL.
+
+## 2026-09-09T02:05Z (2026-09-08 21:00 CDT slot) — none — **anomaly (queue drained)**
+
+**Outcome: no chunk work. The §9 "On deck" queue is drained and the drain
+instruction applies — stop and journal.** This is exactly the state the
+19:30 slot predicted at the end of its entry above.
+
+**Preflight (step 1): clean.** `git status --porcelain` empty on `main` at
+`c52d11c`; both services Up (`fem-em-solver` Up 5 days, `fem-em-solver-xl`
+Up 25 h — the operator's 09-07 bring-up, still unused by any slot). No
+dirty-tree exception invoked, no `recovered/*` created.
+
+**Step 2 — the queue read item by item** (§9, "Last reviewed **2026-09-08,
+10:30 review**" — unchanged, see automation health below):
+
+| # | item | state | takeable? |
+|---|------|-------|-----------|
+| 1 | `WF-6` step 4e | 🚫 ATTEMPTED 12:00 slot, "Not re-runnable as written"; unblock = a review scopes a non-free-order summation or drops the closed-form comparand | no |
+| 2 | `GEO-28` | ✅ DONE 13:30 slot | no |
+| 3 | `MAT-4` step 5b | ✅ DONE 15:00 slot | no |
+| 4 | `TH-15` step 2g | 🚫 EXECUTED 16:30 slot, negative-result clause fired on reading C, "Not re-runnable as written"; unblock = a review specifies the `src/` `_path_voltage` replacement from reading B after settling the half-domain question | no |
+| 5 | `GEO-29` | ✅ DONE 19:30 slot | no |
+| 6 | `ANS-4` step 2, `xl` | **HELD** by the 03:00 review — "do not take in a headless slot, **skip it unmarked**" | no, and deliberately left unmarked |
+
+Every item is done, blocked or held, so step 2's fallback clause is reached.
+§9's drain paragraph is explicit that there is **no fallback chunk**: "If the
+queue drains: **stop and journal.** … `PORT-9` step 3's legs are serial by
+design — (d) is not queued until (d0) has a margin — and a review scopes each
+leg from the previous one's number, not an implementer in-slot. `EX-36`, the
+former pre-authorised exception, closed 2026-09-01 (`ae67b4c`) and **nothing
+replaces it as a fallback**." So no chunk was started, no compute was issued,
+no executor was spawned, and no §7 status moved. Item 6 was **not** marked —
+the 03:00 review's hold says to skip it unmarked, and rule (d) does not apply
+because this slot did not attempt it.
+
+**No compute this slot.** Zero harness windows, zero core-seconds against the
+12-core budget; no XL window (item 6 untouched, service left as found —
+stopping it is the operator's/weekly's call, not a skipped item's).
+
+**Denials / anomalies:** none — no docker-socket denial, no allowlist denial,
+no compute-safety event, no container wedge, nothing backgrounded.
+
+**⚠️ Automation health — the 18:00 daily review is still the open fault.**
+`logs/automation/20260908T230001Z_daily-review.log` is **146 bytes** with the
+"out of usage credits" tell (recorded by the 19:30 slot). Confirmed unchanged
+this slot; §9 still reads "Last reviewed 2026-09-08, 10:30 review". The 19:30
+slot's launcher log (`20260909T003001Z_implementer.log`, 2 693 B) and this
+slot's (`20260909T020001Z_implementer.log`) both fired on schedule, so the
+credit outage was transient and confined to the review — but its cost is a
+**queue that no one re-topped**, which is now spending slots. Two of the day's
+twelve slots (this one and, on the same reading, 22:30) are lost to it.
+
+**Hypothesis for the next attempt.** **The 22:30 slot will find the identical
+state and should stop and journal too** — nothing between now and then edits
+§9 (the 02:15 weekly explicitly never edits §9; the 00:00 slot is the next
+implementer run and it, too, will drain). The first session that can restore
+throughput is the **03:00 daily review**, and the highest-value thing it can
+do is re-top §9 with items whose scoping the lost 18:00 review already owed:
+(1) `WF-6` **step 4f** — the `h`-ladder, now priced by `GEO-29`'s table
+(2.43× cells for a nominal 8× refinement ⇒ mesh-affordable to 0.0075; the
+open question is the **solve** cost at `-n 4`/`-n 8`, and the (α) repeat
+discipline applies to the three unrepeated rungs); (2) `TH-15` — settle
+whether the gap tag is a **half-domain** (`V_C`/CAD = 0.5069, `A_gap` exactly
+half the box cross-section, 16:30 slot), because that factor 2 sits in every
+`V̄` normalisation on the fixture, then specify the `src/` `_path_voltage`
+replacement from **reading B** (mutual −3.67% / +0.80%, inside the unmoved
+10%); (3) `ANS-4` — whether the degree-1 rungs can move off XL onto ordinary
+heavy-tier windows, which `GEO-29`'s mesh costs now make arguable; (4) whether
+`mri:3` should print the 1 g gate `MAT-4` step 5b landed. Also outstanding for
+whichever review reads this: `attempts.md` is **18 021 lines** against the
+6 000 budget (`OPS-36`), the example census still reads `stale=81` at
+`f700f5e`, and six `attempt/*` branches are live with three of them
+(`…WF-6-step4…`, `…step4b…`, `…step4d…`) tied to a step-4e landing that did
+not happen — their disposition needs a ruling now that item 1 is 🚫.
