@@ -18093,3 +18093,72 @@ whichever review reads this: `attempts.md` is **18 021 lines** against the
 `f700f5e`, and six `attempt/*` branches are live with three of them
 (`…WF-6-step4…`, `…step4b…`, `…step4d…`) tied to a step-4e landing that did
 not happen — their disposition needs a ruling now that item 1 is 🚫.
+
+## 2026-09-09T03:35Z (2026-09-08 22:30 CDT slot) — none — **anomaly (queue drained, second consecutive)**
+
+**Outcome: no chunk work.** The §9 "On deck" queue is drained and the drain
+instruction applies — stop and journal. This is the state the 21:00 slot
+predicted verbatim ("The 22:30 slot will find the identical state and should
+stop and journal too"); nothing between the two slots edited §9.
+
+**Preflight (step 1): clean.** `git status --porcelain` empty on `main` at
+`cbf77ea` (the 21:00 slot's own journal commit). Both services Up
+(`fem-em-solver` Up 5 days, `fem-em-solver-xl` Up 26 h — the operator's 09-07
+bring-up, still unused by any slot; left as found). No dirty-tree exception
+invoked, no `recovered/*` created.
+
+**Step 2 — the queue, re-read item by item** (§9 still reads "Last reviewed
+**2026-09-08, 10:30 review**"; unchanged since the 21:00 slot's table, which
+this entry confirms rather than restates):
+
+| # | item | state | takeable? |
+|---|------|-------|-----------|
+| 1 | `WF-6` step 4e | 🚫 ATTEMPTED 12:00, "Not re-runnable as written" | no |
+| 2 | `GEO-28` | ✅ DONE 13:30 | no |
+| 3 | `MAT-4` step 5b | ✅ DONE 15:00 | no |
+| 4 | `TH-15` step 2g | 🚫 EXECUTED 16:30, negative-result clause fired, "Not re-runnable as written" | no |
+| 5 | `GEO-29` | ✅ DONE 19:30 | no |
+| 6 | `ANS-4` step 2, `xl` | **HELD** by the 03:00 review — "skip it unmarked" | no, left unmarked |
+
+Every item is done, blocked or held, so step 2's fallback clause is reached and
+§9's drain paragraph is explicit that there is **no fallback chunk** ("`EX-36`
+… closed 2026-09-01 and **nothing replaces it as a fallback**"). No chunk
+started, no compute issued, no executor spawned, no §7 status moved. Item 6
+**not** marked (the hold says skip unmarked; rule (d) does not apply — this
+slot did not attempt it).
+
+**No compute this slot.** Zero harness windows, zero core-seconds against the
+12-core budget; no XL window.
+
+**Denials / anomalies:** none — no docker-socket denial, no allowlist denial,
+no compute-safety event, no container wedge, nothing backgrounded.
+
+**⚠️ Automation health — the 18:00 daily review remains the open fault, and
+its cost is now two slots.** `logs/automation/20260908T230001Z_daily-review.log`
+is still **146 bytes** (the "out of usage credits" tell, first recorded by the
+19:30 slot). Every implementer launcher since has fired normally
+(`20260909T003001Z` 2 693 B, `20260909T020001Z` 2 017 B, this slot
+`20260909T033002Z`), so the outage was transient and confined to the review —
+but no session since 10:30 has been able to re-top §9, and the **21:00 and
+22:30 slots are both lost to it**. The 00:00 slot will be the third unless a
+review runs first.
+
+**Hypothesis for the next attempt.** **The 00:00 slot will find the identical
+state and should stop and journal as well** — the 02:15 Wednesday weekly
+review never edits §9 by protocol, so the first session that can restore
+throughput is the **03:00 daily review**. The re-topping shortlist the 21:00
+slot assembled stands unchanged and is repeated here so the review needs only
+this entry: (1) `WF-6` **step 4f** — the `h`-ladder, mesh-priced by `GEO-29`
+(2.43× cells for a nominal 8× refinement; the open question is the **solve**
+cost at `-n 4`/`-n 8`, and the repeat discipline applies to the three
+unrepeated rungs); (2) `TH-15` — settle whether the gap tag is a
+**half-domain** (`V_C`/CAD = 0.5069, `A_gap` exactly half the box
+cross-section, 16:30 slot) before specifying the `src/` `_path_voltage`
+replacement from **reading B** (mutual −3.67% / +0.80%, inside the unmoved
+10%); (3) `ANS-4` — whether the degree-1 rungs can move off XL onto ordinary
+heavy-tier windows, which `GEO-29`'s mesh costs make arguable; (4) whether
+`mri:3` should print the 1 g gate `MAT-4` step 5b landed. Also outstanding:
+`attempts.md` is **18 096 lines** against the 6 000 budget (`OPS-36`), the
+example census still reads `stale=81` at `f700f5e`, and six `attempt/*`
+branches are live with three (`…WF-6-step4…`, `…step4b…`, `…step4d…`) tied to
+a step-4e landing that did not happen.
