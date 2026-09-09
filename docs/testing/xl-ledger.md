@@ -21,5 +21,12 @@ measured peak** — the true peak is at or above it and was not instrumented. An
 future XL commissioning that leans on this figure should print `ru_maxrss`
 instead. It is nonetheless a decade under the ordinary service's own 128 G
 limit, which is the load-bearing part: this run did not need the tier.
-| 2026-09-09 | TH-11-step5d | `20260909T145530Z_TH-11-step5d.log` | | | | | |
-| 2026-09-09 | TH-11-step5d | `20260909T153910Z_TH-11-step5d.log` | | | | 4838 | |
+| 2026-09-09 | TH-11-step5d | `20260909T145530Z_TH-11-step5d.log` | 8 | 2 808 204 | 260.9 (spot) | — | **KILLED, no footer — uncountable.** Wrapper killed at ~40 min; the container-side `timeout`/`mpiexec`/8 ranks survived it with nothing consuming their output, so the run could produce no evidence and was stopped. Only durable reading: 260.9 GiB from the cgroup. Cause and the three fixes: `OPS-43`. |
+| 2026-09-09 | TH-11-step5d | `20260909T153910Z_TH-11-step5d.log` | 8 | 2 808 204 | 263.4 (container lifetime — spans the killed attempt, see note) | 4838 | **17 passed / 1 skipped, Status 0 — the rung solved for the first time.** Loaded 2331.7 s + free 2257.6 s. 64 MHz ladder h 0.005 → 0.0025 → 0.00125: **+10.2698 % → +2.8063 % → +0.3824 %**; three-rung fit **p = 1.623, d₀ = −0.7834 %**; two-rung bracket **[−2.0415 %, −0.4256 %]**, overlapping step 4's 10 MHz [−2.1492, −0.9050] and 30 MHz [−3.3675, −0.3812]. |
+
+**Note on the 2026-09-09 peaks.** Both rows share one container lifetime
+(started 14:55:23Z, before the first attempt), and `memory.peak` cannot be reset
+on this kernel, so **263.4 GiB is the maximum over both runs**, not this run's
+own peak. Same workload at the same rank count, so the figure is representative
+— but it is not attributable, and §5.1 now requires restarting the service
+before an `xl` window so the next one is.
