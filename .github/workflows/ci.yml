@@ -7,6 +7,25 @@ on:
     branches: [ main ]
 
 jobs:
+  private-leak:
+    # Ansys licence terms restrict disclosure of benchmark results, so no
+    # AED-derived figure may reach a tracked file. The local pre-commit hook
+    # (scripts/testing/install_git_hooks.sh) is the first net, but .git/hooks
+    # is not tracked and cannot be installed by an agent, so this is the net
+    # that always exists. It is a no-op on a runner, where the gitignored raw
+    # exports are absent and there is nothing to compare against — its value
+    # is on a clone that has them.
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    - name: No Ansys figure in a tracked file
+      run: python3 scripts/testing/check_private_leak.py --audit
+
   lint:
     runs-on: ubuntu-latest
     steps:
