@@ -540,8 +540,22 @@ cores.** Every verification command declares a tier and must not exceed it:
   reopened: re-pricing one is a **review** decision, and any revival needs its
   finest rung priced first (the epitaph's own lesson). Do not cite "does not
   fit the box" from a pre-2026-08-24 measurement without re-measuring.
-- **This box cannot be measured from inside the sandbox, and the guard says so
-  rather than pretending (measured 2026-09-09).** This is WSL2: `/proc/loadavg`,
+- **XL windows run at 02:00 from cron, not from a session (operator directive
+  2026-09-09) — and that is the whole answer to box contention.** The box is
+  shared with work this sandbox cannot see, so scheduling a quiet hour beats
+  detection that cannot work. `scripts/automation/xl-run.sh` at 02:00 daily
+  runs whatever single window is queued in `scripts/automation/xl-queue.env`
+  and clears the queue afterwards; empty is the normal state and the entry then
+  costs a second. **No Claude session is involved**, which is also what makes
+  it possible: a foreground harness call is capped at 660 s and an implementer
+  slot is killed at 65 min, so no scheduled *session* can hold a 2 h window,
+  while a cron script has neither limit. It takes its own lock rather than the
+  automation flock, so a long window cannot starve the 02:15 weekly or the
+  03:00 review, and it restarts the service first so `memory.peak` belongs to
+  the run. A failed window still consumes its queue entry, for the same reason
+  a started run has spent the week: re-queue deliberately or not at all.
+- **This box cannot be measured from inside the sandbox (measured 2026-09-09) —
+  which is *why* the schedule above exists rather than a detector.** This is WSL2: `/proc/loadavg`,
   `nproc` and `free` describe **this Linux VM only**. Work on the Windows host,
   in another WSL distro, or in another VM is invisible, and it cannot be probed
   — there is no `powershell.exe` on PATH and `/mnt` is unreadable. The
@@ -551,10 +565,12 @@ cores.** Every verification command declares a tier and must not exceed it:
   free and started a 16-rank, 2-hour window straight into it. Consequences:
   (a) `scripts/testing/box_check.sh` reports containers, VM load and VM memory
   and prints its own blind spot, and its green verdict means only "nothing *I*
-  can see is using the box"; (b) an `xl` command now requires
-  `FEM_EM_XL_BOX_OK=1`, a **per-run** operator acknowledgement that the whole
-  machine was looked at — deliberately not a stored setting, because the
-  question is "is the box free *now*" and a file cannot answer it; (c) the
+  can see is using the box"; (b) a mandatory per-run confirmation token was
+  tried and **removed the same day** — it blocked ordinary work, since any file
+  or command merely *containing* the XL command matches the guard's trip-wire,
+  so it prevented editing the guard and even writing the queue file; the 02:00
+  schedule replaces it and `FEM_EM_XL_BOX_OK` survives only as something the
+  launcher sets; (c) the
   docker socket is reachable from a direct agent command but **not from inside
   a script** here, so `box_check.sh`'s container section goes blank exactly when
   run the convenient way and says "unavailable" rather than reporting zero.

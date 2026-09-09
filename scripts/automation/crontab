@@ -20,6 +20,19 @@
 # in the buffer after the 00:00 implementer slot's 01:05 hard kill and before
 # the 02:15 weekly review. See docs/testing/retention-policy.md §4.
 45 1 * * 0 /home/taz5297/Development/fem-em-solver/scripts/automation/housekeeping.sh
+# 02:00 daily: the XL window, if one is queued in scripts/automation/xl-queue.env
+# (operator directive 2026-09-09). No Claude session — an XL window is one
+# deterministic command, and running it from an agent is what made it hard: a
+# foreground harness call is capped at 660 s and an implementer slot is killed
+# at 65 min, so no scheduled *session* can hold a 2 h window; a cron script has
+# neither limit. 02:00 is chosen because the box is shared with work this
+# sandbox cannot see (the Windows host is unreachable from it), and a quiet
+# hour is a better answer than detection that cannot work. It takes its own
+# lock, not the automation flock, so a 2 h window cannot starve the 02:15
+# weekly or the 03:00 review — both documentation-only. Worst case it ends at
+# 04:00, before the 04:30 implementer slot. Exits in a second when nothing is
+# queued, which is the normal state.
+0 2 * * * /home/taz5297/Development/fem-em-solver/scripts/automation/xl-run.sh
 #
 # CANONICAL COPY. The live schedule lives in the user crontab spool; this file
 # is the version-controlled source of truth for it. Install with:
