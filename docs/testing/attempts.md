@@ -15702,3 +15702,102 @@ them. Nothing is lost or duplicated: `git grep` confirms both edits present
 exactly once, and the tree is clean. Recorded only because a review diffing
 `95d1f53` for the §7/§9 changes would not find them there. **No action
 needed.**
+
+## 2026-09-09T19:05Z (2026-09-09 13:30 CDT slot) — `TH-15` step 3 — **incomplete (the measurement is green; the mandatory rule-(c) re-run is structurally unrunnable in a slot; code parked on `attempt/TH-15-step3-20260909T185900Z`)**
+
+**Queue position.** §9 item 1 (`GEO-30`) is ✅ DONE (12:00 slot), so item 2 —
+`TH-15` step 3 — was the first open item. Preflight **clean**, both containers
+Up (`fem-em-solver` 5 days, `fem-em-solver-xl` 4 h). Executor: `implementer`,
+spawned **foreground** with the no-background rule stated verbatim; no window
+in flight on return. Three harness logs, three footers, nothing backgrounded.
+
+**What ran, and it did what the item asked.** Main window
+`20260909T183507Z_TH-15.log` — **Status 0, elapsed 222 s**, 13 passed in
+219.84 s (`:1156`), `-n 4`, complex build, `timeout -k 30 500`, `-s`; gapped
+solid mesh 184 176 cells, 33.86 s build (`:1032`), the same `_build` fixture
+step 2h measured. **Anchor (asserted) green** (`:1033–1041`): CAD gap box
+**1509.378273 mm³**, identical to the item's comparand; P1 tag 101 alone
+754.689136 mm³ (`V`/box **0.500000**), tags `(101, 111)` summed 1509.378273 mm³
+(`V`/box **1.000000**); P2 identical on `(102, 112)`. **Negative control
+(asserted) green:** summed/single = **2.000000000** on both ports inside the
+1e-6 band — the single-tag path is untouched — and the C2 port controls read
+4.770030e-15 (single) / 6.734160e-15 (summed) against 1e-3. So `111`/`112`
+**are** the other halves; step 2h's mechanism is confirmed and the item's
+"if the sum does not reach the box" branch did not fire.
+
+**The six numbers, printed and asserted nowhere** (`:1087–1091`, detail
+`:1062–1065`, `:1082–1085`), single-half | both-halves: mean `|V|`
+**7.925019902e+00 | 3.962509951e+00** V (ratio **0.500000**); corrected `M`
+**0.929199 | 0.929199** (−7.08% both, ratio **1.000000**); `‖S−Sᵀ‖/‖S‖`
+**1.276737e-03 | 1.276737e-03**. Raw mutual −11.58% both ways;
+`Im Z12 = +1.097977541e+00 Ω`, `ωM12 = 1.241755 Ω`, bit-identical. Drive area
+5.408000e-05 → 1.081600e-04 m², `J` 1.849112e+04 → 9.245562e+03 A/m²
+(`:1046, :1066`).
+
+**Finding (1), for the review that flips the default: the factor 2 cancels.**
+It lands entirely on absolute `V` **and** `I` — both halve exactly, because
+only the drive cross-section takes the summed volume while the source support
+stays on `gap_cell_tag`, exactly as the item specifies — so every `Z`, `S`,
+mutual and reciprocity quantity on this route is **bit-identical** between the
+two rungs. The in-band caveat is printed at `:1091`. The single-half rung's
+`M` 0.929199 / reciprocity 1.276737e-03 differ from the gated 0.939822 /
+4.76e-05 records because this is a **different mesh** (sheet fragment), not a
+moved record: nothing gated ran in this window.
+
+**Finding (2), which the item did not anticipate and which bears directly on
+the flip: on the gated fixture there is no half to take.** With
+`emit_port_sheet=False` the gap cell tag is **already the full box** —
+`gap_1 = gap_2 = 1.509378e-06 m³ = gap_box_analytic`
+(`20260909T183906Z_TH-15.log:86`). The half-domain exists only on
+sheet-emitting meshes, so flipping the default would be a **no-op on the gated
+path** and would move digits only on sheet-emitting fixtures.
+
+**Why this is incomplete, and it is a structural finding rather than an
+overrun.** The item's rule-(c) re-run is mandatory *in this slot* and it did
+not run. Both importing gate modules are **heavy-tier at `-n 2`**, not the
+500 s the item extrapolated from step 2d's module:
+`test_port_gap_voltage_impedance.py` — `20260909T183906Z_TH-15.log`,
+**Status 124, elapsed 501 s**, three module tests green first (`:71–73`,
+`:82–86`) and then the window ended; `test_port_gap_voltage_padding.py` —
+`20260909T184758Z_TH-15.log`, **Status 124, elapsed 501 s**,
+`test_the_enlarged_box_is_the_fixture_it_claims_to_be` PASSED (`:75`), same
+overrun. **Neither is a failure — both are undersized windows**, and per the
+hard rule neither was re-run at a longer timeout in-slot. The re-run needs
+`timeout -k 30 1200` at `-n 2`, one window each, and **a 1200 s container
+window exceeds the 660 000 ms foreground ceiling a headless slot has**, with
+backgrounding forbidden. This is ruling (6)'s XL-vs-timebox conflict appearing
+in a second, cheaper place: an item can specify evidence that no scheduled
+slot is able to produce.
+
+**Executor's report checked against the logs** before this entry was written:
+every digit above is re-read from the cited log lines, and the two `Status 124`
+footers were confirmed independently of the report.
+
+**Disposition.** Code parked on **`attempt/TH-15-step3-20260909T185900Z`** —
+the additive optional `gap_cell_tags` field on `GapVoltagePortSpec` (a
+`gap_volume_tags` property returning `(gap_cell_tag,)` when unset, tuple-capable
+`_tag_measure`/`_tag_volume`, a non-empty `validate()` check, and the one call
+site), plus `tests/validation/test_th15_gap_volume_both_halves.py`. The
+impressed-source `subdomain_ids` and `_gap_displacement_current` still use
+`gap_cell_tag` alone. **The default is unflipped and no `src/` change is on
+`main`.** The `main` commit carries only the three logs, the test-results rows,
+the §7 `TH-15` step-3 annotation and the §9 item-2 🚫 marking with its unblock
+condition (rule (d)). `TH-15` stays 🟡 on step 2's unitarity gate; no band, no
+record, no gated number moved; nothing closed and no audit is owed.
+
+**Denials / anomalies:** none — no docker-socket denial, no allowlist denial,
+no container wedge, no compute-safety event, nothing backgrounded, no orphaned
+ranks (both 124s were the container-side `timeout -k 30` firing as designed).
+
+**Hypothesis for the next attempt.** The code is done and green; what needs
+deciding is not physics. **Re-tier the rule-(c) evidence, do not re-run the
+measurement.** Three routes, cheapest first: (a) run the two modules at `-n 4`
+rather than `-n 2` and see whether either fits 590 s — the modules are
+mesh-bound, so this may simply work and costs one slot to find out; (b) split
+each module's heavy fixture into its own window so two ~500 s windows replace
+one 1200 s one; (c) hand the pair to an operator window, which has no 660 s
+ceiling. Whichever the review picks, it should also decide **whether rule (c)
+is discharged at all here**, because finding (2) says the change cannot move a
+digit on the gated path — the gated fixture has no second half to sum — which
+is a stronger additivity argument than the re-run would have been, and is
+checkable by inspection rather than by 20 minutes of compute.
