@@ -221,6 +221,8 @@ def build_four_port_sweep(
     reuse=None,
     phantom_resolution=None,
     conductor_resolution=None,
+    phantom_material=None,
+    resolution=None,
 ):
     """One mesh; four driven lumped-sheet solves at 50 Ohm; the assembled 4x4.
 
@@ -249,6 +251,21 @@ def build_four_port_sweep(
     has always used, leaving the gated mesh bit-for-bit unchanged.  It is
     ignored when ``reuse`` is given, since then no mesh is built.
 
+    ``phantom_material`` is the fifth additive parameter (`WF-6` step 4, same
+    precedent): ``None`` — every gate's value — installs the saline
+    ``HomogeneousMaterial`` this sweep has always given tag 3, leaving the
+    gated problem bit-for-bit unchanged.  `WF-6` step 4/4f passes
+    ``HomogeneousMaterial(sigma=0.0, epsilon_r=1.0, mu_r=1.0)`` to run the
+    *unloaded* coil on the identical mesh.  Nothing else in the construction
+    moves.
+
+    ``resolution`` is the sixth additive parameter (`WF-6` step 4f, same
+    precedent): ``None`` — every gate's value — passes ``None`` to `_build`,
+    which then uses the module ``RESOLUTION`` (0.015 m) this sweep has always
+    used, leaving the gated mesh bit-for-bit unchanged.  A float walks
+    `GEO-29`'s global-resolution ladder.  It is ignored when ``reuse`` is
+    given, since then no mesh is built.
+
     ``reuse`` is the second additive parameter, same precedent: hand it a dict
     this function already returned and the mesh, the narrowed sheet facet tags
     and the sheet geometry are taken from it rather than rebuilt, so a
@@ -272,6 +289,7 @@ def build_four_port_sweep(
             True,
             phantom_resolution=phantom_resolution,
             conductor_resolution=conductor_resolution,
+            resolution=resolution,
         )
         tdim = msh.topology.dim
         ncells = int(msh.topology.index_map(tdim).size_global)
@@ -345,8 +363,12 @@ def build_four_port_sweep(
             CONDUCTOR_CELL_TAG: HomogeneousMaterial(
                 sigma=SIGMA_WIRE_S_PER_M, epsilon_r=1.0, mu_r=1.0
             ),
-            PHANTOM_CELL_TAG: HomogeneousMaterial(
-                sigma=SALINE_SIGMA, epsilon_r=SALINE_EPSILON_R, mu_r=1.0
+            PHANTOM_CELL_TAG: (
+                HomogeneousMaterial(
+                    sigma=SALINE_SIGMA, epsilon_r=SALINE_EPSILON_R, mu_r=1.0
+                )
+                if phantom_material is None
+                else phantom_material
             ),
         },
         boundary_condition="pec_zero_tangential_a",

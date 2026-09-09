@@ -82,6 +82,7 @@ def _build(
     phantom_resolution=None,
     conductor_resolution=None,
     as_hole=False,
+    resolution=None,
 ):
     """One graded, gapped birdcage rung, sheeted or not, with its wall time.
 
@@ -97,6 +98,14 @@ def _build(
     ``CONDUCTOR_RESOLUTION`` exactly as this helper always has, so every
     existing rung's mesh is bit-identical.  A float replaces it, which is how
     step 1b refines the sheet without touching any gate.
+
+    ``resolution`` is `WF-6` step 4f's additive keyword, same precedent again:
+    ``None`` — every gate's value, and the only one any of them passes —
+    forwards this module's ``RESOLUTION`` (0.015 m) exactly as this helper
+    always has, so every existing rung's mesh is bit-identical and no record
+    moves.  A float replaces it, which is how step 4f's ``h``-ladder walks
+    `GEO-29`'s rungs (0.015 / 0.012 / 0.0095 m, cell counts 116 085 / 149 049 /
+    197 393, `20260909T003221Z_GEO-29.log:7038–7042`) without touching a gate.
 
     ``as_hole`` is `TH-15` step 3a's additive keyword, same precedent again:
     ``False`` — every gate's value — is the generator's own default and builds
@@ -119,7 +128,7 @@ def _build(
         leg_gap_length=LEG_GAP_LENGTH,
         emit_port_sheets=emit_port_sheets,
         air_padding=AIR_PADDING,
-        resolution=RESOLUTION,
+        resolution=(RESOLUTION if resolution is None else float(resolution)),
         conductor_resolution=(
             CONDUCTOR_RESOLUTION if conductor_resolution is None
             else float(conductor_resolution)
