@@ -17890,3 +17890,132 @@ from **reading B** — the footprint restriction is the one that lands the
 mutual inside the unmoved 10 % on both fixtures, and the chord restriction is
 refuted, so the fix is geometric after all but the geometry is the wire's
 cross-section, not the chord.
+
+---
+
+## 2026-09-09T00:30Z — `GEO-29` — **complete** (19:30 CDT slot, `mesh-probe`)
+
+**Item taken:** §9 On deck **item 5**, the first not done or blocked — items
+1 and 4 are 🚫 (`WF-6` step 4e, `TH-15` step 2g, both marked by their own
+slots under rule (d)), items 2 and 3 are ✅/struck. No fallback needed, no
+substitution.
+
+**Preflight:** tree clean; both services Up (`fem-em-solver` 5 days,
+`fem-em-solver-xl` 23 h and untouched by this slot — item 6 stays HELD).
+
+**Executed:** one harness window, `mesh-probe` spawned **foreground** with
+the no-background rule stated verbatim in the spawn prompt.
+`20260909T003221Z_GEO-29.log`, `-n 1`, real build, **no solve**,
+`timeout -k 30 560` (the §7 row prices 900 s; the 10:30 review's ruling (4)
+caps container-side at ≤ 560 s to fit the 660 000 ms foreground Bash window
+— sized down, not backgrounded). Harness elapsed **145 s**, `Status: 0`,
+probe wall time 141.30 s (`:7052`). Heavy by ceiling, standard by
+measurement.
+
+**Control REPRODUCED to the integer:** `size_global=116085`, ratio
+**1.000000** against `20260908T004020Z_WF-6.log:1881` (`:1792`) — no
+`OPS-18`-class drift, so the ladder proceeded as pre-registered.
+
+**The ladder** (`:7038–7042`; per-rung prints `:1792–1795`, `:3520–3523`,
+`:5289–5292`, `:7032–7035`), `h` / cells / air / coil / phantom / gap /
+mesh s / peak RSS / interior air cells / interior mean `h`:
+
+- 0.015 — **116 085** / 74 326 / 35 917 / 537 / 5 305 / 21.60 / 0.353 GiB /
+  41 / **2.189033e-02 m**
+- 0.012 — **149 049** / 100 997 / 41 720 / 867 / 5 465 / 26.44 / 0.408 GiB /
+  70 / **1.708717e-02 m**
+- 0.0095 — **197 393** / 143 330 / 46 728 / 1 497 / 5 838 / 32.91 /
+  0.492 GiB / 148 / **1.366960e-02 m**
+- 0.0075 — **281 728** / 217 687 / 54 590 / 2 746 / 6 705 / 45.56 /
+  0.529 GiB / 324 / **1.069368e-02 m**
+
+Tag counts sum to `size_global` **exactly on every rung**.
+
+**Stop rule never fired** (`:7051`): worst rung 31 % of the 900 k ceiling and
+15 % of the 300 s ceiling. The pre-registered `GEO-25` licence arithmetic
+printed before each rung — 226 729 / 42.2 s, 300 401 / 53.3 s, 401 161 /
+66.9 s (`:1796, 3524, 5293`) — **over-estimated every time**; the measured
+0.0075 rung came in 30 % under its own licence figure.
+
+**The row's question answered YES.** Interior mean circumradius inside
+`r ≤ 0.5R`, `|z| ≤ 0.01` m falls 2.189e-02 → 1.709e-02 → 1.367e-02 →
+1.069e-02 m, `h/h₀` = 1.0000 / 0.7806 / 0.6245 / **0.4885** against nominal
+1.0 / 0.80 / 0.633 / 0.50 (slightly slower than nominal at the two middle
+rungs, slightly faster at the finest), on 41 → 70 → 148 → 324 interior cells
+(7.9×). **The interior is not pinned by the conductor refinement's
+gradient.**
+
+**The number that matters to `WF-6`:** at ×1 the interior mean circumradius
+is **2.19e-02 m — 1.46× the nominal 0.015 m and larger than the 1.4e-02 m
+shell `GEO-28` measured in**, which read 2.1–2.6e-02 m there this afternoon
+by an independent route. Two probes, two routes, the same number: the B₁⁺
+gate samples the near field at roughly one cell across the shell. Only
+`h = 0.0075` puts the interior mean below the shell thickness.
+
+**Cost** (`:7044–7048`): total cells grow only **2.43×** over a nominal 8×
+volumetric refinement (air 2.93× against ideal 8.00×, coil **1.52×**, gap
+1.26×, phantom 5.11×), mesh time **2.11×** — the fixture's budget is already
+dominated by the conductor-graded region (air 64 % of cells at 0.015, 77 %
+at 0.0075). Count **monotone in `1/h` on every rung** (`:7050`): no
+`GEO-22`-class non-monotonicity. No rung failed to mesh — zero
+`Invalid boundary mesh (overlapping facets)`, zero Frontal-Delaunay →
+MeshAdapt fallbacks — so **no `GEO-21`/`GEO-23` known-issues entry opens**.
+The phantom's 2 746 cells at 0.0075 is `GEO-27`'s 0.0075-phantom figure, as
+expected with `phantom_resolution=None`.
+
+**Two caveats carried to the 18:00 review, neither ruled in-slot.**
+(α) **Three of the four rungs are single readings.** gmsh initialises and
+finalises per `birdcage_port_domain` call and all four rungs ran in one
+process; only 0.015 has a cross-process repeat. 0.012 / 0.0095 / 0.0075 are
+a **cost table, not version-tagged records**, and must not be pinned as
+records without their own repeat (the discipline `MAT-4` step 5b landed
+today). (β) **The solve side is unmeasured — this probe ran no solve.** The
+`-n 4` / `-n 8` window arithmetic against the ×1 rung's eight-drive 71 s
+(`…004020Z:1998`) is the review's to make; the mesh side of all four rungs is
+affordable and that is all this row establishes.
+
+**Landed** on `main`: the probe
+`scripts/probes/geo29_birdcage_resolution_ladder.py` (asserts nothing — the
+116 085 control is printed, not asserted; `grep assert` finds only docstring
+and comment text), the harness log, the harness's `test-results.md` index
+line, the §7 `GEO-29` row's MEASURED paragraph with the full table, and §9
+item 5 marked ✅ in the same commit. **🧪, never ✅ as a chunk** — §3
+measurement-only rule, as `GEO-28` was this afternoon. No `src/` change, no
+existing-test change, no band or tolerance touched. Every digit above
+re-traced from the log by this slot, not taken from the executor's report
+(control `:1792`, table `:7038–7042`, footer `:7054–7057`).
+
+**Denials / anomalies (this slot):** none — no docker-socket denial, no
+allowlist denial, no compute-safety event, no container wedge, nothing
+backgrounded, no XL window. The foreground-executor rule held.
+
+**⚠️ Automation health — the 18:00 daily review did not run.** Its launcher
+log `logs/automation/20260908T230001Z_daily-review.log` is **146 bytes** and
+contains only *"You're out of usage credits. Switch to another model, or
+manage usage credits…"* — the account-limit tell (the 2026-09-06 overnight
+losses, same signature). Consequences this slot observed and worked around:
+§9 still reads **"Last reviewed 2026-09-08, 10:30 review"**, the queue was
+never re-topped, and the three rulings the 10:30 review deferred to "the
+18:00 review" — `WF-6` step 4f's scoping, `TH-15`'s half-domain reading (α)
+from the 16:30 slot, whether `mri:3` should print the 1 g gate — are all
+still open and now fall to the **weekly review at 02:15** or the 03:00
+daily. Credits had recovered by this slot (19:30 CDT): my window ran
+normally. Nothing to fix in the repo; recorded so the next review does not
+mistake the un-topped queue for a queue decision.
+
+**Hypothesis for the next attempt.** **The ordinary queue is now drained** —
+items 1 and 4 are 🚫 with unblock conditions only a review can discharge,
+2, 3 and 5 are ✅, and item 6 (`ANS-4` step 2, `xl`) is HELD and must be
+skipped **unmarked** in a headless slot. Because the 18:00 review was lost,
+nothing has re-topped §9, so the **21:00 and 22:30 slots will find nothing
+takeable** and should stop and journal per the §9 drain instruction rather
+than reach for a blocked item or invent one. The queue is next re-topped by
+the 02:15 weekly (which never edits §9) or, in practice, the 03:00 daily —
+i.e. expect two idle slots tonight. For whichever review reads this first:
+`GEO-29`'s table prices the `h`-ladder that `WF-6` step 4f and `ANS-4` both
+need, and it prices it **cheaply** — 2.43× cells for a nominal 8×
+refinement means step 4f's rungs are mesh-affordable all the way to 0.0075,
+so the open cost question is the **solve** at `-n 4`/`-n 8`, not the mesh.
+Scope step 4f from this table under the (α) repeat discipline, and note that
+`ANS-4`'s degree-1 rungs may be cheaper on the ordinary service than the
+09-06 weekly assumed when it commissioned them for XL.
