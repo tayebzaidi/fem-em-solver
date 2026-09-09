@@ -7484,8 +7484,18 @@ Tree at review start: **dirty** (below); **eight** `attempt/*`, no
 `recovered/*`; `fem-em-solver` Up 5 days, `fem-em-solver-xl` Up 35 min
 (restarted for the 09:55 window); all four launcher logs end `exit=0`.
 
-**Dirty tree (step 2) — DELIBERATELY LEFT AS FOUND, and this is the one
-disposition step 2 permits.** The tree carries
+**Dirty tree (step 2) — left as found during the review, and disposed of by
+the operator at 10:48 while the review was still writing; the tree is CLEAN
+at commit time.** *(Corrected at 10:51. The paragraph below records the
+review's reasoning as it stood at 10:30, because the reasoning is the part
+worth keeping: the run it declined to read a result from turned out to have
+been **orphaned and killed at ≈ 40 min with eight ranks still burning
+260 GiB** — see §9 item 7 and `b3fcbf4`. Waiting was right, and a review that
+had committed the half-filled row would have recorded a result that never
+existed. The operator's `b3fcbf4` landed both ledger rows, both logs, the
+`OPS-43` policy fixes and — swept in from this review's working tree — the
+§7 `GEO-30` row, the §9 rewrite and the two known-issues ruling rows.)* The
+tree carried
 `docs/testing/xl-ledger.md` modified (a ledger row whose last four columns
 are blank) and `docs/testing/logs/20260909T145530Z_TH-11-step5d.log`
 untracked. **It is not a stalled tree: it is an in-flight run's own live
@@ -7500,17 +7510,17 @@ counts as spent the moment the row is written. Both are worse than waiting,
 and implementer-run.md step 1's own rationale — "the first encounter still
 stops, so a human editing interactively is never interrupted mid-change" —
 is exactly this case. **What this review did instead:** journaled it as an
-`anomaly` entry in `docs/testing/attempts.md` naming the two paths and the
-11:55 self-termination, marked §9 item 7 🚫 so no headless slot takes a
-7200 s window inside a 65-minute timebox, and put the ledger fill at the
-**top of the dashboard's Waiting-on-you** as an operator action. **The cost
-if it is not filled before 12:00** is stated plainly there: the 12:00 slot
-stops and journals on preflight and the 13:30 slot parks the row to
-`recovered/*`, so an unattended run costs two slots. This review did **not**
-read a result from the log and no review may: it has **no footer**, its last
-line is the mesh probe (`2 808 204 cells, mesh 173.3 s at -n 8; 5.03 cells
-per delta at 64 MHz`), and a silent MUMPS factorisation and an orphaned run
-look identical from outside. `git branch --list 'recovered/*'`: **none**, and
+`anomaly` entry in `docs/testing/attempts.md`, marked §9 item 7 🚫 so no
+headless slot takes a 7200 s window inside a 65-minute timebox, and put the
+ledger fill at the **top of the dashboard's Waiting-on-you** as an operator
+action. This review did **not** read a result from the log and no review may:
+it had **no footer**, its last line was the mesh probe (`2 808 204 cells,
+mesh 173.3 s at -n 8; 5.03 cells per delta at 64 MHz`), and a silent MUMPS
+factorisation and an orphaned run look identical from outside. **That
+caution was vindicated within twenty minutes:** `b3fcbf4` established the
+window had been killed at ≈ 40 min with eight ranks still running
+unattended, so there was never a result to read — the footer's absence *was*
+the finding. `git branch --list 'recovered/*'`: **none**, and
 none was created this interval. The **eight** `attempt/*` branches are all
 **kept**: the seven carried into this interval keep the ends the 03:00 review
 named, and the new `…WF-6-step4f-20260909T124552Z` (`ab2a2cf`) is item 3's
@@ -7620,17 +7630,27 @@ what it was built for — it is self-expiring, so no revert has to be
 remembered. **First-run streak 60 of 60** over the slots that fired since the
 09-03 18:00 review. **Foreground-executor rule: held on all four working
 slots** (25 held since the break at 54). No docker-socket denial; no
-allowlist denial; no compute-safety event; no container wedge. Tier labels
-honest on every window: 2a heavy by ceiling (205 s + 132 s at `-n 4`), 2h
+allowlist denial; no container wedge; **one compute-safety event, outside the
+slots, on the operator's XL window — see below.** Tier labels
+honest on every scheduled window: 2a heavy by ceiling (205 s + 132 s at `-n 4`), 2h
 standard (58 / 56 s at `-n 2`), 4f heavy by ceiling (453 s), `ANS-2` step 1
 heavy by ceiling (233 s) — every one inside its container timeout and the
-660 000 ms host window. **One compute-safety observation that is not a
-violation but is worth the ink:** the 09:55 XL window is the first run in
-this repo's history to be launched with no scheduled session able to witness
-its footer, because 7200 s does not fit in any slot. It is correctly
-harness-routed, correctly ledger-appended and correctly `-k 60`-guarded, and
-it will self-terminate — but "who reads the footer" is now an open question
-and is ruling (6)'s referral to the weekly. Housekeeping (`OPS-36`):
+660 000 ms host window. **One compute-safety event, and it is the interval's
+most expensive lesson — corrected at 10:51 from `b3fcbf4`:** the 09:55 XL
+window (attempt 1) was killed on the wrapper side at ≈ 40 min while the
+container-side `mpiexec` and all eight ranks **kept running at ≈ 85% CPU on
+260 GiB with nothing consuming their output**. This review saw the symptom —
+`/proc/loadavg` ≈ 6.0 sustained against a footerless, static log — and
+correctly declined to read a result from it, but could not diagnose it: a
+scheduled session cannot inspect the XL container (`docker stats` denied by
+the allowlist, `docker exec` denied by `bash_guard.py`, both correctly). The
+operator diagnosed and fixed it inside the hour (`OPS-43`): a long window must
+survive its own client, so container-side output is redirected to a file and
+echoed back rather than piped — a bare pipe or `tee` takes `SIGPIPE` when the
+client dies and takes the run with it. Two rules now in CLAUDE.md. **The
+standing gap this exposes is ruling (6)'s:** an XL window cannot be witnessed
+by any scheduled session, so "who reads the footer" has no owner, and a
+killed one spends the week's slot regardless. Housekeeping (`OPS-36`):
 `docs/testing/logs` holds 1 258 files; the census now reads **`stale=87`**
 across 47 examples (up from 81 at `f700f5e`), which is item 5's business and
 strengthens its case rather than weakening it.
@@ -8176,23 +8196,31 @@ noticed; a log without the readings is a window not spent.
    discriminator — still worth the slot, but the 2026-09-13 weekly may
    re-commission it. Never split the slot further, never carry it over.*
 
-7. 🚫 **IN FLIGHT / HELD — launched 2026-09-09 09:55 CDT by the operator's
-   interactive session and still running at the 10:30 review.
-   DO NOT TAKE THIS ITEM IN A HEADLESS SLOT; skip it and take item 1.** The
-   harness appended its ledger row at window start (`docs/testing/xl-ledger.md`,
-   log `20260909T145530Z_TH-11-step5d.log`), so the slot is spent whatever the
-   outcome. The window is `timeout -k 60 7200` from 09:55, i.e. it self-terminates
-   by **11:55 CDT** at the latest; at 10:31 the log's last line was the mesh probe
-   (`2 808 204 cells, mesh 173.3 s at -n 8; 5.03 cells per delta at 64 MHz`) and
-   the host-side driver was no longer visible, which is consistent with a silent
-   MUMPS factorisation and equally consistent with an orphaned run — **the footer
-   is the only thing that settles it, and no review may claim a result without
-   one.** Structural reason no scheduled slot may take it: an XL window is 7200 s
-   and the implementer timebox is killed at 65 minutes, so this item cannot
-   complete in a slot by construction (the same reason item 6 was held). The
-   ledger row's last four columns and the §7 `TH-11` ruling are the **operator's**
-   next action and are at the top of the dashboard's Waiting-on-you. Original item
-   text below.
+7. 🚫 **IN FLIGHT / HELD — attempt 1 was orphaned and killed; attempt 2 is
+   running. DO NOT TAKE THIS ITEM IN A HEADLESS SLOT; skip it and take
+   item 1.** Corrected at 10:51, after the operator's `b3fcbf4` landed the
+   diagnosis mid-review. **Attempt 1** (launched 09:55:30, log
+   `20260909T145530Z_TH-11-step5d.log`) was **killed on the wrapper side at
+   ≈ 40 min with no `## Exit` footer, while the container-side `mpiexec` and
+   all eight ranks kept running at ≈ 85% CPU on 260 GiB with nothing consuming
+   their output** — the review's 10:30 reading of `/proc/loadavg` at ≈ 6.0 was
+   that orphaned compute, and its refusal to read a result from a footerless
+   log was correct. **Attempt 2** (launched 10:39:11, log
+   `20260909T153910Z_TH-11-step5d.log`) uses the fix `OPS-43` landed: the
+   container-side output is redirected to a gitignored `/workspace/logs/`
+   file and echoed back, never a bare pipe or `tee` (which takes `SIGPIPE`
+   when the client dies and kills the run with it). **Consequence for
+   readers: attempt 2's harness log stays ≈ 2 KB and static until the run
+   returns** — size and mtime carry no information about liveness now, and
+   the only thing that settles it is the footer. Its `timeout -k 60 7200`
+   from 10:39 puts the latest possible finish at **12:39 CDT**. Both attempts
+   appended their own ledger row (§5.1: a killed XL run has still spent the
+   slot), and both rows plus both logs are committed at `b3fcbf4`. Structural
+   reason no scheduled slot may take this item: an XL window is 7200 s and the
+   implementer timebox is killed at 65 minutes, so it cannot complete in a slot
+   by construction (the same reason item 6 was held) — ruling (6) refers that
+   to the weekly. The ledger rows' last four columns and the §7 `TH-11` ruling
+   are the **operator's** next action. Original item text below.
 
    **`TH-11` step 5d — the 64 MHz third rung at 512 GiB, `xl`** *(commissioned
    2026-09-09 by the operator interactively, under §5.1's XL tier and the

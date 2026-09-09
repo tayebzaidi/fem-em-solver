@@ -15456,3 +15456,108 @@ ordering. Worth a review's eye independently: `|Im P|/Re P` ≈ 0.337 at 10 MHz
 is printed and ungated here, and it is the same reactive-loading quantity
 `PORT-9`'s fixture carries — if a future step wants it as an anchor it needs a
 comparand, not a threshold picked in-slot.
+
+---
+
+## 2026-09-09T15:30Z — `TH-11` step 5d — **anomaly** (10:30 daily review, not a slot)
+
+**Written by the scheduled 10:30 daily review, not by an implementer slot**, so
+that the next slot reads it before its preflight. No chunk work was done and
+nothing was executed; this session is documentation-only.
+
+**What is dirty.** `git status --porcelain` at 10:30 CDT:
+`M docs/testing/xl-ledger.md` (one appended row,
+`| 2026-09-09 | TH-11-step5d | 20260909T145530Z_TH-11-step5d.log | | | | | |`,
+last four columns blank) and untracked
+`docs/testing/logs/20260909T145530Z_TH-11-step5d.log`.
+
+*(Superseded at 10:51 — see the RESOLVED block below. The tree is **clean** at
+this entry's commit; the operator committed both ledger rows and both logs at
+`b3fcbf4`. The reasoning below is kept because it is the part worth keeping:
+it is why the review did not "clean" a tree whose run had produced nothing.)*
+
+**Why it is dirty, and why it is *not* a stalled tree.** Both are the live
+artifacts of an XL run that was **still in flight at review time**. The
+operator's interactive session commissioned `TH-11` step 5d as §9 item 7
+(`5a0623f`, 09:55:22 CDT) and launched it at **09:55:30** against
+`fem-em-solver-xl` at `-n 8` with `timeout -k 60 7200`. `run_and_log.sh`
+appends the ledger row when the window *starts* (§5.1), so the row is the
+harness's own marker, not an edit anyone forgot to finish. At review start the
+tree was **35 minutes old — younger than the 90-minute implementer cycle**
+daily-review.md step 2 uses as its outage threshold.
+
+**Disposition: left exactly as found, deliberately.** Committing would put a
+half-filled ledger row into the record as if it were a result; reverting would
+erase a slot §5.1 counts as spent the moment the row is written. Neither is
+honest while the run is live, and implementer-run.md step 1's own rationale —
+"the first encounter still stops, so a human editing interactively is never
+interrupted mid-change" — describes this case exactly.
+
+**State of the run, and what may *not* be concluded from it.** The log has
+**no footer**. Its last line at 10:31 was the mesh probe: `[TH-11 step 5 |
+PROBE | rung third (near 0.00125)] 2808204 cells, mesh 173.3 s at -n 8; 5.03
+cells per delta at 64 MHz (ceiling for the third rung: 3400000 cells)` — so
+the third rung **meshed**, which is already more than step 5 ever achieved on
+the 64 GiB service. Host `/proc/loadavg` read 5.96 / 6.16 / 6.03 at 10:30 and
+5.26 / 5.95 / 5.96 at 10:31, and the log had not grown since 09:58:56. That is
+consistent with a silent MUMPS factorisation **and equally consistent with an
+orphaned run**; the host-side driver was not visible, but this session's `ps`
+sees only its own sandbox namespace, and `docker stats` / `docker exec` against
+the XL service are both denied to a scheduled session (the guard correctly
+routes XL through the harness). **No review may read a result from this log,
+and this one did not.**
+
+---
+
+**RESOLVED AT 10:51, MID-REVIEW — it was the orphaned case, and the caution
+was right.** The operator's `b3fcbf4` (`ops(OPS-43)`, 10:48) landed the
+diagnosis while this review was still writing. **Attempt 1 was killed on the
+wrapper side at ≈ 40 min with no `## Exit` footer, while the container-side
+`timeout`, `mpiexec` and all eight ranks kept running at ≈ 85% CPU on 260 GiB
+with nobody consuming their output.** The sustained ≈ 6.0 load this entry
+recorded above was exactly that unattended compute. **There was never a result
+to read: the footer's absence was the finding, not a gap in it.** A review that
+had committed the half-filled ledger row to "clean the tree" would have put a
+run that produced nothing into the record as though it had produced something.
+
+**What the operator fixed (`OPS-43`, policy + docs only, no band / record /
+`src/` change):** (1) a window over ~10 minutes must survive its own client —
+redirect container-side output to a gitignored `/workspace/logs/` file and echo
+it back; a bare pipe or `tee` does the *opposite*, since `tee` takes `SIGPIPE`
+when the client dies and the run dies with it. (2) After any killed window,
+**check for orphaned ranks before re-running** — a dead wrapper does not stop
+the compute. (3) `memory.peak` is per *container lifetime* and read-only on
+this kernel (WSL2 6.6), so a reading taken after a second run is the maximum
+over every run since the container started; restart the service before an XL
+window or print `ru_maxrss`. Two of the three are now in CLAUDE.md.
+
+**Attempt 2 is running:** launched 10:39:11, log
+`20260909T153910Z_TH-11-step5d.log`, using the redirect fix, `timeout -k 60
+7200` ⇒ latest possible finish **12:39 CDT**. **Note for whoever reads it
+next: its harness log stays ≈ 2 KB and static until the run returns**, because
+the output is now buffered to a file inside the container — size and mtime say
+nothing about liveness, and only the footer settles it. Both attempts appended
+their own ledger row (§5.1: a killed XL run has still spent the slot); both
+rows and both logs are committed at `b3fcbf4`, and **the tree is clean as of
+this review's commit** — the 12:00 slot's preflight is not at risk. The ledger
+rows' last four columns remain the operator's to fill from the footers.
+
+**The structural finding, referred to the 2026-09-13 weekly (§9 ruling (6)).**
+An XL window is 7200 s and an implementer slot is killed at 65 minutes, so
+**no scheduled slot can run an XL item to a footer** — item 6 was held for this
+reason and item 7 is now marked 🚫 for it. XL runs are therefore launchable
+only from interactive operator sessions, and "who reads the footer" has no
+owner in any current protocol. §5.1 is the weekly's to change; this review
+named it rather than patching §9 around it.
+
+**Denials / anomalies:** `docker stats` and a direct `docker compose exec`
+against `fem-em-solver-xl` were both denied (allowlist and `bash_guard.py`
+respectively) — both correct, both recorded here only so the next reader knows
+the liveness question was asked and could not be answered from a scheduled
+session.
+
+**Hypothesis for the next attempt.** None for `TH-11` — the ruling on step 5d
+is a review's, written from the footer once it exists, and §9 item 7 says
+branch (a) only makes §2.1's Larmor caveat *revisitable*, it does not move it.
+The next slot should take **§9 item 1 (`GEO-30`)**, which is independent of all
+of this.
