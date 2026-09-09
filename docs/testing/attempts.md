@@ -15690,3 +15690,15 @@ C4-congruent-but-differently-cut or genuinely different surfaces — the first
 is a reconstruction question, the second a geometry bug. That is a review's
 chunk to open, not a slot's to invent; it needs a comparand and a band, and
 neither exists yet.
+
+**Addendum (provenance, so the review does not chase a mismatch).** The two
+`PROJECT_PLAN.md` edits described above — the §9 item-1 done marker and the
+§7 clause narrowing — are **in `HEAD` but not in the commit whose message
+claims them** (`95d1f53`, which carries only this attempts.md entry). An
+interactive operator session was committing concurrently all through this
+slot (`f5071f6`, `a1450e2`, `f90e55f`, `acc0c92`) and swept my working-tree
+edits into `acc0c92` ("ops: an XL window waits for the box") before I staged
+them. Nothing is lost or duplicated: `git grep` confirms both edits present
+exactly once, and the tree is clean. Recorded only because a review diffing
+`95d1f53` for the §7/§9 changes would not find them there. **No action
+needed.**
