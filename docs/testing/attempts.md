@@ -15171,3 +15171,104 @@ congruence in the generator or give each rung its own measured spread record
 to be widened**, it is `PORT-11`'s gate and the ×1 rung meets it at 0.1%. Until
 that is settled the `ANS-4` convergence measurement cannot be made at all, so
 this probe is the whole Larmor front's critical path.
+
+---
+
+## 2026-09-09T11:30Z (2026-09-09 06:00 CDT slot) — `TH-15` step 2h — **complete (🧪 measurement-only; the half-domain reading is CONFIRMED)**
+
+**Preflight clean.** `git status --porcelain` empty at `c212bc1`; both compose
+services Up (`fem-em-solver` 5 days, `fem-em-solver-xl` 34 h, unused).
+§9 item 1 (`ANS-4` step 2a) was already 🚫 BLOCKED by the 04:30 slot's
+executed negative result, so the first item not done or blocked is **item 2**,
+taken without substitution.
+
+**Executor `mesh-probe`, spawned foreground** with the no-background rule, the
+repo-relative-harness-path rule and the `-s` rule stated verbatim in the spawn
+prompt, per the item's own instruction. It ran no solve and wrote no `src/`,
+no test and no record.
+
+**Result: the gap cell tag is exactly half the gap box, to twelve digits, and
+by design.** Two geometry-only windows through the harness, `-n 2`,
+`timeout -k 30 300`, real build: `20260909T110257Z_TH-15-step2h.log`
+(`Status: 1`, elapsed **58 s**) and `20260909T110426Z_TH-15-step2h.log`
+(`Status: 1`, **56 s**) — a deliberate repeat, **character-identical in every
+measured digit**, only the gmsh build times differing (24.66/28.97 s vs
+24.07/29.14 s). `Status: 1` is the anchor's own negative-result exit, not a
+crash: no gmsh fallback lines, no overlapping-facet failures, the full fragment
+census printed on both fixtures, mesh cell counts 161 461 (hole) / 184 176
+(solid) matching the records. Standard by measurement, heavy by ceiling.
+
+**The three numbers the review writes the `src/` specification from** —
+identical on both fixtures (PEC hole and boxed solid) and both ports
+(`:513–519, 1438–1444`):
+
+| quantity | value |
+|---|---|
+| `V_tag` | 7.546891363338e-07 m³ = **754.689136 mm³** |
+| `V_tag`/box (CAD 1509.378273 mm³) | **0.500000** |
+| `V_tag`/(π r_w²·chord) (938.947478 mm³) | **0.803761** |
+| `A_gap = V_tag/g` | 5.408000000000e-05 m² = **54.080000 mm²** |
+| `A_gap`/box cross-section (108.160000 mm²) | **0.500000** |
+
+with `g = 2·half_y` = 1.395505060e-02 m and chord = 11.955051 mm. Extents from
+owned cell midpoints (hole P1): `x` span 1.017787e-02 and `y` span 1.388758e-02
+cover the full box (10.4 / 13.955 mm), while **`z` spans 5.067458e-03 — half of
+10.4 mm** — over `z ∈ [−2.5099e-02, −2.0032e-02]`, the half *below* the torus-1
+centre plane at `z = −0.02`. Owned cells 12 585 / 12 632 (hole), 13 661 /
+13 648 (solid, reproducing `OPS-39`'s `-n 1` census).
+
+**Negative control green.** The C2 symmetry identity
+`|V_P1 − V_P2|/|V_P1|` = **2.525310e-15** (hole) / **8.698290e-15** (solid)
+against the item's 1e-3 (`:521, 1446`), so the probe reproduces one tag from
+the other at round-off and the volume reading is the mesh's, not a probe bug.
+
+**The anchor's negative-result clause fired, and I did not guess a third
+candidate — `src/` names it.** `V_tag` matches neither of the item's two CAD
+candidates inside 5% (`:1450–1453`). But when `emit_port_sheet=True` the
+generator **splits each gap box at its mid-plane into two cell groups** —
+`101`/`111` for gap 1 (below/above) and `102`/`112` for gap 2 — and its own
+docstring already says a caller selecting the gap volume by tag "must take
+**both halves**" (`src/fem_em_solver/io/mesh.py:1176–1181, 1425–1426, 1455,
+1542, 1582–1583`). The generator's fragment census, printed above the mesh,
+reads `gap_1 = gap_2 = gap_1_upper = gap_2_upper = 7.546891e-07` against
+`gap_box_analytic = 1.509378e-06` (`:40`) — four equal halves, two per port.
+The whole gap box is `101 ∪ 111` (`102 ∪ 112`); `GAP_TAGS = (101, 102)` selects
+half. So the "miss" is not an unexplained third region, and the item's
+stop-and-record disposition is satisfied with the mechanism attached rather
+than open. **Executor's report checked against the logs** before any of this
+was written: every digit above is re-read from `20260909T110257Z`, and the
+`src/` line numbers verified by direct read, not taken from the report.
+
+**Consequence, left for the review to rule (not ruled here).**
+`_tag_volume(GAP_TAGS[k])` reads half the gap box, so **every `V̄` normalised
+by box length over `V_tag` on this fixture carries a factor 2**. 2g's reading
+(α) is therefore confirmed as a measurement rather than arithmetic on printed
+numbers: `V_C`/CAD = 0.5069 is `V_C` against the *full*-box-scale comparand,
+and against the half comparand 469.5 mm³ it is **+1.39%**, inside 2g's
+predicted 5%. The `src/` `_path_voltage` replacement should still be specified
+from **reading B**, now with the factor settled.
+
+**Scope, as the item required: closes nothing.** `TH-15` stays 🟡 on step 2's
+unitarity gate; both `attempt/TH-15-*` branches kept; no `src/` change, no test
+edited, no band moved, no record written, no XL window. 🧪 measurement-only by
+the §3 rule, so no audit is owed. Landed on `main`: the probe script
+`scripts/probes/th15_gap_tag_geometry.py` (imported by nothing), the two logs,
+the §7 `TH-15` "Step 2h" bullet, the known-issues row, this entry, and the §9
+item-2 done marking.
+
+**Denials / anomalies:** none — no docker-socket denial, no allowlist denial,
+no compute-safety event, no container wedge, nothing backgrounded. The
+foreground-executor rule held: the executor ran in the foreground and returned
+with no window in flight.
+
+**Hypothesis for the next attempt.** Nothing further is owed on this question —
+it is measured and explained. The next move on `TH-15` is the **`src/`
+`_path_voltage` chunk specified from reading B with the factor 2 applied**, and
+that specification is the 2026-09-09 18:00 or 2026-09-13 weekly review's to
+write, not an implementer's; the one open drafting choice is whether the
+replacement integrates over `101 ∪ 111` (the whole gap box, restoring the
+generator's intended union) or keeps the half-tag and divides — the former is
+the generator's documented contract and the latter bakes the asymmetry in, so I
+would expect the review to pick the union. Unrelated and still owed: §9 item 1
+needs the review's ruling on the non-C4-covariant conductor refinement before
+the Larmor front can move at all.

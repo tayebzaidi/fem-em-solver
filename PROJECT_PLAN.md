@@ -2894,6 +2894,56 @@ review confirms that reading before step 1 runs.
 >   first — if the tag is a half-domain, every `V̄` normalisation on this
 >   fixture carries a factor 2 that reading B's mutual agreement does not
 >   currently reflect.
+> * **Step 2h EXECUTED 2026-09-09 (06:00 implementer slot, `mesh-probe`,
+>   🧪 measurement-only) — reading (α) is CONFIRMED: the gap cell tag is
+>   exactly half the gap box, to twelve digits, and by design. The factor
+>   2 is settled.** `main` at `c212bc1`; nothing but this record, the
+>   known-issues row, the probe script and the §9 marking. Geometry only,
+>   **no solve**, real build. Two windows, `-n 2`, `timeout -k 30 300`,
+>   `-s`, **character-identical in every measured digit** (only gmsh build
+>   times differ): `20260909T110257Z_TH-15-step2h.log` (Status 1, elapsed
+>   **58 s**) and `20260909T110426Z_TH-15-step2h.log` (Status 1, **56 s**);
+>   standard by measurement, heavy by ceiling. `Status: 1` is the anchor's
+>   own negative-result exit, not a crash. **The three numbers the `src/`
+>   specification is written from**, identical on both fixtures (hole and
+>   boxed solid) and both ports (`:513–519, 1438–1444`): `V_tag` =
+>   7.546891363338e-07 m³ = **754.689136 mm³**; **`V_tag`/box = 0.500000**
+>   against the CAD box 1509.378273 mm³; `V_tag`/(π r_w² · chord) =
+>   **0.803761** against 938.947478 mm³; and `A_gap = V_tag/g` =
+>   5.408000000000e-05 m² = 54.080000 mm² = **0.500000** of the box
+>   cross-section 108.160000 mm² (`g = 2·half_y` = 1.395505060e-02 m,
+>   chord = 11.955051 mm). Extents from owned cell midpoints (hole, P1):
+>   `x` span 1.017787e-02 and `y` span 1.388758e-02 cover the full box
+>   (10.4 / 13.955 mm), while **`z` spans 5.067458e-03 — half of 10.4 mm**,
+>   over `z ∈ [−2.5099e-02, −2.0032e-02]`, i.e. the half *below* the
+>   torus-1 centre plane at `z = −0.02`. Owned cells: hole 12 585 / 12 632,
+>   solid 13 661 / 13 648 (the solid reproduces `OPS-39`'s `-n 1` census).
+>   **Negative control green** — the C2 identity `|V_P1 − V_P2|/|V_P1|` =
+>   **2.525310e-15** (hole) / **8.698290e-15** (solid) against 1e-3
+>   (`:521, 1446`), so the volume reading is not a probe bug.
+>   **Anchor's negative-result clause fired, and the mechanism is
+>   documented in `src/` itself.** `V_tag` matches **neither** named CAD
+>   candidate inside 5% (`:1450–1453`), which the item says to record and
+>   stop on — but the missing third candidate is not a guess: when
+>   `emit_port_sheet=True` the generator **splits each gap box at its
+>   mid-plane into two cell groups**, `101`/`111` for gap 1 (below/above)
+>   and `102`/`112` for gap 2, and its docstring already says "a caller
+>   that selects the gap volume by tag must take **both halves**"
+>   (`src/fem_em_solver/io/mesh.py:1176–1181, 1425–1426, 1455,
+>   1542, 1582–1583`). The generator's own fragment census, printed above
+>   the mesh, reads `gap_1 = gap_2 = gap_1_upper = gap_2_upper =
+>   7.546891e-07` against `gap_box_analytic = 1.509378e-06` (`:40`) —
+>   four equal halves, two per port. So the whole gap box is `101 ∪ 111`
+>   (`102 ∪ 112`), and `GAP_TAGS = (101, 102)` selects half of it.
+>   **Consequence for the `src/` specification (the next review's, not
+>   ruled here):** `_tag_volume(GAP_TAGS[k])` reads half the gap box, so
+>   every `V̄` normalised by the box length over `V_tag` on this fixture
+>   carries a factor 2; 2g's `V_C`/CAD = 0.5069 is `V_C` against the
+>   *full*-box-scale comparand, and against the half comparand 469.5 mm³
+>   it is **+1.39%**. **Scope: closes nothing** — `TH-15` stays 🟡 on step
+>   2's unitarity gate, both branches kept, no `src/` change, no test
+>   edited, no band moved, no record written. Deliverable landed:
+>   `scripts/probes/th15_gap_tag_geometry.py` (imported by nothing).
 > * **Step 3a (the birdcage hole as a `MeshGenerator` route — scoped
 >   2026-09-06 10:30 review, §9 item 4; step 2a's pattern on
 >   `birdcage_port_domain`).** One additive `as_hole=False` keyword: the
@@ -7769,7 +7819,25 @@ noticed; a log without the readings is a window not spent.
    and do not "fix" it in-slot. Never loosen an imported band to keep a
    rung.
 
-2. **`TH-15` step 2h — is the gap tag a half-domain? The factor 2 under
+2. 🧪 **DONE 2026-09-09 06:00 — measured, and the answer is YES, exactly and
+   by design.** `mesh-probe`, two character-identical geometry-only windows
+   `-n 2` (`20260909T110257Z_TH-15-step2h.log`, 58 s, and
+   `…110426Z_…`, 56 s; `Status: 1` is the anchor's own negative-result exit).
+   `V_tag` = **754.689136 mm³** = **0.500000** of the CAD box and 0.803761 of
+   the wire-footprint×chord; `A_gap = V_tag/g` = **54.080000 mm²** =
+   **0.500000** of the box cross-section; the tag's `z` extent is half the
+   box's while `x` and `y` are full. C2 control **2.53e-15 / 8.70e-15**
+   against 1e-3. Neither named CAD candidate matches inside 5%, firing the
+   item's clause — but the third candidate is not a guess: the generator
+   splits each gap box at its mid-plane into `101`/`111` and `102`/`112` and
+   says so in its own docstring (`src/fem_em_solver/io/mesh.py:1176–1181`),
+   with the fragment census printing four equal halves. Full readings in the
+   §7 `TH-15` "Step 2h" bullet and the known-issues entry of the same date.
+   Nothing closed, no `src/`, no band moved; the `src/` `_path_voltage`
+   specification is the next review's, written from these three numbers.
+   Original item text below.
+
+   **`TH-15` step 2h — is the gap tag a half-domain? The factor 2 under
    every `V̄` on this fixture, settled by geometry alone** (standard by
    expectation, heavy by ceiling, `-n 2`, real build, **no solve**; `main`;
    independent; scoped by this review, ruling (2)). **Executor
