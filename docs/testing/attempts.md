@@ -15053,3 +15053,121 @@ whether `mri:3` should print the 1 g gate. Still outstanding: `attempts.md`
 **18 164 lines** against the 6 000 budget (`OPS-36`), the census `stale=81` at
 `f700f5e`, and six live `attempt/*` branches, three of them tied to a step-4e
 landing that did not happen.
+
+## 2026-09-09T09:45Z (2026-09-09 04:30 CDT slot) — `ANS-4` step 2a — **incomplete (executed negative result, landed on `main` at `ad80555`)**
+
+**Outcome: the item ran, its own negative-result clause fired, and the finding
+is committed.** Not "complete" in the §4 sense — step 2a was to deliver a
+four-rung ladder and a Richardson h → 0 estimate, and it delivered **one usable
+rung**. Nothing is parked: the whole result is on `main`, the tree is clean, and
+the drought is over (this is the first slot to do chunk work since 19:30).
+
+**Step 1 — preflight clean.** `git status --porcelain` empty on `main` at
+`d4bde49` (the 03:00 daily review's own commit — it landed, so §9 was re-topped
+and the three-slot drain ended). `fem-em-solver` Up 5 days, `fem-em-solver-xl`
+Up 32 h and **left untouched** (this item is explicitly *not* XL work). No
+dirty-tree exception invoked, no `recovered/*` created.
+
+**Step 2 — the queue.** §9 "Last reviewed 2026-09-09, 03:00 review"; item 1 is
+`ANS-4` step 2a, not done and not blocked, so it was taken. No fallback, no
+substitution. Executor: `implementer`, spawned **foreground**, one at a time,
+with the no-background rule and the 660 000 ms host window stated verbatim in
+its prompt. It held both.
+
+**What was tried, in the item's own order.**
+1. **Standing rule (c)'s mandatory re-run, first and green.**
+   `20260909T093128Z_ANS-4-step2a.log` — `-n 2`, complex build,
+   `tests/environment` + `tests/mesh/test_birdcage_leg_offset.py` +
+   `tests/validation/test_port_birdcage_leg_offset_sweep.py`, `-v -s
+   --tb=short`: **22 passed in 202.74 s**, `Status: 0`, elapsed **205 s**
+   (`:9129–9130`). This is the slot's other durable result: `d6cd0fb`'s
+   additive `conductor_resolution` / `degree` keywords were asserted
+   behaviour-preserving **by inspection** by the 03:00 review, and they now
+   have a measurement behind them. Inspection was right.
+2. **The one code edit**, test module only, no `src/`: the second additive env
+   knob **`FEM_EM_ANS4_STEP2_DEGREE2`** (default on, `0` for the degree-1
+   windows) guarding the degree-2 block that `FEM_EM_ANS4_STEP2_RUNGS` does not
+   suppress — the ≳ 49 GiB / ~1 100–1 300 s trap the 03:00 review named. It
+   works; neither ladder window built a degree-2 solve.
+3. `--collect-only` smoke (`20260909T093524Z_ANS-4-step2a.log`, 4 tests,
+   `Status: 0`, 3 s), then **window 1** at `-n 4`, `timeout -k 30 560`,
+   `FEM_EM_ANS4_STEP2_RUNGS="1.0 0.75"`:
+   `20260909T093534Z_ANS-4-step2a.log`, **1 failed / 14 passed in 130.88 s**,
+   `Status: 1`, elapsed **132 s** (`:4008–4009`).
+4. **Window 2 (`"0.6 0.45"`) was NOT run.** The item's negative-result clause is
+   explicit — a rung that fails (ii)–(iv) is not a usable ladder point: print,
+   record, stop. Spending a second window refining a ladder whose second rung
+   already fails the gate would have bought nothing.
+
+**Measured numbers (all read back off the log by this slot, not taken on the
+executor's word).**
+- Anchor (i) **green**: ×1 meshes **116 085** cells, ratio **1.000000** against
+  `GEO-19` step B's `STEP2_CELL_COUNT` inside `STEP2_CELL_COUNT_BAND` = 2e-2
+  (`:3680`).
+- Negative control **green**: ×0.75 meshes **161 695** cells, **+39.3%**,
+  reproducing `PORT-14` step 1b's 116 085 / 161 695 **to the digit**
+  (`:3685–3686`). `conductor_resolution` demonstrably refines — the "four
+  identical rungs" false positive the item feared is excluded.
+- Anchor (ii) **green**: `‖S − Sᵀ‖/‖S‖` = **9.194053381e-16** (×1) /
+  **2.271834085e-15** (×0.75) vs `RECIPROCITY_BAND` 1e-3 (`:3691–3692`).
+- Anchor (iii) **green**: `σ_max` = **0.998974779044** / **0.998823907170** vs
+  1 + 1e-9 (`:3691–3692`).
+- **Anchor (iv) RED at ×0.75** — the finding. `Z` class spreads
+  **self 0.1012% / adjacent 0.0916% / opposite 0.0654%** at ×1 (`:3691`) →
+  **self 0.5390% / adjacent 0.4591% / opposite 1.6886%** at ×0.75 (`:3692`),
+  against the imported, unmoved `ADJACENT_SPREAD_BAND` = 0.5%. The assert fires
+  on `self` (`:3716`); `opposite` is **3.4× the band**. S-class spreads at
+  ×0.75: 0.4433 / 0.0549 / **2.0731%** (`:3704–3706`).
+- Printed, asserted nowhere — 128 MHz S entries (`:3700–3706`). ×1:
+  `S₁₁ = +4.753451182e-01 +5.808054918e-01j`,
+  `S₂₁ = +2.276311790e-01 −2.671367065e-01j`,
+  `S₃₁ = +5.270667676e-02 −2.216416825e-01j`. ×0.75 moves from ×1:
+  **1.1379% / 0.8762% / 1.6616%**. **Richardson fit: absent** — it needs three
+  rungs finer than ×1 and one exists.
+- Costs at `-n 4`: mesh 21.6 / 29.9 s, four drives 18.5 / 28.6 s, ladder built
+  in 104.2 s. Tier heavy by ceiling; every window well inside `timeout -k 30
+  560` and the 660 000 ms host window.
+
+**Nothing loosened.** No band moved, no rung kept by widening anything, no
+`src/` touched, no in-slot "fix" attempted, no AED number anywhere in the
+module, the logs, the plan text or the commit message. Zero-byte JIT stub
+sweep: 1 removed.
+
+**Landed together at `ad80555`** (code + 3 logs + `test-results.md` rows + §7 +
+known-issues + §9): the knob; the §7 `ANS-4` row's step-2a addendum with every
+reading above; a new **🔴 OPEN 2026-09-09** known-issues entry (test id, literal
+symptom, verified-at, cause **not diagnosed**, resolves-with); and **§9 On-deck
+item 1 marked 🚫 BLOCKED with its unblock condition, per standing rule (d), in
+the same commit**.
+
+**⚠️ For the review — a new residual red on `main`.**
+`tests/validation/test_ans4_resolution_ladder.py::test_every_rung_passes_the_imported_port11_gates`
+now fails **whenever the ladder contains a rung other than ×1**. That is the
+finding, documented in known-issues, not a regression to fix silently — but the
+"Residual `main` reds at `-n 2`" line in §9 (currently "4 deliberate/known")
+needs updating, and this module is not in the `-n 2` default set, so the review
+should decide how to count it.
+
+**Scope unchanged, as the item required.** `ANS-4`'s Larmor verdict stays
+**INCONCLUSIVE** — and is now *not decidable from a one-point ladder*, which
+also retires the 02:15 weekly's honest caveat that 2a alone might settle it. The
+row keeps its ✅ for the runnable half only; step 2b (the XL slot) is untouched
+and unrun.
+
+**Denials / anomalies:** none — no docker-socket denial, no allowlist denial, no
+compute-safety event, no container wedge, nothing backgrounded, no XL window.
+Foreground-executor rule held.
+
+**Hypothesis for the next attempt.** The ×1 conductor size happens to mesh four
+near-congruent legs and ×0.75 does not — a **non-C4-covariant refinement** of
+the gmsh conductor mesh (the `GEO-26` step 2 class of defect), not physics: a
+broken solve would have moved reciprocity and passivity, and those sit at 1e-15
+and 0.9988 on the failing rung. The discriminator is cheap, decisive and needs
+**no solve** — per-leg cell counts and gap-sheet areas on the ×1 and ×0.75
+meshes, a `mesh-probe` item of the `GEO-28`/`GEO-29` shape, ≈ 30 s at `-n 2`.
+If it confirms (a), the remedy is `GEO-26` step 2's: either enforce per-leg
+congruence in the generator or give each rung its own measured spread record
+(rule (f) class, a review's ratification) — and **`ADJACENT_SPREAD_BAND` is not
+to be widened**, it is `PORT-11`'s gate and the ×1 rung meets it at 0.1%. Until
+that is settled the `ANS-4` convergence measurement cannot be made at all, so
+this probe is the whole Larmor front's critical path.
