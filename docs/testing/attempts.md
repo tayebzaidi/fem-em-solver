@@ -15801,3 +15801,100 @@ is discharged at all here**, because finding (2) says the change cannot move a
 digit on the gated path — the gated fixture has no second half to sum — which
 is a stronger additivity argument than the re-run would have been, and is
 checkable by inspection rather than by 20 minutes of compute.
+
+## 2026-09-09T20:50Z (2026-09-09 15:00 CDT slot) — `WF-6` step 4g — **complete (green on the first ladder run; landed on `main` at `49432f9`)**
+
+**Queue position.** §9 items 1 (`GEO-30`) ✅ and 2 (`TH-15` step 3) 🚫 BLOCKED,
+so item 3 — `WF-6` step 4g — was the first open item and was taken unchanged.
+Preflight **clean**, both containers Up (`fem-em-solver` 6 days,
+`fem-em-solver-xl` 5 h). Executor: `implementer`, spawned **foreground** with
+the no-background rule stated verbatim; no window in flight on return. Three
+harness logs, three footers, nothing backgrounded. Committed at minute 42.
+
+**What ran.** Collect-only smoke `20260909T200247Z_WF-6.log` (12 items, two
+rungs × six tests, Status 0, 5 s). Main window `20260909T200431Z_WF-6.log` —
+**Status 0** (`:4116`), **elapsed 204 s** (`:4117`), `28 passed, 2 skipped in
+202.58s` (`:3917`), `-n 4`, complex build, `timeout -k 30 500`, `-s`. Heavy by
+ceiling, standard by measurement — 4f's three-rung ladder was 451 s and
+dropping the finest rung landed at 204 s, close to the item's ≈ 300 s estimate.
+
+**Both re-registered anchors and the re-sized control are green**, all at
+`:1982–1994, 3803–3815, 3828`. Anchor (i): the ×1 (0.015 m) rung reproduces its
+own measured four-copy worst-radius C4 spread at **5.2506%** inside the 10%
+relative bar, and `size_global` reads **116 085 / 149 049** at ratio
+**1.000000** against the imported, unmoved 1% `CELL_COUNT_BAND`. Anchor (ii):
+both rungs pass the module's existing gates at unmoved bands — power residual
+P1/P2 **9.795836e-03 / 9.796294e-03** then **8.113516e-03 / 8.111819e-03**
+(≤ 1e-2, and note both rungs stay port-symmetric to five figures, unlike the
+dropped ×0.0095 rung), C4 covariance **3.6159% / 1.6815%** (≤ 5%). Negative
+control (asserted, re-sized off 4f's measured ceiling): cw-vs-ccw worst-radius
+separation **9.53× / 19.52×** against the 5× bar. Printed, asserted nowhere:
+spread **5.2506% → 2.0719%**, ratio **0.3946**; drift median **0.9482%**, max
+**2.9092%**; the eleven-point table reproducing step 4b character-for-character
+(9.805561792e-08 T at `+x̂`, 1.013569652e-07 T at `+ŷ`, `:2000, 2005`);
+phantom power 0.000000000e+00 on both rungs (vacuum).
+
+**One printed number does not match the review's summary of 4f, and it is
+recorded rather than smoothed.** The point-to-point drift here reads median
+0.9482% / max 2.9092% where the 10:30 review's recap of 4f cites median
+0.36%/0.91% and max 2.46%/1.84%. It is printed-only on both sides, never
+asserted, and everything that *is* asserted — the spreads, the eleven point
+values, the cell counts — reproduces exactly, so this is a statistic defined
+over a different rung pairing (4f had three rungs, this has two), not a moved
+measurement. Named here so a review does not read it as drift in the fixture.
+
+**Correction to the item's own premise, which cost the slot one red window.**
+The item said the 4g module was the only file that moves. It is not: `main`
+never carried the additive `resolution` / `phantom_material` keywords that 4f
+introduced on `tests/mesh/test_birdcage_port_sheets._build` and
+`build_four_port_sweep`, so the first run died on `TypeError:
+build_four_port_sweep() got an unexpected keyword argument 'phantom_material'`
+(`20260909T200300Z_WF-6.log:716, 737`, Status 1, 34 s, 12 errors / 18 passed).
+Both files were then taken by path checkout from the same branch; both keywords
+are `None`-defaulted and leave every gate's mesh and problem bit-for-bit
+unchanged. **This is rule (c)-adjacent and is disclosed as such:** the change is
+in `tests/`, not `src/`, and the 28-passed window includes both touched modules'
+own tests. Cheap lesson for future path-checkout items: a "one file moves" claim
+against an `attempt/*` branch should be checked with `git diff --stat` against
+`main` *before* the first window, not discovered by a `TypeError`.
+
+**Branch deletion deliberately not executed.** §9 item 3 authorised deleting
+"the four older `WF-6` step-4 branches" when 4g lands. That does not resolve
+against the **six** that exist, and `attempt/WF-6-step4f-20260909T124552Z` is
+still ahead of `main` on `src/fem_em_solver/utils/analytical.py` (+220) and
+`tests/unit/test_birdcage_filament_field.py` (+297) — step 4a/4b material this
+landing did **not** take — while `…step4c` / `…step4e` carry material no other
+branch reproduces. Deleting on that instruction would destroy material, so all
+six are kept and the disposition is returned to the next review, with the
+reason also written into §9 item 3. A slot does not re-scope §9.
+
+**Disposition.** Complete per §4: verification executed by the executor through
+the harness, quantitative assertions (a reproduction of a measured statistic, a
+symmetry identity, an imported cell-count record, a negative-control ratio),
+tier and elapsed time recorded. `49432f9` on `main` carries the three logs, the
+three test files, the test-results rows, a known-issues line, the §7 `WF-6`
+annotation and the §9 item-3 done marker **together**. **`WF-6` stays 🟡** — no
+band moved (`CLOSED_FORM_BAND`, `POWER_BALANCE_BAND`, `C4_COVARIANCE_BAND`,
+`CELL_COUNT_BAND` all unmoved), no point pruned, the deleted closed-form
+comparand stayed deleted, the ×0.0095 rung stayed out, and §2's B₁⁺ clause does
+not move. Tree clean at slot end. An audit is owed on this closure only in the
+sense §4 defines — it closes no chunk and moves no status marker, so the review
+should read it as evidence for the Phase-5 exit decision, not as a new ✅.
+
+**Denials / anomalies:** none — no docker-socket denial, no allowlist denial, no
+container wedge, no compute-safety event, nothing backgrounded, no orphaned
+ranks. The one red window was a real `TypeError`, not an infrastructure event.
+
+**Hypothesis for the next attempt.** The residual ≈ 2% is not `h`'s — the ladder
+now says so with two clean rungs (ratio 0.3946, then 4f's third rung stalling at
+0.3717), and `GEO-30` already excluded the mesh in conductor mass and gap-sheet
+area. But `GEO-30` recorded one ungated tell that this run's port-symmetric
+residuals sharpen: the gap-sheet **facet counts** are C4-equal on the rungs that
+behaved (58/58/58/58, 62/62/62/62) and go **C2, not C4** (80/74/80/74,
+70/76/70/76) on exactly the two that broke — opposite ports equal, adjacent
+differing, the same class split `ANS-4` step 2a's `Z` spreads and 4f's P1/P2
+power split both showed. **Next measurement: read the port-sheet
+triangulation's C4 class directly** — facet counts, per-facet area
+distributions and the sheet's own quadrature under the C4 rotation map — rather
+than refine the volume mesh again. That is a probe (`mesh-probe`), not a solve,
+and it would serve `ANS-4` and `WF-6` jointly exactly as `GEO-30` did.
