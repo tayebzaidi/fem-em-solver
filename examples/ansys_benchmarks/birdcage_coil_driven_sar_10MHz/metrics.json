@@ -1,0 +1,244 @@
+{
+  "case": "ANS-2 step 1 \u2014 coil-driven SAR, loaded four-leg birdcage, 10 MHz",
+  "scope": "SPEC export rows 1-3, 7, 8 only; rows 4-6 held for step 2 (sphere-vs-cube averaging systematic). Runnable half: no adjudication, no absolute-SAR or compliance claim.",
+  "generated_utc": "2026-09-09T14:09:52+00:00",
+  "mpi_ranks": 4,
+  "frequency_hz": 10000000.0,
+  "basis_order": "Nedelec first kind, degree 1 (N1curl)",
+  "basis_unknowns_per_tet": 6,
+  "aed_order_correspondence": "HFSS Zero Order (20 unknowns/tet = First Order, the AED default, is the order-sensitivity column)",
+  "phantom_resolution_m": 0.0025,
+  "phantom_sigma_s_per_m": 0.5,
+  "phantom_rho_kg_per_m3": 1000.0,
+  "phantom_volume_closed_form_m3": 0.0002261946710584651,
+  "n_cells": 199920,
+  "n_phantom_cells": 58866,
+  "cell_ratio": 1.0,
+  "phantom_cell_ratio": 1.0,
+  "named_points_m": [
+    [
+      0.015,
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.015,
+      0.0
+    ],
+    [
+      -0.015,
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      -0.015,
+      0.0
+    ]
+  ],
+  "pointwise": {
+    "0": {
+      "e_magnitude_v_per_m": [
+        0.04848996490364124,
+        0.006466301324605959,
+        0.016196446874590376,
+        0.006096108075173937
+      ],
+      "sar_w_per_kg": [
+        5.878191740890898e-07,
+        1.0453263205150194e-08,
+        6.558122284035708e-08,
+        9.290633416050221e-09
+      ]
+    },
+    "1": {
+      "e_magnitude_v_per_m": [
+        0.005063972899015259,
+        0.04507430708487307,
+        0.005117735454451219,
+        0.017057906365003362
+      ],
+      "sar_w_per_kg": [
+        6.410955380490252e-09,
+        5.079232897953595e-07,
+        6.547804045436756e-09,
+        7.274304238930555e-08
+      ]
+    },
+    "2": {
+      "e_magnitude_v_per_m": [
+        0.017270294838257955,
+        0.004972857412969383,
+        0.045986988353212487,
+        0.004485535388195662
+      ],
+      "sar_w_per_kg": [
+        7.456577095008984e-08,
+        6.182327712431136e-09,
+        5.287007744496252e-07,
+        5.030006929688902e-09
+      ]
+    },
+    "3": {
+      "e_magnitude_v_per_m": [
+        0.005253811236863419,
+        0.015660286082034746,
+        0.006175999914100836,
+        0.04801291549584142
+      ],
+      "sar_w_per_kg": [
+        6.900633128148084e-09,
+        6.131114004279278e-08,
+        9.535743734743385e-09,
+        5.763100136027023e-07
+      ]
+    }
+  },
+  "phantom_power": {
+    "0": {
+      "dissipated_power_w": 5.5032047285609436e-08,
+      "meshed_volume_m3": 0.0002259978941111196,
+      "meshed_mass_kg": 0.22599789411111962,
+      "average_sar_w_per_kg": 2.4350690302694166e-07
+    },
+    "1": {
+      "dissipated_power_w": 5.498192946956782e-08,
+      "meshed_volume_m3": 0.0002259978941111196,
+      "meshed_mass_kg": 0.22599789411111962,
+      "average_sar_w_per_kg": 2.4328514071256816e-07
+    },
+    "2": {
+      "dissipated_power_w": 5.5000910172621776e-08,
+      "meshed_volume_m3": 0.0002259978941111196,
+      "meshed_mass_kg": 0.22599789411111962,
+      "average_sar_w_per_kg": 2.4336912690690245e-07
+    },
+    "3": {
+      "dissipated_power_w": 5.4968620186794394e-08,
+      "meshed_volume_m3": 0.0002259978941111196,
+      "meshed_mass_kg": 0.22599789411111962,
+      "average_sar_w_per_kg": 2.432262495320739e-07
+    }
+  },
+  "excitation": {
+    "0": {
+      "driven_port": "P1",
+      "source_voltage_v": {
+        "re": 1.0,
+        "im": 0.0
+      },
+      "port_voltage_v": {
+        "re": 0.3143961071956686,
+        "im": 0.07094372247924469
+      },
+      "port_current_a": {
+        "re": 0.013712077856086628,
+        "im": -0.0014188744495848937
+      },
+      "incident_power_w": 0.005,
+      "supplied_power_re_w": 0.006856038928043314,
+      "supplied_power_im_va": 0.0007094372247924469,
+      "accepted_power_re_w": 0.0021051818321666618,
+      "accepted_power_im_va": 0.0007094372247924469,
+      "accepted_im_over_re": 0.33699569982621935
+    },
+    "1": {
+      "driven_port": "P2",
+      "source_voltage_v": {
+        "re": 1.0,
+        "im": 0.0
+      },
+      "port_voltage_v": {
+        "re": 0.31441610804327225,
+        "im": 0.07098551522108777
+      },
+      "port_current_a": {
+        "re": 0.013711677839134555,
+        "im": -0.0014197103044217554
+      },
+      "incident_power_w": 0.005,
+      "supplied_power_re_w": 0.006855838919567278,
+      "supplied_power_im_va": 0.0007098551522108777,
+      "accepted_power_re_w": 0.002105196756749903,
+      "accepted_power_im_va": 0.0007098551522108777,
+      "accepted_im_over_re": 0.33719183251392804
+    },
+    "2": {
+      "driven_port": "P3",
+      "source_voltage_v": {
+        "re": 1.0,
+        "im": 0.0
+      },
+      "port_voltage_v": {
+        "re": 0.31451673715285566,
+        "im": 0.07096459284528439
+      },
+      "port_current_a": {
+        "re": 0.013709665256942886,
+        "im": -0.0014192918569056877
+      },
+      "incident_power_w": 0.005,
+      "supplied_power_re_w": 0.006854832628471443,
+      "supplied_power_im_va": 0.0007096459284528439,
+      "accepted_power_re_w": 0.0021055998576588017,
+      "accepted_power_im_va": 0.0007096459284528439,
+      "accepted_im_over_re": 0.33702791433596174
+    },
+    "3": {
+      "driven_port": "P4",
+      "source_voltage_v": {
+        "re": 1.0,
+        "im": 0.0
+      },
+      "port_voltage_v": {
+        "re": 0.3144299598318462,
+        "im": 0.0709480854752828
+      },
+      "port_current_a": {
+        "re": 0.013711400803363076,
+        "im": -0.0014189617095056559
+      },
+      "incident_power_w": 0.005,
+      "supplied_power_re_w": 0.006855700401681538,
+      "supplied_power_im_va": 0.0007094808547528279,
+      "accepted_power_re_w": 0.0021053012935938176,
+      "accepted_power_im_va": 0.0007094808547528279,
+      "accepted_im_over_re": 0.33699730148444507
+    }
+  },
+  "coverage": {
+    "power_miss": 7.771561172376096e-14,
+    "mass_miss": 5.284661597215745e-14
+  },
+  "ten_pairs": {
+    "0": 0.00030924700930797644,
+    "1": 5.9865036854660617e-05,
+    "2": 0.000394445496207118,
+    "3": 0.0006441622847750155
+  },
+  "one_pairs": {
+    "0": 0.0009566843801293027,
+    "1": 0.001198953086626219,
+    "2": 0.0013050065324065683,
+    "3": 0.0010653332380875225
+  },
+  "control_1g": {
+    "0": 0.8701432117507754,
+    "1": 0.8705464867890071,
+    "2": 0.8705058767520921,
+    "3": 0.8705920355958413
+  },
+  "c4_covariance_band": 0.05,
+  "exact_identity_rtol": 1e-10,
+  "cell_count_band": 0.01,
+  "control_separation_multiple": 10.0,
+  "solve_seconds": [
+    18.14538119197823,
+    17.592528664972633,
+    17.05643164901994,
+    17.41178415704053
+  ],
+  "total_seconds": 231.49840687197866,
+  "paraview_output": "/workspace/examples/ansys_benchmarks/birdcage_coil_driven_sar_10MHz/paraview_output/ans2_birdcage_coil_driven_sar_10mhz_combined.xdmf"
+}

@@ -1,0 +1,44 @@
+# Test Run
+- Chunk: ANS-2-step1-imports
+- Commit: 0544a81bb4b64d8f2f755fa55b7999cfec845138
+- Time (UTC): 2026-09-09 14:05:45
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && source /usr/local/bin/dolfinx-complex-mode && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 timeout -k 30 60 mpiexec -n 2 python3 -c "import importlib.util,sys; from pathlib import Path; p=Path(\"examples/ansys_benchmarks/birdcage_coil_driven_sar_10MHz/02_birdcage_coil_driven_sar_10MHz.py\").resolve(); s=importlib.util.spec_from_file_location(\"ans2\",p); m=importlib.util.module_from_spec(s); sys.modules[\"ans2\"]=m; s.loader.exec_module(m); print(\"IMPORT OK\", m.BASENAME, m.PHANTOM_RESOLUTION_1G_RUNG, m.CONTROL_SEPARATION)"'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Sep  4 23:31 .
+drwxr-xr-x 16 taz5297 taz5297 4096 Sep  9 09:02 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  721 Sep  3 13:49 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 2801 Sep  4 23:31 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && source /usr/local/bin/dolfinx-complex-mode && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 timeout -k 30 60 mpiexec -n 2 python3 -c "import importlib.util,sys; from pathlib import Path; p=Path(\"examples/ansys_benchmarks/birdcage_coil_driven_sar_10MHz/02_birdcage_coil_driven_sar_10MHz.py\").resolve(); s=importlib.util.spec_from_file_location(\"ans2\",p); m=importlib.util.module_from_spec(s); sys.modules[\"ans2\"]=m; s.loader.exec_module(m); print(\"IMPORT OK\", m.BASENAME, m.PHANTOM_RESOLUTION_1G_RUNG, m.CONTROL_SEPARATION)"'\'''
+/workspace/tests/validation/test_port_birdcage_four_port.py:1: SyntaxWarning: invalid escape sequence '\*'
+  """`PORT-9` step 3 leg (d) — the 4x4 on the gapped birdcage at 50 Ohm.
+/workspace/tests/validation/test_port_birdcage_four_port.py:1: SyntaxWarning: invalid escape sequence '\*'
+  """`PORT-9` step 3 leg (d) — the 4x4 on the gapped birdcage at 50 Ohm.
+IMPORT OK ans2_birdcage_coil_driven_sar_10mhz_combined 0.0025 10.0
+IMPORT OK ans2_birdcage_coil_driven_sar_10mhz_combined 0.0025 10.0
+
+## Exit
+- Status: 0
+- Elapsed (s): 3
+- Filtered lines (gmsh optimisation chatter): 0
