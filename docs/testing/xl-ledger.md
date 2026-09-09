@@ -22,4 +22,4 @@ future XL commissioning that leans on this figure should print `ru_maxrss`
 instead. It is nonetheless a decade under the ordinary service's own 128 G
 limit, which is the load-bearing part: this run did not need the tier.
 | 2026-09-09 | TH-11-step5d | `20260909T145530Z_TH-11-step5d.log` | | | | | |
-| 2026-09-09 | TH-11-step5d | `20260909T153910Z_TH-11-step5d.log` | | | | | |
+| 2026-09-09 | TH-11-step5d | `20260909T153910Z_TH-11-step5d.log` | | | | 4838 | |
