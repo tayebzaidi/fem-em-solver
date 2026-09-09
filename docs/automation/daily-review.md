@@ -1,4 +1,7 @@
-# Daily review protocol (Fable 5.1, scheduled)
+# Daily review protocol (scheduled)
+
+*Model: `scripts/automation/review-model.env` (dated override, self-expiring —
+see CLAUDE.md § Scheduled automation). Medium effort.*
 
 Run by `scripts/automation/daily-review.sh` via cron **three times daily**
 (03:00, 10:30, 18:00 local), each followed by four implementer runs on a shared

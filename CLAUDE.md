@@ -110,11 +110,11 @@ System cron runs headless sessions via `scripts/automation/` on a 90-minute
 grid — 3 reviews and 12 implementer runs a day, four runs after each review,
 plus two weekly planning reviews:
 
-- **Plan review** (Fable 5.1, medium effort, 03:00 / 10:30 / 18:00 local) — audits results
+- **Plan review** (medium effort, 03:00 / 10:30 / 18:00 local) — audits results
   against §4, rescopes failed attempts, disposes of `recovered/*` branches,
   tops the §9 "On deck" queue up to 5 items. Protocol:
   docs/automation/daily-review.md.
-- **Weekly planning review** (Fable 5.1, high effort, Sunday **and Wednesday**
+- **Weekly planning review** (high effort, Sunday **and Wednesday**
   02:15 local) —
   owns the long horizon with brutal realism: §6 phase map and §10 roadmap
   (phases → subgoals, dated pace-based assessments), examples/ health, and
@@ -139,6 +139,15 @@ channel — scheduled sessions never send push notifications. A PreToolUse
 hook (`scripts/automation/hooks/bash_guard.py`, wired in
 .claude/settings.json) mechanically denies `mpiexec` rank counts above 12
 and pytest runs that bypass the logging harness.
+
+**Review model.** Both reviews take their model from
+`scripts/automation/review-model.env` — a default plus an optional **dated**
+override the launcher expires by itself, so a borrowed model cannot outlive
+its reason and no revert has to be remembered. Set 2026-09-09: the reviews
+run on Opus through 2026-09-11 because the Fable credit pool emptied and the
+09-08 18:00 review died on it, costing three implementer slots (the daily
+review is the only session that re-tops §9). The launcher logs which model it
+chose on every run. Implementer runs are unaffected and stay on Opus.
 
 If you are one of these scheduled sessions, your protocol document is
 authoritative; read it before acting. If you are an interactive session,

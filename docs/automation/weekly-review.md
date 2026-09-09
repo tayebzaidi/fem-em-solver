@@ -1,4 +1,7 @@
-# Weekly planning review protocol (Fable 5.1, scheduled)
+# Weekly planning review protocol (scheduled)
+
+*Model: `scripts/automation/review-model.env` (dated override, self-expiring —
+see CLAUDE.md § Scheduled automation). High effort.*
 
 Run by `scripts/automation/weekly-review.sh` via cron **twice weekly**
 (Sunday and Wednesday 02:15 local — after the 02:00 usage-window reset, in
