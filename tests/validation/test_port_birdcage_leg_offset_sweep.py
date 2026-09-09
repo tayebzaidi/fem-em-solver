@@ -196,7 +196,14 @@ def _narrowed_radial(msh, facet_tags, tag, fraction, centre, radial, half_width)
     return dolfinx.mesh.meshtags(msh, fdim, new_idx[order], new_val[order])
 
 
-def _four_port_rung(name, offsets, frequency_hz=FREQUENCY_HZ, reuse=None):
+def _four_port_rung(
+    name,
+    offsets,
+    frequency_hz=FREQUENCY_HZ,
+    reuse=None,
+    conductor_resolution=None,
+    degree=1,
+):
     """Build one rung, narrow its four sheets in their own frames, drive all four.
 
     Returns the assembled ``Z``/``S``, the circulant class spreads, the
@@ -209,6 +216,18 @@ def _four_port_rung(name, offsets, frequency_hz=FREQUENCY_HZ, reuse=None):
     `tests/validation/test_port_birdcage_larmor_gate.py`).  Nothing else about
     this function moved when the parameter was added, and every rung below still
     calls it at the default.
+
+    ``conductor_resolution`` and ``degree`` are `ANS-4` step 2's additive
+    parameters, on exactly the ``frequency_hz`` precedent above: their defaults
+    (``None`` and ``1``) are what every rung in this repo passes and reproduce
+    this function's previous behaviour bit for bit — ``None`` forwards the
+    module's ``CONDUCTOR_RESOLUTION`` through ``_build``, and ``degree=1`` is
+    already ``run_n_port_sparameter_sweep``'s own default, which this function
+    was previously taking implicitly.  They exist so the step-2 discriminator
+    can refine the conductor mesh and raise the element order **on the
+    identical construction** — the only way its rungs are comparable with the
+    128 MHz column the operator replicated in AED, which came from this
+    function.  Nothing else about this function moved when they were added.
 
     ``reuse`` is the second additive parameter, for `EX-34`: hand it a rung this
     function already returned and the mesh, the narrowed sheet tags and the sheet
@@ -231,7 +250,9 @@ def _four_port_rung(name, offsets, frequency_hz=FREQUENCY_HZ, reuse=None):
         diag = {"mesh_wall_time_s": 0.0}
         t_mesh = 0.0
     else:
-        msh, cell_tags, _facet_tags, diag, t_mesh = _build(offsets)
+        msh, cell_tags, _facet_tags, diag, t_mesh = _build(
+            offsets, conductor_resolution=conductor_resolution
+        )
         tdim = msh.topology.dim
         ncells = int(msh.topology.index_map(tdim).size_global)
         # Hoisted on every rank before any facet-restricted form (known-issues 9).
@@ -347,6 +368,7 @@ def _four_port_rung(name, offsets, frequency_hz=FREQUENCY_HZ, reuse=None):
         port_defs,
         lumped_sheet_ports=specs,
         lumped_sheet_facet_tags=tags_f,
+        degree=degree,
     )
     comm.Barrier()
     t_sweep = time.perf_counter() - t0
@@ -412,6 +434,12 @@ def _four_port_rung(name, offsets, frequency_hz=FREQUENCY_HZ, reuse=None):
     return {
         "name": name,
         "frequency_hz": float(frequency_hz),
+        # Additive with the two `ANS-4` step-2 parameters, so a ladder can label
+        # its own rungs from the rung itself rather than from its call site.
+        "degree": int(degree),
+        "conductor_resolution": (
+            None if conductor_resolution is None else float(conductor_resolution)
+        ),
         "column_power": column_power,
         "pooled": pooled,
         "result": result,

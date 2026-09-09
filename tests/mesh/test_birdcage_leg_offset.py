@@ -104,8 +104,19 @@ IDENTITY_BAND = 1.0e-12
 SHEET_AREA_BAND = 1.0e-9
 
 
-def _build(offsets):
-    """One graded, gapped, sheeted birdcage rung at the given leg offsets."""
+def _build(offsets, conductor_resolution=None):
+    """One graded, gapped, sheeted birdcage rung at the given leg offsets.
+
+    ``conductor_resolution`` is `ANS-4` step 2's additive keyword, on the
+    precedent this repo has used four times over (``frequency_hz`` / ``reuse``
+    on ``_four_port_rung``; ``phantom_resolution`` / ``as_hole`` on
+    ``tests/mesh/test_birdcage_port_sheets._build``): ``None`` — the value
+    every gate in this repo passes, and the only one any of them passes —
+    forwards this module's ``CONDUCTOR_RESOLUTION`` exactly as this helper
+    always has, so every existing rung's mesh is bit-identical and no record
+    moves.  A float replaces it, which is how the `ANS-4` step-2 ladder
+    refines the conductor without touching a gate.
+    """
     started = time.perf_counter()
     mesh, cell_tags, facet_tags, diagnostics = MeshGenerator.birdcage_port_domain(
         leg_count=LEG_COUNT,
@@ -122,7 +133,11 @@ def _build(offsets):
         emit_port_sheets=True,
         air_padding=AIR_PADDING,
         resolution=RESOLUTION,
-        conductor_resolution=CONDUCTOR_RESOLUTION,
+        conductor_resolution=(
+            CONDUCTOR_RESOLUTION
+            if conductor_resolution is None
+            else float(conductor_resolution)
+        ),
         comm=MPI.COMM_WORLD,
         return_diagnostics=True,
     )
