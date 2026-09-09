@@ -29,6 +29,7 @@ XL_RANK_CEILING = 16
 XL_TIMEOUT_CEILING_S = 7200
 XL_INTERVAL_DAYS = 7
 XL_LEDGER = Path(__file__).resolve().parents[3] / "docs" / "testing" / "xl-ledger.md"
+XL_OVERRIDE = Path(__file__).resolve().parents[1] / "xl-override.env"
 
 
 def deny(reason: str) -> None:
@@ -52,6 +53,41 @@ def last_xl_run() -> "dt.date | None":
     return max(dates) if dates else None
 
 
+def xl_interval_override() -> "str | None":
+    """The reason string of an in-date operator override, else None.
+
+    The 7-day interval is a budget the weekly review spends, and normally
+    nothing may buy a second run inside it.  This is the one documented door:
+    an **operator-authorised, dated, self-expiring** file that says who
+    authorised the exception and until when.  It expires by date here, so an
+    override cannot outlive its reason, and it never touches the ledger — the
+    record of what ran stays complete and a spent slot stays spent.
+
+    Malformed or absent file ⇒ no override, and the ordinary interval rule
+    applies.  Fail-closed on purpose: the safe direction for a rule that
+    protects a shared box is to deny.
+    """
+    try:
+        text = XL_OVERRIDE.read_text(encoding="utf-8")
+    except OSError:
+        return None
+    fields = {}
+    for line in text.splitlines():
+        line = line.split("#", 1)[0].strip()
+        if "=" in line:
+            k, v = line.split("=", 1)
+            fields[k.strip()] = v.strip().strip('"').strip("'")
+    until = fields.get("XL_OVERRIDE_UNTIL", "")
+    reason = fields.get("XL_OVERRIDE_REASON", "") or "no reason recorded"
+    try:
+        expiry = dt.date.fromisoformat(until)
+    except ValueError:
+        return None
+    if dt.date.today() > expiry:
+        return None
+    return f"{reason} (operator override, expires {expiry.isoformat()})"
+
+
 def check_xl(cmd: str) -> None:
     """The four XL-tier conditions; deny on the first that fails."""
     if "run_and_log.sh" not in cmd:
@@ -66,10 +102,12 @@ def check_xl(cmd: str) -> None:
     last = last_xl_run()
     if last is not None:
         age = (dt.date.today() - last).days
-        if age < XL_INTERVAL_DAYS:
+        if age < XL_INTERVAL_DAYS and xl_interval_override() is None:
             deny(f"The XL slot was used {age} day(s) ago ({last.isoformat()}, {XL_LEDGER.name}); "
                  f"one XL run per {XL_INTERVAL_DAYS} days (operator directive 2026-09-05). "
-                 "Shrink the case to the heavy tier or wait for the slot.")
+                 "Shrink the case to the heavy tier or wait for the slot. "
+                 f"An operator may authorise an exception in {XL_OVERRIDE.name} "
+                 "(dated, self-expiring); a scheduled session may not write one.")
 
 
 def main() -> None:
