@@ -18162,3 +18162,57 @@ heavy-tier windows, which `GEO-29`'s mesh costs make arguable; (4) whether
 example census still reads `stale=81` at `f700f5e`, and six `attempt/*`
 branches are live with three (`…WF-6-step4…`, `…step4b…`, `…step4d…`) tied to
 a step-4e landing that did not happen.
+
+## 2026-09-09T05:01Z (2026-09-09 00:00 CDT slot) — none — **anomaly (queue drained, third consecutive)**
+
+**Outcome: no chunk work. Stopped and journaled per §9's drain paragraph.**
+The 22:30 slot's hypothesis was exactly right: this slot found the identical
+state, and the reason is unchanged — the 18:00 daily review (23:00 UTC) never
+ran, so nothing has been able to re-top §9 since the 10:30 review.
+
+**Step 1 — preflight clean.** `git status --porcelain` empty on `main` at
+`b1d8ffd` (the 22:30 slot's own journal commit). Both services Up
+(`fem-em-solver` Up 5 days, `fem-em-solver-xl` Up 28 h — the operator's 09-07
+bring-up, still unused by any slot; left as found). No dirty-tree exception
+invoked, no `recovered/*` created.
+
+**Step 2 — the queue.** §9 still reads "Last reviewed **2026-09-08, 10:30
+review**" and is byte-identical to the table the 21:00 and 22:30 slots
+recorded; re-read item by item and confirmed rather than restated here:
+items 1 🚫 (`WF-6` step 4e, "not re-runnable as written"), 2 ✅ (`GEO-28`),
+3 ✅ (`MAT-4` step 5b), 4 🚫 (`TH-15` step 2g), 5 ✅ (`GEO-29`), 6 **HELD**
+(`ANS-4` step 2, `xl` — "do not take in a headless slot, skip it unmarked";
+left unmarked, rule (d) does not apply because this slot did not attempt it).
+Every item done, blocked or held ⇒ step 2's fallback clause is reached, and
+§9's drain paragraph is explicit that there is **no fallback chunk** (`EX-36`
+closed 2026-09-01 and nothing replaced it). No chunk started, no compute
+issued, no executor spawned, no §7 status moved.
+
+**No compute this slot.** Zero harness windows, zero core-seconds against the
+12-core budget; no XL window. **Denials / anomalies:** none — no docker-socket
+denial, no allowlist denial, no compute-safety event, no container wedge,
+nothing backgrounded.
+
+**⚠️ Automation health — the 18:00 review outage has now cost three slots.**
+`logs/automation/20260908T230001Z_daily-review.log` is still **146 bytes** (the
+"out of usage credits" tell). Every implementer launcher since has fired
+normally (`20260909T003001Z` 2 693 B, `…020001Z` 2 017 B, `…033002Z` 1 240 B,
+this slot `…050001Z`), so the outage was transient and confined to that one
+review session — but **21:00, 22:30 and 00:00 are all lost to it**, and the
+04:30 / 06:00 / 07:30 / 09:00 slots will be too unless the 03:00 review lands.
+
+**Hypothesis for the next attempt.** The **02:15 Wednesday weekly** fires
+before the next implementer slot but never edits §9 by protocol, so the
+**03:00 daily review (08:00 UTC)** is still the only session that can restore
+throughput; if it also fails to launch, 04:30 will be the fourth drained slot
+and the operator's dashboard Waiting-on-you section is the escalation path.
+The re-topping shortlist is unchanged from the 21:00/22:30 entries and is not
+restated — a review reading this should read `cbf77ea`'s entry for it. Its four
+candidates in one line: (1) `WF-6` step 4f, the `h`-ladder now mesh-priced by
+`GEO-29`; (2) `TH-15` — settle the half-domain gap-tag factor 2, then specify
+the `src/` `_path_voltage` replacement from reading B; (3) `ANS-4` — whether
+the degree-1 rungs can move off XL onto ordinary heavy-tier windows; (4)
+whether `mri:3` should print the 1 g gate. Still outstanding: `attempts.md`
+**18 164 lines** against the 6 000 budget (`OPS-36`), the census `stale=81` at
+`f700f5e`, and six live `attempt/*` branches, three of them tied to a step-4e
+landing that did not happen.
