@@ -20,6 +20,8 @@ Run with ``source /usr/local/bin/dolfinx-complex-mode`` (see
 
 from __future__ import annotations
 
+import os
+import time
 from dataclasses import dataclass
 from enum import Enum
 from typing import Callable, Mapping, Optional, Sequence
@@ -547,6 +549,21 @@ class TimeHarmonicSolver:
             "pc_type": "lu",
             "pc_factor_mat_solver_type": "mumps",
         }
+        # `OPS-43`: opt-in solver progress. A direct solve is silent for its
+        # whole factorization — on the 2.81 M-cell `TH-11` rung that is a
+        # >30-minute gap in which the only evidence the run is alive is its
+        # memory climbing, which is no way to watch a 2 h XL window. Setting
+        # `FEM_EM_SOLVER_PROGRESS` raises MUMPS's own verbosity so it reports
+        # its analysis and factorization phases and their memory estimates on
+        # rank 0. Unset (every existing run, and CI) leaves the options dict
+        # byte-identical, so no recorded number can move.
+        #   1 = errors/warnings only, 2 = + main statistics (the useful one),
+        #   3 = + per-phase detail, 4 = very verbose.
+        # Explicit `solver_petsc_options` still wins: it is applied after this.
+        _progress = os.environ.get("FEM_EM_SOLVER_PROGRESS", "").strip()
+        if _progress and _progress.lower() not in ("0", "false", "no", "off"):
+            level = _progress if _progress.isdigit() else "2"
+            options["mat_mumps_icntl_4"] = int(level)
         if self.problem.solver_petsc_options:
             options.update(dict(self.problem.solver_petsc_options))
 
@@ -588,7 +605,25 @@ class TimeHarmonicSolver:
             except Exception:
                 pass
 
+        # `OPS-43`: stage heartbeat around the one call that dominates the
+        # window. Same env gate, same default-off contract as the MUMPS
+        # verbosity above; prints on rank 0 only and never changes the solve.
+        _t0 = time.perf_counter()
+        if _progress and _progress.lower() not in ("0", "false", "no", "off"):
+            if self.mesh.comm.rank == 0:
+                ndofs = self.function_space().dofmap.index_map.size_global
+                print(
+                    f"[solve] factorize+solve starting: {ndofs} dofs, degree "
+                    f"{self.degree}, {self.mesh.topology.index_map(self.mesh.topology.dim).size_global} cells",
+                    flush=True,
+                )
         e_complex = problem.solve()
+        if _progress and _progress.lower() not in ("0", "false", "no", "off"):
+            if self.mesh.comm.rank == 0:
+                print(
+                    f"[solve] done in {time.perf_counter() - _t0:.1f} s",
+                    flush=True,
+                )
         e_complex.name = "E"
         e_complex.x.scatter_forward()
 
