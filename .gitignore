@@ -130,3 +130,8 @@ examples/ansys_benchmarks/*/aed_results/
 examples/ansys_benchmarks/*/COMPARISON_private.md
 docs/private/*
 !docs/private/README.md
+
+# Scratch commit-message files (git commit -F). Committed by a stray `git add
+# -A` twice on 2026-09-09; ignoring them is the fix, not resolving to be careful.
+/.msg*
+/.commitmsg*
