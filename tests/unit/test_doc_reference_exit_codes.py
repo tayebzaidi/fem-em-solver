@@ -188,14 +188,24 @@ def test_fresh_and_resolvable_references_exit_zero(tmp_path):
     assert status == expected_status(counts)
 
 
-@pytest.mark.parametrize(
-    "age_h, expect_stale", [(47.0, 0), (49.0, 1)], ids=["within-48h", "past-48h"]
-)
-def test_default_window_is_unchanged_by_this_chunk(tmp_path, age_h, expect_stale):
-    """`OPS-19`'s scope is exit-code semantics only: `OPS-15`'s 48 h stays put.
+WINDOW_H = checker.DEFAULT_MAX_AGE_S / 3600.0
+
+# Either side of the default window, expressed as hours off the boundary rather
+# than as literals, so the pair follows `DEFAULT_MAX_AGE_S` instead of pinning a
+# second copy of it (`ANS-1`). Re-registered by `OPS-42` (2026-09-09) when the
+# default moved 48 h -> 14 days; the assertion itself is unchanged, only the
+# boundary it brackets.
+BOUNDARY_CASES = [(WINDOW_H - 1.0, 0), (WINDOW_H + 1.0, 1)]
+BOUNDARY_IDS = ["inside-window", "past-window"]
+
+
+@pytest.mark.parametrize("age_h, expect_stale", BOUNDARY_CASES, ids=BOUNDARY_IDS)
+def test_default_window_is_the_one_the_module_declares(tmp_path, age_h, expect_stale):
+    """The behavioural boundary is exactly `DEFAULT_MAX_AGE_S`.
 
     Measured by behaviour on either side of the boundary rather than by reading
-    the argparse default, so a default changed anywhere in the call chain fails.
+    the argparse default, so a default overridden anywhere in the call chain
+    fails: `--max-age-s` is not passed here at all.
     """
     docs_root, output_dir = write_fixture(tmp_path, "fixture_field.xdmf")
     artifact = output_dir / "fixture_field.xdmf"
@@ -308,11 +318,9 @@ def test_tracked_in_tree_artifact_is_exempt_from_freshness(tmp_path):
     assert status == checker.EXIT_STALE_ONLY
 
 
-@pytest.mark.parametrize(
-    "age_h, expect_stale", [(47.0, 0), (49.0, 1)], ids=["within-48h", "past-48h"]
-)
+@pytest.mark.parametrize("age_h, expect_stale", BOUNDARY_CASES, ids=BOUNDARY_IDS)
 def test_default_window_holds_on_example_relative_paths(tmp_path, age_h, expect_stale):
-    """(c) The 47 h / 49 h boundary is the same wherever the artifact lives."""
+    """(c) The default-window boundary is the same wherever the artifact lives."""
     docs_root, example_output, unrelated = write_example_fixture(tmp_path, "fixture_field.xdmf")
     artifact = example_output / "fixture_field.xdmf"
     artifact.write_text("<Xdmf/>\n")
@@ -323,13 +331,20 @@ def test_default_window_holds_on_example_relative_paths(tmp_path, age_h, expect_
     assert status == (checker.EXIT_STALE_ONLY if expect_stale else checker.EXIT_OK)
 
 
-def _census_of_the_committed_tree() -> tuple[int, int, int]:
+def _stale_census(window_s: float) -> dict:
     """Walk the tree the way the fix says the checker must, independently.
 
-    Returns `(stale_count, checked_artifacts, hidden_by_the_old_exemption)`.
+    Returns a dict with the stale *set* (resolved artifact paths), the example
+    directories those artifacts belong to, how many artifacts were age-checked
+    at all, and how many of them the pre-`EX-29` basename exemption hid.
     Deliberately does not import the checker's resolution helpers — a
     re-implementation that agrees is evidence; a call into the same function
-    would only assert it equals itself.
+    would only assert it equals itself. `artifact_mtime` is the one exception:
+    it is the *reading* of an artifact's age (`.bp` directories need the
+    newest child, `EX-14`), not the rule under test.
+
+    `window_s` is a parameter so the same walk produces the pre-`OPS-42` (48 h)
+    and post-`OPS-42` (14 d) censuses from one implementation.
     """
     examples = REPO_ROOT / "examples"
     tracked = {
@@ -349,7 +364,10 @@ def _census_of_the_committed_tree() -> tuple[int, int, int]:
 
     root_output = REPO_ROOT / "paraview_output"
     now = time.time()
-    stale = checked = hidden = 0
+    stale: set[Path] = set()
+    covered: set[Path] = set()
+    cited_by: set[Path] = set()
+    checked = hidden = 0
     for name, guides in cited.items():
         if name.endswith(".py") or name in checker.ALLOWLIST or name in tracked:
             continue
@@ -362,10 +380,29 @@ def _census_of_the_committed_tree() -> tuple[int, int, int]:
                 # The old code exempted this by basename and never applied the
                 # age rule to it.
                 hidden += 1
-            if now - checker.artifact_mtime(target) > 172800.0:
-                stale += 1
+            if now - checker.artifact_mtime(target) > window_s:
+                stale.add(target)
+                covered.add(directory)
+                cited_by.update(guides)
             break
-    return stale, checked, hidden
+    return {
+        "stale": stale,
+        "covered": covered,
+        # The guides citing at least one stale artifact — "how many examples the
+        # signal covers" in the units the 02:15 weekly used (40 of 47), which is
+        # per *guide*, not per output directory (several guides share one
+        # `paraview_output/`).
+        "cited_by": cited_by,
+        "checked": checked,
+        "hidden": hidden,
+    }
+
+
+def _census_of_the_committed_tree() -> tuple[int, int, int]:
+    """`(stale_count, checked_artifacts, hidden_by_the_old_exemption)` at the
+    module's declared default window."""
+    census = _stale_census(checker.DEFAULT_MAX_AGE_S)
+    return len(census["stale"]), census["checked"], census["hidden"]
 
 
 def test_committed_tree_stale_count_equals_an_independent_full_census():
@@ -422,3 +459,117 @@ def test_the_orphaned_magnetostatics_output_dir_is_gone():
     were an orphan that the example-relative resolution would now read as the
     example's live output."""
     assert not (REPO_ROOT / "examples" / "magnetostatics" / "paraview_output").exists()
+
+
+# --------------------------------------------------------------------------
+# `OPS-42` (2026-09-09): the default window moves 172 800 s (48 h) -> 1 209 600 s
+# (14 days), because the corpus that ran daily when `OPS-15` chose 48 h now runs
+# weekly. Pre-change census on this tree: `dead=0 guide=0 stale=87
+# stale_severity=report exit=2`
+# (`20260909T141114Z_ANS-2-step1-census.log:126`); the weekly's health finding
+# read `stale=81` over 40 of the 47 examples
+# (`20260907T140926Z_EX-53-census-post.log:120`).
+#
+# The two tests below are the chunk's anchor and its negative control. The
+# anchor alone cannot detect a threshold change that *disabled* the check —
+# both sides would read zero and agree — which is exactly why the control is
+# here and why it asserts a rise of exactly 1 rather than "at least 1".
+# --------------------------------------------------------------------------
+
+# The window this replaced, kept only to print the before/after comparison the
+# `OPS-42` item asks for. It is not a threshold any assertion here depends on.
+PRE_OPS42_MAX_AGE_S = 172800.0
+
+
+def test_reported_stale_set_equals_an_independent_recomputation_at_the_new_window():
+    """Anchor: `stale=` is exactly the set recomputed from the artifacts' own
+    `st_mtime` against `DEFAULT_MAX_AGE_S`, with `dead=0 guide=0` unchanged.
+
+    This is a consistency identity the checker cannot satisfy by accident: the
+    recomputation walks the guides, resolves each artifact the way `EX-29` says
+    it must, and applies the age rule itself. Also prints the before/after
+    counts and how many example output directories they cover, so the review
+    can see whether the signal became informative — a post-change `stale` that
+    is still most of the corpus is a finding about the cadence, not a reason to
+    move the window again.
+    """
+    status, counts = run_checker()
+    after = _stale_census(checker.DEFAULT_MAX_AGE_S)
+    before = _stale_census(PRE_OPS42_MAX_AGE_S)
+
+    total_guides = len(sorted((REPO_ROOT / "examples").rglob("*.md")))
+
+    def _cover(census: dict) -> str:
+        return (
+            f"{len(census['stale'])} stale artifact(s) cited by "
+            f"{len(census['cited_by'])} guide(s) of {total_guides}, in "
+            f"{len(census['covered'])} output dir(s)"
+        )
+
+    print(
+        f"OPS-42 window {PRE_OPS42_MAX_AGE_S:.0f} s -> "
+        f"{checker.DEFAULT_MAX_AGE_S:.0f} s: "
+        f"before {_cover(before)}; after {_cover(after)}; "
+        f"{after['checked']} artifact(s) age-checked in total; "
+        f"reported stale={counts['stale']}"
+    )
+    for target in sorted(after["stale"]):
+        print(f"  still stale at 14 d: {target.relative_to(REPO_ROOT)}")
+
+    assert counts["dead"] == 0, "a guide names a file no run produces"
+    assert counts["guide"] == 0, "an example is missing a guide or a heading"
+    assert counts["stale_severity"] == "report", "OPS-19's default must not move"
+    # The identity. A mismatch means the checker's age arithmetic disagrees with
+    # the filesystem, which is worth more than the threshold: report both sets,
+    # open a known-issues row and revert the default (`OPS-42`, negative result).
+    assert counts["stale"] == len(after["stale"]), (
+        "reported stale count disagrees with the independent recomputation; "
+        f"recomputed set = {sorted(str(p.relative_to(REPO_ROOT)) for p in after['stale'])}"
+    )
+    # Widening a window can only ever un-flag artifacts, never flag new ones.
+    assert after["stale"] <= before["stale"]
+    assert status == expected_status(counts)
+
+
+def test_backdating_one_artifact_past_the_new_window_still_reports_it_stale(tmp_path):
+    """Negative control: the check is widened, not switched off.
+
+    Three artifacts in one fixture tree, all fresh (`stale=0`); push exactly one
+    past `DEFAULT_MAX_AGE_S` and the reported count must rise by **exactly 1**
+    and the exit code must move OK -> stale-only. A
+    threshold change that quietly disabled the age rule passes the anchor above
+    and fails here. `os.utime` is applied only to files this fixture created —
+    never to a committed artifact or to the corpus's own scratch.
+    """
+    docs_root = tmp_path / "guides"
+    docs_root.mkdir()
+    output_dir = tmp_path / "out"
+    output_dir.mkdir()
+    names = ["alpha_field.xdmf", "beta_field.h5", "gamma_metrics.json"]
+    (docs_root / "01_fixture.md").write_text(
+        "# Fixture guide\n\n"
+        "## What this demonstrates\n\nThree run artifacts.\n\n"
+        "## How to run it\n\n"
+        + "".join(f"Open `{name}` after the run.\n\n" for name in names)
+        + "## How to analyze it, step by step\n\n1. Look at them.\n"
+    )
+    for name in names:
+        (output_dir / name).write_text("{}\n")
+
+    baseline_status, baseline = run_checker(*fixture_args(docs_root, output_dir))
+    assert (baseline["dead"], baseline["guide"], baseline["stale"]) == (0, 0, 0)
+    assert baseline_status == checker.EXIT_OK
+
+    backdated = output_dir / names[1]
+    age(backdated, WINDOW_H + 1.0)
+
+    status, counts = run_checker(*fixture_args(docs_root, output_dir))
+    print(
+        f"negative control: stale {baseline['stale']} -> {counts['stale']} "
+        f"after backdating {backdated.name} to {WINDOW_H + 1.0:.1f} h "
+        f"(window {WINDOW_H:.1f} h)"
+    )
+    assert counts["stale"] == baseline["stale"] + 1
+    assert (counts["dead"], counts["guide"]) == (0, 0)
+    assert status == checker.EXIT_STALE_ONLY
+    assert status == expected_status(counts)

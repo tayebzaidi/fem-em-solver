@@ -28,6 +28,17 @@ unless fixing it is the task.
 
 ## Failing tests
 
+### 🟡 OPEN 2026-09-09 (found by `OPS-42`, 16:30 implementer slot) — `test_the_in_tree_exemption_cannot_silently_widen` is red on `main`: **two `ans:` benchmark `metrics.json` were committed without being added to `COMMITTED_EXAMPLE_ARTIFACTS`**, which is exactly what that pinned set exists to make loud
+
+| | |
+| --- | --- |
+| **Test** | `tests/unit/test_doc_reference_exit_codes.py::test_the_in_tree_exemption_cannot_silently_widen`. On `main`, at any rank width; pure filesystem, no solve. |
+| **Verified at** | `ddbde16` + `OPS-42`'s window change (which cannot reach this test — it compares `git ls-files` output against a hard-coded set and never looks at an mtime). `20260909T213349Z_OPS-42.log` — `-n 1`, `timeout -k 30 120`, `-v -s --tb=short`: **1 failed / 16 passed in 6.02 s**, `Status: 1`, elapsed 7 s (`:224`, footer `:227–228`). |
+| **Symptom** | `AssertionError` at `:210`: the tracked set now has **five** members, the pinned `COMMITTED_EXAMPLE_ARTIFACTS` three. The two extras are `examples/ansys_benchmarks/birdcage_four_port_10_64_128MHz/metrics.json` and `examples/ansys_benchmarks/birdcage_coil_driven_sar_10MHz/metrics.json`. |
+| **Cause — diagnosed, and it is not a defect in the checker** | `ANS-1`'s rule has each `ans:` case commit its own `metrics.json`, and the freshness exemption is "git tracks it". `EX-29` pinned the tracked *paths* so that widening the exemption has to be declared; the two new cases committed their `metrics.json` (the SAR case in this same day's 09:00 slot) without declaring it. The test is doing its job — the record is stale, the rule is not. |
+| **Consequence** | One red name in an otherwise green module. No checker behaviour is wrong: the two new artifacts are genuinely committed and genuinely exempt from freshness, and the exemption has **not** widened to untracked scratch (that half of the rule is asserted by `test_tracked_in_tree_artifact_is_exempt_from_freshness`, green in the same window). `OPS-42` deselected this one name for its closing window (`20260909T213444Z_OPS-42.log`, 16 passed / 1 deselected, `Status: 0`) rather than editing a record it does not own. |
+| **Resolves with** | Adding the two paths to `COMMITTED_EXAMPLE_ARTIFACTS` in the chunk that owns the record class (a one-line set edit plus the provenance comment the block already carries), or a review ruling that the `ans:` `metrics.json` family should be matched by pattern rather than pinned path — which would trade this maintenance for a weaker guarantee and should be decided, not drifted into. |
+
 ### 🔴 OPEN 2026-09-09 (`ANS-4` step 2a, 04:30 implementer slot) — the ×0.75 rung of the `ANS-4` convergence ladder **breaks C4 symmetry**: refining `conductor_resolution` moves the `Z` class spreads from **0.1012 / 0.0916 / 0.0654%** at ×1 to **0.5390 / 0.4591 / 1.6886%**, so the finer rung fails the imported, unmoved `ADJACENT_SPREAD_BAND` = 0.5% and is not a usable ladder point
 
 | | |

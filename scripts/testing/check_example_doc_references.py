@@ -24,13 +24,24 @@ exist. Two classes of reference, checked differently:
   written it) and the ``.bp`` instructions in ``PARAVIEW_GUIDE.md`` (VTX export
   raises on the N1curl potential, so the directory is never written).
 
-  The default window is **48 h** (`OPS-15`, 2026-08-10). One hour was shorter
-  than the 90-minute automation slot grid, so every slot that ran the checker
-  after its examples had aged half an hour paid an 80–200 s refresh solve — a
-  structural tax, not a freshness finding. 48 h keeps a committed guide green
-  across a review interval and still flags the one genuinely dead reference
-  this pass has ever caught (a 158-h-old `.bp`, `EX-14`). In-slot controls that
-  want the strict reading pass `--max-age-s 1` explicitly.
+  The default window is **1 209 600 s = 14 days** (`OPS-42`, 2026-09-09). It
+  was **48 h** from `OPS-15` (2026-08-10) until then, and 1 h before that: one
+  hour was shorter than the 90-minute automation slot grid, so every slot that
+  ran the checker after its examples had aged half an hour paid an 80–200 s
+  refresh solve — a structural tax, not a freshness finding, and 48 h kept a
+  committed guide green across a review interval. **Why it moved again:** the
+  corpus ran daily when 48 h was chosen and now runs weekly, so the window had
+  become a report of the run cadence rather than of staleness — the census read
+  `stale=81` over **40 of the 47 examples**, 85% of what it measures, oldest
+  ≈ 178 h (`20260907T140926Z_EX-53-census-post.log:120`). A signal that fires
+  on 85% of its population carries no information. 14 days is two weekly corpus
+  runs: an example that missed a whole cycle is still flagged, and nothing that
+  ran in the last cycle is. A reference no run has *ever* produced is caught by
+  the existence rule above, not by this window, so widening it does not weaken
+  the defect class the pass exists for. In-slot controls that want the strict
+  reading pass `--max-age-s 1` explicitly. The exit-code contract is untouched by the move (`OPS-19`):
+  staleness still never owns the exit code and ``--stale-severity`` still
+  defaults to ``report``.
 
 **Guide pass (`EX-15`)** — every entry ``./run_examples.sh --list`` enumerates
 must have a **same-stem** ``.md`` next to it (``01_lossy_plane_wave.py`` →
@@ -44,7 +55,7 @@ by the reference pass but do not satisfy the per-example requirement.
 Usage (run it *after* the examples whose artifacts are being checked):
 
     python3 scripts/testing/check_example_doc_references.py \
-        --output-dir paraview_output --max-age-s 172800
+        --output-dir paraview_output --max-age-s 1209600
 
 **Exit codes (`OPS-19`, 2026-08-16)** — staleness does not own the exit code:
 
@@ -80,6 +91,13 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 EXIT_OK = 0
 EXIT_HARD = 1
 EXIT_STALE_ONLY = 2
+
+# Default artifact-age window, in seconds (`OPS-42`, 2026-09-09: 172 800 = 48 h
+# -> 1 209 600 = 14 days; the reasoning is in the module docstring). Named here
+# for the same reason the exit codes are: the test module recomputes the stale
+# set against this window and must import it rather than restate the digit
+# (`ANS-1`), or the window and its test can drift apart silently.
+DEFAULT_MAX_AGE_S = 1209600.0
 
 RUNNER = REPO_ROOT / "scripts" / "run_examples.sh"
 
@@ -332,9 +350,12 @@ def main() -> int:
     parser.add_argument(
         "--max-age-s",
         type=float,
-        default=172800.0,
+        default=DEFAULT_MAX_AGE_S,
         help="an artifact older than this is treated as a stale leftover, not "
-        "as evidence that a run produces it (default: 172800 = 48 h)",
+        f"as evidence that a run produces it (default: {DEFAULT_MAX_AGE_S:.0f} "
+        "= 14 days, two weekly corpus runs; `OPS-42`, 2026-09-09, widened from "
+        "172800 = 48 h, which dated from a daily corpus cadence and had become "
+        "a report of that cadence rather than of staleness)",
     )
     parser.add_argument(
         "--docs-root",
