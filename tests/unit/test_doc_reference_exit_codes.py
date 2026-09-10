@@ -423,17 +423,58 @@ def test_committed_tree_stale_count_equals_an_independent_full_census():
     assert counts["stale"] == expected_stale
 
 
-# Measured 2026-08-24 (`git ls-files examples | grep -E '\.(xdmf|h5|bp|csv|json|
-# png|msh)$'`). The `EX-29` entry predicted the tracked set was empty; it is
-# not — three artifacts really are committed, and they are exactly the ones
-# whose exemption the pre-fix comment described ("an artifact committed next to
-# its own case"). Pinning the paths, not the count, is what stops the exemption
-# widening back to "any basename found under examples/".
+# Measured 2026-08-24 by `EX-29` (`git ls-files examples | grep -E
+# '\.(xdmf|h5|bp|csv|json|png|msh)$'`), re-measured and re-pinned 2026-09-09 by
+# `OPS-44`. The `EX-29` entry predicted the tracked set was empty; it is not —
+# artifacts really are committed, and they are exactly the ones whose exemption
+# the pre-fix comment described ("an artifact committed next to its own case").
+# Pinning the paths, not the count, is what stops the exemption widening back to
+# "any basename found under examples/".
+#
+# Provenance of each member, and why this record moved:
+#   * `magnetostatics/straight_wire_validation.png` and the
+#     `loop_over_lossy_slab_10MHz` / `two_torus_gap_ports_10MHz`
+#     `metrics.json` — the three `EX-29` measured on 2026-08-24.
+#   * `ansys_benchmarks/birdcage_four_port_10_64_128MHz/metrics.json`
+#     (`ANS-2` step 1) and
+#     `ansys_benchmarks/birdcage_coil_driven_sar_10MHz/metrics.json`
+#     (`ANS-4`, committed 2026-09-09) — each landed under `ANS-1`'s rule that
+#     an `ans:` case commits its own `metrics.json`, but neither declared the
+#     widening here, so this test went red on `main` (found by `OPS-42`,
+#     2026-09-09, `20260909T213349Z_OPS-42.log:194–195`). `OPS-44` writes that
+#     declaration late rather than replacing the pin with an `ans:*/metrics.json`
+#     glob: the 2026-09-09 18:00 review ruled that a pattern would trade one
+#     line of maintenance per benchmark case for a weaker guarantee, and the
+#     point of the pin is that widening the exemption must be *declared*.
 COMMITTED_EXAMPLE_ARTIFACTS = {
+    "examples/ansys_benchmarks/birdcage_coil_driven_sar_10MHz/metrics.json",
+    "examples/ansys_benchmarks/birdcage_four_port_10_64_128MHz/metrics.json",
     "examples/ansys_benchmarks/loop_over_lossy_slab_10MHz/metrics.json",
     "examples/ansys_benchmarks/two_torus_gap_ports_10MHz/metrics.json",
     "examples/magnetostatics/straight_wire_validation.png",
 }
+
+
+def _tracked_example_artifacts_via_git() -> set[str]:
+    """The pinned set re-derived *independently of the checker*: plain
+    `git ls-files examples` filtered on `ARTIFACT_SUFFIXES`.
+
+    Deliberately not `checker.tracked_artifacts` — that is the code under test,
+    and an anchor that called it would only prove the checker agrees with
+    itself.
+    """
+    proc = subprocess.run(
+        ["git", *checker.safe_directory_args(REPO_ROOT), "ls-files", "-z", "--", "examples"],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    return {
+        entry
+        for entry in proc.stdout.split("\0")
+        if entry and entry.endswith(checker.ARTIFACT_SUFFIXES)
+    }
 
 
 def test_the_in_tree_exemption_cannot_silently_widen():
@@ -444,13 +485,77 @@ def test_the_in_tree_exemption_cannot_silently_widen():
     tracked set, and the tracked set is pinned: a chunk that commits a new
     artifact has to say so here, and a chunk that re-broadens the rule to
     untracked scratch fails on the extra entries.
+
+    `OPS-44` anchor: the identity holds against an *independent* re-derivation
+    from `git ls-files`, not merely against a count.
     """
     tracked = {
         str(path.relative_to(REPO_ROOT))
         for paths in checker.tracked_artifacts(REPO_ROOT / "examples").values()
         for path in paths
     }
+    from_git = _tracked_example_artifacts_via_git()
+    print(f"OPS-44 pinned={len(COMMITTED_EXAMPLE_ARTIFACTS)} "
+          f"checker={len(tracked)} git_ls_files={len(from_git)}")
+    for path in sorted(from_git):
+        print(f"  tracked example artifact: {path}")
+    assert tracked == from_git, (
+        "checker.tracked_artifacts disagrees with git ls-files — that is a "
+        "defect in the checker, not in the pinned record"
+    )
     assert tracked == COMMITTED_EXAMPLE_ARTIFACTS
+    assert len(COMMITTED_EXAMPLE_ARTIFACTS) == 5
+
+
+def test_dropping_any_pinned_path_turns_the_identity_red():
+    """`OPS-44` negative control, half 1 — separation arithmetic.
+
+    The anchor above is a set equality, so it can only be trusted if removing
+    any single member breaks it. A pin "fixed" by deleting or weakening the
+    assertion passes the anchor and fails here.
+    """
+    tracked = {
+        str(path.relative_to(REPO_ROOT))
+        for paths in checker.tracked_artifacts(REPO_ROOT / "examples").values()
+        for path in paths
+    }
+    for dropped in sorted(COMMITTED_EXAMPLE_ARTIFACTS):
+        weakened = COMMITTED_EXAMPLE_ARTIFACTS - {dropped}
+        assert tracked != weakened, (
+            f"the identity survives dropping {dropped} — the pin is not "
+            "actually constraining that path"
+        )
+        assert len(weakened) == 4
+
+
+def test_an_untracked_example_artifact_never_enters_the_exemption(tmp_path):
+    """`OPS-44` negative control, half 2 — the exemption is still "git tracks
+    it", not "it lives under an example directory".
+
+    Mirrors `test_tracked_in_tree_artifact_is_exempt_from_freshness` with the
+    `git add` removed: same tree, same age, no index entry. If the exemption had
+    widened back to "any basename under `examples/`", this artifact would be
+    exempt and the census would read clean.
+    """
+    docs_root, example_output, unrelated = write_example_fixture(tmp_path, "fixture_field.xdmf")
+    artifact = example_output / "fixture_field.xdmf"
+    artifact.write_text("<Xdmf/>\n")
+    age(artifact, 10.0)
+
+    git("init", "-q", cwd=docs_root)  # a work tree, but the artifact is not added
+
+    exempt = {
+        str(path)
+        for paths in checker.tracked_artifacts(docs_root).values()
+        for path in paths
+    }
+    print(f"OPS-44 untracked control: exemption holds {len(exempt)} path(s)")
+    assert str(artifact) not in exempt
+    assert exempt == set()
+
+    status, counts = run_checker(*fixture_args(docs_root, unrelated, "--max-age-s", "3600"))
+    assert (counts["dead"], counts["guide"], counts["stale"]) == (0, 0, 1)
+    assert status == checker.EXIT_STALE_ONLY
 
 
 def test_the_orphaned_magnetostatics_output_dir_is_gone():
