@@ -17,21 +17,32 @@
 # exits quietly — so the entry can sit in cron every night and cost nothing.
 set -uo pipefail
 
+# Which tier this invocation runs. `xl` = 2 h / 512 GiB / 3 per week (Sun-Fri
+# 02:00); `xxl` = 8 h / 754 GiB / 1 per week (Saturday 02:00). Operator
+# directive 2026-09-10. Each tier has its own queue file, its own ledger and
+# its own compose service; the guard enforces the ceilings and the budget.
+TIER="${1:-xl}"
+case "$TIER" in
+  xl)  SERVICE="fem-em-solver-xl"  ;;
+  xxl) SERVICE="fem-em-solver-xxl" ;;
+  *)   echo "usage: xl-run.sh [xl|xxl]" >&2; exit 2 ;;
+esac
+
 REPO="/home/taz5297/Development/fem-em-solver"
 # Overridable because $HOME is read-only inside the agent sandbox; cron has a
 # writable one. `housekeeping.sh` carries the same escape hatch.
-LOCK="${FEM_EM_XL_LOCK:-$HOME/.fem-em-xl.lock}"   # its own lock, NOT the automation flock:
+LOCK="${FEM_EM_XL_LOCK:-$HOME/.fem-em-$TIER.lock}"   # its own lock, NOT the automation flock:
                                       # a 2 h XL window must not starve the
                                       # 02:15 weekly or the 03:00 review, both
                                       # of which are documentation-only.
 LOGDIR="$REPO/logs/automation"
-QUEUE="$REPO/scripts/automation/xl-queue.env"
+QUEUE="$REPO/scripts/automation/$TIER-queue.env"
 export PATH="$HOME/.local/bin:/usr/local/bin:/usr/bin:/bin"
 
 mkdir -p "$LOGDIR"
-LOG="$LOGDIR/$(date -u +%Y%m%dT%H%M%SZ)_xl-run.log"
+LOG="$LOGDIR/$(date -u +%Y%m%dT%H%M%SZ)_${TIER}-run.log"
 exec >>"$LOG" 2>&1
-echo "$(date -u) xl-run starting"
+echo "$(date -u) xl-run starting: tier=$TIER service=$SERVICE"
 
 # Distinguish "cannot create the lock" from "another window holds it". They had
 # the same message and the same exit 0, so an unwritable lock path looked
@@ -41,7 +52,7 @@ if ! exec 9>"$LOCK" 2>/dev/null; then
   exit 1
 fi
 if ! flock -n 9; then
-  echo "$(date -u) another XL window holds the lock; skipping"
+  echo "$(date -u) another $TIER window holds the lock; skipping"
   exit 0
 fi
 
@@ -81,17 +92,17 @@ fi
 # §5.1: restart the service immediately before the window so the container's
 # `memory.peak` belongs to this run — it is per container lifetime and cannot
 # be reset on this kernel.
-docker compose -f docker/docker-compose.yml --profile xl up -d --force-recreate fem-em-solver-xl
+docker compose -f docker/docker-compose.yml --profile "$TIER" up -d --force-recreate "$SERVICE"
 sleep 5
 
-echo "$(date -u) running XL chunk $CHUNK"
+echo "$(date -u) running $TIER chunk $CHUNK"
 # The box is quiet by schedule, so the guard's interactive box-confirmation is
 # satisfied here by the clock rather than by a human at 02:00.
 FEM_EM_XL_BOX_OK=1 scripts/testing/run_and_log.sh "$CHUNK" "$CMD"
 STATUS=$?
 echo "$(date -u) run_and_log exit=$STATUS"
 
-docker compose -f docker/docker-compose.yml --profile xl stop fem-em-solver-xl
+docker compose -f docker/docker-compose.yml --profile "$TIER" stop "$SERVICE"
 
 # Consume the queue entry either way: a failed XL window has still spent its
 # slot (§5.1), and re-running it unattended tomorrow is exactly what the
@@ -103,9 +114,9 @@ git add -A
 if git diff --cached --quiet; then
   echo "$(date -u) nothing to commit"
 else
-  git -c user.name="fem-em xl-run" -c user.email="xl-run@localhost" commit -q -m "chore(xl): scheduled XL window — $CHUNK $(date -u +%Y-%m-%d)
+  git -c user.name="fem-em xl-run" -c user.email="xl-run@localhost" commit -q -m "chore($TIER): scheduled $TIER window — $CHUNK $(date -u +%Y-%m-%d)
 
-Ran by scripts/automation/xl-run.sh at the 02:00 slot. Harness log, ledger row
+Ran by scripts/automation/xl-run.sh $TIER at the 02:00 slot. Harness log, ledger row
 and test-results row are in this commit; the readout still needs a human or a
 review to interpret it, and the ledger's last four columns are filled by hand."
   echo "$(date -u) committed $(git rev-parse --short HEAD)"

@@ -216,13 +216,23 @@ START_EPOCH="$(date -u +%s)"
 # the fem-em-solver-xl service consumes the weekly slot the moment it starts, so
 # the ledger row is appended BEFORE the run (a killed run still spent the box);
 # the bash guard reads this table. Ranks/cells/memory/readout are filled by hand.
-XL_LEDGER="$ROOT_DIR/docs/testing/xl-ledger.md"
+# Two big-compute tiers, each with its own ledger (operator directive
+# 2026-09-10). Test xxl first: "fem-em-solver-xl" is not a substring of
+# "fem-em-solver-xxl", but the order is explicit so a rename cannot silently
+# file an xxl run in the xl budget.
+if [[ "$CMD" == *fem-em-solver-xxl* ]]; then
+  XL_LEDGER="$ROOT_DIR/docs/testing/xxl-ledger.md"
+  XL_TIER="XXL"
+else
+  XL_LEDGER="$ROOT_DIR/docs/testing/xl-ledger.md"
+  XL_TIER="XL"
+fi
 IS_XL=0
-if [[ "$CMD" == *fem-em-solver-xl* && -f "$XL_LEDGER" ]]; then
+if [[ ( "$CMD" == *fem-em-solver-xl* || "$CMD" == *fem-em-solver-xxl* ) && -f "$XL_LEDGER" ]]; then
   IS_XL=1
   printf '| %s | %s | `%s` | | | | | |\n' \
     "$(date -u '+%Y-%m-%d')" "$CHUNK_ID" "$(basename "$LOG_FILE")" >> "$XL_LEDGER"
-  echo "[harness] XL slot consumed: row appended to $(basename "$XL_LEDGER")" >> "$LOG_FILE"
+  echo "[harness] ${XL_TIER} slot consumed: row appended to $(basename "$XL_LEDGER")" >> "$LOG_FILE"
 fi
 
 set +e

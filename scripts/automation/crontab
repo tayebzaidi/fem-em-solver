@@ -32,7 +32,18 @@
 # weekly or the 03:00 review — both documentation-only. Worst case it ends at
 # 04:00, before the 04:30 implementer slot. Exits in a second when nothing is
 # queued, which is the normal state.
-0 2 * * * /home/taz5297/Development/fem-em-solver/scripts/automation/xl-run.sh
+# 02:00 Sun-Fri: the XL window (2 h, 512 GiB), if one is queued in
+# scripts/automation/xl-queue.env. Budget is three per trailing 7 days,
+# enforced by the guard against xl-ledger.md, so this entry can fire nightly
+# and simply does nothing once the budget is spent or the queue is empty.
+0 2 * * 0-5 /home/taz5297/Development/fem-em-solver/scripts/automation/xl-run.sh xl
+# 02:00 Saturday: the XXL window (8 h, 754 GiB, one per week), from
+# scripts/automation/xxl-queue.env. Saturday is its own day so the two tiers
+# cannot both start at 02:00 and contend for the box; 8 h from 02:00 ends at
+# 10:00, so it overlaps the 04:30-09:00 implementer slots -- those are 2-8 rank
+# jobs and the box is 36 cores, but a Saturday XXL window is the one time the
+# machine is deliberately oversubscribed. Operator directive 2026-09-10.
+0 2 * * 6 /home/taz5297/Development/fem-em-solver/scripts/automation/xl-run.sh xxl
 #
 # CANONICAL COPY. The live schedule lives in the user crontab spool; this file
 # is the version-controlled source of truth for it. Install with:

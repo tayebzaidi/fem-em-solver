@@ -25,11 +25,37 @@ import sys
 from pathlib import Path
 
 RANK_CEILING = 12
-XL_SERVICE = "fem-em-solver-xl"
-XL_RANK_CEILING = 16
-XL_TIMEOUT_CEILING_S = 7200
+# Two big-compute tiers, gated the same way and budgeted separately
+# (operator directive 2026-09-10). `xl` moved from one run per 7 days to a
+# budget of three, because the constraint turned out to be wall-clock and not
+# memory; `xxl` is the Saturday window for what a 2 h slot cannot hold.
+_DOCS = Path(__file__).resolve().parents[3] / "docs" / "testing"
+TIERS = {
+    "xl": {
+        "service": "fem-em-solver-xl",
+        "ranks": 16,
+        "timeout_s": 7200,          # 2 h
+        "per_week": 3,              # trailing 7 days
+        "ledger": _DOCS / "xl-ledger.md",
+    },
+    "xxl": {
+        "service": "fem-em-solver-xxl",
+        "ranks": 16,
+        "timeout_s": 28800,         # 8 h
+        "per_week": 1,
+        "ledger": _DOCS / "xxl-ledger.md",
+    },
+}
+# Longest service name first: "fem-em-solver-xl" is not a substring of
+# "fem-em-solver-xxl", but matching order is still made explicit so a future
+# rename cannot silently send an xxl command down the xl path.
+TIER_ORDER = ("xxl", "xl")
+
+XL_SERVICE = TIERS["xl"]["service"]          # kept: referenced in messages
+XL_RANK_CEILING = TIERS["xl"]["ranks"]
+XL_TIMEOUT_CEILING_S = TIERS["xl"]["timeout_s"]
 XL_INTERVAL_DAYS = 7
-XL_LEDGER = Path(__file__).resolve().parents[3] / "docs" / "testing" / "xl-ledger.md"
+XL_LEDGER = TIERS["xl"]["ledger"]
 XL_OVERRIDE = Path(__file__).resolve().parents[1] / "xl-override.env"
 
 # Shared-box courtesy for the XL tier (operator directive 2026-09-09). An XL
@@ -53,13 +79,56 @@ def deny(reason: str) -> None:
     sys.exit(0)
 
 
-def last_xl_run() -> "dt.date | None":
-    """Date of the most recent ledger row (`| YYYY-MM-DD | ...`), or None."""
+def ledger_dates(ledger: Path) -> "list[dt.date]":
+    """Every run date in a tier's ledger (`| YYYY-MM-DD | ...`)."""
     try:
-        text = XL_LEDGER.read_text(encoding="utf-8")
+        text = ledger.read_text(encoding="utf-8")
     except OSError:
-        return None
-    dates = [dt.date.fromisoformat(m) for m in re.findall(r"^\|\s*(\d{4}-\d{2}-\d{2})\s*\|", text, flags=re.M)]
+        return []
+    return [dt.date.fromisoformat(m)
+            for m in re.findall(r"^\|\s*(\d{4}-\d{2}-\d{2})\s*\|", text, flags=re.M)]
+
+
+def runs_in_trailing_week(ledger: Path) -> int:
+    """Rows inside the trailing 7 days that actually consumed the box.
+
+    The budget is on **box time**, not on attempts. `run_and_log.sh` writes the
+    row when a window starts and fills the elapsed column when it ends, so a
+    window that never started carries 0 — and on 2026-09-10 two of five rows
+    were exactly that (docker unreachable, 0 s, no compute). Charging those
+    against a three-per-week budget would price an infrastructure failure like
+    a two-hour solve.
+
+    This cannot be gamed the way "re-run until it works" could: you cannot
+    produce a 0-second row for a run that did any work, because the harness
+    measures the elapsed time itself.
+    """
+    cutoff = dt.date.today() - dt.timedelta(days=XL_INTERVAL_DAYS - 1)
+    try:
+        text = ledger.read_text(encoding="utf-8")
+    except OSError:
+        return 0
+    n = 0
+    for row in re.findall(r"^\|\s*(\d{4}-\d{2}-\d{2})\s*\|(.*)$", text, flags=re.M):
+        date_s, rest = row
+        try:
+            when = dt.date.fromisoformat(date_s)
+        except ValueError:
+            continue
+        if when < cutoff:
+            continue
+        cells = [c.strip() for c in rest.split("|")]
+        # date | chunk | log | ranks | cells | peak | elapsed | readout
+        elapsed = cells[5] if len(cells) > 5 else ""
+        if elapsed in ("", "-", "\u2014") or elapsed == "0":
+            continue          # never started: no box time spent
+        n += 1
+    return n
+
+
+def last_xl_run() -> "dt.date | None":
+    """Date of the most recent `xl` run. Kept for callers and tests."""
+    dates = ledger_dates(XL_LEDGER)
     return max(dates) if dates else None
 
 
@@ -142,40 +211,44 @@ def xl_load_check(cmd: str) -> "str | None":
     return None
 
 
-def check_xl(cmd: str) -> None:
-    """The four XL-tier conditions; deny on the first that fails."""
+def check_tier(cmd: str, tier: str) -> None:
+    """The tier's four conditions; deny on the first that fails."""
+    spec = TIERS[tier]
+    name, ceiling = spec["service"], spec["timeout_s"]
+
     if "run_and_log.sh" not in cmd:
-        deny(f"Commands against {XL_SERVICE} must go through scripts/testing/run_and_log.sh "
-             "(XL tier, PROJECT_PLAN §5.1).")
+        deny(f"Commands against {name} must go through scripts/testing/run_and_log.sh "
+             f"({tier.upper()} tier, PROJECT_PLAN §5.1).")
+
     timeouts = [int(v) for v in re.findall(r"timeout\s+-k\s+\d+\s+(\d+)", cmd)]
     if not timeouts:
-        deny(f"Commands against {XL_SERVICE} must carry `timeout -k 30 <s>` with s <= "
-             f"{XL_TIMEOUT_CEILING_S} (XL tier ceiling 2 h).")
-    if max(timeouts) > XL_TIMEOUT_CEILING_S:
-        deny(f"timeout {max(timeouts)} s exceeds the XL tier ceiling of {XL_TIMEOUT_CEILING_S} s.")
+        deny(f"Commands against {name} must carry `timeout -k <n> <s>` with s <= "
+             f"{ceiling} ({tier.upper()} tier ceiling {ceiling // 3600} h).")
+    if max(timeouts) > ceiling:
+        deny(f"timeout {max(timeouts)} s exceeds the {tier.upper()} tier ceiling of {ceiling} s.")
+
     busy = xl_load_check(cmd)
     if busy is not None:
-        deny(f"XL window postponed — {busy}")
+        deny(f"{tier.upper()} window postponed — {busy}")
 
     # NOTE (2026-09-09): a mandatory per-run "box confirmed free" token used to
-    # live here. Removed the same day. The box-contention problem is solved by
-    # *scheduling* instead — XL windows run from cron at 02:00 via
-    # scripts/automation/xl-run.sh, when the machine is quiet, so nothing has
-    # to detect a host this sandbox cannot see. The token also made ordinary
-    # work impossible: any file or command merely containing the XL command
-    # matches the trip-wire below, so it blocked editing this guard and even
-    # writing the queue file. FEM_EM_XL_BOX_OK is still honoured where set (the
-    # scheduled launcher sets it); it is no longer required.
+    # live here. Removed the same day — see the scheduling note in §5.1.
 
-    last = last_xl_run()
-    if last is not None:
-        age = (dt.date.today() - last).days
-        if age < XL_INTERVAL_DAYS and xl_interval_override() is None:
-            deny(f"The XL slot was used {age} day(s) ago ({last.isoformat()}, {XL_LEDGER.name}); "
-                 f"one XL run per {XL_INTERVAL_DAYS} days (operator directive 2026-09-05). "
-                 "Shrink the case to the heavy tier or wait for the slot. "
-                 f"An operator may authorise an exception in {XL_OVERRIDE.name} "
-                 "(dated, self-expiring); a scheduled session may not write one.")
+    used = runs_in_trailing_week(spec["ledger"])
+    budget = spec["per_week"]
+    if used >= budget and xl_interval_override() is None:
+        recent = sorted(set(ledger_dates(spec["ledger"])))[-budget:]
+        deny(f"The {tier.upper()} budget for the trailing {XL_INTERVAL_DAYS} days is spent: "
+             f"{used} of {budget} runs already recorded ({', '.join(d.isoformat() for d in recent)}, "
+             f"{spec['ledger'].name}). Operator directive 2026-09-10. Wait for the oldest to age "
+             f"out, shrink the case to a tier that fits, or have an operator authorise an "
+             f"exception in {XL_OVERRIDE.name} (dated, self-expiring); a scheduled session may "
+             "not write one.")
+
+
+def check_xl(cmd: str) -> None:
+    """Back-compatible entry point: the `xl` tier's conditions."""
+    check_tier(cmd, "xl")
 
 
 def main() -> None:
@@ -189,7 +262,12 @@ def main() -> None:
     # command), not any mention of its name — heredocs, greps and commit
     # messages that name the service are not XL runs. `--profile xl up/stop`
     # is service lifecycle, not compute, and is not gated either.
-    targets_xl = re.search(r"docker\s+compose[^;&|]*\bexec\b[^;&|]*" + re.escape(XL_SERVICE), cmd) is not None
+    targets_tier = None
+    for _tier in TIER_ORDER:
+        if re.search(r"docker\s+compose[^;&|]*\bexec\b[^;&|]*" + re.escape(TIERS[_tier]["service"]), cmd):
+            targets_tier = _tier
+            break
+    targets_xl = targets_tier is not None
 
     # Rule 1: rank ceiling, absolute — applies even inside harness commands.
     for m in re.finditer(r"mpi(?:exec|run)\s+(?:-n|-np)\s+(\d+)", cmd):
@@ -201,11 +279,13 @@ def main() -> None:
                 f"smallest rank count that fits the tier. (Up to {XL_RANK_CEILING} ranks "
                 f"exist only in the weekly XL slot against {XL_SERVICE} — PROJECT_PLAN §5.1.)"
             )
-        if n > XL_RANK_CEILING:
-            deny(f"mpiexec -n {n} exceeds the XL tier's {XL_RANK_CEILING}-rank ceiling.")
+        tier_ranks = TIERS[targets_tier]["ranks"] if targets_tier else XL_RANK_CEILING
+        if n > tier_ranks:
+            deny(f"mpiexec -n {n} exceeds the {(targets_tier or 'xl').upper()} tier's "
+                 f"{tier_ranks}-rank ceiling.")
 
-    if targets_xl:
-        check_xl(cmd)
+    if targets_tier is not None:
+        check_tier(cmd, targets_tier)
 
     # Rule 2: pytest runs go through the logging harness. Matching is scoped
     # to actual invocations (container exec, mpiexec, or a host-side pytest at

@@ -67,5 +67,40 @@ services:
         reservations:
           memory: 4G
 
+  # XXL tier (operator directive 2026-09-10): the Saturday window — 8 h, 754 GiB,
+  # once a week, for the cases the 2 h XL window cannot hold. The box is a
+  # 1.5 TB machine of which this WSL VM currently has 754 GiB; that is what the
+  # limit tracks, so raising the VM raises this.
+  #
+  # NOTE, deliberately: a container limit equal to the VM's *whole* memory is
+  # not really a limit — the kernel OOM killer reaches the run before the cgroup
+  # does, and it may take other containers with it. That is the operator's call
+  # (2026-09-10: "max available for now") and it is recorded rather than
+  # silently softened. If a run is ever OOM-killed with the VM starved rather
+  # than the cgroup capped, lowering this to ~700G is the first thing to try.
+  #
+  #   docker compose -f docker/docker-compose.yml --profile xxl up -d fem-em-solver-xxl
+  #   docker compose -f docker/docker-compose.yml --profile xxl stop fem-em-solver-xxl
+  fem-em-solver-xxl:
+    image: fem-em-solver:latest
+    container_name: fem-em-solver-xxl
+    profiles: ["xxl"]
+    volumes:
+      - ..:/workspace
+      - fem-em-cache:/root/.cache
+    environment:
+      - PYTHONPATH=/usr/local/dolfinx-real/lib/python3.12/dist-packages:/usr/local/lib:/workspace/src
+      - MPLBACKEND=Agg
+    working_dir: /workspace
+    command: /bin/bash
+    stdin_open: true
+    tty: true
+    deploy:
+      resources:
+        limits:
+          memory: 754G
+        reservations:
+          memory: 4G
+
 volumes:
   fem-em-cache:

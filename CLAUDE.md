@@ -50,10 +50,13 @@ that solves in the frequency domain needs the complex DolfinX build
   (smoke 30 s / standard 180 s / heavy 1200 s), wrap runs in `timeout` at the
   ceiling, never exceed 20 minutes for a single compute command.
   Overrun ⇒ kill and shrink the case; never just raise the timeout.
-  **One exception, mechanically gated: the weekly XL slot** (PROJECT_PLAN §5.1,
-  operator directive 2026-09-05) — one run per 7 days at ≤ 512 GiB / 16 ranks /
-  2 h against the separate `fem-em-solver-xl` service, commissioned only by the
-  weekly planning review and recorded in `docs/testing/xl-ledger.md`.
+  **Two exceptions, mechanically gated** (PROJECT_PLAN §5.1): the **`xl`** tier —
+  three runs per trailing 7 days at ≤ 512 GiB / 16 ranks / 2 h against
+  `fem-em-solver-xl`, 02:00 Sun–Fri — and the **`xxl`** tier — one run per
+  trailing 7 days at ≤ 754 GiB / 16 ranks / 8 h against `fem-em-solver-xxl`,
+  02:00 Saturday. Both are commissioned only by the weekly planning review,
+  queued in `scripts/automation/<tier>-queue.env`, run by cron with no Claude
+  session, and recorded in `docs/testing/<tier>-ledger.md`.
 - **All verification runs in Docker through the logging harness** (service must
   be Up — `docker compose -f docker/docker-compose.yml ps`):
 

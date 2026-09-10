@@ -532,7 +532,8 @@ cores.** Every verification command declares a tier and must not exceed it:
 | `smoke` | 30 s | Imports, pure-Python logic, config validation |
 | `standard` | 3 min | Coarse meshes, single small solves — the default |
 | `heavy` | 20 min | Convergence studies, sweeps — must be labeled `heavy` |
-| `xl` | **2 h, 512 GiB, 16 ranks — one run per 7 days** | The convergence rung the heavy tier cannot hold (operator directive 2026-09-05). Runs against the separate `fem-em-solver-xl` compose service (profile `xl`), **commissioned only by the weekly planning review** with a named chunk and a pre-registered readout, and recorded in `docs/testing/xl-ledger.md`; the bash guard denies a second XL exec inside 7 days, any XL exec outside `run_and_log.sh`, any `timeout` above 7200 s, and `-n` above 16. First slot reserved for the `ANS-4` 128 MHz refinement rung |
+| `xl` | **2 h, 512 GiB, 16 ranks — three runs per trailing 7 days** (operator directive 2026-09-10; was one, raised because the measured constraint turned out to be wall-clock rather than memory) | The convergence rung the heavy tier cannot hold (operator directive 2026-09-05). Runs against the separate `fem-em-solver-xl` compose service (profile `xl`), **commissioned only by the weekly planning review** with a named chunk and a pre-registered readout, and recorded in `docs/testing/xl-ledger.md`; the bash guard denies a second XL exec inside 7 days, any XL exec outside `run_and_log.sh`, any `timeout` above 7200 s, and `-n` above 16. First slot reserved for the `ANS-4` 128 MHz refinement rung |
+| `xxl` | **8 h, 754 GiB, 16 ranks — one run per trailing 7 days, Saturday 02:00** (operator directive 2026-09-10) | The window a 2 h `xl` slot cannot hold: the human-scale coil, or a many-drive sweep before the factorisation is reused. Runs against the separate `fem-em-solver-xxl` service (profile `xxl`), from `scripts/automation/xxl-queue.env` via `xl-run.sh xxl`, recorded in `docs/testing/xxl-ledger.md`. 754 GiB is this WSL VM's **whole** allocation — half the machine's 1.5 TB — so the kernel OOM killer reaches a runaway before the cgroup does; that is the operator's stated choice and is recorded in `docker-compose.yml` rather than silently softened. Saturday is its own cron day so the two tiers cannot both start at 02:00 |
 
 - Wrap commands in `timeout -k 30 <s>` at the tier ceiling — the `-k` is
   mandatory: a plain TERM does not reliably stop an `mpiexec` job, and an
@@ -610,10 +611,16 @@ cores.** Every verification command declares a tier and must not exceed it:
   load is known to be ours and decaying, and never a way past somebody else's
   work. Verified across the threshold: at 36 cores and 16 ranks it allows at
   load 12, postpones at 16.1, and the same load allows an 8-rank window.
-- **The XL slot is a budget, not a loophole.** One run per week, spent by the
-  weekly review on the one measurement the heavy tier cannot hold; the
-  ledger row is appended by the harness *when the run starts*, so a killed or
-  failed XL run has still spent the week. Bring the service up for the slot
+- **The big-compute slots are a budget, not a loophole.** Three `xl` runs and
+  one `xxl` run per trailing 7 days, spent by the weekly review on the
+  measurements the heavy tier cannot hold; the
+  ledger row is appended by the harness *when the run starts*, so a killed
+  run has still spent its slot **if it consumed box time**. The budget counts
+  elapsed seconds, not attempts: a row whose elapsed column is 0 or empty
+  never started and is not charged (2026-09-10 — two of five rows that day
+  were 0-second environment failures, and pricing those like a two-hour solve
+  would be absurd). That cannot be gamed the way a retry could, because the
+  harness measures the elapsed time itself. Bring the service up for the slot
   (`docker compose -f docker/docker-compose.yml --profile xl up -d
   fem-em-solver-xl`) and stop it afterwards. Every other rule above (kill and
   shrink, `timeout -k 30`, rank-local bugs at `-n 2` first) applies to it
