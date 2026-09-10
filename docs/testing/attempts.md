@@ -16603,3 +16603,63 @@ no executor was spawned. This entry is the only change.
     relative.
 - The 07:30 entry adds a third: a harness smoke check of the `--profile xl`
   orphan listing against the idle XL service.
+
+## 2026-09-10T17:03Z (2026-09-10 12:00 CDT slot) — none — **anomaly (dirty tree at preflight: the operator's in-flight 15:20Z `ANS-4-step2d` XL window; stopped per step 1)**
+
+**Preflight.** Slot started 12:00:07 CDT, HEAD `26e14be`. `git status` is
+dirty. There are two items:
+- ` M docs/testing/xl-ledger.md`: one appended row,
+  `| 2026-09-10 | ANS-4-step2d | 20260910T152049Z_ANS-4-step2d.log | | | | | |`,
+  whose measurement columns are all empty.
+- `?? docs/testing/logs/20260910T152049Z_ANS-4-step2d.log`: header `092f2c6`,
+  `-n 16`, `timeout -k 60 7200`. It holds the preflight, the
+  `[harness] XL slot consumed` line and the echoed command, and **no
+  `## Exit` footer**.
+
+Both services are Up: `fem-em-solver` for 6 days, `fem-em-solver-xl` for
+2 hours.
+
+**Why this stops, not lands.** This is exactly the tree the 10:30 review
+described and deliberately left dirty (PROJECT_PLAN.md daily-review notes
+2026-09-10, "Tree and branches"). It is the in-flight window's own record.
+The window returns by ≈ 17:21Z (12:21 CDT) at the latest, and this slot
+started ≈ 18 min before that. The landing exception does not apply, for two
+reasons:
+- (i) no prior **attempts.md** anomaly entry journals this diff; the review
+  recorded it in PROJECT_PLAN and on the dashboard instead;
+- (ii) the diff is not finished: the log has no footer, and the ledger row's
+  columns are unfilled.
+
+So step 1's first-encounter rule applies: this entry only, then stop. That is
+the designed consequence the review named ("the 12:00 slot stops at
+preflight").
+- No chunk work, no compute and no executor.
+- xl-ledger.md and the log were not touched, staged or committed.
+
+**Denial (expected, by design).** One Bash call tried a read-only check of the
+XL window's liveness: `docker compose --profile xl exec -T fem-em-solver-xl`
+running `ps` plus a tail of `/workspace/logs/ans4-step2d-raw.log`. The guard
+denied it: "Commands against fem-em-solver-xl must go through
+scripts/testing/run_and_log.sh (XL tier, PROJECT_PLAN §5.1)". So this slot
+cannot say whether the ranks are still live, or whether the raw file has grown
+past the pytest collection. The only liveness evidence is the service's
+"Up 2 hours" and the missing footer. Routing the check through the harness was
+not tried. That would have appended a test-results row. It would also have
+raced the window's own `run_and_log.sh`, whose ledger/footer write is still
+pending.
+
+**For the 13:30 slot and the 18:00 review.**
+- If the window has returned, the harness should have written the footer and
+  filled the ledger columns itself. The diff is then a finished,
+  documentation-only record. It is still not landable under the exception,
+  because it differs byte-for-byte from what this entry describes, so the
+  13:30 slot parks it on `recovered/*` per the second-encounter rule. That is
+  what the review predicted.
+- If the footer is still absent at 13:30 (18:30Z, past the 7200 s + 60 s
+  kill), the wrapper died or the ranks outlived their `timeout`. The first
+  action is then the orphan check on `fem-em-solver-xl` (CLAUDE.md, §5.1),
+  and the raw file `/workspace/logs/ans4-step2d-raw.log` is the recoverable
+  record.
+- Hypothesis: the window finishes on time and the operator or the 18:00
+  review commits its record. The only slots lost are this one and possibly
+  13:30.
