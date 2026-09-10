@@ -16663,3 +16663,72 @@ pending.
 - Hypothesis: the window finishes on time and the operator or the 18:00
   review commits its record. The only slots lost are this one and possibly
   13:30.
+
+## 2026-09-10T18:30Z (2026-09-10 13:30 CDT slot) — `OPS-43` (d) gate, re-anchored — **complete (gate green on the first window; landed on `main` as `12b0d60`)**
+
+**Preflight.** Tree clean at 13:30:06 CDT. The 12:00 slot's anomaly did not
+recur: the operator committed the 15:20Z `ANS-4-step2d` record in `998edf9`
+(13:17 CDT), so no `recovered/*` parking was needed. `fem-em-solver` Up 6 d,
+and `fem-em-solver-xl` still Up 3 h. Not touched.
+
+**Item.** §9 item 1, `OPS-43` (d) gate re-anchored at child `-n 1` (10:30
+review, ruling (2)). I delegated it to `implementer` in the foreground: one
+executor, 273 s. Before appending this entry, I read the log and the §7/§9
+diff myself.
+- The module was taken by path from `attempt/OPS-43d-20260910T111045Z`, and
+  that branch is left in place for the review.
+- Only record files changed on `main`, plus the module.
+
+**Window (footer read here).** `20260910T183305Z_OPS-43d.log`.
+- Parent `-n 2` with 20 PMI-scrubbed children.
+- Complex build, `FEM_EM_REQUIRE_COMPLEX=1`, `tests/environment` first, `-s`,
+  `timeout -k 30 180`.
+- **12 passed** `:177`, `Status: 0` `:245`, **54 s** `:246`. Smoke tier.
+
+**Asserted, no tolerance.**
+- **Anchor** (8 interleaved `-n 1` children, 4 unset + 4 set): norm2 is one
+  value, `{'0x1.2bbe0e158fdb3p-5': 8}` (`:90`), the same as the 06:00 record
+  `…110803Z:269`. The three-term imbalance is also one value,
+  `{'0x1.56f8034472e19p-3': 8}` (`:91`).
+- **Negative controls** (`:82–89`):
+  - `[solve]` lines: 0 on every unset child, 2 on every set child.
+  - Options dict: unset == pre-`81861d0` literal; set == literal +
+    `mat_mumps_icntl_4: 2`.
+  - ICNTL(4) reads back `[0]` / `[2]`.
+
+**Printed, asserted nowhere** (6 unset + 6 set `-n 2` children, `:96–111`).
+- Both settings read norm2 `{'…fda0p-5': 6}` and three-term `{'…e29p-3': 6}`.
+- The predicted "same modal value" held. There was no drift this window, so
+  the running tally is 2 of 34.
+- The `-n 1`/`-n 2` value split comes with `‖A‖_F` 16 ULP and `‖b‖` 1 ULP
+  apart, with identical geometry. So it is assembly order, distinct from the
+  `-n 2` factor drift.
+
+**Disclosed deviations.**
+- **Smoke-scalar asserts moved to prints.** The parked module's three-term
+  `< 0.25` and two-term record asserts are now prints (`:93`: 0.167465234 and
+  1.167465234). They were not part of the item, and
+  `tests/solver/test_time_harmonic_smoke.py` still asserts both
+  (`POYNTING_IMBALANCE_MAX = 0.25` `:33`/`:275`, `AXIAL_RECORD_IMBALANCE`
+  `:77`/`:286`; checked here). Nothing is loosened, but the review should
+  ratify it.
+- **Retired machinery:** the single-pair `-n 2` asserts and the
+  `FEM_EM_OPS43D_PROBE` opt-in are removed, as the ruling requires.
+- **Cosmetic print defect, not fixed:** line `:91` of the log, the
+  relative-imbalance summary, is followed by the label "record norm2 …". This
+  touches only print text. It was left so that the committed file is the one
+  that ran.
+- **Known-issues:** the 2026-09-10 row is re-headed as an observation the gate
+  no longer depends on, and is not retired.
+
+**Denials / anomalies: none.** Nothing was backgrounded and there were no
+permission denials. One thing I could not check: `fem-em-solver-xl` is still
+Up 3 h after its window was recorded. The guard denies a direct `ps` against
+it, and this slot did not route an orphan check through the harness because it
+does not own that service.
+
+**Hypothesis / for the review.**
+- `OPS-43` stays ⬜, owing (a) (§9 item 3) and the (c) ladder wiring.
+- Next on deck: item 2, `GEO-32`.
+- The 18:00 review should confirm `fem-em-solver-xl` is idle or stopped, since
+  §5.1 has the XL service stopped after its window.
