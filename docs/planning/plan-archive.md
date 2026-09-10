@@ -28837,3 +28837,92 @@ slot's. Everything else on the "for the weekly" list at the top of this
 section is either the weekly's own call or not implementer-ready. If a fifth
 slot materialises, the correct action is **stop and journal**, not a
 fallback.
+
+## §9 On-deck interval narrative (2026-09-10 03:00 review) — archived 2026-09-10 (10:30 daily review)
+
+Last reviewed **2026-09-10, 03:00 review**. *(The 2026-09-09 10:30 interval
+narrative, which the 18:00 review left in place, is archived verbatim in
+`docs/planning/plan-archive.md`.)*
+
+**Interval (18:00 → 03:00): four slots fired, and all four did chunk work.**
+
+| Slot | Chunk | Outcome |
+|---|---|---|
+| 19:30 | `GEO-31` (mesh-probe, 144 s) | 🧪 **same support, same boundary, different interior cut**, at all four rungs, ×1 included (`20260910T003835Z_GEO-31.log:7270–7286`) |
+| 21:00 | `OPS-44` (8 s) | ✅ |
+| 22:30 | `TH-15` step 3b | landed `8d4cf58`: impedance module 31 passed / 479 s at `-n 4`; padding module 12 passed + the pre-existing `PORT-1` 3b-xii red / 540 s, its first footered run |
+| 00:00 | `OPS-43` (c) (53 s) | both gates green; the ladder wiring was correctly withheld from the armed XL module |
+| 02:00 | XL window | **did not start** — §9 item 5 |
+
+**Tree and branches.** The tree was clean at review start, and there are no
+`recovered/*` branches. `attempt/TH-15-step3-20260909T185900Z` is
+**deleted**: `git show --stat cddb22f` touches six files, and all six are on
+`main`. `git diff cddb22f main` is empty on `gap_voltage.py` and
+`test_th15_gap_volume_both_halves.py`, and the three logs and three rows
+are present. The other four branches (`TH-15-step2proper`,
+`WF-6-step4b/4c/4e`) are kept on the 18:00 ruling.
+
+**Audit (§4).** One chunk newly ✅: `OPS-44` at `1f78649`, `auditor`
+**PASS**, re-read here.
+- Anchor: `pinned=5 checker=5 git_ls_files=5` at
+  `20260910T020150Z_OPS-44.log:162`.
+- Negative controls at `:169–171`.
+- Result: `19 passed in 6.09s` at `:208`; `Status: 0`, `Elapsed (s): 8` at
+  `:211–212`.
+
+`GEO-31` is 🧪 and owes no audit. `OPS-43` stays ⬜ and `TH-15` stays 🟡.
+None of the four is a new capability, so no example chunk opens.
+
+**Record repair.** `8d4cf58` took `docs/testing/test-results.md` by path
+checkout from the parked branch and deleted nine rows `main` had appended
+since: `WF-6` ×3, `OPS-42` ×2, `GEO-31` ×3, `OPS-44` ×1. All nine are
+restored byte-for-byte from `1f78649`, and the trap is added to
+`daily-review.md`'s rubric list. A logs↔rows guard chunk was considered and
+**not opened**: 959 logs already lack rows and 1 252 rows lack logs
+(retention), so a set identity would need a pinned exemption larger than
+the thing it guards.
+
+**Rulings banked this review.**
+(1) **`GEO-31` disposition → `PORT-18`** (§7, §9 item 1). The fixture's sheet
+   normal is the drive direction, so both the source term and the read-back
+   take a component N1curl leaves discontinuous, under a `'+'` side the cut
+   picks. This is the cheapest candidate that fits "present at ×1, amplified
+   by refinement".
+(2) **`TH-15`'s `gap_cell_tags` default stays unflipped.** Step 3's six numbers
+   (`docs/testing/attempts.md:15728–15735`): mean `|V|` 7.925019902 →
+   3.962509951 V (×0.5), while corrected `M` (0.929199) and `‖S−Sᵀ‖/‖S‖`
+   (1.276737e-03) are bit-identical. The flip moves a raw reading and no
+   gate, so it waits for a gate that reads `|V|` directly.
+(3) **`OPS-26`'s "re-tier every Status-124 deferral at `-n 4`" is not
+   opened.** The only other such module,
+   `test_dodd_deeds_reactance_box_truncation.py`, already timed out at `-n 8`
+   (601 s), so width is not its constraint.
+(4) **`ANS-1` record rule.** A case that commits a `metrics.json` pins it in
+   the same commit (§7 `ANS-1`).
+(5) **`OPS-43` (c)'s five legacy call sites are never refactored** (item 4).
+(6) **Guarding XL commands by `xl-queue.env` state rather than by slot
+   times.** The 00:00 slot's structural finding is referred to the weekly
+   together with the non-executable launcher and the cron path's missing
+   interval gate.
+
+**For the weekly (2026-09-13), added to the 18:00 list** (now archived):
+- **The XL cron path.** `xl-run.sh` mode `100644`. `run_and_log.sh` does not
+  enforce the 7-day interval, so a cron window is gated by nothing. Should an
+  implementer §9 item that touches an XL-queued module carry the mechanical
+  "is `xl-queue.env` armed?" check?
+- **The padding module's single red.** It is now observable at `-n 4`; its
+  2026-08-08 escalation is still unanswered.
+- **Heavy-tier headroom.** The `TH-15` gate modules have 111 s and 50 s of
+  headroom at `-n 4`.
+
+**Residual `main` reds at `-n 2`: 4 deliberate/known.** `OPS-44` retired the
+fifth. The padding module's red is additionally visible at `-n 4`
+(known-issues, 2026-09-09).
+
+**Three takeable items, 1–3; fewer than five, stated rather than padded.**
+- Item 1 is a probe with its own new file.
+- Item 2 is a test-only smoke gate.
+- Item 3 edits the harness, so it is ordered after item 2.
+
+None depends on another's result. Items 4–5 are blocked on the operator's XL
+decision. A fourth slot that finds nothing takeable **stops and journals**.
