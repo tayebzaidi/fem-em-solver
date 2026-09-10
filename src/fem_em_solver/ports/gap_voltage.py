@@ -78,6 +78,21 @@ class GapVoltagePortSpec:
         Must match a :class:`~fem_em_solver.ports.definitions.PortDefinition`.
     gap_cell_tag
         Cell tag of the gap (source) volume the impressed density lives on.
+    gap_cell_tags
+        Optional tuple of cell tags whose **summed** meshed volume is the gap
+        volume, defaulting to ``(gap_cell_tag,)`` — i.e. today's behaviour for
+        every caller that does not set it (`TH-15` step 3).  It exists because
+        ``MeshGenerator.two_torus_domain(emit_port_sheet=True)`` fragments each
+        gap box at its mid-plane into ``101``/``111`` and ``102``/``112``, so
+        ``gap_cell_tag`` alone selects **half** the box on that fixture
+        (measured ``V_tag``/box = 0.500000, `TH-15` step 2h,
+        ``20260909T110257Z_TH-15-step2h.log:513-519``) and the generator's own
+        docstring says a caller taking the gap volume "must take both halves"
+        (``io/mesh.py:1179-1182``).  Only the drive cross-section
+        ``A_gap = V_gap / gap_length_m`` reads this tuple; the impressed
+        density's support and the ``gap_displacement`` current integral still
+        live on ``gap_cell_tag`` alone, so the two are deliberately *not*
+        equivalent and no default is flipped here.
     gap_length_m
         Length of that gap volume along ``drive_direction``; the drive
         cross-section is taken as ``meshed gap volume / gap_length_m`` so the
@@ -111,6 +126,9 @@ class GapVoltagePortSpec:
     path_weights: np.ndarray
     conductor_length_m: Optional[float] = None
     conductor_cross_section_m2: Optional[float] = None
+    # `TH-15` step 3.  ``None`` means ``(gap_cell_tag,)``: byte-for-byte the
+    # selection every pre-existing caller gets today.
+    gap_cell_tags: Optional[tuple[int, ...]] = None
     drive_direction: tuple[float, float, float] = (0.0, 1.0, 0.0)
     drive_current_a: float = 1.0
     # `TH-15` step 2c.  ``"conduction"`` (the default, and the route every
@@ -125,6 +143,13 @@ class GapVoltagePortSpec:
     # has none) — and its error scales with the *port's own* current rather
     # than with the drive.
     current_route: str = "conduction"
+
+    @property
+    def gap_volume_tags(self) -> tuple[int, ...]:
+        """The cell tags whose summed volume is this port's gap volume."""
+        if self.gap_cell_tags is None:
+            return (int(self.gap_cell_tag),)
+        return tuple(int(tag) for tag in self.gap_cell_tags)
 
     def validate(self) -> None:
         if not self.port_id or not self.port_id.strip():
@@ -154,6 +179,11 @@ class GapVoltagePortSpec:
             raise ValueError(
                 f"port '{self.port_id}': path_weights must be (n,) for (n, 3) points"
             )
+        if self.gap_cell_tags is not None and len(tuple(self.gap_cell_tags)) == 0:
+            raise ValueError(
+                f"port '{self.port_id}': gap_cell_tags must be a non-empty tuple "
+                "of cell tags (leave it None for the default (gap_cell_tag,))"
+            )
         if self.current_route not in _CURRENT_ROUTES:
             raise ValueError(
                 f"port '{self.port_id}': current_route must be one of "
@@ -166,11 +196,29 @@ def _reduce(form, comm) -> complex:
     return complex(comm.allreduce(fem.assemble_scalar(fem.form(form)), op=MPI.SUM))
 
 
+def _as_tag_tuple(tag) -> tuple[int, ...]:
+    """``101`` -> ``(101,)``; ``(101, 111)`` -> ``(101, 111)`` (`TH-15` step 3)."""
+    if isinstance(tag, (int, np.integer)):
+        return (int(tag),)
+    tags = tuple(int(t) for t in tag)
+    if not tags:
+        raise ValueError("a tag selection must name at least one cell tag")
+    return tags
+
+
 def _tag_measure(msh, cell_tags, tag):
-    return ufl.Measure("dx", domain=msh, subdomain_data=cell_tags, subdomain_id=(int(tag),))
+    return ufl.Measure(
+        "dx", domain=msh, subdomain_data=cell_tags, subdomain_id=_as_tag_tuple(tag)
+    )
 
 
 def _tag_volume(msh, cell_tags, tag, comm) -> float:
+    """Meshed volume of one cell tag, or the **sum** over a tuple of tags.
+
+    A ``dx`` measure with several subdomain ids integrates over their union, and
+    the gap-box halves are disjoint, so the tuple form is exactly the sum
+    (`TH-15` step 3).  ``assemble_scalar`` is rank-local — ``_reduce`` fixes it.
+    """
     one = fem.Constant(msh, default_scalar_type(1.0))
     return float(np.real(_reduce(one * _tag_measure(msh, cell_tags, tag), comm)))
 
@@ -299,11 +347,13 @@ def run_gap_voltage_port_case(
 
     # The drive cross-section from the *meshed* gap volume, not from nominal
     # geometry: this is what makes the prescribed current the mesh's current.
-    gap_volume = _tag_volume(msh, cell_tags, driven_spec.gap_cell_tag, comm)
+    # `TH-15` step 3: the selection is `gap_volume_tags`, which is
+    # `(gap_cell_tag,)` unless a caller opted into the summed form.
+    gap_volume = _tag_volume(msh, cell_tags, driven_spec.gap_volume_tags, comm)
     if gap_volume <= 0.0:
         raise ValueError(
-            f"port '{driven_port_id}': gap cell tag {driven_spec.gap_cell_tag} has "
-            "zero meshed volume globally"
+            f"port '{driven_port_id}': gap cell tag(s) "
+            f"{driven_spec.gap_volume_tags} have zero meshed volume globally"
         )
     gap_area = gap_volume / driven_spec.gap_length_m
 

@@ -28,6 +28,25 @@ unless fixing it is the task.
 
 ## Failing tests
 
+### 🟡 OPEN 2026-09-09 (filed by `TH-15` step 3b, 22:30 implementer slot; the defect itself dates from `PORT-1` step 3b-xii, 2026-08-07) — `tests/validation/test_port_gap_voltage_padding.py::test_box_enlargement_discriminates_between_the_two_routes` is **red on `main` and has been since it landed**: the estimator/control deviation reads **3.111508e-02** at `air_padding = 0.10` against the pre-decided 2.5% threshold, which is `PORT-1`'s **disposition (ii)** — a real estimator bias, not a truncation artefact
+
+> This module was **never observed in a footered run** before this slot.
+> `OPS-26` step 2 findings 21 and 33 deferred it structurally — `Status 124`
+> at `-n 2` / 400 s and again at `-n 2` / 590 s, `collected 2 items` and
+> then the first test's name and nothing else, reason recorded as "module
+> fixture alone > 590 s at `-n 2`", with the note that its `scope="module"`
+> `gap_ports_padded` fixture makes a by-name split useless. `TH-15` step 3b
+> ran it at **`-n 4`** and it footered in 537.36 s, so the deferral is
+> retired by width and the red behind it is visible for the first time.
+
+| | |
+|---|---|
+| **Test** | `tests/validation/test_port_gap_voltage_padding.py::test_box_enlargement_discriminates_between_the_two_routes`. The module's other **12** names pass in the same run. |
+| **Symptom** | `AssertionError: the estimator/control deviation at air_padding = 0.1 is 3.111508e-02, above the pre-decided 2.5%: enlarging the PEC box from 0.08 did not pull the two routes together (padding 0.08 read 3.022400e-02)` → `assert 0.03111507676007086 <= 0.025` |
+| **Verified at** | `20260910T033937Z_TH-15.log` — `-n 4`, complex build (`FEM_EM_REQUIRE_COMPLEX=1`), `tests/environment` first, `-s -v --tb=short`, `timeout -k 30 590`: **1 failed, 12 passed in 537.36 s**, `Status: 1`, elapsed **540 s**. Tree = `main` + `TH-15` step 3's additive `gap_cell_tags` field. |
+| **Cause** | Not diagnosed further here, and **not this slot's change**: the module names no `gap_cell_tag` and the step-3 default selection is byte-identical, while the two printed deviations reproduce `PORT-1` step 3b-xii's 2026-08-07 record (−3.0188e-02 / −3.1267e-02 at padding 0.10, −3.0224e-02 at 0.08) measured a month before the field existed. The test was landed *carrying* this red by `a755afb` (`PORT-1` step 3b-xvii) as the pre-decided discriminator between disposition (i) (truncation) and (ii) (estimator bias); it lands on (ii). |
+| **Fix** | **Deliberately not fixed, and `REACTION_CONSISTENCY_TOLERANCE` (3%) is not to be moved** — the test's own message says so. Owner is `PORT-1`'s successor to step 3b-xii. What this entry adds is that the red is now *measured on the 0.11 image at `-n 4`* rather than inferred, and that the module is runnable in a 590 s window at that width. |
+
 ### 🔴 OPEN 2026-09-09 (`ANS-4` step 2a, 04:30 implementer slot) — the ×0.75 rung of the `ANS-4` convergence ladder **breaks C4 symmetry**: refining `conductor_resolution` moves the `Z` class spreads from **0.1012 / 0.0916 / 0.0654%** at ×1 to **0.5390 / 0.4591 / 1.6886%**, so the finer rung fails the imported, unmoved `ADJACENT_SPREAD_BAND` = 0.5% and is not a usable ladder point
 
 | | |
