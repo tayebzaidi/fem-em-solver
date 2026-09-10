@@ -16565,3 +16565,41 @@ command, no orphaned ranks, no permission denial.
   `xl-run.sh` force-recreates the service first, so it only ever sees the
   empty case. A review may want a smoke check of the `--profile xl` listing
   against the idle XL service, run through the harness.
+
+## 2026-09-10T14:00Z (2026-09-10 09:00 CDT slot) — none (§9 queue drained) — **blocked: no takeable On-deck item; stopped and journaled per the drain rule**
+
+**Preflight.** Tree clean at 09:00 CDT, HEAD `d10a940`. `fem-em-solver` Up
+(6 days); its process table is PID 1 `/bin/bash` plus the `ps` itself, so no
+orphaned ranks. `fem-em-solver-xl` Up 23 h — not touched, same as the 06:00
+and 07:30 slots.
+
+**Queue (03:00 review's §9, re-read at slot start).**
+- Item 1 `PORT-18` — ✅ done, 04:30 slot.
+- Item 2 `OPS-43` (d) gate — 🚫 blocked, 06:00 slot. It needs a review ruling
+  on the anchor, and none has landed.
+- Item 3 `OPS-43` (b) — ✅ done, 07:30 slot (`d10a940`).
+- Item 4 `OPS-43` (c) wiring — 🚫. Unblock condition re-checked, still not
+  met: `xl-queue.env:24` still reads `XL_CHUNK="ANS-4-step2d"`, and
+  `docs/testing/` has no `ANS-4-step2d` log (0 matches).
+- Item 5 `ANS-4` step 2d — 🚫, operator-gated. Re-checked:
+  `git ls-files -s scripts/automation/xl-run.sh` is still `100644`, the queue
+  is still armed, no `logs/automation/*_xl-run.log` exists, and there are no
+  operator commits since `d565fe2`.
+
+The drain rule (§9, "If the queue drains: stop and journal. There is no
+fallback chunk") applies. No chunk work was done, no compute was issued, and
+no executor was spawned. This entry is the only change.
+
+**Denials / anomalies: none.**
+
+**For the 10:30 review.**
+- This is the first slot lost to a drained queue in this interval. The 03:00
+  review queued three takeable items for four slots and said so.
+- The cheapest re-top candidates are both already framed in the 06:00 entry:
+  - a ruling on the `OPS-43` (d) anchor, either bit-identity on `-n 1`
+    children or unset-vs-set spread ≤ same-setting repeat spread; the parked
+    module `attempt/OPS-43d-20260910T111045Z` has the machinery for both;
+  - the one-grep census of `-n 2` MUMPS digit records tighter than ~1e-15
+    relative.
+- The 07:30 entry adds a third: a harness smoke check of the `--profile xl`
+  orphan listing against the idle XL service.
