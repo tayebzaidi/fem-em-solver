@@ -187,8 +187,13 @@ def _spread(values):
     return float((v.max() - v.min()) / mean)
 
 
-def _build_rung(conductor_resolution, resolution, comm):
-    """`_build(True)`'s parameter set with the two swept keywords replaced."""
+def _build_rung(conductor_resolution, resolution, comm, c4_congruent_sheets=False):
+    """`_build(True)`'s parameter set with the two swept keywords replaced.
+
+    ``c4_congruent_sheets`` is `GEO-32`'s additive pass-through; its ``False``
+    default is the generator's own default, so every existing caller of this
+    helper (`GEO-30`, `GEO-31`, `PORT-18`) builds the identical mesh.
+    """
     started = time.perf_counter()
     mesh, cell_tags, _facet_tags, diagnostics = MeshGenerator.birdcage_port_domain(
         leg_count=LEG_COUNT,
@@ -207,6 +212,7 @@ def _build_rung(conductor_resolution, resolution, comm):
         conductor_resolution=float(conductor_resolution),
         phantom_resolution=None,
         as_hole=False,
+        c4_congruent_sheets=bool(c4_congruent_sheets),
         comm=comm,
         return_diagnostics=True,
     )

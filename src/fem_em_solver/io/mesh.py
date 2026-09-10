@@ -3359,8 +3359,21 @@ class MeshGenerator:
         *,
         ring_sheet_orientation: str = "transverse",
         as_hole: bool = False,
+        c4_congruent_sheets: bool = False,
     ):
         """Generate a coarse, parametric birdcage-like geometry fixture with port tags.
+
+        ``c4_congruent_sheets`` (`GEO-32`) is additive, keyword-only and defaults
+        to ``False``, which executes no new gmsh call: every existing caller gets
+        the identical mesh.  With ``True`` the four leg-port sheets are meshed as
+        exact C4 copies of sheet 1 — after the fragment, sheets 2..4 are bound to
+        sheet 1 with ``gmsh.model.mesh.setPeriodic`` under the snapped
+        ``_z_rotation_affine(theta_k - theta_1)``, so gmsh copies sheet 1's
+        triangulation instead of cutting each sheet on its own (`GEO-31`
+        measured the four sheets as the same patch cut four ways, facet-centroid
+        Hausdorff 0.44-0.99 of a facet edge).  Valid only with
+        ``emit_port_sheets=True``, `leg_gap_length` set and ``leg_count == 4``;
+        anything else raises ``ValueError``.
 
         ``as_hole`` (`TH-15` step 3a) is additive and defaults to ``False``, so
         every existing caller builds the identical mesh it always has.  With
@@ -3528,6 +3541,25 @@ class MeshGenerator:
                 "as_hole needs emit_port_sheets: with the coil cut out of the "
                 "mesh the port sheets are the only thing left to drive it"
             )
+        if c4_congruent_sheets:
+            # `GEO-32`. Checked before any gmsh state exists: each is a
+            # contradiction in the request, not a build failure.
+            if not emit_port_sheets:
+                raise ValueError(
+                    "c4_congruent_sheets requires emit_port_sheets=True: it "
+                    "constrains the port sheets' triangulation, and without "
+                    "emit_port_sheets there are no sheets"
+                )
+            if leg_gap_length is None:
+                raise ValueError(
+                    "c4_congruent_sheets requires leg_gap_length: it binds the "
+                    "leg-port sheets, which exist only in the gapped layout"
+                )
+            if leg_count != 4:
+                raise ValueError(
+                    "c4_congruent_sheets requires leg_count == 4: the "
+                    f"constraint is the C4 copy of sheet 1, got leg_count={leg_count}"
+                )
         if leg_count < 3:
             raise ValueError("leg_count must be >= 3 for a birdcage-like fixture")
         if leg_width <= 0.0:
@@ -3670,6 +3702,7 @@ class MeshGenerator:
                     port_clearance=port_clearance,
                     emit_port_sheets=emit_port_sheets,
                     as_hole=as_hole,
+                    c4_congruent_sheets=c4_congruent_sheets,
                     air_padding=air_padding,
                     resolution=resolution,
                     conductor_resolution=conductor_resolution,
@@ -3760,6 +3793,7 @@ class MeshGenerator:
         port_clearance: float = 1.0e-3,
         emit_port_sheets: bool = False,
         as_hole: bool = False,
+        c4_congruent_sheets: bool = False,
         conductor_resolution: Optional[float] = None,
         conductor_refine_distance: Optional[float] = None,
         phantom_resolution: Optional[float] = None,
@@ -4558,6 +4592,48 @@ class MeshGenerator:
             gmsh.option.setNumber("Mesh.MeshSizeExtendFromBoundary", 0)
             gmsh.option.setNumber("Mesh.MeshSizeFromPoints", 0)
             gmsh.option.setNumber("Mesh.MeshSizeFromCurvature", 0)
+
+        if c4_congruent_sheets:
+            # `GEO-32`. After every `occ.synchronize()` that follows the
+            # fragment (the `as_hole` drop included) and before `generate(3)`.
+            # The tags are the sheets' *post-fragment* surfaces, read off the
+            # positional out-map: a pre-fragment tag names an entity the
+            # fragment deleted. The leg sheets are the first `leg_count` dim-2
+            # tools, in ordinal order. The affine is the snapped one, so at 90
+            # degrees the copy is exact (last-bit coordinates move the cell
+            # count at 1e-3, `GEO-19` step B). gmsh matches the boundary
+            # curves under the affine itself; if they do not coincide it
+            # fails, and that failure is a finding — no tolerance is set here.
+            if not (emit_port_sheets and leg_gap_length is not None and leg_count == 4):
+                raise ValueError(
+                    "c4_congruent_sheets requires emit_port_sheets=True, "
+                    "leg_gap_length and leg_count == 4"
+                )
+            post_fragment_sheets: List[int] = []
+            for ordinal, sheet in enumerate(sheet_tags[:leg_count], start=1):
+                pieces = fragment_map[input_dimtags.index((2, sheet))]
+                surfaces = [tag for dim, tag in pieces if dim == 2]
+                if len(surfaces) != 1:
+                    raise RuntimeError(
+                        f"c4_congruent_sheets: port P{ordinal}'s sheet became "
+                        f"{len(surfaces)} surfaces in the fragment "
+                        f"({surfaces}), so a one-to-one periodic copy is undefined"
+                    )
+                post_fragment_sheets.append(surfaces[0])
+            master = post_fragment_sheets[0]
+            for k in range(1, leg_count):
+                gmsh.model.mesh.setPeriodic(
+                    2,
+                    [post_fragment_sheets[k]],
+                    [master],
+                    list(_z_rotation_affine(float(theta_leg[k] - theta_leg[0]))),
+                )
+            print(
+                "[birdcage-mesh] c4_congruent_sheets: post-fragment sheet "
+                f"surfaces {post_fragment_sheets} bound to master {master} "
+                "under the snapped z-rotation",
+                flush=True,
+            )
 
         mesh_start = time.perf_counter()
         gmsh.model.mesh.generate(3)
