@@ -16384,3 +16384,65 @@ every historical figure sourced from it in this container's lifetime is an
 upper bound on *something else*; if any tracked doc quotes one as a run's
 peak, it is wrong in the same way the `TH-11` step 5d ledger row is, and a
 grep for `memory.peak` in `docs/` would settle it cheaply.
+
+## 2026-09-10T09:42Z (2026-09-10 04:30 CDT slot) — `PORT-18` — **complete as measured (🧪): premise (0) false, stopped on the row's first negative branch; landed on `main`**
+
+**Preflight.** Tree clean at 04:30 CDT; `fem-em-solver` Up with an empty
+process table (PID 1 bash only). `fem-em-solver-xl` shows Up 19 h; a `ps`
+inside it was **denied by the bash guard** ("Commands against
+fem-em-solver-xl must go through scripts/testing/run_and_log.sh"), so its
+process table was not read — not fought, noted for the review, which already
+carries the XL item (§9 item 5).
+
+**Item.** §9 On-deck item 1, `PORT-18`, delegated to `mesh-probe` in the
+foreground (one executor, 558 s). New probe
+`scripts/probes/port18_sheet_plus_side_census.py`, importing `geo30`'s
+`RUNGS` / `_build_rung` and the `SHEET_IFACE + i` interface selection.
+
+**Windows (both read here, footers checked).**
+- `20260910T093526Z_PORT-18.log` — `-n 2`, four rungs, `timeout -k 30 500`,
+  Status 0, **154 s** (`:7147–7148`).
+- `20260910T093810Z_PORT-18.log` — `-n 1`, ×1 + ×0.75, `timeout -k 30 300`,
+  Status 0, **68 s** (`:3588–3589`).
+- 0-byte FFCx stub sweep found none.
+
+**Asserted, green on every sheet at every rung in both windows:** (A)
+partition identity worst 1.089e-15 vs 1e-12; (B) `E_lin` read-backs equal
+`1 + x̄_i/ρ₀` to ≤ 9.99e-16 at `q = 2` (relative denominator
+`max(|target|, 1)` because the θ = 180° sheet's target is ≈ 0 — an executor
+choice, disclosed in the docstring; the review may prefer an absolute form);
+negative control spread 2.000000 vs ≥ 1.40.
+
+**The finding.** Premise (0) `∫(n('+')·ẑ)² dS / A_i` = **0.000000000000000**
+on all 24 sheet readings (`…093526Z…:7008, 7037, 7066, 7095`;
+`…093810Z…:3517, 3546`). Checked independently of the facet-normal form: the
+sheet bounding boxes are flat in y on P1/P3 and flat in x on P2/P4, 14 mm
+radial × 8 mm axial (`:7007`). The sheets are vertical radial–axial planes
+with azimuthal normals, so `ĥ = ẑ` is **tangential** and single-valued in
+N1curl; the §7 row's code reading ("the gap box's mid-plane, normal `±ẑ`")
+was wrong, and the `'+'`-side mechanism does not exist on this fixture, for
+the read-back or for the source term. Per the row: printed and stopped; the
+(a)/(b)/(c) predicates were not evaluated, no known-issues row opened, no
+`ufl.avg`, no `src/`, band or record change.
+
+**Printed, consistent with the premise reading.** `f_i` varies across sheets
+and rearranges completely between `-n 2` and `-n 1` (×1: 0.714/0.148/0.091/
+0.722 vs 0.544/0.959/0.017/0.193), while `R^+ = R^− = R^avg` to every printed
+digit at q = 2/4/8 and at both rank counts. Side choice and quadrature are
+both inert.
+
+**Lead for the review (printed only).** The smooth field's N1curl-interpolant
+read-back spread tracks the broken rungs: ×1 7.223e-06 → ×0.75 3.521e-04
+(≈ 49×); 0.012 3.140e-06 → 0.0095 7.308e-04 (≈ 233×). The expression
+comparand stays ≤ 4.2e-15. Sheet pairings reproduce `GEO-31`'s centroid
+pattern (×1 P1=P2, P3=P4; ×0.75 P1=P3, P2=P4; 0.012 P4 alone; 0.0095 all
+four). Magnitudes are 0.035 % / 0.073 %, below the imported `ANS-4` ×0.75
+`Z` class spreads (0.54 / 0.46 / 1.69 %).
+
+**Hypothesis for the next attempt.** The port model's side handling is
+excluded; the surviving suspect is the degree-1 solve on differently cut
+sheets. The cheapest next measurement is whether the cut-induced interpolant
+spread (≈ 1e-4 at ×0.75) is amplified by the resonant solve to the ≈ 1e-2
+gate-scale spreads, e.g. the same four-port solve at ×0.75 with the sheet
+facets' cut forced C4-congruent (a mesher question, the review's to scope),
+or the ×0.75 spreads at degree 2 on the same mesh.
