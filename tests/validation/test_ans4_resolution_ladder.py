@@ -439,11 +439,12 @@ def test_every_finer_rung_actually_refines(ladder):
                 flush=True,
             )
     for coarser, finer in zip(rungs, rungs[1:]):
+        knob = finer.get("knob", "conductor_resolution")
         assert finer["cells"] > coarser["cells"], (
-            f"conductor_resolution x{finer['factor']:g} gave {finer['cells']} "
-            f"cells, not more than x{coarser['factor']:g}'s {coarser['cells']} — "
-            "the keyword did not refine anything, so the ladder below is four "
-            "re-runs of one mesh rather than a convergence measurement"
+            f"{knob} {finer['factor']:g} gave {finer['cells']} cells, not more "
+            f"than {coarser['factor']:g}'s {coarser['cells']} — the keyword did "
+            "not refine anything, so this ladder is re-runs of one mesh rather "
+            "than a convergence measurement"
         )
 
 
