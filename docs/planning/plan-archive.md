@@ -28549,3 +28549,291 @@ writes a B₁⁺ field above 10 MHz.
 > no quadrature (that is `EX-39` at 10 MHz), no CV/homogeneity, no SAR, no
 > tuning, no absolute claim. **Negative result:** a record not reproducing
 > is a finding about the example path — known-issues, stop; no band moves.
+
+## §9 On-deck interval narrative (2026-09-09 10:30 review, carried unrefreshed through the 18:00 review) — archived 2026-09-10 (03:00 daily review)
+
+Last reviewed **2026-09-09, 10:30 review**. Interval (since the 03:00
+review): **four implementer slots scheduled, four fired, and all four did
+chunk work** — the first full interval since the 09-08 drain. 04:30 `ANS-4`
+step 2a (implementer, two windows `-n 4`, 205 s + 132 s): the standing-rule-(c)
+re-run is **green and banked** (`20260909T093128Z_ANS-4-step2a.log`, 22 passed,
+Status 0) — the two keyword defaults `d6cd0fb` landed by inspection are now
+verified by execution — and window 1 measured anchors (i)–(iii) and the
+refinement control green but **gate (iv) RED at ×0.75**: the `Z` class spreads
+go 0.1012 / 0.0916 / 0.0654% → 0.5390 / 0.4591 / **1.6886%** past the imported,
+unmoved 0.5% (`20260909T093534Z_ANS-4-step2a.log`, Status 1). The item's own
+clause fired, window 2 was not run, nothing was fixed in-slot. 06:00 `TH-15`
+step 2h (`mesh-probe`, two character-identical geometry-only windows `-n 2`,
+58 / 56 s): **CONFIRMED** — `V_tag`/box = **0.500000**, `A_gap` = 0.500000 of
+the box cross-section, `z` extent exactly half while `x`, `y` are full, C2
+control 2.53e-15 / 8.70e-15 against 1e-3
+(`20260909T110257Z_TH-15-step2h.log:513–519, 521`); the third candidate is the
+generator's own documented mid-plane split, so the factor 2 is settled and this
+review's item 2 spends it. 🧪, no audit owed. 07:30 `WF-6` step 4f
+(implementer, `-n 4`, 451.24 s, elapsed 453 s, parked `ab2a2cf`): the ladder
+**ran to completion at all three rungs** — the C4 four-copy spread falls
+5.2506% → 2.0719% → 1.9514% (ratios 1.0000 / 0.3946 / 0.3717) and then stalls
+an order above `GEO-28`'s 0.1% floor — but three asserted anchors are RED, two
+of them the *pre-registration's* fault and one a new finding
+(`20260909T123716Z_WF-6.log`). 09:00 `ANS-2` step 1 (implementer, one window
+`-n 4`, 233 s, landed `7ceb190`): the coil-driven SAR benchmark's runnable half
+built and **executed green**, four 1 g C4 pairs 0.0957 / 0.1199 / 0.1305 /
+0.1065% reproducing `MAT-4` step 5b to the digit, coverage identity 7.771561e-14
+≤ 1e-10, mis-paired control ≈ 17× the band, incident power printed against
+HFSS's 1 W and **nothing rescaled** (`20260909T140558Z_ANS-2-step1.log:1911–1923`);
+closes the runnable half only, `ANS-2` stays 🟡.
+
+**Outside the slots, an interactive operator session did XL work this
+interval** (09:13–09:55, overlapping the 09:00 slot): it ran `ANS-4` step 2b
+against `fem-em-solver-xl` (§9 item 6, Status 0, 249 s, 14 passed / 1 skipped),
+found the case **mis-tiered** — 249 s and ~16.6 GiB against the item's predicted
+1 100–1 300 s and ≳ 49 GiB, an eighth of the *ordinary* service's own 128 G
+limit, so the tier was never needed — wrote the dated, self-expiring
+`scripts/automation/xl-override.env` buying the interval back once, and at
+**09:55 launched `TH-11` step 5d**, the genuinely memory-bound case, as §9
+item 7. That run was still in flight at this review; see the tree note below.
+Tree at review start: **dirty** (below); **eight** `attempt/*`, no
+`recovered/*`; `fem-em-solver` Up 5 days, `fem-em-solver-xl` Up 35 min
+(restarted for the 09:55 window); all four launcher logs end `exit=0`.
+
+**Dirty tree (step 2) — left as found during the review, and disposed of by
+the operator at 10:48 while the review was still writing; the tree is CLEAN
+at commit time.** *(Corrected at 10:51. The paragraph below records the
+review's reasoning as it stood at 10:30, because the reasoning is the part
+worth keeping: the run it declined to read a result from turned out to have
+been **orphaned and killed at ≈ 40 min with eight ranks still burning
+260 GiB** — see §9 item 7 and `b3fcbf4`. Waiting was right, and a review that
+had committed the half-filled row would have recorded a result that never
+existed. The operator's `b3fcbf4` landed both ledger rows, both logs, the
+`OPS-43` policy fixes and — swept in from this review's working tree — the
+§7 `GEO-30` row, the §9 rewrite and the two known-issues ruling rows.)* The
+tree carried
+`docs/testing/xl-ledger.md` modified (a ledger row whose last four columns
+are blank) and `docs/testing/logs/20260909T145530Z_TH-11-step5d.log`
+untracked. **It is not a stalled tree: it is an in-flight run's own live
+artifacts, 35 minutes old at review start** — younger than the 90-minute
+implementer cycle step 2 uses as its outage threshold. `run_and_log.sh`
+appends the XL ledger row *when the window starts* (§5.1), and the log is
+the window's own transcript; the operator launched both at 09:55 and the
+container-side `timeout -k 60 7200` puts the latest possible finish at
+**11:55 CDT**. Committing now would put a half-filled ledger row into the
+record as though it were a result; reverting would erase a slot that §5.1
+counts as spent the moment the row is written. Both are worse than waiting,
+and implementer-run.md step 1's own rationale — "the first encounter still
+stops, so a human editing interactively is never interrupted mid-change" —
+is exactly this case. **What this review did instead:** journaled it as an
+`anomaly` entry in `docs/testing/attempts.md`, marked §9 item 7 🚫 so no
+headless slot takes a 7200 s window inside a 65-minute timebox, and put the
+ledger fill at the **top of the dashboard's Waiting-on-you** as an operator
+action. This review did **not** read a result from the log and no review may:
+it had **no footer**, its last line was the mesh probe (`2 808 204 cells,
+mesh 173.3 s at -n 8; 5.03 cells per delta at 64 MHz`), and a silent MUMPS
+factorisation and an orphaned run look identical from outside. **That
+caution was vindicated within twenty minutes:** `b3fcbf4` established the
+window had been killed at ≈ 40 min with eight ranks still running
+unattended, so there was never a result to read — the footer's absence *was*
+the finding. `git branch --list 'recovered/*'`: **none**, and
+none was created this interval. The **eight** `attempt/*` branches are all
+**kept**: the seven carried into this interval keep the ends the 03:00 review
+named, and the new `…WF-6-step4f-20260909T124552Z` (`ab2a2cf`) is item 3's
+landing branch — it carries 4's, 4b's, 4d's and 4f's material, and the four
+older `WF-6` step-4 branches are deleted by item 3 when it lands, not before.
+
+**Audit (§4). No audit was owed this interval, and that is a finding rather
+than an omission.** `git diff d4bde49..HEAD -- PROJECT_PLAN.md` changes four
+chunk rows — `TH-11`, `WF-6`, `ANS-2`, `ANS-4` — and **not one status marker
+moved**: `TH-11` ✅ → ✅ (unchanged since 2026-08-18), `WF-6` 🟡 → 🟡,
+`ANS-2` 🟡 → 🟡, `ANS-4` ✅ → ✅ (the runnable half, closed earlier). No
+`auditor` was spawned because there is nothing to audit; step 3's list is
+empty. The interval's four slots produced one green closure that closes only
+a *half* already scoped as such (`ANS-2` step 1, which correctly held the
+chunk at 🟡 and moved no §2 clause), one confirmed geometric measurement
+(`TH-15` step 2h, 🧪 by the §3 rule, owes no audit), one executed negative
+(`ANS-4` step 2a), and one executed partial with three reds (`WF-6` step 4f).
+Four slots, four honest results, zero new ✅ — that is the system working, not
+stalling. **Consequently no example chunk opens** (step 5's ramp clause keys
+on chunks that *newly closed a quantitative gate*; none did) and §2 is
+untouched.
+
+**Rulings banked this review (step 4).** (1) **The two reds of this interval
+are the same red, and one no-solve census answers both.** `ANS-4` step 2a
+refined `conductor_resolution` and broke the fixture's C4 symmetry; `WF-6`
+step 4f refined the *global* `resolution` and broke the same fixture's
+port symmetry. The second is the sharper evidence and it was not stated as
+symmetry at all: 4f's power residual is **port-symmetric to five figures** on
+the two coarse rungs (P1 9.795836e-03 / P2 9.796294e-03, then 8.113516e-03 /
+8.111819e-03) and then **splits and doubles** at ×0.0095 — P1 1.853642e-02,
+P2 1.419812e-02 (`20260909T123716Z_WF-6.log:2089–2090, 3910–3911, 5777–5778`)
+— on the rung that also printed ungated `Z` class spreads 1.3475 / 0.4544 /
+0.9165%. Two refinement axes, one symptom class, one fixture. Both items'
+unblock conditions independently asked for a geometric census, so this review
+opens **`GEO-30`** (item 1) as one probe across *both* axes rather than
+rescoping two solve items in the dark. Deliberately **not** ruled here:
+whether the conductor refinement can be made C4-covariant, and whether either
+rung earns a per-rung record under rule (f) — those are rulings the next
+review writes from `GEO-30`'s table. `ADJACENT_SPREAD_BAND` (0.5%),
+`POWER_BALANCE_BAND` (1e-2) and `CELL_COUNT_BAND` (1%) are **not** widened,
+and `ANS-4` keeps its INCONCLUSIVE Larmor verdict. (2) **`TH-15`: the factor 2
+is settled, so the `src/` specification the 03:00 review deferred is written —
+and it is additive.** Step 2h confirmed `GAP_TAGS = (101, 102)` reads exactly
+**half** the gap box, with the generator's own docstring already saying a
+caller "must take both halves" (`src/fem_em_solver/io/mesh.py:1176–1181`).
+The obvious chunk — fix the selection and re-record — is the wrong one: that
+factor divides into every `V̄` on this fixture and would move gated digits in
+`test_port_gap_voltage_impedance.py` and `…_padding.py` in the same commit
+that introduces it, which is indistinguishable from re-recording to taste.
+**Disposition: `TH-15` step 3** (item 2) adds an optional `gap_cell_tags`
+that **defaults to today's single-tag behaviour**, asserts the geometric
+identity (both halves sum to the CAD box, ratio 0.500000 → 1.000000), prints
+`V̄`, the mutual and reciprocity computed **both ways**, and flips nothing.
+The default flip is the next review's ruling, made from those six printed
+numbers, and the rule-(c) re-run of the two importing gate modules is the
+evidence the change was additive. (3) **`WF-6` step 4f's two red anchors were
+mis-specified, not missed, and the re-registration is arithmetic — but the
+third red is real and is removed from the ladder rather than absorbed by it.**
+Anchor (i) compared a **four**-copy spread against the **two**-copy 3.3106e-02
+record while the ×1 rung reproduced step 4b's table *character-for-character*
+(`20260908T004020Z_WF-6.log:1894, 1899`), so the fixture is exonerated and the
+comparand is replaced by the statistic that exists, its own measured 5.2506%.
+The cw bar inherited the same error: at ×1 the cw spread is 50.0268% against
+5.2506%, so **9.53× is the arithmetic ceiling** and the pre-registered 10× bar
+was *unreachable*, not merely unmet — the rubric's own lesson, paid for again.
+Re-sized to ≥ 5×, backed by 4f's measured 9.53× / 19.52×. Nothing is loosened:
+neither number was ever an imported band or a green record. The ×0.0095 power
+residual is **not** re-registered and **not** widened — the rung is dropped
+from item 3's ladder because the known-issues row forbids trusting a finer rung
+of this fixture until it is diagnosed, and the 02:15 weekly's Phase-5 exit
+clause names a two-rung monotone fall as sufficient on its own terms. Its
+readings stay on record. (4) **No example chunk opens** — step 5's ramp clause
+keys on chunks that newly closed a quantitative gate, and this interval closed
+none (see the audit note above). (5) **`OPS-42` carries over unchanged** as
+item 5; the 03:00 review's ruling on the 48 h staleness window stands and the
+item is untouched and still ready. (6) **The XL tier's structural conflict is
+named, not fixed here.** An XL window is 7200 s and an implementer slot is
+killed at 65 minutes, so **no scheduled slot can ever run an XL item to a
+footer** — item 6 was held for this reason and item 7 is now marked 🚫 for it.
+This is a §5.1/timebox question and §5.1 is the weekly's, so it is returned to
+the 2026-09-13 weekly rather than patched in §9. (7) Standing rule (g) (`-s`
+on every pytest window) held on all four working slots and stands.
+
+**Plan work this review.** (1) §7: one new row, **`GEO-30`** (the two-axis
+C4 census, ruling (1)). The other two rulings are recorded where their
+evidence already lives — known-issues, below — rather than duplicated into
+the `WF-6` and `TH-15` rows, which already carry the slots' own step-4f and
+step-2h annotations; ruling (2)'s `src/` specification is written out in
+full as §9 item 2. (2) §9: this recap, four ready items,
+the operator's XL run marked 🚫 IN FLIGHT last. (3) §6: **not touched** —
+the phase map is the weekly's. (4) §2: **nothing moved** — no gate changed
+hands this interval and no status marker moved at all. (5) known-issues:
+the `ANS-4` step-2a entry and the `WF-6` step-4f entry each gain ruling
+(1)'s cross-reference — they are now formally the same open question with
+`GEO-30` as the shared next measurement; none retires. (6)
+`docs/testing/attempts.md`: an `anomaly` entry for the in-flight XL tree.
+(7) `docs/status/dashboard.md` refreshed, Waiting-on-you led by the XL
+ledger fill.
+
+**Automation health — a clean interval, the first since the 09-08 drain.**
+All four implementer launchers fired and ended `exit=0`
+(`20260909T093001Z`, `…110002Z`, `…123001Z`, `…140001Z`), all four slots did
+chunk work, and this review's launcher (`…153001Z`) logged its model choice
+as designed: `review-model override active until 2026-09-11: claude-opus-5`.
+The dated override in `scripts/automation/review-model.env` is doing exactly
+what it was built for — it is self-expiring, so no revert has to be
+remembered. **First-run streak 60 of 60** over the slots that fired since the
+09-03 18:00 review. **Foreground-executor rule: held on all four working
+slots** (25 held since the break at 54). No docker-socket denial; no
+allowlist denial; no container wedge; **one compute-safety event, outside the
+slots, on the operator's XL window — see below.** Tier labels
+honest on every scheduled window: 2a heavy by ceiling (205 s + 132 s at `-n 4`), 2h
+standard (58 / 56 s at `-n 2`), 4f heavy by ceiling (453 s), `ANS-2` step 1
+heavy by ceiling (233 s) — every one inside its container timeout and the
+660 000 ms host window. **One compute-safety event, and it is the interval's
+most expensive lesson — corrected at 10:51 from `b3fcbf4`:** the 09:55 XL
+window (attempt 1) was killed on the wrapper side at ≈ 40 min while the
+container-side `mpiexec` and all eight ranks **kept running at ≈ 85% CPU on
+260 GiB with nothing consuming their output**. This review saw the symptom —
+`/proc/loadavg` ≈ 6.0 sustained against a footerless, static log — and
+correctly declined to read a result from it, but could not diagnose it: a
+scheduled session cannot inspect the XL container (`docker stats` denied by
+the allowlist, `docker exec` denied by `bash_guard.py`, both correctly). The
+operator diagnosed and fixed it inside the hour (`OPS-43`): a long window must
+survive its own client, so container-side output is redirected to a file and
+echoed back rather than piped — a bare pipe or `tee` takes `SIGPIPE` when the
+client dies and takes the run with it. Two rules now in CLAUDE.md. **The
+standing gap this exposes is ruling (6)'s:** an XL window cannot be witnessed
+by any scheduled session, so "who reads the footer" has no owner, and a
+killed one spends the week's slot regardless. Housekeeping (`OPS-36`):
+`docs/testing/logs` holds 1 258 files; the census now reads **`stale=87`**
+across 47 examples (up from 81 at `f700f5e`), which is item 5's business and
+strengthens its case rather than weakening it.
+
+**Example chunk (§5.4).** None opened — ruling (4); no chunk newly closed a
+quantitative gate this interval.
+
+**§10 check (step 5).** Phase 5 (current) subgoal 4: the B₁⁺ half now has
+the **measured convergence statement** the 02:15 weekly dated its exit
+clause against, and it arrived a slot early. `WF-6` step 4f's ladder is the
+answer: the C4 four-copy spread falls 5.2506% → 2.0719% → 1.9514%, so
+refinement owns ≈ 60% of the effect and then **stops**, an order above
+`GEO-28`'s ≈ 0.1% mesh floor. The honest reading is that `h` is not the
+whole mechanism and a residual ≈ 2% belongs to the degree-1 N1curl solve or
+the CG1 `curl E` estimator — which is a narrower and more useful position
+than a week ago, and it is the input the 09-13 weekly's dated exit decision
+needs. The SAR half is **done** and `ANS-2` step 1 landed its first outside
+adjudicator's runnable half this interval, which is the only construction
+that can attack what a C4 identity structurally cannot (a SAR wrong by a
+constant factor passes a symmetry identity exactly).
+
+**What changed in the shape of the risk, and it is the one thing this review
+would flag upward.** Two independent refinements of the *same* fixture broke
+its symmetry on the same day, and that fixture is load-bearing for **both**
+open fronts — `ANS-4`'s Larmor discriminator and `WF-6`'s B₁⁺ convergence
+both read numbers off it. Until `GEO-30` reports, every finer rung of the
+four-port birdcage is untrustworthy, which is why item 1 is first and why
+this review declined to rescope either blocked item around it. This is a
+within-phase measurement gap, not a roadmap change: **the backlog still
+reaches §10, this review added no physics chunk**, and the one chunk it did
+add (`GEO-30`) is a no-solve census that two existing chunks had already
+independently asked for. **For the weekly (2026-09-13):** the XL
+tier's 7200 s-vs-65-minute conflict and who reads an XL footer (ruling (6));
+whether `ANS-4` step 2b still deserves a slot now that it measured 249 s and
+~16.6 GiB and the ledger note says the tier was not needed; `PORT-14`'s
+`REDUCTION_BAND` re-registration; `TH-14`'s step-1 anchor; the `attempts.md`
+budget-vs-retention conflict the rotation cannot fix; landing 4c's module on
+`main`; and `implementer.md`'s missing "Last verified against" footer. Not
+implementer-ready and not queued: `PORT-15` step 2, `PORT-14` step 2,
+`PORT-4`…`PORT-8`, `WF-7` / `WF-8`, `TH-5`, `TH-14`, `TH-16`…`TH-18`,
+`PORT-13` step 4, `ANS-6`, `PORT-17`.
+
+**Residual `main` reds at `-n 2`: 4 deliberate/known** (unchanged) —
+the two entry-3 names, `test_birdcage_volumes_partition_the_box` and
+`test_port_lumped_rlc_termination.py::test_the_terminated_solve_matches_the_circuit_reduction`
+(known-issues 🟡, the weekly's band ruling); plus the two degree-2 coil
+identity tests at 1e-9, `-n 8` only. The example-corpus census on `main`
+reads `dead=0 guide=0 stale=81 exit=2` at `f700f5e`
+(`20260907T140926Z_EX-53-census-post.log`), 47 examples.
+
+**Four ready items — 1, 2, 3 and 5 — for the four slots before the 18:00
+review, and they are independent of each other's results.** Items 4 and 6 are
+done (this interval's record, kept); item 7 is the operator's XL run, in
+flight and explicitly not takeable in a headless slot. Files are disjoint: 1
+`scripts/probes/geo30_*.py` only (no test module, no `src/`); 2
+`src/fem_em_solver/ports/gap_voltage.py` plus its own test, and the two
+rule-(c) gate modules it re-runs but does not edit; 3 the parked
+`tests/validation/test_birdcage_b1_plus_closed_form.py` on
+`attempt/WF-6-step4f-20260909T124552Z`; 5
+`scripts/testing/check_example_doc_references.py` only. Items 1 and 3 both
+build birdcage meshes and neither changes the generator; item 2 reads the
+two-torus fixture nothing else here touches.
+
+**Fewer than the five items step 6 asks for, and this is stated rather than
+padded.** The two items this interval blocked (`ANS-4` step 2a, `WF-6` step
+4f) both have unblock conditions that are *measurements*, and item 1 is that
+measurement for both — rescoping either before it reports would be inventing
+work, which step 5 forbids. `ANS-2` step 2 (SPEC rows 4–6) is deliberately
+not queued: the SPEC's own ordering forbids reading a rows-4–6 miss until the
+operator's rows-1–3 numbers exist, and that is a Waiting-on-you item, not a
+slot's. Everything else on the "for the weekly" list at the top of this
+section is either the weekly's own call or not implementer-ready. If a fifth
+slot materialises, the correct action is **stop and journal**, not a
+fallback.

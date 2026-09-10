@@ -204,7 +204,14 @@ version-bump record sweeps) says so in its first line:
    `metadata={"quadrature_degree": …}` can send FFCx into a compile that
    does not finish in nine minutes, and each killed window poisons that
    form's cache entry (`rm /root/.cache/fenics/*<hash>*` recovers; pin
-   the degree — `POST-5` step 1, 2026-08-18, two windows). Add to
+   the degree — `POST-5` step 1, 2026-08-18, two windows); landing a
+   parked branch by **path checkout** of an append-only record
+   (`git checkout attempt/… -- docs/testing/test-results.md`) replaces
+   the file and silently deletes every row `main` appended since the
+   branch — `8d4cf58` (`TH-15` step 3b, 2026-09-09) dropped nine rows
+   across four chunks, restored by the 2026-09-10 03:00 review; take
+   code by path, append record rows by hand, and check
+   `git diff --stat` shows only insertions on record files. Add to
    this list as runs discover more.
 5. **The scope boundary** — what the item does *not* close, stated so the
    implementer holds the chunk at 🟡 rather than over-claiming. `POST-3` step 1
