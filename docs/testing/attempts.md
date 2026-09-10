@@ -16275,3 +16275,112 @@ is still unanswered. (3) The rank-width finding generalises: two modules
 believed unfittable were merely `-n 2`-bound, and `OPS-26` step 2 deferred
 others on the same evidence — a cheap sweep re-running each `Status 124`
 deferral at `-n 4` would probably retire more than one.
+
+## 2026-09-10T05:15Z (2026-09-10 00:00 CDT slot) — `OPS-43` (c) — **complete on both asserted gates, one deliberate scope carve-out; landed on `main` at `418bf94`**
+
+Took §9 On-deck **item 4** (`OPS-43` sub-part (c), the per-run memory
+instrument) — items 1, 2 and 3 were all marked DONE by the three preceding
+slots, so item 4 was the first not done or blocked. Preflight clean, both
+containers Up. Executor: `implementer`, foreground, one chunk.
+
+**Result: both asserted gates green in one smoke window.**
+`20260910T050613Z_OPS-43c.log`, **Status 0, elapsed 53 s**, tier smoke,
+`-n 2`, real build, `timeout -k 30 180`, `-s`, **9 passed / 4 skipped**.
+- **Anchor** (closed form — the comparand is the allocation the test itself
+  chose): 256 MiB touched per rank, summed `ru_maxrss` rise **0.5010 GiB =
+  1.0020×** the 0.5 GiB allocation against the band [0.8, 1.5] (`:80–83`).
+  The KiB→bytes factor and a rank-local-rather-than-summed figure are both
+  outside that band, which is the point of calibrating against a known
+  allocation rather than against another instrument.
+- **Negative control** (the whole point of the sub-part):
+  `/sys/fs/cgroup/memory.peak` reads **25 960 632 320 B (24.1777 GiB)
+  identically at all three sampling points** — before, after the large run
+  and after the small one — i.e. it cannot distinguish them, while summed
+  `ru_maxrss` separates them **2.5636×** (2.3398 vs 0.9127 GiB) against the
+  2.0 floor (`:90–95`). That is exactly the failure both `xl-ledger.md` rows
+  record, reproduced deliberately at smoke cost. Large-then-small order is
+  deliberate and stated in the docstring: small-then-large could make
+  `memory.peak` look attributable by accident.
+
+New: `src/fem_em_solver/utils/instrumentation.py`,
+`tests/unit/test_memory_instrument.py`. `OPS-43` stays ⬜ on (a), (b) and
+the (d) gate; its §7 status cell now names what (c) landed and what it did
+not.
+
+**The one scope reduction, and it is the substantive judgement of this
+slot.** Item 4 also asks for the helper to be wired into
+`tests/validation/test_ans4_resolution_ladder.py`. **I ordered that omitted.**
+The item's ordering note reasons "Every implementer slot is at 04:30 or
+later, so the [02:00 XL] window has returned first" — **the 00:00 slot is
+earlier, not later**, and the note's premise is simply false here. Verified
+before spawning, not assumed: at 05:00Z `scripts/automation/xl-queue.env`
+still carried `XL_CHUNK="ANS-4-step2d"` (the launcher clears it only *after*
+the run) and `docs/testing/logs/` held no `ANS-4-step2d` log — so the week's
+single, un-repeatable 7200 s / 16-rank XL window was **~2 h ahead of this
+slot**, reading that exact module. Item 4's own trap list prices the risk:
+"the allreduce is a **collective** — every rank must call it or the window
+hangs to its `timeout`". Landing instrumentation never executed at 16 ranks
+into that module two hours before the window risks destroying the XL slot,
+and the item's own escape clause ("if the 02:00 log has no footer, skip this
+item") shows the intent is precisely this — never edit a module a live or
+imminent XL run is reading. Neither asserted gate depends on the wiring, so
+the §4 content was fully deliverable without it. §9 item 4 is marked 🚫
+BLOCKED per standing rule (d), in the same commit as this record, with the
+unblock condition stated: the 02:00 window has returned (footered
+`ANS-4-step2d` log, or `xl-queue.env` cleared).
+
+**Verified by me, not just reported.** I read the log footer myself
+(`Status: 0`, `Elapsed (s): 53`, `9 passed, 4 skipped`), grepped both gate
+readings out of the log at the cited lines rather than taking the executor's
+summary, and confirmed the XL safety mechanically:
+`git diff 5a3ce3a..HEAD -- tests/validation/test_ans4_resolution_ladder.py
+scripts/automation/` is **empty** and `xl-queue.env` is **still armed**.
+`git status --porcelain` empty afterwards.
+
+**The five-call-site refactor was NOT done, deliberately, and I endorse the
+executor's reasoning.** Its licence is "only if each one's printed digit is
+unchanged"; all five live in heavy/`xl` modules that cannot be re-executed
+at smoke tier to discharge that condition, and inspection alone does not.
+**Recommendation to the review: never buy it.** New sites use the helper;
+the old five stay archaeology. Discharging a "digit unchanged" condition
+across five heavy modules costs more than the duplication it removes.
+
+**One trap measured, and it is reusable.** The first window
+(`20260910T050412Z_OPS-43c.log`, Status 1 — the anchor was already green at
+1.0023×) failed because a plain subprocess of an `mpiexec`-launched rank
+inherits Hydra's `PMI_*` handshake, and importing `fem_em_solver` eagerly
+pulls DolfinX → mpi4py → `MPI_Init`, which aborts `PMI_Init failed`, **exit
+15**. Fix: scrub `PMI_`/`PMIX_`/`HYDRA_`/`MPICH_`/`OMPI_`/`MPIEXEC_` from
+the child environment. Any future test that shells out from inside a rank
+hits this, and the symptom (exit 15 from an import that works everywhere
+else) does not point at its cause.
+
+**Scope held.** No assertion loosened, widened or deleted. No band moved, no
+gated record moved, no physics claim moved, §2 untouched. Neither
+`xl-ledger.md` row was re-measured or re-attributed — both keep their honest
+caveats, which is the point: (c) fixes the *next* row, not the two already
+written. No known-issues row opened (nothing failed that was not mine and
+fixed in-slot).
+
+**Denials / anomalies: none.** No docker-socket denial, no allowlist denial,
+no container wedge, no compute-safety event, nothing backgrounded, no `-k`
+filter, no pipe through `grep`, no orphaned ranks. Both windows foreground,
+tier label honest (smoke, 53 s against a 180 s container ceiling).
+
+**Hypotheses for the 03:00 review.** (1) **The 00:00 slot vs the 02:00 XL
+cron is a structural collision, not a one-off**, and this is the second
+XL-vs-timebox finding in two days (the 10:30 review's ruling (6) referred
+the first to the weekly). Item 4's ordering note is the only guard and it
+was written against a wrong premise; any future §9 item touching an
+XL-queued module needs the check stated as "is `xl-queue.env` armed?",
+which is mechanical, rather than as an inference from slot times. Worth
+handing to the 09-13 weekly alongside ruling (6). (2) The ladder wiring is
+now the cheapest possible item and should be **attached to whichever chunk
+next executes that module** rather than queued on its own — buying a heavy
+window for instrumentation is the wrong trade when a heavy window for that
+module is already coming. (3) `memory.peak`'s reading here (a 24.18 GiB
+container high-water that predates both runs and moves for neither) suggests
+every historical figure sourced from it in this container's lifetime is an
+upper bound on *something else*; if any tracked doc quotes one as a run's
+peak, it is wrong in the same way the `TH-11` step 5d ledger row is, and a
+grep for `memory.peak` in `docs/` would settle it cheaply.

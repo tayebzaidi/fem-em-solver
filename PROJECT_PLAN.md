@@ -8158,9 +8158,56 @@ noticed; a log without the readings is a window not spent.
    590 s, do **not** trim the module to make it fit, and do **not** land
    the `src/` change on an argument.
 
-4. **`OPS-43` (c) — per-run memory that a second run in the same container
+4. **BOTH GATES GREEN 2026-09-10 (00:00 slot, `418bf94`,
+   `20260910T050613Z_OPS-43c.log`, Status 0, 53 s, 9 passed / 4 skipped) —
+   instrument + calibration landed; 🚫 BLOCKED on the ladder wiring only.**
+   Anchor: summed `ru_maxrss` rise **0.5010 GiB = 1.0020×** the 0.5 GiB
+   allocation, band [0.8, 1.5] (`:80–83`). Negative control:
+   `/sys/fs/cgroup/memory.peak` reads **25 960 632 320 B identically at all
+   three sampling points** — it cannot tell the two runs apart — while summed
+   `ru_maxrss` separates them **2.5636×** against the 2.0 floor (`:90–95`),
+   reproducing the exact failure both `xl-ledger` rows record. New:
+   `src/fem_em_solver/utils/instrumentation.py`,
+   `tests/unit/test_memory_instrument.py`. **`OPS-43` stays ⬜** on (a), (b)
+   and the (d) gate.
+   **Why this item is blocked rather than done, and it is a scheduling
+   collision this item's own ordering note did not anticipate:** the note
+   assumed "every implementer slot is at 04:30 or later, so the [02:00 XL]
+   window has returned first". **The 00:00 slot is earlier, not later.** At
+   05:00Z `scripts/automation/xl-queue.env` still carried
+   `XL_CHUNK="ANS-4-step2d"` (the launcher clears it only *after* the run)
+   and no `ANS-4-step2d` log existed, so the week's single un-repeatable
+   7200 s / 16-rank window was ~2 h **ahead** of the slot, reading
+   `tests/validation/test_ans4_resolution_ladder.py`. This item's own trap
+   list names the cost — "the allreduce is a **collective** — every rank
+   must call it or the window hangs to its `timeout`" — so wiring never
+   executed at 16 ranks into that module two hours before the window risks
+   the whole XL slot. The slot therefore landed the two asserted gates,
+   neither of which depends on the wiring, and left the wiring alone;
+   `git diff` confirms the module and `scripts/automation/` are byte-for-byte
+   unmoved and the helper is outside the ladder's import graph.
+   **Unblock condition:** the 02:00 `ANS-4` step 2d window has returned
+   (a footered `ANS-4-step2d` log exists, or `xl-queue.env` is cleared).
+   Then wire `report_peak_rss` into the ladder module — a ~15-minute
+   additive edit — **preferably attached to whichever chunk next executes
+   that module**, so the wiring is proven by a run that was going to happen
+   anyway rather than buying a heavy window for instrumentation.
+   **Also for the review:** the five-call-site refactor was **not** done and
+   the slot recommends never buying it — its licence is "only if each
+   printed digit is unchanged", every site lives in a heavy/`xl` module that
+   cannot be re-executed at smoke tier to discharge that, and inspection
+   alone does not. New sites use the helper; the old five stay archaeology.
+   **One trap measured and worth reusing** (first window
+   `20260910T050412Z_OPS-43c.log`, Status 1, anchor already green at
+   1.0023×): a plain subprocess of an `mpiexec`-launched rank inherits
+   Hydra's `PMI_*` handshake, and importing `fem_em_solver` eagerly pulls
+   DolfinX → mpi4py → `MPI_Init`, which aborts `PMI_Init failed`, **exit
+   15**. Fix: scrub `PMI_`/`PMIX_`/`HYDRA_`/`MPICH_`/`OMPI_`/`MPIEXEC_` from
+   the child environment. Any test that shells out from inside a rank hits
+   this. ~~`OPS-43` (c) — per-run memory that a second run in the same
+   container
    cannot forge: summed `ru_maxrss`, calibrated against a known
-   allocation** (**smoke**, `-n 2`, no solve, no mesh; `main`;
+   allocation~~ (**smoke**, `-n 2`, no solve, no mesh; `main`;
    independent; the open sub-part of an existing chunk, licensed by its own
    pre-registered gate and by the `xl-ledger` note of 2026-09-09).
    Executor: implementer.
