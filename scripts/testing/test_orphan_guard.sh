@@ -11,8 +11,9 @@
 #                           no log file;
 #            probe killed -> same call exits exactly 0 and adds exactly one row.
 #   scope    probe live  -> a host-only CMD is not checked (exit 0, one row).
-#   control  probe live  -> the pre-change harness (HEAD's run_and_log.sh, in a
-#                           scratch root under the repo, deleted afterwards)
+#   control  probe live  -> the pre-change harness (run_and_log.sh at d10a940^,
+#                           the parent of the (b) commit; in a scratch root
+#                           under the repo, deleted afterwards)
 #                           proceeds, exit 0.
 #
 # Disclosure: the nested harness calls this script makes append their own rows
@@ -85,9 +86,14 @@ echo "status=$ST rows_before=$R0 rows_after=$R1"
 
 echo "== negative control, probe live: pre-change harness proceeds =="
 mkdir -p "$SCRATCH/scripts/testing"
-git show HEAD:scripts/testing/run_and_log.sh >"$SCRATCH/scripts/testing/run_and_log.sh"
+# Pinned to the parent of the commit that introduced the check (d10a940,
+# OPS-43 (b)). It was `HEAD:` when the gate first ran on the pre-(b) tree; on
+# every later HEAD that copy already refuses, so the control could never be
+# green again (20260910T213658Z_OPS-43a.log:61-69, 2 failures, both this leg).
+PRE_CHANGE_REV=d10a940db29fa74e360382f5f55205caaeb57cee^
+git show "$PRE_CHANGE_REV:scripts/testing/run_and_log.sh" >"$SCRATCH/scripts/testing/run_and_log.sh"
 if grep -q ORPHAN_REFUSAL "$SCRATCH/scripts/testing/run_and_log.sh"; then
-  echo "note: HEAD's harness already carries the check; the control is not a pre-change copy"
+  echo "note: $PRE_CHANGE_REV's harness already carries the check; the control is not a pre-change copy"
   check "control copy is pre-change" 1
 fi
 bash "$SCRATCH/scripts/testing/run_and_log.sh" OPS-43b-control "$TRIVIAL"; ST=$?

@@ -5,6 +5,7 @@ set -euo pipefail
 #   scripts/testing/run_and_log.sh <chunk_id> <command...>
 #   scripts/testing/run_and_log.sh --dry-run <chunk_id> <command...>
 #   FEM_SOLVER_DRY_RUN=1 scripts/testing/run_and_log.sh <chunk_id> <command...>
+#   scripts/testing/run_and_log.sh --capture-orphan <chunk_id> <logs/<name>-raw.log>
 # Example:
 #   scripts/testing/run_and_log.sh A1 "docker compose exec fem-em-solver bash -lc 'cd /workspace && PYTHONPATH=/workspace/src mpiexec -n 2 python3 examples/magnetostatics/01_straight_wire.py'"
 #
@@ -19,10 +20,56 @@ set -euo pipefail
 #       CMD, and a dry run, skip the check. If the process listing itself
 #       cannot be taken (service down), the check warns and proceeds: the
 #       wrapped command then fails visibly in its own log.
+#   76  NO_RC_CAPTURE (OPS-43 (a)): --capture-orphan found no `[capture] rc=`
+#       line in the raw file. The log is still written, with
+#       `Status: unknown (no rc line)`, and one row is appended with Exit
+#       `unknown`. A capture that cannot see the status never claims success.
+#
+# Durable capture (OPS-43 (a), PROJECT_PLAN §5.1). A window that may outlive
+# its wrapper (anything over ~10 minutes) writes its container-side output AND
+# its exit status to a raw file under the gitignored /logs/, then echoes it:
+#
+#   scripts/testing/run_and_log.sh <ID> "docker compose exec -T fem-em-solver \
+#     bash -lc 'cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 <T> \
+#     mpiexec -n 2 python3 -m pytest <paths> -v -s --tb=short \
+#     > /workspace/logs/<name>-raw.log 2>&1; rc=\$?; \
+#     echo \"[capture] rc=\$rc\" >> /workspace/logs/<name>-raw.log; \
+#     cat /workspace/logs/<name>-raw.log; exit \$rc'"
+#
+# (Escape `$` and the inner double quotes as shown when the outer quotes are
+# double quotes on the calling shell; the container-side part stays in single
+# quotes.) The rc line lands in the raw file before the echo, so a wrapper
+# killed mid-window (the container command keeps running: `docker compose
+# exec -T` does not propagate the client's death) still leaves the status on
+# disk. Once the container command has finished (check `ps` in the service),
+# turn the raw file into a footered harness log:
+#
+#   scripts/testing/run_and_log.sh --capture-orphan <ID> logs/<name>-raw.log
+#
+# It writes the normal header (naming the mode and the raw path), the raw
+# contents as `## Output` through the retention filter below, and `## Exit`
+# with `Status:` from the LAST `[capture] rc=` line; it appends one
+# test-results row and exits with that status (76 above when there is none).
+# The raw path may be host-relative (to the cwd, else the repo root), absolute,
+# or the container's /workspace/... form. The killed wrapper's own log has no
+# `## Exit`; leave it, the recovered log is the one to cite.
 
 DRY_RUN="${FEM_SOLVER_DRY_RUN:-0}"
+CAPTURE_MODE=0
+NO_RC_CAPTURE=76
+RAW_FILE=""
 
-if [[ "${1:-}" == "--dry-run" ]]; then
+if [[ "${1:-}" == "--capture-orphan" ]]; then
+  if [[ $# -ne 3 ]]; then
+    echo "Usage: $0 --capture-orphan <chunk_id> <logs/<name>-raw.log>"
+    exit 2
+  fi
+  CAPTURE_MODE=1
+  RAW_ARG="$3"
+  set -- "$2" "--capture-orphan $3"
+fi
+
+if [[ "$CAPTURE_MODE" == 0 && "${1:-}" == "--dry-run" ]]; then
   DRY_RUN=1
   shift
 fi
@@ -41,6 +88,18 @@ ROOT_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
 LOG_DIR="$ROOT_DIR/docs/testing/logs"
 INDEX_FILE="$ROOT_DIR/docs/testing/test-results.md"
 mkdir -p "$LOG_DIR"
+
+if [[ "$CAPTURE_MODE" == 1 ]]; then
+  case "$RAW_ARG" in
+    /workspace/*) RAW_FILE="$ROOT_DIR/${RAW_ARG#/workspace/}" ;;
+    /*) RAW_FILE="$RAW_ARG" ;;
+    *) if [[ -f "$RAW_ARG" ]]; then RAW_FILE="$(pwd)/$RAW_ARG"; else RAW_FILE="$ROOT_DIR/$RAW_ARG"; fi ;;
+  esac
+  if [[ ! -f "$RAW_FILE" ]]; then
+    echo "[harness] --capture-orphan: raw file not found: $RAW_ARG (resolved to $RAW_FILE)" >&2
+    exit 2
+  fi
+fi
 
 # Ensure docker compose can always find project config for this repo layout.
 DEFAULT_COMPOSE_FILE="$ROOT_DIR/docker/docker-compose.yml"
@@ -146,7 +205,7 @@ fi
 ORPHAN_REFUSAL=75
 ORPHAN_PATTERN='mpiexec|hydra_pmi_proxy|pytest'
 COMPOSE_EXEC_RE='docker[[:space:]]+compose[^;&|]*[[:space:]]exec([[:space:]]|$)'
-if [[ "$CMD" =~ $COMPOSE_EXEC_RE ]]; then
+if [[ "$CAPTURE_MODE" == 0 && "$CMD" =~ $COMPOSE_EXEC_RE ]]; then
   TARGET_SERVICE="fem-em-solver"
   PROFILE_ARGS=()
   if [[ "$CMD" == *fem-em-solver-xl* ]]; then
@@ -195,6 +254,11 @@ START_EPOCH="$(date -u +%s)"
   echo "- Working Dir: $(pwd)"
   echo "- COMPOSE_FILE: $COMPOSE_META"
   echo "- Command: $CMD"
+  if [[ "$CAPTURE_MODE" == 1 ]]; then
+    echo "- Mode: capture-orphan (OPS-43 (a)): output recovered from a raw file, nothing executed"
+    echo "- Raw file: $RAW_FILE"
+    echo "- Raw file mtime (UTC): $(date -u -r "$RAW_FILE" '+%Y-%m-%d %H:%M:%S' 2>/dev/null || echo unknown)"
+  fi
   echo ""
   echo "## Preflight"
   echo '\$ pwd'
@@ -228,7 +292,7 @@ else
   XL_TIER="XL"
 fi
 IS_XL=0
-if [[ ( "$CMD" == *fem-em-solver-xl* || "$CMD" == *fem-em-solver-xxl* ) && -f "$XL_LEDGER" ]]; then
+if [[ "$CAPTURE_MODE" == 0 && ( "$CMD" == *fem-em-solver-xl* || "$CMD" == *fem-em-solver-xxl* ) && -f "$XL_LEDGER" ]]; then
   IS_XL=1
   printf '| %s | %s | `%s` | | | | | |\n' \
     "$(date -u '+%Y-%m-%d')" "$CHUNK_ID" "$(basename "$LOG_FILE")" >> "$XL_LEDGER"
@@ -236,12 +300,34 @@ if [[ ( "$CMD" == *fem-em-solver-xl* || "$CMD" == *fem-em-solver-xxl* ) && -f "$
 fi
 
 set +e
-(
-  cd "$ROOT_DIR"
-  set -x
-  bash -lc "$CMD"
-) >> "$LOG_FILE" 2>&1
-STATUS=$?
+if [[ "$CAPTURE_MODE" == 1 ]]; then
+  echo "[harness] capture-orphan: contents of $RAW_FILE follow" >> "$LOG_FILE"
+  cat "$RAW_FILE" >> "$LOG_FILE"
+  [[ -n "$(tail -c 1 "$RAW_FILE")" ]] && echo "" >> "$LOG_FILE"
+  # last rc line wins; tolerate a partial preceding line (no trailing newline)
+  RC_LINE="$(grep -oE '\[capture\] rc=[0-9]+[[:space:]]*$' "$RAW_FILE" | tail -n 1)"
+  if [[ -n "$RC_LINE" ]]; then
+    STATUS="${RC_LINE#*rc=}"
+    STATUS="${STATUS//[[:space:]]/}"
+    STATUS_TEXT="$STATUS"
+    ROW_EXIT="$STATUS"
+    EXIT_CODE="$STATUS"
+  else
+    STATUS_TEXT="unknown (no rc line)"
+    ROW_EXIT="unknown"
+    EXIT_CODE="$NO_RC_CAPTURE"
+  fi
+else
+  (
+    cd "$ROOT_DIR"
+    set -x
+    bash -lc "$CMD"
+  ) >> "$LOG_FILE" 2>&1
+  STATUS=$?
+  STATUS_TEXT="$STATUS"
+  ROW_EXIT="$STATUS"
+  EXIT_CODE="$STATUS"
+fi
 set -e
 
 END_EPOCH="$(date -u +%s)"
@@ -298,9 +384,12 @@ fi
 {
   echo ""
   echo "## Exit"
-  echo "- Status: $STATUS"
+  echo "- Status: $STATUS_TEXT"
   echo "- Elapsed (s): $ELAPSED_SECONDS"
   echo "- Filtered lines (gmsh optimisation chatter): ${ELIDED_LINES:-0}"
+  if [[ "$CAPTURE_MODE" == 1 ]]; then
+    echo "- Capture note: Elapsed is this capture call's own time, not the window's; Status is the raw file's last [capture] rc= line"
+  fi
 } >> "$LOG_FILE"
 
 if [[ "$IS_XL" == 1 ]]; then
@@ -328,9 +417,9 @@ printf '| %s | %s | `%s` | %s | `%s` | %s | `%s` |\n' \
   "$GIT_COMMIT_FULL" \
   "$ELAPSED_SECONDS" \
   "$ENV_META" \
-  "$STATUS" \
+  "$ROW_EXIT" \
   "$(basename "$LOG_FILE")" >> "$INDEX_FILE"
 
 echo "Log written: $LOG_FILE"
 echo "Index updated: $INDEX_FILE"
-exit "$STATUS"
+exit "$EXIT_CODE"
