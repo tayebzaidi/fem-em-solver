@@ -18,7 +18,9 @@
 set -uo pipefail
 
 REPO="/home/taz5297/Development/fem-em-solver"
-LOCK="$HOME/.fem-em-xl.lock"          # its own lock, NOT the automation flock:
+# Overridable because $HOME is read-only inside the agent sandbox; cron has a
+# writable one. `housekeeping.sh` carries the same escape hatch.
+LOCK="${FEM_EM_XL_LOCK:-$HOME/.fem-em-xl.lock}"   # its own lock, NOT the automation flock:
                                       # a 2 h XL window must not starve the
                                       # 02:15 weekly or the 03:00 review, both
                                       # of which are documentation-only.
@@ -31,7 +33,13 @@ LOG="$LOGDIR/$(date -u +%Y%m%dT%H%M%SZ)_xl-run.log"
 exec >>"$LOG" 2>&1
 echo "$(date -u) xl-run starting"
 
-exec 9>"$LOCK"
+# Distinguish "cannot create the lock" from "another window holds it". They had
+# the same message and the same exit 0, so an unwritable lock path looked
+# exactly like a healthy skip — which is how a failed launch would hide.
+if ! exec 9>"$LOCK" 2>/dev/null; then
+  echo "$(date -u) FAILED: cannot open lock file $LOCK (set FEM_EM_XL_LOCK to a writable path)"
+  exit 1
+fi
 if ! flock -n 9; then
   echo "$(date -u) another XL window holds the lock; skipping"
   exit 0
