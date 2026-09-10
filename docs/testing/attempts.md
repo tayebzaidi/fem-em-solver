@@ -16446,3 +16446,68 @@ spread (≈ 1e-4 at ×0.75) is amplified by the resonant solve to the ≈ 1e-2
 gate-scale spreads, e.g. the same four-port solve at ×0.75 with the sheet
 facets' cut forced C4-congruent (a mesher question, the review's to scope),
 or the ×0.75 spreads at degree 2 on the same mesh.
+
+## 2026-09-10T11:14Z (2026-09-10 06:00 CDT slot) — `OPS-43` (d) gate — **blocked: the anchor's instrument (MUMPS `-n 2` run-to-run 1-ULP drift) is not reproducible, independent of `FEM_EM_SOLVER_PROGRESS`; test parked, records landed on `main`**
+
+**Preflight.** Tree clean at 06:00 CDT; `fem-em-solver` Up. `fem-em-solver-xl`
+still Up (20 h) — not touched, the review carries the XL item.
+
+**Item.** §9 On-deck item 2 (item 1 `PORT-18` was done by the 04:30 slot),
+delegated to `implementer` in the foreground (one executor, 582 s). New module
+`tests/solver/test_solver_progress_inert.py`: the existing smoke fixture of
+`test_time_harmonic_smoke.py` (h = 0.03, 1 405 cells, 2 004 dofs, degree 1,
+no `solver_petsc_options`), each solve a separate child `mpiexec -n 2`
+launched from rank 0 with a PMI-scrubbed env, results broadcast as
+`float.hex`, options dict captured by wrapping `th.LinearProblem` in the
+child only. No `src/` change.
+
+**Windows (all `-n 2`, complex, `tests/environment` first, `-s`,
+`timeout -k 30 180`, smoke; footers read here).**
+- `20260910T110332Z_OPS-43d.log` — **1 failed / 11 passed**, `Status: 1`
+  `:388`, 36 s `:389`. Anchor red (`:244`): norm2 unset
+  `0x1.2bbe0e158fda1p-5` vs set `0x1.2bbe0e158fda0p-5`, diff −6.94e-18.
+- `20260910T110452Z_OPS-43d.log` — 12 passed, `Status: 0` `:383`, 37 s;
+  added same-setting repeats: all four children `…fda0p-5`.
+- `20260910T110629Z_OPS-43d.log` — 12 passed, `Status: 0` `:383`, 37 s;
+  added mesh / `‖A‖_F` / `‖b‖` fingerprints: **set_repeat** drifted to
+  `…fd9fp-5` (`:243`) with every fingerprint bit-identical to the others.
+- `20260910T110803Z_OPS-43d.log` — 12 passed, `Status: 0` `:403`, 61 s;
+  print-only probe `FEM_EM_OPS43D_PROBE=8`: 12/12 `-n 2` children
+  `…fda0p-5`, 8/8 `-n 1` children `…fdb3p-5`.
+
+**Reading.** At `-n 2`, 2 of 22 child solves drifted by 1 ULP, one unset and
+one set, after assembly (A/b identical) — MUMPS 5.8.2, 2 MPI, no OMP,
+`OPENBLAS_NUM_THREADS=1`. The variable is inert wherever the solve is
+reproducible, but a single-pair `==` at `-n 2` is intermittently red for a
+reason that is not the variable. Closing on windows 2–4 would be selecting
+the green ones, so the slot did not close. The identity was **not** relaxed
+to a tolerance (item text forbids it). Common value norm2
+3.65896487314743002e-02; three-term imbalance 0.167465234 (inside the smoke
+gate's 25 %).
+
+**Negative-control legs green in all four windows:** `[solve]` lines exactly
+0 unset / 2 set; options dict unset == the pre-`81861d0` literal
+(`git show 81861d0^`), set == literal + `mat_mumps_icntl_4: 2`; MUMPS
+`ICNTL(4)` read back `[0, 0]` / `[2, 2]` (printed). So (d1) is wired and
+fires only when set; the options-dict half of the "byte-identical" claim
+holds.
+
+**Disposition.** Test module parked on
+`attempt/OPS-43d-20260910T111045Z` (the only code). On `main`: the four logs
+and their test-results rows, a new known-issues 🟡 row (2026-09-10, MUMPS
+`-n 2` non-reproducibility, cause not diagnosed), the §7 `OPS-43` annotation
+(status stays ⬜), and §9 item 2 marked 🚫 BLOCKED with the unblock condition
+(standing rule (d)). d1/d2 stay in place.
+
+**Denials / anomalies: none.** Nothing backgrounded, no `-k` filter, no pipe
+inside a harness command, no orphaned ranks, no permission denial.
+
+**Hypothesis for the review.** The anchor needs redesigning, and the review
+should rule on it: either bit-identity on child `-n 1` solves (8/8
+reproducible so far, too small a sample to trust yet), or an
+unset-vs-set spread that must not exceed the same-setting repeat spread over
+N children per setting. The parked module already has the repeat and probe
+machinery for either. The drift itself also matters beyond this gate. Any
+existing `-n 2` digit record tighter than ~1e-15 relative on a MUMPS solve is
+exposed to it. This slot did not audit the existing bands for that, and a
+one-grep census is cheap.
