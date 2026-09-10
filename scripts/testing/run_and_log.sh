@@ -7,6 +7,18 @@ set -euo pipefail
 #   FEM_SOLVER_DRY_RUN=1 scripts/testing/run_and_log.sh <chunk_id> <command...>
 # Example:
 #   scripts/testing/run_and_log.sh A1 "docker compose exec fem-em-solver bash -lc 'cd /workspace && PYTHONPATH=/workspace/src mpiexec -n 2 python3 examples/magnetostatics/01_straight_wire.py'"
+#
+# Exit status: the wrapped command's own status, except
+#   2   usage error
+#   75  ORPHAN_REFUSAL (OPS-43 (b)): CMD is a `docker compose … exec` and the
+#       target service (fem-em-solver-xl if named, else fem-em-solver) already
+#       runs a process matching mpiexec|hydra_pmi_proxy|pytest. The PIDs,
+#       elapsed seconds and args are printed on stderr; no log file, no
+#       test-results row and no XL ledger row is written. Kill the survivors
+#       (PROJECT_PLAN §5.1 "check for orphaned ranks") and re-run. A host-only
+#       CMD, and a dry run, skip the check. If the process listing itself
+#       cannot be taken (service down), the check warns and proceeds: the
+#       wrapped command then fails visibly in its own log.
 
 DRY_RUN="${FEM_SOLVER_DRY_RUN:-0}"
 
@@ -125,6 +137,47 @@ if [[ "$DRY_RUN" == "1" ]]; then
   echo "To actually run this test, execute:"
   echo "  $0 $CHUNK_ID \"$CMD\""
   exit 0
+fi
+
+# Orphan-rank refusal (OPS-43 (b), PROJECT_PLAN §5.1): a killed wrapper leaves
+# its container-side ranks running (2026-09-09: eight ranks on 260 GiB with no
+# consumer). Refuse to double-book the service on top of them. Runs before the
+# log header and before the XL ledger row, so a refusal writes nothing.
+ORPHAN_REFUSAL=75
+ORPHAN_PATTERN='mpiexec|hydra_pmi_proxy|pytest'
+COMPOSE_EXEC_RE='docker[[:space:]]+compose[^;&|]*[[:space:]]exec([[:space:]]|$)'
+if [[ "$CMD" =~ $COMPOSE_EXEC_RE ]]; then
+  TARGET_SERVICE="fem-em-solver"
+  PROFILE_ARGS=()
+  if [[ "$CMD" == *fem-em-solver-xl* ]]; then
+    TARGET_SERVICE="fem-em-solver-xl"
+    PROFILE_ARGS=(--profile xl)
+  fi
+  set +e
+  PS_TABLE="$(cd "$ROOT_DIR" && docker compose ${PROFILE_ARGS[@]+"${PROFILE_ARGS[@]}"} exec -T "$TARGET_SERVICE" ps -eo pid,etimes,args </dev/null 2>&1)"
+  PS_STATUS=$?
+  set -e
+  if [[ "$PS_STATUS" -ne 0 ]]; then
+    echo "[harness] orphan check skipped: could not list processes in $TARGET_SERVICE (status $PS_STATUS): $PS_TABLE" >&2
+  else
+    OFFENDERS=""
+    while IFS= read -r line; do
+      read -r pid etimes args <<<"$line"
+      [[ "$pid" =~ ^[0-9]+$ ]] || continue          # header
+      [[ "$args" == "ps -eo pid,etimes,args" ]] && continue  # the listing itself
+      if [[ "$args" =~ $ORPHAN_PATTERN ]]; then
+        OFFENDERS+="  pid=$pid elapsed_s=$etimes args=$args"$'\n'
+      fi
+    done <<<"$PS_TABLE"
+    if [[ -n "$OFFENDERS" ]]; then
+      {
+        echo "[harness] REFUSED (exit $ORPHAN_REFUSAL): live ranks in service $TARGET_SERVICE"
+        printf '%s' "$OFFENDERS"
+        echo "[harness] kill them (PROJECT_PLAN §5.1) and re-run; nothing was logged."
+      } >&2
+      exit "$ORPHAN_REFUSAL"
+    fi
+  fi
 fi
 
 START_EPOCH="$(date -u +%s)"

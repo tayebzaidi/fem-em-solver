@@ -16511,3 +16511,57 @@ machinery for either. The drift itself also matters beyond this gate. Any
 existing `-n 2` digit record tighter than ~1e-15 relative on a MUMPS solve is
 exposed to it. This slot did not audit the existing bands for that, and a
 one-grep census is cheap.
+
+## 2026-09-10T12:35Z (2026-09-10 07:30 CDT slot) — `OPS-43` (b) — **complete (gate green on the first window; landed on `main`)**
+
+**Preflight.** Tree clean at 07:30 CDT; `fem-em-solver` Up, process table
+PID 1 bash only. `fem-em-solver-xl` Up 22 h — not touched.
+
+**Item.** §9 item 1 ✅ (`PORT-18`) and item 2 🚫 (`OPS-43` (d)), so the first
+takeable item is item 3, `OPS-43` (b). Delegated to `implementer` in the
+foreground (one executor, 218 s). I reviewed the diff, the gate script and
+both logs before committing. Changes: the `run_and_log.sh` orphan check
+(exit **75** `ORPHAN_REFUSAL`) and the new
+`scripts/testing/test_orphan_guard.sh`. No `src/`, compose, `xl-run.sh` or
+`xl-queue.env` change.
+
+**Windows (footers read here).**
+- `20260910T123339Z_OPS-43b.log` — gate, `timeout -k 30 120`, 0 failures
+  `:81`, `Status: 0` `:84`, **6 s** `:85`.
+- `20260910T123359Z_OPS-43b.log` — regression, the `OPS-44` command verbatim
+  at `-n 1` with `-s`, **19 passed** `:208`, `Status: 0` `:211`, **7 s**
+  `:212`.
+- Companion logs written by the gate's nested harness calls:
+  `…123342Z_OPS-43b-hostonly.log`, `…123345Z_OPS-43b-proceed.log`.
+
+**Asserted.**
+- **Probe live** (PID 20527): the modified harness exits exactly 75 and names
+  `pid=20527`. Rows stay 1601 → 1601 and log files 1298 → 1298 (`:46–53`).
+- **Negative control:** HEAD's harness with the same probe live exits 0, and
+  the probe is still alive afterwards (`:63–69`).
+- **Scope:** a host-only command with the probe live exits 0 and adds one row
+  (`:57–59`).
+- **Probe killed:** the same call exits 0, and rows go 1602 → 1603 (`:78–80`).
+- **Cleanup:** after the slot the container again reads PID 1 plus the listing
+  only.
+
+**Disclosed deviations.**
+- **Scratch copy location:** the pre-change copy ran from
+  `.ops43b_scratch_root/scripts/testing/` instead of the repo root. The
+  harness resolves its root two levels above itself, so a repo-root copy
+  would write outside the repo. The scratch root is deleted, and its Exit
+  block is echoed into the gate log.
+- **Not exercised (inspection only):** the XL-service resolution branch
+  (`--profile xl`) and the warn-and-proceed branch for a failed listing.
+
+**Denials / anomalies: none.** Nothing backgrounded, no pipe inside a harness
+command, no orphaned ranks, no permission denial.
+
+**Hypothesis / for the review.**
+- **Behaviour change for other runs:** every scheduled run now meets the
+  guard. A harness exit of 75 means a survivor is running in the service and
+  must be cleaned up (§5.1), not retried.
+- **XL branch:** it is unverified. The first XL window would exercise it, but
+  `xl-run.sh` force-recreates the service first, so it only ever sees the
+  empty case. A review may want a smoke check of the `--profile xl` listing
+  against the idle XL service, run through the harness.

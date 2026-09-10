@@ -1,0 +1,213 @@
+# Test Run
+- Chunk: OPS-43b
+- Commit: 93b22ccd17d398b00d712ef0905310895b843431
+- Time (UTC): 2026-09-10 12:34:00
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 120 mpiexec -n 1 python3 -m pytest tests/unit/test_doc_reference_exit_codes.py -v -s --tb=short'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Sep  4 23:31 .
+drwxr-xr-x 16 taz5297 taz5297 4096 Sep 10 07:33 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  721 Sep  3 13:49 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 2801 Sep  4 23:31 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 120 mpiexec -n 1 python3 -m pytest tests/unit/test_doc_reference_exit_codes.py -v -s --tb=short'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... collected 19 items
+
+tests/unit/test_doc_reference_exit_codes.py::test_current_tree_is_free_of_hard_violations_and_obeys_the_contract Scanned 61 guide(s) under examples/, 184 distinct file reference(s) checked, 1 allowlisted.
+PASS: every referenced file exists.
+PASS: every referenced artifact is fresh within the window.
+Guide pass: 48 runnable example(s) from scripts/run_examples.sh --list, 48 checked against 3 required heading(s), 0 pending (EX-15 steps 2-3).
+PASS: every runnable example has a guide with all required sections.
+RESULT: dead=0 guide=0 stale=0 stale_severity=report exit=0
+
+PASSED
+tests/unit/test_doc_reference_exit_codes.py::test_staleness_alone_exits_with_the_staleness_code Scanned 1 guide(s) under /tmp/pytest-of-root/pytest-18/test_staleness_alone_exits_wit0/guides/, 1 distinct file reference(s) checked, 0 allowlisted.
+PASS: every referenced file exists.
+STALE: 1 stale artifact(s) (--stale-severity report):
+  - fixture_field.xdmf: stale in /tmp/pytest-of-root/pytest-18/test_staleness_alone_exits_wit0/out/ (10.0 h old, limit 1.0 h) — rerun the example that writes it, or the reference is dead  [/tmp/pytest-of-root/pytest-18/test_staleness_alone_exits_wit0/guides/01_fixture.md:9]
+Guide pass: 48 runnable example(s) from scripts/run_examples.sh --list, 48 checked against 3 required heading(s), 0 pending (EX-15 steps 2-3).
+PASS: every runnable example has a guide with all required sections.
+RESULT: dead=0 guide=0 stale=1 stale_severity=report exit=2
+
+PASSED
+tests/unit/test_doc_reference_exit_codes.py::test_stale_severity_fail_restores_the_old_all_or_nothing_reading Scanned 1 guide(s) under /tmp/pytest-of-root/pytest-18/test_stale_severity_fail_resto0/guides/, 1 distinct file reference(s) checked, 0 allowlisted.
+PASS: every referenced file exists.
+FAIL: 1 stale artifact(s) (--stale-severity fail):
+  - fixture_field.xdmf: stale in /tmp/pytest-of-root/pytest-18/test_stale_severity_fail_resto0/out/ (10.0 h old, limit 1.0 h) — rerun the example that writes it, or the reference is dead  [/tmp/pytest-of-root/pytest-18/test_stale_severity_fail_resto0/guides/01_fixture.md:9]
+Guide pass: 48 runnable example(s) from scripts/run_examples.sh --list, 48 checked against 3 required heading(s), 0 pending (EX-15 steps 2-3).
+PASS: every runnable example has a guide with all required sections.
+RESULT: dead=0 guide=0 stale=1 stale_severity=fail exit=1
+
+PASSED
+tests/unit/test_doc_reference_exit_codes.py::test_dead_reference_still_exits_one_after_the_split[dead-artifact] Scanned 1 guide(s) under /tmp/pytest-of-root/pytest-18/test_dead_reference_still_exit0/guides/, 1 distinct file reference(s) checked, 0 allowlisted.
+FAIL: 1 dead reference(s):
+  - never_written_field.xdmf: no run produced it in /tmp/pytest-of-root/pytest-18/test_dead_reference_still_exit0/guides/paraview_output/, /tmp/pytest-of-root/pytest-18/test_dead_reference_still_exit0/out/, and it is not committed under /tmp/pytest-of-root/pytest-18/test_dead_reference_still_exit0/guides/  [/tmp/pytest-of-root/pytest-18/test_dead_reference_still_exit0/guides/01_fixture.md:9]
+PASS: every referenced artifact is fresh within the window.
+Guide pass: 48 runnable example(s) from scripts/run_examples.sh --list, 48 checked against 3 required heading(s), 0 pending (EX-15 steps 2-3).
+PASS: every runnable example has a guide with all required sections.
+RESULT: dead=1 guide=0 stale=0 stale_severity=report exit=1
+
+PASSED
+tests/unit/test_doc_reference_exit_codes.py::test_dead_reference_still_exits_one_after_the_split[dead-script] Scanned 1 guide(s) under /tmp/pytest-of-root/pytest-18/test_dead_reference_still_exit1/guides/, 1 distinct file reference(s) checked, 0 allowlisted.
+FAIL: 1 dead reference(s):
+  - no_such_example_script.py: no such file in the repo  [/tmp/pytest-of-root/pytest-18/test_dead_reference_still_exit1/guides/01_fixture.md:9]
+PASS: every referenced artifact is fresh within the window.
+Guide pass: 48 runnable example(s) from scripts/run_examples.sh --list, 48 checked against 3 required heading(s), 0 pending (EX-15 steps 2-3).
+PASS: every runnable example has a guide with all required sections.
+RESULT: dead=1 guide=0 stale=0 stale_severity=report exit=1
+
+PASSED
+tests/unit/test_doc_reference_exit_codes.py::test_fresh_and_resolvable_references_exit_zero Scanned 1 guide(s) under /tmp/pytest-of-root/pytest-18/test_fresh_and_resolvable_refe0/guides/, 1 distinct file reference(s) checked, 0 allowlisted.
+PASS: every referenced file exists.
+PASS: every referenced artifact is fresh within the window.
+Guide pass: 48 runnable example(s) from scripts/run_examples.sh --list, 48 checked against 3 required heading(s), 0 pending (EX-15 steps 2-3).
+PASS: every runnable example has a guide with all required sections.
+RESULT: dead=0 guide=0 stale=0 stale_severity=report exit=0
+
+PASSED
+tests/unit/test_doc_reference_exit_codes.py::test_default_window_is_the_one_the_module_declares[inside-window] Scanned 1 guide(s) under /tmp/pytest-of-root/pytest-18/test_default_window_is_the_one0/guides/, 1 distinct file reference(s) checked, 0 allowlisted.
+PASS: every referenced file exists.
+PASS: every referenced artifact is fresh within the window.
+Guide pass: 48 runnable example(s) from scripts/run_examples.sh --list, 48 checked against 3 required heading(s), 0 pending (EX-15 steps 2-3).
+PASS: every runnable example has a guide with all required sections.
+RESULT: dead=0 guide=0 stale=0 stale_severity=report exit=0
+
+PASSED
+tests/unit/test_doc_reference_exit_codes.py::test_default_window_is_the_one_the_module_declares[past-window] Scanned 1 guide(s) under /tmp/pytest-of-root/pytest-18/test_default_window_is_the_one1/guides/, 1 distinct file reference(s) checked, 0 allowlisted.
+PASS: every referenced file exists.
+STALE: 1 stale artifact(s) (--stale-severity report):
+  - fixture_field.xdmf: stale in /tmp/pytest-of-root/pytest-18/test_default_window_is_the_one1/out/ (337.0 h old, limit 336.0 h) — rerun the example that writes it, or the reference is dead  [/tmp/pytest-of-root/pytest-18/test_default_window_is_the_one1/guides/01_fixture.md:9]
+Guide pass: 48 runnable example(s) from scripts/run_examples.sh --list, 48 checked against 3 required heading(s), 0 pending (EX-15 steps 2-3).
+PASS: every runnable example has a guide with all required sections.
+RESULT: dead=0 guide=0 stale=1 stale_severity=report exit=2
+
+PASSED
+tests/unit/test_doc_reference_exit_codes.py::test_untracked_in_tree_artifact_is_freshness_checked Scanned 1 guide(s) under /tmp/pytest-of-root/pytest-18/test_untracked_in_tree_artifac0/guides/, 1 distinct file reference(s) checked, 0 allowlisted.
+PASS: every referenced file exists.
+STALE: 1 stale artifact(s) (--stale-severity report):
+  - fixture_field.xdmf: stale in /tmp/pytest-of-root/pytest-18/test_untracked_in_tree_artifac0/guides/example_a/paraview_output/ (10.0 h old, limit 1.0 h) — rerun the example that writes it, or the reference is dead  [/tmp/pytest-of-root/pytest-18/test_untracked_in_tree_artifac0/guides/example_a/01_fixture.md:9]
+Guide pass: 48 runnable example(s) from scripts/run_examples.sh --list, 48 checked against 3 required heading(s), 0 pending (EX-15 steps 2-3).
+PASS: every runnable example has a guide with all required sections.
+RESULT: dead=0 guide=0 stale=1 stale_severity=report exit=2
+
+PASSED
+tests/unit/test_doc_reference_exit_codes.py::test_tracked_in_tree_artifact_is_exempt_from_freshness Scanned 1 guide(s) under /tmp/pytest-of-root/pytest-18/test_tracked_in_tree_artifact_0/guides/, 1 distinct file reference(s) checked, 0 allowlisted.
+PASS: every referenced file exists.
+PASS: every referenced artifact is fresh within the window.
+Guide pass: 48 runnable example(s) from scripts/run_examples.sh --list, 48 checked against 3 required heading(s), 0 pending (EX-15 steps 2-3).
+PASS: every runnable example has a guide with all required sections.
+RESULT: dead=0 guide=0 stale=0 stale_severity=report exit=0
+
+Scanned 1 guide(s) under /tmp/pytest-of-root/pytest-18/test_tracked_in_tree_artifact_0/guides/, 1 distinct file reference(s) checked, 0 allowlisted.
+PASS: every referenced file exists.
+STALE: 1 stale artifact(s) (--stale-severity report):
+  - fixture_field.xdmf: stale in /tmp/pytest-of-root/pytest-18/test_tracked_in_tree_artifact_0/guides/example_a/paraview_output/ (10.0 h old, limit 1.0 h) — rerun the example that writes it, or the reference is dead  [/tmp/pytest-of-root/pytest-18/test_tracked_in_tree_artifact_0/guides/example_a/01_fixture.md:9]
+Guide pass: 48 runnable example(s) from scripts/run_examples.sh --list, 48 checked against 3 required heading(s), 0 pending (EX-15 steps 2-3).
+PASS: every runnable example has a guide with all required sections.
+RESULT: dead=0 guide=0 stale=1 stale_severity=report exit=2
+
+PASSED
+tests/unit/test_doc_reference_exit_codes.py::test_default_window_holds_on_example_relative_paths[inside-window] Scanned 1 guide(s) under /tmp/pytest-of-root/pytest-18/test_default_window_holds_on_e0/guides/, 1 distinct file reference(s) checked, 0 allowlisted.
+PASS: every referenced file exists.
+PASS: every referenced artifact is fresh within the window.
+Guide pass: 48 runnable example(s) from scripts/run_examples.sh --list, 48 checked against 3 required heading(s), 0 pending (EX-15 steps 2-3).
+PASS: every runnable example has a guide with all required sections.
+RESULT: dead=0 guide=0 stale=0 stale_severity=report exit=0
+
+PASSED
+tests/unit/test_doc_reference_exit_codes.py::test_default_window_holds_on_example_relative_paths[past-window] Scanned 1 guide(s) under /tmp/pytest-of-root/pytest-18/test_default_window_holds_on_e1/guides/, 1 distinct file reference(s) checked, 0 allowlisted.
+PASS: every referenced file exists.
+STALE: 1 stale artifact(s) (--stale-severity report):
+  - fixture_field.xdmf: stale in /tmp/pytest-of-root/pytest-18/test_default_window_holds_on_e1/guides/example_a/paraview_output/ (337.0 h old, limit 336.0 h) — rerun the example that writes it, or the reference is dead  [/tmp/pytest-of-root/pytest-18/test_default_window_holds_on_e1/guides/example_a/01_fixture.md:9]
+Guide pass: 48 runnable example(s) from scripts/run_examples.sh --list, 48 checked against 3 required heading(s), 0 pending (EX-15 steps 2-3).
+PASS: every runnable example has a guide with all required sections.
+RESULT: dead=0 guide=0 stale=1 stale_severity=report exit=2
+
+PASSED
+tests/unit/test_doc_reference_exit_codes.py::test_committed_tree_stale_count_equals_an_independent_full_census Scanned 61 guide(s) under examples/, 184 distinct file reference(s) checked, 1 allowlisted.
+PASS: every referenced file exists.
+PASS: every referenced artifact is fresh within the window.
+Guide pass: 48 runnable example(s) from scripts/run_examples.sh --list, 48 checked against 3 required heading(s), 0 pending (EX-15 steps 2-3).
+PASS: every runnable example has a guide with all required sections.
+RESULT: dead=0 guide=0 stale=0 stale_severity=report exit=0
+
+independent census: stale=0 checked=89 hidden_pre_fix=62
+PASSED
+tests/unit/test_doc_reference_exit_codes.py::test_the_in_tree_exemption_cannot_silently_widen OPS-44 pinned=5 checker=5 git_ls_files=5
+  tracked example artifact: examples/ansys_benchmarks/birdcage_coil_driven_sar_10MHz/metrics.json
+  tracked example artifact: examples/ansys_benchmarks/birdcage_four_port_10_64_128MHz/metrics.json
+  tracked example artifact: examples/ansys_benchmarks/loop_over_lossy_slab_10MHz/metrics.json
+  tracked example artifact: examples/ansys_benchmarks/two_torus_gap_ports_10MHz/metrics.json
+  tracked example artifact: examples/magnetostatics/straight_wire_validation.png
+PASSED
+tests/unit/test_doc_reference_exit_codes.py::test_dropping_any_pinned_path_turns_the_identity_red PASSED
+tests/unit/test_doc_reference_exit_codes.py::test_an_untracked_example_artifact_never_enters_the_exemption OPS-44 untracked control: exemption holds 0 path(s)
+Scanned 1 guide(s) under /tmp/pytest-of-root/pytest-18/test_an_untracked_example_arti0/guides/, 1 distinct file reference(s) checked, 0 allowlisted.
+PASS: every referenced file exists.
+STALE: 1 stale artifact(s) (--stale-severity report):
+  - fixture_field.xdmf: stale in /tmp/pytest-of-root/pytest-18/test_an_untracked_example_arti0/guides/example_a/paraview_output/ (10.0 h old, limit 1.0 h) — rerun the example that writes it, or the reference is dead  [/tmp/pytest-of-root/pytest-18/test_an_untracked_example_arti0/guides/example_a/01_fixture.md:9]
+Guide pass: 48 runnable example(s) from scripts/run_examples.sh --list, 48 checked against 3 required heading(s), 0 pending (EX-15 steps 2-3).
+PASS: every runnable example has a guide with all required sections.
+RESULT: dead=0 guide=0 stale=1 stale_severity=report exit=2
+
+PASSED
+tests/unit/test_doc_reference_exit_codes.py::test_the_orphaned_magnetostatics_output_dir_is_gone PASSED
+tests/unit/test_doc_reference_exit_codes.py::test_reported_stale_set_equals_an_independent_recomputation_at_the_new_window Scanned 61 guide(s) under examples/, 184 distinct file reference(s) checked, 1 allowlisted.
+PASS: every referenced file exists.
+PASS: every referenced artifact is fresh within the window.
+Guide pass: 48 runnable example(s) from scripts/run_examples.sh --list, 48 checked against 3 required heading(s), 0 pending (EX-15 steps 2-3).
+PASS: every runnable example has a guide with all required sections.
+RESULT: dead=0 guide=0 stale=0 stale_severity=report exit=0
+
+OPS-42 window 172800 s -> 1209600 s: before 88 stale artifact(s) cited by 56 guide(s) of 63, in 9 output dir(s); after 0 stale artifact(s) cited by 0 guide(s) of 63, in 0 output dir(s); 89 artifact(s) age-checked in total; reported stale=0
+PASSED
+tests/unit/test_doc_reference_exit_codes.py::test_backdating_one_artifact_past_the_new_window_still_reports_it_stale Scanned 1 guide(s) under /tmp/pytest-of-root/pytest-18/test_backdating_one_artifact_p0/guides/, 3 distinct file reference(s) checked, 0 allowlisted.
+PASS: every referenced file exists.
+PASS: every referenced artifact is fresh within the window.
+Guide pass: 48 runnable example(s) from scripts/run_examples.sh --list, 48 checked against 3 required heading(s), 0 pending (EX-15 steps 2-3).
+PASS: every runnable example has a guide with all required sections.
+RESULT: dead=0 guide=0 stale=0 stale_severity=report exit=0
+
+Scanned 1 guide(s) under /tmp/pytest-of-root/pytest-18/test_backdating_one_artifact_p0/guides/, 3 distinct file reference(s) checked, 0 allowlisted.
+PASS: every referenced file exists.
+STALE: 1 stale artifact(s) (--stale-severity report):
+  - beta_field.h5: stale in /tmp/pytest-of-root/pytest-18/test_backdating_one_artifact_p0/out/ (337.0 h old, limit 336.0 h) — rerun the example that writes it, or the reference is dead  [/tmp/pytest-of-root/pytest-18/test_backdating_one_artifact_p0/guides/01_fixture.md:11]
+Guide pass: 48 runnable example(s) from scripts/run_examples.sh --list, 48 checked against 3 required heading(s), 0 pending (EX-15 steps 2-3).
+PASS: every runnable example has a guide with all required sections.
+RESULT: dead=0 guide=0 stale=1 stale_severity=report exit=2
+
+negative control: stale 0 -> 1 after backdating beta_field.h5 to 337.0 h (window 336.0 h)
+PASSED
+
+============================== 19 passed in 6.17s ==============================
+
+## Exit
+- Status: 0
+- Elapsed (s): 7
+- Filtered lines (gmsh optimisation chatter): 0
