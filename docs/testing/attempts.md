@@ -16732,3 +16732,101 @@ does not own that service.
 - Next on deck: item 2, `GEO-32`.
 - The 18:00 review should confirm `fem-em-solver-xl` is idle or stopped, since
   §5.1 has the XL service stopped after its window.
+
+## 2026-09-10T20:12Z (2026-09-10 15:00 CDT slot) — `GEO-32` — **complete as measured (🧪): (A)/(B)/control green, and the printed read-back spread falls to round-off with the cut made congruent; landed on `main` as `3e9ec15`**
+
+**Preflight.** Tree clean at 15:00:06 CDT (`4859aa0`).
+- **Both services were `Exited (137)` about an hour before the slot**:
+  `fem-em-solver` and `fem-em-solver-xl`. The cause was not diagnosed; nothing
+  in `git log` since 13:30 accounts for it.
+- I ran `docker compose -f docker/docker-compose.yml up -d fem-em-solver`
+  (implementer.md preflight) and left `fem-em-solver-xl` stopped.
+- This answers the 13:30 slot's open question: the XL service is stopped, not
+  idle-Up. It was a fresh container, so there were no orphaned ranks to check.
+
+**Item.** §9 item 1 is DONE (13:30), so I took item 2, `GEO-32`. It was
+delegated to `implementer` in the foreground as one executor (554 s).
+- I checked the footers, the asserted lines and the `mesh.py` diff myself
+  before writing this entry.
+- Item 3 (`OPS-43` (a)) is the next item.
+
+**Windows (footers read here).**
+- W1 `20260910T200420Z_GEO-32.log`: ×1 and ×0.75, flag off and on. `-n 2`,
+  real build, `timeout -k 30 500`. **`Status: 0` `:7452`, 127 s `:7453`**.
+- W2 `20260910T200744Z_GEO-32.log`: the 0.0095 rung, both flags,
+  `timeout -k 30 300`. **`Status: 0` `:3830`, 81 s `:3831`**.
+- Regression `20260910T200641Z_GEO-32.log`:
+  `tests/mesh/test_birdcage_port_sheets.py`, `-n 2`, `-s`. **2 passed
+  `:3264`, `Status: 0` `:3270`, 54 s `:3271`**.
+- Standard tier throughout.
+
+**Asserted (W1 `:7442–7447`, W2 `:3824–3825`).**
+- **(A) Flag off reproduces `GEO-31` to its printed digits.**
+  - ×1: `size_global` 116085 (ratio 1.000000, inside the 1% band), counts
+    58/58/58/58, d(P3) = 1.114339e-03 m.
+  - ×0.75: counts 80/74/80/74, d(P2)/ℓ = d(P4)/ℓ = 0.9897.
+  - So the generator is reproducible run to run, and no known-issues row is
+    needed.
+- **(B) Flag on.**
+  - Counts are equal at every rung: 58×4, **80×4**, 70×4.
+  - Max facet-centroid Hausdorff is **9.603429e-15 m** at all three rungs,
+    against the 1e-12 m bar.
+  - gmsh accepted `setPeriodic` on every rung, with no refusal and no
+    mesh failure.
+- **Negative control (flag off, bar ≥ 0.4 ℓ):** 0.527683 ℓ at ×1, 0.989700 ℓ
+  at ×0.75, 0.506854 ℓ at 0.0095.
+
+**Printed, asserted nowhere (rule (e)).** `PORT-18`'s R⁺ spread (q = 2),
+flag off → on:
+
+| Rung | Flag off | Flag on | Log |
+|---|---|---|---|
+| ×1 | 7.223213e-06 | 1.465268e-15 | W1 `:7438` |
+| ×0.75 | 3.520702e-04 | 1.344563e-15 | W1 `:7439` |
+| 0.0095 | 7.307614e-04 | 9.775987e-16 | W2 `:3821` |
+
+- The ×0.75 prediction was ≈ 1e-5. The reading is round-off, on the behaved
+  ×1 rung as well, so **the cut carries the whole read-back spread**.
+- Meshing time is unchanged.
+- **`size_global` moves with the flag:**
+  - ×1: 116085 → 116118
+  - ×0.75: 161695 → 161645
+  - 0.0095: 197393 → 197284
+- So a flag-on mesh is **not** the `GEO-19` 116 085 record fixture. Any
+  follow-on port solve with the flag needs its own cell count. This is
+  recorded in the §7 row as printed, not ruled.
+
+**Disclosed deviations (from the executor; checked here).**
+1. `geo30._build_rung` gained an additive `c4_congruent_sheets=False`
+   pass-through (§9 standing rules (a)/(c)).
+   - The default is the generator's, so `GEO-30`, `GEO-31` and `PORT-18`
+     build the same mesh.
+   - W1 (A) re-reads `GEO-31`'s numbers through that path, which serves as
+     its same-slot re-run.
+2. The `setPeriodic` block sits directly before `generate(3)`. That is after
+   the size fields and after the `as_hole` path's later `synchronize()`.
+3. There are extra guards:
+   - a `RuntimeError` if a sheet comes out of the fragment as more than one
+     surface;
+   - a repeat of the public `ValueError` inside the builder.
+   With the flag off, only an `if` is evaluated.
+4. (A)'s distances are compared as printed-digit strings, per "to its
+   printed digits".
+5. **Cosmetic:** W2's closing line (`:3827`) says "(A), (B) and the negative
+   control green". (A) has no record at 0.0095 and did not run there. The
+   print text was left as run.
+6. §7 status is 🧪, not ✅, and the review makes that call. No record, band,
+   default or rung status moved. `ANS-4` step 2a and `WF-6` step 4f stay
+   blocked.
+
+**Denials / anomalies.** No permission denials, nothing backgrounded. The one
+anomaly is the unexplained `Exited (137)` of both services before the slot
+(above).
+
+**Hypothesis / for the review.**
+- (B) is green and the spread collapsed. The row's follow-on is now
+  queueable: re-run the ×0.75 four-port `Z` class spreads (`ANS-4` step 2a's
+  comparison) with `c4_congruent_sheets=True`.
+- That run must carry its own flag-on cell count, since the flag moves
+  `size_global` by 33–109 cells.
+- Next on deck: item 3, `OPS-43` (a).
