@@ -7,6 +7,28 @@ on:
     branches: [ main ]
 
 jobs:
+  launcher-exec-bit:
+    # A cron launcher without its execute bit does not fail — it silently does
+    # not run. Measured 2026-09-10: scripts/automation/xl-run.sh was committed
+    # 100644 because the chmod was in a Bash call the compute guard denied for
+    # unrelated reasons, and the 02:00 XL window simply never fired. Nothing in
+    # the logs said so, because the script that writes the log is the script
+    # that did not start.
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Every launcher and helper script is executable in git
+      run: |
+        bad=$(git ls-files -s 'scripts/**/*.sh' | awk '$1!="100755"{print $4}')
+        if [ -n "$bad" ]; then
+          echo "Not executable in git (mode should be 100755):"
+          echo "$bad" | sed 's/^/  /'
+          echo
+          echo "Fix: chmod +x <file> && git add --chmod=+x <file>"
+          exit 1
+        fi
+        echo "all $(git ls-files 'scripts/**/*.sh' | wc -l) shell scripts are 100755"
+
   private-leak:
     # Ansys licence terms restrict disclosure of benchmark results, so no
     # AED-derived figure may reach a tracked file. The local pre-commit hook
