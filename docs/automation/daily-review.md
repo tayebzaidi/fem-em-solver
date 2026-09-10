@@ -211,7 +211,11 @@ version-bump record sweeps) says so in its first line:
    branch — `8d4cf58` (`TH-15` step 3b, 2026-09-09) dropped nine rows
    across four chunks, restored by the 2026-09-10 03:00 review; take
    code by path, append record rows by hand, and check
-   `git diff --stat` shows only insertions on record files. Add to
+   `git diff --stat` shows only insertions on record files; a negative
+   control that copies `HEAD:` of the file its change edits goes stale the
+   moment that change lands — `test_orphan_guard.sh`'s control was red on
+   every HEAD after `d10a940` and cost `OPS-43` (a)'s regression a window
+   (2026-09-10 16:30); pin the pre-change commit (`<sha>^`) instead. Add to
    this list as runs discover more.
 5. **The scope boundary** — what the item does *not* close, stated so the
    implementer holds the chunk at 🟡 rather than over-claiming. `POST-3` step 1

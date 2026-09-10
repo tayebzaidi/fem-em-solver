@@ -28926,3 +28926,105 @@ fifth. The padding module's red is additionally visible at `-n 4`
 
 None depends on another's result. Items 4–5 are blocked on the operator's XL
 decision. A fourth slot that finds nothing takeable **stops and journals**.
+
+## §9 On-deck interval narrative (2026-09-10 10:30 review) — archived 2026-09-10 (18:00 daily review)
+
+Last reviewed **2026-09-10, 10:30 review**. *(The 03:00 interval narrative is
+archived verbatim in `docs/planning/plan-archive.md`.)*
+
+**Interval (03:00 → 10:30): four slots fired. Three did chunk work; the fourth
+found the queue drained and stopped, as the rule says.**
+
+| Slot | Chunk | Outcome |
+|---|---|---|
+| 04:30 | `PORT-18` (mesh-probe, 154 + 68 s) | 🧪 **premise (0) false** — the sheet normals are azimuthal, so `ĥ = ẑ` is tangential and the `'+'`-side mechanism does not exist (`20260910T093526Z_PORT-18.log:7008`) |
+| 06:00 | `OPS-43` (d) gate | 🚫 blocked on its instrument — MUMPS `-n 2` 1-ULP run-to-run drift in 2 of 22 children; module parked on `attempt/OPS-43d-20260910T111045Z` |
+| 07:30 | `OPS-43` (b) (6 + 7 s) | landed `d10a940`, gate green (refusal exit 75) |
+| 09:00 | — | queue drained (items 2, 4, 5 blocked); journaled `ab74007` |
+
+**Operator activity since 09:00 (interactive session).** Dashboard option (a)
+was taken.
+- `cd80f5c` restored `xl-run.sh`'s execute bit, re-dated `XL_OVERRIDE_UNTIL`
+  to 2026-09-11 and added a CI check on launcher modes.
+- A hand-fired `xl-run.sh` died in 0 s: docker was denied inside the sandboxed
+  script (`20260910T151845Z_ANS-4-step2d.log`, Status 1). Its ledger row is
+  kept, and `76e78c4` cleared the queue. `b3e34df` / `092f2c6` fixed the lock
+  path and added a docker preflight.
+- **A second `ANS-4-step2d` window started at 15:20:49Z** by a direct harness
+  call. No `logs/automation/*_xl-run.log` exists for it, so no launcher will
+  commit it. It runs `-n 16` under `timeout -k 60 7200`, so it returns by
+  ≈ 17:21Z (12:21 CDT) at the latest.
+- The queue is now empty, so cron's 02:00 on 09-11 runs nothing.
+
+**Tree and branches.**
+- **Dirty at review start, and left dirty deliberately.** The diff is the
+  harness-appended `xl-ledger.md` row for the 15:20Z window plus the untracked
+  `docs/testing/logs/20260910T152049Z_ANS-4-step2d.log`. The log holds
+  preflight only, with no footer. This is the **in-flight** window's own
+  record, 10 min old, not a stalled tree: the footer, the test-results row
+  and the ledger's last four columns do not exist yet. Committing now would
+  land a footerless log as if it were final. It is Waiting-on-you 1.
+- **Consequence for the 12:00 slot:** if the record is still uncommitted, that
+  slot stops at preflight (implementer-run.md step 1) and the 13:30 slot parks
+  it on `recovered/*` for the 18:00 review. Either is the designed path, not
+  an outage.
+- No `recovered/*` branches.
+- Five `attempt/*` branches. `OPS-43d-20260910T111045Z` is new and kept, since
+  item 1 takes its module. `TH-15-step2proper` and `WF-6-step4b/4c/4e` are
+  kept on the 09-09 18:00 ruling.
+
+**Audit (§4).** No chunk turned ✅ this interval: `PORT-18` is 🧪, and
+`OPS-43` stays ⬜ with (b) landed. So no `auditor` was spawned, and no example
+chunk opens (no newly gated capability).
+
+**Rulings banked this review.**
+(1) **`PORT-18` disposition** (§7 row). Accepted as measured, 🧪.
+   - The wrong premise was **this review line's code reading**. The
+     generator's own comment gives the sheet an azimuthal normal
+     (`io/mesh.py:3972–3974`), and premise check (0) caught the error in
+     222 s.
+   - The `'+'`-side hypothesis is excluded for both the read-back and the
+     source term.
+   - The surviving lead is `PORT-18`'s printed one: the interpolant read-back
+     spread tracks the broken rungs, ×49 at ×0.75 and ×233 at 0.0095, with
+     `GEO-31`'s pairings. **`GEO-32`** (§7, item 2) makes the cut congruent
+     by construction and re-reads that lead before any solve is bought.
+   - `ANS-4` step 2a and `WF-6` step 4f stay blocked.
+(2) **`OPS-43` (d) anchor re-registered, not relaxed** (§7 `OPS-43`, item 1).
+   The identity stays `==` and moves to child `-n 1`, one value across 4 unset
+   + 4 set interleaved children. `-n 2` children are printed only.
+(3) **`-n 2` records exposed to the drift: none.**
+   - `Explore` swept 167 test modules: no MUMPS solve result is asserted
+     against a recorded number tighter than 1e-9 relative, and the two
+     bit-exact solve comparisons are same-process.
+   - Spot-checked here: `test_port_birdcage_four_port.py:165`
+     (`LEG_D0_REPRODUCTION_BAND = 1.0e-9`) and
+     `test_port_drive_superposition.py:736, 825`.
+   - Recorded on the known-issues row; no chunk opened.
+(4) **`OPS-43` (c) wiring:** the queue half of its unblock condition is met,
+   but the module is executing in the 15:20Z window and the ride-along ruling
+   stands (item 4).
+(5) **`OPS-43` (b)'s XL refusal case is not queueable headless.** The bash
+   guard denies XL-service commands inside 7 days of a ledger row. Its listing
+   branch was taken for real by the 15:20Z call.
+(6) **While an XL window is live, no item runs above `-n 2`.** All three items
+   below already satisfy that.
+
+**For the weekly (2026-09-13), added:**
+- The step-2d readout and its private verdict.
+- The ledger now carries four XL rows in 09-09/09-10 under a dated override,
+  and `run_and_log.sh` still enforces no 7-day interval on the cron path.
+- Once `OPS-43` (a) lands, whether future `xl-queue.env` commands adopt its
+  rc-in-raw-file shape.
+
+**Residual `main` reds at `-n 2`: 4 deliberate/known**, unchanged, plus the
+padding module's red at `-n 4` (known-issues, 2026-09-09).
+
+**Three takeable items, 1–3: fewer than five, stated rather than padded.**
+- Item 1 is test-only.
+- Item 2 is a `src/` mesher keyword plus a probe.
+- Item 3 edits the harness, so it goes last.
+
+None depends on another's result. Items 4–5 are not takeable. A fourth slot
+that finds nothing takeable **stops and journals**.
+
