@@ -16101,3 +16101,71 @@ is cut-sensitive, which is a port-model finding and moves every record on
 this fixture). That is a solve-free facet-integration measurement on a mesh
 that already exists, and it is the question `GEO-31`'s verdict sentence names.
 Not opened here — the review owns it.
+
+## 2026-09-10T02:05Z (2026-09-09 21:00 CDT slot) — `OPS-44` — **complete (green on the first window, landed on `main` at `1f78649`)**
+
+**Preflight clean, container Up.** `git status --porcelain` empty on `main` at
+`5a3ce3a`; `fem-em-solver` Up 6 days. `fem-em-solver-xl` Up 11 hours and
+untouched by this slot — the previous slot flagged the same thing, and it is
+the operator's service, not a scheduled session's; noting it a second time so
+a review can decide whether an idle XL container between weekly slots is worth
+stopping.
+
+**Item taken: §9 item 2, `OPS-44`,** the first item not done or blocked (item 1
+`GEO-31` is struck through and marked DONE by the 19:30 slot). Delegated to
+`implementer` in the foreground, one chunk, no concurrency.
+
+**What was done.** `COMMITTED_EXAMPLE_ARTIFACTS` in
+`tests/unit/test_doc_reference_exit_codes.py` was re-pinned from `EX-29`'s
+three paths (2026-08-24) to the **five** paths git actually tracks, adding
+`examples/ansys_benchmarks/birdcage_four_port_10_64_128MHz/metrics.json` and
+`examples/ansys_benchmarks/birdcage_coil_driven_sar_10MHz/metrics.json`, with
+the provenance comment extended to name both chunks and both dates. Per the
+review's ruling (3) the pin stays a **pinned path set, not a glob**. The name
+`OPS-42` had deselected (`test_the_in_tree_exemption_cannot_silently_widen`)
+is un-deselected and the whole module runs.
+
+**Measured (`20260910T020150Z_OPS-44.log`, one window, `-n 1`,
+`timeout -k 30 120`, `-v -s --tb=short`, smoke).** `19 passed in 6.09s`,
+`Status: 0`, **elapsed 8 s** — inside the item's predicted 7 s to the second.
+Anchor (`:162`): `OPS-44 pinned=5 checker=5 git_ls_files=5` — the pin equals
+`checker.tracked_artifacts` **and** an independent `git ls-files examples`
+re-derivation filtered on `ARTIFACT_SUFFIXES`, computed without routing
+through the code under test. Negative control, both halves green: dropping
+each of the five pinned paths in turn falsifies the identity (5/5
+separations), and on a `tmp_path` git work tree an artifact sitting in an
+example's own output directory but never added to the index yields an
+exemption set of **0 paths** and is still reported stale
+(`dead=0 guide=0 stale=1`, `exit=2`). The already-green positive half
+`test_tracked_in_tree_artifact_is_exempt_from_freshness` re-ran unchanged.
+
+**Verified by me, not just reported.** I re-read the log footer
+(`Status: 0`, `Elapsed (s): 8`), the anchor line, and
+`git show --stat 1f78649` before accepting the executor's report: the commit
+carries the test module, the harness log, the `test-results.md` row, the §7
+`OPS-44` flip to ✅, the §9 item-2 DONE marking and the 12-line retirement of
+the 2026-09-09 known-issues row, together. `git status --porcelain` empty
+afterwards.
+
+**Scope held.** No assertion loosened or deleted; the negative-result clause
+never fired because the tracked set was exactly the predicted five and the
+checker agreed with git — the staleness was on the record's side only.
+`OPS-19`'s exit-code contract, `OPS-42`'s `DEFAULT_MAX_AGE_S`,
+`--stale-severity`, `run_examples.sh` and every on-disk artifact are
+untouched; no artifact refreshed, no example chunk closed, §2 unmoved.
+
+**Denials / anomalies: none.** No docker-socket denial, no allowlist denial,
+no container wedge, no compute-safety event, nothing backgrounded, no `-k`
+filter, no pipe through `grep`, no orphaned ranks. One window, foreground,
+tier label honest (smoke, 8 s against a 120 s container ceiling).
+
+**Hypothesis for the next attempt / for the 03:00 review.** Nothing is owed on
+`OPS-44` — but the *recurrence mechanism* is untouched and this is the second
+time the pin has gone stale silently: the next `ans:` case that commits a
+`metrics.json` turns this test red again, and the red surfaces in an unrelated
+slot which then has to decide whether to deselect it. The review-level
+question is therefore not "should the pin become a glob" (ruled, no) but
+whether `ANS-1`'s rule should **require the pin edit in the same commit** that
+adds a tracked artifact — a checklist line in the `ANS-1` row, or a guard, so
+the declaration is made by the chunk that widens the exemption rather than
+discovered later by whoever trips over it.
