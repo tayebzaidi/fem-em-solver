@@ -16169,3 +16169,109 @@ whether `ANS-1`'s rule should **require the pin edit in the same commit** that
 adds a tracked artifact — a checklist line in the `ANS-1` row, or a guard, so
 the declaration is made by the chunk that widens the exemption rather than
 discovered later by whoever trips over it.
+
+## 2026-09-10T03:55Z (2026-09-09 22:30 CDT slot) — `TH-15` step 3b — **complete (two windows, one green / one carrying a pre-existing red; landed on `main` at `8d4cf58`)**
+
+**Preflight clean, container Up.** `git status --porcelain` empty on `main` at
+`4b4ab63`; `fem-em-solver` Up 6 days. `fem-em-solver-xl` Up 13 hours and
+untouched by this slot — third consecutive slot to note it; an idle XL
+container between weekly slots is a review's call, not a scheduled session's.
+
+**Item taken: §9 item 3, `TH-15` step 3b,** the first item not done or blocked
+(items 1 `GEO-31` and 2 `OPS-44` are both struck through and marked DONE by the
+19:30 and 21:00 slots). Delegated to `implementer` in the foreground, one
+chunk, no concurrency, the no-background rule stated verbatim in the spawn
+prompt.
+
+**What was done.** The parked branch's non-log files were taken by path
+checkout from `attempt/TH-15-step3-20260909T185900Z` (`cddb22f`) —
+`src/fem_em_solver/ports/gap_voltage.py`,
+`tests/validation/test_th15_gap_volume_both_halves.py` and three
+`docs/testing/test-results.md` rows; the branch's three logs were already on
+`main` via `4e57ed4`, so nothing there was re-landed. Then the item's mandatory
+rule-(c) evidence ran in **two separate windows**, `-n 4`, complex build +
+`FEM_EM_REQUIRE_COMPLEX=1`, `tests/environment` first in each, `-s`,
+`timeout -k 30 590`, foreground at the 660 000 ms host ceiling.
+
+**The measurement the item asked for — whether the two gate modules fit at
+`-n 4` — is YES for both, and the slot's hypothesis (a) is confirmed by
+execution.** Both were `Status 124` at 501 s at `-n 2` yesterday with zero
+failures and only an undersized window; both footer at `-n 4`:
+
+| Window | Module | Result | Status | Elapsed | Log |
+|---|---|---|---|---|---|
+| 1 | `test_port_gap_voltage_impedance.py` | 31 passed in 477.72 s | **0** | **479 s** | `20260910T033128Z_TH-15.log` |
+| 2 | `test_port_gap_voltage_padding.py` | 1 failed, 12 passed in 537.36 s | **1** | **540 s** | `20260910T033937Z_TH-15.log` |
+
+Window 1 has 111 s of headroom against its own container ceiling; window 2 has
+50 s. Neither is comfortable and a review should know it: these two modules are
+heavy-tier at `-n 4` and there is no rank width above 12 that a scheduled slot
+may reach if either grows.
+
+**Anchor (asserted) — met in window 1, every gate at its imported, unmoved
+band, digits reproducing the last green records with the additive field in
+place.** Bit-identity gate on the 3b-xviii rung raw `0.894283` → corrected
+`0.939581` (`20260910T033128Z_TH-15.log:124`); matched-topology deviations
+`-2.6090e-03` / `-2.5225e-03` against `REACTION_CONSISTENCY_TOLERANCE` = 3%
+unmoved (`:885, :887`); systematics ladder raw `0.894106` (−10.59%) → PEC box
+`+0.0169` → `/(1 − 0.030224)` → **`0.939398` (−6.06%)** against
+`MUTUAL_TOLERANCE` = 0.10 unmoved, with the blind-fixture negative control at
+`0.017427` (−98.26%, rejected) (`:909–910`); reciprocity `Im Z₁₂`
+`1.110110e+00` / `Im Z₂₁` `1.110409e+00` Ω (`:908`). The gated fixture's census
+reprints step 3's finding (ii) — `gap_1 = gap_2 = 1.509378e-06 m³ =
+gap_box_analytic` (`:128`) — so the default path is a no-op on the gated
+fixture **by execution rather than by inspection**, which is exactly what
+ruling (4) refused to accept as an argument.
+
+**The one red, and why it did not stop the landing.** Window 2's
+`test_box_enlargement_discriminates_between_the_two_routes` reads deviation
+**3.111508e-02** at `air_padding = 0.10` and **3.022400e-02** at 0.08 against
+its pre-decided 2.5%. That is `PORT-1` step 3b-xii's **disposition (ii)**, a
+red the module was landed *carrying* at `a755afb`. Two independent reasons it
+is not this change: the module names no `gap_cell_tag`/`gap_cell_tags` (grepped
+— zero hits in either gate module) and the default selection is byte-identical;
+and the 0.08 deviation `3.022400e-02` byte-reproduces the 2026-08-07 record
+`−3.0224e-02` while the 0.10 reading sits between that record's two 0.10
+values (`−3.0188e-02` / `−3.1267e-02`), all measured a month before the field
+existed. A gated quantity reproducing a pre-change record to six figures *is*
+the additivity evidence rule (c) wanted. Filed as a new `🟡 OPEN`
+known-issues row (2026-09-09) rather than absorbed;
+`REACTION_CONSISTENCY_TOLERANCE` untouched at 3%.
+
+**A second finding, unasked for and worth a review's attention: this is the
+first footered observation of `test_port_gap_voltage_padding.py` in the repo's
+history.** `OPS-26` step 2 deferred it structurally at findings 21 and 33
+(`Status 124` at `-n 2` / 400 s and `-n 2` / 590 s, **zero `PASSED` lines**,
+"module fixture alone > 590 s at `-n 2`"). At `-n 4`, 12 of its 13 names are
+green and the 13th is a named, dispositioned red. That deferral is retired.
+
+**Verified by me, not just reported.** I re-read both log footers
+(`Status: 0` / `Elapsed (s): 479`; `Status: 1` / `Elapsed (s): 540`), the
+failing assertion's own text, `git show --stat 8d4cf58`, the §9 item-3 DONE
+marking and the known-issues row before accepting the executor's report, and
+grepped both gate modules for `gap_cell_tags`/`gap_volume_tags` myself (zero
+hits, which is the load-bearing half of the additivity argument).
+`git status --porcelain` empty afterwards.
+
+**Scope held.** No assertion loosened, widened or deleted. The default is
+**not** flipped — `gap_cell_tags` stays optional and `(gap_cell_tag,)`-
+defaulted, and the flip remains a later review's ruling from step 3's six
+printed numbers. No band moved, no gated record moved, `TH-15` stays 🟡 on
+step 2's unitarity gate, nothing in §2 moved.
+
+**Denials / anomalies: none.** No docker-socket denial, no allowlist denial, no
+container wedge, no compute-safety event, nothing backgrounded, no `-k` filter,
+no pipe through `grep`, no orphaned ranks. Two windows, both foreground, tier
+labels honest (heavy by ceiling, 479 s and 540 s against 590 s container
+ceilings).
+
+**Hypotheses for the 03:00 review.** (1) `attempt/TH-15-step3-20260909T185900Z`
+is now **redundant** — its non-log content is on `main` at `8d4cf58` — and is a
+disposal call. (2) The padding module's red is now the *only* thing standing
+between it and a fully green heavy module, and step 3b-xiii already named the
+suspect (gapped-and-lossy vs closed-and-lossless control, not truncation and
+not the wedge limits); the escalation the 2026-08-08 entry sent to the weekly
+is still unanswered. (3) The rank-width finding generalises: two modules
+believed unfittable were merely `-n 2`-bound, and `OPS-26` step 2 deferred
+others on the same evidence — a cheap sweep re-running each `Status 124`
+deferral at `-n 4` would probably retire more than one.
