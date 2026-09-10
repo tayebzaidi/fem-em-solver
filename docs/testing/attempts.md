@@ -16830,3 +16830,90 @@ anomaly is the unexplained `Exited (137)` of both services before the slot
 - That run must carry its own flag-on cell count, since the flag moves
   `size_global` by 33–109 cells.
 - Next on deck: item 3, `OPS-43` (a).
+
+## 2026-09-10T21:42Z (2026-09-10 16:30 CDT slot) — `OPS-43` (a) — **complete (gate and regression green on their second windows, each first-window red in a gate script rather than the harness; landed on `main` as `9d853fb`)**
+
+**Preflight.** Tree clean at 16:30:06 CDT (`bc4fcc7`).
+- `fem-em-solver` was Up; `fem-em-solver-xl` was not running.
+- There were zero `mpiexec`/`hydra`/`python3` processes in the container.
+
+**Item.** §9 items 1–2 were DONE, so I took item 3, `OPS-43` (a). It was
+delegated to `implementer` in the foreground as one executor (521 s). I read
+both closing footers, the gate's asserted lines and the `test_orphan_guard.sh`
+diff myself before writing this entry.
+
+**Windows (footers read here). All smoke, host-side gates through the
+harness, `timeout -k 30 120`.**
+- Gate `20260910T213636Z_OPS-43a.log`: **`Status: 0` `:139`, 16 s `:140`**,
+  `== summary: 0 failure(s) ==` `:136`.
+- Regression `20260910T213744Z_OPS-43a.log`
+  (`scripts/testing/test_orphan_guard.sh`): **0 failures `:81`, `Status: 0`
+  `:84`, 7 s `:85`**.
+- Superseded first windows, committed: gate `20260910T213546Z` (Status 1) and
+  regression `20260910T213658Z` (Status 1, 2 failures). Their causes are under
+  deviations.
+- Nested companion logs, committed: `…-killed` (no footer, deliberately),
+  `…-capture`, `…-norc`, and `OPS-43b-hostonly/-proceed` at
+  213637/213650/213651/213747/213749Z.
+
+**Asserted (gate `:49–130`).**
+- **Kill:** the harness process group was SIGKILLed at t = 4.08 s, with 4 raw
+  lines written. No host wrapper or compose client survived.
+- **Container command:** it outlived the kill (container `ps`, `:54–61`) and
+  finished by itself at t = 13.14 s. **The 09-09 observation holds at this
+  scale.**
+- **Raw file:** exactly 12 lines, `line 1` … `line 12`, plus exactly one
+  `[capture] rc=3`.
+- **`--capture-orphan`:** the recovered log has one `## Exit` and
+  `Status: 3`. The call exited **3**, and rows went 1616 → 1617.
+- **Negative control 1:** the killed wrapper's log has no `## Exit` and added
+  no row (`:69–76`). The defect is reproduced.
+- **Negative control 2:** the rc-stripped copy exited **76**
+  (`NO_RC_CAPTURE`, new and named in the header), wrote
+  `Status: unknown (no rc line)` with no numeric status, and added one row
+  (`:117–130`).
+- **Regression:** the refusal leg still exits 75 with no row and no log, and
+  the proceed leg exits 0 with rows +1.
+
+**Disclosed deviations (from the executor; checked here).**
+1. **Gate first window red on a check the item did not specify.** The
+   executor's extra "no host survivor" check used a bare host `pgrep -f`
+   marker. That matched the container's processes, which the WSL2 host PID
+   namespace can see. The check was narrowed to the killed pgid plus
+   `compose exec` clients, with the measurement recorded in a script comment.
+   All item assertions were green in both windows.
+2. **Regression first window red independent of this change.**
+   `test_orphan_guard.sh`'s negative control copied `HEAD:run_and_log.sh`.
+   Every HEAD since `d10a940` carries the orphan check, so the control could
+   never be green after (b) landed.
+   - It is now pinned to `d10a940^` (the true pre-change harness), with the
+     failing log cited in a comment.
+   - The anchor legs are unchanged, and no assertion was loosened: the
+     control still requires a pre-change copy that proceeds with exit 0.
+   - The `20260910T123339Z_OPS-43b.log` record the item cites was taken when
+     HEAD was the pre-(b) tree.
+3. **Additive behaviour beyond the item.**
+   - The recovered header also records the raw file's mtime.
+   - A footer note says the elapsed time is the capture call's own.
+   - Capture mode skips the orphan check and the XL ledger.
+   - The raw path is accepted as relative, absolute or `/workspace/…`; only
+     the relative form was exercised.
+   - A missing newline before the rc line is tolerated; that case was not
+     exercised.
+4. `OPS-43` stays ⬜, owing only the (c) wiring (§7 note). §5.1 documents the
+   shape. No edit was made to `xl-run.sh`, `xl-queue.env` or any compose
+   file.
+
+**Denials / anomalies.** No permission denials, nothing backgrounded via the
+Bash tool; backgrounding happened inside the gate script. The container's
+end-of-gate process table is clean (`:133–135`). The Grep tool is not exposed
+in this session, so `grep` ran via Bash for read-only checks.
+
+**Hypothesis / for the review.**
+- §9 is now drained: items 1–3 are DONE, and 4 (`OPS-43` (c), ride-along) and
+  5 (`ANS-4` step 2d) are 🚫. The 19:30 slot needs a re-topped queue.
+- Whether future `xl-queue.env` commands adopt the rc-in-raw-file shape and
+  `--capture-orphan` is the weekly's call, per item 3's scope.
+- `test_orphan_guard.sh`'s stale control is worth one line in the review: a
+  `HEAD:`-pinned negative control self-invalidates on landing, and
+  `test_durable_capture.sh` avoids the pattern.
