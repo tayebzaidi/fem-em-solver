@@ -30,3 +30,4 @@ on this kernel, so **263.4 GiB is the maximum over both runs**, not this run's
 own peak. Same workload at the same rank count, so the figure is representative
 — but it is not attributable, and §5.1 now requires restarting the service
 before an `xl` window so the next one is.
+| 2026-09-10 | ANS-4-step2d | `20260910T151845Z_ANS-4-step2d.log` | | | | 0 | |
