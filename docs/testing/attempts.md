@@ -15980,3 +15980,124 @@ the right instrument and is exactly what `OPS-42` was asked to produce — but t
 review should say so deliberately rather than inherit it. The cheap follow-on,
 if it wants a graded signal back, is a second severity band (`report` at 14 d,
 plus an informational count at 7 d) rather than another threshold move.
+
+---
+
+## 2026-09-10T00:45Z (2026-09-09 19:30 CDT slot) — `GEO-31` — **complete (green, measurement-only, landed on `main`)**
+
+**Item.** §9 On-deck item 1, the first item not done or blocked, taken without
+substitution: `GEO-31`, the port gap-sheets' triangulation under the C4
+rotation — same area, different cut, or different surface? Opened by the
+18:00 review (ruling (1)) on the one ungated lead `GEO-30` handed back.
+Executor `mesh-probe`, spawned **foreground** with the no-background rule
+stated verbatim in the spawn prompt; it never backgrounded a window.
+
+**Preflight.** Tree clean, `main` at `2ff98db`; `fem-em-solver` Up 6 days,
+`fem-em-solver-xl` Up 10 hours. No dirty-tree exception needed. Five
+`attempt/*` branches, no `recovered/*` — unchanged by this slot.
+
+**What was done.** `scripts/probes/geo31_birdcage_port_sheet_congruence.py`,
+new, importing `geo30_birdcage_c4_refinement_census.py`'s `RUNGS`,
+`_build_rung`, `_interface_facet_tags` and `SHEET_IFACE + i` selection
+verbatim — the geometry was not rebuilt and the tags were not re-derived by
+hand, as the item required. Per rung, per sheet: facet count and total area,
+the sorted per-facet-area vector with min/mean/max, the symmetric Hausdorff
+distance between sheet *i*'s facet-centroid set and sheet 1's rotated by
+(i−1)·90° about ẑ, the same metric on boundary-vertex sets alone, and the
+bounding-box discrepancy of each rotated-image difference.
+
+**Two windows, both Status 0, both foreground, 660 000 ms host timeout,
+`timeout -k 30 500` container-side, `-n 2`, real build, `-s`.**
+`20260910T003421Z_GEO-31.log` (145 s) carried the full table but **not** the
+item's required explicit discriminator *sentence* — the numbers were there
+and unambiguous, the words were not. Rather than write the verdict only into
+this journal, I added a discriminator block to the probe that **derives** the
+verdict from the measured (3)–(5) columns (never hardcoded, asserted nowhere)
+and re-ran: `20260910T003835Z_GEO-31.log` (144 s), character-identical
+readings plus `:7270–7279`. A third, 1 s window
+(`20260910T003414Z_GEO-31.log`) is the mandated `find /root/.cache/fenics
+-name '*.c' -size 0` stub sweep (none found) plus a `py_compile` guard, run
+before the measurement so a typo could not burn the window.
+
+**Asserted — the only two, both green.** (A) reproduction anchor: counts
+`(58,58,58,58)` at ×1 and `(62,62,62,62)` at `resolution` 0.012 against
+`GEO-30`'s, digit for digit, sheet-area spreads 6.050235e-16 / 8.470329e-16
+against the imported, unmoved 1e-3 (`20260910T003835Z_GEO-31.log:7281–7283`).
+(B) probe self-test: ℓ = sqrt(4A/(n√3)) = 2.111761e-03 m from
+A = 1.120000e-04 m², n = 58 (the item predicted ≈ 2.1e-3 m);
+`d(P1,P1)` = **0.000000e+00** exactly and
+`d(P1, P1 + ℓ·(1,1,1)/√3)` = **2.111761e-03 m = 1.000000 ℓ** against the ℓ/2
+bar 1.055880e-03 m (`:7284–7286`). The one failure mode that would have made
+the table meaningless — a metric returning 0 regardless — is excluded.
+
+**Measured verdict (printed, asserted nowhere, rule (e)): SAME SUPPORT, SAME
+BOUNDARY, DIFFERENT INTERIOR CUT — at all four rungs** (`:7270–7279`). Bbox
+discrepancy ≤ **5.633375e-18 m** (≈ 3e-15 ℓ) everywhere for both full and
+boundary vertex sets; boundary-vertex Hausdorff ≤ **2.881029e-14 m**
+(≈ 1.5e-11 ℓ) everywhere with **equal boundary-vertex counts** on all four
+sheets at all four rungs (30/30/30/30, 34/34/34/34 at ×0.75); facet-centroid
+Hausdorff **0.44–0.99 ℓ**, a full facet-edge length. Total area is
+1.120000e-04 m² on every sheet at every rung. So the four sheets are the same
+four patches cut differently by gmsh — **not** a defect in
+`birdcage_port_domain`'s sheet emission.
+
+**Per-rung centroid metric d_i/ℓ (P1 is the reference):** ×1 `0 / 0 / 0.5277 /
+0.5277`; `conductor_resolution` ×0.75 `0 / 0.9897 / 0 / 0.9897`; `resolution`
+0.012 `0 / 0 / 0 / 0.5758`; `resolution` 0.0095 `0 / 0.4569 / 0.5069 /
+0.4378` (`:7009, 7024, 7039, 7054`).
+
+**Two readings past `GEO-30`, and both sharpen the question rather than
+answering it.** (i) **Equal facet counts do not imply a congruent cut.** At
+×1 — 58/58/58/58, spread 0, the rung every gate builds on — P3 and P4 are
+*not* C4 images of P1 (1.114339e-03 m = 0.53 ℓ each) while P2 matches to
+2.570e-14; `resolution` 0.012 is the same story on P4 alone (0.58 ℓ). The cut
+asymmetry is therefore present on the two rungs that *behaved*, and
+`GEO-30`'s facet-count reading understated it. (ii) **The cut asymmetry is
+not the C2 pattern the counts showed.** At ×0.75 the metric follows the
+counts (0 / 0.9897 / 0 / 0.9897 against 80/74/80/74), but at 0.0095 it does
+not — counts 70/76/70/76, d_i = 0 / 0.4569 / 0.5069 / 0.4378, P3 differing
+despite an equal count. Meanwhile the **sorted per-facet-area multisets agree
+to ≤ 1.5e-11 relative wherever the counts permit the comparison**
+(`:7003, 7033`), including the ×1 P3/P4 pair whose centroids are 0.53 ℓ
+apart: same area distribution, different placement (`:7056–7269`).
+
+**Disposition.** Complete per §4 as a measurement-only step: verification
+executed through the harness by the executor I own, two quantitative asserted
+identities (an exact reproduction of a prior census plus an exact-0 /
+≥ ℓ/2 metric separation), tier and elapsed time recorded. `GEO-31` is **🧪,
+never ✅** — §3's measurement-only rule; the table is the deliverable and the
+review that reads it owns the disposition. **Scope held exactly:** no `src/`
+change, no generator fix, no port-model change, nothing rehabilitated.
+`ANS-4` keeps ✅ + **INCONCLUSIVE**, `WF-6` stays 🟡, the ×0.0095 rung stays
+**out** of `WF-6`'s ladder, and `ADJACENT_SPREAD_BAND` (0.5%),
+`POWER_BALANCE_BAND` (1e-2), `CELL_COUNT_BAND` (1%) and every port band are
+untouched. §2 unmoved; no example chunk opened.
+
+**Denials / anomalies: none.** No docker-socket denial, no allowlist denial,
+no container wedge, no compute-safety event, nothing backgrounded, no
+orphaned ranks, no `-k` filter, no pipe through `grep`. Two measurement
+windows rather than the item's one; the second bought the item's own
+discriminator deliverable into the log rather than leaving it in this journal,
+and cost 144 s. `fem-em-solver-xl` was Up 10 hours at slot start and is
+untouched by this slot — it is the operator's, not mine, but a reviewer may
+want to note it is still running.
+
+**Hypothesis for the next attempt / for the 03:00 review.** The mesh is now
+excluded as a *geometric* mechanism on every axis measured — mass (`GEO-30`),
+sheet area (`GEO-30`), support and boundary (`GEO-31`) — and what survives is
+narrow and specific: **four identical patches with identical area
+distributions, triangulated differently, integrated over by the lumped-sheet
+port model** (`ports/lumped.py`, `I = (1/R_s)∫E·ĥ dS / h`). The reading that
+should drive the next measurement is (i): the asymmetry is already present at
+×1, the rung on which `PORT-9`/`PORT-11`/`ANS-4` all passed their gates, so
+"refinement broke the symmetry" is the wrong frame — refinement *amplified*
+an asymmetry that was always there, presumably by moving the cut relative to
+the quadrature. The cheapest discriminating follow-on is therefore a
+**cut-sensitivity probe at fixed geometry**: reconstruct the lumped-sheet
+current on the ×1 rung's four sheets at two or three quadrature degrees and
+see whether the P1–P4 spread falls with degree (quadrature error on an
+asymmetric cut, curable and bounded) or does not (the reconstruction itself
+is cut-sensitive, which is a port-model finding and moves every record on
+this fixture). That is a solve-free facet-integration measurement on a mesh
+that already exists, and it is the question `GEO-31`'s verdict sentence names.
+Not opened here — the review owns it.
