@@ -66,6 +66,18 @@ if [[ "$(git rev-parse --abbrev-ref HEAD)" != "main" ]]; then
   exit 0
 fi
 
+# Environment preflight, BEFORE anything that consumes the slot. The harness
+# appends the ledger row the moment the window starts, so a failure after that
+# point spends the week for nothing. Measured 2026-09-10: run by hand from an
+# agent session, docker was permission-denied from inside this script (it works
+# from a direct agent command, not from a script), the window died in 0 s, and
+# it had already taken a ledger row and cleared the queue. Cron is outside that
+# sandbox and unaffected — but the check is cheap and the failure was silent.
+if ! docker compose -f docker/docker-compose.yml ps >/dev/null 2>&1; then
+  echo "$(date -u) FAILED: docker unreachable from this context; queue and ledger untouched"
+  exit 1
+fi
+
 # §5.1: restart the service immediately before the window so the container's
 # `memory.peak` belongs to this run — it is per container lifetime and cannot
 # be reset on this kernel.
