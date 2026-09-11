@@ -16917,3 +16917,50 @@ in this session, so `grep` ran via Bash for read-only checks.
 - `test_orphan_guard.sh`'s stale control is worth one line in the review: a
   `HEAD:`-pinned negative control self-invalidates on landing, and
   `test_durable_capture.sh` avoids the pattern.
+
+## 2026-09-11T00:40Z (2026-09-10 19:30 CDT slot) — `ANS-4` step 2a′ (+ `OPS-43` (c) wiring) — **complete: flag-on window green, flag-off control reproduces step 2a's red to the digit; landed on `main` as `e9e364e`**
+
+**Preflight.** Tree clean at 19:30:06 CDT (`4b1f7c7`), and `fem-em-solver` was Up. No `recovered/*` branches existed. §9 item 1 was open and unblocked, so I took it.
+
+**Execution.** Delegated to `implementer` in the foreground as one executor (417 s). The spawn prompt carried the foreground / 660 000 ms / `timeout -k 30` / `-s` rules and a no-commit instruction. I read the test diff and both logs' spread, `[mem]`, `S`, assertion and footer lines myself before writing this entry.
+
+**Change (test-side only, no `src/`).**
+- `_build` (`tests/mesh/test_birdcage_leg_offset.py`) and `_four_port_rung` (`tests/validation/test_port_birdcage_leg_offset_sweep.py`) gain additive `c4_congruent_sheets=False`; `_four_port_rung` ignores it under `reuse`.
+- `tests/validation/test_ans4_resolution_ladder.py`:
+  - env `FEM_EM_ANS4_STEP2_C4_CONGRUENT` (unset/`0` = off) is passed to all four `_four_port_rung` call sites (2d, 2c, 2a, degree 2), and `c4_congruent_sheets=on|off` is added to every rung label.
+  - `report_peak_rss` runs after every rung on all ranks.
+  - The five legacy `ru_maxrss` sites are untouched.
+
+**Windows. Both `-n 4`, complex, `FEM_EM_REQUIRE_COMPLEX=1`, `tests/environment` first, `-s`, `timeout -k 30 560`, `RUNGS="1.0 0.75"`, `DEGREE2=0`.**
+- **Window 1, flag on:** `20260911T003204Z_ANS-4-step2a-prime.log`, **15 passed (`:3995`), Status 0, 147 s (`:4194`)**.
+  - `size_global` 116 118 / 161 645 (`:2031, :3898`), both as `GEO-32` predicted. Control ratio 1.000284, inside the band (`:3901`).
+  - `Z` class spreads ×1 **0.0739 / 0.0822 / 0.0506 %** (`:2029`), ×0.75 **0.0481 / 0.0649 / 0.0555 %** (`:3896`), against the unmoved 0.5 %.
+  - Reciprocity 9.73e-16 / 2.37e-15; σ_max 0.998977574510 / 0.998688470520.
+  - S-class spreads at ×0.75: 0.0395 / 0.0573 / 0.0267 %.
+  - Printed only: ×0.75 moves `S₁₁/S₂₁/S₃₁` off the flag-on ×1 rung by 1.3786 / 1.3308 / 0.8225 % (`:3924–3926`).
+  - `[mem]`: 2.4269 / 2.9917 GiB summed over 4 ranks (`:2030, :3897`).
+- **Window 2, flag off (negative control by reproduction):** `20260911T003442Z_ANS-4-step2a-prime.log`, **1 failed / 14 passed (`:3785`), Status 1, 137 s (`:4011`)**.
+  - Same assertion as step 2a: `self class spread 0.5390% exceeds the imported, unmoved 0.5%` (`:3718`).
+  - Spreads 0.1012 / 0.0916 / 0.0654 % and 0.5390 / 0.4591 / 1.6886 % (`:3693–3694`).
+  - The six `S` entries (`:3699–3705`) and both σ_max equal `20260909T093534Z` to every printed digit.
+  - Reciprocity moved only at round-off (9.19e-16 → 1.01e-15), as it also did between step 2a's own logs.
+  - `[mem]`: 2.4599 / 3.0097 GiB (`:1916, :3678`).
+  - The red is the item's pre-registered expectation. A pass would have been the stop condition.
+
+**Branch applied: "Window 1 green."** The port-sheet cut carried step 2a's ×0.75 `Z` class-spread break as well as `PORT-18`'s read-back spread. I did not extend the ladder in-slot.
+
+**Records.** All in `e9e364e`:
+- §7 `ANS-4`: a new step 2a′ paragraph.
+- §7 `GEO-32`: a follow-on note.
+- §7 `OPS-43`: the (c) wiring landed and is closeable; left ⬜ for the review to audit.
+- §9 item 1: marked DONE.
+- known-issues: an update row on the 2026-09-09 `ANS-4` step 2a entry. That entry stays open, because the default flag-off path is still red for any ladder beyond ×1.
+
+No band moved, the default is unchanged, and no AED number was written anywhere.
+
+**Denials / anomalies.** None. Nothing was backgrounded.
+
+**Hypothesis / for the review.**
+- Queue ×0.6 / ×0.45 **flag on** (predicted by `PORT-14` step 1b's counts, ≈ 210 k / 330 k cells flag off; flag-on counts are their own). That gives the three finest degree-1 rungs the Richardson print needs.
+- Rule on the known-issues entry: flip `c4_congruent_sheets`' default for the ladder, or require the flag beyond ×1.
+- A flag-on ×1 is not the `GEO-19` 116 085 record, so a flag-on ladder needs its own control record (116 118 measured here, inside the 1 % band).
