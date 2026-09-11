@@ -114,5 +114,6 @@ the human operator.
 
 *Maintained by `docs/automation/daily-review.md` step 7. The Waiting-on-you
 section above is the alerting channel — check it after each review interval.
-The published artifact copy lags this file until the next interactive
-session republishes it.*
+The published artifact was last republished from this file on **2026-09-11**
+(18:00 review content); it lags this file whenever a scheduled review edits it,
+until the next interactive session republishes it.*
