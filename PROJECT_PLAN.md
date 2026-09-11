@@ -4314,6 +4314,53 @@ lineage. Standard tier.
 >   `STEP1C_RESIDUALS`, `_epsilon_star`, `_geometric_candidates`, three
 >   fixtures and four `step1d` tests, all skipping unless
 >   `FEM_EM_PORT14_WIDTH_SWEEP` is set.
+> * **Step 1e executed 2026-09-11, 07:30 implementer slot — F-small's
+>   single-mode floor registered as a (1\*) record; the deliberate red
+>   retires.** The 2026-09-06 weekly ruling (§10 Phase 6), tests only, no
+>   `src/`. `REDUCTION_BAND` = 1e-3 keeps its value and comment and is **not**
+>   re-registered. `tests/validation/test_port_lumped_rlc_termination.py`
+>   gains `REDUCTION_FLOOR_F_SMALL` (C 1.595580e-03 / L 3.370512e-03 / R
+>   7.249519e-04, cited to `20260905T020428Z_PORT-14.log:1858, 1865, 1872`),
+>   `REDUCTION_FLOOR_RTOL` = 1e-3 and `RECORD_RANK_WIDTH` = 2. On the `OPS-41`
+>   precedent the record assertion skips off `-n 2`, after the readings are
+>   printed. The gate now asserts `|r/record − 1| ≤ 1e-3` per element and
+>   prints each residual against the band as "systematic, not gated".
+>   `STEP1_RESIDUAL_RECORD` takes its C/L entries from the new dict; R stays
+>   out so `STEP1B_TERMINATIONS` is unchanged. `c4_congruent_sheets` off; the
+>   `GEO-19` record mesh.
+>   `20260911T123334Z_PORT-14-step1e.log`, standard tier (`timeout -k 30 300`),
+>   `-n 2`, complex build, `-s`, no step 1b/1c/1d env var set:
+>   **`15 passed, 16 skipped … 110.80s`** (`:2050`), **Status 0, 113 s**
+>   (`:2118–2119`). Collect-only smoke first,
+>   `20260911T123311Z_PORT-14-step1e-smoke.log` (31 collected `:81`, Status 0,
+>   4 s).
+>
+>   | element | residual | record | ratio | `|ratio − 1|` | vs band (printed) |
+>   |---|---|---|---|---|---|
+>   | C = 100 pF | 1.595580e-03 | 1.595580e-03 | 0.999999762 | **2.380e-07** | 1.595580× |
+>   | L = 1 µH | 3.370512e-03 | 3.370512e-03 | 1.000000106 | **1.065e-07** | 3.370512× |
+>   | R = 200 Ω | 7.249519e-04 | 7.249519e-04 | 0.999999966 | **3.391e-08** | 0.724952× |
+>
+>   (`:1888, :1895, :1902`.) Every record reproduces ≥ 4 000× inside the rtol.
+>   **Negative control (asserted, backed by the step 1 log):** held against
+>   another element's record, each residual fails reproduction.
+>   `|r_C/rec_L − 1|` = **0.526606** (pre-registered 0.527), and
+>   `|r_R/rec_C − 1|` = **0.545650** (pre-registered 0.546) (`:1913, :1917`).
+>   Every off-diagonal pair is asserted > 100× the rtol, so a swapped or
+>   mis-keyed record cannot pass.
+>   **Unmoved anchors, green:**
+>   - 50 Ω baseline: reciprocity 1.044255156e-14 vs 1e-3, σ_max 0.999992805
+>     vs 1 + 1e-9 (`:1884`; step 1 read 1.464e-14, the 1-ULP class).
+>   - Γ = 0 control: Δ = 0.3218888 / 0.3254627 / 0.2112830, miss
+>     0.3219520 / 0.3267853 / 0.2120063 (`:1922–1924`), step 1's digits
+>     exactly.
+>
+>   **Not claimed:** no absolute-accuracy or single-mode-accuracy claim. The
+>   residual *is* the sheet's named systematic (edge fringing, step 1d
+>   reading (2)) on F-small at 10 MHz. `TH-17` may not gate a mode frequency
+>   tighter than it without saying so. The row stays 🟡: step 2 (64 MHz) is
+>   open and now unblocked. Known-issues 2026-09-05 `PORT-14` step 1 entry
+>   retired in the same commit.
 
 **`PORT-15` — the circuit layer (HFSS + Circuit)** 🟡 *(**step 1 ✅
 2026-09-05, 22:30 slot** — the algebra and its three identities; digits in
@@ -7652,10 +7699,12 @@ unchanged, on the 2026-09-09 18:00 ruling.
 - whether a flag-on `ANS-4` Richardson estimate (item 1) changes step 2d's
   Larmor reading.
 
-**Residual `main` reds at `-n 2`: 4 deliberate/known**, unchanged, plus the
-padding module's red at `-n 4` (known-issues, 2026-09-09). Item 3 retires
-`PORT-14` step 1's deliberate red if it lands; the item checks whether the
-tally counts it.
+**Residual `main` reds at `-n 2`: 3 deliberate/known** (4 → 3, 2026-09-11
+07:30 slot), plus the padding module's red at `-n 4` (known-issues,
+2026-09-09). Item 3 retired `PORT-14` step 1's deliberate red, which the tally
+counted. It stood at 5 on 2026-09-05 with `POST-6`'s red and this one
+(attempts.md, `TH-15` step 1 entry), and fell to 4 when `PORT-16` step 2
+retired `POST-6`'s on 2026-09-07.
 
 **Four takeable items: fewer than five, stated rather than padded.** No
 other §7 row has queue-ready text (`plan-navigator`: `PORT-15` step 2 waits on
@@ -7909,7 +7958,13 @@ item 1. Their item texts are in `git show 4b1f7c7` and
    stale-factor control reading ≤ 1e-12 ⇒ the probe cannot see a wrong factor:
    stop without landing.
 
-3. **`PORT-14` step 1e — register F-small's measured single-mode floor as a
+3. ✅ **DONE 2026-09-11 07:30 slot — all three records reproduce (|ratio − 1|
+   2.4e-7 / 1.1e-7 / 3.4e-8 against 1e-3), cross-element control 0.526606 /
+   0.545650, baseline and Γ = 0 control unmoved, deliberate red retired**
+   (§7 `PORT-14` step 1e paragraph; `20260911T123334Z_PORT-14-step1e.log`,
+   `…123311Z_PORT-14-step1e-smoke.log`; known-issues 2026-09-05 `PORT-14`
+   entry retired).
+   **`PORT-14` step 1e — register F-small's measured single-mode floor as a
    (1\*) record and retire the deliberate red** (implementer; tests only;
    complex; standard; `main`; independent).
    **Why:** the 2026-09-06 weekly ruling (§10, the Phase-6 paragraph: "The

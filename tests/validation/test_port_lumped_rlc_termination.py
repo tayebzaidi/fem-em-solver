@@ -19,6 +19,12 @@ error in the usual sense — it measures how lumped the sheet actually is.  That
 is why the band is not widened if it is missed: a miss is a *finding about the
 sheet*, recorded as such.
 
+**Step 1e (2026-09-11).**  Steps 1b–1d measured the miss as the sheet's
+single-mode floor (edge fringing, step 1d reading (2)).  Per the 2026-09-06
+weekly ruling it is now a (1*) record, ``REDUCTION_FLOOR_F_SMALL``, asserted at
+``REDUCTION_FLOOR_RTOL`` at ``-n 2``; ``REDUCTION_BAND`` keeps its value and is
+printed beside each residual as a named systematic, not gated.
+
 **What this is not.**  Not an absolute-accuracy claim, not a resonance or tuning
 claim, not a coil-loading number: it is a self-consistency identity between two
 routes on one fixture at one frequency, exactly as `PORT-9`/`PORT-11` are.  Read
@@ -76,6 +82,46 @@ from tests.validation.test_port_package_sparameters import REFERENCE_IMPEDANCE_O
 # as written.  Never widened here: a residual above it is a finding about the
 # lumped sheet (§9 item 2's negative-result protocol), not a tolerance to move.
 REDUCTION_BAND = 1.0e-3
+
+# --- `PORT-14` step 1e: the F-small single-mode floor as a (1*) record --------
+REDUCTION_FLOOR_F_SMALL = {
+    "C = 100 pF": 1.595580e-03,
+    "L = 1 uH": 3.370512e-03,
+    "R = 200 Ohm": 7.249519e-04,
+}
+"""F-small's measured single-mode floor of the lumped sheet, per element.
+
+Source: ``20260905T020428Z_PORT-14.log:1858, 1865, 1872`` (`-n 2`, the
+116 085-cell `GEO-19` record mesh, ``c4_congruent_sheets`` off, 10 MHz).
+
+Registered as a (1*) **record**, not a band, by the 2026-09-06 weekly review's
+ruling on `PORT-14` (PROJECT_PLAN §10, Phase 6: "the fixture's measured
+single-mode floor is registered as a (1*) record on F-small ... the gate
+asserts the residual at that record ... and prints against 1e-3").
+``REDUCTION_BAND`` = 1e-3 is *not* re-registered: widening it to fit these
+numbers would be fitting the band to the artifact.
+
+What the floor is: step 1d's pre-registered **reading (2)** — no measured
+geometric ratio predicts the −1.09 % effective-width offset, so the residual is
+a field effect of the sheet (edge fringing, the single-mode residual proper;
+``20260906T003627Z_PORT-14-step1d.log:2001–2040``).  It is carried as a **named
+systematic of the lumped sheet**, the way `PORT-1` carries its two feed
+systematics.  A later change that moves these digits is a change to the sheet
+or the fixture and must say so — never a re-record in passing.
+"""
+
+# Reproduction tolerance on each record (relative).  The records reproduced to
+# the printed digit across the step 1 / 1b ×1 / 1c ε = 0 runs (same mesh, same
+# width), so 1e-3 is loose against run-to-run drift and tight against any
+# change to the sheet: the cross-element negative control below misses by ~0.5.
+REDUCTION_FLOOR_RTOL = 1.0e-3
+
+# --- the records' rank width (the `OPS-41` precedent) -----------------------
+# Every reproduction record above was set at `mpiexec -n 2`, the width CI runs.
+# Another width is not a reproduction: off it the reading is still printed and
+# every non-record assertion still runs, and only the record assertion skips.
+# This constant declares the *domain* of the records; it relaxes nothing.
+RECORD_RANK_WIDTH = 2
 
 # The port terminated in the RLC element.  Index 0 of the 4×4, i.e. `P1`, whose
 # 50 Ω column is `PORT-9` leg (d0)'s recorded column.
@@ -236,30 +282,56 @@ def test_the_fifty_ohm_baseline_reproduces_the_port9_gates(rlc_termination_cases
     )
 
 
+def _reduction_residuals(cases):
+    """``‖S'_meas − S'_pred‖_F / ‖S'_pred‖_F`` per case, keyed by label.
+
+    Both matrices come from the comm-reduced sweep / `_power_waves` route, so the
+    number is identical on every rank.
+    """
+    out = {}
+    for case in cases:
+        predicted = case["predicted"]
+        out[case["label"]] = float(
+            np.linalg.norm(case["measured"] - predicted) / np.linalg.norm(predicted)
+        )
+    return out
+
+
 @complex_only
 def test_the_terminated_solve_matches_the_circuit_reduction(rlc_termination_cases):
     """**The gate.**  Field-solved terminated 3×3 == reduction of the 50 Ω 4×4.
 
-    Pre-stated band ``1e-3`` (`PORT-14` §7 entry), asserted as written for each
-    of the capacitor, the inductor and the resistor.  Every residual is printed
-    before any assertion, so a miss is a measurement in the log whether or not
-    the assertion survives it.
+    Step 1e (the 2026-09-06 weekly ruling): each residual is **asserted at its
+    F-small record** ``REDUCTION_FLOOR_F_SMALL`` to ``REDUCTION_FLOOR_RTOL``
+    relative, and **printed** against the pre-stated ``REDUCTION_BAND`` = 1e-3 as
+    a named systematic of the lumped sheet — not gated, and not widened.  Every
+    residual is printed before any assertion.  The record assertion runs only
+    at ``RECORD_RANK_WIDTH`` (`OPS-41`): another width is not a reproduction.
     """
-    residuals = []
+    comm = MPI.COMM_WORLD
+    residuals = _reduction_residuals(rlc_termination_cases["cases"])
     for case in rlc_termination_cases["cases"]:
-        predicted = case["predicted"]
-        residual = float(
-            np.linalg.norm(case["measured"] - predicted) / np.linalg.norm(predicted)
-        )
-        case["residual"] = residual
-        residuals.append((case["label"], residual))
+        case["residual"] = residuals[case["label"]]
 
-    if MPI.COMM_WORLD.rank == 0:
-        print("[PORT-14 step1] reduction identity residuals (band 1e-3):", flush=True)
+    if comm.rank == 0:
+        print(
+            "[PORT-14 step1e] reduction identity residuals: asserted at the "
+            f"F-small record (rtol {REDUCTION_FLOOR_RTOL:.0e}, -n "
+            f"{RECORD_RANK_WIDTH} records; this run -n {comm.size}); printed "
+            f"against REDUCTION_BAND = {REDUCTION_BAND:.0e} (systematic, not gated):",
+            flush=True,
+        )
         for case in rlc_termination_cases["cases"]:
+            record = REDUCTION_FLOOR_F_SMALL[case["label"]]
+            residual = case["residual"]
             print(
                 f"    {case['label']:<12s} ||S'_meas - S'_pred||_F/||S'_pred||_F = "
-                f"{case['residual']:.6e}",
+                f"{residual:.6e}   record {record:.6e}   ratio "
+                f"{residual / record:.9f}   |ratio - 1| = "
+                f"{abs(residual / record - 1.0):.3e}   vs band: "
+                f"{residual / REDUCTION_BAND:.6f}x "
+                f"({'over' if residual > REDUCTION_BAND else 'under'}; "
+                "systematic, not gated)",
                 flush=True,
             )
             for row in range(case["measured"].shape[0]):
@@ -268,13 +340,93 @@ def test_the_terminated_solve_matches_the_circuit_reduction(rlc_termination_case
                 print(f"        meas row {row}: {meas}", flush=True)
                 print(f"        pred row {row}: {pred}", flush=True)
 
-    for label, residual in residuals:
-        assert residual <= REDUCTION_BAND, (
-            f"{label}: the field-solved terminated 3x3 differs from the circuit "
-            f"reduction of the 50 Ohm 4x4 by {residual:.3e}, above the pre-stated "
-            f"{REDUCTION_BAND:.0e} band. The identity is exact for a single-mode "
-            "port, so this is a statement about how lumped the sheet is — do not "
-            "widen the band (PROJECT_PLAN §9 item 2, negative-result protocol)"
+    assert set(residuals) == set(REDUCTION_FLOOR_F_SMALL), (
+        f"terminations {sorted(residuals)} do not match the records' keys "
+        f"{sorted(REDUCTION_FLOOR_F_SMALL)}"
+    )
+    if comm.size != RECORD_RANK_WIDTH:
+        pytest.skip(
+            f"REDUCTION_FLOOR_F_SMALL records were set at -n {RECORD_RANK_WIDTH}; "
+            f"this is -n {comm.size}, which is not a reproduction (OPS-41 "
+            "precedent) — readings printed above"
+        )
+    for label, residual in residuals.items():
+        record = REDUCTION_FLOOR_F_SMALL[label]
+        miss = abs(residual / record - 1.0)
+        assert miss <= REDUCTION_FLOOR_RTOL, (
+            f"{label}: the reduction residual {residual:.6e} does not reproduce the "
+            f"F-small record {record:.6e} (|ratio - 1| = {miss:.3e} > "
+            f"{REDUCTION_FLOOR_RTOL:.0e}). The floor is a (1*) record of the lumped "
+            "sheet on the GEO-19 mesh at -n 2: a move is a change to the sheet or "
+            "the fixture — report it, do not re-register it in passing "
+            "(PROJECT_PLAN §7 PORT-14 step 1e)"
+        )
+
+
+# Pre-registered cross-element pairs for the discrimination control, with the
+# miss each one produces on the step 1 log's own digits
+# (`20260905T020428Z_PORT-14.log:1858, 1865, 1872`): 1.595580/3.370512 and
+# 0.7249519/1.595580.  *Asserted* under §9 rule (e) — same comparison, same
+# fixture, backed by that log.
+CROSS_ELEMENT_CONTROLS = (
+    ("C = 100 pF", "L = 1 uH", 0.527),
+    ("R = 200 Ohm", "C = 100 pF", 0.546),
+)
+
+
+@complex_only
+def test_a_mis_keyed_floor_record_cannot_reproduce(rlc_termination_cases):
+    """**Negative control: the rtol discriminates between elements.**
+
+    Each element's measured residual, held against *another* element's record,
+    must miss reproduction by far more than ``REDUCTION_FLOOR_RTOL``.  The two
+    pre-registered pairs are asserted at their log-backed misses (0.527 / 0.546
+    to ±0.005, i.e. the third printed digit) and ≫ the rtol; every other
+    off-diagonal pair is asserted to miss the rtol too.  So a swapped or
+    mis-keyed record cannot pass the gate above.  Width-independent: a 0.5
+    separation does not ride a 1e-4 rank sensitivity.
+    """
+    residuals = _reduction_residuals(rlc_termination_cases["cases"])
+    pairs = []
+    for measured_label, residual in residuals.items():
+        for record_label, record in REDUCTION_FLOOR_F_SMALL.items():
+            if measured_label != record_label:
+                pairs.append(
+                    (measured_label, record_label, abs(residual / record - 1.0))
+                )
+
+    if MPI.COMM_WORLD.rank == 0:
+        print(
+            "[PORT-14 step1e] negative control, cross-element reproduction "
+            f"(each must miss rtol {REDUCTION_FLOOR_RTOL:.0e}):",
+            flush=True,
+        )
+        backed = {(m, r): v for m, r, v in CROSS_ELEMENT_CONTROLS}
+        for measured_label, record_label, miss in pairs:
+            note = (
+                f"  pre-registered {backed[(measured_label, record_label)]:.3f}"
+                if (measured_label, record_label) in backed
+                else ""
+            )
+            print(
+                f"    r[{measured_label}] / rec[{record_label}] - 1 | = "
+                f"{miss:.6f}   ({miss / REDUCTION_FLOOR_RTOL:.1f}x rtol){note}",
+                flush=True,
+            )
+
+    misses = {(m, r): v for m, r, v in pairs}
+    for measured_label, record_label, expected in CROSS_ELEMENT_CONTROLS:
+        miss = misses[(measured_label, record_label)]
+        assert abs(miss - expected) <= 5.0e-3, (
+            f"|r[{measured_label}]/rec[{record_label}] - 1| = {miss:.6f}, not the "
+            f"log-backed {expected:.3f}: the residuals no longer order as step 1 "
+            "measured them"
+        )
+    for measured_label, record_label, miss in pairs:
+        assert miss > 100.0 * REDUCTION_FLOOR_RTOL, (
+            f"r[{measured_label}] reproduces rec[{record_label}] to {miss:.3e}, "
+            f"within 100x the {REDUCTION_FLOOR_RTOL:.0e} rtol: the record gate "
+            "cannot tell these two elements apart"
         )
 
 
@@ -360,11 +512,14 @@ def test_the_zero_gamma_control_misses(rlc_termination_cases):
 # the same ceiling-first Gamma = 0 control step 1 ran.
 STEP1B_FACTOR_ENV = "FEM_EM_PORT14_CONDUCTOR_RESOLUTION_FACTOR"
 
-# Step 1's printed record, `20260905T020428Z_PORT-14.log`, restated here as the
-# comparison line for the printout (it is a logged number, not a constant any
-# module exports).
+# Step 1's printed record, `20260905T020428Z_PORT-14.log`.  The cell count is
+# restated as the comparison line for the printout; the residuals are taken from
+# step 1e's `REDUCTION_FLOOR_F_SMALL` (lossless pair only — the resistor stays
+# step 1's business, and `STEP1B_TERMINATIONS` below filters on these keys).
 STEP1_CELL_RECORD = 116085
-STEP1_RESIDUAL_RECORD = {"C = 100 pF": 1.595580e-03, "L = 1 uH": 3.370512e-03}
+STEP1_RESIDUAL_RECORD = {
+    label: REDUCTION_FLOOR_F_SMALL[label] for label in ("C = 100 pF", "L = 1 uH")
+}
 
 # The two lossless terminations — |Gamma| = 1, the worst pair — taken from the
 # gate's own tuple so no value is restated.  The resistor is step 1's business.
