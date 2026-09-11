@@ -83,8 +83,16 @@ def _build(
     conductor_resolution=None,
     as_hole=False,
     resolution=None,
+    c4_congruent_sheets=False,
 ):
     """One graded, gapped birdcage rung, sheeted or not, with its wall time.
+
+    ``c4_congruent_sheets`` is `WF-6` step 4h's additive keyword, threaded the
+    way `ANS-4` step 2a′ threaded it in `tests/mesh/test_birdcage_leg_offset.py`:
+    ``False`` — every gate's value, and the generator's own default — builds
+    the identical mesh this helper always has.  ``True`` binds the four
+    leg-port sheets to sheet 1's triangulation (`GEO-32`); a flag-on mesh is
+    not the `GEO-19` 116 085-cell record mesh.
 
     ``phantom_resolution`` is `WF-6` step 3f₀'s additive keyword (the
     `frequency_hz` / `reuse` precedent in
@@ -135,6 +143,7 @@ def _build(
         ),
         phantom_resolution=phantom_resolution,
         as_hole=as_hole,
+        c4_congruent_sheets=bool(c4_congruent_sheets),
         comm=comm,
         return_diagnostics=True,
     )

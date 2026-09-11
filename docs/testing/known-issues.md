@@ -28,6 +28,18 @@ unless fixing it is the task.
 
 ## Failing tests
 
+### 🟡 OPEN 2026-09-11 (`WF-6` step 4h, 09:00 implementer slot) — the unloaded F-small birdcage's ×0.0095 global-resolution rung **misses power accounting by ≈ 1.97e-02 on both ports even with the C4-congruent sheet cut**: the cut removes the P1/P2 split, not the residual
+
+| | |
+| --- | --- |
+| **Test** | `tests/validation/test_birdcage_b1_plus_closed_form.py::test_power_accounting_closes_on_every_rung[x0.0095]`. **Reachable only opt-in** (`FEM_EM_WF6_C4_CONGRUENT=1`); the default `LADDER` (`x1`, `x0.012`) does not contain the rung, so nothing on `main` is red by default. |
+| **Verified at** | `bf6ae76` + the step-4h test-side keywords. `20260911T140329Z_WF-6-step4h.log` — `-n 4`, complex, `FEM_EM_REQUIRE_COMPLEX=1`, keys `x1 x0.0095`, `timeout -k 30 590`, `-v -s`: **1 failed / 18 passed / 4 skipped in 196.74 s**, elapsed 199 s, `[capture] rc=1` (`:4149, :4372`). Default-path control `20260911T140714Z_WF-6-step4h-flagoff-x1.log`: 6 passed, rc 0. |
+| **Symptom** | `rung x0.0095 [P1]: power accounting misses by 1.968410e-02 of the supplied 6.789015267e-03 W (phantom 0.000000000e+00, conductor 4.371025298e-04, sheets 6.218277077e-03); imported band 1e-02` (`:4147`). P2 reads **1.968464e-02** (`:4035`). The flag-off step-4f record on the same rung was P1 **1.853642e-02** / P2 **1.419812e-02** (`20260909T123716Z_WF-6.log:5777–5778, 5789–5795`), so on/off = 1.0619 / 1.3864 (`:4036–4037`). |
+| **What is green in the same window** | The flag-on ×1 rung: 116 118 cells, residuals 9.795942e-03 / 9.796517e-03, covariance 3.5271%, cw/ccw 15.03× (`:2032–2044`). On ×0.0095 itself: covariance 1.3181%, cw/ccw 53.09×, 21 of 21 points (`:4031–4033`). |
+| **Cause — not diagnosed** | The congruent cut **was** the carrier of the port-to-port split: P1 and P2 now agree to 2.7e-05 relative, as they do on both coarser rungs. The residual itself is **common-mode** and did not fall, so it is not a sheet-cut asymmetry. Unseparated candidates include the accounting's own terms at finer `h` (the conductor-less residual rose from 7.52e-02 at ×1 to 8.41e-02 at ×0.0095, `:2043, :4034`) and the sheet-power estimator's discretisation. Not measured in this slot. |
+| **Consequence** | ×0.0095 stays out of the default `LADDER`; no `WF-6` record, band or rung is re-registered; `WF-6` stays 🟡. |
+| **Resolves with** | A review scoping a diagnosis of the common-mode ≈ 2e-2 residual at ×0.0095 (for example, a per-term accounting ladder across ×1 / ×0.012 / ×0.0095 with the flag on). `POWER_BALANCE_BAND` is not to be widened. |
+
 ### 🟡 OBSERVATION (was OPEN) 2026-09-10 (`OPS-43` (d) gate, 06:00 implementer slot) — the complex MUMPS smoke solve is **not bit-reproducible across processes at `-n 2`**: 2 of 22 identical child solves drifted by 1 ULP. **Re-headed 2026-09-10 13:30 slot: no gate depends on this any more** — the (d) gate landed on `main` re-anchored at child `-n 1` (`20260910T183305Z_OPS-43d.log`, `Status: 0` `:245`, 54 s). Not retired: the drift is still undiagnosed.
 
 | | |

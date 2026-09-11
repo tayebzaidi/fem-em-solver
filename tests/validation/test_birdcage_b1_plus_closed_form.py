@@ -103,6 +103,15 @@ formulation or the CG1 ``curl E`` estimator.  If the re-registered ×1 anchor
 misses, the fixture has changed since 4f and *that* is the finding: report
 both readings and stop — never widen a band, never prune a point.
 
+**Step 4h (2026-09-11) — opt-in congruent sheet cut, test-side only.**
+``FEM_EM_WF6_C4_CONGRUENT=1`` builds every rung with `GEO-32`'s
+``c4_congruent_sheets`` and appends the dropped ×0.0095 rung;
+``FEM_EM_WF6_LADDER_KEYS`` selects rungs.  Unset, the ladder and every
+record assert exactly as step 4g left them.  Measured
+(`20260911T140329Z_WF-6-step4h.log`): the cut makes P1/P2 agree at ×0.0095
+(1.968410e-02 / 1.968464e-02) but the residual stays above the unmoved 1e-2,
+so the rung stays out of ``LADDER``.
+
 Run (complex build required)::
 
     scripts/testing/run_and_log.sh WF-6 "docker compose exec -T fem-em-solver \\
@@ -115,10 +124,14 @@ Run (complex build required)::
 
 from __future__ import annotations
 
+import os
+
 import numpy as np
 import pytest
+from mpi4py import MPI
 
 from fem_em_solver.core import HomogeneousMaterial
+from fem_em_solver.utils.instrumentation import report_peak_rss
 from fem_em_solver.post import (
     evaluate_vector_field_parallel,
     magnetic_flux_density_from_e,
@@ -163,6 +176,63 @@ LADDER = (
     {"key": "x1", "resolution": 0.015, "cells": 116085, "record": True},
     {"key": "x0.012", "resolution": 0.012, "cells": 149049, "record": False},
 )
+
+# **`WF-6` step 4h — the congruent sheet cut, opt-in, test-side only.**
+# `ANS-4` step 2a′ showed `GEO-32`'s ``c4_congruent_sheets`` clears the
+# conductor-refinement Z class-spread break (`20260911T003204Z_ANS-4-step2a-
+# prime.log:3913`); 4h asks whether the same cut carries the ×0.0095 rung's
+# power-residual split.  Unset or "0" = off: ``LADDER`` above is then the
+# active tuple **unchanged**, every rung builds the flag-off mesh, and the
+# two ×1 record tests assert as before.  "1" builds every rung with the cut
+# and appends the dropped ×0.0095 rung (its ``cells`` is `GEO-29`'s flag-off
+# single reading, printed only).  A flag-on mesh is not the record mesh.
+C4_CONGRUENT_ENV = "FEM_EM_WF6_C4_CONGRUENT"
+# Space/comma-separated rung keys; unset = every active rung.  Selection keeps
+# the ladder's own order, so ×1 always builds (and reports) first.
+LADDER_KEYS_ENV = "FEM_EM_WF6_LADDER_KEYS"
+CONGRUENT_EXTRA_RUNGS = (
+    {"key": "x0.0095", "resolution": 0.0095, "cells": 197393, "record": False},
+)
+# Printed only: the flag-on ×1 cell count `GEO-32` predicts (the cut adds 33
+# cells to the 116 085 record, the 2026-09-11 03:00 ruling's 116 118).
+PREDICTED_FLAG_ON_X1_CELLS = 116118
+# **The negative control, by record (never re-run here).**  Step 4f's flag-off
+# ×0.0095 power residuals, `20260909T123716Z_WF-6.log:5777-5778, 5789-5795`.
+# The flag-on reading is printed beside them with its ratio; the ratio is
+# *predicted* to fall, never asserted (§9 rule (e)).
+FLAG_OFF_X0_0095_RESIDUALS = {"P1": 1.853642e-02, "P2": 1.419812e-02}
+
+
+def _c4_congruent_enabled():
+    """Whether every rung builds with ``c4_congruent_sheets``. Default **off**."""
+    raw = os.environ.get(C4_CONGRUENT_ENV)
+    if raw is None or not raw.strip():
+        return False
+    return raw.strip().lower() not in ("0", "false", "no", "off")
+
+
+def _active_ladder():
+    """``LADDER`` (flag off) or ``LADDER + CONGRUENT_EXTRA_RUNGS`` (flag on),
+    filtered by ``FEM_EM_WF6_LADDER_KEYS`` in ladder order.  Pure env logic,
+    identical on every rank; an unknown key raises at collection."""
+    ladder = LADDER + (CONGRUENT_EXTRA_RUNGS if _c4_congruent_enabled() else ())
+    raw = os.environ.get(LADDER_KEYS_ENV)
+    if raw is None or not raw.strip():
+        return ladder
+    wanted = raw.replace(",", " ").split()
+    known = [r["key"] for r in ladder]
+    unknown = [k for k in wanted if k not in known]
+    if unknown:
+        raise ValueError(
+            f"{LADDER_KEYS_ENV} names rung(s) {unknown} not in the active ladder "
+            f"{known} ({C4_CONGRUENT_ENV}={'on' if _c4_congruent_enabled() else 'off'}"
+            "; x0.0095 exists only with the flag on)"
+        )
+    return tuple(r for r in ladder if r["key"] in wanted)
+
+
+C4_CONGRUENT = _c4_congruent_enabled()
+ACTIVE_LADDER = _active_ladder()
 
 # **Anchor (i)'s reproduction control.**  Step 4f measured *this module's own
 # four-copy spread statistic*, on this fixture, at this rung, as 5.2506%
@@ -274,7 +344,9 @@ def _radial_spreads(values):
     return np.asarray(out, dtype=float)
 
 
-@pytest.fixture(scope="module", params=LADDER, ids=[r["key"] for r in LADDER])
+@pytest.fixture(
+    scope="module", params=ACTIVE_LADDER, ids=[r["key"] for r in ACTIVE_LADDER]
+)
 def rung(request):
     """One ``h`` rung: one mesh, four single drives, the two superpositions.
 
@@ -285,7 +357,9 @@ def rung(request):
     """
     spec = request.param
     sweep = build_four_port_sweep(
-        phantom_material=VACUUM, resolution=spec["resolution"]
+        phantom_material=VACUUM,
+        resolution=spec["resolution"],
+        c4_congruent_sheets=C4_CONGRUENT,
     )
     comm = sweep["mesh"].comm
 
@@ -373,30 +447,52 @@ def rung(request):
     x1 = _LADDER_READINGS.get("x1")
     if comm.rank == 0:
         _print_rung(reading, previous, x1, delta_deg, azimuths, sweep)
+    # Collective: every rank calls it, rank 0 prints.
+    report_peak_rss(comm, label=f"WF-6 step4h after rung {spec['key']}")
     _LADDER_READINGS[spec["key"]] = reading
     return reading
 
 
 def _previous_key(key):
-    keys = [r["key"] for r in LADDER]
+    keys = [r["key"] for r in ACTIVE_LADDER]
     i = keys.index(key)
     return keys[i - 1] if i > 0 else None
+
+
+def _residual(sh):
+    total = sh["phantom"] + sh["conductor"] + sh["sheet_total"]
+    return abs(sh["supplied"] - total) / abs(sh["supplied"])
 
 
 def _print_rung(reading, previous, x1, delta_deg, azimuths, sweep):
     spec = reading["spec"]
     cells = reading["cells"]
-    print(
-        f"\n[WF-6 step4g] rung {spec['key']}: resolution = {spec['resolution']} m, "
-        f"{cells} cells (GEO-29 {spec['cells']}, ratio "
-        f"{cells / spec['cells']:.6f}"
-        + (
+    if C4_CONGRUENT:
+        record_clause = (
+            f", PRINTED NOT ASSERTED — flag-on mesh is not the record mesh "
+            f"(GEO-32); x1 flag-on PREDICTED {PREDICTED_FLAG_ON_X1_CELLS}, "
+            f"ratio {cells / PREDICTED_FLAG_ON_X1_CELLS:.6f})"
+            if spec["key"] == "x1"
+            else ", PRINTED NOT ASSERTED — flag-on mesh, its own count; the "
+            "comparand is GEO-29's flag-off single reading)"
+        )
+    elif spec["record"]:
+        record_clause = (
             f", ASSERTED inside the imported {CELL_COUNT_BAND * 100:.0f}% "
             "CELL_COUNT_BAND)"
-            if spec["record"]
-            else ", PRINTED NOT ASSERTED — GEO-29's finer rungs are single "
+        )
+    else:
+        record_clause = (
+            ", PRINTED NOT ASSERTED — GEO-29's finer rungs are single "
             "readings, not records)"
         )
+    print(
+        f"\n[WF-6 step4g] rung {spec['key']}: c4_congruent_sheets="
+        f"{'on' if C4_CONGRUENT else 'off'} ({C4_CONGRUENT_ENV}); resolution = "
+        f"{spec['resolution']} m, "
+        f"{cells} cells (GEO-29 {spec['cells']}, ratio "
+        f"{cells / spec['cells']:.6f}"
+        + record_clause
         + f"\n    unloaded (vacuum on tag 3), 10 MHz, degree 1, CG1 |B1+|; sheet "
         "azimuths "
         + ", ".join(f"{p} {azimuths[p]:.3f}" for p in sorted(azimuths))
@@ -455,6 +551,19 @@ def _print_rung(reading, previous, x1, delta_deg, azimuths, sweep):
             "(PRINTED)",
             flush=True,
         )
+    if C4_CONGRUENT and spec["key"] == "x0.0095":
+        for pid, sh in sorted(reading["shares"].items()):
+            on = _residual(sh)
+            off = FLAG_OFF_X0_0095_RESIDUALS[pid]
+            print(
+                f"[WF-6 step4h] negative control BY RECORD, x0.0095 [{pid}]: "
+                f"flag-on residual {on:.6e} vs flag-off record {off:.6e} "
+                f"(20260909T123716Z_WF-6.log:5777-5778, 5789-5795); ratio "
+                f"on/off {on / off:.4f} (PREDICTED to fall, NEVER ASSERTED); "
+                f"flag-on {'<=' if on <= POWER_BALANCE_BAND else '>'} the "
+                f"imported {POWER_BALANCE_BAND:.0e} POWER_BALANCE_BAND",
+                flush=True,
+            )
     print(
         f"[WF-6 step4g] rung {spec['key']}: the eleven z = 0 gate points "
         "(steps 4/4b's set, no closed form — the comparand path is deleted):",
@@ -505,6 +614,17 @@ def test_the_x1_rung_reproduces_its_recorded_cell_count(rung):
             "(that probe's own caveat) — printed above, never asserted"
         )
     ratio = rung["cells"] / rung["spec"]["cells"]
+    if C4_CONGRUENT:
+        if MPI.COMM_WORLD.rank == 0:
+            print(
+                f"\n[WF-6 step4h] x1 record test SKIPPED (flag on): meshed "
+                f"{rung['cells']} cells against the flag-off record "
+                f"{rung['spec']['cells']} (ratio {ratio:.6f}) and the flag-on "
+                f"PREDICTED {PREDICTED_FLAG_ON_X1_CELLS} (ratio "
+                f"{rung['cells'] / PREDICTED_FLAG_ON_X1_CELLS:.6f}) — PRINTED",
+                flush=True,
+            )
+        pytest.skip("flag-on mesh is not the record mesh (`GEO-32`)")
     assert abs(ratio - 1.0) <= CELL_COUNT_BAND, (
         f"the x1 rung meshed {rung['cells']} cells against the recorded "
         f"{rung['spec']['cells']} (ratio {ratio:.6f}), outside the imported "
@@ -526,6 +646,16 @@ def test_the_x1_rung_reproduces_the_recorded_c4_spread(rung):
         pytest.skip("the reproduction control is the x1 rung's, by construction")
     measured = rung["worst_spread"]
     relative = abs(measured - RECORDED_X1_WORST_SPREAD) / RECORDED_X1_WORST_SPREAD
+    if C4_CONGRUENT:
+        if MPI.COMM_WORLD.rank == 0:
+            print(
+                f"\n[WF-6 step4h] x1 spread record test SKIPPED (flag on): "
+                f"worst-radius C4 four-copy spread {measured * 100:.4f}% against "
+                f"the flag-off record {RECORDED_X1_WORST_SPREAD * 100:.4f}% "
+                f"({relative * 100:.2f}% relative) — PRINTED",
+                flush=True,
+            )
+        pytest.skip("flag-on mesh is not the record mesh (`GEO-32`)")
     assert relative <= RECORDED_SPREAD_TOLERANCE, (
         f"the x1 rung's worst-radius C4 four-copy spread reads "
         f"{measured * 100:.4f}% against the recorded "

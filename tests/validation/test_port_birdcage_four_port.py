@@ -224,6 +224,7 @@ def build_four_port_sweep(
     phantom_material=None,
     resolution=None,
     build_only=False,
+    c4_congruent_sheets=False,
 ):
     """One mesh; four driven lumped-sheet solves at 50 Ohm; the assembled 4x4.
 
@@ -274,6 +275,15 @@ def build_four_port_sweep(
     `GEO-29`'s global-resolution ladder.  It is ignored when ``reuse`` is
     given, since then no mesh is built.
 
+    ``c4_congruent_sheets`` is the eighth additive parameter (`WF-6` step 4h,
+    the `ANS-4` step 2a′ precedent in
+    `tests/validation/test_port_birdcage_leg_offset_sweep._four_port_rung`):
+    ``False`` — every gate's value — forwards the generator's own default
+    through `_build`, leaving the gated mesh bit-for-bit unchanged.  ``True``
+    builds `GEO-32`'s C4-congruent sheet cut, which is **not** the `GEO-19`
+    116 085-cell record mesh.  It is ignored when ``reuse`` is given, since
+    then no mesh is built.
+
     ``reuse`` is the second additive parameter, same precedent: hand it a dict
     this function already returned and the mesh, the narrowed sheet facet tags
     and the sheet geometry are taken from it rather than rebuilt, so a
@@ -298,6 +308,7 @@ def build_four_port_sweep(
             phantom_resolution=phantom_resolution,
             conductor_resolution=conductor_resolution,
             resolution=resolution,
+            c4_congruent_sheets=c4_congruent_sheets,
         )
         tdim = msh.topology.dim
         ncells = int(msh.topology.index_map(tdim).size_global)
