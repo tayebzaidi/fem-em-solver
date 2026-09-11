@@ -1,0 +1,75 @@
+# Test Run
+- Chunk: TH-19-step1-collect
+- Commit: 8345787bace628422a487e7e8a0a2834be91282e
+- Time (UTC): 2026-09-11 03:31:56
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.5.1
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'source /usr/local/bin/dolfinx-complex-mode && cd /workspace && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 TH12_DEGREE2_HALF=loaded timeout -k 10 30 python3 -m pytest tests/environment tests/validation/test_coil_loading_degree2_pair.py --collect-only -q'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 24
+drwxr-xr-x  3 taz5297 taz5297 4096 Sep  4 23:31 .
+drwxr-xr-x 16 taz5297 taz5297 4096 Sep 10 22:31 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  721 Sep  3 13:49 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 4264 Sep 10 12:01 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.5.1
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''source /usr/local/bin/dolfinx-complex-mode && cd /workspace && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 TH12_DEGREE2_HALF=loaded timeout -k 10 30 python3 -m pytest tests/environment tests/validation/test_coil_loading_degree2_pair.py --collect-only -q'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collected 20 items
+
+<Dir workspace>
+  <Dir tests>
+    <Dir environment>
+      <Module test_complex_mode.py>
+        <Function test_scalar_type_matches_active_dolfinx_build>
+        <Function test_complex_constant_assembles_to_closed_form>
+        <Function test_inner_conjugates_second_argument_but_dot_does_not>
+        <Function test_complex_weighted_n1curl_mass_matrix_scales_exactly>
+      <Module test_dolfinx_api_migration.py>
+        <Function test_no_unmigrated_call_sites>
+        <Function test_negative_control_detects_reverted_migrations>
+        <Function test_filed_survivors_outside_the_gated_roots_are_unchanged>
+      <Module test_dolfinx_version.py>
+        <Function test_adopted_dolfinx_version_is_exact>
+        <Function test_resolved_dolfinx_path_matches_mode_and_interpreter>
+        <Function test_h5py_built_against_the_image_hdf5>
+        <Function test_complex_build_is_complex128>
+    <Dir validation>
+      <Module test_coil_loading_degree2_pair.py>
+        <Function test_the_mesh_is_the_mat6_step3_baseline>
+        <Function test_the_degree1_control_reproduces_its_recorded_deviation>
+        <Function test_the_degree1_identities_hold_in_this_window[loaded]>
+        <Function test_the_degree1_identities_hold_in_this_window[free]>
+        <Function test_the_cost_probe_priced_degree2_before_solving_it>
+        <Function test_complex_power_identity_holds_at_degree2>
+        <Function test_this_half_dissipates_what_its_sigma_says>
+        <Function test_both_solves_are_driven_by_the_same_projected_current>
+        <Function test_the_loaded_coil_dissipates_and_expels_flux>
+
+========================= 20 tests collected in 1.36s ==========================
+
+## Exit
+- Status: 0
+- Elapsed (s): 2
+- Filtered lines (gmsh optimisation chatter): 0

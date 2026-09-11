@@ -17006,3 +17006,55 @@ No band moved, no `src/` changed, and no AED number was written anywhere.
 - `PORT-19` step 2 (factor once, N back-substitutions in `ports/sparameters.py`, default-on keyword) is unblocked and needs queue-ready item text.
 - Wording nit in the §7 row's step 1: it says the right-hand sides "differ by more than the reference impedance", which compares a vector norm to ohms. The §9 item's `> 0` is what was asserted. The review may want to strike the phrase.
 - §9 item 3 (`TH-19`, heavy, ≈ 20 min over three windows at `-n 8`) is next. After it, the queue holds no takeable item (item 4 is 🚫).
+
+## 2026-09-11T04:00Z (2026-09-10 22:30 CDT slot) — `TH-19` steps 1–2 — **complete (steps 1–2 as queued): outcome (a) on both σ-halves; the matched projection makes the degree-2 coil identity pass at the unmoved 1e-9**
+
+**Preflight.** Tree clean at 22:30:06 CDT (`8345787`), and `fem-em-solver` was Up. No `recovered/*` branches existed. §9 items 1–2 were DONE, so I took item 3.
+
+**Execution.** Delegated to `implementer` in the foreground as one executor (≈ 28 min). The spawn prompt carried the foreground / 660 000 ms / `timeout -k 30` / `-s` / durable-capture rules, a 23:13 no-new-window cutoff, and a no-commit instruction. Before writing this entry I checked the test diff, the doc diffs, and the three logs' failure, residual, pass-count, `[capture] rc=` and footer lines myself. After the windows, `pgrep -c python3` in the container read 0, so no ranks were orphaned.
+
+**Change (test-side only; `git diff -- src/` empty).**
+- `_solve_projected_at` (`tests/validation/test_coil_loading_larmor_probe.py`) gains additive `project_source=True`, forwarded to `solver.solve`.
+- `test_coil_loading_degree2_pair.py` gains `_project_source()`, which reads env `TH19_PROJECT_SOURCE`:
+  - unset gives `True`, i.e. today's call;
+  - `matched` gives `"matched"`;
+  - anything else raises.
+- The switch applies to the degree-2 half only; the degree-1 control row always runs the default.
+- It prints the choice and `W_e`, `W_m`, `W_e/W_m`. `IDENTITY_TOLERANCE` is untouched.
+
+**Windows. All `-n 8`, `timeout -k 30 600`, complex, `FEM_EM_REQUIRE_COMPLEX=1`, `tests/environment` first, `-s`, §5.1 durable capture.**
+- **Collect-only:** `20260911T033155Z_TH-19-step1-collect.log`, 20 collected, Status 0, 2 s.
+- **W1, step 1, loaded, env unset (negative control and default-path regression):** `20260911T033210Z_TH-19-step1.log`, **1 failed / 17 passed / 2 skipped, Status 1, 475 s**. The 17 are 11 environment tests plus the record's 6.
+  - The red is reproduced: `test_complex_power_identity_holds_at_degree2` at relative **2.3898e-09** against 1e-9 (`:537`).
+  - `Im Z` −2.323123e+03 Ω, `W_e` 7.859344e-06 J, `W_m` 3.135703e-08 J, `W_e/W_m` 2.506405e+02 (`:437`).
+- **W2, matched, loaded:** `20260911T034033Z_TH-19-step2-loaded.log`, **18 passed / 2 skipped, Status 0, 484 s**.
+  - Residual **2.0421e-14** (`:398`), `Im Z` **+9.307547 Ω** against the degree-1 default's +9.017628 Ω.
+  - `W_e` **2.043905e-13 J**, a 3.845e7× drop. `W_m` is unmoved at 3.135703e-08 J, and `W_e/W_m` is 6.518171e-06 (`:399`).
+  - Degree-2 solve 399.9 s, summed peak RSS 60.10 GiB.
+- **W3, matched, free:** `20260911T034858Z_TH-19-step2-free.log`, **18 passed / 2 skipped, Status 0, 483 s**. It ran because W2 finished under the 560 s skip rule.
+  - Residual **5.9380e-15** (`:420`), `Im Z` **+9.871903 Ω**.
+  - `W_e` **3.405566e-13 J** and `W_m` 3.325847e-08 J, against the 2026-09-01 default-path free record (`W_e` 7.8594e-06 J, residual 3.7235e-09, `20260901T034059Z_TH-13-step3a3-degree2-free.log`).
+  - `P_loss` is exactly 0.
+- **Degree-1 control, all three windows:** 138 490 cells, ΔR deviation +1.5838 % against the +1.5834 % record, and degree-1 identity residuals ≤ 1.3e-14.
+- **Printed only:** matched degree-2 ΔX = −0.5644 Ω, against −0.5666 Ω at degree 1.
+
+**Anomalies.**
+1. W1's residual digits moved from 3.8990e-09 to 2.3898e-09. `Im Z`, `W_e` and `W_m` all equal the 2026-09-01 record to every printed digit, so I read this as the cancellation round-off the item said not to assert. It is still red, more than 2× over the bound. The review may overrule that reading.
+2. The free half with matched off was not re-run this slot; W3's comparison uses the 09-01 record.
+3. The executor's first W2 call carried a trailing `echo "wrapper rc=$?"`, was denied before running, and was retried without it.
+4. W1's host-side call ended in `| tail -5`. The container side redirected to a file, and the footer is intact.
+5. My own `pgrep -f "python3 -m pytest"` orphan check was denied by `bash_guard.py` because the string contained `pytest`. `pgrep -c python3` works. The review may want to add that to the rubric.
+
+**Records.** In this commit:
+- §7 `TH-19`: a steps 1–2 paragraph. The row stays ⬜, since step 3 is void as written and the default is unchanged.
+- §9 item 3: marked DONE.
+- known-issues degree-2 entry: a reading row. The entry stays open, because the default path is still red and the birdcage sheet drive bypasses the projection (`ports/lumped.py:480–483`).
+- test-results.md: four rows.
+
+No band moved and no AED number was written.
+
+**Hypothesis / for the review.**
+- Outcome (a) goes to the 2026-09-13 weekly: the `TH-12` degree-1 production-order clause's objection is gone on the projected-current coil. Two things are still open:
+  - whether `"matched"` becomes the default (the known-issues entry retires with that);
+  - a sheet-drive formulation ruling before any birdcage identity test.
+- The queue is now drained (item 4 is 🚫), so the next slot stops and journals unless the 03:00 review re-tops §9.

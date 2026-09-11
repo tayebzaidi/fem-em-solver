@@ -126,6 +126,28 @@ def _half() -> str:
     return half
 
 
+def _project_source():
+    """`TH-19` step 2's switch: the degree-2 half's ``project_source`` value.
+
+    Env ``TH19_PROJECT_SOURCE`` unset (or empty) returns ``True`` — the value
+    :func:`_solve_projected_at` already defaults to and ``solver.solve``'s own
+    default, so the degree-2 call is today's call, bit-identical (window 1 is
+    the regression check by reproduction).  ``matched`` returns ``"matched"``
+    (`TH-13` step 3a's degree-/boundary-matched projection).  Anything else
+    raises, so a typo cannot silently run the default path and read as the
+    matched one.  The degree-1 control row is never switched.
+    """
+    raw = os.environ.get("TH19_PROJECT_SOURCE")
+    if raw is None or not raw.strip():
+        return True
+    choice = raw.strip().lower()
+    if choice != "matched":
+        raise ValueError(
+            f"TH19_PROJECT_SOURCE must be unset or 'matched'; got {raw!r}"
+        )
+    return "matched"
+
+
 def _solve_half(msh, cell_tags, degree: int, comm, half: str) -> dict:
     """One σ-half at ``degree`` on an existing mesh — half of :func:`_solve_pair`.
 
@@ -137,8 +159,10 @@ def _solve_half(msh, cell_tags, degree: int, comm, half: str) -> dict:
     computes, on the same solve.
     """
     sigma = HALF_SIGMA[half]
+    project_source = _project_source()
     fields, j_prime, t_solve = _solve_projected_at(
-        msh, cell_tags, sigma, FREQUENCY_HZ, comm, degree=degree
+        msh, cell_tags, sigma, FREQUENCY_HZ, comm, degree=degree,
+        project_source=project_source,
     )
 
     x = ufl.SpatialCoordinate(msh)
@@ -168,6 +192,7 @@ def _solve_half(msh, cell_tags, degree: int, comm, half: str) -> dict:
         degree=degree,
         half=half,
         sigma=sigma,
+        project_source=project_source,
         current=current,
         z_reaction=z_reaction,
         w_e=w_e,
@@ -207,6 +232,9 @@ def half_rows():
         print(
             f"\n[TH-13 3a''' | half {half!r} | f = {FREQUENCY_HZ / 1e6:g} MHz] "
             f"{ncells} cells, mesh {t_mesh:.1f} s at -n {comm.size}"
+            f"\n[TH-19] degree-2 half project_source = {_project_source()!r} "
+            f"(TH19_PROJECT_SOURCE={os.environ.get('TH19_PROJECT_SOURCE')!r}; "
+            f"the degree-1 control row always runs the default)"
             f"\n[TH-13 3a'''] COST PROBE (before any degree-2 assembly): "
             f"{row1['n_dofs']} DOFs at degree 1 -> {projection['n_dofs_2']} at "
             f"degree 2 ({projection['dof_ratio']:.2f}x); projection "
@@ -272,6 +300,11 @@ def _print_reading(half, row1, rows2, projection, ncells) -> None:
             f"{row['im_energy']:.6e} Ω → residual {row['residual']:.4e} "
             f"(bound {IDENTITY_TOLERANCE:.0e}; W_m {row['w_m']:.4e} J, W_e "
             f"{row['w_e']:.4e} J); P_loss {row['p_loss']:+.7e} W"
+        )
+        print(
+            f"    [TH-19] project_source={row['project_source']!r}: W_e "
+            f"{row['w_e']:.6e} J, W_m {row['w_m']:.6e} J, W_e/W_m "
+            f"{row['w_e'] / row['w_m']:.6e}"
         )
     else:
         print(
@@ -428,6 +461,13 @@ def test_complex_power_identity_holds_at_degree2(half_rows):
         f"vs energy {row['im_energy']:.6e} Ω → residual {row['residual']:.4e} "
         f"(bound {IDENTITY_TOLERANCE:.0e}; W_m {row['w_m']:.4e} J, W_e "
         f"{row['w_e']:.4e} J)"
+    )
+    # `TH-19`: printed beside the step-1 record (W_e 7.8593e-06 J, W_m
+    # 3.1357e-08 J, 20260901T033434Z); a reading, not an assertion.
+    print(
+        f"  [TH-19] project_source={row['project_source']!r}: W_e "
+        f"{row['w_e']:.6e} J, W_m {row['w_m']:.6e} J, W_e/W_m "
+        f"{row['w_e'] / row['w_m']:.6e}"
     )
     assert row["residual"] < IDENTITY_TOLERANCE, (
         f"complex-power identity broken on the {row['half']} solve at degree 2: "

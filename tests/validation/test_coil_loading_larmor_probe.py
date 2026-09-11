@@ -143,7 +143,15 @@ def _stored_magnetic_energy(e_complex, omega: float, comm) -> float:
     return float(np.real(total) / (4.0 * MU_0 * omega**2))
 
 
-def _solve_projected_at(msh, cell_tags, sigma_slab, frequency_hz, comm, degree: int = 1):
+def _solve_projected_at(
+    msh,
+    cell_tags,
+    sigma_slab,
+    frequency_hz,
+    comm,
+    degree: int = 1,
+    project_source: bool | str = True,
+):
     """``test_dodd_deeds_projected_drive._solve_projected`` with ``f`` freed.
 
     That helper pins ``FEM_FREQUENCY_HZ``, which is the one thing this chunk
@@ -155,6 +163,11 @@ def _solve_projected_at(msh, cell_tags, sigma_slab, frequency_hz, comm, degree: 
     ``degree`` defaults to 1, so every `TH-11` caller and every recorded number
     is untouched; `TH-12` step 2 passes 2 to run the same fixture at
     second-order N1curl.
+
+    ``project_source`` defaults to ``True`` — ``solver.solve``'s own default —
+    so every existing caller's solve is unchanged; `TH-19` step 2 passes
+    ``"matched"`` (the `TH-13` step 3a projection, which also projects, so the
+    non-None assertion below holds on both paths).
     """
     problem = TimeHarmonicProblem(
         mesh=msh,
@@ -173,6 +186,7 @@ def _solve_projected_at(msh, cell_tags, sigma_slab, frequency_hz, comm, degree: 
     fields = solver.solve(
         current_density=_azimuthal_current_density(j_magnitude),
         subdomain_ids=[WIRE_TAG],
+        project_source=project_source,
     )
     comm.Barrier()
     elapsed = time.perf_counter() - t0

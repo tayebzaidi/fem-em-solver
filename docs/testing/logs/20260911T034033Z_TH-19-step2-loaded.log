@@ -1,0 +1,1056 @@
+# Test Run
+- Chunk: TH-19-step2-loaded
+- Commit: 8345787bace628422a487e7e8a0a2834be91282e
+- Time (UTC): 2026-09-11 03:40:34
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.5.1
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'source /usr/local/bin/dolfinx-complex-mode && cd /workspace && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 TH12_DEGREE2_HALF=loaded TH19_PROJECT_SOURCE=matched timeout -k 30 600 mpiexec -n 8 python3 -m pytest tests/environment tests/validation/test_coil_loading_degree2_pair.py -v -s --tb=short > /workspace/logs/TH-19-step2-loaded-raw.log 2>&1; rc=$?; echo "[capture] rc=$rc" >> /workspace/logs/TH-19-step2-loaded-raw.log; cat /workspace/logs/TH-19-step2-loaded-raw.log; exit $rc'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 24
+drwxr-xr-x  3 taz5297 taz5297 4096 Sep  4 23:31 .
+drwxr-xr-x 16 taz5297 taz5297 4096 Sep 10 22:40 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  721 Sep  3 13:49 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 4264 Sep 10 12:01 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.5.1
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''source /usr/local/bin/dolfinx-complex-mode && cd /workspace && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 TH12_DEGREE2_HALF=loaded TH19_PROJECT_SOURCE=matched timeout -k 30 600 mpiexec -n 8 python3 -m pytest tests/environment tests/validation/test_coil_loading_degree2_pair.py -v -s --tb=short > /workspace/logs/TH-19-step2-loaded-raw.log 2>&1; rc=$?; echo "[capture] rc=$rc" >> /workspace/logs/TH-19-step2-loaded-raw.log; cat /workspace/logs/TH-19-step2-loaded-raw.log; exit $rc'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... collected 20 items
+
+tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build collected 20 items
+
+tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build PASSEDcollected 20 items
+
+tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build 
+tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form 
+[TH-1 step 0] PETSC_ARCH='linux-gnu-complex128-32' ScalarType=complex128 dolfinx=/usr/local/dolfinx-complex/lib/python3.12/dist-packages/dolfinx/__init__.py version=0.11.0.post0
+PASSED
+tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form PASSED
+tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form collected 20 items
+
+tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build PASSED
+tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form collected 20 items
+
+tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build PASSED
+tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form collected 20 items
+
+tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build collected 20 items
+
+tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build PASSEDPASSED
+tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form 
+tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form collected 20 items
+
+tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build PASSED
+tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form PASSEDPASSEDPASSEDPASSEDPASSEDPASSEDPASSEDPASSED
+tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not 
+tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not 
+tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not 
+tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not 
+tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not 
+tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not 
+tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not 
+tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not [TH-1 step 0] inner=(11.000000000000004+2.0000000000000004j) dot=(-5.000000000000002+10.000000000000004j)
+PASSEDPASSED
+tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly PASSED
+tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly PASSED
+tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly PASSED
+tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly PASSED
+tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly PASSED
+tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly 
+tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly PASSED
+tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly [TH-1 step 0] ||M||_F=1.041233e+00 ||M_c - eps_c*M||_F=7.765e-16
+PASSEDPASSEDPASSEDPASSEDPASSEDPASSEDPASSEDPASSED
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites 
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites 
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites 
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites 
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites 
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites 
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites 
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites PASSED
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations PASSED
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations PASSED
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations PASSED
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations PASSED
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations PASSED
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations PASSED
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations PASSED
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations PASSED
+tests/environment/test_dolfinx_api_migration.py::test_filed_survivors_outside_the_gated_roots_are_unchanged PASSED
+tests/environment/test_dolfinx_api_migration.py::test_filed_survivors_outside_the_gated_roots_are_unchanged PASSED
+tests/environment/test_dolfinx_api_migration.py::test_filed_survivors_outside_the_gated_roots_are_unchanged PASSED
+tests/environment/test_dolfinx_api_migration.py::test_filed_survivors_outside_the_gated_roots_are_unchanged PASSED
+tests/environment/test_dolfinx_api_migration.py::test_filed_survivors_outside_the_gated_roots_are_unchanged PASSED
+tests/environment/test_dolfinx_api_migration.py::test_filed_survivors_outside_the_gated_roots_are_unchanged PASSED
+tests/environment/test_dolfinx_api_migration.py::test_filed_survivors_outside_the_gated_roots_are_unchanged PASSED
+tests/environment/test_dolfinx_api_migration.py::test_filed_survivors_outside_the_gated_roots_are_unchanged PASSED
+tests/environment/test_dolfinx_version.py::test_adopted_dolfinx_version_is_exact PASSED
+tests/environment/test_dolfinx_version.py::test_resolved_dolfinx_path_matches_mode_and_interpreter PASSED
+tests/environment/test_dolfinx_version.py::test_h5py_built_against_the_image_hdf5 PASSED
+tests/environment/test_dolfinx_version.py::test_adopted_dolfinx_version_is_exact PASSED
+tests/environment/test_dolfinx_version.py::test_resolved_dolfinx_path_matches_mode_and_interpreter PASSED
+tests/environment/test_dolfinx_version.py::test_h5py_built_against_the_image_hdf5 PASSED
+tests/environment/test_dolfinx_version.py::test_adopted_dolfinx_version_is_exact PASSED
+tests/environment/test_dolfinx_version.py::test_resolved_dolfinx_path_matches_mode_and_interpreter PASSED
+tests/environment/test_dolfinx_version.py::test_h5py_built_against_the_image_hdf5 PASSEDPASSED
+tests/environment/test_dolfinx_version.py::test_complex_build_is_complex128 
+tests/environment/test_dolfinx_version.py::test_complex_build_is_complex128 PASSEDPASSED
+tests/validation/test_coil_loading_degree2_pair.py::test_the_mesh_is_the_mat6_step3_baseline 
+tests/validation/test_coil_loading_degree2_pair.py::test_the_mesh_is_the_mat6_step3_baseline PASSED
+tests/environment/test_dolfinx_version.py::test_complex_build_is_complex128 PASSED
+tests/validation/test_coil_loading_degree2_pair.py::test_the_mesh_is_the_mat6_step3_baseline PASSED
+tests/environment/test_dolfinx_version.py::test_adopted_dolfinx_version_is_exact PASSED
+tests/environment/test_dolfinx_version.py::test_resolved_dolfinx_path_matches_mode_and_interpreter PASSED
+tests/environment/test_dolfinx_version.py::test_h5py_built_against_the_image_hdf5 PASSED
+tests/environment/test_dolfinx_version.py::test_complex_build_is_complex128 PASSED
+tests/validation/test_coil_loading_degree2_pair.py::test_the_mesh_is_the_mat6_step3_baseline PASSED
+tests/environment/test_dolfinx_version.py::test_adopted_dolfinx_version_is_exact PASSED
+tests/environment/test_dolfinx_version.py::test_resolved_dolfinx_path_matches_mode_and_interpreter PASSED
+tests/environment/test_dolfinx_version.py::test_h5py_built_against_the_image_hdf5 PASSED
+tests/environment/test_dolfinx_version.py::test_complex_build_is_complex128 PASSED
+tests/validation/test_coil_loading_degree2_pair.py::test_the_mesh_is_the_mat6_step3_baseline PASSED
+tests/environment/test_dolfinx_version.py::test_adopted_dolfinx_version_is_exact 
+[OPS-18 step 1] dolfinx=0.11.0.post0 file=/usr/local/dolfinx-complex/lib/python3.12/dist-packages/dolfinx/__init__.py python=3.12.3 ScalarType=complex128
+PASSED
+tests/environment/test_dolfinx_version.py::test_resolved_dolfinx_path_matches_mode_and_interpreter [OPS-18 step 1] expect /dolfinx-complex/ and /python3.12/ in /usr/local/dolfinx-complex/lib/python3.12/dist-packages/dolfinx/__init__.py
+PASSED
+tests/environment/test_dolfinx_version.py::test_h5py_built_against_the_image_hdf5 PASSED
+tests/environment/test_dolfinx_version.py::test_adopted_dolfinx_version_is_exact PASSED
+tests/environment/test_dolfinx_version.py::test_resolved_dolfinx_path_matches_mode_and_interpreter PASSED
+tests/environment/test_dolfinx_version.py::test_h5py_built_against_the_image_hdf5 [OPS-18 step 1] h5py=3.16.0 built=(2, 1, 1) linked=(2, 1, 1)
+PASSED
+tests/environment/test_dolfinx_version.py::test_complex_build_is_complex128 PASSED
+tests/validation/test_coil_loading_degree2_pair.py::test_the_mesh_is_the_mat6_step3_baseline PASSED
+tests/environment/test_dolfinx_version.py::test_complex_build_is_complex128 PASSED
+tests/validation/test_coil_loading_degree2_pair.py::test_the_mesh_is_the_mat6_step3_baseline PASSED
+tests/environment/test_dolfinx_version.py::test_adopted_dolfinx_version_is_exact PASSED
+tests/environment/test_dolfinx_version.py::test_resolved_dolfinx_path_matches_mode_and_interpreter PASSED
+tests/environment/test_dolfinx_version.py::test_h5py_built_against_the_image_hdf5 PASSED
+tests/environment/test_dolfinx_version.py::test_complex_build_is_complex128 PASSED
+tests/validation/test_coil_loading_degree2_pair.py::test_the_mesh_is_the_mat6_step3_baseline Info    : Meshing 1D...
+Info    : [  0%] Meshing curve 1 (Circle)
+Info    : [ 10%] Meshing curve 2 (Circle)
+Info    : [ 10%] Meshing curve 3 (Line)
+Info    : [ 20%] Meshing curve 4 (Line)
+Info    : [ 20%] Meshing curve 5 (Line)
+Info    : [ 30%] Meshing curve 6 (Line)
+Info    : [ 30%] Meshing curve 7 (Line)
+Info    : [ 40%] Meshing curve 8 (Line)
+Info    : [ 40%] Meshing curve 9 (Line)
+Info    : [ 50%] Meshing curve 10 (Line)
+Info    : [ 50%] Meshing curve 11 (Line)
+Info    : [ 60%] Meshing curve 12 (Line)
+Info    : [ 60%] Meshing curve 13 (Line)
+Info    : [ 60%] Meshing curve 14 (Line)
+Info    : [ 70%] Meshing curve 15 (Line)
+Info    : [ 70%] Meshing curve 16 (Line)
+Info    : [ 80%] Meshing curve 17 (Line)
+Info    : [ 80%] Meshing curve 18 (Line)
+Info    : [ 90%] Meshing curve 19 (Line)
+Info    : [ 90%] Meshing curve 20 (Line)
+Info    : [100%] Meshing curve 21 (Line)
+Info    : [100%] Meshing curve 22 (Line)
+Info    : Done meshing 1D (Wall 0.0841783s, CPU 0.084177s)
+Info    : Meshing 2D...
+Info    : [  0%] Meshing surface 1 (Torus, Frontal-Delaunay)
+Info    : [ 10%] Meshing surface 2 (Plane, Frontal-Delaunay)
+Info    : [ 20%] Meshing surface 3 (Plane, Frontal-Delaunay)
+Info    : [ 30%] Meshing surface 4 (Plane, Frontal-Delaunay)
+Info    : [ 40%] Meshing surface 5 (Plane, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 6 (Plane, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 7 (Plane, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 8 (Plane, Frontal-Delaunay)
+Info    : [ 70%] Meshing surface 9 (Plane, Frontal-Delaunay)
+Info    : [ 80%] Meshing surface 10 (Plane, Frontal-Delaunay)
+Info    : [ 90%] Meshing surface 11 (Plane, Frontal-Delaunay)
+Info    : [100%] Meshing surface 12 (Plane, Frontal-Delaunay)
+Info    : Done meshing 2D (Wall 0.19352s, CPU 0.193438s)
+Info    : Meshing 3D...
+Info    : 3D Meshing 3 volumes with 1 connected component
+Info    : Tetrahedrizing 3701 nodes...
+Info    : Done tetrahedrizing 3709 nodes (Wall 0.0744303s, CPU 0.074428s)
+Info    : Reconstructing mesh...
+Info    :  - Creating surface mesh
+Info    :  - Identifying boundary edges
+Info    :  - Recovering boundary
+Info    : Done reconstructing mesh (Wall 0.148854s, CPU 0.136825s)
+Info    : Found volume 4
+Info    : Found volume 3
+Info    : Found volume 1
+Info    : It. 0 - 0 nodes created - worst tet radius 38.0979 (nodes removed 0 0)
+Info    : It. 500 - 500 nodes created - worst tet radius 3.56824 (nodes removed 0 0)
+Info    : It. 1000 - 1000 nodes created - worst tet radius 2.60393 (nodes removed 0 0)
+Info    : It. 1500 - 1500 nodes created - worst tet radius 2.28242 (nodes removed 0 0)
+Info    : It. 2000 - 2000 nodes created - worst tet radius 2.07757 (nodes removed 0 0)
+Info    : It. 2500 - 2500 nodes created - worst tet radius 1.93442 (nodes removed 0 0)
+Info    : It. 3000 - 3000 nodes created - worst tet radius 1.85668 (nodes removed 0 0)
+Info    : It. 3500 - 3500 nodes created - worst tet radius 1.82622 (nodes removed 0 0)
+Info    : It. 4000 - 4000 nodes created - worst tet radius 1.65816 (nodes removed 0 0)
+Info    : It. 4500 - 4500 nodes created - worst tet radius 1.59432 (nodes removed 0 0)
+Info    : It. 5000 - 5000 nodes created - worst tet radius 1.54245 (nodes removed 0 0)
+Info    : It. 5500 - 5500 nodes created - worst tet radius 1.50014 (nodes removed 0 0)
+Info    : It. 6000 - 6000 nodes created - worst tet radius 1.45693 (nodes removed 0 0)
+Info    : It. 6500 - 6500 nodes created - worst tet radius 1.42088 (nodes removed 0 0)
+Info    : It. 7000 - 7000 nodes created - worst tet radius 1.38651 (nodes removed 0 0)
+Info    : It. 7500 - 7500 nodes created - worst tet radius 1.35408 (nodes removed 0 0)
+Info    : It. 8000 - 8000 nodes created - worst tet radius 1.327 (nodes removed 0 0)
+Info    : It. 8500 - 8500 nodes created - worst tet radius 1.30065 (nodes removed 0 0)
+Info    : It. 9000 - 9000 nodes created - worst tet radius 1.27722 (nodes removed 0 0)
+Info    : It. 9500 - 9500 nodes created - worst tet radius 1.25629 (nodes removed 0 0)
+Info    : It. 10000 - 10000 nodes created - worst tet radius 1.23604 (nodes removed 0 0)
+Info    : It. 10500 - 10500 nodes created - worst tet radius 1.21594 (nodes removed 0 0)
+Info    : It. 11000 - 11000 nodes created - worst tet radius 1.19935 (nodes removed 0 0)
+Info    : It. 11500 - 11500 nodes created - worst tet radius 1.18246 (nodes removed 0 0)
+Info    : It. 12000 - 12000 nodes created - worst tet radius 1.16457 (nodes removed 0 0)
+Info    : It. 12500 - 12500 nodes created - worst tet radius 1.14916 (nodes removed 0 0)
+Info    : It. 13000 - 13000 nodes created - worst tet radius 1.13426 (nodes removed 0 0)
+Info    : It. 13500 - 13500 nodes created - worst tet radius 1.11981 (nodes removed 0 0)
+Info    : It. 14000 - 14000 nodes created - worst tet radius 1.10603 (nodes removed 0 0)
+Info    : It. 14500 - 14500 nodes created - worst tet radius 1.0942 (nodes removed 0 0)
+Info    : It. 15000 - 15000 nodes created - worst tet radius 1.08209 (nodes removed 0 0)
+Info    : It. 15500 - 15500 nodes created - worst tet radius 1.07049 (nodes removed 0 0)
+Info    : It. 16000 - 16000 nodes created - worst tet radius 1.06013 (nodes removed 0 0)
+Info    : It. 16500 - 16500 nodes created - worst tet radius 1.04964 (nodes removed 0 0)
+Info    : It. 17000 - 17000 nodes created - worst tet radius 1.04005 (nodes removed 0 0)
+Info    : It. 17500 - 17500 nodes created - worst tet radius 1.02986 (nodes removed 0 0)
+Info    : It. 18000 - 18000 nodes created - worst tet radius 1.0205 (nodes removed 0 0)
+Info    : It. 18500 - 18500 nodes created - worst tet radius 1.01159 (nodes removed 0 0)
+Info    : It. 19000 - 19000 nodes created - worst tet radius 1.0027 (nodes removed 0 0)
+Info    : 3D refinement terminated (22869 nodes total):
+Info    :  - 3 Delaunay cavities modified for star shapeness
+Info    :  - 0 nodes could not be inserted
+Info    :  - 140935 tetrahedra created in 2.03397 sec. (69290 tets/s)
+Info    : 0 node relocations
+Info    : Done meshing 3D (Wall 2.61054s, CPU 2.57438s)
+[harness] 13 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 27 edge swaps, 0 node relocations (volume = 4.54141e-06): worst = 0.303135 / average = 0.810354 (Wall 0.000971995s, CPU 0.00096s)
+Info    : No ill-shaped tets in the mesh :-)
+[harness] 22 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 817 edge swaps, 29 node relocations (volume = 0.0135): worst = 0.0976793 / average = 0.783264 (Wall 0.0285343s, CPU 0.028529s)
+Info    : 824 edge swaps, 29 node relocations (volume = 0.0135): worst = 0.300335 / average = 0.783376 (Wall 0.0343137s, CPU 0.034285s)
+Info    : No ill-shaped tets in the mesh :-)
+[harness] 22 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 1835 edge swaps, 46 node relocations (volume = 0.0134955): worst = 0.204241 / average = 0.789342 (Wall 0.0803645s, CPU 0.08036s)
+Info    : 1846 edge swaps, 46 node relocations (volume = 0.0134955): worst = 0.300077 / average = 0.789413 (Wall 0.107403s, CPU 0.107395s)
+Info    : No ill-shaped tets in the mesh :-)
+[harness] 10 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : Done optimizing mesh (Wall 0.439232s, CPU 0.403131s)
+Info    : 22869 nodes 146297 elements
+
+[TH-13 3a''' | half 'loaded' | f = 10 MHz] 138490 cells, mesh 4.8 s at -n 8
+[TH-19] degree-2 half project_source = 'matched' (TH19_PROJECT_SOURCE='matched'; the degree-1 control row always runs the default)
+[TH-13 3a'''] COST PROBE (before any degree-2 assembly): 162558 DOFs at degree 1 -> 881476 at degree 2 (5.42x); projection 48.03 GiB (linear end 31.09 GiB) against 80% of memory.max = 102.40 GiB
+[TH-13 3a''']   VERDICT: under cap — the degree-2 half is attempted
+
+  cells: 138490 (record: 138490)
+PASSED
+tests/validation/test_coil_loading_degree2_pair.py::test_the_degree1_control_reproduces_its_recorded_deviation 
+  cells: 138490 (record: 138490)
+PASSED
+tests/validation/test_coil_loading_degree2_pair.py::test_the_degree1_control_reproduces_its_recorded_deviation 
+  cells: 138490 (record: 138490)
+PASSED
+tests/validation/test_coil_loading_degree2_pair.py::test_the_degree1_control_reproduces_its_recorded_deviation 
+  cells: 138490 (record: 138490)
+PASSED
+tests/validation/test_coil_loading_degree2_pair.py::test_the_degree1_control_reproduces_its_recorded_deviation 
+  cells: 138490 (record: 138490)
+PASSED
+tests/validation/test_coil_loading_degree2_pair.py::test_the_degree1_control_reproduces_its_recorded_deviation 
+  cells: 138490 (record: 138490)
+PASSED
+tests/validation/test_coil_loading_degree2_pair.py::test_the_degree1_control_reproduces_its_recorded_deviation 
+  degree 1: +1.5838% vs record +1.5834% → +0.00039 pp (floor 0.01 pp)
+PASSED
+  degree 1: +1.5838% vs record +1.5834% → +0.00039 pp (floor 0.01 pp)
+PASSED
+  degree 1: +1.5838% vs record +1.5834% → +0.00039 pp (floor 0.01 pp)
+PASSED
+  degree 1: +1.5838% vs record +1.5834% → +0.00039 pp (floor 0.01 pp)
+PASSED
+  degree 1: +1.5838% vs record +1.5834% → +0.00039 pp (floor 0.01 pp)
+PASSED
+  degree 1: +1.5838% vs record +1.5834% → +0.00039 pp (floor 0.01 pp)
+PASSED
+tests/validation/test_coil_loading_degree2_pair.py::test_the_degree1_identities_hold_in_this_window[loaded] 
+tests/validation/test_coil_loading_degree2_pair.py::test_the_degree1_identities_hold_in_this_window[loaded] 
+tests/validation/test_coil_loading_degree2_pair.py::test_the_degree1_identities_hold_in_this_window[loaded] 
+tests/validation/test_coil_loading_degree2_pair.py::test_the_degree1_identities_hold_in_this_window[loaded] 
+tests/validation/test_coil_loading_degree2_pair.py::test_the_degree1_identities_hold_in_this_window[loaded] 
+tests/validation/test_coil_loading_degree2_pair.py::test_the_degree1_identities_hold_in_this_window[loaded] 
+  degree 1, loaded: Im Z reaction 9.017628e+00 Ω vs energy 9.017628e+00 Ω → residual 4.9247e-15 (bound 1e-09)
+PASSED
+  degree 1, loaded: Im Z reaction 9.017628e+00 Ω vs energy 9.017628e+00 Ω → residual 4.9247e-15 (bound 1e-09)
+PASSED
+  degree 1, loaded: Im Z reaction 9.017628e+00 Ω vs energy 9.017628e+00 Ω → residual 4.9247e-15 (bound 1e-09)
+PASSED
+  degree 1, loaded: Im Z reaction 9.017628e+00 Ω vs energy 9.017628e+00 Ω → residual 4.9247e-15 (bound 1e-09)
+PASSED
+  degree 1, loaded: Im Z reaction 9.017628e+00 Ω vs energy 9.017628e+00 Ω → residual 4.9247e-15 (bound 1e-09)
+PASSED
+  degree 1, loaded: Im Z reaction 9.017628e+00 Ω vs energy 9.017628e+00 Ω → residual 4.9247e-15 (bound 1e-09)
+PASSED
+tests/validation/test_coil_loading_degree2_pair.py::test_the_degree1_identities_hold_in_this_window[free] 
+tests/validation/test_coil_loading_degree2_pair.py::test_the_degree1_identities_hold_in_this_window[free] 
+tests/validation/test_coil_loading_degree2_pair.py::test_the_degree1_identities_hold_in_this_window[free] 
+tests/validation/test_coil_loading_degree2_pair.py::test_the_degree1_identities_hold_in_this_window[free] 
+tests/validation/test_coil_loading_degree2_pair.py::test_the_degree1_identities_hold_in_this_window[free] 
+tests/validation/test_coil_loading_degree2_pair.py::test_the_degree1_identities_hold_in_this_window[free] 
+  degree 1, free: Im Z reaction 9.584200e+00 Ω vs energy 9.584200e+00 Ω → residual 8.8964e-15 (bound 1e-09)
+PASSED
+  degree 1, free: Im Z reaction 9.584200e+00 Ω vs energy 9.584200e+00 Ω → residual 8.8964e-15 (bound 1e-09)
+PASSED
+  degree 1, free: Im Z reaction 9.584200e+00 Ω vs energy 9.584200e+00 Ω → residual 8.8964e-15 (bound 1e-09)
+PASSED
+  degree 1, free: Im Z reaction 9.584200e+00 Ω vs energy 9.584200e+00 Ω → residual 8.8964e-15 (bound 1e-09)
+PASSED
+  degree 1, free: Im Z reaction 9.584200e+00 Ω vs energy 9.584200e+00 Ω → residual 8.8964e-15 (bound 1e-09)
+PASSED
+tests/validation/test_coil_loading_degree2_pair.py::test_the_cost_probe_priced_degree2_before_solving_it 
+tests/validation/test_coil_loading_degree2_pair.py::test_the_cost_probe_priced_degree2_before_solving_it 
+tests/validation/test_coil_loading_degree2_pair.py::test_the_cost_probe_priced_degree2_before_solving_it 
+tests/validation/test_coil_loading_degree2_pair.py::test_the_cost_probe_priced_degree2_before_solving_it 
+tests/validation/test_coil_loading_degree2_pair.py::test_the_cost_probe_priced_degree2_before_solving_it 
+  degree 1, free: Im Z reaction 9.584200e+00 Ω vs energy 9.584200e+00 Ω → residual 8.8964e-15 (bound 1e-09)
+PASSED
+  degree-2 DOFs 881476 (5.423x degree 1); projection 48.03 GiB vs threshold 102.40 GiB (over cap: False)
+PASSED
+  degree-2 DOFs 881476 (5.423x degree 1); projection 48.03 GiB vs threshold 102.40 GiB (over cap: False)
+PASSED
+  degree-2 DOFs 881476 (5.423x degree 1); projection 48.03 GiB vs threshold 102.40 GiB (over cap: False)
+PASSED
+  degree-2 DOFs 881476 (5.423x degree 1); projection 48.03 GiB vs threshold 102.40 GiB (over cap: False)
+PASSED
+  degree-2 DOFs 881476 (5.423x degree 1); projection 48.03 GiB vs threshold 102.40 GiB (over cap: False)
+PASSED
+tests/validation/test_coil_loading_degree2_pair.py::test_the_cost_probe_priced_degree2_before_solving_it 
+tests/validation/test_coil_loading_degree2_pair.py::test_complex_power_identity_holds_at_degree2 
+tests/validation/test_coil_loading_degree2_pair.py::test_complex_power_identity_holds_at_degree2 
+tests/validation/test_coil_loading_degree2_pair.py::test_complex_power_identity_holds_at_degree2 
+tests/validation/test_coil_loading_degree2_pair.py::test_complex_power_identity_holds_at_degree2 
+tests/validation/test_coil_loading_degree2_pair.py::test_complex_power_identity_holds_at_degree2 
+  degree-2 DOFs 881476 (5.423x degree 1); projection 48.03 GiB vs threshold 102.40 GiB (over cap: False)
+PASSED
+  degree 2, loaded: Im Z reaction 9.307547e+00 Ω vs energy 9.307547e+00 Ω → residual 2.0421e-14 (bound 1e-09; W_m 3.1357e-08 J, W_e 2.0439e-13 J)
+  [TH-19] project_source='matched': W_e 2.043905e-13 J, W_m 3.135703e-08 J, W_e/W_m 6.518171e-06
+PASSED
+  degree 2, loaded: Im Z reaction 9.307547e+00 Ω vs energy 9.307547e+00 Ω → residual 2.0421e-14 (bound 1e-09; W_m 3.1357e-08 J, W_e 2.0439e-13 J)
+  [TH-19] project_source='matched': W_e 2.043905e-13 J, W_m 3.135703e-08 J, W_e/W_m 6.518171e-06
+PASSED
+  degree 2, loaded: Im Z reaction 9.307547e+00 Ω vs energy 9.307547e+00 Ω → residual 2.0421e-14 (bound 1e-09; W_m 3.1357e-08 J, W_e 2.0439e-13 J)
+  [TH-19] project_source='matched': W_e 2.043905e-13 J, W_m 3.135703e-08 J, W_e/W_m 6.518171e-06
+PASSED
+  degree 2, loaded: Im Z reaction 9.307547e+00 Ω vs energy 9.307547e+00 Ω → residual 2.0421e-14 (bound 1e-09; W_m 3.1357e-08 J, W_e 2.0439e-13 J)
+  [TH-19] project_source='matched': W_e 2.043905e-13 J, W_m 3.135703e-08 J, W_e/W_m 6.518171e-06
+PASSED
+  degree 2, loaded: Im Z reaction 9.307547e+00 Ω vs energy 9.307547e+00 Ω → residual 2.0421e-14 (bound 1e-09; W_m 3.1357e-08 J, W_e 2.0439e-13 J)
+  [TH-19] project_source='matched': W_e 2.043905e-13 J, W_m 3.135703e-08 J, W_e/W_m 6.518171e-06
+PASSED
+tests/validation/test_coil_loading_degree2_pair.py::test_complex_power_identity_holds_at_degree2 
+tests/validation/test_coil_loading_degree2_pair.py::test_this_half_dissipates_what_its_sigma_says 
+tests/validation/test_coil_loading_degree2_pair.py::test_this_half_dissipates_what_its_sigma_says 
+tests/validation/test_coil_loading_degree2_pair.py::test_this_half_dissipates_what_its_sigma_says 
+tests/validation/test_coil_loading_degree2_pair.py::test_this_half_dissipates_what_its_sigma_says 
+tests/validation/test_coil_loading_degree2_pair.py::test_this_half_dissipates_what_its_sigma_says 
+  degree 2, loaded: Im Z reaction 9.307547e+00 Ω vs energy 9.307547e+00 Ω → residual 2.0421e-14 (bound 1e-09; W_m 3.1357e-08 J, W_e 2.0439e-13 J)
+  [TH-19] project_source='matched': W_e 2.043905e-13 J, W_m 3.135703e-08 J, W_e/W_m 6.518171e-06
+PASSED
+  degree 2, loaded (σ = 100 S/m): P_loss +1.3543067e-01 W
+PASSED
+  degree 2, loaded (σ = 100 S/m): P_loss +1.3543067e-01 W
+PASSED
+  degree 2, loaded (σ = 100 S/m): P_loss +1.3543067e-01 W
+PASSED
+  degree 2, loaded (σ = 100 S/m): P_loss +1.3543067e-01 W
+PASSED
+  degree 2, loaded (σ = 100 S/m): P_loss +1.3543067e-01 W
+PASSED
+tests/validation/test_coil_loading_degree2_pair.py::test_both_solves_are_driven_by_the_same_projected_current SKIPPEDprocess holds ['loaded']
+(`TH-13` step 3a‴ runs one σ-half per window because the pair costs >=
+524 s at -n 8).  The reading stays as 2026-08-18 recorded it.)
+tests/validation/test_coil_loading_degree2_pair.py::test_this_half_dissipates_what_its_sigma_says 
+  degree 2, loaded (σ = 100 S/m): P_loss +1.3543067e-01 W
+PASSED
+tests/validation/test_coil_loading_degree2_pair.py::test_both_solves_are_driven_by_the_same_projected_current 
+tests/validation/test_coil_loading_degree2_pair.py::test_both_solves_are_driven_by_the_same_projected_current SKIPPEDprocess holds ['loaded']
+(`TH-13` step 3a‴ runs one σ-half per window because the pair costs >=
+524 s at -n 8).  The reading stays as 2026-08-18 recorded it.)
+tests/validation/test_coil_loading_degree2_pair.py::test_both_solves_are_driven_by_the_same_projected_current SKIPPEDprocess holds ['loaded']
+(`TH-13` step 3a‴ runs one σ-half per window because the pair costs >=
+524 s at -n 8).  The reading stays as 2026-08-18 recorded it.)
+tests/validation/test_coil_loading_degree2_pair.py::test_the_loaded_coil_dissipates_and_expels_flux 
+  cells: 138490 (record: 138490)
+PASSED
+tests/validation/test_coil_loading_degree2_pair.py::test_both_solves_are_driven_by_the_same_projected_current SKIPPEDprocess holds ['loaded']
+(`TH-13` step 3a‴ runs one σ-half per window because the pair costs >=
+524 s at -n 8).  The reading stays as 2026-08-18 recorded it.)
+tests/validation/test_coil_loading_degree2_pair.py::test_both_solves_are_driven_by_the_same_projected_current SKIPPEDprocess holds ['loaded']
+(`TH-13` step 3a‴ runs one σ-half per window because the pair costs >=
+524 s at -n 8).  The reading stays as 2026-08-18 recorded it.)
+tests/validation/test_coil_loading_degree2_pair.py::test_the_loaded_coil_dissipates_and_expels_flux SKIPPEDprocess holds ['loaded']
+(`TH-13` step 3a‴ runs one σ-half per window because the pair costs >=
+524 s at -n 8).  The reading stays as 2026-08-18 recorded it.)
+tests/validation/test_coil_loading_degree2_pair.py::test_the_loaded_coil_dissipates_and_expels_flux 
+tests/validation/test_coil_loading_degree2_pair.py::test_the_degree1_control_reproduces_its_recorded_deviation 
+tests/validation/test_coil_loading_degree2_pair.py::test_the_loaded_coil_dissipates_and_expels_flux 
+tests/validation/test_coil_loading_degree2_pair.py::test_the_loaded_coil_dissipates_and_expels_flux SKIPPEDprocess holds ['loaded'] (`TH-13`
+step 3a‴ runs one σ-half per window because the pair costs >= 524 s at
+-n 8).  The reading stays as 2026-08-18 recorded it.)
+  degree 1: +1.5838% vs record +1.5834% → +0.00039 pp (floor 0.01 pp)
+PASSED
+tests/validation/test_coil_loading_degree2_pair.py::test_the_loaded_coil_dissipates_and_expels_flux SKIPPEDprocess holds ['loaded'] (`TH-13`
+step 3a‴ runs one σ-half per window because the pair costs >= 524 s at
+-n 8).  The reading stays as 2026-08-18 recorded it.)SKIPPEDprocess holds ['loaded'] (`TH-13`
+step 3a‴ runs one σ-half per window because the pair costs >= 524 s at
+-n 8).  The reading stays as 2026-08-18 recorded it.)SKIPPEDprocess holds ['loaded'] (`TH-13`
+step 3a‴ runs one σ-half per window because the pair costs >= 524 s at
+-n 8).  The reading stays as 2026-08-18 recorded it.)SKIPPEDprocess holds ['loaded'] (`TH-13`
+step 3a‴ runs one σ-half per window because the pair costs >= 524 s at
+-n 8).  The reading stays as 2026-08-18 recorded it.)
+tests/validation/test_coil_loading_degree2_pair.py::test_the_degree1_identities_hold_in_this_window[loaded] SKIPPEDprocess holds ['loaded'] (`TH-13`
+step 3a‴ runs one σ-half per window because the pair costs >= 524 s at
+-n 8).  The reading stays as 2026-08-18 recorded it.)
+  degree 1, loaded: Im Z reaction 9.017628e+00 Ω vs energy 9.017628e+00 Ω → residual 4.9247e-15 (bound 1e-09)
+PASSED
+[TH-13 3a'''] READING at 10 MHz on 138490 cells, half 'loaded' (one σ-half per process — no ΔZ, no bracket comparison; those are cross-half and stay as 2026-08-18 recorded them)
+  degree 1 (full pair, the control):   162558 DOFs, dR deviation +1.5838% vs record +1.5834%, solves 22.4 s + 23.9 s
+    identity residuals: loaded 4.9247e-15, free 8.8964e-15 (bound 1e-09)
+  degree 2, loaded:   881476 DOFs, solve 399.9 s, summed peak RSS 60.10 GiB (process high-water mark, so it includes the degree-1 row — an upper bound on its own footprint)
+    Im Z reaction 9.307547e+00 Ω vs energy 9.307547e+00 Ω → residual 2.0421e-14 (bound 1e-09; W_m 3.1357e-08 J, W_e 2.0439e-13 J); P_loss +1.3543067e-01 W
+    [TH-19] project_source='matched': W_e 2.043905e-13 J, W_m 3.135703e-08 J, W_e/W_m 6.518171e-06
+
+  cells: 138490 (record: 138490)
+PASSED
+tests/validation/test_coil_loading_degree2_pair.py::test_the_degree1_identities_hold_in_this_window[free] 
+  degree 1, free: Im Z reaction 9.584200e+00 Ω vs energy 9.584200e+00 Ω → residual 8.8964e-15 (bound 1e-09)
+PASSED
+tests/validation/test_coil_loading_degree2_pair.py::test_the_degree1_control_reproduces_its_recorded_deviation 
+tests/validation/test_coil_loading_degree2_pair.py::test_the_cost_probe_priced_degree2_before_solving_it 
+  degree 1: +1.5838% vs record +1.5834% → +0.00039 pp (floor 0.01 pp)
+PASSED
+  degree-2 DOFs 881476 (5.423x degree 1); projection 48.03 GiB vs threshold 102.40 GiB (over cap: False)
+PASSED
+tests/validation/test_coil_loading_degree2_pair.py::test_the_degree1_identities_hold_in_this_window[loaded] 
+tests/validation/test_coil_loading_degree2_pair.py::test_complex_power_identity_holds_at_degree2 
+  degree 1, loaded: Im Z reaction 9.017628e+00 Ω vs energy 9.017628e+00 Ω → residual 4.9247e-15 (bound 1e-09)
+PASSED
+  degree 2, loaded: Im Z reaction 9.307547e+00 Ω vs energy 9.307547e+00 Ω → residual 2.0421e-14 (bound 1e-09; W_m 3.1357e-08 J, W_e 2.0439e-13 J)
+  [TH-19] project_source='matched': W_e 2.043905e-13 J, W_m 3.135703e-08 J, W_e/W_m 6.518171e-06
+PASSED
+tests/validation/test_coil_loading_degree2_pair.py::test_the_degree1_identities_hold_in_this_window[free] 
+tests/validation/test_coil_loading_degree2_pair.py::test_this_half_dissipates_what_its_sigma_says 
+  degree 2, loaded (σ = 100 S/m): P_loss +1.3543067e-01 W
+PASSED
+  degree 1, free: Im Z reaction 9.584200e+00 Ω vs energy 9.584200e+00 Ω → residual 8.8964e-15 (bound 1e-09)
+PASSED
+tests/validation/test_coil_loading_degree2_pair.py::test_both_solves_are_driven_by_the_same_projected_current 
+tests/validation/test_coil_loading_degree2_pair.py::test_the_cost_probe_priced_degree2_before_solving_it 
+  degree-2 DOFs 881476 (5.423x degree 1); projection 48.03 GiB vs threshold 102.40 GiB (over cap: False)
+PASSED
+tests/validation/test_coil_loading_degree2_pair.py::test_complex_power_identity_holds_at_degree2 SKIPPEDprocess holds ['loaded']
+(`TH-13` step 3a‴ runs one σ-half per window because the pair costs >=
+524 s at -n 8).  The reading stays as 2026-08-18 recorded it.)
+  degree 2, loaded: Im Z reaction 9.307547e+00 Ω vs energy 9.307547e+00 Ω → residual 2.0421e-14 (bound 1e-09; W_m 3.1357e-08 J, W_e 2.0439e-13 J)
+  [TH-19] project_source='matched': W_e 2.043905e-13 J, W_m 3.135703e-08 J, W_e/W_m 6.518171e-06
+PASSED
+tests/validation/test_coil_loading_degree2_pair.py::test_the_loaded_coil_dissipates_and_expels_flux 
+tests/validation/test_coil_loading_degree2_pair.py::test_this_half_dissipates_what_its_sigma_says SKIPPEDprocess holds ['loaded'] (`TH-13`
+step 3a‴ runs one σ-half per window because the pair costs >= 524 s at
+-n 8).  The reading stays as 2026-08-18 recorded it.)
+  degree 2, loaded (σ = 100 S/m): P_loss +1.3543067e-01 W
+PASSED
+tests/validation/test_coil_loading_degree2_pair.py::test_both_solves_are_driven_by_the_same_projected_current SKIPPEDprocess holds ['loaded']
+(`TH-13` step 3a‴ runs one σ-half per window because the pair costs >=
+524 s at -n 8).  The reading stays as 2026-08-18 recorded it.)
+tests/validation/test_coil_loading_degree2_pair.py::test_the_loaded_coil_dissipates_and_expels_flux SKIPPEDprocess holds ['loaded'] (`TH-13`
+step 3a‴ runs one σ-half per window because the pair costs >= 524 s at
+-n 8).  The reading stays as 2026-08-18 recorded it.)
+
+=============================== warnings summary ===============================
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_four_port.py:1: SyntaxWarning: invalid escape sequence '\*'
+    """`PORT-9` step 3 leg (d) — the 4x4 on the gapped birdcage at 50 Ohm.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_lumped_column.py:1: SyntaxWarning: invalid escape sequence '\*'
+    """`PORT-9` step 3 leg (c) — the first port solve on the gapped birdcage.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_lumped_column.py:458: SyntaxWarning: invalid escape sequence '\*'
+    """**Leg (c)'s gate.**  ``|Z₂₁ − Z₄₁|/|Z₂₁| ≤ 0.5%``, with ``Z₃₁`` apart.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_termination_probe.py:1: SyntaxWarning: invalid escape sequence '\*'
+    """`PORT-9` step 3 leg (d0) — the termination probe on the gapped birdcage.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_termination_probe.py:432: SyntaxWarning: invalid escape sequence '\*'
+    """**Negative control (1).**  Z_p = 1e6 Ω reproduces leg (c)'s ``I₁``.
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-19wwojm_/tests/validation/test_port_birdcage_four_port.py:1: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-19wwojm_/tests/validation/test_port_birdcage_lumped_column.py:1: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-19wwojm_/tests/validation/test_port_birdcage_lumped_column.py:458: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-19wwojm_/tests/validation/test_port_birdcage_termination_probe.py:1: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-19wwojm_/tests/validation/test_port_birdcage_termination_probe.py:432: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_filed_survivors_outside_the_gated_roots_are_unchanged
+tests/environment/test_dolfinx_api_migration.py::test_filed_survivors_outside_the_gated_roots_are_unchanged
+  /workspace/examples/ansys_benchmarks/two_torus_gap_ports_10MHz/03_two_torus_gap_ports_10MHz.py:398: SyntaxWarning: invalid escape sequence '\*'
+    """
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+============ 18 passed, 2 skipped, 32 warnings in 483.06s (0:08:03) ============
+
+
+=============================== warnings summary ===============================
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_four_port.py:1: SyntaxWarning: invalid escape sequence '\*'
+    """`PORT-9` step 3 leg (d) — the 4x4 on the gapped birdcage at 50 Ohm.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_lumped_column.py:1: SyntaxWarning: invalid escape sequence '\*'
+    """`PORT-9` step 3 leg (c) — the first port solve on the gapped birdcage.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_lumped_column.py:458: SyntaxWarning: invalid escape sequence '\*'
+    """**Leg (c)'s gate.**  ``|Z₂₁ − Z₄₁|/|Z₂₁| ≤ 0.5%``, with ``Z₃₁`` apart.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_termination_probe.py:1: SyntaxWarning: invalid escape sequence '\*'
+    """`PORT-9` step 3 leg (d0) — the termination probe on the gapped birdcage.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_termination_probe.py:432: SyntaxWarning: invalid escape sequence '\*'
+    """**Negative control (1).**  Z_p = 1e6 Ω reproduces leg (c)'s ``I₁``.
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-i19e314c/tests/validation/test_port_birdcage_four_port.py:1: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-i19e314c/tests/validation/test_port_birdcage_lumped_column.py:1: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-i19e314c/tests/validation/test_port_birdcage_lumped_column.py:458: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-i19e314c/tests/validation/test_port_birdcage_termination_probe.py:1: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-i19e314c/tests/validation/test_port_birdcage_termination_probe.py:432: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_filed_survivors_outside_the_gated_roots_are_unchanged
+tests/environment/test_dolfinx_api_migration.py::test_filed_survivors_outside_the_gated_roots_are_unchanged
+  /workspace/examples/ansys_benchmarks/two_torus_gap_ports_10MHz/03_two_torus_gap_ports_10MHz.py:398: SyntaxWarning: invalid escape sequence '\*'
+    """
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+============ 18 passed, 2 skipped, 32 warnings in 483.06s (0:08:03) ============
+
+
+=============================== warnings summary ===============================
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_four_port.py:1: SyntaxWarning: invalid escape sequence '\*'
+    """`PORT-9` step 3 leg (d) — the 4x4 on the gapped birdcage at 50 Ohm.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_lumped_column.py:1: SyntaxWarning: invalid escape sequence '\*'
+    """`PORT-9` step 3 leg (c) — the first port solve on the gapped birdcage.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_lumped_column.py:458: SyntaxWarning: invalid escape sequence '\*'
+    """**Leg (c)'s gate.**  ``|Z₂₁ − Z₄₁|/|Z₂₁| ≤ 0.5%``, with ``Z₃₁`` apart.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_termination_probe.py:1: SyntaxWarning: invalid escape sequence '\*'
+    """`PORT-9` step 3 leg (d0) — the termination probe on the gapped birdcage.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_termination_probe.py:432: SyntaxWarning: invalid escape sequence '\*'
+    """**Negative control (1).**  Z_p = 1e6 Ω reproduces leg (c)'s ``I₁``.
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-p9khmpd_/tests/validation/test_port_birdcage_four_port.py:1: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-p9khmpd_/tests/validation/test_port_birdcage_lumped_column.py:1: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-p9khmpd_/tests/validation/test_port_birdcage_lumped_column.py:458: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-p9khmpd_/tests/validation/test_port_birdcage_termination_probe.py:1: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-p9khmpd_/tests/validation/test_port_birdcage_termination_probe.py:432: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_filed_survivors_outside_the_gated_roots_are_unchanged
+tests/environment/test_dolfinx_api_migration.py::test_filed_survivors_outside_the_gated_roots_are_unchanged
+  /workspace/examples/ansys_benchmarks/two_torus_gap_ports_10MHz/03_two_torus_gap_ports_10MHz.py:398: SyntaxWarning: invalid escape sequence '\*'
+    """
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+============ 18 passed, 2 skipped, 32 warnings in 483.04s (0:08:03) ============
+
+
+=============================== warnings summary ===============================
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_four_port.py:1: SyntaxWarning: invalid escape sequence '\*'
+    """`PORT-9` step 3 leg (d) — the 4x4 on the gapped birdcage at 50 Ohm.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_lumped_column.py:1: SyntaxWarning: invalid escape sequence '\*'
+    """`PORT-9` step 3 leg (c) — the first port solve on the gapped birdcage.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_lumped_column.py:458: SyntaxWarning: invalid escape sequence '\*'
+    """**Leg (c)'s gate.**  ``|Z₂₁ − Z₄₁|/|Z₂₁| ≤ 0.5%``, with ``Z₃₁`` apart.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_termination_probe.py:1: SyntaxWarning: invalid escape sequence '\*'
+    """`PORT-9` step 3 leg (d0) — the termination probe on the gapped birdcage.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_termination_probe.py:432: SyntaxWarning: invalid escape sequence '\*'
+    """**Negative control (1).**  Z_p = 1e6 Ω reproduces leg (c)'s ``I₁``.
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-xglmxx1h/tests/validation/test_port_birdcage_four_port.py:1: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-xglmxx1h/tests/validation/test_port_birdcage_lumped_column.py:1: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-xglmxx1h/tests/validation/test_port_birdcage_lumped_column.py:458: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-xglmxx1h/tests/validation/test_port_birdcage_termination_probe.py:1: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-xglmxx1h/tests/validation/test_port_birdcage_termination_probe.py:432: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_filed_survivors_outside_the_gated_roots_are_unchanged
+tests/environment/test_dolfinx_api_migration.py::test_filed_survivors_outside_the_gated_roots_are_unchanged
+  /workspace/examples/ansys_benchmarks/two_torus_gap_ports_10MHz/03_two_torus_gap_ports_10MHz.py:398: SyntaxWarning: invalid escape sequence '\*'
+    """
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+============ 18 passed, 2 skipped, 32 warnings in 483.06s (0:08:03) ============
+
+
+=============================== warnings summary ===============================
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_four_port.py:1: SyntaxWarning: invalid escape sequence '\*'
+    """`PORT-9` step 3 leg (d) — the 4x4 on the gapped birdcage at 50 Ohm.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_lumped_column.py:1: SyntaxWarning: invalid escape sequence '\*'
+    """`PORT-9` step 3 leg (c) — the first port solve on the gapped birdcage.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_lumped_column.py:458: SyntaxWarning: invalid escape sequence '\*'
+    """**Leg (c)'s gate.**  ``|Z₂₁ − Z₄₁|/|Z₂₁| ≤ 0.5%``, with ``Z₃₁`` apart.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_termination_probe.py:1: SyntaxWarning: invalid escape sequence '\*'
+    """`PORT-9` step 3 leg (d0) — the termination probe on the gapped birdcage.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_termination_probe.py:432: SyntaxWarning: invalid escape sequence '\*'
+    """**Negative control (1).**  Z_p = 1e6 Ω reproduces leg (c)'s ``I₁``.
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-0kgu4hzd/tests/validation/test_port_birdcage_four_port.py:1: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-0kgu4hzd/tests/validation/test_port_birdcage_lumped_column.py:1: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-0kgu4hzd/tests/validation/test_port_birdcage_lumped_column.py:458: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-0kgu4hzd/tests/validation/test_port_birdcage_termination_probe.py:1: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-0kgu4hzd/tests/validation/test_port_birdcage_termination_probe.py:432: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_filed_survivors_outside_the_gated_roots_are_unchanged
+tests/environment/test_dolfinx_api_migration.py::test_filed_survivors_outside_the_gated_roots_are_unchanged
+  /workspace/examples/ansys_benchmarks/two_torus_gap_ports_10MHz/03_two_torus_gap_ports_10MHz.py:398: SyntaxWarning: invalid escape sequence '\*'
+    """
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+============ 18 passed, 2 skipped, 32 warnings in 483.05s (0:08:03) ============
+
+
+=============================== warnings summary ===============================
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_four_port.py:1: SyntaxWarning: invalid escape sequence '\*'
+    """`PORT-9` step 3 leg (d) — the 4x4 on the gapped birdcage at 50 Ohm.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_lumped_column.py:1: SyntaxWarning: invalid escape sequence '\*'
+    """`PORT-9` step 3 leg (c) — the first port solve on the gapped birdcage.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_lumped_column.py:458: SyntaxWarning: invalid escape sequence '\*'
+    """**Leg (c)'s gate.**  ``|Z₂₁ − Z₄₁|/|Z₂₁| ≤ 0.5%``, with ``Z₃₁`` apart.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_termination_probe.py:1: SyntaxWarning: invalid escape sequence '\*'
+    """`PORT-9` step 3 leg (d0) — the termination probe on the gapped birdcage.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_termination_probe.py:432: SyntaxWarning: invalid escape sequence '\*'
+    """**Negative control (1).**  Z_p = 1e6 Ω reproduces leg (c)'s ``I₁``.
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-e44zwqc6/tests/validation/test_port_birdcage_four_port.py:1: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-e44zwqc6/tests/validation/test_port_birdcage_lumped_column.py:1: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-e44zwqc6/tests/validation/test_port_birdcage_lumped_column.py:458: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-e44zwqc6/tests/validation/test_port_birdcage_termination_probe.py:1: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-e44zwqc6/tests/validation/test_port_birdcage_termination_probe.py:432: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_filed_survivors_outside_the_gated_roots_are_unchanged
+tests/environment/test_dolfinx_api_migration.py::test_filed_survivors_outside_the_gated_roots_are_unchanged
+  /workspace/examples/ansys_benchmarks/two_torus_gap_ports_10MHz/03_two_torus_gap_ports_10MHz.py:398: SyntaxWarning: invalid escape sequence '\*'
+    """
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+============ 18 passed, 2 skipped, 32 warnings in 483.06s (0:08:03) ============
+
+
+=============================== warnings summary ===============================
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_four_port.py:1: SyntaxWarning: invalid escape sequence '\*'
+    """`PORT-9` step 3 leg (d) — the 4x4 on the gapped birdcage at 50 Ohm.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_lumped_column.py:1: SyntaxWarning: invalid escape sequence '\*'
+    """`PORT-9` step 3 leg (c) — the first port solve on the gapped birdcage.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_lumped_column.py:458: SyntaxWarning: invalid escape sequence '\*'
+    """**Leg (c)'s gate.**  ``|Z₂₁ − Z₄₁|/|Z₂₁| ≤ 0.5%``, with ``Z₃₁`` apart.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_termination_probe.py:1: SyntaxWarning: invalid escape sequence '\*'
+    """`PORT-9` step 3 leg (d0) — the termination probe on the gapped birdcage.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_termination_probe.py:432: SyntaxWarning: invalid escape sequence '\*'
+    """**Negative control (1).**  Z_p = 1e6 Ω reproduces leg (c)'s ``I₁``.
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-ma8e0plx/tests/validation/test_port_birdcage_four_port.py:1: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-ma8e0plx/tests/validation/test_port_birdcage_lumped_column.py:1: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-ma8e0plx/tests/validation/test_port_birdcage_lumped_column.py:458: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-ma8e0plx/tests/validation/test_port_birdcage_termination_probe.py:1: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-ma8e0plx/tests/validation/test_port_birdcage_termination_probe.py:432: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_filed_survivors_outside_the_gated_roots_are_unchanged
+tests/environment/test_dolfinx_api_migration.py::test_filed_survivors_outside_the_gated_roots_are_unchanged
+  /workspace/examples/ansys_benchmarks/two_torus_gap_ports_10MHz/03_two_torus_gap_ports_10MHz.py:398: SyntaxWarning: invalid escape sequence '\*'
+    """
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+============ 18 passed, 2 skipped, 32 warnings in 483.05s (0:08:03) ============
+
+
+=============================== warnings summary ===============================
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_four_port.py:1: SyntaxWarning: invalid escape sequence '\*'
+    """`PORT-9` step 3 leg (d) — the 4x4 on the gapped birdcage at 50 Ohm.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_lumped_column.py:1: SyntaxWarning: invalid escape sequence '\*'
+    """`PORT-9` step 3 leg (c) — the first port solve on the gapped birdcage.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_lumped_column.py:458: SyntaxWarning: invalid escape sequence '\*'
+    """**Leg (c)'s gate.**  ``|Z₂₁ − Z₄₁|/|Z₂₁| ≤ 0.5%``, with ``Z₃₁`` apart.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_termination_probe.py:1: SyntaxWarning: invalid escape sequence '\*'
+    """`PORT-9` step 3 leg (d0) — the termination probe on the gapped birdcage.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_termination_probe.py:432: SyntaxWarning: invalid escape sequence '\*'
+    """**Negative control (1).**  Z_p = 1e6 Ω reproduces leg (c)'s ``I₁``.
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-8l48q697/tests/validation/test_port_birdcage_four_port.py:1: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-8l48q697/tests/validation/test_port_birdcage_lumped_column.py:1: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-8l48q697/tests/validation/test_port_birdcage_lumped_column.py:458: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-8l48q697/tests/validation/test_port_birdcage_termination_probe.py:1: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-8l48q697/tests/validation/test_port_birdcage_termination_probe.py:432: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_filed_survivors_outside_the_gated_roots_are_unchanged
+tests/environment/test_dolfinx_api_migration.py::test_filed_survivors_outside_the_gated_roots_are_unchanged
+  /workspace/examples/ansys_benchmarks/two_torus_gap_ports_10MHz/03_two_torus_gap_ports_10MHz.py:398: SyntaxWarning: invalid escape sequence '\*'
+    """
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+============ 18 passed, 2 skipped, 32 warnings in 483.07s (0:08:03) ============
+[capture] rc=0
+
+## Exit
+- Status: 0
+- Elapsed (s): 484
+- Filtered lines (gmsh optimisation chatter): 67
