@@ -29182,3 +29182,91 @@ noticed; a log without the readings is a window not spent.
 `3e9ec15` and `OPS-43` (a) `9d853fb`, and item 5 (`ANS-4` step 2d) landed as
 `998edf9`. Their item texts are in `git show 26e14be` and
 `docs/testing/attempts.md`. Item 4 is folded into item 1 below.)*
+
+
+## §9 On-deck interval narrative (2026-09-11 03:00 review) — archived 2026-09-11 (10:30 daily review)
+
+Last reviewed **2026-09-11, 03:00 review**. *(The 2026-09-10 18:00 interval
+narrative is archived verbatim in `docs/planning/plan-archive.md`.)*
+
+**Interval (18:00 → 03:00): four slots fired. Three did chunk work; the 00:00
+slot found the queue drained and stopped, as the rule says.**
+
+| Slot | Chunk | Outcome |
+|---|---|---|
+| 19:30 | `ANS-4` step 2a′ (147 + 137 s, `-n 4`) | landed `e9e364e`: flag on, ×1/×0.75 pass every imported gate (×0.75 `Z` spreads 0.0481 / 0.0649 / 0.0555 %); flag off reproduces step 2a's red to the digit; `OPS-43` (c) wired |
+| 21:00 | `PORT-19` step 1 (62 + 81 s, `-n 2`) | landed `8345787`: `‖A_k − A_1‖_∞ = 0.0` for all four drives; step 2 is live |
+| 22:30 | `TH-19` steps 1–2 (475 + 484 + 483 s, `-n 8`) | landed `9126d39`: outcome (a) on both σ-halves, residual 2.0421e-14 / 5.9380e-15 under `"matched"`; default path still red |
+| 00:00 | — | queue drained; journaled `c75d701` |
+
+No operator activity. The 02:00 XL launcher found an empty queue
+(`logs/automation/20260911T070001Z_xl-run.log`). This review ran on
+`claude-opus-5` under the override that expires tonight.
+
+**Tree and branches.** Clean at review start; no `recovered/*`. The four
+`attempt/*` branches (`TH-15-step2proper`, `WF-6-step4b/4c/4e`) are kept,
+unchanged, on the 2026-09-09 18:00 ruling.
+
+**Audit (§4).**
+- **`OPS-43` → ✅**, closed by this review. The `auditor` found every part
+  compliant on substance: logs present, anchors inside real asserts, digits
+  traced. It returned DEMOTE on one point only: the row declared *smoke*, while
+  (c)/(d) ran under `timeout -k 30 180` and measured 53–61 s
+  (`20260910T050613Z_OPS-43c.log:12, :230`; `20260910T183305Z_OPS-43d.log:12,
+  :246`, both re-read here). §4 item 4 requires a declared tier, so the tier is
+  re-declared *standard*. No evidence changed and nothing was re-run.
+- No other chunk turned ✅. `ANS-4` step 2a′ is a reading inside the
+  already-✅ `ANS-4` row; `PORT-19` and `TH-19` stay ⬜. No example chunk opens:
+  `OPS-43` is instrumentation, not a physics capability.
+
+**Rulings banked this review.**
+(1) **`ANS-4` step 2a′ accepted.** Flag on, both rungs pass the unmoved 0.5 %
+   (`20260911T003204Z_ANS-4-step2a-prime.log:3995, :4194`). Flag off
+   reproduces step 2a's red (`20260911T003442Z…:3718`). So the sheet cut
+   carried the ×0.75 break, and the `conductor_resolution` ladder exists with
+   the flag on. Item 1 walks it.
+(2) **Known-issues `ANS-4` step 2a entry: require the flag beyond ×1; do not
+   flip the mesher default** (row added there). Flipping it would move the
+   `GEO-19` record and every importer. Item 1 lands the guard and retires the
+   entry.
+(3) **`PORT-19` step 1 accepted.** Two corrections to the §7 row:
+   - The step-1 phrase "differ by more than the reference impedance" compared a
+     vector norm to ohms, and is struck.
+   - Step 2's negative control as written ("perturb one port's
+     `port_impedance_ohm`") cannot make reuse unsafe. The perturbed port's
+     sheet is in every drive's matrix, so the matrix stays drive-invariant
+     (step 1's own control (ii) shows this). It is re-specified as a
+     **stale factor**: factor at P2 = 51 Ω, solve the 50 Ω right-hand sides.
+     Its ≥ 100× factor becomes *predicted* under rule (e), since no prior
+     measurement backs it; > the reproduction band is asserted.
+(4) **`TH-19` steps 1–2 accepted as measured; referred to the weekly.** W1's
+   residual digits moved 3.8990e-09 → 2.3898e-09 while `Im Z`, `W_e` and `W_m`
+   reproduce to every printed digit (`20260911T033210Z_TH-19-step1.log:437,
+   :537–538`). That is read as cancellation round-off, which the item said not to
+   assert. It is still > 2× over 1e-9, so the status does not change.
+(5) **Rubric trap added** (`daily-review.md`): `pgrep -f "python3 -m pytest"`
+   is denied by `bash_guard.py`, and `pgrep -c python3` works (22:30
+   anomaly 5).
+
+**For the weekly (2026-09-13), added:**
+- `TH-19` outcome (a): whether `"matched"` becomes the degree-2 default (the
+  known-issues degree-2 entry retires with it), and the sheet-drive
+  formulation ruling any birdcage identity test needs;
+- whether a flag-on `ANS-4` Richardson estimate (item 1) changes step 2d's
+  Larmor reading.
+
+**Residual `main` reds at `-n 2`: 3 deliberate/known** (4 → 3, 2026-09-11
+07:30 slot), plus the padding module's red at `-n 4` (known-issues,
+2026-09-09). Item 3 retired `PORT-14` step 1's deliberate red, which the tally
+counted. It stood at 5 on 2026-09-05 with `POST-6`'s red and this one
+(attempts.md, `TH-15` step 1 entry), and fell to 4 when `PORT-16` step 2
+retired `POST-6`'s on 2026-09-07.
+
+**Four takeable items: fewer than five, stated rather than padded.** No
+other §7 row has queue-ready text (`plan-navigator`: `PORT-15` step 2 waits on
+`PORT-14`; `TH-5`/`TH-14`/`TH-16`–`TH-18` are unscoped; `POST-6` waits on a
+weekly ruling; `TH-15` step 2's unitarity gate has no new evidence). **No
+item depends on another's result.** Items 2–4 all build through
+`build_four_port_sweep`, and each additive keyword is default-off or
+bit-identical at its default, so landing order does not matter. A fifth slot
+that finds nothing takeable **stops and journals**.

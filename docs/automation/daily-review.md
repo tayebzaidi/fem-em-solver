@@ -219,7 +219,12 @@ version-bump record sweeps) says so in its first line:
    orphan-rank check spelled `pgrep -f "python3 -m pytest"` is **denied by
    `bash_guard.py`** (the string matches its pytest-routing rule) —
    `pgrep -c python3` inside the container is the check that runs
-   (`TH-19` steps 1–2, 2026-09-10 22:30). Add to this list as runs discover
+   (`TH-19` steps 1–2, 2026-09-10 22:30); a durable-capture command that
+   drops the idiom's trailing **`; exit $rc`** exits with `cat`'s status, so
+   the harness footer and test-results row read **0 over a failed pytest** —
+   `WF-6` step 4h's red window (`[capture] rc=1`, `Status: 0`, 2026-09-11
+   09:00); copy §5.1's idiom verbatim and read the `[capture] rc=` line, not
+   the footer, until `OPS-45` lands. Add to this list as runs discover
    more.
 5. **The scope boundary** — what the item does *not* close, stated so the
    implementer holds the chunk at 🟡 rather than over-claiming. `POST-3` step 1

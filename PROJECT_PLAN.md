@@ -877,6 +877,7 @@ re-deriving a closed step's diagnosis. (The older per-chunk log,
 | `OPS-42` | **The corpus census's staleness window reports the run cadence, not staleness** — `scripts/testing/check_example_doc_references.py` treats an artifact older than **48 h** (`OPS-15`, 2026-08-10, set when the corpus ran daily) as stale; the corpus now runs weekly and the census reads `stale=81` over **40 of 47 examples** — 85% of what it measures, oldest ≈ 178 h (`20260907T140926Z_EX-53-census-post.log:120`). Opened by the 2026-09-09 03:00 daily review, ruling (5), on the 02:15 weekly's health finding, which asked this review whether 48 h is the right threshold and explicitly ruled out refreshing 40 artifacts by hand. **Change:** the default artifact-age window 172 800 → **1 209 600 s (14 days)**, with the `--help` text and the docstring paragraph recording the new value and why it moved. `OPS-19`'s exit-code contract is untouched — staleness still never owns the exit code and `--stale-severity` still defaults to `report`. **Anchor (asserted):** the stale set recomputed independently in the test from the artifacts' own `st_mtime` equals the checker's reported `stale=` count exactly, with `dead=0 guide=0` unchanged. **Negative control (asserted):** an artifact backdated past the new window (on a `tmp_path` copy, never a committed artifact) is still reported stale and the count rises by exactly 1 — a threshold change that quietly disabled the check passes the anchor and fails this. Full item in §9 item 5. **EXECUTED GREEN 2026-09-09, 16:30 implementer slot** (`20260909T213444Z_OPS-42.log`, `Status: 0` `:193`, `Elapsed (s): 7` `:194`, **16 passed / 1 deselected in 5.75 s**, `-n 1`, `timeout -k 30 120`, `-s`, smoke): the default is now `DEFAULT_MAX_AGE_S = 1209600.0` — named as a module constant for the same reason the exit codes are, so the test imports the window instead of restating it (`ANS-1`); the docstring paragraph and the `--help` string both carry the new value **and** the cadence reason. Nothing else in the checker moved: `--stale-severity` still defaults to `report`, the three `OPS-19` exit-code tests and the four `EX-29` resolution tests are green unchanged. **Measured before/after on the committed tree** (`:170`): at 172 800 s, **88 stale artifacts cited by 56 of 63 guides in 9 output dirs**; at 1 209 600 s, **0 stale, 0 guides** of the 89 artifacts age-checked — i.e. the whole corpus has run inside the last 14 days, so the post-change signal reads zero rather than 85%. **Anchor** (`:171–186`): reported `stale=` equals the set recomputed in the test from each artifact's own `st_mtime` (0 = 0), with `dead=0 guide=0` unchanged from the pre-change census `dead=0 guide=0 stale=87` (`20260909T141114Z_ANS-2-step1-census.log:126`), plus the monotonicity identity `stale(14 d) ⊆ stale(48 h)`; the recomputed and reported sets agreed at **both** windows, so the negative-result clause did not fire. **Negative control** (`:187`): on a three-artifact `tmp_path` fixture (never a committed artifact), backdating one file to 337.0 h against the 336.0 h window moves `stale` **0 → 1, a rise of exactly 1**, and the exit code `EXIT_OK → EXIT_STALE_ONLY` — the check is widened, not switched off. The two `47 h / 49 h` boundary pairs are re-registered as `DEFAULT_MAX_AGE_S ∓ 1 h` and follow the constant. Two windows were used, not one: the first (`20260909T213349Z_OPS-42.log`, `Status: 1`) surfaced **one unrelated red name on `main`** — `test_the_in_tree_exemption_cannot_silently_widen`, whose pinned `COMMITTED_EXAMPLE_ARTIFACTS` is missing the two `ans:` `metrics.json` committed since (new known-issues row, 2026-09-09); it was deselected for the closing window rather than edited, because this chunk does not own that record. No artifact was refreshed by hand and no example chunk was closed. | ✅ *(2026-09-09)* | smoke |
 | `OPS-43` | **Long-window robustness: durable capture, orphan-rank cleanup, and per-run memory instrumentation** — the three defects the 2026-09-09 XL runs paid for, each measured, none yet mechanised (§5.1 now states all three as rules; this chunk makes them checkable rather than remembered). (a) **Durable capture**: a helper — `run_and_log.sh` keyword or a documented command shape — that redirects container-side output to `/workspace/logs/<name>-raw.log` and echoes it back, plus a `--capture-orphan <raw file>` mode that turns a surviving raw file into a properly footered harness log when the wrapper died. Gate: kill a wrapper mid-window on a smoke-tier case and show the raw file is complete and the recovered log carries a real `## Exit`. (b) **Orphan detection**: `run_and_log.sh` checks for live ranks in the target service *before* starting and refuses with the offending PIDs and elapsed times, so a killed window cannot silently double-book the box. Gate: start a sleep in the container, assert the harness refuses, kill it, assert the harness proceeds. (c) **Per-run memory**: `memory.peak` is per container lifetime and read-only on this kernel, so either the harness restarts the XL service before an `xl` window (zeroing it) or the measured module prints `resource.getrusage(RUSAGE_SELF).ru_maxrss` summed over ranks. Gate: two consecutive runs in one container lifetime report *different*, individually correct peaks. (d) **Progress visibility — added 2026-09-09 on operator direction; d1–d3 landed.** A direct solve is silent for its entire factorization: `TH-11` step 5d went **>30 minutes without writing a line** while perfectly healthy, and the only evidence it was alive came from outside it. Three levels, stacking, all opt-in and default-off: **(d1)** `FEM_EM_SOLVER_PROGRESS` raises MUMPS's `ICNTL(4)` so it reports its analysis and factorization phases and their memory estimates on rank 0 (`core/time_harmonic.py`; unset — every existing run and CI — leaves the options dict byte-identical, and an explicit `solver_petsc_options` still wins, being applied after); **(d2)** the same gate prints dof count, degree and cell count before the dominating solve call and its elapsed after, rank 0 only; **(d3)** `scripts/testing/watch_run.sh <service> <out> [interval]` samples cgroup memory, rank count and summed CPU into a TSV from *outside* the run, so it reports when the process says nothing and survives the run's own death — the memory column is the progress bar a direct solve does not have, climbing through the factorization and plateauing when it completes. Verified live against step 5d: **262.1 GiB flat at 672 % CPU across 8 ranks**, i.e. mid-factorization. Two traps recorded in the script: `memory.peak` is per container lifetime (§5.1), and wrapping the watcher in `timeout` kills its process group and reads as an unreachable container. **Gate still owed for (d1)/(d2):** one smoke solve with the variable set and one without, identical results, the extra lines present only in the first. Opened 2026-09-09 by the operator-interactive session that hit all four; smoke tier throughout — no solve is needed to gate (a)–(c). **(c) INSTRUMENT AND CALIBRATION LANDED 2026-09-10, 00:00 CDT implementer slot — both pre-registered gates green; the `test_ans4_resolution_ladder.py` wiring is DELIBERATELY DEFERRED past the 02:00 XL window and is the one piece (c) still owes.** Shared helper `src/fem_em_solver/utils/instrumentation.py` (`summed_peak_rss_bytes` / `report_peak_rss`: `resource.getrusage(RUSAGE_SELF).ru_maxrss` × 1024 → bytes, `comm.allreduce(..., MPI.SUM)`, rank-0-only print, non-Linux refused rather than ported), calibrated by `tests/unit/test_memory_instrument.py`. One window, `20260910T050613Z_OPS-43c.log`, `-n 2`, real build, `timeout -k 30 180`, **9 passed / 4 skipped, `Status: 0`, elapsed 53 s** (smoke). **Anchor (closed form):** 256 MiB touched per rank, summed rise **0.5010 GiB = 1.0020 ×** the 0.5 GiB allocation, band [0.8, 1.5] — a KiB/bytes error, a constant, or a rank-local figure fails it. **Negative control:** large (1 GiB) run first then small (32 MiB), separate subprocesses, one container lifetime — `/sys/fs/cgroup/memory.peak` reads **25 960 632 320 B (24.1777 GiB) identically at all three sampling points**, i.e. it reports a stale container high-water as both runs' peak and cannot distinguish them, while summed `ru_maxrss` separates them **2.5636 ×** (2.3398 vs 0.9127 GiB) against the 2.0 floor. That is the two ledger rows' defect reproduced deliberately at smoke cost; neither ledger row is re-measured or re-attributed and both keep their caveats. **Why the ladder wiring was deferred, recorded so the next review can simply order it:** the slot ran at 05:04Z with `scripts/automation/xl-queue.env` still carrying `XL_CHUNK="ANS-4-step2d"` and no `ANS-4-step2d` log present — the week's single un-repeatable 7 200 s / 16-rank window fires against that exact module at 02:00 local. §9 item 4's own trap list notes the allreduce is a **collective** that hangs the window if any rank misses it, and its ordering note ("every implementer slot is at 04:30 or later, so the window has returned first") is false for the 00:00 slot. The helper was therefore placed where the ladder's import graph does not reach (verified by grep: the ladder imports no `tests.unit` and no `utils.instrumentation`; `utils/__init__.py` is a docstring only), so nothing the XL window reads moved. **The five existing `ru_maxrss` call sites were NOT refactored onto the helper** — the licence is "only if each printed digit is unchanged", and every one of them lives in a heavy/`xl` module that cannot be re-executed at smoke tier to prove it, so inspection alone would not have discharged the condition. **Trap measured and recorded in the test (worth reusing):** a plain subprocess of an `mpiexec`-launched rank inherits Hydra's `PMI_*` handshake, so importing `fem_em_solver` — whose `__init__` eagerly pulls DolfinX → mpi4py → `MPI_Init` — aborts with `PMI_Init failed`, **exit 15** (first run `20260910T050412Z_OPS-43c.log`, `Status: 1`, anchor already green at 1.0023 ×); the fix is scrubbing `PMI_`/`PMIX_`/`HYDRA_`/`MPICH_`/`OMPI_`/`MPIEXEC_` from the child environment. **(d) GATE ATTEMPTED 2026-09-10, 06:00 CDT implementer slot — BLOCKED on the anchor's instrument, not on the variable (known-issues 2026-09-10).** Module `tests/solver/test_solver_progress_inert.py` (smoke fixture of `test_time_harmonic_smoke.py`, h = 0.03, 1 405 cells / 2 004 dofs; each solve a separate child `mpiexec -n 2` from rank 0, PMI-scrubbed env). Window 1 `20260910T110332Z_OPS-43d.log` **red** (`Status: 1` `:388`, 36 s): unset `norm2 = 0x1.2bbe0e158fda1p-5` vs set `0x1.2bbe0e158fda0p-5`, diff −6.94e-18. Windows 2–4 **green** (`20260910T110452Z` `Status: 0` `:383` 37 s; `20260910T110629Z` `:383` 37 s; `20260910T110803Z` `:403` 61 s) with norm2 `0x1.2bbe0e158fda0p-5` = 3.65896487314743002e-02 on both settings and three-term imbalance `0x1.56f8034472e29p-3` = 0.167465234 (inside the smoke gate's 25 %, two-term on its 116.7465 % record). But a same-setting repeat control drifted too: 2 of 22 `-n 2` children moved 1 ULP (window 1 unset, window 3 set_repeat → `…fd9fp-5`) with **identical** geometry / `‖A‖_F` / `‖b‖` fingerprints, and `-n 1` read 8/8 identical. So the variable is measured inert where the solve is reproducible, and a single-pair bit-identity at `-n 2` is not a reliable gate; closing on the green windows would be selecting them. Negative-control legs green in all four windows: `[solve]` lines 0 unset / 2 set, options dict unset == pre-`81861d0` literal, set == literal + `mat_mumps_icntl_4: 2`, MUMPS ICNTL(4) read back `[0,0]` / `[2,2]`. Owed: a review ruling on the anchor (e.g. `-n 1` children, or unset-vs-set spread against repeat spread). **(b) LANDED 2026-09-10, 07:30 CDT implementer slot — gate green, one smoke window plus one regression window.** `scripts/testing/run_and_log.sh`: when `CMD` matches `docker compose … exec`, before the log header and the XL ledger row, it lists `ps -eo pid,etimes,args` in the target service (`fem-em-solver-xl` if named, with `--profile xl`; else `fem-em-solver`), skips the listing's own line, and on any `mpiexec|hydra_pmi_proxy|pytest` match prints PID / elapsed / args on stderr and exits **75** (`ORPHAN_REFUSAL`, named in the header comment; the script's pre-existing exits were 2 usage / 0 dry run / the wrapped status). Host-only commands and dry runs skip the check; if the listing itself fails (service down) it warns and proceeds so the wrapped command fails visibly in its own log. Container `ps` table read first: PID 1 `/bin/bash` and the listing only — no permanent process matches, pattern kept as specified. Gate `scripts/testing/test_orphan_guard.sh` (host-side, `trap` kills the probe and removes the scratch root on every exit path), window `20260910T123339Z_OPS-43b.log`, `timeout -k 30 120`, **0 failures `:81`, `Status: 0` `:84`, elapsed 6 s `:85`** (smoke). **Anchor (asserted, exact):** probe `hydra_pmi_proxy-orphan-probe` live as PID 20527 (`:39`, `:43`) → modified harness exit **75**, message names `pid=20527` (`:46–51`), test-results rows **1601 → 1601** and log files **1298 → 1298** (`:49`, `:52–53`); probe killed (`:71`) → same call exit **0**, rows **1602 → 1603** (`:78–80`). **Negative control (asserted):** `git show HEAD:scripts/testing/run_and_log.sh` with the same live probe exits **0** and the probe is still live afterwards (`:63–69`). The copy ran from a scratch root `.ops43b_scratch_root/scripts/testing/`, not the repo root as the item said, because the harness resolves its root two levels above itself and a repo-root copy would have written outside the repo; the control's own log and index lived in the scratch root (deleted), and its Exit block is echoed into the gate log (`:65–67`). **Scope check (asserted, extra):** a host-only `true` with the probe live exits 0 and appends one row (`:57–59`). **Regression (asserted):** the `OPS-44` command verbatim through the modified harness, `20260910T123359Z_OPS-43b.log`, **19 passed `:208`, `Status: 0` `:211`, elapsed 7 s `:212`**. The gate's nested harness calls add two companion logs/rows (`…123342Z_OPS-43b-hostonly.log`, `…123345Z_OPS-43b-proceed.log`); every row assertion is a delta around its own call. **Not exercised, inspection only:** the `fem-em-solver-xl` resolution path (the slot does not exec into that service) and the warn-and-proceed branch. **Rulings, 2026-09-10 10:30 review.** **(d) anchor re-registered, not relaxed:** the identity stays `==` on `float.hex`, and moves to child `mpiexec -n 1` solves — 4 unset + 4 set, interleaved, asserted as **one** value across all eight children, so repeat reproducibility and unset == set are a single assertion that cannot be green by selecting windows. `-n 2` children are printed only. Licence: (d1)/(d2) change MUMPS verbosity and a print, nothing partition-dependent. The 06:00 windows show the `-n 2` drift in *both* settings with bit-identical A/b fingerprints, and 8/8 `-n 1` children agree (`20260910T110803Z_OPS-43d.log:269–270`). **Exposure census (`Explore`, 167 test modules, spot-checked here):** no assertion compares a MUMPS solve result against a recorded number tighter than **1e-9** relative (`LEG_D0_REPRODUCTION_BAND`, `test_port_birdcage_four_port.py:165`); the only bit-exact solve comparisons (`test_port_drive_superposition.py:736, 825`) are same-process. So the drift exposes no existing record. Queued as §9 item 1. **(a) queued** as §9 item 3 with its gate written (rc line inside the raw file; `--capture-orphan`). **(c) wiring:** the queue half of its unblock condition is met (`76e78c4` emptied `xl-queue.env`), but it still rides with the next chunk that executes the ladder module — no standalone window. **(b)'s XL listing branch** was taken for real by the operator's 15:20Z `ANS-4-step2d` harness call (it proceeded; whether it listed or warned is not visible in that log's stdout). The refusal case on the XL service stays unexercised and is not queueable headless: the bash guard denies XL-service commands inside 7 days of a ledger row. **(d) GATE CLOSED 2026-09-10, 13:30 CDT implementer slot, re-anchored as ruled.** Module `tests/solver/test_solver_progress_inert.py` was taken by path from `attempt/OPS-43d-20260910T111045Z` and restructured to the ruling: rank 0 of a `-n 2` pytest job launches 20 PMI-scrubbed children. The retired single-pair `-n 2` asserts, the `FEM_EM_OPS43D_PROBE` opt-in and the smoke-scalar asserts were removed; the smoke scalars are now printed, since the smoke test gates them itself. One window, `20260910T183305Z_OPS-43d.log`, complex build, `FEM_EM_REQUIRE_COMPLEX=1`, `tests/environment` first, `-s`, `timeout -k 30 180`: **12 passed** (`:177`), **`Status: 0` `:245`, elapsed 54 s `:246`** (smoke). **Anchor (asserted, a set of size 1, no tolerance):** 8 child `-n 1` solves, interleaved unset/set, all exit 0 (`:82–89`). norm2 `{'0x1.2bbe0e158fdb3p-5': 8}` (`:90`), which is the 06:00 record. Three-term imbalance `{'0x1.56f8034472e19p-3': 8}` (`:91`). **Negative controls (asserted, all green):** `[solve]` lines 0 on each unset child and 2 on each set child; options dict unset == pre-`81861d0` literal, set == literal + `mat_mumps_icntl_4: 2`; ICNTL(4) read back `[0]` / `[2]` (`:82–89`). **Printed, asserted nowhere:** `-n 2` 6 unset + 6 set (`:96–107`). Both settings gave norm2 `{'0x1.2bbe0e158fda0p-5': 6}` and three-term `{'0x1.56f8034472e29p-3': 6}` (`:108–111`). The prediction held: the modal value is the same for both settings. No drift this window, so the tally is 2 of 34. Fingerprints: `‖A‖_F` differs by 16 ULP between `-n 1` (`0x1.35c8f773e9107p+14`) and `-n 2` (`…9117p+14`), and `‖b‖` by 1 ULP; geometry is identical. That makes the `-n 1`/`-n 2` value split an assembly-order difference, separate from the `-n 2` factor drift. Smoke scalars at `-n 1` (printed): three-term 0.167465234 < 0.25, two-term 1.167465234 against the 1.167465 record (`:93`). The known-issues 2026-09-10 entry is re-headed as an observation the gate no longer depends on; it is **not** retired. **(a) LANDED 2026-09-10, 16:30 CDT implementer slot — gate green; one gate window plus one regression window, each needing a second run for a defect in a gate script (both disclosed below).** `scripts/testing/run_and_log.sh`: (i) the rc-in-raw-file shape is documented in the header comment (escaped host-side form) and in §5.1; (ii) `--capture-orphan <chunk_id> <raw>` writes the normal header plus `- Mode: capture-orphan`, `- Raw file:` and the raw file's mtime. The raw contents go in as `## Output` through the retention filter, followed by `## Exit` with `Status:` from the **last** `[capture] rc=` line. It appends one test-results row and exits with that status. With no rc line it writes `Status: unknown (no rc line)`, puts `unknown` in the row's Exit column, and exits **76** (`NO_RC_CAPTURE`, named in the header). Pre-existing exits: 0 / 2 / 75 / the wrapped status. Capture mode skips the orphan check and the XL ledger. The raw path may be relative, absolute, or `/workspace/…`. Gate `scripts/testing/test_durable_capture.sh` (host-side, structured like `test_orphan_guard.sh`; its `trap` kills the container command by marker and removes raw files and scratch on every exit path). Window `20260910T213636Z_OPS-43a.log`, `timeout -k 30 120`: **0 failures `:136`, `Status: 0` `:139`, elapsed 16 s `:140`** (smoke). **Anchor (asserted, exact):** the harness was started on the shape in its own session (pgid 828748 ≠ gate 828596, `:41`) and SIGKILLed as a process group at t = 4.08 s with 4 lines written (`:49–51`). No host wrapper or compose client survived (`:52–53`). The container command was still live (pids 424/435, `:54–61`) and finished by itself at t = 13.14 s (`:63–64`). The raw file held 12 `line` lines, `line 1`…`line 12`, plus exactly one `[capture] rc=3` (`:79–95`). `--capture-orphan` → `20260910T213650Z_OPS-43a-capture.log`: one `## Exit`, `Status: 3`, the 12 lines in its Output, call exit **3**, rows **1616 → 1617** (`:97–116`). **Negative controls (asserted):** the killed wrapper's own log `20260910T213637Z_OPS-43a-killed.log` has **no** `## Exit` and wrote no row (1616 → 1616, `:69–76`). A copy with the rc line stripped → exit **76**, `Status: unknown (no rc line)`, no numeric status, one row with Exit `unknown` (`20260910T213651Z_OPS-43a-norc.log`, `:117–131`). **First gate window** `20260910T213546Z_OPS-43a.log`, `Status: 1` (`:137`, `:140`), 17 s: every item assertion was green. Its one failure was an extra check the gate adds itself (no host survivor): a bare host `pgrep -f <marker>` matched the **container's** bash processes, which are visible in the WSL2 host PID namespace (host 826758/826769 = container 282/293, `:52–55`), while the compose clients were already gone. The check was narrowed to the killed group plus `compose exec` clients, with the measurement recorded in the script. **Regression:** `test_orphan_guard.sh` first ran as `20260910T213658Z_OPS-43a.log` with **2 failures** (`:82`, `Status: 1` `:85`), both in its negative-control leg (`:61–69`). That leg copied `HEAD:scripts/testing/run_and_log.sh`, which carries the check on every HEAD after `d10a940`, so the leg went stale when (b) landed, independently of (a). The control is now pinned to `d10a940^`, the parent of the (b) commit, with the log cited in a comment. Re-run `20260910T213744Z_OPS-43a.log`: **0 failures `:81`, `Status: 0` `:84`, elapsed 7 s `:85`**. Anchor legs are unchanged (exit 75, rows 1622 → 1622, logs 1322 → 1322, `:49–53`; proceed 0, rows 1623 → 1624, `:78–80`) and the pinned control proceeds with exit 0 (`:63–69`). Companion logs from nested calls: `…213547Z`/`…213637Z_OPS-43a-killed`, `…213601Z`/`…213650Z_OPS-43a-capture`, `…213602Z`/`…213651Z_OPS-43a-norc`, `…213700Z`/`…213747Z_OPS-43b-hostonly`, `…213703Z`/`…213749Z_OPS-43b-proceed`. **Not exercised (inspection only):** an rc line appended to a partial last line (the regex tolerates it) and the `/workspace/…` and absolute path forms. Adopting the shape for XL queues stays the weekly review's job. | ✅ **2026-09-11, 03:00 daily review** — all four parts landed with harness logs, quantitative anchors inside real asserts, and elapsed recorded (`auditor`: checks 1–7 clean; (c) anchor 1.0020× `20260910T050613Z_OPS-43c.log:80–83`, (b) exit 75 `20260910T123339Z_OPS-43b.log:43–53`, (a) `Status: 3` recovery `20260910T213636Z_OPS-43a.log:97–116`, (d) one hex value over 8 children `20260910T183305Z_OPS-43d.log:90`). **Tier corrected, not the evidence:** the row had declared *smoke*, but (c)/(d) ran under `timeout -k 30 180` and measured 36–61 s (`20260910T050613Z_OPS-43c.log:12, :230`; `20260910T183305Z_OPS-43d.log:12, :246`), which is the standard tier. The auditor returned DEMOTE on that label alone. The tier column now reads standard, and no window was re-run. *(d1–d3 landed; (b) landed 2026-09-10 with its gate green; **(d) gate closed 2026-09-10 13:30 at child `-n 1`** (`20260910T183305Z_OPS-43d.log`); (c)'s instrument + calibration landed 2026-09-10, its ladder wiring deferred past the 02:00 XL window; **(a) landed 2026-09-10 16:30** (`20260910T213636Z_OPS-43a.log`); still open: only the (c) ladder wiring. **(c) ladder wiring landed 2026-09-10 19:30 slot with `ANS-4` step 2a′** — `report_peak_rss` after every rung on all ranks in `tests/validation/test_ans4_resolution_ladder.py`; its `[mem]` line printed on all four rungs of two consecutive windows in one container lifetime, and neither hung. Window 1 green (`20260911T003204Z_ANS-4-step2a-prime.log:2030, :3897`, 2.4269 / 2.9917 GiB summed over 4 ranks); window 2 is the deliberate flag-off red (`20260911T003442Z…:1916, :3678`, 2.4599 / 3.0097 GiB). The legacy `ru_maxrss` sites are untouched. Closeable; the review audits)* | standard *(re-declared 2026-09-11 03:00 review from *smoke*: measured 6–61 s under 120–180 s wrappers)* |
 | `OPS-44` | **Re-pin `COMMITTED_EXAMPLE_ARTIFACTS` to the five artifacts git actually tracks** — opened 2026-09-09 18:00 review, ruling (3), on the live red `OPS-42` surfaced and correctly declined to own. `tests/unit/test_doc_reference_exit_codes.py::test_the_in_tree_exemption_cannot_silently_widen` asserts `tracked == COMMITTED_EXAMPLE_ARTIFACTS` (`:448–453`); the pinned set has **three** members (`:432–436`, measured 2026-08-24 by `EX-29`) and the tracked set now has **five** — the two `ans:` benchmark `metrics.json` (`birdcage_four_port_10_64_128MHz`, `birdcage_coil_driven_sar_10MHz`, the latter committed in this same day's 09:00 slot) entered under `ANS-1`'s "each `ans:` case commits its own `metrics.json`" rule without being declared here (`20260909T213349Z_OPS-42.log:194–195, 210–211`; known-issues 🟡 2026-09-09). **The test is doing exactly its job** — the record is stale, the rule is not — and this chunk moves the record. **Ruled here, so the implementer does not have to decide it:** the pin stays a **pinned path set**, not a pattern. Matching `ans:*/metrics.json` by glob would trade this one-line maintenance for a weaker guarantee, and the whole point of `EX-29`'s pin is that widening the freshness exemption has to be *declared* by the chunk that widens it; the correct fix is that the two `ans:` chunks' declaration is written now, late, with its provenance. **The change:** add the two paths to `COMMITTED_EXAMPLE_ARTIFACTS` with the provenance comment the block already carries extended to name both chunks and both dates. Nothing else in the module or the checker moves. **Anchor (asserted):** the module's own set-equality identity `tracked == COMMITTED_EXAMPLE_ARTIFACTS` passes with **exactly five** members, and the five are re-derived independently in the test from `git ls-files examples` filtered on the artifact suffixes — i.e. the pin equals an independent recomputation, not merely a count. **Negative control (asserted — by construction, separation arithmetic):** on a `tmp_path` copy, an artifact placed under an example directory but **not** git-tracked must not enter `checker.tracked_artifacts` and must not receive the freshness exemption, and dropping any one path from the pinned set must make the identity assertion red — so a pin that had been "fixed" by deleting the assertion, or an exemption that had widened back to "any basename under `examples/`", fails here. `test_tracked_in_tree_artifact_is_exempt_from_freshness` is the already-green half of the same rule and is re-run unchanged as the positive half. **Tier / ranks / cost:** pure filesystem, no solve, no mesh, no container FEM work — `OPS-42` measured this whole module at **7 s** elapsed, `-n 1`, twice (`20260909T213444Z_OPS-42.log:193–194`) ⇒ **one window** `-n 1`, `timeout -k 30 120`, `-s`, **smoke**. **Traps already paid for:** run the **whole** module — `OPS-42` deselected this one name for its closing window and this chunk exists to un-deselect it, so a `-k`-filtered run proves nothing (and `-k a or b` splits into stray argv inside an already-quoted container command anyway); never pipe pytest through `grep -v` inside a harness command, because the footer then records the pipe's exit status rather than pytest's (two `OPS-17` footers showed exit 0 over a failing and a killed run); `timeout -k 30`; no `run_in_background`; pytest `-s` (standing rule (g)). **Scope:** a pinned record and its comment. It does **not** touch `OPS-19`'s exit-code contract, `OPS-42`'s `DEFAULT_MAX_AGE_S`, `--stale-severity`, `run_examples.sh` or any artifact on disk; it refreshes nothing, closes no example chunk, and moves no band. Its whole deliverable is that the module is green undeselected and the 2026-09-09 known-issues row retires **in the same commit**. **Negative result:** if the tracked set is not the five — a sixth artifact has landed since, or `tracked_artifacts` returns something git does not track — pin **what is measured**, say so in the comment, and if the mismatch is on the checker's side rather than the record's, that is a defect worth more than the pin: report both sets, open a known-issues row, revert, stop. Never delete or weaken the assertion to make the module green. **EXECUTED GREEN 2026-09-09, 18:00-review slot** (`20260910T020150Z_OPS-44.log`, `Status: 0`, **19 passed in 6.09 s**, harness elapsed **8 s**, `-n 1`, `timeout -k 30 120`, `-v -s --tb=short`, whole module, **nothing deselected**). The tracked set is the five the item predicted — no sixth artifact had landed and `tracked_artifacts` agrees with git, so the negative-result clause did not fire. **Anchor** (`:pinned=5 checker=5 git_ls_files=5`): the pin equals `checker.tracked_artifacts` *and* an independent `git ls-files examples` re-derivation filtered on `ARTIFACT_SUFFIXES` (deliberately not routed through the code under test), all three sets identical and of size 5. **Negative control, both halves green:** dropping each of the five pinned paths in turn makes the identity false (5/5 separations), and on a `tmp_path` git work tree an artifact under the example's own output dir but *not* added to the index holds an exemption set of **0 paths** and is still reported stale (`dead=0 guide=0 stale=1`, `exit=2` = `EXIT_STALE_ONLY`) — the exemption is still “git tracks it”, not “anything under `examples/`”. `test_tracked_in_tree_artifact_is_exempt_from_freshness` re-ran unchanged and green. Nothing else moved: `DEFAULT_MAX_AGE_S` still 1 209 600 s, `--stale-severity` still `report`, the `OPS-19` exit-code contract untouched, no artifact refreshed. The 2026-09-09 known-issues row retires in this commit. | ✅ *(2026-09-09)* | smoke |
+| `OPS-45` | **The harness footer must not call a red durable-capture window green** — *opened 2026-09-11 10:30 review, on the 09:00 slot's anomaly.* **The defect, measured:** `WF-6` step 4h's main window wrote its container command as `…pytest … > raw 2>&1; echo [capture] rc=$? >> raw; cat raw` — the documented §5.1 idiom **minus its trailing `; exit $rc`** — so the command's exit is `cat`'s. Pytest failed (`20260911T140329Z_WF-6-step4h.log:4149` "1 failed", `:4372` `[capture] rc=1`) and the footer reads **`- Status: 0`** (`:4375`), as does its test-results row (Exit 0). A review sweep of every tracked log for a body line `^\[capture\] rc=[1-9]` finds four: the two `OPS-43a-capture` fixtures (Status 3, correct), `20260911T033210Z_TH-19-step1.log:1123` (Status 1 at `:1126`, correct) and this one — **the only masked record**, and the only two logs whose command lacks `exit $rc` are this slot's. So the harness is not wrong about what it was given; it trusts the command's exit when the output says otherwise. **The change (`scripts/testing/run_and_log.sh`, normal mode only, `:321–330`):** after the command returns, take the **last non-blank line of the command's output** (the documented idiom ends with `cat raw`, whose last line is the rc line). If it matches `^\[capture\] rc=([0-9]+)[[:space:]]*$` and the command exited **0** with rc ≠ 0, set `STATUS_TEXT`/`ROW_EXIT`/`EXIT_CODE` to rc and add `- Capture note: command exited 0 but its output's final [capture] rc= line reads <rc>; Status is the rc line` to `## Exit`. A **non-zero** command exit is never overwritten (a killed `docker compose exec` with an rc=0 line already echoed stays red), and an rc line that is not the final output line is ignored — a script that merely *prints* a nested raw file mid-output (e.g. `test_durable_capture.sh`'s `cat -A` dump) cannot flip its own status. **Anchor (asserted), new `scripts/testing/test_capture_status.sh`, host-only commands, no container:** (i) `bash -c 'echo x; echo "[capture] rc=1"'` (exit 0) ⇒ footer `- Status: 1`, harness exit 1, new row Exit 1, capture note present; (ii) the full documented idiom with `exit $rc` and rc = 3 ⇒ Status 3, no note; (iii) rc line **not last** (`echo "[capture] rc=1"; echo tail`, exit 0) ⇒ Status 0; (iv) `echo "[capture] rc=0"; exit 5` ⇒ Status 5. Rows asserted as deltas (+1 per call), as `test_durable_capture.sh` does. **Negative control (asserted):** case (i) against the **pinned pre-change harness** `git show 06044b4:scripts/testing/run_and_log.sh` (copied to a scratch path under the gitignored `logs/`) reads `- Status: 0` — the defect reproduces; pin the literal sha, never `HEAD:` (rubric trap, `OPS-43` (a) regression, 2026-09-10 16:30). **Regression (asserted):** `scripts/testing/test_durable_capture.sh` and `scripts/testing/test_orphan_guard.sh` re-run green through the harness in the same slot. **Tier / cost:** smoke; the four host cases take seconds; `test_durable_capture.sh` measured Elapsed 16 s (`20260910T213636Z_OPS-43a.log`, `## Exit`) and `test_orphan_guard.sh` 6–7 s (test-results rows for `20260910T123339Z_OPS-43b.log`, `…123359Z…`); `timeout -k 30 120` each. **Scope:** does not rewrite the masked `WF-6` step 4h row (append-only; the §7 `WF-6` paragraph and known-issues entry already carry rc = 1), does not change `--capture-orphan`, and does not add a `bash_guard.py` shape check (a separate ask if this proves insufficient). **Negative result:** control (i) against the pinned harness reads non-zero ⇒ the defect is not what this row says; stop and report. Any regression gate red ⇒ do not land; park on `attempt/*`. **Records:** §5.1 gains one sentence (the footer honours a final rc line); the rubric trap in `docs/automation/daily-review.md` stays (it is about writing the idiom correctly). | ⬜ | smoke |
 | `OPS-1` | Executable verification environment (Docker) | ✅ | smoke |
 | `OPS-2` | CI runs the real test suite, not just `tests/unit` | ✅ | standard |
 | `OPS-3` | Deterministic test tolerance policy | ✅ | smoke |
@@ -7630,90 +7631,85 @@ may reappear. If every item is done or blocked, the drain instruction at the
 end of this section applies: **stop and journal**.
 
 
-Last reviewed **2026-09-11, 03:00 review**. *(The 2026-09-10 18:00 interval
+Last reviewed **2026-09-11, 10:30 review**. *(The 2026-09-11 03:00 interval
 narrative is archived verbatim in `docs/planning/plan-archive.md`.)*
 
-**Interval (18:00 → 03:00): four slots fired. Three did chunk work; the 00:00
-slot found the queue drained and stopped, as the rule says.**
+**Interval (03:00 → 10:30): four slots fired and all four did chunk work; the
+queue the 03:00 review wrote is fully consumed.**
 
 | Slot | Chunk | Outcome |
 |---|---|---|
-| 19:30 | `ANS-4` step 2a′ (147 + 137 s, `-n 4`) | landed `e9e364e`: flag on, ×1/×0.75 pass every imported gate (×0.75 `Z` spreads 0.0481 / 0.0649 / 0.0555 %); flag off reproduces step 2a's red to the digit; `OPS-43` (c) wired |
-| 21:00 | `PORT-19` step 1 (62 + 81 s, `-n 2`) | landed `8345787`: `‖A_k − A_1‖_∞ = 0.0` for all four drives; step 2 is live |
-| 22:30 | `TH-19` steps 1–2 (475 + 484 + 483 s, `-n 8`) | landed `9126d39`: outcome (a) on both σ-halves, residual 2.0421e-14 / 5.9380e-15 under `"matched"`; default path still red |
-| 00:00 | — | queue drained; journaled `c75d701` |
+| 04:30 | `ANS-4` step 2a″ (31 + 141 + 250 s, `-n 2` / `-n 8`) | landed `f62f2e7`: guard control errors at setup with nothing meshed; flag-on ladder green to ×0.45 (`Z` spreads ≤ 0.1072 % vs 0.5 %); Richardson p 2.13 / 2.65 / 2.88 printed |
+| 06:00 | `PORT-19` step 2 (92 + 60 + 73 s, `-n 2`) | landed `f2d83c2`: reused vs per-drive `S`/`Z`/`E` 0.0 relative; factorisations 1 vs 4; stale-factor control 1.073e-2 |
+| 07:30 | `PORT-14` step 1e (4 + 113 s, `-n 2`) | landed `c4b0fdf`: F-small floor registered as a (1\*) record, reproduced to ≤ 2.4e-7; deliberate red retired |
+| 09:00 | `WF-6` step 4h (6 + 199 + 52 s, `-n 4`) | landed `a20a8d6`: **negative result** — congruent cut removes the ×0.0095 P1/P2 split, not the common-mode ≈ 2e-2 residual |
 
-No operator activity. The 02:00 XL launcher found an empty queue
-(`logs/automation/20260911T070001Z_xl-run.log`). This review ran on
-`claude-opus-5` under the override that expires tonight.
+No operator activity. No XL window was due. This review ran on
+`claude-opus-5` under the override that expires at the end of today
+(`logs/automation/20260911T153001Z_daily-review.log:1–2`); the 18:00 review is
+still on it and the 2026-09-12 03:00 review returns to `claude-fable-5-1`.
 
-**Tree and branches.** Clean at review start; no `recovered/*`. The four
-`attempt/*` branches (`TH-15-step2proper`, `WF-6-step4b/4c/4e`) are kept,
-unchanged, on the 2026-09-09 18:00 ruling.
+**Tree and branches.** Clean at review start; `fem-em-solver` Up 20 h; no
+`recovered/*`. The four `attempt/*` branches (`TH-15-step2proper`,
+`WF-6-step4b/4c/4e`) are kept, unchanged, on the 2026-09-09 18:00 ruling.
 
-**Audit (§4).**
-- **`OPS-43` → ✅**, closed by this review. The `auditor` found every part
-  compliant on substance: logs present, anchors inside real asserts, digits
-  traced. It returned DEMOTE on one point only: the row declared *smoke*, while
-  (c)/(d) ran under `timeout -k 30 180` and measured 53–61 s
-  (`20260910T050613Z_OPS-43c.log:12, :230`; `20260910T183305Z_OPS-43d.log:12,
-  :246`, both re-read here). §4 item 4 requires a declared tier, so the tier is
-  re-declared *standard*. No evidence changed and nothing was re-run.
-- No other chunk turned ✅. `ANS-4` step 2a′ is a reading inside the
-  already-✅ `ANS-4` row; `PORT-19` and `TH-19` stay ⬜. No example chunk opens:
-  `OPS-43` is instrumentation, not a physics capability.
+**Audit (§4).** No chunk turned ✅ this interval, so no `auditor` ran:
+`ANS-4` step 2a″ is a reading inside the already-✅ `ANS-4` row, `PORT-19`
+stays ⬜ (done-when needs the 32×32), `PORT-14` and `WF-6` stay 🟡. No example
+chunk opens.
 
 **Rulings banked this review.**
-(1) **`ANS-4` step 2a′ accepted.** Flag on, both rungs pass the unmoved 0.5 %
-   (`20260911T003204Z_ANS-4-step2a-prime.log:3995, :4194`). Flag off
-   reproduces step 2a's red (`20260911T003442Z…:3718`). So the sheet cut
-   carried the ×0.75 break, and the `conductor_resolution` ladder exists with
-   the flag on. Item 1 walks it.
-(2) **Known-issues `ANS-4` step 2a entry: require the flag beyond ×1; do not
-   flip the mesher default** (row added there). Flipping it would move the
-   `GEO-19` record and every importer. Item 1 lands the guard and retires the
-   entry.
-(3) **`PORT-19` step 1 accepted.** Two corrections to the §7 row:
-   - The step-1 phrase "differ by more than the reference impedance" compared a
-     vector norm to ohms, and is struck.
-   - Step 2's negative control as written ("perturb one port's
-     `port_impedance_ohm`") cannot make reuse unsafe. The perturbed port's
-     sheet is in every drive's matrix, so the matrix stays drive-invariant
-     (step 1's own control (ii) shows this). It is re-specified as a
-     **stale factor**: factor at P2 = 51 Ω, solve the 50 Ω right-hand sides.
-     Its ≥ 100× factor becomes *predicted* under rule (e), since no prior
-     measurement backs it; > the reproduction band is asserted.
-(4) **`TH-19` steps 1–2 accepted as measured; referred to the weekly.** W1's
-   residual digits moved 3.8990e-09 → 2.3898e-09 while `Im Z`, `W_e` and `W_m`
-   reproduce to every printed digit (`20260911T033210Z_TH-19-step1.log:437,
-   :537–538`). That is read as cancellation round-off, which the item said not to
-   assert. It is still > 2× over 1e-9, so the status does not change.
-(5) **Rubric trap added** (`daily-review.md`): `pgrep -f "python3 -m pytest"`
-   is denied by `bash_guard.py`, and `pgrep -c python3` works (22:30
-   anomaly 5).
+(1) **`ANS-4` step 2a″ accepted.** Guard control: four setup errors, nothing
+   meshed, Status 1 (`20260911T093156Z_ANS-4-step2a-dprime-w0.log:172`). Flag-on
+   ×0.75 / ×0.6 / ×0.45: 161 645 / 209 544 / 293 534 cells, rung costs mesh
+   29.3 / 38.9 / 54.5 s + four drives 22.9 / 24.7 / 40.1 s at `-n 8`
+   (`…-w2.log:2060, :3979, :5945`, re-read here), `[capture] rc=0` (`:6517`).
+   The fit has three points and S₁₁'s move is non-monotone, so it is a reading,
+   not a converged value; item 5 buys the fourth point the 04:30 slot priced.
+(2) **`PORT-19` step 2 accepted, including its one deviation.** The keyword
+   default is `None` rather than `True` so that an explicit `True` off the
+   lumped-sheet route can raise; that is the item's intent and is ratified.
+   Re-read: `0.000e+00` for `S` and `Z` (`20260911T110544Z_PORT-19-step2.log:1891`),
+   stale factor `1.073e-02` (`:1898`). The five callers listed unrun stay unrun
+   on the reuse-on default; item 4 is the step that closes the row.
+(3) **`PORT-14` step 1e accepted.** `|ratio − 1|` = 2.380e-07 / 1.065e-07 /
+   3.391e-08 (`20260911T123334Z_PORT-14-step1e.log:1888, :1895, :1902`, re-read
+   here). Step 2 (64 MHz) is unblocked and is item 2.
+(4) **`WF-6` step 4h accepted as a negative result.** Re-read: ×0.0095 flag-on
+   P1 1.968410e-02 / P2 1.968464e-02 (`20260911T140329Z_WF-6-step4h.log:4034–4035`),
+   ×1 flag-on 9.795942e-03 / 9.796517e-03 (`:2043–2044`). The ×0.0095 rung stays
+   dropped and the known-issues entry stands, with a ruling row added. The
+   diagnosis goes first to the term `PORT-16` already attributed a 1 % gap to
+   on the loaded fixture — the Cauchy–Schwarz deficit of the terminal-current
+   sheet form (`tests/validation/test_birdcage_power_identity.py` docstring
+   (iv)) — which a finer rim could grow. That is item 3.
+(5) **Masked exit status: one record, one new chunk.** That window's footer
+   reads `- Status: 0` (`:4375`), and so does its test-results row, over
+   `[capture] rc=1` (`:4372`): the slot's capture command dropped §5.1's
+   trailing `; exit $rc`. A sweep of every tracked log for a body line
+   `^\[capture\] rc=[1-9]` finds four; the other three carry the matching
+   status (`20260911T033210Z_TH-19-step1.log:1123, :1126`, and the two
+   `OPS-43a-capture` fixtures), and only this slot's two logs lack `exit $rc`.
+   So no earlier green reading is masked. The row is not edited (append-only;
+   the §7 `WF-6` paragraph and known-issues already say rc = 1). **`OPS-45`**
+   (§7) makes the harness honour a final rc line, and is item 1. A rubric trap
+   is added to `daily-review.md`.
 
-**For the weekly (2026-09-13), added:**
-- `TH-19` outcome (a): whether `"matched"` becomes the degree-2 default (the
-  known-issues degree-2 entry retires with it), and the sheet-drive
-  formulation ruling any birdcage identity test needs;
-- whether a flag-on `ANS-4` Richardson estimate (item 1) changes step 2d's
-  Larmor reading.
+**For the weekly (2026-09-13), added:** item 5's four-point `ANS-4` reading, if
+it lands, beside step 2a″'s three-point fit.
 
-**Residual `main` reds at `-n 2`: 3 deliberate/known** (4 → 3, 2026-09-11
-07:30 slot), plus the padding module's red at `-n 4` (known-issues,
-2026-09-09). Item 3 retired `PORT-14` step 1's deliberate red, which the tally
-counted. It stood at 5 on 2026-09-05 with `POST-6`'s red and this one
-(attempts.md, `TH-15` step 1 entry), and fell to 4 when `PORT-16` step 2
-retired `POST-6`'s on 2026-09-07.
+**Residual `main` reds at `-n 2`: 3 deliberate/known**, unchanged since the
+07:30 slot, plus the padding module's red at `-n 4` (known-issues,
+2026-09-09). The `WF-6` ×0.0095 red is opt-in only and is not counted.
 
-**Four takeable items: fewer than five, stated rather than padded.** No
-other §7 row has queue-ready text (`plan-navigator`: `PORT-15` step 2 waits on
-`PORT-14`; `TH-5`/`TH-14`/`TH-16`–`TH-18` are unscoped; `POST-6` waits on a
-weekly ruling; `TH-15` step 2's unitarity gate has no new evidence). **No
-item depends on another's result.** Items 2–4 all build through
-`build_four_port_sweep`, and each additive keyword is default-off or
-bit-identical at its default, so landing order does not matter. A fifth slot
-that finds nothing takeable **stops and journals**.
+**Five takeable items. No item depends on another's result.** Item 1 edits
+the harness every later window runs through, but only makes a mismatched
+status stricter. Items 2 and 3 take test-side additive keywords on different
+modules, item 4 threads a keyword through the ring-column helper, and item 5
+is env-only. `plan-navigator` found no other queue-ready row (`PORT-15` step 2
+waits on `PORT-14` step 2; `TH-5`/`TH-14`/`TH-16`–`TH-18` are unscoped;
+`TH-19` waits on the weekly). A sixth slot that finds nothing takeable
+**stops and journals**.
 
 **⚠️ Standing constraint on the compose allow — read before editing that
 file.** `docker-compose.yml` line 9 is `- ..:/workspace`, so write access
@@ -7779,324 +7775,340 @@ never widened silently and never on a quantity that was already green.
 noticed; a log without the readings is a window not spent.
 
 
-*(The 18:00 queue is done: items 1–3 are `ANS-4` step 2a′ `e9e364e`,
-`PORT-19` step 1 `8345787` and `TH-19` steps 1–2 `9126d39`; item 4 rode with
-item 1. Their item texts are in `git show 4b1f7c7` and
-`docs/testing/attempts.md`.)*
+*(The 03:00 queue is done: items 1–4 are `ANS-4` step 2a″ `f62f2e7`,
+`PORT-19` step 2 `f2d83c2`, `PORT-14` step 1e `c4b0fdf` and `WF-6` step 4h
+`a20a8d6`, the last as a negative result. Their item texts are in
+`git show 710c743` and `docs/testing/attempts.md`.)*
 
-1. ✅ **DONE 2026-09-11 04:30 slot — guard green, flag-on ladder green to
-   ×0.45, Richardson printed (p 2.13 / 2.65 / 2.88)** (§7 `ANS-4` step 2a″;
-   `20260911T093156Z_ANS-4-step2a-dprime-w0.log`, `…093247Z…-w1.log`,
-   `…093524Z…-w2.log`; known-issues 2026-09-09 `ANS-4` entry retired).
-   **`ANS-4` step 2a″ — walk the flag-on `conductor_resolution` ladder to
-   ×0.6 / ×0.45, and land the known-issues guard first** (implementer;
-   test-side only, no `src/`; complex; `main`; independent).
-   **Why:** ruling (1). With `c4_congruent_sheets` on, ×1 and ×0.75 pass every
-   imported gate (`20260911T003204Z_ANS-4-step2a-prime.log`). The weekly's
-   pre-registered readout needs **three degree-1 rungs finer than ×1** for its
-   Richardson print, and that is now buildable.
-   **Edit 1, the guard (ruling (2)):** `_c4_congruent_enabled()`
-   (`tests/validation/test_ans4_resolution_ladder.py:205`) must tell *unset*
-   from an explicit `0`. At the top of the `ladder` fixture (`:285`), before
-   any mesh, if the env is unset and any `conductor_resolution` factor ≠ 1.0,
-   raise `ValueError`. The message names the known-issues 2026-09-09 `ANS-4`
-   entry and both remedies (`=1` to measure, `=0` for the flag-off control).
-   The check is pure env logic, identical on every rank, so every rank raises
-   and nothing hangs. The `RUNGSPEC` and `RESOLUTION` paths are untouched.
-   **Guard control (asserted, window 0, smoke):** `RUNGS="1.0 0.75"`,
-   `DEGREE2=0`, flag **unset**, `-n 2`, `timeout -k 30 120`, `-s`. Expect every
-   ladder test to **error at setup** with the message in the log, no
-   `size_global` line (nothing meshed), exit 1, well under 60 s. Anything that
-   meshes means the guard failed: stop.
-   **Window 1 (cost probe):** `RUNGS="1.0 0.6"`, flag `=1`, `DEGREE2=0`,
-   `-n 8`, `timeout -k 30 600`, `-s`, §5.1 durable capture.
-   **Window 2 (the Richardson window):** `RUNGS="0.75 0.6 0.45"`, flag `=1`,
-   `DEGREE2=0`, `-n 8`, `timeout -k 30 600`, `-s`, durable capture. **Run it
-   only if window 1's ×0.6 rung (mesh + four drives, from its `[ANS-4 step2]
-   rung` line) took ≤ 150 s.** Otherwise stop and record the cost, because
-   ×0.45 then projects past the window.
-   **Anchors (asserted, imported, unmoved), both windows:**
-   - `test_every_finer_rung_actually_refines`;
-   - `test_every_rung_passes_the_imported_port11_gates`: reciprocity ≤ 1e-3,
-     σ_max ≤ 1 + 1e-9, and every `Z` class spread ≤ 0.5 %
-     (`ADJACENT_SPREAD_BAND`) on every rung;
-   - window 1 only: `test_the_record_rung_reproduces_the_fixture` (116 118
-     against 116 085 inside the 1 % band, ratio 1.000284 in 2a′). Window 2 has
-     no ×1 rung, so that test skips by design (`:439`).
+**Every window below that uses §5.1 durable capture copies the idiom
+verbatim, trailing `; exit $rc` included, and the executor reads the
+`[capture] rc=` line rather than the footer until `OPS-45` lands** (ruling (5)).
 
-   **Negative control (asserted by reproduction):** window 2's ×0.75 rung must
-   reproduce 2a′'s flag-on `size_global` **161 645** exactly (`:3898`). The
-   mesh is built on rank 0 whatever the rank count, so the cell count is
-   `-n`-independent. Its three `Z` spreads must stay ≤ 0.5 %. *Predicted,
-   printed only:* they equal 2a′'s 0.0481 / 0.0649 / 0.0555 % to ~1e-10, since
-   the partition moved from `-n 4` to `-n 8`.
-   **Printed (rule (e)):** per rung — `size_global` (*predicted* ≈ 210 k /
-   ≈ 330 k from `PORT-14` step 1b's flag-off 209 604 and its ×0.45 estimate;
-   flag-on counts are their own), the three class spreads, `S₁₁/S₂₁/S₃₁`, the
-   `[mem]` line, mesh and drive times. Window 2 also prints the module's
-   Richardson h → 0 estimate and exponent `p` (it prints "not asymptotic"
-   rather than a number outside `RICHARDSON_P_BRACKET`).
-   **Tier / ranks / cost:** 2a′ measured ×1 + ×0.75 at 147 s on `-n 4`; flag-off
-   step 2a measured mesh 21.6 / 29.9 s and four drives 18.5 / 28.6 s. The
-   2026-09-09 weekly priced ×0.45 at ≈ 21 GiB summed and ≈ 230 s for four
-   drives at `-n 4`; 2a′'s `[mem]` read only 3.0 GiB at ×0.75. Estimate: window
-   1 ≈ 3 min, window 2 ≈ 6–8 min at `-n 8`. Heavy.
+1. **`OPS-45` — the harness footer honours a final `[capture] rc=` line**
+   (implementer; host-side shell only, no container solve, no `src/`; smoke;
+   `main`; independent).
+   **Why:** ruling (5). A durable-capture window whose command drops
+   `; exit $rc` records Status 0 over a failed pytest
+   (`20260911T140329Z_WF-6-step4h.log:4372, :4375`). The full spec is in the
+   §7 `OPS-45` row and binds; what follows is its summary.
+   **The change:** in `scripts/testing/run_and_log.sh` normal mode
+   (`:321–330`), if the command exited 0 and the **last non-blank output line**
+   matches `^\[capture\] rc=([0-9]+)[[:space:]]*$` with rc ≠ 0, then Status,
+   row Exit and the harness exit become rc, and `## Exit` gains a capture note.
+   A non-zero command exit is never overwritten, and an rc line that is not
+   the last output line is ignored.
+   **Anchor (asserted):** new `scripts/testing/test_capture_status.sh`, four
+   host-only cases. (i) `echo x; echo "[capture] rc=1"`, exit 0 ⇒ Status 1,
+   exit 1, row Exit 1, note present. (ii) Full idiom with `exit $rc`, rc 3 ⇒
+   Status 3, no note. (iii) rc line not last ⇒ Status 0. (iv) `echo
+   "[capture] rc=0"; exit 5` ⇒ Status 5. Test-results rows are asserted as +1
+   deltas.
+   **Negative control (asserted):** case (i) through the pinned pre-change
+   harness `git show 06044b4:scripts/testing/run_and_log.sh`, copied under the
+   gitignored `logs/`, reads `- Status: 0`. Pin the literal sha, never `HEAD:`.
+   **Regression (asserted):** `scripts/testing/test_durable_capture.sh`
+   (Elapsed 16 s, `20260910T213636Z_OPS-43a.log`) and
+   `scripts/testing/test_orphan_guard.sh` (6–7 s, `20260910T123339Z_OPS-43b.log`)
+   re-run green through the harness.
+   **Tier / ranks / cost:** smoke, no ranks; each call runs under
+   `timeout -k 30 120`; under 2 min for all windows.
    **Traps:**
-   - `FEM_EM_ANS4_STEP2_DEGREE2=0` in every window, or the degree-2 solve
-     builds (≥ 49 GiB).
-   - Target `fem-em-solver` only.
-   - The ladder fixture builds **every** rung before any test prints gates, so
-     an overrun loses the spreads. That is why window 1 probes cost, and why
-     durable capture (redirect to `/workspace/logs/<name>-raw.log`, append
-     `[capture] rc=`, echo back; `run_and_log.sh --capture-orphan` recovers)
-     is mandatory.
-   - Bash-tool timeout 660000 ms, foreground. If a window dies, run
-     `pgrep -c python3` in the container before anything else, never
-     `pgrep -f` on a pytest string (guard-denied).
-   - A flag-on mesh is not the `GEO-19` record mesh, so moves are measured
-     against the flag-on ×1.
-   - Complex build + `FEM_EM_REQUIRE_COMPLEX=1`, `tests/environment` first;
-     `-s`; no pipe; no `-k a or b`; sweep 0-byte cache stubs only; append
-     record rows by hand.
+   - The gate script's nested harness calls append their own test-results
+     rows; assert deltas and disclose them, as `test_durable_capture.sh` does.
+   - `pgrep -f` on a pytest string is guard-denied.
+   - `$(...)` in a Bash-tool command is denied, but inside a script file it is
+     fine.
+   - Commit messages go through `git commit -F`.
 
-   **Scope:** does not flip the mesher default, run degree 2, touch the AED
-   comparison, or rule on the Larmor verdict (the 2026-09-13 weekly's). The
-   Richardson number is public only as the relative move of each class; any
-   ours-vs-AED gap goes to `docs/private/` only.
-   **Records:** the §7 `ANS-4` step 2a″ paragraph; retire the known-issues
-   2026-09-09 `ANS-4` step 2a entry in the same commit as the guard, since the
-   guard is its fix.
+   **Scope:** no rewrite of the masked `WF-6` row, no `--capture-orphan`
+   change, no `bash_guard.py` shape check.
+   **Records:** one §5.1 sentence and the §7 row, which is ✅-eligible when
+   anchor, control and regression are all green.
+   **Negative result:** the pinned control reads non-zero ⇒ the defect is not
+   what the row says: report and stop. A regression gate red ⇒ do not land;
+   park on `attempt/*` and mark this item BLOCKED (rule (d)).
+
+2. **`PORT-14` step 2 — measure the termination-reduction identity at 64 MHz
+   on the record mesh** (implementer; tests only; complex; standard; `main`;
+   independent).
+   **Why:** step 1e registered the 10 MHz floor, and the 2026-09-06 weekly ruling
+   says step 2 "(64 MHz, the nominal width, on the record mesh) proceeds on that
+   footing" (§10 Phase-6 paragraph). Step 2 is the serial predecessor of
+   `PORT-15` gate (i) and `TH-17`.
+   **The change (`tests/validation/test_port_lumped_rlc_termination.py`,
+   additive):**
+   - Env `FEM_EM_PORT14_STEP2_64MHZ` (unset/`0` = off; the default path is
+     bit-identical) selects `STEP2_FREQUENCY_HZ = 64.0e6` for the
+     `rlc_termination_cases` fixture (`:206–252`). It is passed both to
+     `build_four_port_sweep(frequency_hz=…)` and to
+     `series_rlc_impedance(...)`.
+   - `FREQUENCY_HZ` (imported from `test_port_gap_voltage_impedance`) is not
+     mutated. Print lines say which frequency ran.
+   - Under the flag, the 10 MHz record assert in
+     `test_the_terminated_solve_matches_the_circuit_reduction` and
+     `test_a_mis_keyed_floor_record_cannot_reproduce` print their readings,
+     then **skip with the reason** "10 MHz record; 64 MHz has none yet".
+
+   **Anchors (asserted, imported, unmoved) at 64 MHz:**
+   - `test_the_fifty_ohm_baseline_reproduces_the_port9_gates`: reciprocity
+     ≤ 1e-3 and σ_max ≤ 1 + tolerance. `PORT-11` passed both at 64 MHz on
+     this mesh.
+   - `test_the_zero_gamma_control_misses` at `CONTROL_MISS_FACTOR` × the band,
+     with its existing coupling-floor skip kept.
+
+   **Negative control (asserted):** that Γ = 0 control is the one; at 10 MHz
+   it measured 321× / 325× / 211× (`20260905T020428Z_PORT-14.log:1881–1884`).
+   *Predicted, printed:* the 64 MHz `Δ` is also far above the floor. If the
+   test skips on coupling at 64 MHz, the identity is not resolved: report it.
+   **Printed (rule (e)):**
+   - per element: `Z_p` (C = 100 pF ⇒ −j24.87 Ω; L = 1 µH ⇒ +j402.1 Ω; R =
+     200 Ω), Γ, and the residual against `REDUCTION_BAND` and against the
+     10 MHz `REDUCTION_FLOOR_F_SMALL`, with the ratio;
+   - the 64 MHz 50 Ω `S₁₁`/`S₂₁` beside the 10 MHz baseline, as proof the sweep
+     was rebuilt.
+   *Predicted, not asserted:* residuals of the same order as the 10 MHz floor
+   (1e-3 to 1e-2).
+   **Windows:**
+   - (1) flag `=1`, `-n 2`, `timeout -k 30 300`, `-s`;
+   - (2) flag unset, the same module: the 1e records still reproduce (113 s in
+     step 1e), which shows the default path is untouched.
+   **Tier / ranks / cost:** 13 solves on the 116 085-cell mesh took 105 s at
+   10 MHz and `-n 2` (`20260905T020428Z_PORT-14.log:1912`), and the frequency
+   does not change the matrix size. ≈ 2 min per window, ≈ 4–5 min total.
+   Standard.
+   **Traps:**
+   - Check that `build_four_port_sweep`'s `reuse` path cannot hand back a
+     10 MHz sweep when `frequency_hz` differs. The printed 64 MHz `S` must
+     differ from 10 MHz.
+   - No step 1b/1c/1d env var.
+   - `c4_congruent_sheets` off, since this is the `GEO-19` record mesh.
+   - The sweep now rides `PORT-19`'s reuse-on default where it goes through
+     the sweep helper. Say in the journal whether it does.
+   - Complex + `FEM_EM_REQUIRE_COMPLEX=1`, `tests/environment` first; `-s`;
+     foreground; no pipe; `timeout -k 30`.
+
+   **Scope:** measures only. No 64 MHz record is registered (that is the next
+   review's ruling on these numbers), no band moves, no `PORT-15` gate (i),
+   and the row stays 🟡.
    **Negative result:**
-   - Any finer rung breaks a `Z` class spread with the flag on ⇒ the cut was
-     not the whole carrier beyond ×0.75. Record the rung and spreads in §7,
-     keep the known-issues entry open (re-headed), and stop. No band moves.
-   - Richardson "not asymptotic" ⇒ a measurement, not a failure. Record it.
-   - Window 0 meshes ⇒ the guard is broken: fix in-slot or park, and do not
-     run windows 1–2 on an unguarded module.
+   - Baseline gates red at 64 MHz ⇒ the fixture is not a valid 4×4 at that
+     frequency: record, known-issues entry, stop.
+   - Residual > 1e-2 ⇒ record the three residuals in §7 and stop.
+   - Neither is a band change.
 
-2. ✅ **DONE 2026-09-11 06:00 slot — reused vs per-drive `S`/`Z`/`E` identical
-   (0.0 relative), factorisations 1 vs 4, stale factor 1.073e-2, regression
-   unmoved** (§7 `PORT-19` step 2 paragraph;
-   `20260911T110544Z_PORT-19-step2.log`,
-   `20260911T110733Z_PORT-19-step2-regression.log`,
-   `20260911T110842Z_PORT-19-step2-callers.log`).
-   **`PORT-19` step 2 — factor once per matched-termination sweep, solve four
-   right-hand sides** (implementer; **`src/`**, standing rule (c); complex;
-   standard; `main`; independent).
-   **Why:** step 1 measured the premise: `‖A_k − A_1‖_∞ = 0.0` for every drive
-   (`20260911T020253Z_PORT-19-step1.log:1832–1835`). The 32-port human-scale
-   sweep is ≈ 5.4 h per-drive and ≈ 20 min with reuse (§7 row).
-   **The change (default-on keyword, the per-drive path stays reachable):**
-   - `run_n_port_sparameter_sweep(..., reuse_factorization=True)`
-     (`ports/sparameters.py:260`), lumped-sheet route only. It is ignored on
-     the gap-voltage and heuristic routes, and passing `True` explicitly there
-     raises.
-   - On that route, the first drive runs `run_lumped_sheet_port_case` as today
-     and keeps its `TimeHarmonicSolver`, which holds `_linear_problem` and so
-     the MUMPS factor (`core/time_harmonic.py:580–596`). Drives 2…N pass it
-     back through an additive `solver=None` keyword on
-     `run_lumped_sheet_port_case` (`ports/lumped.py:414`).
-   - A new `TimeHarmonicSolver` method (name the executor's) rebuilds **only**
-     `L` exactly as `solve` does (`:496–545`, the zero volume load plus the
-     driven sheet's `lumped_port_linear_term`). It assembles `b` the way
-     dolfinx 0.11's `LinearProblem.solve` does — `assemble_vector`,
-     `apply_lifting(b, [a], [bcs])`, reverse ghost update, `set_bc(b, bcs)`,
-     since `solve` builds Dirichlet `bcs` (`:486`) — and calls the held KSP's
-     `solve(b, x)`, then `scatter_forward`.
-   - The post-solve tail (DG interpolation onward, `:627` on) moves into a
-     private helper both paths call, so `TimeHarmonicFields` are built one
-     way. `keep_fields` (`POST-6`) must work on both paths.
+3. **`WF-6` step 4i — is the common-mode ×0.0095 residual the terminal-form
+   Cauchy–Schwarz deficit?** (implementer; test-side keyword only, no `src/`;
+   complex; heavy; `main`; independent).
+   **Why:** ruling (4). 4h left P1/P2 equal and both at ≈ 1.97e-2
+   (`20260911T140329Z_WF-6-step4h.log:4034–4035`). `PORT-16` showed on the
+   *loaded* ×1 fixture that the ~1 % accounting gap is exactly the deficit of
+   `½|I|²Re Z_p` below the sheet field's dissipation. There,
+   `ceiling/terminal = 1.010593` on all sixteen sheet readings and
+   `supplied_terminal = P_vol + C` to the printed digit
+   (`test_birdcage_power_identity.py` docstring (iv),
+   `20260907T050816Z_PORT-16.log:1884, 1895–1898, 1912`). A finer rim can
+   make the sheet field less uniform and so grow that deficit.
+   **The change (`tests/validation/test_birdcage_b1_plus_closed_form.py`,
+   additive, default bit-identical):**
+   - Env `FEM_EM_WF6_EXACT_SHARES` (unset/`0` = off). When on, the `rung`
+     fixture (`:350–453`) computes `_exact_shares(sweep, solves[pid])` for P1
+     and P2, imported with `DISCRETE_IDENTITY_RTOL` from
+     `tests.validation.test_birdcage_power_identity`. It stores them in
+     `reading`, and `_print_rung` prints per port:
+     - `P_src,exact`, `P_vol`, `P_sheet,exact`;
+     - identity rel dev `|P_src − P_vol − P_sheet|/P_src`;
+     - ceiling total `C`, terminal sheets, and `C/terminal`;
+     - the CS-corrected residual `|supplied_terminal − (P_vol + C)|/supplied_terminal`
+       beside the existing terminal residual.
+   - New test `test_the_exact_discrete_identity_closes_on_every_rung` skips
+     unless the env is on.
 
    **Anchors (asserted):**
-   - (A) New `tests/validation/test_port19_factor_reuse.py` on the gated 4-leg
-     fixture at 10 MHz, via `build_four_port_sweep(build_only=True)`. Reused
-     and per-drive sweeps in one process agree entry by entry on `S` and `Z`
-     to relative ≤ **1e-12**: same arithmetic, and the `-n 2` MUMPS drift is
-     1 ULP (known-issues 2026-09-10).
-   - (B) A factorisation counter (wrap `LinearProblem.__init__` or count KSP
-     `setUp`) reads **exactly 1** on the reused sweep and **4** per-drive.
-   - (C) Regression: `tests/validation/test_port_birdcage_four_port.py`,
-     default now reuse-on, re-run green. Its leg (d0) column against
-     `LEG_D0_Z_COLUMN` at `LEG_D0_REPRODUCTION_BAND` 1e-9 (`:165`), plus
-     reciprocity, passivity and C4, are the imported record, all unmoved.
+   - (a) identity rel dev ≤ `DISCRETE_IDENTITY_RTOL` (1e-6, imported) on P1
+     and P2 of every rung. This is a theorem of the weak form, not a band.
+   - (b) reproduction: the terminal residuals reproduce 4h's flag-on readings
+     to rtol 1e-5 — ×1 9.795942e-03 / 9.796517e-03 (`:2043–2044`), ×0.0095
+     1.968410e-02 / 1.968464e-02 (`:4034–4035`) — so this is 4h's fixture.
+   - The imported 4h anchors stay as they are, and
+     `test_power_accounting_closes_on_every_rung[x0.0095]` **stays red by
+     design** (known-issues 2026-09-11). One failed test is expected, not a
+     window failure.
 
-   **Negative control (asserted):** the **stale factor** (ruling (3)). Hold a
-   factor built with P2 at 51 Ω (a `dataclasses.replace` copy, as step 1 did)
-   and solve the 50 Ω drives' right-hand sides with it. The result must differ
-   from the per-drive 50 Ω `S` by **> 1e-12** relative in max entry. Printed
-   beside it, *predicted* ≥ 1e-10 (≥ 100× the band): step 1's control (ii)
-   moved the port entries of `A` by 1.96e-2 relative
-   (`20260911T020253Z_PORT-19-step1.log:1841`). No prior `S`-level
-   measurement exists, so the factor is predicted under rule (e).
-   **Printed:** wall per drive on both paths, the factor count, and INFOG
-   memory if the executor reads it cheaply.
-   **Other callers:** grep for `run_n_port_sparameter_sweep(` with
-   `lumped_sheet_ports`. Each 10 MHz caller module whose recorded window is
-   ≤ 120 s at `-n 2` is re-run green in-slot. Any larger one is listed in the
-   journal as on the new default and unrun (§5.2), not silently assumed.
-   **Tier / ranks / cost:** gate `-n 2`, `timeout -k 30 300`: one 116 085-cell
-   mesh (25–37 s) plus 4 + 4 + 4 solves. Leg (d)'s 4-solve window took 66 s
-   including its mesh (`20260823T093319Z_PORT-9-step3d.log`), so ≈ 2–3 min.
-   Regression 81 s (`20260911T020408Z_PORT-19-step1-regression.log`),
-   `timeout -k 30 300`.
+   **Negative control:** (b) is the asserted one, since a different mesh or
+   flag cannot reproduce 1.968410e-02 to 1e-5. *Predicted, printed beside the
+   measured value, never asserted (rule (e): no prior measurement on the
+   unloaded fixture):*
+   - `C/terminal` ≈ 1.01 at ×1;
+   - the CS-corrected residual ≪ 9.8e-3 at ×1;
+   - at ×0.0095, CS-corrected ≪ 1.97e-2 **if** the deficit is the carrier.
+
+   **Windows:**
+   - (1) flags `FEM_EM_WF6_C4_CONGRUENT=1 FEM_EM_WF6_EXACT_SHARES=1`, keys
+     `x1 x0.0095`, `-n 4`, `timeout -k 30 590`, `-s`, durable capture **with
+     `exit $rc`**;
+   - (2) if ≥ 15 min of slot remain: the same flags, keys `x0.012` only,
+     `timeout -k 30 400`, for a third `h` point.
+
+   **Tier / ranks / cost:** 4h's two rungs took 199 s at `-n 4`, with `[mem]`
+   at 2.63 / 4.69 GiB summed (`:2057, :4051`). Exact shares add a few surface
+   and volume assemblies per port, seconds. Window 1 ≈ 3.5 min; window 2
+   ≈ 2.5 min (4f: three flag-off rungs in 453 s). Heavy.
    **Traps:**
-   - dolfinx 0.11 `LinearProblem` requires `petsc_options_prefix`. Do not
-     build a second one per drive: that is the per-drive path.
-   - A `b` without `apply_lifting`/`set_bc` is silently wrong on the PEC rows.
-   - The gauge penalty belongs to `a` only.
-   - Closures bind sheets by default argument (`lumped.py:485`).
-   - `assemble_scalar` is rank-local; compare `S` from the comm-reduced sweep
-     result.
-   - Complex + `FEM_EM_REQUIRE_COMPLEX=1`, `tests/environment` first; `-s`;
-     foreground; no pipe; `timeout -k 30`.
+   - `_exact_shares` needs `solved["driven"]`, `["omega"]` and `["fields"]`.
+     `_solve_driven` supplies them, which is how `PORT-16` calls it.
+   - `_loss_power_w` on a vacuum phantom returns phantom 0, which is expected.
+   - Import names only from the power-identity module, never its fixtures.
+   - Every term is MPI-reduced inside the helpers; compare on reduced values.
+   - No ordering comparison on complex UFL operands.
+   - Rung fixtures are module-scoped and parametrised, `x1` first.
+   - `pgrep -c python3` after a death.
+   - Complex + `FEM_EM_REQUIRE_COMPLEX=1`, `tests/environment` first; no pipe;
+     sweep 0-byte cache stubs only.
 
-   **Scope:** step 2 only. No 32-port `PORT-13` re-run and no speedup claim
-   beyond the printed walls. `PORT-19` stays ⬜ (done-when needs the 32×32).
-   **Negative result:** (A) misses 1e-12 ⇒ the reuse path is not the same
-   arithmetic. Report the worst entry, do not land the default-on keyword,
-   park the diff on `attempt/*`, and mark this item BLOCKED (rule (d)). The
-   stale-factor control reading ≤ 1e-12 ⇒ the probe cannot see a wrong factor:
-   stop without landing.
+   **Scope:** no band moves, no record is registered, ×0.0095 does not return
+   to `LADDER`, and no `PORT-16` re-disposition. `WF-6` stays 🟡.
+   **Negative result:**
+   - Identity (a) misses 1e-6 ⇒ an assembly statement on the flag-on mesh:
+     record it and stop.
+   - CS-corrected ≈ terminal residual at ×0.0095 ⇒ the common-mode 2e-2 is
+     not the terminal form. Add a row with both numbers to the known-issues
+     entry; the next candidate is the volume (conductor) term.
+   - CS-corrected ≪ 1e-2 on both rungs ⇒ the residual is the deficit. Report
+     it; the review rules on whether the fixture's accounting should use the
+     exact form.
 
-3. ✅ **DONE 2026-09-11 07:30 slot — all three records reproduce (|ratio − 1|
-   2.4e-7 / 1.1e-7 / 3.4e-8 against 1e-3), cross-element control 0.526606 /
-   0.545650, baseline and Γ = 0 control unmoved, deliberate red retired**
-   (§7 `PORT-14` step 1e paragraph; `20260911T123334Z_PORT-14-step1e.log`,
-   `…123311Z_PORT-14-step1e-smoke.log`; known-issues 2026-09-05 `PORT-14`
-   entry retired).
-   **`PORT-14` step 1e — register F-small's measured single-mode floor as a
-   (1\*) record and retire the deliberate red** (implementer; tests only;
-   complex; standard; `main`; independent).
-   **Why:** the 2026-09-06 weekly ruling (§10, the Phase-6 paragraph: "The
-   daily review scopes step 1e as that re-registration (tests only)"),
-   unqueued for five days. It blocks `PORT-14` step 2, which blocks `TH-17`.
-   `REDUCTION_BAND` = 1e-3 is **not** re-registered. The measured floor becomes
-   a record and the band stays printed.
-   **The change (`tests/validation/test_port_lumped_rlc_termination.py`):**
-   - Add `REDUCTION_FLOOR_F_SMALL = {"C = 100 pF": 1.595580e-03, "L = 1 uH":
-     3.370512e-03, "R = 200 Ohm": 7.249519e-04}`, citing
-     `20260905T020428Z_PORT-14.log:1858, 1865, 1872`, with a docstring naming
-     the ruling, reading (2) (edge fringing, step 1d) and "named systematic of
-     the lumped sheet".
-   - Add `REDUCTION_FLOOR_RTOL = 1e-3`, and `RECORD_RANK_WIDTH = 2` on the
-     `OPS-41` precedent (the records are `-n 2` records).
-   - `test_the_terminated_solve_matches_the_circuit_reduction` (`:240`) keeps
-     printing every residual. It prints each against `REDUCTION_BAND` as
-     "systematic, not gated", and **asserts** `|residual / record − 1| ≤ 1e-3`
-     per element. `STEP1_RESIDUAL_RECORD` (`:367`) should import the new dict
-     rather than restate it.
-
-   **Anchor (asserted):** the three records at rtol 1e-3 (a reproduction
-   record, rule (f) class, ruled by the weekly rather than invented here). Also
-   the existing 50 Ω baseline gates (`:210`) and the Γ = 0 control (`:282`,
-   5× the band; measured 321× / 325× in step 1d), both unmoved.
-   **Negative control (asserted, backed by the same log):** the rtol
-   discriminates. Each element's residual must **fail** reproduction against
-   another element's record: `|r_C / rec_L − 1|` = 0.527,
-   `|r_R / rec_C − 1|` = 0.546 from `:1858, :1865, :1872`, ≫ 1e-3. That shows a
-   swapped or mis-keyed record cannot pass.
-   **Tier / ranks / cost:** the gate window took 105 s at `-n 2`
-   (`20260905T020428Z_PORT-14.log:1912`, 13 solves). Use `timeout -k 30 300`,
-   plus a collect-only smoke first. Standard.
-   **Traps:**
-   - The step 1b/1c/1d tests skip without their env vars. Run the module with
-     none set, so only the step 1 gate runs.
-   - Do not touch `REDUCTION_BAND`'s value or its comment.
-   - Records are `-n 2`, and another width is not a reproduction.
-   - `c4_congruent_sheets` stays off: this is the `GEO-19` record mesh.
-   - Complex + `FEM_EM_REQUIRE_COMPLEX=1`, `tests/environment` first; `-s`;
-     foreground; no pipe; `timeout -k 30`.
-
-   **Records:**
-   - The §7 `PORT-14` row gets a step 1e paragraph and stays 🟡.
-   - The known-issues 2026-09-05 `PORT-14` step 1 entry **retires in this
-     commit**, re-headed as "systematic registered as a record".
-   - If §9's residual-red tally counts this gate, it moves in the same commit.
-
-   **Scope:** step 1e only. No 64 MHz step 2, no `PORT-15` gate (i), no §2
-   change beyond naming the systematic.
-   **Negative result:** any element misses its record at 1e-3 ⇒ the floor is
-   not a record on today's image. Print measured against record, do not
-   re-register, keep the known-issues entry open with the reading, and stop.
-
-4. ✅ **DONE 2026-09-11 09:00 slot — NEGATIVE RESULT: flag-on ×0.0095 residual
-   P1 1.968410e-02 / P2 1.968464e-02 > 1e-2 (on/off 1.0619 / 1.3864); the cut
-   removes the P1/P2 split, not the residual; flag-on ×1 green at 116 118
-   cells; rung stays dropped** (§7 `WF-6` step 4h paragraph;
-   `20260911T140329Z_WF-6-step4h.log`,
-   `20260911T140714Z_WF-6-step4h-flagoff-x1.log`,
-   `20260911T140308Z_WF-6-step4h-collect.log`; known-issues 🟡 2026-09-11
-   `WF-6` step 4h).
-   **`WF-6` step 4h — does the congruent sheet cut return the dropped ×0.0095
-   rung to the `|B₁⁺|` h-ladder?** (implementer; test-side keywords only, no
-   `src/`; complex; heavy; `main`; independent).
-   **Why:** the ×0.0095 rung was dropped from
-   `tests/validation/test_birdcage_b1_plus_closed_form.py`'s `LADDER` (`:154`).
-   Its power residual read **1.853642e-02** against the unmoved
-   `POWER_BALANCE_BAND` 1e-2, split between ports (P1 1.853642e-02 / P2
-   1.419812e-02, `20260909T123716Z_WF-6.log:5777–5778, 5789–5795`). The
-   2026-09-09 ruling tied it to the same open question as `ANS-4` step 2a.
-   2a′ has now shown the sheet cut carried that symptom, and this item tests
-   whether it carries this one too.
+4. **`PORT-19` step 3 — the 32-port `PORT-13` sweep under factor reuse, its
+   32×32 reproduced** (implementer; tests only, no `src/`; complex; heavy;
+   `main`; independent).
+   **Why:** the `PORT-19` done-when: both steps ✅, "the 32-port `PORT-13`
+   sweep re-run and its recorded 32×32 reproduced, the speedup recorded as a
+   measurement". The ring module does **not** go through
+   `run_n_port_sparameter_sweep`. `_solve_one_drive`
+   (`tests/validation/test_port_birdcage_ring_column.py:223`) calls
+   `ctx["solver"].solve(...)` per drive, so reuse must be threaded by hand.
    **The change (additive, defaults bit-identical):**
-   - `c4_congruent_sheets=False` on `build_four_port_sweep`
-     (`tests/validation/test_port_birdcage_four_port.py:219`), forwarded
-     through its `_build(True, …)` call (`:296`) to
-     `MeshGenerator.birdcage_port_domain`. The executor first reads which
-     `_build` that is and threads the keyword the way `ANS-4` step 2a′ did in
-     `tests/mesh/test_birdcage_leg_offset.py:107, 157`. It is ignored under
-     `reuse`.
-   - In the closed-form module, env `FEM_EM_WF6_C4_CONGRUENT` (unset/`0` =
-     off) passed to `build_four_port_sweep` (`:287`), plus env
-     `FEM_EM_WF6_LADDER_KEYS` selecting rungs. `{"key": "x0.0095",
-     "resolution": 0.0095, "cells": 197393, "record": False}` joins `LADDER`
-     **only when the flag is on**, so the flag-off tuple is unchanged.
-   - With the flag on, the two ×1 **record** tests
-     (`test_the_x1_rung_reproduces_its_recorded_cell_count` `:492`,
-     `…recorded_c4_spread` `:516`) **skip with the reason** "flag-on mesh is
-     not the record mesh (`GEO-32`)" and print their readings. They are
-     flag-off records, and the flag-off path still asserts them.
+   - `_solve_one_drive(ctx, driven_id, *, reuse_factorization=False)`. When
+     `True` and `ctx["solver"]` already holds a factor (`_linear_problem is not
+     None`), call
+     `ctx["solver"].solve_with_held_factorization(extra_linear_terms=[…])`
+     with the same driven-sheet linear term. Otherwise call `solve` exactly as
+     today. Count the calls of each kind in the returned dict.
+   - In `tests/validation/test_port_birdcage_ring_matrix.py`, env
+     `FEM_EM_RING_SWEEP_REUSE=1`:
+     - passes the keyword in windows A/B;
+     - writes the caches to `output/port13_ring_columns_reuse/`, so the
+       **2026-09-04 per-drive caches `output/port13_ring_columns/{bottom,top}.npz`
+       stay untouched as the comparand** (present on disk, checked by this
+       review);
+     - makes the `ring_matrix` fixture read the directory the env names.
 
-   **Window (one):** flag `=1`, keys `x1 x0.0095`, `-n 4`,
-   `timeout -k 30 600`, `-s`, §5.1 durable capture.
-   **Anchors (asserted, imported, unmoved), on both rungs:**
-   - `test_power_accounting_closes_on_every_rung` at `POWER_BALANCE_BAND` 1e-2;
-   - `test_the_map_is_c4_covariant_on_every_rung` at `C4_COVARIANCE_BAND` 5e-2;
-   - `test_the_cw_drive_spread_dwarfs_the_ccw_spread_on_every_rung` at 5×;
-   - `test_every_lattice_point_was_evaluated_on_every_rung`.
+   **Anchors (asserted):**
+   - (A) New test, run only with the env on and all four caches present: every
+     entry of the reuse 32×32 matches the per-drive cached 32×32 to relative
+     ≤ **1e-6**, with the worst entry printed. Same `-n 8`, same image; 1e-6
+     is `STEP2_COLUMN_POWER_RTOL`'s precedent, two decades above `OPS-34`'s
+     ~1e-9 run-to-run scatter.
+   - (B) Window C's existing gates on the reuse caches, all imported and
+     unmoved: all 32 columns balance power, reciprocity ≤ 1e-3, passivity,
+     C16 × mirror, and step 2's four column power sums at 1e-6.
+   - (C) Per half-window, exactly **1** `solve` and **15**
+     `solve_with_held_factorization` calls.
 
-   **Negative control (by record, not re-run — asserted as a separation only
-   if the flag-on reading is green):** the flag-off ×0.0095 residual
-   1.853642e-02 is the logged red (`:5789–5795`). Print the flag-on residual
-   beside it with the ratio; the ratio is *predicted*, not asserted (rule
-   (e)). No flag-off ×0.0095 window runs, since its record is 4f's.
-   **Printed:** per rung — cells (flag-on ×1 *predicted* 116 118; ×0.0095
-   flag-on is its own), P1/P2 power residuals, the four-copy spread, cw/ccw,
-   `|B₁⁺|` at the eleven points, `[mem]` if the executor wires `report_peak_rss`
-   on all ranks.
-   **Tier / ranks / cost:** 4f ran ×1 + ×0.012 + ×0.0095 in 453 s at `-n 4`
-   (`20260909T123716Z_WF-6.log:12, :6199`), and 4g's two rungs in 204 s
-   (test-results 2026-09-09 20:07:55). Dropping ×0.012 puts the window at
-   ≈ 330–380 s. Heavy.
+   **Negative control (asserted):** window C's existing matrix control, which
+   scales one column by 1 % and must move reciprocity ≥ `MATRIX_CONTROL_MARGIN`
+   (2×) the band, runs on the reuse matrix. The stale-factor probe is not
+   re-run; step 2 measured it at 1.073e-2 on the 4-leg fixture.
+   **Printed:** per-drive solve times and the window's PRICE line (solve sum,
+   wall, summed `ru_maxrss`) beside the per-drive price. This is the speedup as
+   a measurement.
+   **Windows:**
+   - A: `FEM_EM_RING_SWEEP_HALF=bottom FEM_EM_RING_SWEEP_REUSE=1`, `-n 8`,
+     `timeout -k 30 400`;
+   - B: `=top`, the same;
+   - C: env unset for the half, `FEM_EM_RING_SWEEP_REUSE=1`, `-n 2`,
+     `timeout -k 30 120`.
+   - All with `-s`, durable capture with `exit $rc`.
+
+   **Tier / ranks / cost:** per-drive windows took 244 / 247 s at `-n 8`: mesh
+   69 s, 16 solves 156–159 s, min 8.9 s per drive, 6.6–6.8 GiB summed
+   (`20260904T170452Z_PORT-13.log`, `20260904T170934Z_PORT-13.log`, PRICE
+   lines). *Predicted:* one ≈ 10 s factor + 15 back-substitutions at the
+   4-leg's ≈ 0.07× ⇒ ≈ 20 s of solve and ≈ 100–110 s per window. Window C
+   took 25 s. ≈ 5 min total. Heavy.
    **Traps:**
-   - The rung fixture is parametrised and module-scoped, so each rung reports
-     before the next builds. Order `x1` first.
-   - Default-off keyword, so `test_port_birdcage_four_port.py` needs no re-run
-     unless the executor touches its body beyond the keyword. If it does, re-run
-     it (81 s).
-   - Durable capture; `pgrep -c python3` after a death.
-   - Complex + `FEM_EM_REQUIRE_COMPLEX=1`, `tests/environment` first; `-s`;
-     no pipe; `timeout -k 30`; sweep 0-byte cache stubs only.
+   - Each half builds its own `ctx`, so no solver crosses windows.
+   - The bilinear side is drive-independent by construction (every sheet is a
+     `z0` termination, L1), the premise step 1 measured on the 4-leg fixture.
+   - Do not overwrite or delete the per-drive caches.
+   - `output/` is gitignored and root-owned (`nobody`), so write the new
+     directory from the container.
+   - The half is selected by env only, never `-k`.
+   - `pgrep -c python3` after a death.
+   - Complex + `FEM_EM_REQUIRE_COMPLEX=1`, `tests/environment` first; no pipe.
 
-   **Scope:** does not re-register any `WF-6` record on the flag-on mesh, does
-   not move the ×1 spread record, and does not change the default `LADDER`.
-   Returning ×0.0095 to the default ladder is a review ruling on this item's
-   numbers.
-   **Negative result:** flag-on ×0.0095 still > 1e-2 ⇒ the cut is not the
-   carrier of the power-residual split. Record the P1/P2 residuals in §7 `WF-6`
-   and the known-issues 2026-09-09 `ANS-4` entry's `WF-6` row (or its
-   successor if item 1 retired that entry: then open a `WF-6`-only entry).
-   The rung stays dropped. Stop.
+   **Scope:** if (A), (B) and (C) are green and the walls are printed, the
+   `PORT-19` done-when is met. The slot may mark the row ✅ with the logs, and
+   the next review audits it. Nothing about 64 MHz, the human-scale mesh, or a
+   `run_n_port_sparameter_sweep` change.
+   **Negative result:**
+   - (A) misses 1e-6 ⇒ report the worst entry and its column, do not mark ✅,
+     keep the keyword default off, and stop.
+   - A window past 400 s ⇒ record the wall and stop.
+   - Parked code ⇒ BLOCKED per rule (d).
+
+5. **`ANS-4` step 2a‴ — a fourth flag-on degree-1 rung (×0.35), to test
+   whether step 2a″'s Richardson fit is asymptotic** (implementer; env only,
+   no code change expected; complex; heavy; `main`; independent).
+   **Why:** ruling (1). 2a″'s fit has three points, S₁₁'s move is non-monotone,
+   and p ≈ 2.1–2.9 is high for degree 1. The 04:30 slot priced a ×0.35 point
+   as cheap. The weekly's step-2d reading wants to know whether the fit holds.
+   **Window (one):** `FEM_EM_ANS4_STEP2_C4_CONGRUENT=1`,
+   `FEM_EM_ANS4_STEP2_DEGREE2=0`, `FEM_EM_ANS4_STEP2_RUNGS="0.6 0.45 0.35"`,
+   `-n 8`, `timeout -k 30 590`, `-s`, durable capture with `exit $rc`.
+   **Anchors (asserted, imported, unmoved):**
+   - `test_every_finer_rung_actually_refines`;
+   - `test_every_rung_passes_the_imported_port11_gates`: reciprocity ≤ 1e-3,
+     σ_max ≤ 1 + 1e-9, and every `Z` class spread ≤ 0.5 % on every rung,
+     including ×0.35.
+
+   **Negative control (asserted by reproduction):** ×0.6 and ×0.45 must
+   reproduce 2a″'s flag-on `size_global` **209 544** and **293 534** exactly
+   (`20260911T093524Z_ANS-4-step2a-dprime-w2.log:3979, :5945`), since the mesh
+   is built on rank 0. *Predicted, printed:* their spreads equal 2a″'s
+   (`:5966–5968`) to ~1e-10 at the same `-n 8`.
+   **Printed (rule (e)):**
+   - ×0.35 `size_global` (*predicted* ≈ 380–420 k), spreads, `[mem]`, mesh and
+     drive times;
+   - the module's Richardson fit on (×0.6, ×0.45, ×0.35) beside 2a″'s p =
+     2.1282 / 2.6525 / 2.8791 on (×0.75, ×0.6, ×0.45) (`:5993–5996`);
+   - each class's relative move of `S_inf` between the two fits.
+
+   **Tier / ranks / cost:** 2a″ measured ×0.6 at 38.9 + 24.7 s and ×0.45 at
+   54.5 + 40.1 s (mesh + four drives, `-n 8`), with `[mem]` 5.11 / 6.07 GiB
+   summed (`:3978, :5944`). ×0.35 is *predicted* at ≈ 80 + 60 s and ≈ 7–8 GiB.
+   Window ≈ 6–7 min. Heavy.
+   **Traps:**
+   - `DEGREE2=0` or the degree-2 solve builds (≥ 49 GiB).
+   - The guard requires the flag.
+   - The ladder fixture builds every rung before any gate prints, so an
+     overrun loses the spreads. If ×0.35 meshing alone passes 150 s, the
+     window will not fit: stop and record the cost.
+   - `RICHARDSON_P_BRACKET` (0.2, 6.0) prints "not asymptotic" rather than an
+     out-of-bracket number.
+   - Target `fem-em-solver` only; `pgrep -c python3` after a death.
+   - Complex + `FEM_EM_REQUIRE_COMPLEX=1`, `tests/environment` first; no pipe;
+     sweep 0-byte cache stubs only.
+
+   **Scope:** no Larmor verdict (the weekly's), no degree 2, no mesher default
+   flip. The fit is public only as relative moves between the two fits; any
+   ours-vs-AED gap goes to `docs/private/` only.
+   **Negative result:**
+   - ×0.35 breaks a spread ⇒ the cut is not the whole carrier at that
+     refinement: record the rung and spreads in §7, open a known-issues entry,
+     stop.
+   - The two fits disagree in p by more than the bracket allows, or "not
+     asymptotic" ⇒ a measurement, recorded as such.
+   - No band moves.
 
 *(The per-review journal — slot recap, completion audits, plan-work notes,
 §10 assessment — lives in the review commits and
