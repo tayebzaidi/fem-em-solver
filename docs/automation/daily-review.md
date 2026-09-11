@@ -223,8 +223,10 @@ version-bump record sweeps) says so in its first line:
    drops the idiom's trailing **`; exit $rc`** exits with `cat`'s status, so
    the harness footer and test-results row read **0 over a failed pytest** —
    `WF-6` step 4h's red window (`[capture] rc=1`, `Status: 0`, 2026-09-11
-   09:00); copy §5.1's idiom verbatim and read the `[capture] rc=` line, not
-   the footer, until `OPS-45` lands. Add to this list as runs discover
+   09:00); copy §5.1's idiom verbatim. Since `OPS-45` (2026-09-11 12:00) the
+   footer honours a **final** `[capture] rc=` line, but an rc line followed
+   by any further output is still ignored by design, so the trailing
+   `; exit $rc` stays mandatory. Add to this list as runs discover
    more.
 5. **The scope boundary** — what the item does *not* close, stated so the
    implementer holds the chunk at 🟡 rather than over-claiming. `POST-3` step 1

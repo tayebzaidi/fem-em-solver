@@ -29270,3 +29270,86 @@ item depends on another's result.** Items 2–4 all build through
 `build_four_port_sweep`, and each additive keyword is default-off or
 bit-identical at its default, so landing order does not matter. A fifth slot
 that finds nothing takeable **stops and journals**.
+
+
+## §9 On-deck interval narrative (2026-09-11 10:30 review) — archived 2026-09-11 (18:00 daily review)
+
+Last reviewed **2026-09-11, 10:30 review**. *(The 2026-09-11 03:00 interval
+narrative is archived verbatim in `docs/planning/plan-archive.md`.)*
+
+**Interval (03:00 → 10:30): four slots fired and all four did chunk work; the
+queue the 03:00 review wrote is fully consumed.**
+
+| Slot | Chunk | Outcome |
+|---|---|---|
+| 04:30 | `ANS-4` step 2a″ (31 + 141 + 250 s, `-n 2` / `-n 8`) | landed `f62f2e7`: guard control errors at setup with nothing meshed; flag-on ladder green to ×0.45 (`Z` spreads ≤ 0.1072 % vs 0.5 %); Richardson p 2.13 / 2.65 / 2.88 printed |
+| 06:00 | `PORT-19` step 2 (92 + 60 + 73 s, `-n 2`) | landed `f2d83c2`: reused vs per-drive `S`/`Z`/`E` 0.0 relative; factorisations 1 vs 4; stale-factor control 1.073e-2 |
+| 07:30 | `PORT-14` step 1e (4 + 113 s, `-n 2`) | landed `c4b0fdf`: F-small floor registered as a (1\*) record, reproduced to ≤ 2.4e-7; deliberate red retired |
+| 09:00 | `WF-6` step 4h (6 + 199 + 52 s, `-n 4`) | landed `a20a8d6`: **negative result** — congruent cut removes the ×0.0095 P1/P2 split, not the common-mode ≈ 2e-2 residual |
+
+No operator activity. No XL window was due. This review ran on
+`claude-opus-5` under the override that expires at the end of today
+(`logs/automation/20260911T153001Z_daily-review.log:1–2`); the 18:00 review is
+still on it and the 2026-09-12 03:00 review returns to `claude-fable-5-1`.
+
+**Tree and branches.** Clean at review start; `fem-em-solver` Up 20 h; no
+`recovered/*`. The four `attempt/*` branches (`TH-15-step2proper`,
+`WF-6-step4b/4c/4e`) are kept, unchanged, on the 2026-09-09 18:00 ruling.
+
+**Audit (§4).** No chunk turned ✅ this interval, so no `auditor` ran:
+`ANS-4` step 2a″ is a reading inside the already-✅ `ANS-4` row, `PORT-19`
+stays ⬜ (done-when needs the 32×32), `PORT-14` and `WF-6` stay 🟡. No example
+chunk opens.
+
+**Rulings banked this review.**
+(1) **`ANS-4` step 2a″ accepted.** Guard control: four setup errors, nothing
+   meshed, Status 1 (`20260911T093156Z_ANS-4-step2a-dprime-w0.log:172`). Flag-on
+   ×0.75 / ×0.6 / ×0.45: 161 645 / 209 544 / 293 534 cells, rung costs mesh
+   29.3 / 38.9 / 54.5 s + four drives 22.9 / 24.7 / 40.1 s at `-n 8`
+   (`…-w2.log:2060, :3979, :5945`, re-read here), `[capture] rc=0` (`:6517`).
+   The fit has three points and S₁₁'s move is non-monotone, so it is a reading,
+   not a converged value; item 5 buys the fourth point the 04:30 slot priced.
+(2) **`PORT-19` step 2 accepted, including its one deviation.** The keyword
+   default is `None` rather than `True` so that an explicit `True` off the
+   lumped-sheet route can raise; that is the item's intent and is ratified.
+   Re-read: `0.000e+00` for `S` and `Z` (`20260911T110544Z_PORT-19-step2.log:1891`),
+   stale factor `1.073e-02` (`:1898`). The five callers listed unrun stay unrun
+   on the reuse-on default; item 4 is the step that closes the row.
+(3) **`PORT-14` step 1e accepted.** `|ratio − 1|` = 2.380e-07 / 1.065e-07 /
+   3.391e-08 (`20260911T123334Z_PORT-14-step1e.log:1888, :1895, :1902`, re-read
+   here). Step 2 (64 MHz) is unblocked and is item 2.
+(4) **`WF-6` step 4h accepted as a negative result.** Re-read: ×0.0095 flag-on
+   P1 1.968410e-02 / P2 1.968464e-02 (`20260911T140329Z_WF-6-step4h.log:4034–4035`),
+   ×1 flag-on 9.795942e-03 / 9.796517e-03 (`:2043–2044`). The ×0.0095 rung stays
+   dropped and the known-issues entry stands, with a ruling row added. The
+   diagnosis goes first to the term `PORT-16` already attributed a 1 % gap to
+   on the loaded fixture — the Cauchy–Schwarz deficit of the terminal-current
+   sheet form (`tests/validation/test_birdcage_power_identity.py` docstring
+   (iv)) — which a finer rim could grow. That is item 3.
+(5) **Masked exit status: one record, one new chunk.** That window's footer
+   reads `- Status: 0` (`:4375`), and so does its test-results row, over
+   `[capture] rc=1` (`:4372`): the slot's capture command dropped §5.1's
+   trailing `; exit $rc`. A sweep of every tracked log for a body line
+   `^\[capture\] rc=[1-9]` finds four; the other three carry the matching
+   status (`20260911T033210Z_TH-19-step1.log:1123, :1126`, and the two
+   `OPS-43a-capture` fixtures), and only this slot's two logs lack `exit $rc`.
+   So no earlier green reading is masked. The row is not edited (append-only;
+   the §7 `WF-6` paragraph and known-issues already say rc = 1). **`OPS-45`**
+   (§7) makes the harness honour a final rc line, and is item 1. A rubric trap
+   is added to `daily-review.md`.
+
+**For the weekly (2026-09-13), added:** item 5's four-point `ANS-4` reading, if
+it lands, beside step 2a″'s three-point fit.
+
+**Residual `main` reds at `-n 2`: 3 deliberate/known**, unchanged since the
+07:30 slot, plus the padding module's red at `-n 4` (known-issues,
+2026-09-09). The `WF-6` ×0.0095 red is opt-in only and is not counted.
+
+**Five takeable items. No item depends on another's result.** Item 1 edits
+the harness every later window runs through, but only makes a mismatched
+status stricter. Items 2 and 3 take test-side additive keywords on different
+modules, item 4 threads a keyword through the ring-column helper, and item 5
+is env-only. `plan-navigator` found no other queue-ready row (`PORT-15` step 2
+waits on `PORT-14` step 2; `TH-5`/`TH-14`/`TH-16`–`TH-18` are unscoped;
+`TH-19` waits on the weekly). A sixth slot that finds nothing takeable
+**stops and journals**.
