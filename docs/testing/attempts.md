@@ -17226,3 +17226,36 @@ No band moved. No window died and no ranks were orphaned.
 - §9 item 4 (`WF-6` step 4h) is the only open On-deck item left for the 09:00 slot.
 
 **Hypothesis.** The F-small floor is a stable (1\*) record at `-n 2`: it reproduced to ≤ 2.4e-7 six days after it was measured (whether this module's sweep now rides `PORT-19` step 2's reuse-on default was not checked). A 64 MHz step 2 should expect its own floor, not this one, and pre-register it as *predicted*.
+
+## 2026-09-11T14:13Z (2026-09-11 09:00 CDT slot) — `WF-6` step 4h — **complete as a negative result: the congruent sheet cut removes the ×0.0095 P1/P2 split, not the power residual; landed `a20a8d6`**
+
+**Preflight.** Tree clean at 09:00:07 CDT, `fem-em-solver` Up. No `recovered/*`. The first open §9 item was item 4, since items 1–3 were DONE. Delegated to `implementer` in the foreground; the slot re-read the logs before journaling.
+
+**Change (test-side only, no `src/`, defaults unchanged).**
+- `c4_congruent_sheets=False` added on `tests/mesh/test_birdcage_port_sheets._build` and on `build_four_port_sweep`, and forwarded to the mesher. `_build` did not accept the keyword before; this is disclosed under rule (a)/(c) as additive and default-off.
+- `test_birdcage_b1_plus_closed_form.py` gains two env flags, `FEM_EM_WF6_C4_CONGRUENT` and `FEM_EM_WF6_LADDER_KEYS`. ×0.0095 joins the ladder only with the flag on. With the flag on, the two ×1 record tests print their readings and then skip (`GEO-32`). `report_peak_rss` now runs after each rung.
+
+**Windows (harness, complex + `FEM_EM_REQUIRE_COMPLEX=1`, `tests/environment` first, `-s`, durable capture).**
+- Collect-only: `20260911T140308Z_WF-6-step4h-collect.log`, 6 s. Flag off collects `x1 x0.012`, the default tuple unchanged; flag on collects `x1 x0.0095`.
+- **Main window:** `20260911T140329Z_WF-6-step4h.log`, flag on, `-n 4`, `timeout -k 30 590`. **1 failed / 18 passed / 4 skipped in 196.74 s (`:4149`), elapsed 199 s, `[capture] rc=1` (`:4372`)**.
+  - ×1 flag on: 116 118 cells, as predicted. Residuals are 9.795942e-03 / 9.796517e-03, covariance 3.5271 %, cw/ccw 15.03×. Every anchor is green.
+  - ×0.0095 flag on: 197 284 cells (`:4023`). Residuals are **P1 1.968410e-02 / P2 1.968464e-02** (`:4034–4035`) against the unmoved 1e-2, so the power test is red (`:4147`). Covariance 1.3181 %, cw/ccw 53.09×, and 21 of 21 points are green.
+  - Negative control by record (`:4036–4037`): flag-off 1.853642e-02 / 1.419812e-02, so on/off is **1.0619 / 1.3864**. The ratio was *predicted* to fall and was never asserted; it rose.
+- Flag-off default control (the executor added it; it is not in the item): `20260911T140714Z_WF-6-step4h-flagoff-x1.log`, `-n 4`. **6 passed in 50.94 s, rc 0**. It reproduces 116 085 cells, the 5.2506 % spread, 9.53× and 3.6159 %, which shows the keyword leaves the default path unchanged.
+- No window died.
+
+**Reading.** P1 and P2 now agree to 2.7e-05 relative, so the cut **was** the carrier of the port-to-port split. The ≈ 2e-2 residual is common to both ports and did not fall, so the cut is not what causes it. The rung stays dropped. No band, record or default `LADDER` moved, and `WF-6` stays 🟡.
+
+**Records (in `a20a8d6`).**
+- The §7 `WF-6` step 4h paragraph.
+- §9 item 4 marked DONE with the negative result.
+- A new known-issues entry: 🟡 2026-09-11 `WF-6` step 4h, opt-in-only red, cause not diagnosed. The 2026-09-09 `ANS-4` entry was already retired by the 04:30 slot, so this is a `WF-6`-only entry, per the item.
+- Three test-results rows and three logs.
+
+**Anomaly for the review: exit status is masked.** With durable capture, the harness footer `Status` and the test-results `Exit` column read **0** for the main window. That value is the exit code of the trailing `cat`; pytest's own exit, `[capture] rc=1`, appears only in the log body. Any rubric that reads the footer or test-results Exit for a durable-capture window will call a red window green. This slot did not edit the auto-appended row. Options: propagate `rc` in the capture idiom (`; exit $rc` after the echo-back) or teach the harness to read the `[capture]` line.
+
+**For the review.**
+- The §9 queue is now drained: items 1–4 are all DONE. The next slot stops and journals unless the 10:30 review re-tops the queue.
+- Returning ×0.0095 to the default ladder is not warranted on these numbers. A diagnosis item is the next step, for example a flag-on per-term accounting ladder across ×1 / ×0.012 / ×0.0095. The conductor-less residual rose from 7.52e-02 at ×1 to 8.41e-02 at ×0.0095, per the known-issues entry.
+
+**Hypothesis.** The common-mode ≈ 2e-2 is in the accounting terms, not the sheets. The conductor (surface-loss) term, or the sheet power term on a refined rim, likely stops converging at ×0.0095. A three-rung flag-on per-term print at `-n 4` (≈ 5 min) would show which term drifts.
