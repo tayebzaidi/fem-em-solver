@@ -220,12 +220,22 @@ def _ring_mirror_map(sheets):
     return sigma
 
 
-def _solve_one_drive(ctx, driven_id):
+def _solve_one_drive(ctx, driven_id, *, reuse_factorization=False):
     """Solve the fixture with ``driven_id`` at 1 V and all 32 ports at ``z0``.
 
     Step 1's route verbatim, with only the driven port's identity varying: the
     bilinear side is drive-independent (every sheet is a `z0` termination, L1),
     the linear side carries the impressed source on one sheet (L3).
+
+    ``reuse_factorization`` (additive, `PORT-19` step 3, default **off** so every
+    existing caller is bit-identical): when ``True`` *and* ``ctx["solver"]``
+    already holds a factor from an earlier drive (``_linear_problem is not
+    None``), only the driven sheet's linear term is rebuilt and the held MUMPS
+    factor back-substitutes it (``solve_with_held_factorization``).  That is
+    correct only because the operator is drive-independent here — the premise
+    `PORT-19` step 1 measured bit for bit on the 4-leg fixture.  The call kind is
+    returned as ``solve_kind`` (``"solve"`` or ``"held"``) so a window can count
+    factorisations rather than assume them.
     """
     comm = ctx["comm"]
     msh, tags_f, omega = ctx["msh"], ctx["tags_f"], ctx["omega"]
@@ -233,24 +243,34 @@ def _solve_one_drive(ctx, driven_id):
         spec.sheet(driven=(spec.port_id == driven_id)) for spec in ctx["specs"]
     ]
     driven_sheet = next(s for s in port_sheets if s.port_id == driven_id)
+    linear_terms = [
+        lambda test, _s=driven_sheet: lumped_port_linear_term(
+            msh, tags_f, _s, test, omega_rad_per_s=omega
+        )
+    ]
+
+    use_held = bool(reuse_factorization) and (
+        getattr(ctx["solver"], "_linear_problem", None) is not None
+    )
 
     comm.Barrier()
     t0 = time.perf_counter()
-    fields = ctx["solver"].solve(
-        current_density=None,
-        project_source=False,
-        extra_bilinear_terms=[
-            lambda trial, test, _s=sheet: lumped_port_bilinear_term(
-                msh, tags_f, _s, trial, test, omega_rad_per_s=omega
-            )
-            for sheet in port_sheets
-        ],
-        extra_linear_terms=[
-            lambda test, _s=driven_sheet: lumped_port_linear_term(
-                msh, tags_f, _s, test, omega_rad_per_s=omega
-            )
-        ],
-    )
+    if use_held:
+        fields = ctx["solver"].solve_with_held_factorization(
+            extra_linear_terms=linear_terms
+        )
+    else:
+        fields = ctx["solver"].solve(
+            current_density=None,
+            project_source=False,
+            extra_bilinear_terms=[
+                lambda trial, test, _s=sheet: lumped_port_bilinear_term(
+                    msh, tags_f, _s, trial, test, omega_rad_per_s=omega
+                )
+                for sheet in port_sheets
+            ],
+            extra_linear_terms=linear_terms,
+        )
     comm.Barrier()
     t_solve = time.perf_counter() - t0
 
@@ -316,6 +336,8 @@ def _solve_one_drive(ctx, driven_id):
         # module's own tests never read this key) does not have to
         # re-solve. No accounting term above is derived from it.
         "fields": fields,
+        # Additive (`PORT-19` step 3): which solve path produced this column.
+        "solve_kind": "held" if use_held else "solve",
     }
 
 

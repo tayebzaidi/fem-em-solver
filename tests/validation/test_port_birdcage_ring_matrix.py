@@ -76,6 +76,18 @@ Run (complex build required, three foreground windows)::
 
 then the same with ``top``, then window C with neither
 ``FEM_EM_RING_SWEEP_HALF`` set, at ``-n 2``.
+
+**Factor reuse (`PORT-19` step 3, additive, default off).**  With
+``FEM_EM_RING_SWEEP_REUSE=1`` the solve windows pass
+``reuse_factorization=True`` to ``_solve_one_drive`` — one MUMPS factorisation
+per half-window, fifteen back-substitutions — and assert exactly **1** ``solve``
+and **15** ``solve_with_held_factorization`` calls; the caches go to
+``output/port13_ring_columns_reuse/`` and the ``ring_matrix`` fixture reads that
+directory, so window C's gates run unmoved on the reuse matrix.  The 2026-09-04
+per-drive caches under ``output/port13_ring_columns/`` are never written in this
+mode: they are the comparand of
+``test_the_reuse_matrix_reproduces_the_per_drive_matrix`` (every entry of the
+32x32 to relative ``REUSE_REPRODUCTION_RTOL``).  Unset, nothing here changes.
 """
 
 from __future__ import annotations
@@ -115,6 +127,21 @@ SWEEP_HALVES = ("bottom", "top")
 # skips with a message when they are absent.
 CACHE_DIR = Path("output/port13_ring_columns")
 
+# `PORT-19` step 3: the factor-reuse sweep, selected by environment only.  Its
+# caches go to their own directory so the per-drive caches above stay the
+# untouched comparand.
+REUSE_ENV = "FEM_EM_RING_SWEEP_REUSE"
+REUSE_CACHE_DIR = Path("output/port13_ring_columns_reuse")
+
+
+def _reuse_on():
+    return os.environ.get(REUSE_ENV, "").strip() == "1"
+
+
+def _cache_dir():
+    """The directory this window reads and writes: the reuse one iff the env is on."""
+    return REUSE_CACHE_DIR if _reuse_on() else CACHE_DIR
+
 # Anchor (ii).  Not a tolerance: a passive network's scattering matrix is a
 # contraction, so the ceiling is exactly 1 and `1 − sigma_max` is a measurement
 # that is printed, never a band that could be widened.  The cached column norms
@@ -136,6 +163,13 @@ STEP2_COLUMN_POWER_SUMS = {
 }
 STEP2_COLUMN_POWER_RTOL = 1.0e-6
 
+# `PORT-19` step 3, anchor (A): the reuse 32x32 against the per-drive cached
+# 32x32, entry by entry.  Same arithmetic up to MUMPS back-substitution order,
+# same `-n 8`, same image — so the band is `STEP2_COLUMN_POWER_RTOL`'s run-to-run
+# precedent, two decades above `OPS-34`'s ~1e-9 scatter, imported, not a new
+# physical tolerance.
+REUSE_REPRODUCTION_RTOL = STEP2_COLUMN_POWER_RTOL
+
 # The negative control's bar, **deliberately not** step 2's imported
 # `CONTROL_MARGIN_FACTOR` (5.0): that number was 4-column arithmetic and is
 # unreachable on 32.  Ceiling first, from the cached columns:
@@ -153,8 +187,8 @@ N_AZIMUTH_CLASSES = SCALED_LEG_COUNT // 2 + 1
 N_SYMMETRY_CLASSES = 2 * N_AZIMUTH_CLASSES
 
 
-def _half_file(half):
-    return CACHE_DIR / f"{half}.npz"
+def _half_file(half, cache_dir=None):
+    return (_cache_dir() if cache_dir is None else cache_dir) / f"{half}.npz"
 
 
 def _half_ordinals(sheets, half):
@@ -242,9 +276,12 @@ def test_the_sweep_half_solves_and_caches_its_sixteen_columns():
             flush=True,
         )
 
+    reuse = _reuse_on()
     columns = {}
     for ordinal in ordinals:
-        columns[ordinal] = _solve_one_drive(built["ctx"], f"P{ordinal}")
+        columns[ordinal] = _solve_one_drive(
+            built["ctx"], f"P{ordinal}", reuse_factorization=reuse
+        )
         if comm.rank == 0:
             col = columns[ordinal]
             print(
@@ -252,13 +289,25 @@ def test_the_sweep_half_solves_and_caches_its_sixteen_columns():
                 f"{col['solve_time']:6.2f} s  sum|S|^2 "
                 f"{sum(abs(s) ** 2 for s in col['s_column'].values()):.9f}  "
                 f"residual {col['residual']:.6e} "
-                f"({col['residual'] / POWER_BALANCE_BAND:.3f}x the band)",
+                f"({col['residual'] / POWER_BALANCE_BAND:.3f}x the band)"
+                + (f"  [{col['solve_kind']}]" if reuse else ""),
                 flush=True,
             )
         # The solved fields are not needed past the column and are the largest
         # object each drive produces; drop the reference so the peak RSS below
         # measures the solver, not sixteen retained field pairs.
         columns[ordinal].pop("fields", None)
+
+    kinds = [columns[o]["solve_kind"] for o in ordinals]
+    n_solve, n_held = kinds.count("solve"), kinds.count("held")
+    if reuse:
+        # `PORT-19` step 3, anchor (C): one factorisation per half-window.  The
+        # counts are identical on every rank (the held factor exists on all of
+        # them or none), so this cannot desynchronise the collectives below.
+        assert (n_solve, n_held) == (1, len(ordinals) - 1), (
+            f"the reuse {half} window made {n_solve} factorising solve() calls and "
+            f"{n_held} held back-substitutions, not 1 and {len(ordinals) - 1}"
+        )
 
     for ordinal, col in columns.items():
         assert len(col["s_column"]) == 2 * SCALED_LEG_COUNT
@@ -287,7 +336,8 @@ def test_the_sweep_half_solves_and_caches_its_sixteen_columns():
     # writes after every rank has finished" true rather than probable.
     comm.Barrier()
     if comm.rank == 0:
-        CACHE_DIR.mkdir(parents=True, exist_ok=True)
+        _cache_dir().mkdir(parents=True, exist_ok=True)
+        extra = {"solve_kinds": np.array(kinds)} if reuse else {}
         np.savez(
             _half_file(half),
             half=np.array(half),
@@ -310,6 +360,7 @@ def test_the_sweep_half_solves_and_caches_its_sixteen_columns():
             ),
             cells=np.array(built["cells"], dtype=np.int64),
             ranks=np.array(comm.size, dtype=np.int64),
+            **extra,
         )
         print(
             f"[PORT-13 step3] window {half.upper()} PRICE: "
@@ -321,6 +372,33 @@ def test_the_sweep_half_solves_and_caches_its_sixteen_columns():
             f"{_half_file(half)}",
             flush=True,
         )
+        if reuse:
+            times = [columns[o]["solve_time"] for o in ordinals]
+            held = [columns[o]["solve_time"] for o in ordinals
+                    if columns[o]["solve_kind"] == "held"]
+            factor = [columns[o]["solve_time"] for o in ordinals
+                      if columns[o]["solve_kind"] == "solve"]
+            comparand = _half_file(half, CACHE_DIR)
+            if comparand.exists():
+                with np.load(comparand, allow_pickle=False) as ref:
+                    ref_times = np.asarray(ref["solve_times"], dtype=float)
+                    ref_ranks = int(ref["ranks"])
+                ref_text = (
+                    f"per-drive cache {comparand}: {ref_times.sum():.2f} s of solve "
+                    f"(min {ref_times.min():.2f}, max {ref_times.max():.2f}) at -n "
+                    f"{ref_ranks} => solve-sum ratio "
+                    f"{ref_times.sum() / sum(times):.2f}x (measured, this fixture)"
+                )
+            else:
+                ref_text = f"per-drive cache {comparand} absent, no comparand"
+            print(
+                f"[PORT-19 step3] window {half.upper()} REUSE: {n_solve} solve + "
+                f"{n_held} held calls; factorising drive {sum(factor):.2f} s, "
+                f"back-substitution drives mean {np.mean(held):.2f} s (min "
+                f"{min(held):.2f}, max {max(held):.2f}), solve sum {sum(times):.2f} s; "
+                + ref_text,
+                flush=True,
+            )
     comm.Barrier()
 
 
@@ -335,7 +413,8 @@ def ring_matrix():
 
     Skips with a message (never fails) when either cache is missing, so the
     module collects and the two solve windows remain the only thing that costs
-    compute.
+    compute.  Reads ``output/port13_ring_columns_reuse/`` when
+    ``FEM_EM_RING_SWEEP_REUSE=1`` (`PORT-19` step 3), else the per-drive caches.
     """
     missing = [str(_half_file(h)) for h in SWEEP_HALVES if not _half_file(h).exists()]
     if missing:
@@ -345,8 +424,14 @@ def ring_matrix():
             + " are absent: run windows A and B (FEM_EM_RING_SWEEP_HALF=bottom|top) "
             "first; `output/` is gitignored, so a clean tree has no caches"
         )
+    return _load_ring_matrix(_cache_dir())
 
-    data = {h: np.load(_half_file(h), allow_pickle=False) for h in SWEEP_HALVES}
+
+def _load_ring_matrix(cache_dir):
+    """Assemble the 32x32 from the two half caches in ``cache_dir``."""
+    data = {
+        h: np.load(_half_file(h, cache_dir), allow_pickle=False) for h in SWEEP_HALVES
+    }
 
     port_ordinals = data["bottom"]["port_ordinals"]
     index = {int(p): k for k, p in enumerate(port_ordinals)}
@@ -689,3 +774,84 @@ def test_the_sweep_reproduces_step_twos_audited_columns(ring_matrix):
             f"{STEP2_COLUMN_POWER_RTOL:.0e}) — this sweep is not measuring the "
             "network step 2 measured"
         )
+
+
+# ---------------------------------------------------------------------------
+# `PORT-19` step 3 — the reuse 32x32 against the per-drive 32x32
+# ---------------------------------------------------------------------------
+
+
+@complex_only
+def test_the_reuse_matrix_reproduces_the_per_drive_matrix():
+    """**`PORT-19` step 3, anchor (A)** — every entry to relative 1e-6.
+
+    Runs only with ``FEM_EM_RING_SWEEP_REUSE=1`` and all four caches present:
+    the reuse halves (one factorisation + fifteen back-substitutions per window)
+    against the 2026-09-04 per-drive halves (sixteen factorisations per window),
+    same fixture, same ``-n 8``.  The worst entry, its column and the solve-time
+    sums of both sweeps are printed; the latter is the speedup as a measurement.
+    """
+    if not _reuse_on():
+        pytest.skip(f"{REUSE_ENV} is not 1: no reuse sweep to compare")
+    missing = [
+        str(_half_file(h, d))
+        for d in (CACHE_DIR, REUSE_CACHE_DIR)
+        for h in SWEEP_HALVES
+        if not _half_file(h, d).exists()
+    ]
+    if missing:
+        pytest.skip("caches absent: " + ", ".join(missing))
+
+    per = _load_ring_matrix(CACHE_DIR)
+    reu = _load_ring_matrix(REUSE_CACHE_DIR)
+    assert per["port_ordinals"] == reu["port_ordinals"]
+    assert bool(np.all(per["filled"])) and bool(np.all(reu["filled"]))
+    for h in SWEEP_HALVES:
+        assert int(per["data"][h]["cells"]) == int(reu["data"][h]["cells"])
+        assert int(per["data"][h]["ranks"]) == int(reu["data"][h]["ranks"]), (
+            f"the {h} halves ran at -n {int(per['data'][h]['ranks'])} (per-drive) "
+            f"and -n {int(reu['data'][h]['ranks'])} (reuse); the item compares like "
+            "with like"
+        )
+        kinds = [str(k) for k in reu["data"][h]["solve_kinds"]]
+        assert kinds.count("solve") == 1 and kinds.count("held") == len(kinds) - 1
+
+    sp, sr = per["S"], reu["S"]
+    mag = np.abs(sp)
+    assert float(mag.min()) > 0.0
+    rel = np.abs(sr - sp) / mag
+    i, j = np.unravel_index(int(np.argmax(rel)), rel.shape)
+    worst = float(rel[i, j])
+    ords = per["port_ordinals"]
+    col_worst = rel.max(axis=0)
+
+    if MPI.COMM_WORLD.rank == 0:
+        print(
+            f"\n[PORT-19 step3] ANCHOR (A) reuse 32x32 vs per-drive 32x32 (rtol "
+            f"{REUSE_REPRODUCTION_RTOL:.0e}, `STEP2_COLUMN_POWER_RTOL`'s precedent):\n"
+            f"    worst entry S[P{ords[i]}, P{ords[j]}] rel {worst:.3e} "
+            f"(|S| per-drive {mag[i, j]:.9e}, abs diff {abs(sr[i, j] - sp[i, j]):.3e}); "
+            f"worst column P{ords[j]}; median column-worst "
+            f"{float(np.median(col_worst)):.3e}; min |S| {float(mag.min()):.3e}; "
+            f"||S_reuse - S_per||_F/||S_per||_F "
+            f"{np.linalg.norm(sr - sp) / np.linalg.norm(sp):.3e}  "
+            f"{'INSIDE' if worst <= REUSE_REPRODUCTION_RTOL else 'MISS'}",
+            flush=True,
+        )
+        for h in SWEEP_HALVES:
+            tp = np.asarray(per["data"][h]["solve_times"], dtype=float)
+            tr = np.asarray(reu["data"][h]["solve_times"], dtype=float)
+            print(
+                f"    {h}: per-drive solve sum {tp.sum():.2f} s (min {tp.min():.2f}) "
+                f"vs reuse {tr.sum():.2f} s (factor drive {tr[0]:.2f}, "
+                f"back-substitution mean {tr[1:].mean():.2f}) at -n "
+                f"{int(reu['data'][h]['ranks'])}: ratio {tp.sum() / tr.sum():.2f}x",
+                flush=True,
+            )
+
+    assert worst <= REUSE_REPRODUCTION_RTOL, (
+        f"the reuse 32x32 departs from the per-drive 32x32 at S[P{ords[i]}, "
+        f"P{ords[j]}] by {worst:.3e} relative (column P{ords[j]}), outside "
+        f"{REUSE_REPRODUCTION_RTOL:.0e} — the held factor is not reproducing the "
+        "per-drive solve (`PORT-19` step 3 negative result: keep the keyword off)"
+    )
