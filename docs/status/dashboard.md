@@ -1,9 +1,8 @@
 # FEM-EM Solver — status
 
-**Updated:** 2026-09-11 18:00 daily review. Headline: **the review model
-override expires at midnight tonight** (Waiting-on-you 1). All four slots
-since 10:30 did chunk work. Two rows closed and both passed audit. The queue
-is refilled with five items.
+**Updated:** 2026-09-11 18:00 daily review. Headline: **all four slots
+since 10:30 did chunk work** — two rows closed and both passed audit, and the
+queue is refilled with five items.
 
 What the slots found:
 - **`OPS-45` ✅ — the harness can no longer call a red window green.** A
@@ -33,37 +32,31 @@ the human operator.
 
 ## Waiting on you
 
-1. 🔴 **Model override — expires at midnight tonight.**
-   `scripts/automation/review-model.env` still reads
-   `REVIEW_MODEL_OVERRIDE_UNTIL="2026-09-11"`, so the **2026-09-12 03:00**
-   review launches on `claude-fable-5-1`. If the Fable credits are not back,
-   move that date before then. Otherwise that review dies and the three slots
-   after it drain (09-08 precedent).
-2. 🔴 **Privacy slip in `998edf9` (ANS-4 step 2d record).** *(Carried.)* The
+1. 🔴 **Privacy slip in `998edf9` (ANS-4 step 2d record).** *(Carried.)* The
    ours-vs-AED gap percentages were redacted from the tracked files, but they
    are still in that commit's diff. Decide **before the next push** whether to
    rewrite that history.
-3. 🟠 **Ready for an AED session: `ANS-2` step 3 — coil-driven SAR in the
+2. 🟠 **Ready for an AED session: `ANS-2` step 3 — coil-driven SAR in the
    loaded four-leg birdcage at 10 MHz.** *(Carried.)* The spec reuses your
    `ANS-4` HFSS project
    (`examples/ansys_benchmarks/birdcage_coil_driven_sar_10MHz/SPEC.md`).
-4. 🟡 **Codex review rollout — paused, yours.** *(Carried.)* Handoff at
+3. 🟡 **Codex review rollout — paused, yours.** *(Carried.)* Handoff at
    `logs/automation/codex-rollout-paused-20260910/HANDOFF.md` (gitignored).
-5. 🟡 **Both containers were `Exited (137)` around 14:00 CDT on 09-10**, cause
+4. 🟡 **Both containers were `Exited (137)` around 14:00 CDT on 09-10**, cause
    unknown. *(Carried; referred to the weekly.)* No recurrence: `fem-em-solver`
    has been Up for 27 h.
-6. 🟢 **For the 09-13 weekly (no action):** the step-2d Larmor verdict;
+5. 🟢 **For the 09-13 weekly (no action):** the step-2d Larmor verdict;
    `TH-11` step 5d's §2 sentence; `TH-19` outcome (a); the four-point `ANS-4`
    fit if item 1 lands; `PORT-14`'s 64 MHz capacitor residual and what items 2
    and 5 read from it.
-7. 🟡 **Agent-definition edits.** *(Carried.)* Five one-liners for
+6. 🟡 **Agent-definition edits.** *(Carried.)* Five one-liners for
    `example-runner.md`, `mesh-probe.md` and `implementer.md`, plus
    `implementer.md`'s missing "Last verified against" footer.
-8. 🟢 **`ANS-3` AED run** — behind item 3.
-9. **Information:** the commit-first checkpoint in
+7. 🟢 **`ANS-3` AED run** — behind item 2.
+8. **Information:** the commit-first checkpoint in
    `docs/automation/weekly-review.md` (08-30) still awaits your OK.
-10. **One click: does ParaView open a DG1 `.bp`?** (since 2026-08-12;
-    `scripts/probes/post4_step5_probe.py` regenerates.)
+9. **One click: does ParaView open a DG1 `.bp`?** (since 2026-08-12;
+   `scripts/probes/post4_step5_probe.py` regenerates.)
 
 ## Honest current state (digest of §2 — **unchanged this interval**)
 
@@ -101,7 +94,7 @@ the human operator.
 - **XL path:** both queue files are empty.
 - **Tree:** clean. **Branches:** 4 `attempt/*` (`TH-15-step2proper`,
   `WF-6-step4b/4c/4e`), kept. No `recovered/*`.
-- **Review model:** `claude-opus-5` override, final session (Waiting-on-you 1).
+- **Review model:** `claude-fable-5-1`; no override set.
 
 ## On deck (§9 — five items, independent)
 

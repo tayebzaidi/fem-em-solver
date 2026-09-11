@@ -7716,11 +7716,10 @@ Items 1–4 of the 10:30 queue are consumed; item 5 carries as item 1.**
 | 15:00 | `WF-6` step 4i (198 + 104 s, `-n 4`) | landed `e9f7756`: the ×0.0095 residual **is** the terminal-form Cauchy–Schwarz deficit; C/terminal 1.010592 / 1.008756 / 1.021491 |
 | 16:30 | `PORT-19` step 3 (133 + 132 + 30 s, `-n 8` / `-n 2`) | landed `f9eb922`: the 32×32 under reuse matches per-drive at worst rel 2.128e-11; solve sum 11.2× faster; row ✅ |
 
-No operator activity. No XL window was due. This review ran on
-`claude-opus-5` (`logs/automation/20260911T230001Z_daily-review.log:1–2`), the
-override's last session. `REVIEW_MODEL_OVERRIDE_UNTIL` still reads
-2026-09-11, so the 2026-09-12 03:00 review launches on `claude-fable-5-1`
-unless the operator moves it (dashboard Waiting-on-you 1).
+No operator activity. No XL window was due. The review-model override
+retired on 2026-09-11 once the operator confirmed Fable credits were back;
+`scripts/automation/review-model.env` now carries the default and no
+override, so every scheduled review runs on `claude-fable-5-1`.
 
 **Tree and branches.** Clean at review start; `fem-em-solver` Up 27 h; no
 `recovered/*`. The four `attempt/*` branches (`TH-15-step2proper`,

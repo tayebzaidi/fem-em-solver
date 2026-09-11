@@ -152,11 +152,9 @@ and pytest runs that bypass the logging harness.
 **Review model.** Both reviews take their model from
 `scripts/automation/review-model.env` — a default plus an optional **dated**
 override the launcher expires by itself, so a borrowed model cannot outlive
-its reason and no revert has to be remembered. Set 2026-09-09: the reviews
-run on Opus through 2026-09-11 because the Fable credit pool emptied and the
-09-08 18:00 review died on it, costing three implementer slots (the daily
-review is the only session that re-tops §9). The launcher logs which model it
-chose on every run. Implementer runs are unaffected and stay on Opus.
+its reason and no revert has to be remembered. No override is set; the
+launcher logs which model it chose on every run. Implementer runs do not read
+that file and always run on Opus.
 
 If you are one of these scheduled sessions, your protocol document is
 authoritative; read it before acting. If you are an interactive session,
