@@ -215,8 +215,12 @@ version-bump record sweeps) says so in its first line:
    control that copies `HEAD:` of the file its change edits goes stale the
    moment that change lands — `test_orphan_guard.sh`'s control was red on
    every HEAD after `d10a940` and cost `OPS-43` (a)'s regression a window
-   (2026-09-10 16:30); pin the pre-change commit (`<sha>^`) instead. Add to
-   this list as runs discover more.
+   (2026-09-10 16:30); pin the pre-change commit (`<sha>^`) instead; an
+   orphan-rank check spelled `pgrep -f "python3 -m pytest"` is **denied by
+   `bash_guard.py`** (the string matches its pytest-routing rule) —
+   `pgrep -c python3` inside the container is the check that runs
+   (`TH-19` steps 1–2, 2026-09-10 22:30). Add to this list as runs discover
+   more.
 5. **The scope boundary** — what the item does *not* close, stated so the
    implementer holds the chunk at 🟡 rather than over-claiming. `POST-3` step 1
    correctly stayed 🟡 because a scalar-σ identity does not gate the coil+

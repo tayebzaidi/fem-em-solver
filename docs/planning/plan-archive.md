@@ -29028,3 +29028,157 @@ padding module's red at `-n 4` (known-issues, 2026-09-09).
 None depends on another's result. Items 4–5 are not takeable. A fourth slot
 that finds nothing takeable **stops and journals**.
 
+
+## §9 On-deck interval narrative (2026-09-10 18:00 review) — archived 2026-09-11 (03:00 daily review)
+
+Last reviewed **2026-09-10, 18:00 review**. *(The 10:30 interval narrative is
+archived verbatim in `docs/planning/plan-archive.md`.)*
+
+**Interval (10:30 → 18:00): four slots fired. Three did chunk work; the 12:00
+slot stopped on the in-flight XL record, as the 10:30 review predicted.**
+
+| Slot | Chunk | Outcome |
+|---|---|---|
+| 12:00 | — | anomaly: the dirty tree was the operator's in-flight 15:20Z `ANS-4-step2d` record; stopped per step 1 (`2afdda0`) |
+| 13:30 | `OPS-43` (d) gate (54 s) | landed `12b0d60`, green at child `-n 1` |
+| 15:00 | `GEO-32` (127 + 81 + 54 s) | 🧪 landed `3e9ec15`: (A)/(B)/control green; the read-back spread falls to round-off with the flag on, at all three rungs |
+| 16:30 | `OPS-43` (a) (16 + 7 s) | landed `9d853fb`, green on second windows (both first reds were in gate scripts) |
+
+**Operator activity (interactive session).**
+- `998edf9` landed the `ANS-4` step 2d XL record: 14 passed / 1 failed (a
+  ladder-module control defect, fixed), 7225 s at `-n 16`, peak 290.2 GiB,
+  recovered footered as `20260910T180911Z_ANS-4-step2d-capture.log`. The
+  verdict is the 09-13 weekly's.
+- `6144510`: `xl` is now three runs per trailing 7 days, plus a new `xxl` tier
+  (8 h, 754 GiB, Saturdays). Both queue files are empty.
+- `e71674a` scoped `PORT-19` (factorisation reuse); `e580f98` scoped `TH-19`
+  (matched projection on the coil, degree-2 retest).
+- A Codex daily-review rollout was trialled and **paused before activation**
+  (handoff in gitignored `logs/automation/codex-rollout-paused-20260910/`). No
+  Codex review ran or committed; all three reviews still run on Claude. Its
+  two `OPS-CODEX-REVIEW` logs landed inside `998edf9`.
+
+**Tree and branches.**
+- Clean at review start. The 12:00 anomaly cleared when `998edf9` landed at
+  13:17, so no `recovered/*` branch exists.
+- `attempt/OPS-43d-20260910T111045Z` **deleted**: its module landed,
+  restructured, in `12b0d60`. `TH-15-step2proper` and `WF-6-step4b/4c/4e` are
+  kept on the 09-09 18:00 ruling.
+- The 15:00 slot found both services `Exited (137)` about an hour earlier,
+  cause undiagnosed, and brought `fem-em-solver` back up. `fem-em-solver-xl`
+  is stopped.
+
+**Audit (§4).** No chunk turned ✅. `GEO-32` is 🧪; `OPS-43` stays ⬜, owing
+only the (c) wiring; step 2d is a reading inside the already-✅ `ANS-4` row,
+and its decision rule is the weekly's. No `auditor` was spawned and no example
+chunk opens.
+
+**Rulings banked this review.**
+(1) **`GEO-32` accepted as measured, 🧪.** (B) max d_i 9.603429e-15 m against
+   1e-12 m (`20260910T200420Z_GEO-32.log:7444, 7446`; `…200744Z…:3824`); control
+   ≥ 0.4 ℓ (`:7445, 7447`). The printed read-back spread falls to ≤ 1.47e-15
+   with the flag on (`:7438–7439`), so the cut carries the whole read-back lead.
+   Whether it also carries `ANS-4` step 2a's ×0.75 `Z` class-spread break needs
+   a solve: item 1. The flag moves `size_global` (116 085 → 116 118 at ×1), so a
+   flag-on rung carries its own count.
+(2) **`OPS-43` (d)'s smoke-scalar asserts moved to prints: ratified.**
+   `tests/solver/test_time_harmonic_smoke.py:275` and `:287` still assert both
+   (checked here).
+(3) **`OPS-43` (a)'s disclosures accepted.** Re-pinning `test_orphan_guard.sh`'s
+   control to `d10a940^` is a correction, not a loosening; the stale-`HEAD:`
+   trap is added to `daily-review.md`'s rubric list.
+(4) **`OPS-43` (c) wiring now rides with item 1**, which executes the ladder
+   module at `-n 4` with no XL window armed.
+(5) **Privacy redaction.** `998edf9` wrote step 2d's ours-vs-AED gap
+   percentages into the §7 `ANS-4` row and `known-issues.md`. Both are redacted
+   to the qualitative reading here; the numbers remain in `998edf9`'s diff
+   (dashboard Waiting-on-you 1).
+(6) **`TH-19` re-priced** (§7 row): the current red record, heavy tier at
+   `-n 8`, and step 3 void as written, because the matched projection does not
+   reach the lumped-sheet drive.
+
+**For the weekly (2026-09-13), added:**
+- step 2d's ledger row says the window ran 25 s past the 2 h ceiling and
+  "completed only because the deadline was lifted by hand" — §5.1's
+  kill-and-shrink rule says otherwise;
+- `TH-19` step 3's void premise, before any outcome (a) reaches the
+  production-order clause;
+- the undiagnosed `Exited (137)` of both services around 14:00 CDT.
+
+**Residual `main` reds at `-n 2`: 4 deliberate/known**, unchanged, plus the
+padding module's red at `-n 4` (known-issues, 2026-09-09).
+
+**Three takeable items, 1–3: fewer than five, stated rather than padded.**
+`PORT-14`'s next step, `TH-15` step 2's unitarity gate and the rest of the
+ladder were not re-scoped this review, and none has queue-ready item text.
+None of items 1–3 depends on another's result. Item 4 has no standalone slot.
+A fourth slot that finds nothing takeable **stops and journals**.
+
+**⚠️ Standing constraint on the compose allow — read before editing that
+file.** `docker-compose.yml` line 9 is `- ..:/workspace`, so write access
+to it is write access to *what the container mounts from the host*. The
+operator granted this knowingly and narrowly (2026-08-22). **Edit only
+`environment:` keys. Do not touch `volumes:`, do not add a mount, do not
+widen a path, and do not change the memory limit (**128 G**, raised from
+64 G by operator directive 2026-08-24) — in this or any future chunk.**
+*(The `fem-em-solver-xl` service added 2026-09-05 is the one operator-
+authorized exception — a second service with its own 512 G limit under the
+`xl` profile; the constraint applies to it verbatim, and chunks do not
+edit it either.)* A
+chunk that believes it needs a mount change is a **blocked finding for the
+operator**. The `Edit(docker/.claude/**)` caution stands for the same
+reason: a nested `.claude/` is a settings-override surface. One surviving
+mechanic: `git checkout` cannot swap `docker/Dockerfile` /
+`docker-compose.yml` in this sandbox — bind-mounted, "Device or resource
+busy", a *silent* wrong-content switch — so any chunk that must move them
+uses the Edit tool and verifies `git status --porcelain`.
+
+**Runner trap (2026-08-29 13:30, 2026-08-30 12:00 and 2026-09-01 04:30 —
+three occurrences in 21 slots, intermittent; 0 of the last 31):** if
+`./run_examples.sh` fails with
+`permission denied … /var/run/docker.sock`, run the runner's inner command
+verbatim through `run_and_log.sh` (`docker compose exec -T fem-em-solver
+bash -lc 'cd /workspace && source /usr/local/bin/dolfinx-complex-mode &&
+PYTHONPATH=/workspace/src timeout -k 30 <T> mpiexec -n 2 python3
+examples/<path>.py'`) and journal the denial; do not spend the slot on it.
+The host runner stays the documented entry point and the substitution
+stays the fallback. **Allowlist trap (12:00 slot):** the harness entry is
+the repo-relative `scripts/testing/run_and_log.sh *` — an absolute path is
+denied; write it relative.
+
+**Standing rules for every item below (from the 10:30 review, kept):**
+(a) an `EX-*` item may add an *additive* return key or keyword to a gate
+fixture's helper it imports, provided the gate module is re-run green
+through the harness in the same slot and the diff is disclosed; (b) guide
+artifact references carry the full filename; (c) a `src/` change beyond an
+item's letter follows ruling (a) above — disclosed, its pre-existing gate
+re-run green in the same slot; **(d) (added 2026-09-05 10:30) a slot that
+parks its item on `attempt/*`, or otherwise leaves it neither done nor
+runnable, marks the §9 item BLOCKED with the unblock condition in the
+*same* commit as the record** — the next slot reads §9 first, and an
+unmarked item costs it the ten minutes the 09:00 slot spent on
+`e49cb67`; **(e) (added 2026-09-05 18:00) every negative-control factor
+in an item is labelled *asserted* or *predicted*: asserted only when a
+prior measurement of the *same* comparison on the *same* fixture backs
+it (cite the log line), predicted otherwise — and a predicted factor is
+printed beside the measured one, never asserted. An executor that meets
+a failing pre-registered assertion whose label is missing stops and
+reports the negative result; it does not decide in-slot** (`EX-49`,
+2026-09-05 15:00, ruled by the 18:00 review; `MAT-6` step 11, 2026-09-06
+07:30, ruled by the 10:30 review); **(f) (added 2026-09-06 18:00) a band
+an item states against an *analytic* comparand that the executed
+fixture's own CAD or mesher cannot meet is re-registered by measurement
+on the same quantity where both sides are the fixture's numbers, said
+so in the docstring and the journal, and the review ratifies or reverts
+it** (`TH-15` step 3a, 16:30 slot — ratified above, ruling (2)); it is
+never widened silently and never on a quantity that was already green.
+**(g) (added 2026-09-08 10:30)** every pytest window below runs with `-s`
+— two windows (≈ 9 min) were lost this interval to swallowed prints
+(`TH-15` step 2f, `OPS-41`), each re-run only because the executor
+noticed; a log without the readings is a window not spent.
+
+
+*(The 10:30 queue is done: items 1–3 are `OPS-43` (d) `12b0d60`, `GEO-32`
+`3e9ec15` and `OPS-43` (a) `9d853fb`, and item 5 (`ANS-4` step 2d) landed as
+`998edf9`. Their item texts are in `git show 26e14be` and
+`docs/testing/attempts.md`. Item 4 is folded into item 1 below.)*
