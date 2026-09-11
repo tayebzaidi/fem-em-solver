@@ -17365,3 +17365,30 @@ Per-sheet ceiling/terminal is uniform to ±1e-6 within each port. `[mem]` 2.62 /
 **For the review.** Whether the fixture's power accounting should switch to the exact (ceiling) form, which would close ×0.0095 to machine precision by construction and so stop being a gate. The alternative is a gate on C/terminal − 1 itself, which is the physical reading.
 
 **Hypothesis.** The ×0.0095 jump in C/terminal comes from the mesh's rim/gap cells, not from h as such, which would explain the non-monotone ladder. Next step: print the per-sheet |E_t| spread (max/min over sheet facets) beside C/terminal on the three rungs. That is arithmetic on fields the fixture already holds: one heavy window and no band change.
+
+## 2026-09-11T21:41Z (2026-09-11 16:30 CDT slot) — `PORT-19` step 3 — **complete: the 32-port `PORT-13` sweep under factor reuse reproduces the per-drive 32×32 (worst rel 2.128e-11 vs 1e-6); row ✅; landed `f9eb922`**
+
+**Preflight.** Tree clean at 16:30:06 CDT, `fem-em-solver` Up 25 h, no `recovered/*`. §9 items 1–3 DONE, so this slot took item 4. Delegated to `implementer` in the foreground; the slot reviewed the diff and re-read the footers and anchor lines below.
+
+**Change (tests only, no `src/`).** `_solve_one_drive(ctx, driven_id, *, reuse_factorization=False)` in `tests/validation/test_port_birdcage_ring_column.py`: with the keyword on and a factor already held (`_linear_problem is not None`) it calls `solve_with_held_factorization` with the driven-sheet linear term; otherwise `solve` as before (the linear-term list is hoisted above the branch; additive return key `solve_kind`). `tests/validation/test_port_birdcage_ring_matrix.py`: env `FEM_EM_RING_SWEEP_REUSE=1` passes the keyword, asserts the call counts, writes `output/port13_ring_columns_reuse/`, points the `ring_matrix` fixture there, and enables new test `test_the_reuse_matrix_reproduces_the_per_drive_matrix`. The 2026-09-04 per-drive caches were not written (mtimes Sep 4, per executor).
+
+**Windows (harness, complex + `FEM_EM_REQUIRE_COMPLEX=1`, `tests/environment` first, `-v -s`, durable capture with `; exit $rc`, foreground).**
+- **A** `HALF=bottom REUSE=1`, `-n 8`, `timeout -k 30 400`: `20260911T213419Z_PORT-19-step3-A.log` — 12 passed / 7 skipped, `[capture] rc=0` (`:11405`), Status 0, Elapsed 133 s (`:11408–11409`).
+- **B** `HALF=top REUSE=1`, same: `20260911T213657Z_PORT-19-step3-B.log` — 19 passed, rc=0 (`:11352`), Status 0, 132 s (`:11355–11356`).
+- **C** `REUSE=1`, no half, `-n 2`, `timeout -k 30 120`: `20260911T213930Z_PORT-19-step3-C.log` — 18 passed / 1 skipped, rc=0 (`:267`), Status 0, 30 s (`:270–271`).
+- Container `python3` count 0 after each window (executor). Heavy tier.
+
+**Readings.**
+- (C, asserted) 1 `solve` + 15 `held` per half-window on every rank (A/B `:10715–10732`, drive lines tagged `[held]`).
+- (A, asserted) worst entry `S[P28,P28]` rel **2.128e-11** (abs 9.182e-13 on |S| 4.314e-02); median column-worst 5.605e-12; Frobenius rel 6.752e-13 (C `:134`).
+- (B, asserted, imported, unmoved) reciprocity 4.585999e-13; σ_max 0.999999452; worst C16 × mirror class 0.4426 % (C `:105, :123`); power residuals max 0.968× band (P37); step-2 column sums rel ≤ 3.059e-10.
+- Negative control (asserted): P17 × 1.01 ⇒ reciprocity 2.496159e-03 = 2.496× band, bar 2× (C `:96`).
+- Speedup (measured on this fixture only): solve sum 14.15 / 13.75 s (factor drive 10.16 / 10.01 s, back-substitutions 0.23–0.32 s) vs per-drive 158.87 / 156.25 s ⇒ 11.23× / 11.36×; in-test wall 101.81 / 100.42 s vs 244 / 247 s; summed ru_maxrss 5.91 / 5.95 GiB vs 6.6–6.8 GiB. The item's prediction (≈ 20 s solve, 100–110 s per window) held.
+
+**Disclosed deviations.** (1) Anchor (A) and window C's gates also ran green inside window B at `-n 8` (all four caches exist once `top.npz` is written; pre-existing module behaviour); the cited anchor is window C. (2) The default path (`reuse_factorization=False`) was not re-run in a separate window; its diff only hoists the linear-term list, and each reuse window's first drive takes that `solve` branch, with P17 / P33 reproducing step 2's column sums at ≤ 3.059e-10. (3) Two executor commands were permission-denied before running anything (an import probe; a first window-B form using `$?` at the Bash-tool level); window B then ran once cleanly.
+
+**Records (`f9eb922`).** Two test modules, three logs, three test-results rows, §7 `PORT-19` step 3 paragraph + status ✅, §9 item 4 marked DONE. `auditor` not spawned (review's job).
+
+**For the review.** Audit the `PORT-19` ✅. The five lumped-sheet callers step 2 listed as unrun on the reuse-on default remain unrun; they are outside this done-when but are the natural sweep to schedule next.
+
+**Hypothesis.** On larger meshes the factor dominates the per-drive cost even more (ANS-4 step 2d: ~all of 1335 s/drive), so the ≈ 11× solve-sum ratio here is a floor for the human-scale 32-port sweep; the next measurement is one reuse sweep at the `ANS-4` resolution inside a single window.
