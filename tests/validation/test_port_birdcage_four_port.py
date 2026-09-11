@@ -223,8 +223,16 @@ def build_four_port_sweep(
     conductor_resolution=None,
     phantom_material=None,
     resolution=None,
+    build_only=False,
 ):
     """One mesh; four driven lumped-sheet solves at 50 Ohm; the assembled 4x4.
+
+    ``build_only`` is the seventh additive parameter (`PORT-19` step 1, same
+    precedent): ``False`` — every gate's value — runs the sweep exactly as
+    before.  ``True`` returns the mesh, cell tags, narrowed facet tags,
+    ``port_defs``, ``specs``, ``problem``, sheet geometry and cell count just
+    before the sweep call and solves nothing, so the premise module can
+    assemble the sweep's port terms on the identical fixture.
 
     The module fixture's body, lifted to module level so a consumer can run the
     gated sweep *through this module* rather than re-implementing it — the
@@ -399,6 +407,20 @@ def build_four_port_sweep(
                 interior=True,
             )
         )
+
+    if build_only:
+        return {
+            "mesh": msh,
+            "cell_tags": cell_tags,
+            "facet_tags": tags_f,
+            "problem": problem,
+            "port_defs": port_defs,
+            "specs": specs,
+            "sheets": sheets,
+            "cells": ncells,
+            "mesh_time": float(t_mesh),
+            "halves": halves,
+        }
 
     comm.Barrier()
     t0 = time.perf_counter()

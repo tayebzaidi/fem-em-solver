@@ -16964,3 +16964,45 @@ No band moved, the default is unchanged, and no AED number was written anywhere.
 - Queue ×0.6 / ×0.45 **flag on** (predicted by `PORT-14` step 1b's counts, ≈ 210 k / 330 k cells flag off; flag-on counts are their own). That gives the three finest degree-1 rungs the Richardson print needs.
 - Rule on the known-issues entry: flip `c4_congruent_sheets`' default for the ladder, or require the flag beyond ×1.
 - A flag-on ×1 is not the `GEO-19` 116 085 record, so a flag-on ladder needs its own control record (116 118 measured here, inside the 1 % band).
+
+## 2026-09-11T02:08Z (2026-09-10 21:00 CDT slot) — `PORT-19` step 1 — **complete: the premise holds by measurement; the sweep's port matrix is bit-identical across all four drives**
+
+**Preflight.** Tree clean at 21:00:07 CDT (`ce11af2`), and `fem-em-solver` was Up. No `recovered/*` branches existed. §9 item 1 was DONE, so I took item 2, which was open and unblocked.
+
+**Execution.** Delegated to `implementer` in the foreground as one executor (329 s). The spawn prompt carried the foreground / 660 000 ms / `timeout -k 30` / `-s` rules and a no-commit instruction. Before writing this entry I read the new module, the fixture diff, the §7/§9 diffs, and both logs' measurement, pass-count and footer lines myself.
+
+**Change (test-side only, no `src/`).**
+- `build_four_port_sweep` (`tests/validation/test_port_birdcage_four_port.py`) gains additive `build_only=False`. With `True` it returns the mesh, tags, `problem`, `port_defs`, `specs`, `sheets` and the cell count just before the sweep call, and solves nothing. The default path is unchanged, and the regression window below proves it.
+- New `tests/validation/test_port19_matrix_premise.py` (six tests):
+  - For k = P1…P4 it builds `sheets_k` as `ports/lumped.py:460–477` does and assembles `A_k` = Σ over the four ports of `lumped_port_bilinear_term`. Closures bind the sheet by default argument, as `lumped.py:485` does.
+  - Asserted: same CSR pattern (compared on each rank, reduced with `LAND`), global `‖A_k − A_1‖_∞ == 0.0`, and `ρ_s` driven == undriven bytewise.
+  - Controls (i) and (ii) are asserted nonzero.
+  - Added beyond the item text: `‖A_1‖_∞ > 0`, so the identity cannot pass on an empty matrix, and a check that `dataclasses.replace` did not mutate the fixture spec (the spec is a frozen dataclass).
+
+**Windows. Both `-n 2`, complex, `FEM_EM_REQUIRE_COMPLEX=1`, `tests/environment` first, `-s`.**
+- **Gate, `timeout -k 30 180`:** `20260911T020253Z_PORT-19-step1.log`, **17 passed, 60.11 s (`:1917`), Status 0, 62 s (`:1986–1987`)**.
+  - Fixture: 116 085 cells, 139 140 N1curl(1) dofs, 10 MHz (`:1830`). `‖A_1‖_∞` = 1.911285169 (`:1831`).
+  - **Drives P1–P4:** pattern == `A_1` True, `‖A_k − A_1‖_∞ = 0.0`, 0 differing CSR values, max |dA| 0.0 (`:1832–1835`).
+  - `ρ_s` driven == undriven on all four ports, ≈ 45.588272 Ω/sq (`:1836–1839`).
+  - **Control (i):** `‖b_1 − b_2‖₂ = 1.768708357` against `‖b_1‖₂ = ‖b_2‖₂ = 1.250665673` (`:1840`). That is √2‖b‖, consistent with disjoint sheet supports. The probe is not blind.
+  - **Control (ii):** P2 at 51 Ω leaves the pattern unchanged and gives `‖A_pert − A_1‖_∞ = 3.747617978e-02`, with 321 CSR values differing (`:1841`). Relative to `‖A_1‖_∞` that is 1.960784314e-02 = 1 − 50/51, the `1/ρ_s` coefficient's prediction. It is printed only and no factor is asserted (rule (e)).
+- **Regression, `timeout -k 30 300`:** `tests/validation/test_port_birdcage_four_port.py` via `20260911T020408Z_PORT-19-step1-regression.log`, **16 passed, 78.69 s (`:1971`), Status 0, 81 s (`:2039–2040`)**.
+  - Cell count 116 085, ratio 1.000000 (`:1859`).
+  - Reciprocity 1.12e-14, σ_max 0.999992805, class spreads 0.0553 / 0.0353 / 0.0214 % (`:1875–1878`).
+  - Leg (d0) control within 1e-9 (`:1883–1886`).
+
+**Branch applied:** the premise holds, so the negative-result branch did not trigger. Step 2 is live as scoped.
+
+**Records.** In this commit:
+- §7 `PORT-19`: a step 1 paragraph. The row stays ⬜, since done-when needs step 2 and the 32-port re-run.
+- §9 item 2: marked DONE.
+- test-results.md: two rows.
+
+No band moved, no `src/` changed, and no AED number was written anywhere.
+
+**Denials / anomalies.** None. Nothing was backgrounded, and no orphaned ranks or cache stubs were reported.
+
+**Hypothesis / for the review.**
+- `PORT-19` step 2 (factor once, N back-substitutions in `ports/sparameters.py`, default-on keyword) is unblocked and needs queue-ready item text.
+- Wording nit in the §7 row's step 1: it says the right-hand sides "differ by more than the reference impedance", which compares a vector norm to ohms. The §9 item's `> 0` is what was asserted. The review may want to strike the phrase.
+- §9 item 3 (`TH-19`, heavy, ≈ 20 min over three windows at `-n 8`) is next. After it, the queue holds no takeable item (item 4 is 🚫).
