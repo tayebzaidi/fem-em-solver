@@ -210,6 +210,35 @@ def _c4_congruent_enabled():
     return raw.strip().lower() not in ("0", "false", "no", "off")
 
 
+def _require_explicit_c4_flag(factors):
+    """Refuse a ``conductor_resolution`` ladder beyond x1 with the flag *unset*.
+
+    Ruled 2026-09-11 03:00 (known-issues, the 2026-09-09 `ANS-4` step 2a
+    entry): on the default flag-off mesher path any factor other than 1.0
+    meshes a C2-not-C4 gap-sheet cut and breaks the imported 0.5 % `Z` class
+    spread (``20260909T093534Z_ANS-4-step2a.log``). Rather than flip the
+    mesher default (which would move the `GEO-19` record), this module
+    requires the choice to be explicit. ``=0`` stays allowed: it is the
+    documented flag-off negative control. Pure env logic, identical on every
+    rank, so every rank raises and nothing hangs.
+    """
+    raw = os.environ.get(C4_CONGRUENT_ENV)
+    if raw is not None and raw.strip():
+        return
+    finer = [f for f in factors if float(f) != 1.0]
+    if finer:
+        raise ValueError(
+            f"{C4_CONGRUENT_ENV} is unset but the conductor_resolution ladder "
+            f"contains factor(s) {', '.join(f'x{f:g}' for f in finer)} other "
+            "than x1. On the default flag-off mesher path those rungs mesh a "
+            "C2-not-C4 port-sheet cut and fail the imported 0.5 % Z class "
+            "spread — see docs/testing/known-issues.md, the 2026-09-09 `ANS-4` "
+            f"step 2a entry. Set {C4_CONGRUENT_ENV}=1 to measure the ladder "
+            f"(c4_congruent_sheets on), or {C4_CONGRUENT_ENV}=0 to run the "
+            "flag-off negative control deliberately."
+        )
+
+
 def _report_rung_rss(comm, label):
     """`OPS-43` (c): summed peak RSS after a rung. Collective — every rank calls it."""
     report_peak_rss(comm, label=f"ANS-4 step2 after {label}")
@@ -289,6 +318,8 @@ def ladder():
     rungspec = _ladder_rungspec()
     resolutions = () if rungspec else _ladder_resolutions()
     factors = () if (rungspec or resolutions) else _ladder_factors()
+    # The known-issues guard (ruled 2026-09-11 03:00): before any mesh.
+    _require_explicit_c4_flag(factors)
     rungs = []
     started = time.perf_counter()
     c4 = _c4_congruent_enabled()

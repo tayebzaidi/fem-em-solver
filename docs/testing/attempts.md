@@ -17079,3 +17079,51 @@ Nothing is takeable. §9's drain paragraph (`PROJECT_PLAN.md:7937`) says "stop a
 - `PORT-14`'s next step, `TH-15` step 2's unitarity gate (not re-scoped at 18:00).
 
 The 04:30 slot stops again if nothing is added.
+
+## 2026-09-11T09:42Z (2026-09-11 04:30 CDT slot) — `ANS-4` step 2a″ — **complete**
+
+**Preflight.** Tree clean at 04:30:06 CDT (`710c743`), and `fem-em-solver` was Up (13 h). No `recovered/*` branches. §9 item 1 (03:00 queue) was the first open item. It was delegated to `implementer` in the foreground; I checked its diff and the three log footers myself before committing.
+
+**What landed (test-side only, no `src/`).**
+- `_require_explicit_c4_flag(factors)` in `tests/validation/test_ans4_resolution_ladder.py`, called at the top of the `ladder` fixture before any mesh.
+  - It raises `ValueError` if `FEM_EM_ANS4_STEP2_C4_CONGRUENT` is unset and any `conductor_resolution` factor ≠ 1.0.
+  - The message names the known-issues 2026-09-09 entry and both remedies.
+  - An explicit `=0` is still allowed, and the `RUNGSPEC`/`RESOLUTION` paths are untouched.
+- The known-issues 2026-09-09 `ANS-4` step 2a entry is retired in this commit.
+
+**Windows (all through the harness, complex build, `DEGREE2=0`, `-s`).**
+- **W0, guard control (smoke; asserted):** flag unset, `RUNGS="1.0 0.75"`, `-n 2`, `timeout -k 30 120`. `20260911T093156Z_ANS-4-step2a-dprime-w0.log`:
+  - all four ladder tests ERROR at setup with the message (`:86`);
+  - nothing meshed;
+  - `11 passed, 4 errors` (`:172`), Status 1, **31 s**.
+- **W1, cost probe (heavy):** flag `=1`, `RUNGS="1.0 0.6"`, `-n 8`, `timeout -k 30 590`, durable capture. `20260911T093247Z_ANS-4-step2a-dprime-w1.log`: **15 passed, Status 0, 141 s**, `[capture] rc=0` (`:4591`).
+  - Cells: ×1 116 118 (record ratio 1.000284); ×0.6 209 544.
+  - ×0.6 took mesh 38.5 s + four drives 29.7 s = 68.2 s, under the 150 s gate, so W2 ran.
+- **W2, Richardson window (heavy):** flag `=1`, `RUNGS="0.75 0.6 0.45"`, `-n 8`, `timeout -k 30 590`, durable capture. `20260911T093524Z_ANS-4-step2a-dprime-w2.log`: **14 passed, 1 skipped (record-rung test, no ×1 by design), Status 0, 250 s**, `[capture] rc=0` (`:6517`).
+  - Cells: 161 645 / 209 544 / 293 534 (`:5955–5957`).
+  - `Z` class spreads (self / adjacent / opposite): 0.0481 / 0.0649 / 0.0555 %, then 0.0522 / 0.1007 / 0.0263 %, then 0.0931 / 0.1072 / 0.0861 % (`:5966–5968`), against the unmoved 0.5 %.
+  - σ_max ≤ 0.99899 and reciprocity ≤ 5.6e-14 on every rung.
+  - `[mem]` peaks at 6.07 GiB summed over 8 ranks at ×0.45.
+- **Negative control (asserted by reproduction):** ×0.75 reproduces 2a′'s 161 645 cells exactly. Its spreads and σ_max equal 2a′'s to every printed digit (the *predicted* equality held).
+- **Richardson (printed only, `w2:5993–5996`):** fitted p = 2.1282 / 2.6525 / 2.8791 for S₁₁ / S₂₁ / S₃₁, inside `RICHARDSON_P_BRACKET`.
+  - The extrapolated value is 1.03 / 0.63 / 0.58 % beyond ×0.45 and 3.06 / 2.20 / 2.65 % from the flag-on ×1.
+
+**Deviation.** The container timeout was `-k 30 590` rather than the item's 600, to fit the 660 s tool window. No other deviations.
+
+**Records.** In this commit:
+- §7 `ANS-4` step 2a″ paragraph;
+- §9 item 1 marked DONE;
+- the known-issues entry retired;
+- three test-results rows (harness-appended);
+- three logs.
+
+No band moved, no AED number was written, and the mesher default is unchanged. 0 stray `python3` in the container after the windows.
+
+**Denials / anomalies.** None in the windows. My own post-run `docker compose exec` without `-f docker/docker-compose.yml` failed with "no configuration file provided" (harmless, re-run with `-f`).
+
+**Hypothesis / for the review and the 2026-09-13 weekly.** The flag-on degree-1 ladder now exists and is C4-clean to ×0.45. Caveats on the Richardson fit:
+- it has three points and no fourth to test asymptoticity;
+- S₁₁'s move from ×1 is non-monotone (1.38 → 1.18 → 2.03 %);
+- p ≈ 2.1–2.9 is higher than expected for degree 1.
+
+So the extrapolated value is a reading, not a converged value. A ×0.35 rung (a fourth point, ≈ 400 k cells, about 2 min of drives at `-n 8`) would test it cheaply. The private gap computation against step 2d's degree-2 finest rung is the weekly's.

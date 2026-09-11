@@ -1,0 +1,280 @@
+# Test Run
+- Chunk: ANS-4-step2a-dprime-w0
+- Commit: 710c743fcfc129f9c527fe58517686cd7ff69744
+- Time (UTC): 2026-09-11 09:31:56
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.5.1
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && source /usr/local/bin/dolfinx-complex-mode && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 FEM_EM_ANS4_STEP2_DEGREE2=0 FEM_EM_ANS4_STEP2_RUNGS="1.0 0.75" timeout -k 30 120 mpiexec -n 2 python3 -m pytest tests/environment tests/validation/test_ans4_resolution_ladder.py -v -s --tb=short'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 24
+drwxr-xr-x  3 taz5297 taz5297 4096 Sep  4 23:31 .
+drwxr-xr-x 16 taz5297 taz5297 4096 Sep 11 04:31 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  721 Sep  3 13:49 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 4264 Sep 10 12:01 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.5.1
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && source /usr/local/bin/dolfinx-complex-mode && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 FEM_EM_ANS4_STEP2_DEGREE2=0 FEM_EM_ANS4_STEP2_RUNGS="1.0 0.75" timeout -k 30 120 mpiexec -n 2 python3 -m pytest tests/environment tests/validation/test_ans4_resolution_ladder.py -v -s --tb=short'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... collected 15 items
+
+tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build 
+[TH-1 step 0] PETSC_ARCH='linux-gnu-complex128-32' ScalarType=complex128 dolfinx=/usr/local/dolfinx-complex/lib/python3.12/dist-packages/dolfinx/__init__.py version=0.11.0.post0
+PASSED
+tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form collected 15 items
+
+tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build PASSED
+tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form PASSEDPASSED
+tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not 
+tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not [TH-1 step 0] inner=(11.00000000000001+1.9999999999999993j) dot=(-5.000000000000001+10.000000000000002j)
+PASSEDPASSED
+tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly 
+tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly [TH-1 step 0] ||M||_F=1.041233e+00 ||M_c - eps_c*M||_F=7.526e-16
+PASSEDPASSED
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites 
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites PASSED
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations PASSED
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations PASSED
+tests/environment/test_dolfinx_api_migration.py::test_filed_survivors_outside_the_gated_roots_are_unchanged PASSED
+tests/environment/test_dolfinx_api_migration.py::test_filed_survivors_outside_the_gated_roots_are_unchanged PASSED
+tests/environment/test_dolfinx_version.py::test_adopted_dolfinx_version_is_exact 
+[OPS-18 step 1] dolfinx=0.11.0.post0 file=/usr/local/dolfinx-complex/lib/python3.12/dist-packages/dolfinx/__init__.py python=3.12.3 ScalarType=complex128
+PASSED
+tests/environment/test_dolfinx_version.py::test_resolved_dolfinx_path_matches_mode_and_interpreter [OPS-18 step 1] expect /dolfinx-complex/ and /python3.12/ in /usr/local/dolfinx-complex/lib/python3.12/dist-packages/dolfinx/__init__.py
+PASSED
+tests/environment/test_dolfinx_version.py::test_h5py_built_against_the_image_hdf5 [OPS-18 step 1] h5py=3.16.0 built=(2, 1, 1) linked=(2, 1, 1)
+PASSED
+tests/environment/test_dolfinx_version.py::test_complex_build_is_complex128 PASSED
+tests/validation/test_ans4_resolution_ladder.py::test_the_record_rung_reproduces_the_fixture ERROR
+tests/validation/test_ans4_resolution_ladder.py::test_every_finer_rung_actually_refines ERROR
+tests/validation/test_ans4_resolution_ladder.py::test_every_rung_passes_the_imported_port11_gates ERROR
+tests/validation/test_ans4_resolution_ladder.py::test_the_ladder_readout_is_printed ERROR
+
+==================================== ERRORS ====================================
+________ ERROR at setup of test_the_record_rung_reproduces_the_fixture _________
+tests/validation/test_ans4_resolution_ladder.py:322: in ladder
+    _require_explicit_c4_flag(factors)
+tests/validation/test_ans4_resolution_ladder.py:230: in _require_explicit_c4_flag
+    raise ValueError(
+E   ValueError: FEM_EM_ANS4_STEP2_C4_CONGRUENT is unset but the conductor_resolution ladder contains factor(s) x0.75 other than x1. On the default flag-off mesher path those rungs mesh a C2-not-C4 port-sheet cut and fail the imported 0.5 % Z class spread — see docs/testing/known-issues.md, the 2026-09-09 `ANS-4` step 2a entry. Set FEM_EM_ANS4_STEP2_C4_CONGRUENT=1 to measure the ladder (c4_congruent_sheets on), or FEM_EM_ANS4_STEP2_C4_CONGRUENT=0 to run the flag-off negative control deliberately.
+___________ ERROR at setup of test_every_finer_rung_actually_refines ___________
+tests/validation/test_ans4_resolution_ladder.py:322: in ladder
+    _require_explicit_c4_flag(factors)
+tests/validation/test_ans4_resolution_ladder.py:230: in _require_explicit_c4_flag
+    raise ValueError(
+E   ValueError: FEM_EM_ANS4_STEP2_C4_CONGRUENT is unset but the conductor_resolution ladder contains factor(s) x0.75 other than x1. On the default flag-off mesher path those rungs mesh a C2-not-C4 port-sheet cut and fail the imported 0.5 % Z class spread — see docs/testing/known-issues.md, the 2026-09-09 `ANS-4` step 2a entry. Set FEM_EM_ANS4_STEP2_C4_CONGRUENT=1 to measure the ladder (c4_congruent_sheets on), or FEM_EM_ANS4_STEP2_C4_CONGRUENT=0 to run the flag-off negative control deliberately.
+______ ERROR at setup of test_every_rung_passes_the_imported_port11_gates ______
+tests/validation/test_ans4_resolution_ladder.py:322: in ladder
+    _require_explicit_c4_flag(factors)
+tests/validation/test_ans4_resolution_ladder.py:230: in _require_explicit_c4_flag
+    raise ValueError(
+E   ValueError: FEM_EM_ANS4_STEP2_C4_CONGRUENT is unset but the conductor_resolution ladder contains factor(s) x0.75 other than x1. On the default flag-off mesher path those rungs mesh a C2-not-C4 port-sheet cut and fail the imported 0.5 % Z class spread — see docs/testing/known-issues.md, the 2026-09-09 `ANS-4` step 2a entry. Set FEM_EM_ANS4_STEP2_C4_CONGRUENT=1 to measure the ladder (c4_congruent_sheets on), or FEM_EM_ANS4_STEP2_C4_CONGRUENT=0 to run the flag-off negative control deliberately.
+_____________ ERROR at setup of test_the_ladder_readout_is_printed _____________
+tests/validation/test_ans4_resolution_ladder.py:322: in ladder
+    _require_explicit_c4_flag(factors)
+tests/validation/test_ans4_resolution_ladder.py:230: in _require_explicit_c4_flag
+    raise ValueError(
+E   ValueError: FEM_EM_ANS4_STEP2_C4_CONGRUENT is unset but the conductor_resolution ladder contains factor(s) x0.75 other than x1. On the default flag-off mesher path those rungs mesh a C2-not-C4 port-sheet cut and fail the imported 0.5 % Z class spread — see docs/testing/known-issues.md, the 2026-09-09 `ANS-4` step 2a entry. Set FEM_EM_ANS4_STEP2_C4_CONGRUENT=1 to measure the ladder (c4_congruent_sheets on), or FEM_EM_ANS4_STEP2_C4_CONGRUENT=0 to run the flag-off negative control deliberately.
+=============================== warnings summary ===============================
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_four_port.py:1: SyntaxWarning: invalid escape sequence '\*'
+    """`PORT-9` step 3 leg (d) — the 4x4 on the gapped birdcage at 50 Ohm.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_lumped_column.py:1: SyntaxWarning: invalid escape sequence '\*'
+    """`PORT-9` step 3 leg (c) — the first port solve on the gapped birdcage.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_lumped_column.py:458: SyntaxWarning: invalid escape sequence '\*'
+    """**Leg (c)'s gate.**  ``|Z₂₁ − Z₄₁|/|Z₂₁| ≤ 0.5%``, with ``Z₃₁`` apart.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_termination_probe.py:1: SyntaxWarning: invalid escape sequence '\*'
+    """`PORT-9` step 3 leg (d0) — the termination probe on the gapped birdcage.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_termination_probe.py:432: SyntaxWarning: invalid escape sequence '\*'
+    """**Negative control (1).**  Z_p = 1e6 Ω reproduces leg (c)'s ``I₁``.
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-vzwor_vb/tests/validation/test_port_birdcage_four_port.py:1: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-vzwor_vb/tests/validation/test_port_birdcage_lumped_column.py:1: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-vzwor_vb/tests/validation/test_port_birdcage_lumped_column.py:458: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-vzwor_vb/tests/validation/test_port_birdcage_termination_probe.py:1: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-vzwor_vb/tests/validation/test_port_birdcage_termination_probe.py:432: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_filed_survivors_outside_the_gated_roots_are_unchanged
+tests/environment/test_dolfinx_api_migration.py::test_filed_survivors_outside_the_gated_roots_are_unchanged
+  /workspace/examples/ansys_benchmarks/two_torus_gap_ports_10MHz/03_two_torus_gap_ports_10MHz.py:398: SyntaxWarning: invalid escape sequence '\*'
+    """
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+ERROR tests/validation/test_ans4_resolution_ladder.py::test_the_record_rung_reproduces_the_fixture - ValueError: FEM_EM_ANS4_STEP2_C4_CONGRUENT is unset but the conductor_resolution ladder contains factor(s) x0.75 other than x1. On the default flag-off mesher path those rungs mesh a C2-not-C4 port-sheet cut and fail the imported 0.5 % Z class spread — see docs/testing/known-issues.md, the 2026-09-09 `ANS-4` step 2a entry. Set FEM_EM_ANS4_STEP2_C4_CONGRUENT=1 to measure the ladder (c4_congruent_sheets on), or FEM_EM_ANS4_STEP2_C4_CONGRUENT=0 to run the flag-off negative control deliberately.
+ERROR tests/validation/test_ans4_resolution_ladder.py::test_every_finer_rung_actually_refines - ValueError: FEM_EM_ANS4_STEP2_C4_CONGRUENT is unset but the conductor_resolution ladder contains factor(s) x0.75 other than x1. On the default flag-off mesher path those rungs mesh a C2-not-C4 port-sheet cut and fail the imported 0.5 % Z class spread — see docs/testing/known-issues.md, the 2026-09-09 `ANS-4` step 2a entry. Set FEM_EM_ANS4_STEP2_C4_CONGRUENT=1 to measure the ladder (c4_congruent_sheets on), or FEM_EM_ANS4_STEP2_C4_CONGRUENT=0 to run the flag-off negative control deliberately.
+ERROR tests/validation/test_ans4_resolution_ladder.py::test_every_rung_passes_the_imported_port11_gates - ValueError: FEM_EM_ANS4_STEP2_C4_CONGRUENT is unset but the conductor_resolution ladder contains factor(s) x0.75 other than x1. On the default flag-off mesher path those rungs mesh a C2-not-C4 port-sheet cut and fail the imported 0.5 % Z class spread — see docs/testing/known-issues.md, the 2026-09-09 `ANS-4` step 2a entry. Set FEM_EM_ANS4_STEP2_C4_CONGRUENT=1 to measure the ladder (c4_congruent_sheets on), or FEM_EM_ANS4_STEP2_C4_CONGRUENT=0 to run the flag-off negative control deliberately.
+ERROR tests/validation/test_ans4_resolution_ladder.py::test_the_ladder_readout_is_printed - ValueError: FEM_EM_ANS4_STEP2_C4_CONGRUENT is unset but the conductor_resolution ladder contains factor(s) x0.75 other than x1. On the default flag-off mesher path those rungs mesh a C2-not-C4 port-sheet cut and fail the imported 0.5 % Z class spread — see docs/testing/known-issues.md, the 2026-09-09 `ANS-4` step 2a entry. Set FEM_EM_ANS4_STEP2_C4_CONGRUENT=1 to measure the ladder (c4_congruent_sheets on), or FEM_EM_ANS4_STEP2_C4_CONGRUENT=0 to run the flag-off negative control deliberately.
+================== 11 passed, 32 warnings, 4 errors in 28.41s ==================
+PASSED
+tests/environment/test_dolfinx_version.py::test_adopted_dolfinx_version_is_exact PASSED
+tests/environment/test_dolfinx_version.py::test_resolved_dolfinx_path_matches_mode_and_interpreter PASSED
+tests/environment/test_dolfinx_version.py::test_h5py_built_against_the_image_hdf5 PASSED
+tests/environment/test_dolfinx_version.py::test_complex_build_is_complex128 PASSED
+tests/validation/test_ans4_resolution_ladder.py::test_the_record_rung_reproduces_the_fixture ERROR
+tests/validation/test_ans4_resolution_ladder.py::test_every_finer_rung_actually_refines ERROR
+tests/validation/test_ans4_resolution_ladder.py::test_every_rung_passes_the_imported_port11_gates ERROR
+tests/validation/test_ans4_resolution_ladder.py::test_the_ladder_readout_is_printed ERROR
+
+==================================== ERRORS ====================================
+________ ERROR at setup of test_the_record_rung_reproduces_the_fixture _________
+tests/validation/test_ans4_resolution_ladder.py:322: in ladder
+    _require_explicit_c4_flag(factors)
+tests/validation/test_ans4_resolution_ladder.py:230: in _require_explicit_c4_flag
+    raise ValueError(
+E   ValueError: FEM_EM_ANS4_STEP2_C4_CONGRUENT is unset but the conductor_resolution ladder contains factor(s) x0.75 other than x1. On the default flag-off mesher path those rungs mesh a C2-not-C4 port-sheet cut and fail the imported 0.5 % Z class spread — see docs/testing/known-issues.md, the 2026-09-09 `ANS-4` step 2a entry. Set FEM_EM_ANS4_STEP2_C4_CONGRUENT=1 to measure the ladder (c4_congruent_sheets on), or FEM_EM_ANS4_STEP2_C4_CONGRUENT=0 to run the flag-off negative control deliberately.
+___________ ERROR at setup of test_every_finer_rung_actually_refines ___________
+tests/validation/test_ans4_resolution_ladder.py:322: in ladder
+    _require_explicit_c4_flag(factors)
+tests/validation/test_ans4_resolution_ladder.py:230: in _require_explicit_c4_flag
+    raise ValueError(
+E   ValueError: FEM_EM_ANS4_STEP2_C4_CONGRUENT is unset but the conductor_resolution ladder contains factor(s) x0.75 other than x1. On the default flag-off mesher path those rungs mesh a C2-not-C4 port-sheet cut and fail the imported 0.5 % Z class spread — see docs/testing/known-issues.md, the 2026-09-09 `ANS-4` step 2a entry. Set FEM_EM_ANS4_STEP2_C4_CONGRUENT=1 to measure the ladder (c4_congruent_sheets on), or FEM_EM_ANS4_STEP2_C4_CONGRUENT=0 to run the flag-off negative control deliberately.
+______ ERROR at setup of test_every_rung_passes_the_imported_port11_gates ______
+tests/validation/test_ans4_resolution_ladder.py:322: in ladder
+    _require_explicit_c4_flag(factors)
+tests/validation/test_ans4_resolution_ladder.py:230: in _require_explicit_c4_flag
+    raise ValueError(
+E   ValueError: FEM_EM_ANS4_STEP2_C4_CONGRUENT is unset but the conductor_resolution ladder contains factor(s) x0.75 other than x1. On the default flag-off mesher path those rungs mesh a C2-not-C4 port-sheet cut and fail the imported 0.5 % Z class spread — see docs/testing/known-issues.md, the 2026-09-09 `ANS-4` step 2a entry. Set FEM_EM_ANS4_STEP2_C4_CONGRUENT=1 to measure the ladder (c4_congruent_sheets on), or FEM_EM_ANS4_STEP2_C4_CONGRUENT=0 to run the flag-off negative control deliberately.
+_____________ ERROR at setup of test_the_ladder_readout_is_printed _____________
+tests/validation/test_ans4_resolution_ladder.py:322: in ladder
+    _require_explicit_c4_flag(factors)
+tests/validation/test_ans4_resolution_ladder.py:230: in _require_explicit_c4_flag
+    raise ValueError(
+E   ValueError: FEM_EM_ANS4_STEP2_C4_CONGRUENT is unset but the conductor_resolution ladder contains factor(s) x0.75 other than x1. On the default flag-off mesher path those rungs mesh a C2-not-C4 port-sheet cut and fail the imported 0.5 % Z class spread — see docs/testing/known-issues.md, the 2026-09-09 `ANS-4` step 2a entry. Set FEM_EM_ANS4_STEP2_C4_CONGRUENT=1 to measure the ladder (c4_congruent_sheets on), or FEM_EM_ANS4_STEP2_C4_CONGRUENT=0 to run the flag-off negative control deliberately.
+=============================== warnings summary ===============================
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_four_port.py:1: SyntaxWarning: invalid escape sequence '\*'
+    """`PORT-9` step 3 leg (d) — the 4x4 on the gapped birdcage at 50 Ohm.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_lumped_column.py:1: SyntaxWarning: invalid escape sequence '\*'
+    """`PORT-9` step 3 leg (c) — the first port solve on the gapped birdcage.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_lumped_column.py:458: SyntaxWarning: invalid escape sequence '\*'
+    """**Leg (c)'s gate.**  ``|Z₂₁ − Z₄₁|/|Z₂₁| ≤ 0.5%``, with ``Z₃₁`` apart.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_termination_probe.py:1: SyntaxWarning: invalid escape sequence '\*'
+    """`PORT-9` step 3 leg (d0) — the termination probe on the gapped birdcage.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_termination_probe.py:432: SyntaxWarning: invalid escape sequence '\*'
+    """**Negative control (1).**  Z_p = 1e6 Ω reproduces leg (c)'s ``I₁``.
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-8yyq3blq/tests/validation/test_port_birdcage_four_port.py:1: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-8yyq3blq/tests/validation/test_port_birdcage_lumped_column.py:1: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-8yyq3blq/tests/validation/test_port_birdcage_lumped_column.py:458: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-8yyq3blq/tests/validation/test_port_birdcage_termination_probe.py:1: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-8yyq3blq/tests/validation/test_port_birdcage_termination_probe.py:432: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_filed_survivors_outside_the_gated_roots_are_unchanged
+tests/environment/test_dolfinx_api_migration.py::test_filed_survivors_outside_the_gated_roots_are_unchanged
+  /workspace/examples/ansys_benchmarks/two_torus_gap_ports_10MHz/03_two_torus_gap_ports_10MHz.py:398: SyntaxWarning: invalid escape sequence '\*'
+    """
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+ERROR tests/validation/test_ans4_resolution_ladder.py::test_the_record_rung_reproduces_the_fixture - ValueError: FEM_EM_ANS4_STEP2_C4_CONGRUENT is unset but the conductor_resolution ladder contains factor(s) x0.75 other than x1. On the default flag-off mesher path those rungs mesh a C2-not-C4 port-sheet cut and fail the imported 0.5 % Z class spread — see docs/testing/known-issues.md, the 2026-09-09 `ANS-4` step 2a entry. Set FEM_EM_ANS4_STEP2_C4_CONGRUENT=1 to measure the ladder (c4_congruent_sheets on), or FEM_EM_ANS4_STEP2_C4_CONGRUENT=0 to run the flag-off negative control deliberately.
+ERROR tests/validation/test_ans4_resolution_ladder.py::test_every_finer_rung_actually_refines - ValueError: FEM_EM_ANS4_STEP2_C4_CONGRUENT is unset but the conductor_resolution ladder contains factor(s) x0.75 other than x1. On the default flag-off mesher path those rungs mesh a C2-not-C4 port-sheet cut and fail the imported 0.5 % Z class spread — see docs/testing/known-issues.md, the 2026-09-09 `ANS-4` step 2a entry. Set FEM_EM_ANS4_STEP2_C4_CONGRUENT=1 to measure the ladder (c4_congruent_sheets on), or FEM_EM_ANS4_STEP2_C4_CONGRUENT=0 to run the flag-off negative control deliberately.
+ERROR tests/validation/test_ans4_resolution_ladder.py::test_every_rung_passes_the_imported_port11_gates - ValueError: FEM_EM_ANS4_STEP2_C4_CONGRUENT is unset but the conductor_resolution ladder contains factor(s) x0.75 other than x1. On the default flag-off mesher path those rungs mesh a C2-not-C4 port-sheet cut and fail the imported 0.5 % Z class spread — see docs/testing/known-issues.md, the 2026-09-09 `ANS-4` step 2a entry. Set FEM_EM_ANS4_STEP2_C4_CONGRUENT=1 to measure the ladder (c4_congruent_sheets on), or FEM_EM_ANS4_STEP2_C4_CONGRUENT=0 to run the flag-off negative control deliberately.
+ERROR tests/validation/test_ans4_resolution_ladder.py::test_the_ladder_readout_is_printed - ValueError: FEM_EM_ANS4_STEP2_C4_CONGRUENT is unset but the conductor_resolution ladder contains factor(s) x0.75 other than x1. On the default flag-off mesher path those rungs mesh a C2-not-C4 port-sheet cut and fail the imported 0.5 % Z class spread — see docs/testing/known-issues.md, the 2026-09-09 `ANS-4` step 2a entry. Set FEM_EM_ANS4_STEP2_C4_CONGRUENT=1 to measure the ladder (c4_congruent_sheets on), or FEM_EM_ANS4_STEP2_C4_CONGRUENT=0 to run the flag-off negative control deliberately.
+================== 11 passed, 32 warnings, 4 errors in 29.58s ==================
+
+## Exit
+- Status: 1
+- Elapsed (s): 31
+- Filtered lines (gmsh optimisation chatter): 0
