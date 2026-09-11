@@ -64,6 +64,7 @@ import numpy as np
 import pytest
 from mpi4py import MPI
 
+from fem_em_solver.utils.instrumentation import report_peak_rss
 from tests.complex_mode import complex_only
 from tests.mesh.test_birdcage_leg_offset import CONDUCTOR_RESOLUTION, RESOLUTION
 from tests.mesh.test_birdcage_port_tags import LEG_COUNT
@@ -141,6 +142,13 @@ STOP_ABOVE_CELLS = 2_200_000
 # value), set to "0" for the two ordinary degree-1 windows.
 DEGREE_2_ENV = "FEM_EM_ANS4_STEP2_DEGREE2"
 
+# `ANS-4` step 2a′: `GEO-32`'s opt-in ``c4_congruent_sheets`` lever, threaded
+# test-side into every ``_four_port_rung`` call. Unset or "0" = off, which is
+# every earlier window's mesh bit for bit; "1" re-runs step 2a's rungs with the
+# cut asymmetry removed, to decide whether the cut also carried the x0.75 Z
+# class-spread break. A flag-on mesh is not the `GEO-19` record mesh.
+C4_CONGRUENT_ENV = "FEM_EM_ANS4_STEP2_C4_CONGRUENT"
+
 # Richardson: fit S(h) = S_inf + C h^p on the three finest degree-1 rungs and
 # report p with the extrapolant.  A fit outside this bracket is not an
 # asymptotic reading and is reported as such rather than as a number.
@@ -192,6 +200,19 @@ def _degree2_enabled():
     if raw is None or not raw.strip():
         return True
     return raw.strip().lower() not in ("0", "false", "no", "off")
+
+
+def _c4_congruent_enabled():
+    """Whether rungs build with ``c4_congruent_sheets``. Default **off**."""
+    raw = os.environ.get(C4_CONGRUENT_ENV)
+    if raw is None or not raw.strip():
+        return False
+    return raw.strip().lower() not in ("0", "false", "no", "off")
+
+
+def _report_rung_rss(comm, label):
+    """`OPS-43` (c): summed peak RSS after a rung. Collective — every rank calls it."""
+    report_peak_rss(comm, label=f"ANS-4 step2 after {label}")
 
 
 
@@ -270,16 +291,20 @@ def ladder():
     factors = () if (rungspec or resolutions) else _ladder_factors()
     rungs = []
     started = time.perf_counter()
+    c4 = _c4_congruent_enabled()
+    c4_tag = f"c4_congruent_sheets={'on' if c4 else 'off'}"
 
     # --- step 2d: the matched-Ansys ladder, explicit (h, degree) per rung.
     for res, deg in rungspec:
         rung = _four_port_rung(
-            f"ANS-4 step2d h={res:g} degree {deg}",
+            f"ANS-4 step2d h={res:g} degree {deg} {c4_tag}",
             zeros,
             FREQUENCY_128_HZ,
             resolution=res,
             degree=deg,
+            c4_congruent_sheets=c4,
         )
+        _report_rung_rss(comm, f"step2d h={res:g} degree {deg} {c4_tag}")
         rung["factor"] = float(res)
         rung["knob"] = "resolution"
         rungs.append(rung)
@@ -287,7 +312,8 @@ def ladder():
         elapsed = time.perf_counter() - started
         if comm.rank == 0:
             print(
-                f"[ANS-4 step2d] rung h={res:g} degree {deg}: {rung['cells']} cells, "
+                f"[ANS-4 step2d] rung h={res:g} degree {deg} ({c4_tag}): "
+                f"{rung['cells']} cells, "
                 f"~{dofs:,.0f} unknowns, mesh {rung['mesh_time']:.1f} s, four drives "
                 f"{rung['sweep_time']:.1f} s at -n {comm.size}; ladder elapsed "
                 f"{elapsed:.0f} s",
@@ -309,18 +335,20 @@ def ladder():
     # already measured.
     for res in resolutions:
         rung = _four_port_rung(
-            f"ANS-4 step2c h={res:g} degree 1",
+            f"ANS-4 step2c h={res:g} degree 1 {c4_tag}",
             zeros,
             FREQUENCY_128_HZ,
             resolution=res,
+            c4_congruent_sheets=c4,
         )
+        _report_rung_rss(comm, f"step2c h={res:g} degree 1 {c4_tag}")
         rung["factor"] = float(res)
         rung["knob"] = "resolution"
         rungs.append(rung)
         elapsed = time.perf_counter() - started
         if comm.rank == 0:
             print(
-                f"[ANS-4 step2c] rung h={res:g}: {rung['cells']} cells, mesh "
+                f"[ANS-4 step2c] rung h={res:g} ({c4_tag}): {rung['cells']} cells, mesh "
                 f"{rung['mesh_time']:.1f} s, four drives {rung['sweep_time']:.1f} s "
                 f"at -n {comm.size}; ladder elapsed {elapsed:.0f} s",
                 flush=True,
@@ -339,17 +367,20 @@ def ladder():
     for factor in factors:
         h_c = float(factor) * CONDUCTOR_RESOLUTION
         rung = _four_port_rung(
-            f"ANS-4 step2 x{factor:g} degree 1",
+            f"ANS-4 step2 x{factor:g} degree 1 {c4_tag}",
             zeros,
             FREQUENCY_128_HZ,
             conductor_resolution=h_c,
+            c4_congruent_sheets=c4,
         )
         rung["factor"] = float(factor)
         rung["knob"] = "conductor_resolution"
         rungs.append(rung)
+        _report_rung_rss(comm, f"step2 x{factor:g} degree 1 {c4_tag}")
         if comm.rank == 0:
             print(
-                f"[ANS-4 step2] rung x{factor:g} degree 1: {rung['cells']} cells, "
+                f"[ANS-4 step2] rung x{factor:g} degree 1 ({c4_tag}): "
+                f"{rung['cells']} cells, "
                 f"mesh {rung['mesh_time']:.1f} s, four drives "
                 f"{rung['sweep_time']:.1f} s at -n {comm.size}",
                 flush=True,
@@ -368,13 +399,15 @@ def ladder():
             )
     elif base is not None:
         degree2 = _four_port_rung(
-            "ANS-4 step2 x1 degree 2",
+            f"ANS-4 step2 x1 degree 2 {c4_tag}",
             zeros,
             FREQUENCY_128_HZ,
             reuse=base,
             degree=2,
+            c4_congruent_sheets=c4,
         )
         degree2["factor"] = float(DEGREE_2_FACTOR)
+        _report_rung_rss(comm, f"step2 x1 degree 2 {c4_tag}")
         if comm.rank == 0:
             print(
                 f"[ANS-4 step2] rung x1 degree 2: {degree2['cells']} cells "

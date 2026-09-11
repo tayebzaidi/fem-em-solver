@@ -204,8 +204,13 @@ def _four_port_rung(
     conductor_resolution=None,
     degree=1,
     resolution=None,
+    c4_congruent_sheets=False,
 ):
     """Build one rung, narrow its four sheets in their own frames, drive all four.
+
+    ``c4_congruent_sheets`` (`ANS-4` step 2a′) is forwarded to ``_build`` and
+    ignored under ``reuse`` (the reused rung's mesh already fixes it); the
+    default ``False`` reproduces every existing rung bit for bit.
 
     Returns the assembled ``Z``/``S``, the circulant class spreads, the
     reciprocity readings and the per-port sheet geometry, all reduced over ranks.
@@ -255,6 +260,7 @@ def _four_port_rung(
             offsets,
             conductor_resolution=conductor_resolution,
             resolution=resolution,
+            c4_congruent_sheets=c4_congruent_sheets,
         )
         tdim = msh.topology.dim
         ncells = int(msh.topology.index_map(tdim).size_global)

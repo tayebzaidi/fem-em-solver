@@ -104,8 +104,15 @@ IDENTITY_BAND = 1.0e-12
 SHEET_AREA_BAND = 1.0e-9
 
 
-def _build(offsets, conductor_resolution=None, resolution=None):
+def _build(
+    offsets, conductor_resolution=None, resolution=None, c4_congruent_sheets=False
+):
     """One graded, gapped, sheeted birdcage rung at the given leg offsets.
+
+    ``c4_congruent_sheets`` is `ANS-4` step 2a′'s additive keyword, forwarded
+    verbatim to ``MeshGenerator.birdcage_port_domain`` (`GEO-32`'s opt-in
+    lever). ``False`` — the generator's own default, and the value every gate
+    passes — builds the mesh bit-identically to before the keyword existed.
 
     ``resolution`` is `ANS-4` step 2c's additive keyword — the **global** cell
     size, the one knob this fixture has never been refined in (`GEO-29`
@@ -147,6 +154,7 @@ def _build(offsets, conductor_resolution=None, resolution=None):
             if conductor_resolution is None
             else float(conductor_resolution)
         ),
+        c4_congruent_sheets=bool(c4_congruent_sheets),
         comm=MPI.COMM_WORLD,
         return_diagnostics=True,
     )
