@@ -17290,3 +17290,48 @@ No band moved. No window died and no ranks were orphaned.
 - The auditor has not run on this closure.
 
 **Hypothesis.** None needed. If a future masked status appears, the likely cause is an idiom whose rc line is followed by more output (for example a trailing `echo`), which this rule deliberately ignores. The §7 row's scope names a `bash_guard.py` shape check as the follow-up ask.
+
+## 2026-09-11T18:40Z (2026-09-11 13:30 CDT slot) — `PORT-14` step 2 — **complete as a negative result: at 64 MHz the C = 100 pF reduction residual is 1.354e-02, above the item's 1e-2 stop line; L and R sit under the 1e-3 band**
+
+**Preflight.** Tree clean at 13:30:06 CDT, `fem-em-solver` Up 22 h. No `recovered/*`. The first open §9 item was item 2, since item 1 (`OPS-45`) is DONE. Executed in-session (tests only, no `src/`), no executor spawned.
+
+**Change (`tests/validation/test_port_lumped_rlc_termination.py`, additive, default path unchanged).**
+- Env `FEM_EM_PORT14_STEP2_64MHZ` (unset/`0` = off) selects `STEP2_FREQUENCY_HZ = 64.0e6` for the `rlc_termination_cases` fixture. The value goes to both `build_four_port_sweep(frequency_hz=…)` and `series_rlc_impedance`. `FREQUENCY_HZ` is not mutated, and a print line names the frequency that ran.
+- With the flag on, the 10 MHz record tests (`…matches_the_circuit_reduction`, `…mis_keyed_floor_record…`) print their readings and then skip with "10 MHz record; 64 MHz has none yet".
+- The baseline test prints the 64 MHz 50 Ω S₁₁/S₂₁ beside the 10 MHz values. Those are restated as `STEP1E_S11_S21_10MHZ` and cited to `20260911T123334Z_PORT-14-step1e.log:1871`.
+- The Γ = 0 "FINDING" text now names the frequency that ran instead of a hard-coded "10 MHz". That branch did not fire in either window.
+
+**Traps checked.**
+- `build_four_port_sweep`'s `reuse=` is mesh-only, and `TimeHarmonicProblem` is rebuilt at `frequency_hz` on every call, so it cannot hand back a 10 MHz sweep. In the log, S₁₁ moved by |Δ| = 6.045e-01 and S₂₁ by 1.915e-01 (`:1886–1887`).
+- The 50 Ω 4×4 goes through `run_n_port_sparameter_sweep` with `PORT-19`'s reuse-on default. The three terminated 3×3s go through `run_lumped_sheet_port_case` directly, which does not reuse factorisations.
+- `c4_congruent_sheets` is off and no step 1b/1c/1d env var is set.
+
+**Windows (harness, complex + `FEM_EM_REQUIRE_COMPLEX=1`, `tests/environment` first, `-s`, `-n 2`, `timeout -k 30 300`, foreground).**
+- **(1) flag on:** `20260911T183201Z_PORT-14-step2.log`. **13 passed, 18 skipped in 113.60 s (`:2053`), Status 0, Elapsed 115 s (`:2121–2122`)**. Standard tier.
+  - 116 085 cells at f = 6.400e+07 Hz, and the 4 drives took 7.40 s (`:1859`).
+  - Z_p (`:1882–1884`): C −j24.86796 Ω, Γ = −0.603378−0.797455j; L +j402.1239 Ω, Γ = +0.969550+0.244893j; R 200 Ω, Γ = +0.6. That matches the item's predicted −j24.87 / +j402.1.
+  - Baseline, asserted (`:1885`): reciprocity 9.950176195e-16 against 1e-3, σ_max 0.999721388 against 1 + 1e-9. Green.
+  - Residuals, printed (`:1891, :1898, :1905`):
+
+    | Element | Residual | × 10 MHz record | × band |
+    |---|---|---|---|
+    | C | **1.354202e-02** | 8.487 | 13.54 |
+    | L | 5.021261e-04 | 0.149 | 0.50 |
+    | R | 7.445387e-04 | 1.027 | 0.74 |
+
+  - Γ = 0 control, asserted on all three (`:1924–1926`): Δ = 0.4806 / 0.2390 / 0.1829, and the miss is 0.4940 / 0.2393 / 0.1836, i.e. 494× / 239× / 184× the band against the 5× requirement. The identity is resolved: no coupling skip.
+- **(2) flag unset:** `20260911T183421Z_PORT-14-step2-default.log`. **15 passed, 16 skipped in 109.02 s (`:2050`), Status 0, Elapsed 111 s (`:2118–2119`)**. The 10 MHz records reproduce with |ratio − 1| = 2.380e-07 / 1.065e-07 / 3.391e-08 (`:1888, :1895, :1903`), identical to step 1e, so the default path is untouched.
+
+**Reading.**
+- The predicted "same order as the 10 MHz floor (1e-3 to 1e-2)" held for L and R.
+- It failed for C. The item's negative-result clause is "Residual > 1e-2 ⇒ record the three residuals in §7 and stop", so this slot recorded them and stopped.
+- The baseline was not red, so no known-issues entry was added.
+- No record was registered, no band moved, and `PORT-14` stays 🟡.
+
+**Records (this commit).** The §7 `PORT-14` step 2 paragraph, §9 item 2 marked DONE as a negative result, two logs, and two test-results rows.
+
+**For the review.**
+- 10 MHz's |Γ| ordering does not carry over. Both C and L have |Γ| = 1 here, yet C rose ×8.5 and L fell ×0.15. So the |Γ| framing (already superseded at 10 MHz) is not the law at 64 MHz either.
+- `PORT-15` gate (i) and `TH-17` are the serial successors. They should not assume a 64 MHz floor ≤ 1e-2 for a capacitive termination.
+
+**Hypothesis.** The C residual follows how hard the termination drives P1's sheet. At −j24.9 Ω the capacitor may partly cancel the leg's inductive reactance, which would put a large current on the terminated sheet and re-excite its non-single-mode (edge-fringing) content. The next step is arithmetic on the solves this module already returns. Print |I_P1| on the terminated sheet per element beside cond(I − S_bb Γ), at 10 and 64 MHz, and look for a correlation with the residual. That costs about two standard windows, needs no new solve route, and changes no band.

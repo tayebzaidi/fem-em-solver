@@ -28,8 +28,9 @@ printed beside each residual as a named systematic, not gated.
 **What this is not.**  Not an absolute-accuracy claim, not a resonance or tuning
 claim, not a coil-loading number: it is a self-consistency identity between two
 routes on one fixture at one frequency, exactly as `PORT-9`/`PORT-11` are.  Read
-PROJECT_PLAN.md §2 before quoting anything here.  10 MHz only — 64 MHz is step 2
-on `PORT-11`'s fixture.
+PROJECT_PLAN.md §2 before quoting anything here.  10 MHz by default; step 2
+(``FEM_EM_PORT14_STEP2_64MHZ=1``) measures the same identity at 64 MHz on the
+same record mesh, printed against the 10 MHz records and not asserted at them.
 
 **Construction is imported, never restated** (`ANS-1` rule): the mesh, the
 narrowed sheets, the material map and the 50 Ω sweep all come from
@@ -123,6 +124,31 @@ REDUCTION_FLOOR_RTOL = 1.0e-3
 # This constant declares the *domain* of the records; it relaxes nothing.
 RECORD_RANK_WIDTH = 2
 
+# --- `PORT-14` step 2: the same identity at 64 MHz, measured not recorded ----
+# `FEM_EM_PORT14_STEP2_64MHZ` (unset/`0` = off, the default path bit-identical)
+# drives the `rlc_termination_cases` fixture at STEP2_FREQUENCY_HZ: both the
+# 50 Ohm sweep and `series_rlc_impedance` take it.  `FREQUENCY_HZ` is not
+# mutated.  The 10 MHz records above are printed against and then *skipped*
+# under the flag — 64 MHz has no record yet (the review rules on these numbers).
+STEP2_ENV = "FEM_EM_PORT14_STEP2_64MHZ"
+STEP2_FREQUENCY_HZ = 64.0e6
+
+# The 10 MHz 50 Ohm baseline's first column, printed beside the 64 MHz one as
+# proof the sweep was rebuilt at the new frequency.  Logged record, restated with
+# its source (`20260911T123334Z_PORT-14-step1e.log:1871`): S11, S21.
+STEP1E_S11_S21_10MHZ = (
+    -3.712480826e-01 + 1.417750480e-01j,
+    +4.671024075e-01 - 4.177746779e-02j,
+)
+
+
+def _step2_enabled():
+    return os.environ.get(STEP2_ENV, "") not in ("", "0")
+
+
+def _rlc_frequency_hz():
+    return STEP2_FREQUENCY_HZ if _step2_enabled() else FREQUENCY_HZ
+
 # The port terminated in the RLC element.  Index 0 of the 4×4, i.e. `P1`, whose
 # 50 Ω column is `PORT-9` leg (d0)'s recorded column.
 TERMINATED_PORT_INDEX = 0
@@ -207,10 +233,11 @@ def _terminated_three_port(sweep, z_termination):
 def rlc_termination_cases():
     """The gated 50 Ω 4×4 plus one terminated 3×3 per element — one mesh, 13 solves."""
     comm = MPI.COMM_WORLD
-    sweep = build_four_port_sweep(frequency_hz=FREQUENCY_HZ)
+    frequency_hz = _rlc_frequency_hz()
+    sweep = build_four_port_sweep(frequency_hz=frequency_hz)
     cases = []
     for label, element in TERMINATIONS:
-        z_term = series_rlc_impedance(FREQUENCY_HZ, **element)
+        z_term = series_rlc_impedance(frequency_hz, **element)
         comm.Barrier()
         t0 = time.perf_counter()
         measured, kept_ids, _results = _terminated_three_port(sweep, z_term)
@@ -236,11 +263,18 @@ def rlc_termination_cases():
     if comm.rank == 0:
         print(
             f"\n[PORT-14 step1] termination-reduction identity at "
-            f"f = {FREQUENCY_HZ:.3e} Hz on the {sweep['cells']}-cell 4-leg fixture; "
+            f"f = {frequency_hz:.3e} Hz on the {sweep['cells']}-cell 4-leg fixture; "
             f"terminated port index {TERMINATED_PORT_INDEX} "
             f"(z0 = {REFERENCE_IMPEDANCE_OHM:.6e} Ohm)",
             flush=True,
         )
+        if _step2_enabled():
+            print(
+                f"[PORT-14 step2] {STEP2_ENV} on: f = {frequency_hz:.6e} Hz "
+                f"(FREQUENCY_HZ = {FREQUENCY_HZ:.6e} Hz unmutated); the 10 MHz "
+                "records are printed against and skipped",
+                flush=True,
+            )
         for case in cases:
             print(
                 f"    {case['label']}: Z_p = {case['z'].real:+.6e}"
@@ -272,6 +306,18 @@ def test_the_fifty_ohm_baseline_reproduces_the_port9_gates(rlc_termination_cases
             f"(band 1 + {PASSIVITY_SIGMA_TOLERANCE:.0e})",
             flush=True,
         )
+        if _step2_enabled():
+            s4 = np.asarray(sweep["s"], dtype=np.complex128)
+            for name, now, then in zip(
+                ("S11", "S21"), (s4[0, 0], s4[1, 0]), STEP1E_S11_S21_10MHZ
+            ):
+                print(
+                    f"[PORT-14 step2] 50 Ohm {name} at {_rlc_frequency_hz():.3e} Hz = "
+                    f"{now.real:+.9e}{now.imag:+.9e}j   10 MHz baseline = "
+                    f"{then.real:+.9e}{then.imag:+.9e}j   |diff| = "
+                    f"{abs(now - then):.6e}",
+                    flush=True,
+                )
     assert reciprocity <= RECIPROCITY_BAND, (
         f"the 50 Ohm 4x4 is reciprocal only to {reciprocity:.3e} against the "
         f"imported {RECIPROCITY_BAND:.0e} band — this is not `PORT-9`'s matrix"
@@ -344,6 +390,8 @@ def test_the_terminated_solve_matches_the_circuit_reduction(rlc_termination_case
         f"terminations {sorted(residuals)} do not match the records' keys "
         f"{sorted(REDUCTION_FLOOR_F_SMALL)}"
     )
+    if _step2_enabled():
+        pytest.skip("10 MHz record; 64 MHz has none yet")
     if comm.size != RECORD_RANK_WIDTH:
         pytest.skip(
             f"REDUCTION_FLOOR_F_SMALL records were set at -n {RECORD_RANK_WIDTH}; "
@@ -414,6 +462,8 @@ def test_a_mis_keyed_floor_record_cannot_reproduce(rlc_termination_cases):
                 flush=True,
             )
 
+    if _step2_enabled():
+        pytest.skip("10 MHz record; 64 MHz has none yet")
     misses = {(m, r): v for m, r, v in pairs}
     for measured_label, record_label, expected in CROSS_ELEMENT_CONTROLS:
         miss = misses[(measured_label, record_label)]
@@ -477,7 +527,8 @@ def test_the_zero_gamma_control_misses(rlc_termination_cases):
         if not reached:
             print(
                 "    FINDING: no termination reaches the Delta floor — the 4-leg "
-                "coupling is too weak for this control at 10 MHz; no factor is "
+                "coupling is too weak for this control at "
+                f"{_rlc_frequency_hz() / 1e6:g} MHz; no factor is "
                 "claimed above the computed ceiling",
                 flush=True,
             )

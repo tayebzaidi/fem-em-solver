@@ -4369,6 +4369,52 @@ lineage. Standard tier.
 >   tighter than it without saying so. The row stays 🟡: step 2 (64 MHz) is
 >   open and now unblocked. Known-issues 2026-09-05 `PORT-14` step 1 entry
 >   retired in the same commit.
+>
+> **Step 2 executed 2026-09-11 (13:30 slot) — negative result: at 64 MHz the
+> capacitor's residual is above the item's 1e-2 stop line.** Env
+> `FEM_EM_PORT14_STEP2_64MHZ=1` drives the same fixture, sweep and
+> terminations at 64 MHz on the 116 085-cell record mesh (`c4_congruent_sheets`
+> off). The 10 MHz record tests print their readings and then skip. The default
+> path is unchanged. Anchor `20260911T183201Z_PORT-14-step2.log`, `-n 2`, standard:
+> 13 passed, 18 skipped in 113.60 s (`:2053`), Status 0, Elapsed 115 s (`:2122`).
+>
+> | Element | Z_p at 64 MHz | Γ | residual | × 10 MHz record | × band |
+> |---|---|---|---|---|---|
+> | C = 100 pF | −j24.86796 Ω | −0.603378−0.797455j | **1.354202e-02** | 8.487 | 13.54 |
+> | L = 1 µH | +j402.1239 Ω | +0.969550+0.244893j | 5.021261e-04 | 0.149 | 0.50 |
+> | R = 200 Ω | 200 Ω | +0.600000 | 7.445387e-04 | 1.027 | 0.74 |
+>
+> (`:1882–1884, :1891, :1898, :1905`.)
+> - **Anchors (asserted, imported, unmoved), green.** 50 Ω reciprocity
+>   9.950176195e-16 against 1e-3, σ_max 0.999721388 against 1 + 1e-9 (`:1885`).
+>   Γ = 0 control asserted on all three: Δ = 0.4806 / 0.2390 / 0.1829, miss
+>   0.4940 / 0.2393 / 0.1836 (`:1924–1926`). The identity is resolved and no
+>   coupling skip fired.
+> - **Proof the sweep was rebuilt.** S₁₁ is +4.488964206e-02+5.803022759e-01j
+>   against 10 MHz −3.712480826e-01+1.417750480e-01j, and S₂₁ moved by 1.915e-01
+>   (`:1886–1887`). The `reuse=` route is mesh-only and the problem is rebuilt at
+>   `frequency_hz`.
+> - **Routes.** The 50 Ω 4×4 rides `PORT-19`'s reuse-on default; the terminated
+>   3×3s go through `run_lumped_sheet_port_case` directly.
+> - **Default-path control.** `20260911T183421Z_PORT-14-step2-default.log`
+>   (flag unset): 15 passed, 16 skipped, Status 0, 111 s. The 10 MHz records
+>   reproduce to |ratio − 1| = 2.380e-07 / 1.065e-07 / 3.391e-08
+>   (`:1888, :1895, :1903`).
+>
+> **Reading.** L and R stay under the 1e-3 band; C does not, and it is above
+> 1e-2. Both C and L have |Γ| = 1, yet C rose ×8.5 while L fell ×0.15, so
+> 10 MHz's ordering does not carry over. Per the item's negative-result clause
+> the three residuals are recorded here and the step stopped.
+>
+> **Not changed.** No 64 MHz record is registered, no band moves, and `PORT-15`
+> gate (i) is not opened. `PORT-15` gate (i) and `TH-17` must not assume a 64 MHz
+> floor ≤ 1e-2 for a capacitive termination. The row stays 🟡.
+>
+> **Hypothesis for the next step (unqueued).** The residual may follow the
+> terminated sheet's current. −j24.9 Ω may partly cancel the leg reactance and
+> re-excite the sheet's fringing content. The next step would print |I_P1| per
+> element and cond(I − S_bb Γ) at 10 and 64 MHz from the solves the module
+> already returns.
 
 **`PORT-15` — the circuit layer (HFSS + Circuit)** 🟡 *(**step 1 ✅
 2026-09-05, 22:30 slot** — the algebra and its three identities; digits in
@@ -7836,7 +7882,13 @@ verbatim, trailing `; exit $rc` included, and the executor reads the
    what the row says: report and stop. A regression gate red ⇒ do not land;
    park on `attempt/*` and mark this item BLOCKED (rule (d)).
 
-2. **`PORT-14` step 2 — measure the termination-reduction identity at 64 MHz
+2. **✅ DONE as a negative result (2026-09-11 13:30 slot; anchor
+   `20260911T183201Z_PORT-14-step2.log`, default-path control
+   `20260911T183421Z_PORT-14-step2-default.log`).** Baseline gates and the
+   Γ = 0 control green at 64 MHz; **C = 100 pF residual 1.354202e-02 > 1e-2**
+   ⇒ the three residuals are recorded in the §7 `PORT-14` entry and the step
+   stopped there, per its negative-result clause.
+   **`PORT-14` step 2 — measure the termination-reduction identity at 64 MHz
    on the record mesh** (implementer; tests only; complex; standard; `main`;
    independent).
    **Why:** step 1e registered the 10 MHz floor, and the 2026-09-06 weekly ruling
