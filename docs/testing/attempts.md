@@ -17259,3 +17259,34 @@ No band moved. No window died and no ranks were orphaned.
 - Returning ×0.0095 to the default ladder is not warranted on these numbers. A diagnosis item is the next step, for example a flag-on per-term accounting ladder across ×1 / ×0.012 / ×0.0095. The conductor-less residual rose from 7.52e-02 at ×1 to 8.41e-02 at ×0.0095, per the known-issues entry.
 
 **Hypothesis.** The common-mode ≈ 2e-2 is in the accounting terms, not the sheets. The conductor (surface-loss) term, or the sheet power term on a refined rim, likely stops converging at ×0.0095. A three-rung flag-on per-term print at `-n 4` (≈ 5 min) would show which term drifts.
+
+## 2026-09-11T17:04Z (2026-09-11 12:00 CDT slot) — `OPS-45` — **complete: the harness footer honours a final `[capture] rc=` line; landed `d19a88e`**
+
+**Preflight.** Tree clean at 12:00:06 CDT, `fem-em-solver` Up 21 h. No `recovered/*`. First open §9 item: item 1, `OPS-45`. Executed in-session (host-side shell only, no container solve, no `src/`); no executor spawned.
+
+**Change (`scripts/testing/run_and_log.sh`, normal mode only).**
+- After the command returns, if it exited 0, the last non-blank line of the log is matched against `^\[capture\] rc=([0-9]+)[[:space:]]*$`. If rc ≠ 0: `STATUS_TEXT`/`ROW_EXIT` = rc, harness exit = rc, and `## Exit` gains `- Capture note: command exited 0 but its output's final [capture] rc= line reads <rc>; Status is the rc line`.
+- The last line of the log is the command's last output line because the `set -x` trace precedes the command.
+- A non-zero command exit is never overwritten. `--capture-orphan` is untouched.
+- One addition beyond the row's letter: an rc above 255 exits 1 (Status still prints rc), since `exit 256` would read as 0. The header comment documents the new exit rule.
+
+**Windows (all smoke, host-side, `timeout -k 30 120`).**
+- Anchor `20260911T170149Z_OPS-45.log`, Elapsed 4 s, **0 failures**:
+  - (i) `- Status: 1`, exit 1, row Exit 1, note present (`:42–52`);
+  - (ii) the documented idiom with `exit $rc`, rc 3: Status 3, no note (`:61–70`);
+  - (iii) rc line not last: Status 0 (`:79–88`);
+  - (iv) `rc=0` line then `exit 5`: Status 5 (`:97–106`).
+  - Every call added exactly one row.
+- **Negative control (asserted):** case (i) through `git show 06044b4:scripts/testing/run_and_log.sh`, copied to `logs/.ops45_scratch/`, gives `- Status: 0`, exit 0, row 0 (`:118–127`). The defect reproduces there.
+- Regression `20260911T170202Z_OPS-45-regress-43a.log` (`test_durable_capture.sh`): 0 failures, Elapsed 16 s, the same as the `OPS-43a` record.
+- Regression `20260911T170227Z_OPS-45-regress-43b.log` (`test_orphan_guard.sh`): 0 failures, Elapsed 6 s.
+- Nested-call logs and rows written by these gates are disclosed in the commit: `OPS-45-i/-ii/-iii/-iv/-control`, `OPS-43a-killed/-capture/-norc`, `OPS-43b-hostonly/-proceed`.
+
+**Records (in `d19a88e`).** §5.1 gains the sentence (the footer honours a final rc line; still write `exit $rc`). The §7 `OPS-45` row is ✅ with its log citations, and §9 item 1 is marked DONE.
+
+**For the review.**
+- §9's bold note ("the executor reads the `[capture] rc=` line rather than the footer until `OPS-45` lands") can now be retired or kept as belt-and-braces. That is the review's call, and this slot did not edit it.
+- The masked `WF-6` step 4h row stays as written, which is append-only and in scope per the row.
+- The auditor has not run on this closure.
+
+**Hypothesis.** None needed. If a future masked status appears, the likely cause is an idiom whose rc line is followed by more output (for example a trailing `echo`), which this rule deliberately ignores. The §7 row's scope names a `bash_guard.py` shape check as the follow-up ask.
