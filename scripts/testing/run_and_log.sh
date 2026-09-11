@@ -20,6 +20,10 @@ set -euo pipefail
 #       CMD, and a dry run, skip the check. If the process listing itself
 #       cannot be taken (service down), the check warns and proceeds: the
 #       wrapped command then fails visibly in its own log.
+#   rc  (OPS-45) the command exited 0 but the final non-blank line of its
+#       output is `[capture] rc=<rc>` with rc != 0: Status, the row's Exit and
+#       the harness exit are rc (exit 1 if rc > 255), and `## Exit` carries a
+#       `Capture note:`. Guards a durable-capture command missing `exit $rc`.
 #   76  NO_RC_CAPTURE (OPS-43 (a)): --capture-orphan found no `[capture] rc=`
 #       line in the raw file. The log is still written, with
 #       `Status: unknown (no rc line)`, and one row is appended with Exit
@@ -327,6 +331,21 @@ else
   STATUS_TEXT="$STATUS"
   ROW_EXIT="$STATUS"
   EXIT_CODE="$STATUS"
+  # OPS-45: a durable-capture command that drops its trailing `exit $rc` exits
+  # with `cat`'s 0 over a failed window (WF-6 step 4h, 2026-09-11). If the
+  # command exited 0 and its FINAL non-blank output line is a non-zero
+  # `[capture] rc=` line, that line is the status. A non-zero command exit is
+  # never overwritten, and an rc line followed by further output is ignored.
+  if [[ "$STATUS" -eq 0 ]]; then
+    LAST_LINE="$(grep -v '^[[:space:]]*$' "$LOG_FILE" | tail -n 1)"
+    if [[ "$LAST_LINE" =~ ^\[capture\]\ rc=([0-9]+)[[:space:]]*$ ]] && (( 10#${BASH_REMATCH[1]} != 0 )); then
+      CAPTURE_RC=$((10#${BASH_REMATCH[1]}))
+      STATUS_TEXT="$CAPTURE_RC"
+      ROW_EXIT="$CAPTURE_RC"
+      EXIT_CODE=$(( CAPTURE_RC > 255 ? 1 : CAPTURE_RC ))
+      CAPTURE_RC_NOTE="command exited 0 but its output's final [capture] rc= line reads $CAPTURE_RC; Status is the rc line"
+    fi
+  fi
 fi
 set -e
 
@@ -389,6 +408,8 @@ fi
   echo "- Filtered lines (gmsh optimisation chatter): ${ELIDED_LINES:-0}"
   if [[ "$CAPTURE_MODE" == 1 ]]; then
     echo "- Capture note: Elapsed is this capture call's own time, not the window's; Status is the raw file's last [capture] rc= line"
+  elif [[ -n "${CAPTURE_RC_NOTE:-}" ]]; then
+    echo "- Capture note: $CAPTURE_RC_NOTE"
   fi
 } >> "$LOG_FILE"
 

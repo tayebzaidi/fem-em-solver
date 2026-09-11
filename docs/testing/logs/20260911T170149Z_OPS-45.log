@@ -1,0 +1,133 @@
+# Test Run
+- Chunk: OPS-45
+- Commit: 155686e601effaa3694882c3c3de369c5173ef15
+- Time (UTC): 2026-09-11 17:01:49
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.5.1
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: timeout -k 30 120 bash scripts/testing/test_capture_status.sh
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 24
+drwxr-xr-x  3 taz5297 taz5297 4096 Sep  4 23:31 .
+drwxr-xr-x 16 taz5297 taz5297 4096 Sep 11 12:01 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  721 Sep  3 13:49 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 4264 Sep 10 12:01 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.5.1
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'timeout -k 30 120 bash scripts/testing/test_capture_status.sh'
+== (i) rc line last, command exits 0 ==
+command: echo x; echo "[capture] rc=1"
+Log written: /home/taz5297/Development/fem-em-solver/docs/testing/logs/20260911T170149Z_OPS-45-i.log
+Index updated: /home/taz5297/Development/fem-em-solver/docs/testing/test-results.md
+harness exit=1 rows 1644 -> 1645 log=/home/taz5297/Development/fem-em-solver/docs/testing/logs/20260911T170149Z_OPS-45-i.log
+PASS: (i) rc line last, command exits 0: log exists
+Exit block:
+## Exit
+- Status: 1
+- Elapsed (s): 1
+- Filtered lines (gmsh optimisation chatter): 0
+- Capture note: command exited 0 but its output's final [capture] rc= line reads 1; Status is the rc line
+last row: | 2026-09-11 17:01:50 | OPS-45-i | `155686e601effaa3694882c3c3de369c5173ef15` | 1 | `host=MCBMR-RAD02;os=Linux 6.6.87.2-microsoft-standard-WSL2 x86_64;python=Python 3.12.3;compose=docker-compose.yml` | 1 | `20260911T170149Z_OPS-45-i.log` |
+PASS: (i) rc line last, command exits 0: footer reads '- Status: 1'
+PASS: (i) rc line last, command exits 0: harness exits 1 (got 1)
+PASS: (i) rc line last, command exits 0: test-results rows rise by exactly 1 (1644 -> 1645)
+PASS: (i) rc line last, command exits 0: new row Exit is 1 (got '1')
+PASS: (i) rc line last, command exits 0: new row names this log
+PASS: (i) rc line last, command exits 0: capture note count is 1 (got 1)
+== (ii) documented idiom with exit $rc, rc 3 ==
+command: ( echo y; exit 3 ) > logs/ops45-idiom-20260911T170149Z-raw.log 2>&1; rc=$?; echo "[capture] rc=$rc" >> logs/ops45-idiom-20260911T170149Z-raw.log; cat logs/ops45-idiom-20260911T170149Z-raw.log; exit $rc
+Log written: /home/taz5297/Development/fem-em-solver/docs/testing/logs/20260911T170150Z_OPS-45-ii.log
+Index updated: /home/taz5297/Development/fem-em-solver/docs/testing/test-results.md
+harness exit=3 rows 1645 -> 1646 log=/home/taz5297/Development/fem-em-solver/docs/testing/logs/20260911T170150Z_OPS-45-ii.log
+PASS: (ii) documented idiom with exit $rc, rc 3: log exists
+Exit block:
+## Exit
+- Status: 3
+- Elapsed (s): 0
+- Filtered lines (gmsh optimisation chatter): 0
+last row: | 2026-09-11 17:01:51 | OPS-45-ii | `155686e601effaa3694882c3c3de369c5173ef15` | 0 | `host=MCBMR-RAD02;os=Linux 6.6.87.2-microsoft-standard-WSL2 x86_64;python=Python 3.12.3;compose=docker-compose.yml` | 3 | `20260911T170150Z_OPS-45-ii.log` |
+PASS: (ii) documented idiom with exit $rc, rc 3: footer reads '- Status: 3'
+PASS: (ii) documented idiom with exit $rc, rc 3: harness exits 3 (got 3)
+PASS: (ii) documented idiom with exit $rc, rc 3: test-results rows rise by exactly 1 (1645 -> 1646)
+PASS: (ii) documented idiom with exit $rc, rc 3: new row Exit is 3 (got '3')
+PASS: (ii) documented idiom with exit $rc, rc 3: new row names this log
+PASS: (ii) documented idiom with exit $rc, rc 3: capture note count is 0 (got 0)
+== (iii) rc line not last ==
+command: echo "[capture] rc=1"; echo tail
+Log written: /home/taz5297/Development/fem-em-solver/docs/testing/logs/20260911T170151Z_OPS-45-iii.log
+Index updated: /home/taz5297/Development/fem-em-solver/docs/testing/test-results.md
+harness exit=0 rows 1646 -> 1647 log=/home/taz5297/Development/fem-em-solver/docs/testing/logs/20260911T170151Z_OPS-45-iii.log
+PASS: (iii) rc line not last: log exists
+Exit block:
+## Exit
+- Status: 0
+- Elapsed (s): 0
+- Filtered lines (gmsh optimisation chatter): 0
+last row: | 2026-09-11 17:01:51 | OPS-45-iii | `155686e601effaa3694882c3c3de369c5173ef15` | 0 | `host=MCBMR-RAD02;os=Linux 6.6.87.2-microsoft-standard-WSL2 x86_64;python=Python 3.12.3;compose=docker-compose.yml` | 0 | `20260911T170151Z_OPS-45-iii.log` |
+PASS: (iii) rc line not last: footer reads '- Status: 0'
+PASS: (iii) rc line not last: harness exits 0 (got 0)
+PASS: (iii) rc line not last: test-results rows rise by exactly 1 (1646 -> 1647)
+PASS: (iii) rc line not last: new row Exit is 0 (got '0')
+PASS: (iii) rc line not last: new row names this log
+PASS: (iii) rc line not last: capture note count is 0 (got 0)
+== (iv) rc=0 line, command exits 5 ==
+command: echo "[capture] rc=0"; exit 5
+Log written: /home/taz5297/Development/fem-em-solver/docs/testing/logs/20260911T170151Z_OPS-45-iv.log
+Index updated: /home/taz5297/Development/fem-em-solver/docs/testing/test-results.md
+harness exit=5 rows 1647 -> 1648 log=/home/taz5297/Development/fem-em-solver/docs/testing/logs/20260911T170151Z_OPS-45-iv.log
+PASS: (iv) rc=0 line, command exits 5: log exists
+Exit block:
+## Exit
+- Status: 5
+- Elapsed (s): 1
+- Filtered lines (gmsh optimisation chatter): 0
+last row: | 2026-09-11 17:01:52 | OPS-45-iv | `155686e601effaa3694882c3c3de369c5173ef15` | 1 | `host=MCBMR-RAD02;os=Linux 6.6.87.2-microsoft-standard-WSL2 x86_64;python=Python 3.12.3;compose=docker-compose.yml` | 5 | `20260911T170151Z_OPS-45-iv.log` |
+PASS: (iv) rc=0 line, command exits 5: footer reads '- Status: 5'
+PASS: (iv) rc=0 line, command exits 5: harness exits 5 (got 5)
+PASS: (iv) rc=0 line, command exits 5: test-results rows rise by exactly 1 (1647 -> 1648)
+PASS: (iv) rc=0 line, command exits 5: new row Exit is 5 (got '5')
+PASS: (iv) rc=0 line, command exits 5: new row names this log
+PASS: (iv) rc=0 line, command exits 5: capture note count is 0 (got 0)
+== negative control: pinned pre-change harness 06044b4 ==
+PASS: control: pinned harness extracted from 06044b4
+control: CAPTURE_RC mentions in pinned harness = 0
+== control (i) through 06044b4 harness ==
+command: echo x; echo "[capture] rc=1"
+Log written: /home/taz5297/Development/fem-em-solver/docs/testing/logs/20260911T170152Z_OPS-45-control.log
+Index updated: /home/taz5297/Development/fem-em-solver/docs/testing/test-results.md
+harness exit=0 rows 1648 -> 1649 log=/home/taz5297/Development/fem-em-solver/docs/testing/logs/20260911T170152Z_OPS-45-control.log
+PASS: control (i) through 06044b4 harness: log exists
+Exit block:
+## Exit
+- Status: 0
+- Elapsed (s): 0
+- Filtered lines (gmsh optimisation chatter): 0
+last row: | 2026-09-11 17:01:53 | OPS-45-control | `155686e601effaa3694882c3c3de369c5173ef15` | 0 | `host=MCBMR-RAD02;os=Linux 6.6.87.2-microsoft-standard-WSL2 x86_64;python=Python 3.12.3;compose=docker-compose.yml` | 0 | `20260911T170152Z_OPS-45-control.log` |
+PASS: control (i) through 06044b4 harness: footer reads '- Status: 0'
+PASS: control (i) through 06044b4 harness: harness exits 0 (got 0)
+PASS: control (i) through 06044b4 harness: test-results rows rise by exactly 1 (1648 -> 1649)
+PASS: control (i) through 06044b4 harness: new row Exit is 0 (got '0')
+PASS: control (i) through 06044b4 harness: new row names this log
+PASS: control (i) through 06044b4 harness: capture note count is 0 (got 0)
+== summary: 0 failure(s) ==
+
+## Exit
+- Status: 0
+- Elapsed (s): 4
+- Filtered lines (gmsh optimisation chatter): 0
