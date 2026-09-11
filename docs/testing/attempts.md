@@ -17335,3 +17335,33 @@ No band moved. No window died and no ranks were orphaned.
 - `PORT-15` gate (i) and `TH-17` are the serial successors. They should not assume a 64 MHz floor ≤ 1e-2 for a capacitive termination.
 
 **Hypothesis.** The C residual follows how hard the termination drives P1's sheet. At −j24.9 Ω the capacitor may partly cancel the leg's inductive reactance, which would put a large current on the terminated sheet and re-excite its non-single-mode (edge-fringing) content. The next step is arithmetic on the solves this module already returns. Print |I_P1| on the terminated sheet per element beside cond(I − S_bb Γ), at 10 and 64 MHz, and look for a correlation with the residual. That costs about two standard windows, needs no new solve route, and changes no band.
+
+## 2026-09-11T20:15Z (2026-09-11 15:00 CDT slot) — `WF-6` step 4i — **complete: the common-mode ×0.0095 residual is the terminal-form Cauchy–Schwarz deficit (C/terminal 1.021491 vs 1.010592 at ×1); both asserted anchors green**
+
+**Preflight.** Tree clean at 15:00:06 CDT, `fem-em-solver` Up 24 h, no `recovered/*`. §9 items 1–2 DONE, so this slot took item 3. Delegated to `implementer` in the foreground; the slot reviewed the diff and re-read the log lines below.
+
+**Change (`tests/validation/test_birdcage_b1_plus_closed_form.py`, additive, test-side only, no `src/`).** Env `FEM_EM_WF6_EXACT_SHARES` (unset/`0` = off, nothing new computed) makes the `rung` fixture call `PORT-16`'s `_exact_shares` on P1/P2 (names only, with `DISCRETE_IDENTITY_RTOL`) and print the exact shares, identity, `C`, `C/terminal` and the CS-corrected residual. Two new tests skip unless the env is set: `test_the_exact_discrete_identity_closes_on_every_rung` (anchor (a)) and `test_the_terminal_residuals_reproduce_step_4h` (anchor (b), 1e-5). The default path was not re-run in a separate flag-off window; with the env unset, the only change is an `exact = None` key and two skips.
+
+**Windows (harness, complex + `FEM_EM_REQUIRE_COMPLEX=1`, `tests/environment` first, `-n 4`, `-v -s`, durable capture with `; exit $rc`, foreground).**
+- Collect-only `20260911T200221Z_WF-6-step4i-collect.log`: 27 items, Status 0, Elapsed 4 s (`:80–81`). **Deviation:** the executor piped this one host-side harness call through `tail`; the log file is complete and the two measuring windows were not piped.
+- **(1)** `C4_CONGRUENT=1 EXACT_SHARES=1`, keys `x1 x0.0095`, `timeout -k 30 590`: `20260911T200251Z_WF-6-step4i.log`. **1 failed / 22 passed / 4 skipped in 196.11 s (`:4183`), `[capture] rc=1` (`:4406`), Status 1, Elapsed 198 s (`:4409–4410`).** The one failure is the by-design `test_power_accounting_closes_on_every_rung[x0.0095]` (known-issues 2026-09-11). Heavy tier.
+- **(2)** same flags, key `x0.012`, `timeout -k 30 400`: `20260911T200634Z_WF-6-step4i-x0.012.log`. **16 passed / 3 skipped in 101.95 s (`:2134`), `[capture] rc=0` (`:2330`), Status 0, Elapsed 104 s (`:2333–2334`).**
+- `pgrep -c python3` in the container afterwards: 0.
+
+**Readings (P1 / P2).**
+
+| Rung | cells | identity rel dev (≤ 1e-6, asserted) | terminal residual | rel vs 4h (≤ 1e-5, asserted) | C/terminal (printed) | CS-corrected (printed) |
+|---|---|---|---|---|---|---|
+| ×1 | 116 118 | 2.345e-15 / 1.048e-14 | 9.795942e-03 / 9.796517e-03 | 6.504e-09 / 3.162e-08 | 1.010592 / 1.010593 (`:2047, :2051`) | 1.012e-15 / 4.681e-15 |
+| ×0.012 | 148 988 | 2.215e-15 / 1.384e-15 | 8.113595e-03 / 8.111880e-03 | no record (skip) | 1.008756 / 1.008757 (`x0.012.log:2018, :2022`) | 7.578e-16 / 5.053e-16 |
+| ×0.0095 | 197 284 | 4.727e-15 / 3.647e-15 | 1.968410e-02 / 1.968464e-02 | 3.388e-08 / 2.444e-07 | 1.021491 / 1.021491 (`:4057, :4061`) | 1.661e-15 / 1.150e-15 |
+
+Per-sheet ceiling/terminal is uniform to ±1e-6 within each port. `[mem]` 2.62 / 3.39 / 4.72 GiB summed.
+
+**Reading.** The item's third negative-result branch fired: CS-corrected ≪ 1e-2 on every rung, so the residual is the deficit, not an assembly leak or the conductor term. **Caveat, stated by this slot:** `supplied_terminal = P_vol + C` holds to 1e-15 on every rung, so it is an algebraic identity of the discrete solve (as on `PORT-16`'s loaded ×1) and that branch could not have failed. The discriminating reading is C/terminal − 1 = 1.059 % / 0.876 % / 2.149 % at ×1 / ×0.012 / ×0.0095. It is non-monotone in h, and on the ×0.0095 mesh the sheet field is markedly less uniform across the gap. No band, record or `LADDER` moved, no `PORT-16` re-disposition, no known-issues row (the branch that asks for one did not fire), and `WF-6` stays 🟡.
+
+**Records (this commit).** Test module, three logs, three test-results rows, the §7 `WF-6` step 4i paragraph and tier cell, and §9 item 3 marked DONE.
+
+**For the review.** Whether the fixture's power accounting should switch to the exact (ceiling) form, which would close ×0.0095 to machine precision by construction and so stop being a gate. The alternative is a gate on C/terminal − 1 itself, which is the physical reading.
+
+**Hypothesis.** The ×0.0095 jump in C/terminal comes from the mesh's rim/gap cells, not from h as such, which would explain the non-monotone ladder. Next step: print the per-sheet |E_t| spread (max/min over sheet facets) beside C/terminal on the three rungs. That is arithmetic on fields the fixture already holds: one heavy window and no band change.

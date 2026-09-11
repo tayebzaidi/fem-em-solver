@@ -112,6 +112,13 @@ record assert exactly as step 4g left them.  Measured
 (1.968410e-02 / 1.968464e-02) but the residual stays above the unmoved 1e-2,
 so the rung stays out of ``LADDER``.
 
+**Step 4i (2026-09-11) — opt-in exact shares, test-side only.**
+``FEM_EM_WF6_EXACT_SHARES=1`` prints `PORT-16`'s form-level shares beside the
+terminal residual on P1/P2 of every rung and asserts only (a) the discrete
+identity at the imported 1e-6 and (b) that the terminal residuals reproduce
+4h's flag-on readings to 1e-5.  ``C/terminal`` and the CS-corrected residual
+are printed, never asserted.  Unset, nothing new is computed.
+
 Run (complex build required)::
 
     scripts/testing/run_and_log.sh WF-6 "docker compose exec -T fem-em-solver \\
@@ -155,6 +162,11 @@ from tests.validation.test_birdcage_b1_quadrature import (
     quadrature_phase_weights,
 )
 from tests.validation.test_port_birdcage_four_port import build_four_port_sweep
+# `WF-6` step 4i: names only, never that module's fixtures.
+from tests.validation.test_birdcage_power_identity import (
+    DISCRETE_IDENTITY_RTOL,
+    _exact_shares,
+)
 
 # The two trustworthy rungs of the fixture's **global** ``resolution`` (the
 # conductor grading is untouched — `ANS-4` step 2a's negative result is that
@@ -201,6 +213,41 @@ PREDICTED_FLAG_ON_X1_CELLS = 116118
 # The flag-on reading is printed beside them with its ratio; the ratio is
 # *predicted* to fall, never asserted (§9 rule (e)).
 FLAG_OFF_X0_0095_RESIDUALS = {"P1": 1.853642e-02, "P2": 1.419812e-02}
+
+# **`WF-6` step 4i — the exact (form-level) shares beside the terminal ones,
+# opt-in, test-side only.**  Unset or "0" = off: the rung fixture computes and
+# prints nothing new and every test above runs exactly as step 4h left it.
+# "1" calls `PORT-16`'s ``_exact_shares`` on the P1 and P2 drives of every
+# rung and prints P_src,exact / P_vol / P_sheet,exact, the discrete identity's
+# relative deviation, the Cauchy-Schwarz ceiling total ``C``, ``C/terminal``
+# and the CS-corrected residual ``|supplied_terminal - (P_vol + C)|/supplied``.
+EXACT_SHARES_ENV = "FEM_EM_WF6_EXACT_SHARES"
+# **Anchor (b), the reproduction control** — step 4h's flag-on terminal
+# residuals on this fixture (`20260911T140329Z_WF-6-step4h.log:2043-2044`
+# for x1, `:4034-4035` for x0.0095), reproduced to ``REPRODUCTION_RTOL``.  A
+# different mesh or flag cannot land 1.968410e-02 to 1e-5, so this is what
+# says the exact shares below were read on 4h's fixture.  x0.012 has no
+# flag-on record: printed, not asserted.
+STEP4H_FLAG_ON_RESIDUALS = {
+    "x1": {"P1": 9.795942e-03, "P2": 9.796517e-03},
+    "x0.0095": {"P1": 1.968410e-02, "P2": 1.968464e-02},
+}
+REPRODUCTION_RTOL = 1.0e-5
+# *Predicted, printed only* (rule (e) — no prior measurement on the unloaded
+# fixture): `PORT-16`'s loaded-x1 ratio ceiling/terminal = 1.010593
+# (`20260907T050816Z_PORT-16.log:1884`).
+PREDICTED_C_OVER_TERMINAL = 1.01
+
+
+def _exact_shares_enabled():
+    """Whether the rung fixture computes the exact shares. Default **off**."""
+    raw = os.environ.get(EXACT_SHARES_ENV)
+    if raw is None or not raw.strip():
+        return False
+    return raw.strip().lower() not in ("0", "false", "no", "off")
+
+
+EXACT_SHARES = _exact_shares_enabled()
 
 
 def _c4_congruent_enabled():
@@ -423,6 +470,13 @@ def rung(request):
         else float("inf")
     )
     shares = {pid: _power_shares(sweep, solves[pid]) for pid in ("P1", "P2")}
+    # Step 4i (opt-in): every term MPI-reduced inside the helpers, so the
+    # dict is identical on every rank.  Collective — every rank calls it.
+    exact = (
+        {pid: _exact_shares(sweep, solves[pid]) for pid in ("P1", "P2")}
+        if EXACT_SHARES
+        else None
+    )
 
     gate_idx = _gate_indices()
     reading = {
@@ -437,6 +491,7 @@ def rung(request):
         "worst_radius": worst_radius,
         "covariance": covariance,
         "shares": shares,
+        "exact": exact,
         "valid": mask,
         "points": points,
         "gate_idx": gate_idx,
@@ -462,6 +517,68 @@ def _previous_key(key):
 def _residual(sh):
     total = sh["phantom"] + sh["conductor"] + sh["sheet_total"]
     return abs(sh["supplied"] - total) / abs(sh["supplied"])
+
+
+def _exact_readings(sh, ex):
+    """Step 4i's derived numbers for one drive, from reduced scalars only."""
+    identity = abs(ex["p_src"] - ex["p_vol"] - ex["sheet_field_total"]) / abs(
+        ex["p_src"]
+    )
+    c_total = ex["sheet_ceiling_total"]
+    cs_corrected = abs(sh["supplied"] - (ex["p_vol"] + c_total)) / abs(sh["supplied"])
+    return {
+        "identity": identity,
+        "c_over_terminal": c_total / sh["sheet_total"],
+        "terminal_residual": _residual(sh),
+        "cs_corrected": cs_corrected,
+    }
+
+
+def _print_exact(reading):
+    spec = reading["spec"]
+    print(
+        f"[WF-6 step4i] rung {spec['key']}: exact (form-level) shares "
+        f"({EXACT_SHARES_ENV}=1); identity ASSERTED <= imported "
+        f"DISCRETE_IDENTITY_RTOL {DISCRETE_IDENTITY_RTOL:g}; C/terminal and the "
+        "CS-corrected residual PRINTED, NEVER ASSERTED",
+        flush=True,
+    )
+    for pid in ("P1", "P2"):
+        sh, ex = reading["shares"][pid], reading["exact"][pid]
+        r = _exact_readings(sh, ex)
+        record = STEP4H_FLAG_ON_RESIDUALS.get(spec["key"], {}).get(pid)
+        rep = (
+            f"4h flag-on record {record:.6e}, rel {abs(r['terminal_residual'] - record) / record:.3e} "
+            f"(ASSERTED <= {REPRODUCTION_RTOL:g})"
+            if record is not None and C4_CONGRUENT
+            else "no 4h flag-on record for this rung/flag (PRINTED)"
+        )
+        print(
+            f"    [{pid} driven] P_src,exact {ex['p_src']:.9e} W   P_vol "
+            f"{ex['p_vol']:.9e} W (phantom {ex['phantom']:.9e}, conductor "
+            f"{ex['conductor']:.9e})   P_sheet,exact {ex['sheet_field_total']:.9e} W"
+            f"   identity rel dev {r['identity']:.3e}\n"
+            f"        C {ex['sheet_ceiling_total']:.9e} W   terminal sheets "
+            f"{sh['sheet_total']:.9e} W   C/terminal {r['c_over_terminal']:.6f} "
+            f"(PREDICTED ~{PREDICTED_C_OVER_TERMINAL} off PORT-16's loaded x1)\n"
+            f"        supplied_terminal {sh['supplied']:.9e} W   P_vol + C "
+            f"{ex['p_vol'] + ex['sheet_ceiling_total']:.9e} W   terminal residual "
+            f"{r['terminal_residual']:.6e} [{rep}]   CS-corrected residual "
+            f"{r['cs_corrected']:.6e}   CS-corrected/terminal "
+            f"{r['cs_corrected'] / r['terminal_residual']:.4f} (PREDICTED << "
+            "terminal if the deficit is the carrier, NEVER ASSERTED)",
+            flush=True,
+        )
+        print(
+            f"        per sheet: "
+            + "   ".join(
+                f"{o} ceiling {ex['sheet_ceiling'][o]:.6e} / terminal "
+                f"{sh['sheets'][o]:.6e} = "
+                f"{ex['sheet_ceiling'][o] / sh['sheets'][o]:.6f}"
+                for o in sorted(sh["sheets"])
+            ),
+            flush=True,
+        )
 
 
 def _print_rung(reading, previous, x1, delta_deg, azimuths, sweep):
@@ -564,6 +681,8 @@ def _print_rung(reading, previous, x1, delta_deg, azimuths, sweep):
                 f"imported {POWER_BALANCE_BAND:.0e} POWER_BALANCE_BAND",
                 flush=True,
             )
+    if reading["exact"] is not None:
+        _print_exact(reading)
     print(
         f"[WF-6 step4g] rung {spec['key']}: the eleven z = 0 gate points "
         "(steps 4/4b's set, no closed form — the comparand path is deleted):",
@@ -696,6 +815,49 @@ def test_power_accounting_closes_on_every_rung(rung):
             f"{residual:.6e} of the supplied {supplied:.9e} W (phantom "
             f"{sh['phantom']:.9e}, conductor {sh['conductor']:.9e}, sheets "
             f"{sh['sheet_total']:.9e}); imported band {POWER_BALANCE_BAND:.0e}"
+        )
+
+
+@complex_only
+def test_the_exact_discrete_identity_closes_on_every_rung(rung):
+    """**Step 4i anchor (a)** — ``P_src,exact = P_vol + P_sheet,exact``.
+
+    ``a(E,E) = L(E)`` holds for the discrete solution, so this is a theorem of
+    the weak form checked at `PORT-16`'s imported ``DISCRETE_IDENTITY_RTOL``
+    (1e-6), not a band.  A miss is an assembly statement on this mesh.
+    """
+    if not EXACT_SHARES:
+        pytest.skip(f"{EXACT_SHARES_ENV} unset: step 4i's exact shares not computed")
+    for pid in ("P1", "P2"):
+        r = _exact_readings(rung["shares"][pid], rung["exact"][pid])
+        assert r["identity"] <= DISCRETE_IDENTITY_RTOL, (
+            f"rung {rung['spec']['key']} [{pid}]: P_src,exact - P_vol - "
+            f"P_sheet,exact deviates by {r['identity']:.3e} of P_src,exact, above "
+            f"the imported DISCRETE_IDENTITY_RTOL {DISCRETE_IDENTITY_RTOL:g}"
+        )
+
+
+@complex_only
+def test_the_terminal_residuals_reproduce_step_4h(rung):
+    """**Step 4i anchor (b)** — the reproduction control (and negative control).
+
+    The terminal residuals reproduce step 4h's flag-on readings to 1e-5
+    relative (`20260911T140329Z_WF-6-step4h.log:2043-2044, 4034-4035`), so the
+    exact shares were read on 4h's fixture.  Rungs without a flag-on record
+    skip after printing.
+    """
+    if not EXACT_SHARES:
+        pytest.skip(f"{EXACT_SHARES_ENV} unset: step 4i's reproduction not run")
+    records = STEP4H_FLAG_ON_RESIDUALS.get(rung["spec"]["key"])
+    if not C4_CONGRUENT or records is None:
+        pytest.skip("no step-4h flag-on residual record for this rung/flag")
+    for pid in ("P1", "P2"):
+        measured = _residual(rung["shares"][pid])
+        rel = abs(measured - records[pid]) / records[pid]
+        assert rel <= REPRODUCTION_RTOL, (
+            f"rung {rung['spec']['key']} [{pid}]: terminal residual {measured:.6e} "
+            f"against step 4h's {records[pid]:.6e} ({rel:.3e} relative), outside "
+            f"{REPRODUCTION_RTOL:g} — not 4h's fixture"
         )
 
 
