@@ -17127,3 +17127,57 @@ No band moved, no AED number was written, and the mesher default is unchanged. 0
 - p ≈ 2.1–2.9 is higher than expected for degree 1.
 
 So the extrapolated value is a reading, not a converged value. A ×0.35 rung (a fourth point, ≈ 400 k cells, about 2 min of drives at `-n 8`) would test it cheaply. The private gap computation against step 2d's degree-2 finest rung is the weekly's.
+
+## 2026-09-11T11:14Z (2026-09-11 06:00 CDT slot) — `PORT-19` step 2 — **complete (step 2 as queued): one factorisation per lumped-sheet sweep reproduces the per-drive `S`/`Z` exactly; landed `f2d83c2`**
+
+**Preflight.** Tree clean at 06:00:06 CDT (`f62f2e7`), and `fem-em-solver` was Up (15 h). No `recovered/*` branches, and no earlier attempt or `attempt/PORT-19*` branch. §9 item 1 was DONE (04:30 slot), so item 2 was the first open item. It went to `implementer` in the foreground. Before writing this entry I checked its diff (the held-factor RHS assembly) and all three log footers and readings myself.
+
+**What landed (`src/`, standing rule (c) — disclosed).**
+- `run_n_port_sparameter_sweep(..., reuse_factorization=None)` in `ports/sparameters.py`.
+  - `None` means on for the lumped-sheet route and ignored on the other routes. An explicit `True` on the gap-voltage or heuristic route raises.
+  - The item said a default of `True`. With that default, "explicit `True` raises" could not be told apart from the default, so the default is `None`.
+- An additive `solver=None` keyword on `run_lumped_sheet_port_case` (`ports/lumped.py`):
+  - `None` builds a fresh solver, as before;
+  - an unsolved solver does the full solve and keeps its factor;
+  - a solver that already holds a factor is re-used;
+  - a solver built on a different problem or degree raises.
+- `TimeHarmonicSolver.solve_with_held_factorization(extra_linear_terms)` in `core/time_harmonic.py`. It rebuilds only `L`, then does `assemble_vector` → `apply_lifting(b, [a], bcs=[bcs])` → reverse ghost update → `bc.set(b.array_w)` → held KSP `solve` → `scatter_forward`.
+- The post-solve tail moved into a private `_finish_solve` that both paths call.
+- New test module `tests/validation/test_port19_factor_reuse.py`.
+
+**Windows (all through the harness, complex build + `FEM_EM_REQUIRE_COMPLEX=1`, `tests/environment` first, `-n 2`, `timeout -k 30 300`, `-s`; standard tier).**
+- **Gate:** `20260911T110544Z_PORT-19-step2.log` — **18 passed, 90.46 s (`:1975`), Status 0 (`:2043`), 92 s (`:2044`)**. Gated 4-leg fixture: 116 085 cells, 10 MHz, build 24.85 s (`:1888`).
+  - **(A) asserted ≤ 1e-12:** the worst relative deviation, reused vs per-drive, is **0.000e+00** for both `S` and `Z` (`:1891`).
+    - Additional check beyond the item: the four kept E phasors also differ by exactly 0.0 relative, and each drive gets its own `Function` (`:1892`).
+  - **(B) asserted:** `LinearProblem` constructions and `LinearProblem.solve` calls, as (min, max) over ranks, read **(1, 1) / (1, 1)** on the reused sweep and **(4, 4) / (4, 4)** per-drive (`:1889–1890`).
+  - **Negative control (asserted > 1e-12):** a stale factor built with P2 at 51 Ω, solving the 50 Ω drives, differs by **1.073e-02** relative at S₂₂. The *predicted* ≥ 1e-10 was printed only, and it holds. `Z` differs by 9.620e-03 at Z₂₂ (`:1898`).
+  - **Printed:**
+    - wall per drive, reused: 5.73 / 0.38 / 0.38 / 0.37 s, sweep 6.92 s;
+    - wall per drive, per-drive: 5.51 / 5.49 / 5.70 / 5.50 s, sweep 22.21 s;
+    - MUMPS INFOG(22) = 1045 MB (`:1897`).
+- **Regression (C):** `tests/validation/test_port_birdcage_four_port.py`, now reuse-on by default. `20260911T110733Z_PORT-19-step2-regression.log` — **16 passed, 58.48 s (`:1971`), Status 0 (`:2039`), 60 s (`:2040`)**.
+  - All values reported below were read by the executor from this log; I verified only the footer.
+  - Leg (d0) deviations are unchanged from step 1 (≤ 2.568e-10 against the 1e-9 band), as are reciprocity, σ_max and the C4 class spreads.
+  - The fixture's sweep time went from 23.74 s to 6.68 s.
+- **Other callers:** `20260911T110842Z_PORT-19-step2-callers.log` — `tests/validation/test_port_drive_superposition.py` (a `keep_fields` sweep), **23 passed, 71.45 s (`:2038`), Status 0 (`:2106`), 73 s (`:2107`)**.
+  - Listed as on the new default and **unrun** (§5.2), because their recorded windows exceed 120 s or have no `-n 2` log:
+    - `test_port_birdcage_leg_offset_sweep.py` (205 s);
+    - `test_port_lumped_sheet_asymmetric.py` (198 s);
+    - `test_port_lumped_sheet_sweep.py` (no `-n 2` log; 500 s window in its docstring);
+    - `examples/ports/03_lumped_sheet_port_widths.py`;
+    - `examples/ports/13_birdcage_asymmetric_drive.py`.
+  - The other `run_n_port_sparameter_sweep(` hits are gap-voltage or heuristic routes, or use a fake solve function.
+
+**Records.** In `f2d83c2`:
+- the §7 `PORT-19` step 2 paragraph (row stays ⬜; done-when needs the 32×32 `PORT-13` re-run);
+- §9 item 2 marked DONE;
+- three test-results rows (harness-appended);
+- three logs.
+
+No band moved. No window died and no ranks were orphaned.
+
+**Denials / anomalies.** The executor had a Bash `for` loop denied and replaced it with a single grep. Host `py_compile` failed on `__pycache__` permissions (harmless; the harness imports the modules).
+
+**Hypothesis / for the review.** The factor-reuse path is exact at 10 MHz on the 4-leg fixture, and the stale-factor probe sees a wrong factor at 1e-2. Two follow-ups:
+- `PORT-19` needs the 32-port `PORT-13` sweep re-run under reuse, with its 32×32 reproduced and the wall recorded, before it can close.
+- The five unrun callers above sit on the new default. The next window that runs any of them is its first reuse-on reading.
