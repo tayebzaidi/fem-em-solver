@@ -17181,3 +17181,48 @@ No band moved. No window died and no ranks were orphaned.
 **Hypothesis / for the review.** The factor-reuse path is exact at 10 MHz on the 4-leg fixture, and the stale-factor probe sees a wrong factor at 1e-2. Two follow-ups:
 - `PORT-19` needs the 32-port `PORT-13` sweep re-run under reuse, with its 32×32 reproduced and the wall recorded, before it can close.
 - The five unrun callers above sit on the new default. The next window that runs any of them is its first reuse-on reading.
+
+## 2026-09-11T12:37Z (2026-09-11 07:30 CDT slot) — `PORT-14` step 1e — **complete (step 1e as queued): F-small's single-mode floor registered as a (1\*) record, deliberate red retired; landed `c4b0fdf`**
+
+**Preflight.** Tree clean at 07:30:07 CDT (`5e8f42a`), and `fem-em-solver` was Up (16 h). No `recovered/*` branches, and no earlier attempt or `attempt/PORT-14*` branch. §9 items 1–2 were DONE (04:30, 06:00 slots), so item 3 was the first open item. It went to `implementer` in the foreground. Before writing this entry I checked the test diff and the gate log myself: the footer (`:2050`, `:2118–2119`), the three residual lines (`:1888, :1895, :1902`), the cross-element control (`:1913–1918`), the baseline (`:1884`) and the Γ = 0 control (`:1922–1924`).
+
+**What landed (tests only, no `src/`).**
+- `tests/validation/test_port_lumped_rlc_termination.py` gains:
+  - `REDUCTION_FLOOR_F_SMALL` (C 1.595580e-03 / L 3.370512e-03 / R 7.249519e-04, cited to `20260905T020428Z_PORT-14.log:1858, 1865, 1872`; the executor re-read those lines and they match every digit);
+  - `REDUCTION_FLOOR_RTOL` = 1e-3;
+  - `RECORD_RANK_WIDTH` = 2 (the `OPS-41` pattern from `test_port_package_sparameters.py`: print first, then skip the record assert off `-n 2`; that module's override flag was not copied).
+- The gate asserts `|r/record − 1| ≤ 1e-3` per element and prints each residual against the unmoved `REDUCTION_BAND` as "systematic, not gated". The band's value and comment are untouched.
+- New negative control `test_a_mis_keyed_floor_record_cannot_reproduce`:
+  - the two pre-registered pairs are asserted at their log-backed 0.527 / 0.546 to ±0.005;
+  - every off-diagonal pair is asserted > 100× the rtol.
+- `STEP1_RESIDUAL_RECORD` now takes its C/L entries from the new dict. R is deliberately left out, because `STEP1B_TERMINATIONS` filters on those keys and adding R would change steps 1b/1c/1d.
+- `c4_congruent_sheets` off (the `GEO-19` record mesh).
+
+**Windows (harness, complex build + `FEM_EM_REQUIRE_COMPLEX=1`, `tests/environment` first, `-n 2`, `-s`, no step 1b/1c/1d env var; standard tier).**
+- Collect-only smoke: `20260911T123311Z_PORT-14-step1e-smoke.log` — 31 collected (`:81`), Status 0, 4 s.
+- **Gate:** `20260911T123334Z_PORT-14-step1e.log`, `timeout -k 30 300` — **15 passed, 16 skipped, 110.80 s (`:2050`), Status 0, 113 s (`:2118–2119`)**.
+  - **Records (asserted, rtol 1e-3):** the ratio is 0.999999762 / 1.000000106 / 0.999999966 (C / L / R), so `|ratio − 1|` = **2.380e-07 / 1.065e-07 / 3.391e-08** (`:1888, :1895, :1902`). Against the band they print as 1.595580× / 3.370512× / 0.724952×.
+  - **Negative control (asserted, backed by the step 1 log):** `|r_C/rec_L − 1|` = **0.526606**, `|r_R/rec_C − 1|` = **0.545650** (`:1913, :1917`). The other four pairs read 0.785–3.649 (`:1914–1916, :1918`).
+  - **Unmoved anchors:**
+    - 50 Ω baseline: reciprocity 1.044255156e-14 vs 1e-3, σ_max 0.999992805 (`:1884`);
+    - Γ = 0 control: Δ = 0.3218888 / 0.3254627 / 0.2112830, miss 0.3219520 / 0.3267853 / 0.2120063 (`:1922–1924`), step 1's digits exactly.
+
+**Records.** In `c4b0fdf`:
+- the §7 `PORT-14` step 1e paragraph (the row stays 🟡; step 2 at 64 MHz is open and now unblocked);
+- the known-issues 2026-09-05 `PORT-14` step 1 entry retired, re-headed "systematic registered as a record";
+- §9's residual-red tally 4 → 3 (it counted this red);
+- §9 item 3 marked DONE;
+- two test-results rows (harness-appended) and two logs.
+
+No band moved. No window died and no ranks were orphaned.
+
+**Denials / anomalies.** Two, both harmless:
+- The executor found no Grep tool in its session and used Bash `grep` instead.
+- A compound `cd …; awk …` command was blocked for approval; it was replaced with plain `grep`.
+
+**For the review.**
+- `docs/status/dashboard.md:69` still says 4 residual reds; the dashboard is the review's file, so it was not edited.
+- `PORT-14` step 2 (64 MHz) is now unblocked on the step 1 side. It is the serial predecessor of `PORT-15` gate (i) and `TH-17`.
+- §9 item 4 (`WF-6` step 4h) is the only open On-deck item left for the 09:00 slot.
+
+**Hypothesis.** The F-small floor is a stable (1\*) record at `-n 2`: it reproduced to ≤ 2.4e-7 six days after it was measured (whether this module's sweep now rides `PORT-19` step 2's reuse-on default was not checked). A 64 MHz step 2 should expect its own floor, not this one, and pre-register it as *predicted*.
