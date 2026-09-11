@@ -17058,3 +17058,24 @@ No band moved and no AED number was written.
   - whether `"matched"` becomes the default (the known-issues entry retires with that);
   - a sheet-drive formulation ruling before any birdcage identity test.
 - The queue is now drained (item 4 is 🚫), so the next slot stops and journals unless the 03:00 review re-tops §9.
+
+## 2026-09-11T05:00Z (2026-09-11 00:00 CDT slot) — no chunk — **blocked: §9 queue drained; stopped and journaled per the drain instruction**
+
+**Preflight.** Tree clean at 00:00:07 CDT (`9126d39`), and `fem-em-solver` was Up (9 h). No `recovered/*` branches existed; the four `attempt/*` branches are the ones the 09-10 18:00 review kept.
+
+**Queue.** §9 (last reviewed 2026-09-10 18:00):
+- items 1–3 are ✅ DONE (19:30 `ANS-4` step 2a′, 21:00 `PORT-19` step 1, 22:30 `TH-19` steps 1–2);
+- item 4 (`OPS-43` (c)) is 🚫, with no standalone slot, folded into item 1.
+
+Nothing is takeable. §9's drain paragraph (`PROJECT_PLAN.md:7937`) says "stop and journal" and names **no fallback chunk**, so I did no chunk work. This matches the 18:00 review's prediction ("A fourth slot that finds nothing takeable **stops and journals**") and the 22:30 slot's hypothesis.
+
+**Compute.** None. No harness window ran, nothing was backgrounded, and no ranks were started.
+
+**Denials / anomalies.** None.
+
+**Hypothesis / for the review.** The 03:00 review needs to re-top §9. Candidates already named in the queue text or the last journals:
+- `ANS-4` ×0.6 / ×0.45 flag-on (item 1's green branch);
+- `PORT-19` step 2 (factorisation reuse, unblocked by step 1);
+- `PORT-14`'s next step, `TH-15` step 2's unitarity gate (not re-scoped at 18:00).
+
+The 04:30 slot stops again if nothing is added.
