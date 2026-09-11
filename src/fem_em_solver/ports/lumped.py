@@ -422,6 +422,7 @@ def run_lumped_sheet_port_case(
     degree: int = 1,
     verbose: bool = True,
     return_fields: bool = False,
+    solver=None,
 ):
     """One lumped-sheet solve; per-port ``V`` and ``I`` off the solved field.
 
@@ -443,6 +444,18 @@ def run_lumped_sheet_port_case(
     ``TimeHarmonicFields`` for this drive — the solved phasor this function
     otherwise reads its terminal quantities off and drops.  Every existing
     caller takes the default and is unchanged.
+
+    ``solver`` (`PORT-19` step 2, additive and default ``None``) lets a sweep
+    share one factorisation across its drives.  ``None`` builds a fresh
+    ``TimeHarmonicSolver`` and factorises, exactly as before.  A
+    ``TimeHarmonicSolver`` on this ``problem`` and ``degree`` that has not
+    solved yet is used for a full solve and keeps its factor.  One that already
+    holds a factor is **re-used**: only the driven sheet's load is assembled
+    and back-substituted
+    (:meth:`~fem_em_solver.core.TimeHarmonicSolver.solve_with_held_factorization`).
+    That is correct only when every sheet's bilinear term equals the one the
+    factor was built with — a matched-termination sweep over the same
+    ``specs``, `PORT-19` step 1's measured premise.  Nothing checks it.
     """
     from ..core import TimeHarmonicSolver
     from ..core.solvers import DEFAULT_GAUGE_PENALTY
@@ -476,23 +489,35 @@ def run_lumped_sheet_port_case(
         pid: spec_by_id[pid].sheet(driven=(pid == driven_port_id)) for pid in port_ids
     }
 
-    solver = TimeHarmonicSolver(problem, degree=degree)
-    fields = solver.solve(
-        current_density=None,
-        gauge_penalty=DEFAULT_GAUGE_PENALTY if gauge_penalty is None else gauge_penalty,
-        project_source=False,
-        extra_bilinear_terms=[
-            lambda trial, test, _s=sheets[pid]: lumped_port_bilinear_term(
-                msh, facet_tags, _s, trial, test, omega_rad_per_s=omega
-            )
-            for pid in port_ids
-        ],
-        extra_linear_terms=[
-            lambda test, _s=sheets[driven_port_id]: lumped_port_linear_term(
-                msh, facet_tags, _s, test, omega_rad_per_s=omega
-            )
-        ],
-    )
+    if solver is None:
+        solver = TimeHarmonicSolver(problem, degree=degree)
+    elif solver.problem is not problem or int(solver.degree) != int(degree):
+        raise ValueError(
+            "solver= must be a TimeHarmonicSolver built on this problem at this degree "
+            f"(got degree {solver.degree}, expected {degree})"
+        )
+    extra_linear_terms = [
+        lambda test, _s=sheets[driven_port_id]: lumped_port_linear_term(
+            msh, facet_tags, _s, test, omega_rad_per_s=omega
+        )
+    ]
+    if getattr(solver, "_linear_problem", None) is not None:
+        fields = solver.solve_with_held_factorization(
+            extra_linear_terms=extra_linear_terms
+        )
+    else:
+        fields = solver.solve(
+            current_density=None,
+            gauge_penalty=DEFAULT_GAUGE_PENALTY if gauge_penalty is None else gauge_penalty,
+            project_source=False,
+            extra_bilinear_terms=[
+                lambda trial, test, _s=sheets[pid]: lumped_port_bilinear_term(
+                    msh, facet_tags, _s, trial, test, omega_rad_per_s=omega
+                )
+                for pid in port_ids
+            ],
+            extra_linear_terms=extra_linear_terms,
+        )
     e = fields.e_complex
 
     responses = {}

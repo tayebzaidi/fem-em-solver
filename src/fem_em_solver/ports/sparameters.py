@@ -273,6 +273,7 @@ def run_n_port_sparameter_sweep(
     gauge_penalty: float = DEFAULT_GAUGE_PENALTY,
     degree: int = 1,
     keep_fields: bool = False,
+    reuse_factorization: Optional[bool] = None,
 ) -> SParameterSweepResult:
     """Run an N-port excitation sweep and assemble an NxN S-matrix.
 
@@ -309,6 +310,21 @@ def run_n_port_sparameter_sweep(
     arbitrary multi-port drive from the same N solves.  Default off: with it off
     this function is byte-for-byte what it was, and no caller's memory moves.
 
+    ``reuse_factorization`` (`PORT-19` step 2, lumped-sheet route only, **on by
+    default** there) factorises once and back-substitutes each drive's
+    right-hand side: the first drive runs a full solve and keeps its
+    ``TimeHarmonicSolver`` (and so its MUMPS factor), drives 2…N hand it back to
+    :func:`run_lumped_sheet_port_case` through ``solver=``.  It is sound because
+    the matched-termination sweep's matrix does not depend on the drive —
+    measured bit for bit in `PORT-19` step 1 — and step 2 measured the reused
+    ``S``/``Z`` against the per-drive ones entry by entry.  ``False`` restores
+    one factorisation per drive (the control).  ``None`` (the default) means
+    "on" on the lumped-sheet route and is ignored on the other two routes; an
+    explicit ``True`` there raises, since those routes have no reuse path.
+    The sentinel is ``None`` rather than ``True`` only so that an explicit
+    ``True`` can be told apart from the default.  The held factor lives until
+    the sweep returns — one factor at a time, as before.
+
     ``reference_impedance_ohm`` overrides the scalar ``Z0`` of the conversion;
     by default the ports' common ``z0_ohm`` is used (the converter is scalar-Z0
     by construction, so mixed per-port references are rejected rather than
@@ -336,11 +352,23 @@ def run_n_port_sparameter_sweep(
             "(`POST-6` step 1): the other routes do not return their solved field"
         )
 
+    if reuse_factorization is True and lumped_sheet_ports is None:
+        raise ValueError(
+            "reuse_factorization=True is implemented on the lumped-sheet route only "
+            "(`PORT-19` step 2): the gap-voltage and heuristic routes factorise per drive"
+        )
+    reuse = lumped_sheet_ports is not None and reuse_factorization is not False
+
     excitation_results: dict[str, SinglePortExcitationResult] = {}
     kept_fields: Optional[dict[str, object]] = {} if keep_fields else None
     z_matrix: Optional[np.ndarray] = None
 
     if gap_voltage_ports is not None or lumped_sheet_ports is not None:
+        shared_solver = None
+        if reuse:
+            from ..core import TimeHarmonicSolver
+
+            shared_solver = TimeHarmonicSolver(problem, degree=degree)
         for port in ports:
             if gap_voltage_ports is not None:
                 excitation_results[port.port_id] = run_gap_voltage_port_case(
@@ -361,6 +389,7 @@ def run_n_port_sparameter_sweep(
                     gauge_penalty=gauge_penalty,
                     degree=degree,
                     return_fields=keep_fields,
+                    solver=shared_solver,
                 )
                 if keep_fields:
                     case, drive_fields = case

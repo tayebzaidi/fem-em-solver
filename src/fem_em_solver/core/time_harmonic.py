@@ -324,6 +324,12 @@ class TimeHarmonicSolver:
         # The last solve's solenoidal projection (None when it was off or the
         # solve had no source); keeps ψ and χ alive for the assembled form.
         self._projection = None
+        # `MAT-6` step 10a / `PORT-19` step 2: the last full solve's
+        # LinearProblem (and so its MUMPS factor), plus what that solve built
+        # around it that a held-factor re-solve needs to return the same
+        # `TimeHarmonicFields`.  Both stay None until `solve` runs.
+        self._linear_problem = None
+        self._held_solve_context: Optional[dict] = None
 
     def function_space(self) -> fem.FunctionSpace:
         """N1curl space the E-field is solved in (cached, shared with BCs)."""
@@ -627,9 +633,103 @@ class TimeHarmonicSolver:
         e_complex.name = "E"
         e_complex.x.scatter_forward()
 
+        self._held_solve_context = {
+            "sigma_field": sigma_field,
+            "epsilon_r_field": epsilon_r_field,
+            "mu_r_field": mu_r_field,
+            "selected_bc": selected_bc,
+            "dirichlet_dof_count": dirichlet_dof_count,
+        }
+        return self._finish_solve(e_complex, problem.solver)
+
+    def solve_with_held_factorization(
+        self,
+        extra_linear_terms: Optional[Sequence[Callable]] = None,
+    ) -> TimeHarmonicFields:
+        """Re-solve with the last :meth:`solve`'s factor and a new right-hand side.
+
+        `PORT-19` step 2.  The operator ``a`` — volume form, every
+        ``extra_bilinear_terms`` surface term, the Dirichlet rows — is **not**
+        rebuilt, re-assembled or re-factorised: the held ``LinearProblem``'s KSP
+        (``preonly`` + MUMPS LU) is asked for one more back-substitution.  Only
+        ``L`` is rebuilt, exactly as :meth:`solve` builds it for
+        ``current_density=None`` (the zero volume load plus each of
+        ``extra_linear_terms``), and ``b`` is assembled exactly as dolfinx 0.11's
+        ``LinearProblem.solve`` assembles it: ``assemble_vector``,
+        ``apply_lifting(b, [a], [bcs])``, a reverse ghost update, then the BC
+        values set — without the last two a PEC row carries a load and the
+        solution is silently wrong there.
+
+        **The caller owns the premise.**  This is correct only when the operator
+        the caller *would* have assembled equals the held one; `PORT-19` step 1
+        measured that bit for bit for a matched-termination lumped-sheet sweep
+        (``‖A_k − A_1‖_∞ = 0.0``).  Nothing here can check it — a factor built
+        for a different termination solves the new load without complaint, which
+        is exactly what the step-2 stale-factor control exercises.
+
+        The solution lands in a **fresh** ``Function`` on every call, so fields
+        returned by earlier solves (``keep_fields``, `POST-6`) are never
+        overwritten by a later drive.
+        """
+        problem = self._linear_problem
+        context = self._held_solve_context
+        if problem is None or context is None:
+            raise RuntimeError(
+                "solve_with_held_factorization() needs a factor: call solve() on this "
+                "TimeHarmonicSolver first"
+            )
+        require_complex_mode("TimeHarmonicSolver.solve_with_held_factorization")
+
+        v_space = self.function_space()
+        v = ufl.TestFunction(v_space)
+        zero = fem.Constant(self.mesh, np.zeros(3, dtype=PETSc.ScalarType))
+        L = ufl.inner(zero, v) * ufl.dx
+        if extra_linear_terms:
+            for term in extra_linear_terms:
+                L = L + term(v)
+        L_form = fem.form(L, dtype=PETSc.ScalarType)
+        # No source projection on this path (current_density is always None).
+        self._projection = None
+
+        b = problem.b
+        with b.localForm() as b_local:
+            b_local.set(0.0)
+        dolfinx.fem.petsc.assemble_vector(b, L_form)
+        dolfinx.fem.petsc.apply_lifting(b, [problem.a], bcs=[problem.bcs])
+        b.ghostUpdate(addv=PETSc.InsertMode.ADD, mode=PETSc.ScatterMode.REVERSE)
+        for bc in problem.bcs:
+            bc.set(b.array_w)
+
+        e_complex = fem.Function(v_space, name="E")
+        _progress = os.environ.get("FEM_EM_SOLVER_PROGRESS", "").strip()
+        _verbose = bool(_progress) and _progress.lower() not in ("0", "false", "no", "off")
+        _t0 = time.perf_counter()
+        problem.solver.solve(b, e_complex.x.petsc_vec)
+        if _verbose and self.mesh.comm.rank == 0:
+            print(
+                f"[solve] held-factor back-substitution done in "
+                f"{time.perf_counter() - _t0:.1f} s",
+                flush=True,
+            )
+        e_complex.x.scatter_forward()
+        return self._finish_solve(e_complex, problem.solver)
+
+    def _finish_solve(self, e_complex, ksp) -> TimeHarmonicFields:
+        """The post-solve tail both solve paths share (DG interpolation onward).
+
+        Moved verbatim out of :meth:`solve` (`PORT-19` step 2) so a full solve
+        and a held-factor re-solve build their ``TimeHarmonicFields`` one way.
+        """
+        context = self._held_solve_context
+        sigma_field = context["sigma_field"]
+        epsilon_r_field = context["epsilon_r_field"]
+        mu_r_field = context["mu_r_field"]
+        selected_bc = context["selected_bc"]
+        dirichlet_dof_count = context["dirichlet_dof_count"]
+
         diagnostics = None
         if self.problem.collect_solver_diagnostics:
-            diagnostics = MagnetostaticSolver._extract_ksp_diagnostics(problem.solver)
+            diagnostics = MagnetostaticSolver._extract_ksp_diagnostics(ksp)
 
         dg = fem.functionspace(self.mesh, ("DG", self.degree, (3,)))
         e_dg = fem.Function(dg, name="E_dg")
