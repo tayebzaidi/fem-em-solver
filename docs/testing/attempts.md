@@ -17764,3 +17764,38 @@ Whichever denominator is meant, one class crosses one-half. The knobs are record
 **Records (this commit):** the log, the test-results row, the §7 `ANS-4` step 2g record and §9 item 3 DONE. No code changed, no band moved, no AED number was compared, and the Larmor verdict stays with the 2026-09-13 weekly. The arithmetic ran as a throwaway script in the container (host `python3` is denied) and was deleted, not committed.
 
 **Hypothesis.** The fixed-h knob move is nearly h-independent for S₁₁ and S₂₁ (additive-looking, ≈ 0.9 %), but S₃₁'s halves beyond the coarsest rung, and S₃₁'s ×0.35 ladder stalls (step ratio 1.0). The opposite-port class is the interacting one, and it is the smallest-magnitude entry (|S₃₁| ≈ 0.22), where small absolute shifts read as large relative moves. A two-knob picture for S₁₁/S₂₁ may still be additive to ~0.1 %. S₃₁ needs either a fourth rung at ×0.35 (h = 0.0075, ≈ 0.9 M cells, likely over a 660 s window at `-n 8`) or the `xl` tier; pricing it is the weekly's.
+
+## 2026-09-12T21:45Z (2026-09-12 16:30 CDT slot) — `WF-6` step 4k — **complete (measurement, negative result for the sliver hypothesis): the 4j top-variance facet on ×0.0095 is among the best-shaped and the largest on P1's sheet, with a lateral-rim edge and no terminal edge**
+
+**Preflight.** Tree clean at 16:30:06 CDT; `fem-em-solver` Up 2 days. §9 items 1–3 were DONE; item 4 was taken. Per the item and step 3 of the protocol, it was delegated to `mesh-probe`, in the foreground, with the harness rules stated in the spawn prompt.
+
+**Tried.** New `tests/mesh/probe_wf6_sheet_facet_census.py`: it imports `build_four_port_sweep(build_only=True, resolution=r, c4_congruent_sheets=True)`, asserts nothing and solves nothing. The (u, v) mapping is copied verbatim from `_sheet_profile` (`test_birdcage_b1_plus_closed_form.py:715–720`, inside the function at `:636`). One fresh complex `-n 1` process per rung, `timeout -k 30 180`, smoke tier.
+- `20260912T213317Z_WF-6-step4k-x1.log`: Status 0, 29 s.
+- `20260912T213407Z_WF-6-step4k-x0.012.log`: Status 0, 32 s.
+- `20260912T213439Z_WF-6-step4k-x0.0095.log`: Status 0, 39 s.
+- `20260912T213518Z_WF-6-step4k-x0.0095-repeat.log`: Status 0, 38 s.
+
+The executor's report said the last three windows ran at the same time. The log stamps and the test-results rows show they ran one after another (21:33:17 → :46, 21:34:07 → :39, 21:34:39 → 21:35:18, 21:35:18 → :57 UTC). All four index rows are intact.
+
+**Anchors (reproduced).** Cells 116 118 / 148 988 / 197 284 and P1 facets 26 / 26 / 29 (`x1:1897`, `x0.012:1868`, `x0.0095:1920–1921`). Every 4j top-5 facet was found at |Δuv| ≤ 6e-4, with area shares equal to 4j's printed ones.
+**Negative control: held.** On ×0.0095 the (0.164, 0.422) facet reads area share 6.726 % (`x0.0095:1928`).
+**Deterministic.** The repeat has the same sheet-geometry sha256 `d413721a1d1798e2` and cell count (`:2007` in both logs).
+
+**Readings, P1, 4j's top-1 facet** (ranks ascending; for 3r/R and dihedral, higher is better; tet values are the worse of the two adjacent tets):
+- **×0.0095** (`:1922–1933`):
+  - Edge ratio 1.195 (5/29, below Q1; sheet 1.075 / 1.316 / 1.67).
+  - R/r 2.047 (5/29, below Q1; 2.009 / 2.132 / 2.711).
+  - Area/median **2.174 (29/29)**.
+  - Tet 3r/R 0.7864 (23/29, above Q3; 0.535 / 0.727 / 0.909).
+  - Min dihedral 46.08° (23/29, above Q3; 29.7 / 42.8 / 53.8).
+  - Flags: lateral-rim edge yes, terminal edge no. Counts: rim edge 8/29, terminal edge 8/29, boundary vertex 26/29 (`:1988`).
+- **×1** (`x1:1899–1910`): edge ratio 1.358 (9/26, IQR); R/r 2.149 (8/26, IQR); area/median 3.482 (26/26); tet 3r/R 0.6224 (4/26, below Q1); dihedral 34.42° (4/26, below Q1); lateral-rim edge.
+- **×0.012** (`x0.012:1870–1881`): edge ratio 1.395 (12/26, IQR); R/r 2.172 (11/26, IQR); area/median 3.315 (23/26); tet 3r/R 0.6557 (8/26, IQR); dihedral 33.97° (2/26, below Q1); lateral-rim edge.
+- **Sheet R/r max:** 4.311 / 3.406 / 2.711 (×1 / ×0.012 / ×0.0095). The ×0.0095 sheet is the best-shaped, while its drive variance is the largest; facet quality does not track the growth.
+- The worst-shaped facets on every rung are the terminal-and-rim corner facets, not the top-1 facet.
+
+**Negative-result clause.** On shape it fires: the facet is not a sliver, and on ×0.0095 it lies outside the IQR on the *good* side. The literal clause ("inside the IQR, not a rim facet") is not met on two counts. Its quality is outside the IQR, but favourably. And it has a lateral-rim edge, as the top-1 facet has on all three rungs. "Rim" here is the narrowed sheet's stepped f = 0.5 midpoint-filter cut, not the CAD edge. Recorded in §7 and known-issues and stopped, per the item. `WF-6` stays 🟡, the known-issues entry stays OPEN, and ×0.0095 stays out of `LADDER`.
+
+**Records (this commit):** the probe, four logs, four test-results rows, the §7 `WF-6` step 4k record, a known-issues reading row, and §9 item 4 DONE. No `src/`, no existing test, no band.
+
+**Hypothesis.** The shared feature across rungs is size and position, not shape: the top-variance facet is the sheet's largest (or near-largest) mid-gap facet on the lateral rim of a sheet only ≈ 3.5 facets wide. A degree-1 N1curl trace on one large rim facet cannot follow the strip-edge field, so its in-plane component carries the error. The next reading is field-side: the tangential trace on that facet's adjacent cells, or the same probe with the sheet narrowing refined so the rim facet shrinks. A review scopes it.
