@@ -97,11 +97,28 @@ are yours.
 6. Refresh **"On deck"** in §9: top it up to **at least 5** items not done or
    blocked — the 4 runs before the next review, plus one spare — ordered, each
    sized for one implementer run (≤ 1 h wall clock, ≤ 20 min per compute
-   command, ≤ 12 ranks). An item that has failed twice must be rescoped before it may be
-   listed again. If fewer than 5 ready items exist, list what exists and say
-   so — step 5 still forbids inventing work. Each listed item meets the rubric
-   below; an item that cannot yet state its anchor is not ready to queue, and
-   writing that anchor is itself the better queue item.
+   command, ≤ 12 ranks). Since 2026-09-12 a slot that commits its item with a
+   clean tree before minute 30 takes the next one (implementer-run.md step 2),
+   so a queue of cheap items can drain faster than four per interval; when
+   the items are short, queue more than five rather than leave the later
+   slots to the drain instruction. If fewer than 5 ready items exist, list
+   what exists and say so — step 5 still forbids inventing work. Each listed
+   item meets the rubric below; an item that cannot yet state its anchor is
+   not ready to queue, and writing that anchor is itself the better queue
+   item.
+
+   **The family cap (operator directive 2026-09-12, four attempts).** A
+   *step family* is a numbered step plus all of its lettered sub-steps
+   (`4`, `4a`–`4k` are one family). Count the attempts since the last
+   sub-step in the family that landed a gate — an asserted, pre-registered
+   anchor that moved a §7 status, retired a known-issues entry or registered
+   a record; a green run of *imported* gates does not count. **At four, the
+   family is frozen**: this review must either re-scope the question at a
+   higher altitude as a *new numbered step* or bank the measured negative and
+   close the question in the §7 row and known-issues — it may not queue a
+   fifth letter. Relettering does not reset the count; a landed gate does.
+   The rule replaced §9's "fails twice" rule, which never fired because every
+   reletter was formally a new item (`WF-6` step 4 ran twelve).
 
    **Prefer independent items over a dependency chain.** Four runs will take
    items 1–4 in order without waiting for each other's results, so an item
@@ -237,6 +254,15 @@ version-bump record sweeps) says so in its first line:
    never fabricate a gate around it or loosen a bound to swallow it; the item
    should say which artifact captures it (a §7 annotation, a known-issues
    entry, an `attempt/*` branch).
+7. **The status its result can move** *(added 2026-09-12, operator
+   directive)* — the §7 chunk row, §2 sentence or known-issues entry the
+   measurement can change, and what result would change it (a glyph flip, a
+   retired entry, a registered record, a re-pointed §2 clause). An item that
+   cannot name one is a curiosity, not work, and the review declines to queue
+   it — `WF-6` steps 4h–4k all diagnosed a rung the review had already
+   removed from the ladder, four slots that could not move a status by
+   construction. This is a filter applied while queueing, not a regret
+   afterwards.
 
 Prefer items where a negative result is still informative — those convert a
 failed hour into a finding. `PORT-1` step 1 measured exactly-zero mutual

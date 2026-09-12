@@ -6,13 +6,17 @@ a 90-minute grid shared with the daily review (04:30, 06:00, 07:30, 09:00,
 each of the three reviews at 03:00 / 10:30 / 18:00). One run = one attempt at
 the **top "On deck" item** in PROJECT_PLAN.md §9. Sessions never overlap: the
 grid spacing exceeds the 65-minute hard kill, and all runs share one `flock`.
+Since 2026-09-12 (operator directive, enacted by the 18:00 daily review) a
+run that finishes its item early takes the next one — see step 2.
 
 ## Timebox
 
 60 minutes wall clock, externally enforced (the wrapper kills the session at
 65). Note the start time immediately; **start no new implementation work
 after minute 45** — the final 15 minutes are for documentation and leaving a
-clean tree. The per-command compute budget is unchanged and non-negotiable:
+clean tree. **A second (or later) item may be started only before minute
+30**, and only from a clean, committed tree (step 2); the minute-45 rule and
+every per-command ceiling apply to it unchanged. The per-command compute budget is unchanged and non-negotiable:
 §5.1 tiers, 20-minute hard ceiling per compute command, `mpiexec -n 12` max,
 `timeout` at the tier ceiling, shared machine. The one exception is an on-deck
 item the weekly review marked **`xl`** (§5.1 XL tier: ≤ 512 GiB / 16 ranks /
@@ -68,6 +72,22 @@ never invent an XL run yourself.
    sentence, scoped to one run; note in attempts.md that you used the
    fallback. If that sentence names nothing, append an attempts.md entry
    saying so and stop.
+
+   **Then, if the item is done early, take the next one.** After an item's
+   outcome commit (step 4) has landed and `git status --porcelain` is empty,
+   if the clock reads **before minute 30** of the slot, return to this step
+   and take the next open item — the same rule, the same order, and it may
+   repeat while the clock allows. Measured 2026-09-11/12: slots were
+   stopping at minutes 5–20 of 60 because one run meant one item, while the
+   compute-safety rationale ("one executor at a time") is satisfied by
+   sequential items just as well. Three guards, all load-bearing: a second
+   item **never starts on a dirty tree** (the first item's commit is what
+   licenses it — an incomplete first item parks per step 4 and the slot then
+   stops, it does not move on); an item that says "depends on item N
+   landing" is taken only if N's commit is on `main`; and each item gets its
+   own outcome commit and its own attempts.md entry (step 5), never a merged
+   one. Nothing here changes the ban on concurrent executors or the
+   per-command tier ceilings.
 3. Execute the chunk following `.claude/agents/implementer.md` (read it
    first) and the chunk's §7 entry, which carries the implementation plan.
    Specialist executors exist for three chunk classes — an EX-* example
