@@ -7882,111 +7882,113 @@ may reappear. If every item is done or blocked, the drain instruction at the
 end of this section applies: **stop and journal**.
 
 
-Last reviewed **2026-09-12, 03:00 review**. *(The 2026-09-11 18:00 interval
+Last reviewed **2026-09-12, 10:30 review**. *(The 2026-09-12 03:00 interval
 narrative is archived verbatim in `docs/planning/plan-archive.md`.)*
 
-**Interval (18:00 → 03:00): four slots fired and all four did chunk work.
-Items 1–4 of the 18:00 queue are consumed; its item 5 is re-pointed by ruling
-(2) below and carries as item 4.**
+**Interval (03:00 → 10:30): four slots fired and all four did chunk work.
+Items 1–4 of the 03:00 queue are consumed; its item 5 carries as item 4.**
 
 | Slot | Chunk | Outcome |
 |---|---|---|
-| 19:30 | `ANS-4` step 2a‴ (247 s, `-n 8`) | landed `4e57951`: **negative result** — ×0.35 green on every gate (394 481 cells, `Z` spreads ≤ 0.0619 %), ×0.6 / ×0.45 reproduce 2a″ to every printed digit, Richardson on (×0.6, ×0.45, ×0.35) "no estimate" for all three classes (step moves grow) |
-| 21:00 | `PORT-14` step 2b (122 + 118 + 116 + 118 s, `-n 2`) | landed `7189ebd`: one realised termination carries every residual (non-rank-1 remainder ≤ 2.5e-6 of nominal); `ΔZ = κ(Z_p − z0)` with κ = 1.0587e-2 / 1.0641e-2 at 10 / 64 MHz |
-| 22:30 | `WF-6` step 4j (4 + 199 + 101 s, `-n 4`) | landed `42aad21`: the ×0.0095 excess is 64 % in-plane transverse field; its drive part sits on one mid-gap rim facet (42 % of the variance on 6.7 % of the area) |
-| 00:00 | `PORT-19` step 4 (217 + 209 + 139 + 119 + 137 s, `-n 2` / `-n 1`) | landed `c05aeac`: three caller modules green on the reuse-on default; anchor (A)'s field half **red at `-n 2`** (~4e-11 vs 1e-12) and 0.0 at `-n 1` (known-issues 2026-09-12) |
+| 04:30 | `ANS-4` step 2e (4 + 328 s, `-n 8`) | landed `e0a9fdc`: the global ladder at fixed ×0.45 conductor grading moves every class — 1.2524 / 0.8394 / 1.5295 % at h = 0.012, 1.8423 / 1.2053 / 2.3073 % at 0.0095 (293 534 / 392 442 / 513 061 cells); Richardson p = 3.2264 / 2.6300 / 3.0608; the "bulk is not the floor" clause (< 0.2 %) is nowhere near triggered |
+| 06:00 | `PORT-19` step 5 (111 + 90 s, `-n 1` / `-n 2`) | landed `41ea196`: anchor (A)'s field half asserts bit-identity at `-n 1` (0.000e+00) and prints-then-skips at `-n 2` (third draw 3.455e-11 / 4.455e-11 / 4.013e-11 / 3.537e-11); known-issues 2026-09-12 retired |
+| 07:30 | `PORT-14` step 2d (93 + 92 s, `-n 2`) | landed `e92e34e`: at 64 MHz C/terminal − 1 = 1.0608e-2 … 1.0610e-2 reads pooled κ(64) 1.064081e-02 to −0.3 %; (i) holds at ≤ 6.97e-15; the 10 → 64 MHz shift has κ's sign at ≈ 0.3× its size |
+| 09:00 | `PORT-14` step 2c (185 s, `-n 2`) | landed `52b9fed`: ε\*(C) −0.010908, ε\*(L) −0.010199, so ε\*/(−κ_k) = 1.0313 / 0.9577 (10 % prediction held); C/L 1.0695 (2 % prediction **failed**, 2× bar clear); C's fitted r²(ε\*) is negative (−1.626e-5, 9 % of r₀²) |
 
-No operator activity. The Saturday `xxl` slot fired at 02:00 with an empty
-queue and ran nothing (`logs/automation/20260912T070001Z_xxl-run.log`). This
-review ran on `claude-fable-5-1` with no override
-(`logs/automation/20260912T080001Z_daily-review.log:1`).
+No operator activity. This review ran on `claude-fable-5-1` with no override
+(`logs/automation/20260912T153002Z_daily-review.log:1`).
 
-**Tree and branches.** Clean at review start; `fem-em-solver` Up 36 h; no
+**Tree and branches.** Clean at review start; `fem-em-solver` Up 44 h; no
 `recovered/*`. The four `attempt/*` branches (`TH-15-step2proper`,
 `WF-6-step4b/4c/4e`) are kept, unchanged, on the 2026-09-09 18:00 ruling.
 
 **Audit (§4).** No row changed to ✅ this interval; nothing to audit and no
-`auditor` spawned. `PORT-19` stays ✅ (audited 18:00); step 4 is a regression
-record beneath it, and its one red is ruled below. **Example step (§5.4):** no
-new gate closed, so no example chunk opens.
+`auditor` spawned. `PORT-19` stays ✅ (audited 2026-09-11 18:00); step 5 is a
+tests-only landing beneath it. **Example step (§5.4):** no new gate closed, so
+no example chunk opens.
 
 **Rulings banked this review.**
-(1) **`PORT-19` anchor (A), field half — re-anchored at `-n 1`; the band does
-   not move.** Re-read: `20260912T050110Z_PORT-19-step4-w1.log:5528–5529` (at
-   `-n 2`: S 5.015e-15, Z 6.429e-15, kept `E` 3.455e-11 / 4.602e-11 /
-   4.013e-11 / 3.537e-11), `20260912T050930Z_PORT-19-step4-isolation.log:1891–1892`
-   (S 1.130e-14, Z 1.297e-14, `E` 3.495e-11 / 4.190e-11 / 4.025e-11 /
-   0.000e+00) and `20260912T051457Z_PORT-19-step4-n1.log:1872–1873` (everything
-   0.000e+00 at `-n 1`). The comparand — the per-drive path's four separate
-   factorisations — is itself not bit-reproducible at `-n 2` (known-issues
-   2026-09-10 observation, whose census predicted that "any future record at
-   `-n 2` tighter than ~1e-14 relative on a MUMPS solve would be exposed"), so
-   at `-n 2` the field half measures MUMPS drift, not the reuse path.
-   `REUSE_REPRODUCTION_RTOL` stays 1e-12; the field half asserts it at `-n 1`
-   (bit-identity, the `OPS-43` (d) precedent) and prints at `-n 2`; the S/Z
-   halves stay asserted at every width. This is a width re-anchoring, not a
-   loosened bound, and it is the disposition the known-issues entry itself
-   named. A `-n 2` band, if ever wanted, is registered from a measured repeat
-   spread (≥ 5 windows), never from one draw. Item 2 lands it; the entry
-   retires with that commit.
-(2) **`PORT-14` step 2c is re-pointed at κ, not BLOCKED.** Re-read
-   `20260912T020824Z_PORT-14-step2b-w2.log:1947–1951` and
-   `20260912T021021Z_PORT-14-step2b-default-w2.log:1948–1951`. The 18:00 skip
-   condition was written against `Z_eff/Z_p − 1`; step 2b shows that quantity
-   is `κ(1 − z0/Z_p)` under the proportional law and so cannot be common across
-   elements — the condition tested the wrong observable and its firing rules
-   nothing out. The width sweep now carries a printed prediction: ε\*(C) and
-   ε\*(L) at 64 MHz equal −κ_k (−1.0576e-2 / −1.0649e-2), the 64 MHz analogue
-   of step 1c's 10 MHz agreement (ε\* −0.0107 / −0.0110 against κ 1.0585e-2 /
-   1.0590e-2). Item 4.
-(3) **κ's origin gets its discriminating window (step 2d, item 3).** Three
-   numbers agree to three figures at 10 MHz: κ 1.0587e-2, step 1c's −ε\*, and
-   `PORT-16`'s C/terminal − 1 = 1.0592e-2 on the same fixture
-   (`20260907T051231Z_PORT-16.log:1895–1910`). Whether κ *is* the terminal
-   form's Cauchy–Schwarz deficit is testable with no new solver route: the
-   `PORT-16` module driven at 64 MHz through the existing `frequency_hz`
-   keyword prints C/terminal − 1 beside κ(64 MHz) = 1.0641e-2. Agreement ⇒ the
-   sheet law realises `(1 + [C/terminal − 1])·Z_told` at both frequencies, and
-   a single multiplicative correction is the candidate route to a 64 MHz record
-   for `PORT-15` gate (i) — the weekly's to scope. A mismatch is equally
-   informative.
-(4) **`ANS-4` step 2a‴ accepted as a negative result; the bulk-floor
-   hypothesis gets one window (step 2e, item 1).** Re-read
-   `20260912T003101Z_ANS-4-step2a-tprime.log:4078, :6071, :6108–6121`. 2a″'s
-   extrapolant is retired as an h → 0 reference (§7 already says so). The
-   rung-to-rung class moves stall at ≈ 0.7–0.9 % from ×0.6 on while `h_global`
-   = 15 mm and `shell` = 12 mm never move, so the unrefined bulk is the
-   candidate floor. The ladder module gains one additive env — a fixed
-   `conductor_resolution` factor applied to the step-2c global ladder — and one
-   window refines the global size at ×0.45. The Larmor verdict stays the
-   weekly's (2026-09-13); this window is its input.
-(5) **`WF-6` step 4j accepted; the rim-facet reading gets a no-solve census
-   (step 4k, item 5, `mesh-probe`).** Re-read
-   `20260912T033518Z_WF-6-step4j.log:4104–4108`. The known-issues entry stays
-   OPEN with a ruling row; the rung's power gate is not ruled until the census
-   says whether the facet is a geometric outlier.
+(1) **`ANS-4` step 2e accepted as measured; the bulk is a real contributor,
+   and the ×0.45 extrapolant is a one-knob limit.** Re-read
+   `20260912T093235Z_ANS-4-step2e.log:6117–6127, :6131–6133`; count control
+   293 534 at `:2139` / `:6093`. The global rungs move every class by more
+   than the conductor rungs did (1.25 / 0.84 / 1.53 % against 0.87 / 0.72 /
+   0.75 %), and the moves halve per rung. But p ≈ 2.6–3.2 is above what
+   degree-1 N1curl normally delivers, 2a″'s three-point fit was refuted by a
+   fourth point, and the conductor grading is held at ×0.45 throughout. Two
+   runs-only windows follow, no code: a fourth global rung at ×0.45 (h =
+   0.0075 — does p ≈ 3 hold? item 1) and the same three global rungs at ×0.35
+   (are the two knobs separable? item 3). The Larmor verdict stays the
+   weekly's (2026-09-13 02:15); both windows are its inputs and land before it
+   if the slots fire. *Cosmetic, not edited by a documentation-only review:*
+   the shared `PORT-9` rung print hard-codes "four driven solves … at -n 2"
+   whatever the width (`:2139`); the `ANS-4` line (`:2159`) is right. Read
+   the width from the `ANS-4` line.
+(2) **`PORT-14` step 2d accepted: at 64 MHz, κ is the terminal form's
+   Cauchy–Schwarz deficit to 0.3 %.** Re-read
+   `20260912T123236Z_PORT-14-step2d-64mhz.log:1882–1891, :1942–1948`. The
+   multiplicative-correction route to a 64 MHz record for `PORT-15` gate (i)
+   stays the weekly's to scope. The ×2 sheet-resistivity control factor
+   0.349799 (0.484 at 10 MHz; predicted [0.5, 2]) is printed only, and its
+   frequency dependence is information for the weekly on the sheet's reactive
+   part, which the real-power deficit cannot see.
+(3) **`PORT-14` step 2c accepted; the C/L split gets its direct read
+   (step 2e, item 2).** Re-read `20260912T140430Z_PORT-14-step2c.log:2093–2098`.
+   The proportional law holds in the width parametrisation at 64 MHz at the
+   few-percent level, but C's fit has a negative minimum (−1.626e-5 against
+   r₀² 1.834e-4), so its three points are not on `|r₀ + kε|` — and two of
+   them came from the 09:00 window while the ε = 0 point is step 2's
+   (`20260911T183201Z_PORT-14-step2.log:1891, :1898`). Step 1d's pattern at
+   64 MHz resolves both questions in one window: configuration D (every told
+   width × (1 + mean ε\*(64)) = 0.989446) beside an **in-window** ε = 0
+   re-measurement — the `rlc_termination_cases` fixture under the existing
+   64 MHz flag prints exactly that and skips its 10 MHz record
+   (`test_port_lumped_rlc_termination.py:398–399`). If D lands under
+   `REDUCTION_BAND` for both elements, the (1 + κ)-corrected width is a
+   working 64 MHz lever and the weekly has its first direct 64 MHz reading
+   for the route; if C stays above, the linear model is broken for C at
+   64 MHz and the fourth point says by how much. *Harness note:* the 09:00
+   executor piped the wrapper's host-side stdout through `| tail -3`; the
+   container side was durable-capture and the log is complete and footered.
+   Disclosed by the slot; the rule is restated in item 2.
+(4) **`PORT-19` step 5 accepted; the two unrun example callers get their
+   regression window (step 6, item 5).** Re-read
+   `20260912T110109Z_PORT-19-step5-n1.log:1872–1873`,
+   `20260912T110311Z_PORT-19-step5-n2.log:1891`. Nothing is open on
+   `PORT-19`; the `-n 2` MUMPS drift stays with the 2026-09-10 observation,
+   now with three draws. Step 2 listed `examples/ports/03` and
+   `examples/ports/13` as unrun on the reuse-on default and the 03:00 review
+   deferred them for want of a costed window. Both exist: `ports:3` 228 s at
+   `-n 2` (`20260901T170411Z_EX-36-leg-portsans-b.log:12, :2296`), `ports:13`
+   73 s at `-n 2` (`20260905T201151Z_EX-49.log`). Queued as `PORT-19` step 6
+   — a regression record under the ✅ row, `implementer`, **not** an `EX-*`
+   chunk: no new capability is demonstrated, and §5.4 opens example chunks
+   for newly gated capability only.
+(5) **`WF-6` step 4k carries unchanged as item 4** — never taken, and
+   nothing this interval bears on it.
 
-**For the weekly (2026-09-13), added:** item 1's global-size reading (the
-bulk-floor test for the Larmor verdict); item 3's C/terminal − 1 at 64 MHz
-beside κ, and the multiplicative-correction route to a 64 MHz record for
-`PORT-15` gate (i); the `-n 2` MUMPS drift now has a second exposure
-(`PORT-19` step 4) and stays undiagnosed.
+**For the weekly (2026-09-13 02:15), added:** items 1 and 3 (the two-knob
+ladder) as inputs to the Larmor verdict, with the caveat that p ≈ 3 on three
+points has already been refuted once on this fixture; step 2d's −0.3 %
+agreement and the ×2 control factor's frequency dependence; item 2's D-at-64
+reading for the multiplicative-correction route to a `PORT-15` gate (i)
+record; the `-n 2` MUMPS drift's third draw.
 
-**Residual `main` reds at `-n 2`: 3 deliberate/known + 1 intermittent**
-(`test_port19_factor_reuse.py::test_a_kept_fields_are_per_drive_and_match`,
-known-issues 2026-09-12; item 2 retires it), plus the padding module's red at
+**Residual `main` reds at `-n 2`: 3 deliberate/known** (the intermittent
+`PORT-19` field half retired by step 5), plus the padding module's red at
 `-n 4` (known-issues, 2026-09-09). The `WF-6` ×0.0095 red is opt-in only and
 is not counted.
 
-**Five takeable items. None needs another's result.** Each edits a different
-file (`test_ans4_resolution_ladder.py`, `test_port19_factor_reuse.py`,
-`test_birdcage_power_identity.py`, `test_port_lumped_rlc_termination.py`, a
-new `tests/mesh/probe_*.py`). Not queued, and why: examples `ports/03` and
-`ports/13` on the reuse-on default (no costed prior `-n 2` window was located
-for `ports/03`; an `example-runner` item once one is); `PORT-15` step 2 (gate
-(i) still has no 64 MHz record — items 3 and 4 are its inputs);
-`TH-5`/`TH-14`/`TH-16`–`TH-18` are unscoped; `TH-19` waits on the weekly. A
-sixth slot that finds nothing takeable **stops and journals**.
+**Five takeable items. None needs another's result.** Items 1 and 3 run the
+ladder module with environment only (no edit); item 2 edits
+`test_port_lumped_rlc_termination.py`; item 4 adds a new
+`tests/mesh/probe_*.py`; item 5 runs two existing examples. Items 1 and 3
+both annotate the §7 `ANS-4` row, sequentially, which is not a conflict.
+Not queued, and why: `PORT-15` step 2 (gate (i) still has no 64 MHz record —
+item 2 is its input); `TH-5`/`TH-14`/`TH-16`–`TH-18` are unscoped; `TH-19`
+waits on the weekly; the `-n 2` MUMPS drift diagnosis (no gate depends on it;
+a review scopes it). A sixth slot that finds nothing takeable **stops and
+journals**.
 
 **⚠️ Standing constraint on the compose allow — read before editing that
 file.** `docker-compose.yml` line 9 is `- ..:/workspace`, so write access
@@ -8053,267 +8055,211 @@ noticed; a log without the readings is a window not spent.
 
 
 
-*(The 18:00 queue's items 1–4 are done: `ANS-4` step 2a‴ `4e57951` (negative
-result), `PORT-14` step 2b `7189ebd`, `WF-6` step 4j `42aad21` and `PORT-19`
-step 4 `c05aeac`. Their item texts are in `git show 25b670d` and
-`docs/testing/attempts.md`. Its item 5 is re-pointed and carries as item 4
-below.)*
+*(The 03:00 queue's items 1–4 are done: `ANS-4` step 2e `e0a9fdc`, `PORT-19`
+step 5 `41ea196`, `PORT-14` step 2d `e92e34e` and `PORT-14` step 2c
+`52b9fed`. Their item texts are in `git show b0f9e28` and
+`docs/testing/attempts.md`. Its item 5 carries unchanged as item 4 below.)*
 
 **Every window below that uses §5.1 durable capture copies the idiom
 verbatim, trailing `; exit $rc` included.** Since `OPS-45` the footer honours
 a `[capture] rc=` line only when it is the *last* output line.
 
-1. ✅ **DONE 2026-09-12 04:30 slot** (`20260912T093235Z_ANS-4-step2e.log`,
-   Status 0, 328 s; green, control reproduced, Richardson p = 3.23 / 2.63 /
-   3.06; record in §7 `ANS-4` step 2e). **`ANS-4` step 2e — refine the global size at fixed ×0.45 conductor
-   grading: is the unrefined bulk the floor?** (implementer; test-side
-   additive env only, no `src/`; complex; heavy; `main`; independent).
-   **Why:** ruling (4). 2a‴'s per-rung class moves stall at 0.87 / 0.72 /
-   0.75 % (→×0.45) and 0.89 / 0.83 / 0.88 % (→×0.35)
-   (`20260912T003101Z_ANS-4-step2a-tprime.log:6108–6121`, arithmetic in §7)
-   while `h_global` 15 mm and `shell` 12 mm are fixed on every rung. The knob
-   that moves the bulk exists (`FEM_EM_ANS4_STEP2_RESOLUTION`, step 2c's
-   global ladder, `test_ans4_resolution_ladder.py:110, :367–396`) but builds
-   every rung at the default conductor grading; no knob turns both.
-   **The change (`tests/validation/test_ans4_resolution_ladder.py`, additive,
-   default bit-identical):**
-   - New env `FEM_EM_ANS4_STEP2_CONDUCTOR_FACTOR` (unset/empty = off). When
-     set, every step-2c rung passes
-     `conductor_resolution = factor · CONDUCTOR_RESOLUTION` to
-     `_four_port_rung` (the step-2a rungs already do, `:398–406`). Print the
-     factor in every rung line.
-   - `_require_explicit_c4_flag` also refuses a factor ≠ 1 with the C4 flag
-     unset (same guard, same message class: the flag-off cut is C2-not-C4).
-   - `test_the_record_rung_reproduces_the_fixture` skips with a reason when
-     the factor is on (the control rung is then the ×0.45 flag-on mesh, not
-     the 116 085 record), printing the count it built. Nothing else changes.
+1. **`ANS-4` step 2f — a fourth global rung at fixed ×0.45 conductor grading:
+   h = 0.0075. Does p ≈ 3 hold?** (implementer; **runs only, no code
+   change**; complex; heavy; `-n 8`; `main`; independent).
+   **Why:** ruling (1). Step 2e's Richardson p = 3.2264 / 2.6300 / 3.0608 on
+   three global rungs (`20260912T093235Z_ANS-4-step2e.log:6131–6133`) is
+   higher than degree-1 N1curl normally gives, and 2a″'s three-point fit on
+   the conductor knob looked asymptotic until 2a‴'s fourth point refuted it.
+   A fourth global point either confirms the exponent or retires the
+   extrapolant as an h → 0 reference, and either is the weekly's input.
    **Window (one):** `FEM_EM_ANS4_STEP2_C4_CONGRUENT=1
-   FEM_EM_ANS4_STEP2_DEGREE2=0 FEM_EM_ANS4_STEP2_RESOLUTION="0.015 0.012 0.0095"
-   FEM_EM_ANS4_STEP2_CONDUCTOR_FACTOR=0.45`, `-n 8`, `timeout -k 30 590`,
+   FEM_EM_ANS4_STEP2_DEGREE2=0 FEM_EM_ANS4_STEP2_RESOLUTION="0.012 0.0095 0.0075"
+   FEM_EM_ANS4_STEP2_CONDUCTOR_FACTOR=0.45`, `-n 8`, `timeout -k 30 900`,
    `-s`, durable capture with `exit $rc`; complex + `FEM_EM_REQUIRE_COMPLEX=1`,
-   `tests/environment` first.
+   `tests/environment` first. **Exactly three rungs, and not 0.015:**
+   `test_the_ladder_readout_is_printed` fits Richardson only when exactly
+   three rungs are finer than ×1 (`test_ans4_resolution_ladder.py:648–658`),
+   and every resolution rung counts as finer because its "factor" is the size
+   in metres — a four-rung window silences the fit. Dropping 0.015 also drops
+   the "move from control" column (no base rung): compute the moves by hand
+   from the printed digits and put them in the journal.
    **Anchors (asserted, imported, unmoved):** `test_every_finer_rung_actually_refines`;
    `test_every_rung_passes_the_imported_port11_gates` (reciprocity ≤ 1e-3,
-   σ_max ≤ 1 + 1e-9, every `Z` class spread ≤ 0.5 % on every rung).
-   **Negative control (asserted by reproduction):** the h = 0.015 rung at
-   factor 0.45 must mesh **293 534** cells, 2a‴'s flag-on ×0.45 count
-   (`…tprime.log:4078`), and its S₁₁ / S₂₁ / S₃₁ must equal `:6108–6111` to
-   every printed digit (2a‴ proved that reproduction on 2a″'s rungs; the mesh
-   is built on rank 0). Backing for "explicit `resolution=0.015` builds the
-   `resolution=None` mesh": the ANS-4 path's flag-on ×1 reads 116 118 cells
-   with the keyword absent (`20260911T093247Z_ANS-4-step2a-dprime-w1.log:2107`)
-   and `WF-6`'s explicit `resolution=0.015` flag-on rung reads 116 118
-   (`20260912T033518Z_WF-6-step4j.log:2032`) — same `_build`, same fixture.
-   **Printed (rule (e)):** per rung: cells (*predicted* ≈ 293.5 k / 326 k /
-   375 k — the flag-on global ladder's increments over ×1, 32 870 and 81 166
-   cells from `…4j.log:2032, :4077` and `…4j-x0.012.log:2003`, added to
-   293 534), mesh and drive times, `[mem]`; the three S classes and spreads;
-   each class's relative move per global rung beside 2a‴'s conductor-rung
-   moves; the module's Richardson fit on the three global rungs ("no
-   estimate" is a reading).
-   **Tier / ranks / cost:** ×0.45 at h = 0.015 measured 54.5 + 10.7 s
-   (`:4078`), `[mem]` 5.85 GiB summed (`:4077`); 2a‴'s 394 k rung measured
-   74.8 + 18.1 s and 7.16 GiB (`:6070–6071`), which bounds the 375 k rung.
-   *Predicted* ≈ 55 + 11, 62 + 13, 72 + 17 s; window ≈ 4–5 min; ≤ 8 GiB.
-   Heavy.
+   σ_max ≤ 1 + 1e-9, every `Z` class spread ≤ 0.5 %) on all three rungs.
+   **Negative control (asserted by reproduction):** the 0.012 and 0.0095 rungs
+   must mesh **392 442** and **513 061** cells and print S₁₁ / S₂₁ / S₃₁ equal
+   to `…step2e.log:6121–6127` to every printed digit — same envs, same rank
+   count, mesh built on rank 0; step 2e reproduced 2a‴'s 293 534 rung this
+   way (`:2139` against `20260912T003101Z_ANS-4-step2a-tprime.log:4078`).
+   The record-rung test skips (factor ≠ 1), as in step 2e.
+   **Printed (rule (e)):** the 0.0075 rung's cells (*predicted* ≈ 650–700 k
+   from the ladder's ≈ ×1.3 per rung: 293 534 → 392 442 → 513 061), mesh and
+   drive times, `[mem]` (*predicted* ≈ 14–15 GiB summed; 10.94 GiB after
+   0.0095, `:6072`); the class move 0.0095 → 0.0075 (*predicted* ≈ 0.3 /
+   0.25 / 0.4 %, i.e. about half of the 0.62 / 0.48 / 0.81 % step before it,
+   if p ≈ 3 holds); Richardson on (0.012, 0.0095, 0.0075): p and S_inf per
+   class beside step 2e's p and S_inf (`:6131–6133`), and |ΔS_inf|/|S_inf|
+   between the two fits per class.
+   **Tier / ranks / cost:** 0.012 rung 71.1 + 22.1 s, 0.0095 rung 91.9 + 31.6 s
+   measured (`:4088`, `:6053`); 0.0075 *predicted* ≈ 120 + 45 s. Window ≈ 7
+   min; heavy. Step 2e's cell predictions missed low by 20–37 % (global and
+   conductor refinement multiply), so the 0.0075 rung may reach ≈ 850 k cells
+   and ≈ 160 s of meshing; the `timeout` is the stop, since the fixture cannot
+   stop mid-build.
    **Traps:**
    - `DEGREE2=0` or the degree-2 solve builds (≥ 49 GiB).
-   - The ladder fixture builds every rung before any gate prints, so an
-     overrun loses the spreads: if the 0.0095 rung's mesh alone passes 150 s,
-     stop and record the cost.
-   - `RESOLUTION` set makes `_ladder_factors()` return `()` (`:320`), so the
-     factor env is read inside the 2c loop, never through `factors`.
-   - `_control_rung` matches `resolution == RESOLUTION` (`:257`); with the
-     factor on that rung is not the record — hence the skip, never a widened
-     `STEP2_CELL_COUNT_BAND`.
-   - `RICHARDSON_P_BRACKET` (0.2, 6.0) prints "not asymptotic" rather than a
-     number.
-   - Target `fem-em-solver` only; `pgrep -c python3` after a death; sweep
-     0-byte cache stubs only; no pipe.
+   - The ladder fixture builds every rung before any gate prints: an overrun
+     loses every spread. If the window dies, `pgrep -c python3` in the
+     container before anything else.
+   - `RESOLUTION` set makes `_ladder_factors()` return `()` (`:320`); the
+     factor env is read inside the 2c loop.
+   - The shared `PORT-9` rung print says "at -n 2" whatever the width
+     (`:2139`); the `ANS-4` line (`:2159`) carries the true width.
+   - `RICHARDSON_P_BRACKET` (0.2, 6.0) prints "no estimate" rather than a
+     number; that is a reading.
+   - Target `fem-em-solver` only; sweep 0-byte cache stubs only; no pipe;
+     `; exit $rc` verbatim.
    **Scope:** no Larmor verdict (the weekly's), no degree 2, no mesher default
-   flip, no band. Class moves are public as relative moves; any ours-vs-AED
-   gap goes to `docs/private/` only.
+   flip, no band, no code. Class moves are public as relative moves; any
+   ours-vs-AED gap goes to `docs/private/` only.
    **Negative result:**
-   - The count control fails ⇒ explicit `resolution` is not the default path
-     on this module: record, stop, no gate reading claimed.
-   - A `Z` spread breaks on a global rung ⇒ global refinement breaks C4 even
-     with the congruent cut: known-issues entry, stop, no band moves.
-   - The classes move by < 0.2 % across 0.015 → 0.0095 (≪ the ≈ 0.8 %
-     conductor moves) ⇒ the bulk is *not* the floor: record in §7 and stop;
-     the remaining candidates (the sheet cut, conductor grading beyond ×0.35)
-     are the weekly's to price.
+   - The count control fails ⇒ explicit `resolution` no longer builds the
+     step 2e meshes: record, stop, no reading claimed.
+   - A gate breaks on the 0.0075 rung ⇒ known-issues entry, stop, no band
+     moves.
+   - Richardson "no estimate", or p leaving the bracket, or the 0.0095 →
+     0.0075 move not smaller than the 0.012 → 0.0095 move ⇒ p ≈ 3 was
+     pre-asymptotic: record in §7 and stop; the move itself is the reading.
+   - Mesh overrun ⇒ record the cost, stop; the weekly prices a `-n 12` or
+     `xl` window.
 
-2. ✅ **DONE 2026-09-12 06:00 slot** (`20260912T110109Z_PORT-19-step5-n1.log`
-   18 passed, `Status: 0`, 111 s; `20260912T110311Z_PORT-19-step5-n2.log`
-   17 passed / 1 skipped, `Status: 0`, 90 s; record in §7 `PORT-19` step 5;
-   known-issues 2026-09-12 retired). **`PORT-19` step 5 — land ruling (1): anchor (A)'s field half asserted at
-   `-n 1`, printed at `-n 2`** (implementer; tests only, one module; complex;
-   standard; `main`; independent).
-   **Why:** ruling (1). `main` carries an intermittent red at `-n 2` in
-   `tests/validation/test_port19_factor_reuse.py` (known-issues 2026-09-12).
-   **The change (`test_port19_factor_reuse.py`):**
-   `test_a_kept_fields_are_per_drive_and_match` (`:324–332`) keeps the
-   `distinct_fields` assertion at every width; the
-   `field_devs ≤ REUSE_REPRODUCTION_RTOL` assertion runs only when
-   `comm.size == 1`; at `comm.size > 1` the four deviations are already
-   printed by the fixture (`:262–267`) and the test `pytest.skip`s with a
-   reason naming the known-issues 2026-09-12 entry and the `OPS-43` (d)
-   precedent. `REUSE_REPRODUCTION_RTOL` stays 1.0e-12. The S/Z tests
-   (`:306–320`) are untouched. The module docstring's anchor (A) sentence says
-   which half asserts at which width. In the same commit: retire the
-   known-issues 2026-09-12 entry (discipline: entries leave with the fixing
-   commit) and annotate §7 `PORT-19`.
-   **Windows (both the module alone, `-v -s`, complex +
-   `FEM_EM_REQUIRE_COMPLEX=1`, `tests/environment` first, durable capture with
-   `exit $rc`):** (1) `-n 1`, `timeout -k 30 400`; (2) `-n 2`,
-   `timeout -k 30 300`.
-   **Anchors (asserted):** at `-n 1`, S, Z and all four kept `E` deviations
-   ≤ 1e-12 — measured 0.000e+00 (`20260912T051457Z_PORT-19-step4-n1.log:1872–1873`);
-   at `-n 2`, S and Z ≤ 1e-12 — measured 5.015e-15 / 6.429e-15 and
-   1.130e-14 / 1.297e-14 (`…step4-w1.log:5528`, `…step4-isolation.log:1891`);
-   the factorisation counts (tests b) unchanged.
-   **Negative control (asserted, both windows):** the stale-factor control
-   separates by > 1e-12 — measured 1.073e-02 at S₂₂ in every window since
-   step 2 (`20260911T110544Z_PORT-19-step2.log:1897–1898`).
-   **Printed (rule (e)):** the `-n 2` field deviations (*predicted*
-   1e-11–5e-11 from two draws; a third draw is information, not a gate).
-   Expected tallies: 18 passed at `-n 1`; 17 passed, 1 skipped at `-n 2`.
-   **Tier / ranks / cost:** 137 s at `-n 1`, 119 s at `-n 2` measured
-   (`…-n1.log`, `…-isolation.log`). ≈ 4.5 min. Standard.
-   **Traps:**
-   - Decide the skip from `comm.size`, identical on every rank — never from
-     a rank-local value; print before skipping so the log carries the reading.
-   - `-n 1` is the anchor width here by ruling, the only such case besides
-     `OPS-43` (d) — say so in the docstring.
-   - No pipe; `timeout -k 30`; foreground.
-   **Scope:** no `src/` change, no default flip, no band change; the row stays
-   ✅. Does not diagnose the `-n 2` MUMPS drift (the known-issues 2026-09-10
-   observation stays).
-   **Negative result:** at `-n 1` any field deviation ≠ 0.0 ⇒ the ruling's
-   premise (bit-identity in one process) is wrong: keep the known-issues entry
-   open with the new reading, do not land the skip, stop. Anything else red ⇒
-   stop and report.
-
-3. ✅ **DONE 2026-09-12 07:30 slot** (`20260912T123236Z_PORT-14-step2d-64mhz.log`
-   16 passed / 1 skipped, `rc=0`, `Status: 0`, 93 s;
-   `20260912T123429Z_PORT-14-step2d-10mhz.log` 17 passed, `rc=0`, `Status: 0`,
-   92 s; record in §7 `PORT-14` step 2d). **`PORT-14` step 2d — is κ the terminal form's Cauchy–Schwarz deficit?
-   C/terminal − 1 at 64 MHz beside κ(64 MHz)** (implementer; tests only, one
-   additive env in the `PORT-16` module, no `src/`; complex; standard;
-   `main`; independent).
-   **Why:** ruling (3).
-   **The change (`tests/validation/test_birdcage_power_identity.py`,
-   additive, default bit-identical):** env `FEM_EM_PORT16_64MHZ` (unset/`0`
-   = off). On, the fixture (`:296–310`) calls
-   `build_four_port_sweep(frequency_hz=64.0e6)`; `_solve_driven` and
-   `_exact_shares` take ω from `sweep["problem"]`
-   (`test_birdcage_b1_plus_map.py:153–156`, `:258`), so nothing else moves.
-   Under the flag: (i) the discrete identity, (ii) the Cauchy–Schwarz bounds,
-   (iii) the split arithmetic and the ×2-`Z_p` control stay asserted
-   (theorems / arithmetic, frequency-independent); (iv)
-   `test_the_cauchy_schwarz_deficit_of_the_terminal_form_reproduces_the_gap`
-   is registered on a 10 MHz measurement, so under the flag it **prints** its
-   residual and skips with a reason (rule (e): no prior 64 MHz measurement).
-   New print per drive: `C/terminal − 1` (= `sheet_ceiling_total /
-   sheet_total − 1`, and per sheet) beside κ — pooled 1.064081e-02 and per
-   element C 1.057617e-02 / L 1.064945e-02 / R 1.058671e-02
-   (`20260912T020824Z_PORT-14-step2b-w2.log:1947–1951`) — and the 10 MHz
-   reference 1.0592e-2 (`20260907T051231Z_PORT-16.log:1895–1910`). Print the
-   fixture's S₁₁ beside `STEP1E_S11_S21_10MHZ`
-   (`test_port_lumped_rlc_termination.py:142`) so the log proves the sweep was
-   rebuilt at 64 MHz. New test `test_step2d_c_over_terminal_is_printed` (no
-   own flag; runs at both frequencies).
-   **Anchors (asserted):** (i) at `DISCRETE_IDENTITY_RTOL` = 1e-6 on all four
-   drives at 64 MHz (a theorem of the discrete solve); (ii) all sixteen
-   Cauchy–Schwarz inequalities; the flag-off window reproduces `PORT-16`'s
-   10 MHz readings — (iv) green and C/terminal − 1 = 1.0592e-2 to rtol 1e-5.
-   **Negative control (asserted, the `PORT-14` step 2 pattern):** the 64 MHz
-   S₁₁ differs from the 10 MHz record `STEP1E_S11_S21_10MHZ` by > 100× the
-   print precision (step 2 measured a wholly different S at 64 MHz,
-   `20260911T183201Z_PORT-14-step2.log:1859, :1880`), so a flag that did not
-   reach the builder cannot pass.
-   **Printed, predicted only:** at 64 MHz, C/terminal − 1 on the 50 Ω drives
-   within 5 % of κ(64) = 1.0641e-2; its 10 → 64 MHz shift has κ's sign
-   (+0.5 %).
-   **Windows (`-n 2`, `-s`, complex + `FEM_EM_REQUIRE_COMPLEX=1`,
-   `tests/environment` first, durable capture with `exit $rc`):** (1)
-   `FEM_EM_PORT16_64MHZ=1`, `timeout -k 30 300`; (2) flag unset,
-   `timeout -k 30 300`.
-   **Tier / ranks / cost:** the `PORT-16` module measured 149 / 131 / 106 /
-   104 s at `-n 2` (test-results 2026-09-07 rows); frequency does not change
-   the matrix size. ≈ 5 min. Standard.
-   **Traps:**
-   - `_power_shares` is imported from `test_birdcage_b1_plus_map.py` and
-     reads `sweep["problem"]` — confirm the printed `f = 6.400e+07 Hz` line
-     before reading anything else.
-   - The ×2 control's *predicted* factor window [0.5, 2] is printed, never
-     asserted; `np.real(Z_p)` in `_terminal_sheet_powers`.
-   - Comm-reduced numbers; print on rank 0. No UFL edit is needed; if one is
-     made, no ordering comparison on complex operands. No pipe.
-   **Scope:** measures only. No record, no band, no `Z_p` correction;
-   `PORT-14` and `PORT-16` statuses unchanged; `PORT-15` gate (i) stays
-   closed; the multiplicative-correction route is the weekly's to scope.
-   **Negative result:** (i) red at 64 MHz ⇒ the assembled forms do not
-   conserve power at that frequency: known-issues entry, stop. C/terminal − 1
-   at 64 MHz off κ by > 20 % ⇒ κ is not (only) the terminal-form deficit:
-   record in §7 `PORT-14` and stop; the width lever (item 4) is then the
-   remaining reading.
-
-4. ✅ **DONE 2026-09-12 09:00 slot** (`20260912T140430Z_PORT-14-step2c.log`
-   23 passed / 12 deselected, `rc=0`, `Status: 0`, 185 s; ε\*/(−κ_k) =
-   1.0313 (C) / 0.9577 (L), C/L 1.0695 (2 % prediction failed), no
-   negative-result bar fires; record in §7 `PORT-14` step 2c).
-   **`PORT-14` step 2c (re-pointed) — step 1c's width lever at 64 MHz, read
-   against κ** (implementer; tests only, no `src/`; complex; heavy; `main`;
-   independent). *The 18:00 skip condition is retired by ruling (2); there is
-   no skip condition.*
-   **Why:** ruling (2). Under the proportional law every sheet realises
-   `(1+κ)·Z_told`; the told width is the lever that undoes it, so ε\* should
-   read −κ_k at 64 MHz as it read −0.0107 / −0.0110 against κ 1.0585e-2 /
-   1.0590e-2 at 10 MHz (step 1c; `…step2b-default-w2.log:1948–1951`).
+2. **`PORT-14` step 2e — configuration D at 64 MHz beside an in-window
+   ε = 0 re-measurement (step 1d's pattern moved to 64 MHz)** (implementer;
+   tests only, additive, one module, no `src/`; complex; heavy by
+   expectation; `-n 2`; `main`; independent).
+   **Why:** ruling (3). Step 2c's C fit has a negative minimum and its three
+   points span two windows; a fourth point at ε ≈ ε\* with ε = 0 re-measured
+   in the same window resolves both, and it is the first direct reading of
+   whether a (1 + κ)-corrected width lands under `REDUCTION_BAND` at 64 MHz.
    **The change (`tests/validation/test_port_lumped_rlc_termination.py`,
-   additive):**
-   - `width_sweep_baseline` and `width_sweep_case` (`:1103–1140`) take
-     `_rlc_frequency_hz()` (`:152`) in place of `FREQUENCY_HZ`, for both
-     `build_four_port_sweep` and `series_rlc_impedance`. Flag unset ⇒
-     bit-identical.
-   - Print lines name the frequency that ran.
-   - Print the three-point `_epsilon_star` fit per element beside step 1c's
-     10 MHz ε\*, step 2's ε = 0 residuals (C 1.354202e-02, L 5.021261e-04,
-     `20260911T183201Z_PORT-14-step2.log:1891, :1898`) and −κ_k (C
-     −1.057617e-02, L −1.064945e-02, `…step2b-w2.log:1947–1951`), with the
-     ratio ε\*/(−κ_k).
-   **Anchors (asserted, existing, unmoved):** per configuration, the perturbed
-   4×4 is reciprocal ≤ 1e-3 with σ_max ≤ 1 + tolerance, and the cell count is
-   bitwise 116 085.
-   **Negative control (asserted):** the existing Γ = 0 control per
-   configuration; at 64 MHz unperturbed it missed by 494× / 239× the band
-   (`…step2.log:1924–1925`) against the 5× bar.
-   **Printed, predicted only:** ε\*(C) and ε\*(L) within 10 % of −κ_k and
-   within 2 % of each other; both ±5 % directions raise L's residual.
+   additive, flag-off bit-identical):**
+   - `step1d_baseline` (`:1635`) builds at `_rlc_frequency_hz()` instead of
+     `FREQUENCY_HZ`.
+   - `step1d_fit` takes its three `(ε, r)` points per element from a 64 MHz
+     table when `FEM_EM_PORT14_STEP2_64MHZ` is on: `STEP2C_RESIDUALS` =
+     (0, step 2's ε = 0 residual), (+0.05, A), (−0.05, B), restated with
+     their sources — C (0, 1.354202e-02) / L (0, 5.021261e-04) from
+     `20260911T183201Z_PORT-14-step2.log:1891, :1898`; A and B per element from
+     the 09:00 window's configuration blocks
+     (`20260912T140430Z_PORT-14-step2c.log:1940–1960, :2011–2030`; L's are
+     2.862518e-03 / 1.895173e-03, `:2097`). **Asserted (arithmetic on the
+     same constants):** the fit reproduces 2c's printed ε\* −0.010908 (C) /
+     −0.010199 (L), mean −0.010554 (`:2093–2094`), to rtol 1e-4.
+   - Configuration D at 64 MHz: every told width × (1 + mean ε\*(64)) =
+     0.989446 through the same `reuse` route; per element print D's residual
+     beside the in-window ε = 0 residual, the ratio D/(ε = 0), 1d's 10 MHz
+     ratios 0.036078 / 0.035507 (`20260906T003627Z_PORT-14-step1d.log:2103–2105`)
+     and `REDUCTION_BAND`. Print lines name the frequency that ran (2c's
+     trap: 1d's lines hard-code "10 MHz" in places).
    **Window (one):** `FEM_EM_PORT14_WIDTH_SWEEP=1 FEM_EM_PORT14_STEP2_64MHZ=1`,
-   `-n 2`, `timeout -k 30 590`, `-s`, durable capture with `exit $rc`;
-   complex + `FEM_EM_REQUIRE_COMPLEX=1`, `tests/environment` first.
-   **Tier / ranks / cost:** step 1c's identical window took 258 s at `-n 2`
-   (`20260905T213322Z_PORT-14-step1c.log`); the reuse-on default since
-   `PORT-19` step 2 makes it faster, not slower. ≈ 4.5 min. Heavy.
+   `-n 2`, `timeout -k 30 590`, `-s`, durable capture with `exit $rc`; complex
+   + `FEM_EM_REQUIRE_COMPLEX=1`, `tests/environment` first; select
+   `-k "step1d or terminated_solve_matches or environment"` so the width
+   configurations A/B/C (same flag) stay out — 2c's command line
+   (`…step2c.log:12`) shows the quoting that survives the container command;
+   1d chained two invocations instead (`…step1d.log`); either works. Under
+   the 64 MHz flag `test_the_terminated_solve_matches_the_circuit_reduction`
+   prints the ε = 0 residuals and skips its 10 MHz record (`:398–399`) — that
+   print is the in-window ε = 0 point.
+   **Anchors (asserted, existing, unmoved):** D is a valid four-port on the
+   bitwise-unchanged mesh — cells 116 085, reciprocity ≤ 1e-3, σ_max ≤ 1 +
+   1e-9 (`test_step1d_configuration_d_is_a_valid_four_port`); the Γ = 0
+   control on D misses by ≥ 5× (*asserted*: same comparison, same fixture —
+   1d's D read 321× / 325× at 10 MHz, `…step1d.log:2110–2111`; 2c's A/B/C
+   read ≥ 234× at 64 MHz, `…step2c.log:1946–1947, :2017–2018, :2088–2089`).
+   **Negative control by reproduction (predicted, stop-on-miss):** the
+   in-window ε = 0 residuals at 64 MHz reproduce step 2's 1.354202e-02 (C)
+   and 5.021261e-04 (L) — *predicted* to rtol 1e-6 (step 2d's flag-off window
+   reproduced C/terminal − 1 across windows to 1.45e-10; the `-n 2` MUMPS
+   drift is ~1e-11 on fields) — printed beside the record. A miss above 1e-6
+   is a finding in its own right (window-to-window non-reproducibility at
+   64 MHz, which would make 2c's mixed-window fit suspect): stop and report.
+   Also print the 64 MHz S₁₁ beside `STEP1E_S11_S21_10MHZ`; it must differ by
+   > 1e-7 (step 2d's control, `…step2d-64mhz.log:1940`) so a flag that did
+   not reach the builder cannot pass.
+   **Printed (rule (e)):** D's residuals per element — *predicted* from 2c's
+   parabolas at ε = −0.010554: C's fitted r² is negative there, so "≈ 0 to
+   the model"; L ≈ 1.3e-4 (0.27× its ε = 0 value) — and whether each lands
+   under `REDUCTION_BAND` 1e-3 (**printed, never asserted**: the width was
+   fitted to these residuals, as 1d said).
+   **Tier / ranks / cost:** `rlc_termination_cases` at 64 MHz 115 s
+   (`20260911T183201Z_PORT-14-step2.log`); 1d's baseline + D 137 s at 10 MHz
+   (`…step1d.log`); reuse-on default since. ≈ 4.5 min; heavy by expectation.
    **Traps:**
-   - Step 1c's print lines hard-code "10 MHz" in places — name the frequency
-     that ran.
-   - `STEP1B_TERMINATIONS` is C and L only.
-   - The `reuse` route is mesh-only; the sweep is rebuilt at the frequency
-     passed.
-   - No other step env var; `c4_congruent_sheets` off; foreground; no pipe.
-   **Scope:** measures only. No record, no band, `PORT-14` stays 🟡,
-   `PORT-15` gate (i) stays closed. Whether a `(1+κ)` correction becomes a
-   registered route is the weekly's.
-   **Negative result:** ε\* off −κ_k by > 30 %, or C and L differing by
-   > 2×, ⇒ the proportional law does not hold in the width parametrisation at
-   64 MHz: record in §7 and stop. Residuals within ±10 % of the ε = 0 values
-   across all three configurations ⇒ width is not a 64 MHz lever at all:
-   record and stop.
+   - `-k a or b` splits inside a quoted container command; copy 2c's
+     quoting or chain invocations.
+   - No host-side pipe on the wrapper either (`| tail -3` in the 09:00 slot
+     broke the letter of the rule; the log survived). Filter after the fact.
+   - Predicted factors printed, never asserted; comm-reduced numbers, print on
+     rank 0; `np.real(Z_p)` where a real part is meant.
+   - `STEP1B_TERMINATIONS` is C and L only; R is printed by the fixture and
+     not part of the fit.
+   - `; exit $rc` verbatim; `timeout -k 30`; foreground.
+   **Scope:** measures only. No record, no band, no `src/`; `PORT-14` stays
+   🟡; `PORT-15` gate (i) stays closed; whether the (1 + κ) correction becomes
+   a registered route is the weekly's.
+   **Negative result:** ε = 0 does not reproduce ⇒ stop, report; 2c's fit is
+   then suspect and the weekly re-scopes. D's C residual > 1e-3 while L's is
+   under ⇒ the linear model is broken for C at 64 MHz: record in §7 and stop.
+   Both > 1e-3 ⇒ the width lever does not undo κ at 64 MHz: record and stop.
+   Both under ⇒ record; the route is the weekly's to scope, not this slot's
+   to register.
 
-5. **`WF-6` step 4k — a no-solve census of the mid-gap rim facet**
+3. **`ANS-4` step 2g — the same three global rungs at fixed ×0.35: are the
+   two knobs separable?** (implementer; **runs only, no code change**;
+   complex; heavy; `-n 8`; `main`; independent of item 1 — different rungs,
+   no file edited; if item 1 overran its mesh, this window's finest rung is
+   of the same size and the same trap applies).
+   **Why:** ruling (1). Step 2e's extrapolant is a limit in the global size
+   at one conductor grading. Repeating the global ladder at ×0.35 measures
+   whether the global moves depend on the conductor grading (the knobs
+   interact) or not (additive), and gives a second extrapolant whose distance
+   from the first is the conductor knob's residual at h → 0.
+   **Window (one):** `FEM_EM_ANS4_STEP2_C4_CONGRUENT=1
+   FEM_EM_ANS4_STEP2_DEGREE2=0 FEM_EM_ANS4_STEP2_RESOLUTION="0.015 0.012 0.0095"
+   FEM_EM_ANS4_STEP2_CONDUCTOR_FACTOR=0.35`, `-n 8`, `timeout -k 30 900`,
+   `-s`, durable capture with `exit $rc`; complex + `FEM_EM_REQUIRE_COMPLEX=1`,
+   `tests/environment` first.
+   **Anchors (asserted, imported, unmoved):** as item 1, on all three rungs.
+   **Negative control (asserted by reproduction):** the h = 0.015 rung at
+   ×0.35 must mesh **394 481** cells and print S₁₁ / S₂₁ / S₃₁ equal to
+   2a‴'s ×0.35 rung, `20260912T003101Z_ANS-4-step2a-tprime.log:6113–6115`, to
+   every printed digit (2a‴ built it with the default global size, and
+   step 2e showed explicit `resolution=0.015` builds the default mesh:
+   293 534 at ×0.45 either way).
+   **Printed (rule (e)):** per rung cells (*predicted* ≈ 394 k / 530 k /
+   690 k), mesh and drive times, `[mem]` (*predicted* ≤ 18 GiB summed; 7.16
+   GiB after ×0.35 at 0.015, `:6070`); the cumulative class moves from
+   h = 0.015 beside ×0.45's 1.2524 / 0.8394 / 1.5295 % and 1.8423 / 1.2053 /
+   2.3073 % (*predicted* within 20 % of them if the knobs are additive);
+   Richardson p and S_inf beside step 2e's; |S_inf(×0.35) − S_inf(×0.45)| /
+   |S_inf| per class (*predicted* ≈ the ×0.45 → ×0.35 move at h = 0.015:
+   0.89 / 0.83 / 0.88 %, if additive).
+   **Tier / ranks / cost:** ×0.35 at 0.015 measured 74.8 + 18.1 s
+   (`…tprime.log:6071`); finer rungs *predicted* ≈ 95 + 30 and 125 + 45 s.
+   ≈ 7–8 min; heavy. The finest rung is item 1's size class: the same
+   mesh-overrun clause.
+   **Traps:** item 1's, verbatim.
+   **Scope:** item 1's; additionally no ruling on which knob "wins" — the
+   two-knob picture is the weekly's to price.
+   **Negative result:** count control fails ⇒ stop. A gate breaks on a rung ⇒
+   known-issues entry, stop. Richardson "no estimate" ⇒ record; the moves are
+   still the reading. The ×0.35 moves differing from ×0.45's by more than
+   half of themselves ⇒ the knobs interact: record in §7 and stop; a
+   two-knob extrapolation is the weekly's to price against the `xl` tier.
+
+4. **`WF-6` step 4k — a no-solve census of the mid-gap rim facet**
    (`mesh-probe` executor; measurement only, a new `tests/mesh/probe_*.py`,
    no edit to an existing test, no `src/`; either build; smoke per rung;
    `main`; spare; independent).
@@ -8368,6 +8314,52 @@ a `[capture] rc=` line only when it is the *last* output line.
    facet) ⇒ the sliver hypothesis is refuted: record it in §7 and
    known-issues, stop; the in-plane field then needs a field-side reading
    (the N1curl trace on the adjacent cells), which a review scopes.
+
+5. **`PORT-19` step 6 — the two unrun example callers on the reuse-on
+   default: `ports:3` and `ports:13`** (implementer; runs only, through
+   `./run_examples.sh`, no example edit; complex; heavy by measurement for
+   window 1, standard for window 2; `-n 2`; `main`; independent).
+   **Why:** ruling (4). Step 2 listed both as unrun on the new default; every
+   other lumped-sheet caller is green (step 4). A regression record under the
+   ✅ row, not a reopening.
+   **Windows:** (1) `./run_examples.sh -e ports:3 -n 2 -t 400` through the
+   harness (the `EX-36` leg-b command, `20260901T170411Z_EX-36-leg-portsans-b.log:12`);
+   (2) `./run_examples.sh -e ports:13 -n 2 -t 300` (`EX-49` ran the inner
+   command directly with `timeout -k 30 590`, `20260905T201151Z_EX-49.log:12`
+   — either entry point); (3) the docrefs census as `EX-53` ran it
+   (`20260907T140926Z_EX-53-census-post.log:12`), gated on `exit != 1`
+   (`exit 2` = staleness is information).
+   **Anchors (asserted by the examples themselves, imported, unmoved):**
+   `ports:3` — cross-route at `f = 0.5` ≤ 5 % (record 1.9222 %), `f = 1.0`
+   reproduces `STEP1_CROSS_ROUTE_RECORD` 7.7431 % at 1e-4, reciprocity ≤ 1e-3
+   (record 2.574296e-11), mesh 184 919 cells
+   (`examples/ports/03_lumped_sheet_port_widths.md:62–67, :87`); `ports:13` —
+   116 085 cells at `STEP2_CELL_COUNT_BAND`, the C4 covariance identity, and
+   `WF-6` step 2's 0.9818 % record at `CG1_RECORD_RTOL` 1e-3
+   (`examples/ports/13_birdcage_asymmetric_drive.md:43–53`).
+   **Negative control (asserted, inside `ports:3`):** control (iii) — `f = 1.0`
+   is asserted to **miss** the 5 % band (7.7431 % > 5 %, guide `:65`).
+   **Printed (rule (e)):** each example's wall time beside its pre-reuse
+   window (228 s / 73 s at `-n 2`; *predicted* lower — the 4-leg fixture's
+   sweep line fell 23.74 → 6.68 s under reuse, `PORT-19` step 2); the census
+   `RESULT:` line.
+   **Tier / ranks / cost:** 228 + 73 s measured pre-reuse at `-n 2`, plus the
+   census (≤ 2 s). ≈ 6 min.
+   **Traps:**
+   - Runner trap (`permission denied … /var/run/docker.sock`): run the inner
+     command verbatim through `run_and_log.sh` and journal the denial.
+   - The allowlist entry is the repo-relative `scripts/testing/run_and_log.sh`;
+     an absolute path is denied.
+   - `paraview_output/` artifacts are gitignored; the census reads them, the
+     commit does not carry them.
+   - No pipe; `timeout -k 30`; foreground; the runner's own `-t` is the
+     container-side timeout.
+   **Scope:** runs only. A red example is a negative result, not a fix in
+   slot; no example, guide, record or band is edited; `PORT-19` stays ✅.
+   **Negative result:** an imported assertion red on the reuse-on default ⇒
+   the reuse path differs from per-drive on a caller step 4 did not cover:
+   known-issues entry naming the example and the assertion, stop. A wall time
+   not lower than the pre-reuse window is information, printed.
 
 *(The per-review journal — slot recap, completion audits, plan-work notes,
 §10 assessment — lives in the review commits and

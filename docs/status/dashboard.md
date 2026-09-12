@@ -1,34 +1,30 @@
 # FEM-EM Solver — status
 
-**Updated:** 2026-09-12 03:00 daily review. Headline: **all four slots since
-18:00 did chunk work** — no row closed, four measurements landed, two review
-rulings banked, and the queue is refilled with five independent items.
+**Updated:** 2026-09-12 10:30 daily review. Headline: **all four slots since
+03:00 did chunk work** — no row closed, four measurements landed, four review
+rulings banked, and the queue is refilled with five independent items, two of
+them inputs to tomorrow's weekly Larmor verdict.
 
 What the slots found:
-- **`ANS-4` ×0.35 rung: negative result.** The finer conductor rung passes
-  every gate, but the four-rung Richardson fit returns no estimate: the
-  step-to-step moves stop shrinking after ×0.6. The old three-point
-  extrapolant is retired as a converged reference. The review's reading is
-  that the unrefined bulk (fixed 15 mm global size) sets the floor; item 1
-  tests exactly that before the 09-13 weekly.
-- **`PORT-14` at 64 MHz: one number explains all three residuals.** The
-  termination the field solve realises differs from the one it was told by a
-  single proportional factor κ ≈ 1.06 % at both 10 and 64 MHz, and the same
-  three-figure number appears as the sheet-field non-uniformity `PORT-16`
-  measured at 10 MHz. Items 3 and 4 test whether κ *is* that non-uniformity
-  and whether the width lever undoes it at 64 MHz. If both hold, a single
-  multiplicative correction is the candidate route to the first 64 MHz
-  circuit-layer record.
-- **`WF-6` ×0.0095 B₁⁺ rung: the excess is located.** Two thirds of it is
-  in-plane transverse field, and 42 % of the drive-component variance sits on
-  one mid-gap rim facet covering 7 % of the sheet. A no-solve mesh census of
-  that facet is queued (item 5); the rung's power gate stays unruled.
-- **`PORT-19` regression record: callers green, one intermittent red.** All
-  three untested sweep-caller modules pass on the reuse-on default. The
-  field half of the reuse test is red at 2 ranks (~4e-11 vs a 1e-12 band) and
-  bit-identical at 1 rank. The review ruled it a width re-anchoring, not a
-  loosened bound: the comparand itself is not bit-reproducible at 2 ranks
-  (MUMPS drift, known since 09-10). Item 2 lands it.
+- **`ANS-4` global ladder: the unrefined bulk is a real contributor.** Holding
+  the conductor grading fixed and refining the global mesh size moves every
+  S-parameter class by more than the conductor rungs did, and the moves halve
+  per rung. The fit's exponent (≈ 3) is higher than degree-1 elements usually
+  give, and a three-point fit on this fixture has been refuted once already.
+  Two more windows are queued before the weekly: a fourth global rung (item 1)
+  and the same ladder at a finer conductor grading (item 3).
+- **`PORT-14`: κ is the sheet-field non-uniformity, to 0.3 %.** At 64 MHz the
+  ratio the power identity measures agrees with the proportional factor κ to
+  −0.3 %; its shift from 10 to 64 MHz has κ's sign at a third of κ's size. The
+  width lever at 64 MHz reads −κ to +3 % (C) / −4 % (L), but the C fit is not
+  quite of the assumed form. One window (item 2) re-measures the zero point
+  and a corrected-width configuration together; if both elements land under
+  the band, the weekly has a candidate route to the first 64 MHz circuit-layer
+  record.
+- **`PORT-19` field half ruled and landed.** The reuse test asserts
+  bit-identity at 1 rank and prints at 2 ranks; the intermittent red is
+  retired. Nothing is open on the chunk. The last two untested example callers
+  get a regression window (item 5).
 
 **Still a self-consistency story at the Larmor frequencies:** no absolute SAR,
 no C95.3 figure, no homogeneity, no Larmor coil accuracy, no resonance or
@@ -50,12 +46,12 @@ the human operator.
    `logs/automation/codex-rollout-paused-20260910/HANDOFF.md` (gitignored).
 4. 🟡 **Both containers were `Exited (137)` around 14:00 CDT on 09-10**, cause
    unknown. *(Carried; referred to the weekly.)* No recurrence: `fem-em-solver`
-   has been Up for 36 h.
-5. 🟢 **For the 09-13 weekly (no action):** the step-2d Larmor verdict, now
-   with the ×0.35 negative and (if item 1 lands) the global-size reading;
-   `TH-11` step 5d's §2 sentence; `TH-19` outcome (a); `PORT-14`'s κ and the
-   multiplicative-correction route to a 64 MHz record (items 3–4); the second
-   exposure of the 2-rank MUMPS drift (`PORT-19` step 4).
+   has been Up for 44 h.
+5. 🟢 **For the 09-13 weekly (no action):** the Larmor verdict, now with the
+   global-ladder reading and (if items 1 and 3 land) the two-knob picture;
+   `TH-11` step 5d's §2 sentence; `TH-19` outcome (a); `PORT-14`'s κ at 64 MHz
+   and the multiplicative-correction route (item 2 is its direct read); the
+   third draw of the 2-rank MUMPS drift.
 6. 🟡 **Agent-definition edits.** *(Carried.)* Five one-liners for
    `example-runner.md`, `mesh-probe.md` and `implementer.md`, plus
    `implementer.md`'s missing "Last verified against" footer.
@@ -73,49 +69,51 @@ the human operator.
 | Time-harmonic curl-curl | ✅ validated | lossy plane wave < 0.06%; Larmor sphere 3.64% / 1.77%, power 3.63%; degree 2 gated at 0.1405% on the sphere (`TH-12` ✅). On the coil, degree 2 passes the power identity **only under `"matched"`** (`TH-19`) |
 | Conductor model | 🟡 PEC-hole gap-volume fix on `main` (`TH-15` step 3b), default not flipped | unchanged |
 | Coil loading | ⚠️ eddy-current regime only; the 64 MHz bracket sentence is the weekly's | `MAT-6` ✅ Dodd–Deeds; `TH-11` step 5d bracket [−2.04%, −0.43%] |
-| S-parameters / ports | ✅ 4-leg identities at 10/64/128 MHz; **self-consistency only** | flag-on conductor ladder C4-clean to ×0.35 (`ANS-4` step 2a‴) but **not in its asymptotic range**; factor reuse reproduces the 4×4 exactly and the 32×32 to 2e-11 (`PORT-19` ✅) |
-| Lumped RLC | 🟡 10 MHz floor registered; **64 MHz capacitor residual 1.35e-2, not registered** — a single proportional κ ≈ 1.06 % carries it | items 3 and 4 test κ's origin and the width lever |
-| B₁⁺ | 🧪 symmetry-gated at CG1; ladder on `main` 5.25% → 2.07% | ×0.0095 power miss located on one rim facet (not explained); item 5 |
+| S-parameters / ports | ✅ 4-leg identities at 10/64/128 MHz; **self-consistency only** | flag-on conductor ladder C4-clean to ×0.35 and global ladder C4-clean to h = 9.5 mm (`ANS-4` steps 2a‴, 2e), **neither in a proven asymptotic range**; factor reuse reproduces the 4×4 exactly and the 32×32 to 2e-11 (`PORT-19` ✅) |
+| Lumped RLC | 🟡 10 MHz floor registered; **64 MHz capacitor residual 1.35e-2, not registered** — κ ≈ 1.06 % is the sheet-field non-uniformity to 0.3 % (step 2d) and the width lever reads −κ to a few % (step 2c) | item 2 measures the corrected width at 64 MHz |
+| B₁⁺ | 🧪 symmetry-gated at CG1; ladder on `main` 5.25% → 2.07% | ×0.0095 power miss located on one rim facet (not explained); item 4 |
 | Coil-driven SAR | ✅ 1 g / 10 g C4-gated at 10 MHz on one fixture (`MAT-4`) | unchanged; no absolute or compliance claim |
-| Test-suite trust | ✅ residual reds at `-n 2`: **3** deliberate/known **+ 1 intermittent** (`PORT-19` field half, item 2 retires it) | harness honours a final capture rc line (`OPS-45` ✅) |
+| Test-suite trust | ✅ residual reds at `-n 2`: **3** deliberate/known (the intermittent `PORT-19` red retired 09-12) | harness honours a final capture rc line (`OPS-45` ✅) |
 
-## Recent activity (2026-09-11 18:00 → 2026-09-12 03:00)
+## Recent activity (2026-09-12 03:00 → 10:30)
 
-- **19:30:** `ANS-4` step 2a‴ landed as a negative result. One window, 247 s
-  at 8 ranks.
-- **21:00:** `PORT-14` step 2b landed. Four windows of 116–122 s.
-- **22:30:** `WF-6` step 4j landed. Windows of 199 s and 101 s.
-- **00:00:** `PORT-19` step 4 landed. Five windows, 119–217 s; one
-  intermittent red isolated to the 2-rank width.
-- **02:00:** the Saturday `xxl` slot fired with an empty queue and ran nothing.
-- **03:00 review (this one):**
+- **04:30:** `ANS-4` step 2e landed. One window, 328 s at 8 ranks; the bulk
+  is a real contributor.
+- **06:00:** `PORT-19` step 5 landed. Two windows, 111 s and 90 s; known-issues
+  entry retired.
+- **07:30:** `PORT-14` step 2d landed. Two windows of 93 s and 92 s.
+- **09:00:** `PORT-14` step 2c landed. One window, 185 s.
+- **10:30 review (this one):**
   - no row turned ✅, so nothing to audit;
-  - the `PORT-19` field-half red was ruled (re-anchor at 1 rank);
-  - the `PORT-14` width-lever item was re-pointed at κ instead of blocked;
-  - five independent items queued.
+  - the four measurements were accepted and their follow-ups scoped;
+  - five independent items queued; the 03:00 narrative archived.
 
 ## Automation health
 
 - **Implementer slots: 4 of 4 fired** and all landed work. No window died, no
-  ranks were orphaned, and no masked status.
-- **XL / XXL path:** both queue files are empty; the `xxl` slot ran nothing.
+  ranks were orphaned, and no masked status. One slot piped the host-side
+  wrapper output (`| tail -3`); the container side was durable-capture and the
+  log is intact — disclosed, rule restated in the queue.
+- **XL / XXL path:** both queue files are empty.
 - **Tree:** clean. **Branches:** 4 `attempt/*` (`TH-15-step2proper`,
   `WF-6-step4b/4c/4e`), kept. No `recovered/*`.
 - **Review model:** `claude-fable-5-1`; no override set.
 
 ## On deck (§9 — five items, independent)
 
-1. **`ANS-4` step 2e** *(implementer; heavy, 8 ranks, ≈ 5 min)* — refine the
-   global mesh size at fixed ×0.45 conductor grading, to test whether the
-   unrefined bulk is the convergence floor.
-2. **`PORT-19` step 5** *(implementer; standard, 1 and 2 ranks, ≈ 4.5 min)* —
-   land the field-half ruling: assert bit-identity at 1 rank, print at 2.
-3. **`PORT-14` step 2d** *(implementer; standard, 2 ranks, ≈ 5 min)* — the
-   sheet-field non-uniformity at 64 MHz beside κ: is κ that deficit?
-4. **`PORT-14` step 2c** *(implementer; heavy, 2 ranks, ≈ 4.5 min)* — the
-   width lever at 64 MHz, now predicted to read −κ.
-5. **`WF-6` step 4k** *(mesh-probe; smoke, 1 rank, ≈ 3 min)* — a no-solve
+1. **`ANS-4` step 2f** *(implementer; heavy, 8 ranks, ≈ 7 min, runs only)* —
+   a fourth global rung (h = 7.5 mm) at fixed ×0.45 conductor grading: does
+   the fitted exponent hold?
+2. **`PORT-14` step 2e** *(implementer; heavy by expectation, 2 ranks,
+   ≈ 4.5 min)* — configuration D (κ-corrected widths) at 64 MHz beside an
+   in-window zero-point re-measurement.
+3. **`ANS-4` step 2g** *(implementer; heavy, 8 ranks, ≈ 7–8 min, runs only)* —
+   the same three global rungs at ×0.35: are the two refinement knobs
+   separable?
+4. **`WF-6` step 4k** *(mesh-probe; smoke, 1 rank, ≈ 3 min)* — a no-solve
    quality census of the mid-gap rim facet across the three flag-on rungs.
+5. **`PORT-19` step 6** *(implementer; ≈ 6 min, 2 ranks, runs only)* — the two
+   unrun example callers (`ports:3`, `ports:13`) on the reuse-on default.
 
 ---
 
