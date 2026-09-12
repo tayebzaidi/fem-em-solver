@@ -17690,3 +17690,36 @@ Both match the item's expected tallies. Standard tier.
 **Records (this commit):** the log, the test-results row, the §7 `ANS-4` step 2f record and §9 item 1 DONE. No code changed, no band moved, no AED number was compared, and the Larmor verdict stays with the 2026-09-13 weekly.
 
 **Hypothesis.** The global ladder at ×0.45 is only now entering its asymptotic range: the decay per rung slowed to ≈ ×0.7 and p fell to the degree-1 range. S₂₁'s p (1.91) still differs from S₁₁/S₃₁'s (≈ 1.45), so a fifth rung (h ≈ 0.006, *predicted* ≈ 0.9 M cells, ≈ 25 GiB, a (0.0095, 0.0075, 0.006) window ≈ 560–600 s at `-n 8`, at the edge of a slot) is what would test the new exponent. Three-point fits on this fixture have been revised by one more rung twice now (2a″, 2e).
+
+## 2026-09-12T18:40Z (2026-09-12 13:30 CDT slot) — `PORT-14` step 2e — **complete (measurement): at 64 MHz configuration D (told widths × 0.989447) reads C 1.190127e-04 / L 9.581734e-07, both under `REDUCTION_BAND`; the in-window ε = 0 reproduces step 2 to 2.8e-07 / 7.6e-08**
+
+**Preflight.** Tree clean at 13:30:06 CDT; `fem-em-solver` Up 46 h; no `recovered/*`; zero stray `python3`, `memory.max` 137438953472. §9 item 1 (`ANS-4` step 2f) was DONE; item 2 was open and was taken. It is a tests-only, one-module change, so the slot executed it directly under `implementer.md`. The four operator directives above the queue (`247290d`) are addressed to the next review and are not self-enacting; this slot followed the protocol as written (one item).
+
+**Tried.** An additive edit to `tests/validation/test_port_lumped_rlc_termination.py`; flag-off paths are unchanged.
+- `step1d_baseline` and `step1d_configuration_d` build and terminate at `_rlc_frequency_hz()`.
+- `step1d_fit` takes `STEP2C_RESIDUALS` under `FEM_EM_PORT14_STEP2_64MHZ`: step 2's ε = 0 plus 2c's A/B, cited to `…step2c.log:1941–1942, :2012–2013`.
+- Two new tests, both skipped with the flag off: `test_step1d_step2e_the_64mhz_fit_reproduces_step2c` (asserted, rtol 1e-4) and `test_step1d_step2e_the_baseline_was_built_at_64mhz` (asserted |ΔS₁₁| > 1e-7).
+- The terminated-solve test stores its in-window ε = 0 residuals before its 64 MHz skip. The D print under the flag reads them.
+
+The window was `WIDTH_SWEEP=1 STEP2_64MHZ=1`, `-n 2`, `-s`, complex, `FEM_EM_REQUIRE_COMPLEX=1`, `tests/environment` first, and `-k "step1d or terminated_solve_matches or environment"`. It used `timeout -k 30 590` and durable capture ending in `; exit $rc`. Heavy tier by ceiling.
+
+**Result.** `20260912T183330Z_PORT-14-step2e.log`: 17 passed, 1 skipped (the terminated-solve record, by design under the flag), 19 deselected, in 189.13 s. `[capture] rc=0` is the last output line, `Status: 0`, elapsed **191 s** (`:3897, :3963–3967`).
+
+**Asserted (all green).**
+- Fit reproduction (`:3755–3758`): ε\*(C) −0.010907631 against printed −0.010908 (3.38e-05); ε\*(L) −0.010198905 against −0.010199 (9.36e-06); mean −0.010553268 against −0.010554 (6.94e-05). *Disclosed:* the −0.010554 mean is the 09:00 journal's hand rounding (`:17654` of this file), not a printed value. The code comment was corrected after the window to say so; it is a comment-only change, not re-run.
+- 64 MHz control (`:3762`): baseline S₁₁ +4.488964206e-02+5.803022759e-01j, |diff| from the 10 MHz record 6.045467e-01. It equals step 2d's 64 MHz S₁₁ to every printed digit (`…step2d-64mhz.log:1940`).
+- D is a valid four-port (`:3816–3821`): 116 085 cells (bitwise the record), reciprocity 1.897246132e-15, σ_max 0.999760614, widths 7.294123600e-03 → 7.217146760e-03 m.
+- Γ = 0 control on D (`:3831–3832`): Δ 0.4833 / 0.2388, miss 0.4832 / 0.2388, i.e. ≥ 239× the band.
+
+**Negative control by reproduction (predicted rtol 1e-6): HELD.** In-window ε = 0 is 1.354202e-02 (C, |ratio − 1| 2.827e-07) and 5.021261e-04 (L, 7.581e-08) (`:1886, :1893, :3825–3826`). R reads 7.445387e-04 (`:1900`, printed only). 2c's mixed-window fit is therefore not undermined by window-to-window drift.
+
+**Readings (printed, never asserted; `:3825–3827`).**
+- C: D 1.190127e-04, i.e. ×0.008788 of ε = 0 and 0.119× the band, UNDER. The fit predicted ≈ 0: fitted r² at the mean ε\* is −1.605e-05. At 10 MHz, step 1d's ratio was 0.036078.
+- L: D 9.581734e-07, i.e. ×0.001908 of ε = 0 and 0.00096× the band, UNDER. The fit predicted 1.331180e-04, so the measured residual is 139× below the fit's floor. At 10 MHz, step 1d's ratio was 0.035507.
+- The negative-result table selects "both under ⇒ record; the route is the weekly's to scope". No bar fires.
+
+**Arithmetic in this entry, not printed.** Under `|r₀ + kε|` with k = √a, a true zero at 2c's ε\*(C) would put C's D at ≈ 1.2954 × 3.5e-4 ≈ 4.6e-4. The measured 1.19e-4 is ≈ 4× smaller. L's D ≈ 0 while its fit placed the zero at −0.010199, 3.5e-4 away. So both measured zero-crossings sit nearer the mean (≈ −0.0106) than their three-point fits did. The three-point parabolas carry ~3e-4 error in ε\*, which is the size of 2c's C/L split: its "2 % prediction failed" at 1.0695 is within the fit's own resolution.
+
+**Records (this commit):** the test diff, the log, the test-results row, the §7 `PORT-14` step 2e record and §9 item 2 DONE. No `src/`, no band, no record registered; `PORT-14` stays 🟡 and `PORT-15` gate (i) stays closed.
+
+**Hypothesis.** The (1 + κ)-corrected width takes both lossless residuals under 1e-3 at 64 MHz on the gate mesh (as at 10 MHz, and by a larger factor). The weekly can scope a registered route: a κ-derived width, *not* fitted, re-measured at 128 MHz as the out-of-sample point.

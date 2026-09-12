@@ -396,6 +396,9 @@ def test_the_terminated_solve_matches_the_circuit_reduction(rlc_termination_case
         f"{sorted(REDUCTION_FLOOR_F_SMALL)}"
     )
     if _step2_enabled():
+        # `PORT-14` step 2e: this window's eps = 0 point, read by step 1d's
+        # configuration-D print at 64 MHz (flag off: nothing is stored).
+        _STEP2E_EPS0_IN_WINDOW.update(residuals)
         pytest.skip("10 MHz record; 64 MHz has none yet")
     if comm.size != RECORD_RANK_WIDTH:
         pytest.skip(
@@ -1552,6 +1555,48 @@ STEP1C_RESIDUALS = {
 # it lands within this fraction of |eps*| of it (~0.3 pp at eps* ~ -1.1%).
 GEOM_MATCH_FRACTION = 0.3
 
+# --- `PORT-14` step 2e: step 1d's pattern moved to 64 MHz --------------------
+# With `FEM_EM_PORT14_STEP2_64MHZ` on, step 1d's baseline and configuration D
+# build at 64 MHz and `step1d_fit` takes its three points from step 2c's
+# 64 MHz readings instead of step 1c's 10 MHz ones (flag off: unchanged).
+# Logged records, restated with their sources: eps = 0 is step 2's
+# (`20260911T183201Z_PORT-14-step2.log:1891, :1898`), +5% / -5% are step 2c's
+# configurations A / B (`20260912T140430Z_PORT-14-step2c.log:1941-1942,
+# :2012-2013`).
+STEP2C_RESIDUALS = {
+    "C = 100 pF": ((0.0, 1.354202e-02), (+0.05, 7.879573e-02), (-0.05, 5.047888e-02)),
+    "L = 1 uH": ((0.0, 5.021261e-04), (+0.05, 2.862518e-03), (-0.05, 1.895173e-03)),
+}
+
+# Step 2c's printed eps* per element (`…step2c.log:2094-2095`) and their mean,
+# asserted reproduced by the fit above — arithmetic on the same constants.  The
+# six printed decimals carry <= 5e-7, i.e. <= 5e-5 relative, under the rtol.  The
+# mean is not printed by 2c: it is the 09:00 journal's half-up rounding of the two
+# printed values (`docs/testing/attempts.md`, 2026-09-12T14:09Z entry), so it
+# carries up to ~1e-6 (measured 2026-09-12: |ratio - 1| = 6.938e-05,
+# `20260912T183330Z_PORT-14-step2e.log:3758`), still under the rtol.
+STEP2C_PRINTED_EPS_STAR = {"C = 100 pF": -0.010908, "L = 1 uH": -0.010199}
+STEP2C_PRINTED_MEAN_EPS_STAR = -0.010554
+STEP2E_FIT_RTOL = 1.0e-4
+
+# Step 1d's 10 MHz ratio D / (eps = 0), `20260906T003627Z_PORT-14-step1d.log:2103-2104`.
+# Printed beside the 64 MHz ratio, never asserted.
+STEP1D_D_RATIO_10MHZ = {"C = 100 pF": 0.036078, "L = 1 uH": 0.035507}
+
+# *Predicted* (rule (e), printed only, stop-on-miss for the slot): the in-window
+# eps = 0 residual reproduces step 2's to this rtol (step 2d's flag-off window
+# reproduced C/terminal - 1 across windows to 1.45e-10).
+STEP2E_EPS0_REPRODUCTION_RTOL = 1.0e-6
+
+# Asserted: the 64 MHz baseline's S11 differs from the 10 MHz record by more than
+# this, so a flag that did not reach step 1d's builder cannot pass (step 2d's
+# control, `20260912T123236Z_PORT-14-step2d-64mhz.log:1940`: |diff| = 6.05e-01).
+STEP2E_S11_MOVE_FLOOR = 1.0e-7
+
+# The eps = 0 residuals measured in *this* window by
+# `test_the_terminated_solve_matches_the_circuit_reduction` under the 64 MHz flag.
+_STEP2E_EPS0_IN_WINDOW = {}
+
 
 def _epsilon_star(points):
     """The vertex of ``r^2(eps)`` through three ``(eps, r)`` points.
@@ -1606,9 +1651,17 @@ def _geometric_candidates(sheet):
 
 @pytest.fixture(scope="module")
 def step1d_fit():
-    """eps* per element from step 1c's constants — arithmetic, no solve."""
+    """eps* per element from step 1c's constants — arithmetic, no solve.
+
+    Under `FEM_EM_PORT14_STEP2_64MHZ` the points are step 2c's 64 MHz readings
+    (`STEP2C_RESIDUALS`, `PORT-14` step 2e).
+    """
+    if _step2_enabled():
+        table, source = STEP2C_RESIDUALS, "step 2c's 64 MHz residuals (eps = 0 from step 2)"
+    else:
+        table, source = STEP1C_RESIDUALS, "step 1c's three printed residuals"
     fit = {}
-    for label, points in STEP1C_RESIDUALS.items():
+    for label, points in table.items():
         star, r2_star, a, b, c = _epsilon_star(points)
         fit[label] = {
             "eps_star": star,
@@ -1618,7 +1671,7 @@ def step1d_fit():
             "c": c,
         }
     mean_star = float(np.mean([v["eps_star"] for v in fit.values()]))
-    return {"per_element": fit, "mean_eps_star": mean_star}
+    return {"per_element": fit, "mean_eps_star": mean_star, "source": source}
 
 
 @pytest.fixture(scope="module")
@@ -1632,7 +1685,7 @@ def step1d_baseline():
     comm = MPI.COMM_WORLD
     comm.Barrier()
     t0 = time.perf_counter()
-    sweep = build_four_port_sweep(frequency_hz=FREQUENCY_HZ)
+    sweep = build_four_port_sweep(frequency_hz=_rlc_frequency_hz())
     comm.Barrier()
     seconds = time.perf_counter() - t0
     widths = [float(spec.sheet_width_m) for spec in sweep["specs"]]
@@ -1677,13 +1730,14 @@ def step1d_configuration_d(step1d_baseline, step1d_fit):
 
     comm.Barrier()
     t0 = time.perf_counter()
-    sweep = build_four_port_sweep(frequency_hz=FREQUENCY_HZ, reuse=reuse)
+    frequency_hz = _rlc_frequency_hz()
+    sweep = build_four_port_sweep(frequency_hz=frequency_hz, reuse=reuse)
     comm.Barrier()
     baseline_seconds = time.perf_counter() - t0
 
     cases = []
     for label, element in STEP1B_TERMINATIONS:
-        z_term = series_rlc_impedance(FREQUENCY_HZ, **element)
+        z_term = series_rlc_impedance(frequency_hz, **element)
         comm.Barrier()
         t1 = time.perf_counter()
         measured, kept_ids, _results = _terminated_three_port(sweep, z_term)
@@ -1764,7 +1818,7 @@ def test_step1d_the_sheet_geometry_candidates_are_printed(step1d_baseline, step1
             f"    fit {label:<12s} eps* = {entry['eps_star']:+.6f}   "
             f"r^2(eps*) = {entry['r2_star']:+.6e}   "
             f"(r^2 = {entry['a']:.6e} eps^2 + {entry['b']:.6e} eps + "
-            f"{entry['c']:.6e}, from step 1c's three printed residuals)",
+            f"{entry['c']:.6e}, from {fit['source']})",
             flush=True,
         )
     eps_star = float(fit["mean_eps_star"])
@@ -1803,6 +1857,136 @@ def test_step1d_the_sheet_geometry_candidates_are_printed(step1d_baseline, step1
             "quantities",
             flush=True,
         )
+
+
+@complex_only
+def test_step1d_step2e_the_64mhz_fit_reproduces_step2c(step1d_fit):
+    """`PORT-14` step 2e: the 64 MHz eps* is step 2c's, recomputed in code.
+
+    Asserted, arithmetic on the same constants: the fit through
+    `STEP2C_RESIDUALS` reproduces step 2c's printed eps* per element and their
+    mean to `STEP2E_FIT_RTOL`.  Runs only under `FEM_EM_PORT14_STEP2_64MHZ`.
+    """
+    if not _step2_enabled():
+        pytest.skip(f"{STEP2_ENV} unset — step 2e's 64 MHz fit is not in use")
+    rows = [
+        (label, float(step1d_fit["per_element"][label]["eps_star"]), printed)
+        for label, printed in STEP2C_PRINTED_EPS_STAR.items()
+    ]
+    rows.append(
+        ("mean", float(step1d_fit["mean_eps_star"]), STEP2C_PRINTED_MEAN_EPS_STAR)
+    )
+    if MPI.COMM_WORLD.rank == 0:
+        print(
+            f"\n[PORT-14 step2e] eps* at 64 MHz from {step1d_fit['source']} "
+            f"against step 2c's printed values (rtol {STEP2E_FIT_RTOL:.0e}, asserted):",
+            flush=True,
+        )
+        for label, star, printed in rows:
+            print(
+                f"    {label:<12s} eps* = {star:+.9f}   step 2c printed {printed:+.6f}   "
+                f"|ratio - 1| = {abs(star / printed - 1.0):.3e}",
+                flush=True,
+            )
+    for label, star, printed in rows:
+        assert abs(star / printed - 1.0) <= STEP2E_FIT_RTOL, (
+            f"{label}: eps* = {star:+.9f} from STEP2C_RESIDUALS does not reproduce "
+            f"step 2c's printed {printed:+.6f} to {STEP2E_FIT_RTOL:.0e} — a restated "
+            "constant is wrong"
+        )
+
+
+@complex_only
+def test_step1d_step2e_the_baseline_was_built_at_64mhz(step1d_baseline):
+    """Control: step 1d's baseline really was rebuilt at 64 MHz.
+
+    Asserted: S11 differs from the 10 MHz record `STEP1E_S11_S21_10MHZ` by more
+    than `STEP2E_S11_MOVE_FLOOR` (step 2d measured 6.05e-01 on this comparison).
+    """
+    if not _step2_enabled():
+        pytest.skip(f"{STEP2_ENV} unset — step 1d's baseline is the 10 MHz one")
+    s11 = complex(np.asarray(step1d_baseline["sweep"]["s"], dtype=np.complex128)[0, 0])
+    diff = abs(s11 - STEP1E_S11_S21_10MHZ[0])
+    if MPI.COMM_WORLD.rank == 0:
+        print(
+            f"\n[PORT-14 step2e] step 1d baseline at f = {_rlc_frequency_hz():.3e} Hz: "
+            f"S11 = {s11.real:+.9e}{s11.imag:+.9e}j   10 MHz record = "
+            f"{STEP1E_S11_S21_10MHZ[0].real:+.9e}{STEP1E_S11_S21_10MHZ[0].imag:+.9e}j   "
+            f"|diff| = {diff:.6e} (asserted > {STEP2E_S11_MOVE_FLOOR:.1e})",
+            flush=True,
+        )
+    assert diff > STEP2E_S11_MOVE_FLOOR, (
+        f"step 1d's baseline S11 moved only {diff:.3e} from the 10 MHz record: "
+        f"{STEP2_ENV} did not reach the builder"
+    )
+
+
+def _print_step2e_configuration_d(case, fit):
+    """Step 2e's 64 MHz reading of configuration D — printed, never asserted."""
+    eps = float(case["epsilon"])
+    print(
+        f"[PORT-14 step2e] configuration D reduction identity residuals at "
+        f"f = {_rlc_frequency_hz():.3e} Hz on the {int(case['sweep']['cells'])}-cell "
+        f"gate mesh, told widths x (1 + mean eps*(64) = {1.0 + eps:.6f}). Printed, "
+        "not asserted (the width was fitted to these numbers):",
+        flush=True,
+    )
+    under = {}
+    for entry in case["cases"]:
+        label = entry["label"]
+        residual = float(abs(entry["residual"]))
+        under[label] = residual <= REDUCTION_BAND
+        per = fit["per_element"][label]
+        r2 = per["a"] * eps * eps + per["b"] * eps + per["c"]
+        predicted = (
+            f"{np.sqrt(r2):.6e}" if r2 > 0.0 else f"~0 (fitted r^2 = {r2:+.3e} < 0)"
+        )
+        record = STEP2C_EPS0_RESIDUALS_64MHZ[label]
+        in_window = _STEP2E_EPS0_IN_WINDOW.get(label)
+        if in_window is None:
+            eps0_note = (
+                "in-window eps = 0 NOT MEASURED (terminated-solve test not in this "
+                f"window); step 2's {record:.6e}   D/(step 2 eps = 0) = "
+                f"{residual / record:.6f}"
+            )
+        else:
+            miss = abs(in_window / record - 1.0)
+            eps0_note = (
+                f"in-window eps = 0 = {in_window:.6e}   D/(eps = 0) = "
+                f"{residual / in_window:.6f}   step 2's eps = 0 {record:.6e}, "
+                f"|ratio - 1| = {miss:.3e} (predicted <= "
+                f"{STEP2E_EPS0_REPRODUCTION_RTOL:.0e}: "
+                f"{'HELD' if miss <= STEP2E_EPS0_REPRODUCTION_RTOL else 'MISSED — stop and report'})"
+            )
+        print(
+            f"    {label:<12s} |Gamma| = {abs(entry['gamma']):.6f}   "
+            f"residual = {residual:.6e}   (predicted from the fit {predicted})   "
+            f"{eps0_note}   step 1d 10 MHz D/(eps = 0) = "
+            f"{STEP1D_D_RATIO_10MHZ[label]:.6f}   (band {REDUCTION_BAND:.0e}; ratio "
+            f"to band {residual / REDUCTION_BAND:.6f}; "
+            f"{'UNDER' if under[label] else 'OVER'})   three drives in "
+            f"{entry['seconds']:.2f} s wall",
+            flush=True,
+        )
+    c_under, l_under = under.get("C = 100 pF"), under.get("L = 1 uH")
+    if c_under and l_under:
+        reading = (
+            "both under the band — the (1 + kappa)-corrected width is a working "
+            "64 MHz lever on this fixture; the route is the weekly's to scope"
+        )
+    elif l_under and not c_under:
+        reading = (
+            "C over, L under — the linear |r0 + k eps| model is broken for C at "
+            "64 MHz: record in §7 and stop"
+        )
+    elif not c_under and not l_under:
+        reading = (
+            "both over — the width lever does not undo kappa at 64 MHz: record "
+            "and stop"
+        )
+    else:
+        reading = "C under, L over — not pre-registered: record and stop"
+    print(f"    READING: {reading}", flush=True)
 
 
 @complex_only
@@ -1873,6 +2057,9 @@ def test_step1d_configuration_d_residuals_are_printed(
     """
     case = step1d_configuration_d
     if MPI.COMM_WORLD.rank != 0:
+        return
+    if _step2_enabled():
+        _print_step2e_configuration_d(case, step1d_fit)
         return
     print(
         f"[PORT-14 step1d] configuration D reduction identity residuals at "

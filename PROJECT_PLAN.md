@@ -4614,6 +4614,54 @@ lineage. Standard tier.
 > departure from the linear model above. **Not changed:** no record, no band,
 > no `Z_p` correction. The row stays 🟡 and `PORT-15` gate (i) stays closed.
 > Whether a `(1+κ)` correction becomes a registered route is the weekly's.
+>
+> **Step 2e executed 2026-09-12 (13:30 slot). Configuration D at 64 MHz takes
+> both lossless residuals under `REDUCTION_BAND`.** Tests only, additive, same
+> module. Under `FEM_EM_PORT14_STEP2_64MHZ`, `step1d_baseline` and
+> `step1d_configuration_d` take `_rlc_frequency_hz()`, and `step1d_fit` fits
+> `STEP2C_RESIDUALS` (step 2's ε = 0 plus 2c's A/B). Two new tests skip with the
+> flag off: `test_step1d_step2e_the_64mhz_fit_reproduces_step2c` and
+> `test_step1d_step2e_the_baseline_was_built_at_64mhz`. The terminated-solve
+> test stores its in-window ε = 0 residuals before its 64 MHz skip. One window:
+> `20260912T183330Z_PORT-14-step2e.log`, `WIDTH_SWEEP=1 STEP2_64MHZ=1`,
+> `-n 2`, `-s`, `-k "step1d or terminated_solve_matches or environment"`,
+> `timeout -k 30 590`, durable capture: **17 passed, 1 skipped, 19 deselected
+> in 189.13 s** (`:3897`), `[capture] rc=0` (`:3963`), Status 0, **191 s**
+> (`:3966–3967`). Heavy by ceiling.
+>
+> - **Anchors and controls (asserted), green.**
+>   - The fit reproduces 2c's printed ε\* to 3.38e-05 (C) and 9.36e-06 (L)
+>     against rtol 1e-4 (`:3756–3757`). The mean is −0.010553268 against the
+>     09:00 journal's hand-rounded −0.010554 (6.94e-05, `:3758`).
+>   - The baseline was rebuilt at 64 MHz: S₁₁ sits 6.045467e-01 from the
+>     10 MHz record (`:3762`), equal to step 2d's to every printed digit.
+>   - D (widths × 0.989446732): 116 085 cells bitwise, reciprocity
+>     1.897246132e-15, σ_max 0.999760614 (`:3816–3821`).
+>   - Γ = 0 on D: Δ 0.4833 / 0.2388, misses 0.4832 / 0.2388, ≥ 239× the band
+>     (`:3831–3832`).
+> - **Negative control by reproduction (predicted rtol 1e-6): held.** In-window
+>   ε = 0 is 1.354202e-02 / 5.021261e-04, |ratio − 1| = 2.827e-07 / 7.581e-08
+>   against step 2 (`:1886, :1893, :3825–3826`). 2c's mixed-window fit is not
+>   undermined by drift.
+>
+> | element | D residual | D/(ε = 0), 64 MHz | step 1d D/(ε = 0), 10 MHz | fit's prediction at the mean ε\* | vs band 1e-3 |
+> |---|---|---|---|---|---|
+> | C = 100 pF | 1.190127e-04 | 0.008788 | 0.036078 | ≈ 0 (r² = −1.605e-05) | 0.119×, UNDER |
+> | L = 1 µH | 9.581734e-07 | 0.001908 | 0.035507 | 1.331180e-04 | 0.00096×, UNDER |
+>
+> (`:3825–3827`; printed, never asserted — the width was fitted to these.)
+>
+> **Reading.** The negative-result table selects "both under ⇒ record".
+> The (1 + mean ε\*(64)) width undoes κ at 64 MHz on the gate mesh by a larger
+> factor than at 10 MHz. L's residual lands 139× below its own fit's floor and
+> C's ≈ 4× below what a zero at 2c's ε\*(C) would give (slot arithmetic,
+> k = √a). So both true zero-crossings sit nearer the common mean than the
+> three-point fits placed them. 2c's 7 % C/L split is within those fits'
+> resolution (~3e-4 in ε\*), not evidence of element-dependent physics.
+> **Not changed:** no record, no band, no `src/`, no `Z_p` correction. The
+> row stays 🟡 and `PORT-15` gate (i) stays closed. Whether a κ-derived (not
+> fitted) width becomes a registered route is the weekly's; 128 MHz would be
+> its out-of-sample point.
 
 **`PORT-15` — the circuit layer (HFSS + Circuit)** 🟡 *(**step 1 ✅
 2026-09-05, 22:30 slot** — the algebra and its three identities; digits in
@@ -8220,7 +8268,11 @@ a `[capture] rc=` line only when it is the *last* output line.
    - Mesh overrun ⇒ record the cost, stop; the weekly prices a `-n 12` or
      `xl` window.
 
-2. **`PORT-14` step 2e — configuration D at 64 MHz beside an in-window
+2. **✅ DONE 2026-09-12 13:30 slot** (`20260912T183330Z_PORT-14-step2e.log`,
+   Status 0, 191 s; D at 64 MHz reads C 1.190127e-04 / L 9.581734e-07, both
+   under `REDUCTION_BAND`; in-window ε = 0 reproduced step 2 to 2.8e-07 /
+   7.6e-08; §7 `PORT-14` step 2e).
+   **`PORT-14` step 2e — configuration D at 64 MHz beside an in-window
    ε = 0 re-measurement (step 1d's pattern moved to 64 MHz)** (implementer;
    tests only, additive, one module, no `src/`; complex; heavy by
    expectation; `-n 2`; `main`; independent).
