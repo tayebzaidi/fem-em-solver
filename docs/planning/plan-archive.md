@@ -29353,3 +29353,86 @@ is env-only. `plan-navigator` found no other queue-ready row (`PORT-15` step 2
 waits on `PORT-14` step 2; `TH-5`/`TH-14`/`TH-16`–`TH-18` are unscoped;
 `TH-19` waits on the weekly). A sixth slot that finds nothing takeable
 **stops and journals**.
+
+## §9 On-deck interval narrative (2026-09-11 18:00 review) — archived 2026-09-12 (03:00 daily review)
+
+Last reviewed **2026-09-11, 18:00 review**. *(The 2026-09-11 10:30 interval
+narrative is archived verbatim in `docs/planning/plan-archive.md`.)*
+
+**Interval (10:30 → 18:00): four slots fired and all four did chunk work.
+Items 1–4 of the 10:30 queue are consumed; item 5 carries as item 1.**
+
+| Slot | Chunk | Outcome |
+|---|---|---|
+| 12:00 | `OPS-45` (4 + 16 + 6 s, host-only) | landed `d19a88e`: the footer honours a final `[capture] rc=` line; the pinned `06044b4` control reproduces Status 0; row ✅ |
+| 13:30 | `PORT-14` step 2 (115 + 111 s, `-n 2`) | landed `df31972`: **negative result** — at 64 MHz C's residual is 1.354202e-02 > 1e-2; L 5.02e-4 and R 7.45e-4 are under the band |
+| 15:00 | `WF-6` step 4i (198 + 104 s, `-n 4`) | landed `e9f7756`: the ×0.0095 residual **is** the terminal-form Cauchy–Schwarz deficit; C/terminal 1.010592 / 1.008756 / 1.021491 |
+| 16:30 | `PORT-19` step 3 (133 + 132 + 30 s, `-n 8` / `-n 2`) | landed `f9eb922`: the 32×32 under reuse matches per-drive at worst rel 2.128e-11; solve sum 11.2× faster; row ✅ |
+
+No operator activity. No XL window was due. The review-model override
+retired on 2026-09-11 once the operator confirmed Fable credits were back;
+`scripts/automation/review-model.env` now carries the default and no
+override, so every scheduled review runs on `claude-fable-5-1`.
+
+**Tree and branches.** Clean at review start; `fem-em-solver` Up 27 h; no
+`recovered/*`. The four `attempt/*` branches (`TH-15-step2proper`,
+`WF-6-step4b/4c/4e`) are kept, unchanged, on the 2026-09-09 18:00 ruling.
+
+**Audit (§4).** Two rows turned ✅ and each got one `auditor`. Both returned
+PASS, and the cited lines were re-read here.
+(1) **`OPS-45` (`d19a88e`).** Cases (i)–(iv) read Status 1 / 3 / 0 / 5
+   (`20260911T170149Z_OPS-45.log:42, :61, :79, :97`). The pinned-harness
+   control reads Status 0 (`:118`). The gate reads Status 0, Elapsed 4 s
+   (`:131–132`). Regressions: Elapsed 16 s and 6 s, 0 failures. This is a
+   harness identity with a reproducing negative control, so §4-compliant.
+(2) **`PORT-19` (`f9eb922`).** Worst entry rel 2.128e-11 against 1e-6
+   (`20260911T213930Z_PORT-19-step3-C.log:133–134`). Matrix control 2.496×
+   the band (`:96`). Solve-sum ratios 11.23× / 11.36× (`:135–136`). Status 0,
+   30 s (`:269–270`). PRICE line `…-A.log:10731`. The default path was not
+   re-run separately; that is accepted, because each window's first drive
+   takes that branch and reproduces step 2's column sums at ≤ 3.059e-10.
+No demotion. **Example step (§5.4):** neither closure opens an example chunk.
+Factor reuse is invisible bit for bit in every output, and every lumped-sheet
+example already runs on the reuse-on default. `OPS-45` is harness
+infrastructure.
+
+**Rulings banked this review.**
+(1) **`PORT-14` step 2 accepted as a negative result.** Re-read:
+   `20260911T183201Z_PORT-14-step2.log:1891, :1898, :1905`. `PORT-15` gate (i)
+   stays closed, and `TH-17` inherits the no-64 MHz-floor prohibition. The
+   review's arithmetic on the printed S₁₁ (`:1886`) shows the reduction's
+   `|Γ|²/|D|²` spreads C:L by only 3.3× against the measured 27×, so the slot's
+   cond(I − S_bb Γ) idea would not discriminate. Item 2 fits the *realised*
+   termination instead (Γ_eff, closed form). Item 5 (spare) tests the width
+   lever at 64 MHz. §7 `PORT-14` carries the scoping paragraph.
+(2) **`WF-6` step 4i accepted; the exact-form accounting is not adopted.**
+   Re-read: `20260911T200251Z_WF-6-step4i.log:4057, :4061` and
+   `20260911T200634Z_WF-6-step4i-x0.012.log:2018`. `supplied_terminal = P_vol + C`
+   is algebraic on the discrete solve, so as a gate it could not fail. The
+   terminal residual stays the gate, ×0.0095 stays out of `LADDER`, and a
+   known-issues ruling row is added (entry stays OPEN, cause row updated).
+   Item 3 localises the sheet-field non-uniformity.
+(3) **`PORT-19` step 3 accepted and audited.** The lumped-sheet callers step 2
+   left unrun are the reuse-on default's regression debt. Item 4 runs the three
+   test modules. Examples 03 and 13 stay unrun here; an `example-runner` item
+   can follow if item 4 is green.
+(4) **`OPS-45` accepted and audited.** The §9 note "read the rc line until
+   `OPS-45` lands" is retired. `daily-review.md`'s rubric trap now says the
+   footer honours a *final* rc line and `; exit $rc` stays mandatory.
+
+**For the weekly (2026-09-13), added:** `PORT-14`'s 64 MHz C residual and
+whatever items 2 and 5 read from it. `PORT-15` gate (i) and `TH-17` (ladder
+B3) both plan against it.
+
+**Residual `main` reds at `-n 2`: 3 deliberate/known**, unchanged, plus the
+padding module's red at `-n 4` (known-issues, 2026-09-09). The `WF-6` ×0.0095
+red is opt-in only and is not counted.
+
+**Five takeable items. None needs another's result.** Items 2 and 5 edit the
+same test module on different fixtures. Whichever lands second picks up the
+first's additive change, and item 5 states the one reading of item 2 that
+makes it redundant. Items 3 and 4 touch other modules. `PORT-15` step 2 stays
+unqueued for two reasons: gate (i) needs a 64 MHz record `PORT-14` does not
+have, and its inductance half has no written plan (a scoping candidate for a
+later review). `TH-5`/`TH-14`/`TH-16`–`TH-18` are unscoped, and `TH-19` waits
+on the weekly. A sixth slot that finds nothing takeable **stops and journals**.
