@@ -17723,3 +17723,44 @@ The window was `WIDTH_SWEEP=1 STEP2_64MHZ=1`, `-n 2`, `-s`, complex, `FEM_EM_REQ
 **Records (this commit):** the test diff, the log, the test-results row, the §7 `PORT-14` step 2e record and §9 item 2 DONE. No `src/`, no band, no record registered; `PORT-14` stays 🟡 and `PORT-15` gate (i) stays closed.
 
 **Hypothesis.** The (1 + κ)-corrected width takes both lossless residuals under 1e-3 at 64 MHz on the gate mesh (as at 10 MHz, and by a larger factor). The weekly can scope a registered route: a κ-derived width, *not* fitted, re-measured at 128 MHz as the out-of-sample point.
+
+## 2026-09-12T20:15Z (2026-09-12 15:00 CDT slot) — `ANS-4` step 2g — **complete (measurement): the global ladder at ×0.35 does not move like the one at ×0.45; the item's interaction clause fires, concentrated in S₃₁**
+
+**Preflight.** Tree clean at 15:00:06 CDT; `fem-em-solver` Up 2 days; no `recovered/*`. Zero stray `python3`, `memory.max` 137438953472, no 0-byte cache stubs under `/root/.cache`. §9 items 1–2 were DONE; item 3 was taken. It is runs only, so the slot executed it directly under `implementer.md` rather than spawning an executor.
+
+**Tried.** One window, env only, no code: `C4_CONGRUENT=1`, `DEGREE2=0`, `RESOLUTION="0.015 0.012 0.0095"`, `CONDUCTOR_FACTOR=0.35`. It ran at `-n 8` with `-s`, complex mode, `FEM_EM_REQUIRE_COMPLEX=1`, `tests/environment` first, and durable capture to `logs/ans4-step2g-raw.log` ending in `; exit $rc`. Heavy tier. **Deviation, disclosed:** the item said `timeout -k 30 900`, but 900 + 30 s cannot return a footer inside the 660 s foreground Bash window that implementer-run.md requires. The slot used `timeout -k 30 600`; step 2f's same-size window measured 437 s.
+
+**Result.** `20260912T200107Z_ANS-4-step2g.log`: 14 passed, 1 skipped (the record test, factor ≠ 1, by design), in 430.69 s. `[capture] rc=0` is the last output line, `Status: 0`, elapsed **432 s** (`:6731–6736`).
+
+**Anchors (asserted, bands unmoved).**
+- Every finer rung refines (`:6170–6173`).
+- Every rung passes the imported `PORT-11` gates (`:6181–6183`): worst reciprocity 2.29e-15, σ_max ≤ 0.999071644712, worst `Z` spread 0.0619 %.
+
+**Negative control (asserted by reproduction): held.** h = 0.015 at ×0.35 meshed **394 481** cells. Its S₁₁ / S₂₁ / S₃₁ (`:6195–6197`) equal `20260912T003101Z_ANS-4-step2a-tprime.log:6113–6115` to every printed digit. σ_max and the `Z` spreads equal `…tprime.log:6093`; reciprocity moved at round-off only (6.62e-16 against 9.16e-16).
+
+**Printed (rule (e)).**
+- Cells 394 481 / 524 983 / 693 462 (*predicted* ≈ 394 k / 530 k / 690 k, held).
+- Mesh 75.2 / 98.9 / 128.4 s, four drives 14.7 / 25.5 / 40.0 s (`:2186, :4159, :6151`).
+- `[mem]` 7.02 / 9.48 / **13.40 GiB** summed over 8 ranks (*predicted* ≤ 18 GiB, held; `:2185, :4158, :6150`). Ladder 399.6 s (`:6152`).
+
+**Readings.** Moves are computed in the slot as |S_b − S_a|/|S_a| from the printed digits; that formula reproduces the fixture's "move from control" column to four decimals.
+- Cumulative moves from 0.015 at ×0.35: **1.1529 / 1.4174 / 0.8893 %** (0.012) and **1.4722 / 1.6609 / 1.6316 %** (0.0095) (`:6199–6205`). ×0.45 gave 1.2524 / 0.8394 / 1.5295 % and 1.8423 / 1.2053 / 2.3073 %.
+- Ratio ×0.35/×0.45: 0.921 / 1.689 / 0.581 (0.012) and 0.799 / 1.378 / 0.707 (0.0095). *Predicted* within 20 % if additive; only S₁₁ at 0.012 holds.
+- Step 0.012 → 0.0095 at ×0.35: 0.7137 / 0.5187 / **0.8896 %**. The step ratio is 0.619 / 0.366 / **1.000**, against ×0.45's 0.496 / 0.575 / 0.527. S₃₁'s move does not shrink.
+- Richardson at ×0.35 (`:6207–6211`): **p = 2.3270 / 4.6812 / 0.2363**, against step 2e's 3.2264 / 2.6300 / 3.0608. S₃₁'s S_inf lies 15.80 % beyond its own finest rung, so it is not a reading.
+- |S_inf(×0.35) − S_inf(×0.45)|/|S_inf(×0.45)|: **0.7974 / 0.8657 / 14.94 %** (*predicted* ≈ 0.89 / 0.83 / 0.88 % if additive).
+- Knob move ×0.45 → ×0.35 at fixed h = 0.015 / 0.012 / 0.0095:
+  - S₁₁: 0.893 / 0.950 / 0.865 %.
+  - S₂₁: 0.834 / 1.048 / 0.950 %.
+  - S₃₁: **0.878 / 0.505 / 0.487 %**.
+
+**Negative-result clause: fires.** "×0.35 moves differing from ×0.45's by more than half of themselves ⇒ the knobs interact: record in §7 and stop."
+- At h = 0.012, the S₂₁ cumulative moves differ by 0.408 of the ×0.35 move (0.689 of the ×0.45 move).
+- At h = 0.012, the S₃₁ cumulative moves differ by 0.720 (0.419).
+- S₁₁ stays ≤ 0.251 under either reading.
+
+Whichever denominator is meant, one class crosses one-half. The knobs are recorded as interacting, and stopped: no fifth rung, no two-knob fit.
+
+**Records (this commit):** the log, the test-results row, the §7 `ANS-4` step 2g record and §9 item 3 DONE. No code changed, no band moved, no AED number was compared, and the Larmor verdict stays with the 2026-09-13 weekly. The arithmetic ran as a throwaway script in the container (host `python3` is denied) and was deleted, not committed.
+
+**Hypothesis.** The fixed-h knob move is nearly h-independent for S₁₁ and S₂₁ (additive-looking, ≈ 0.9 %), but S₃₁'s halves beyond the coarsest rung, and S₃₁'s ×0.35 ladder stalls (step ratio 1.0). The opposite-port class is the interacting one, and it is the smallest-magnitude entry (|S₃₁| ≈ 0.22), where small absolute shifts read as large relative moves. A two-knob picture for S₁₁/S₂₁ may still be additive to ~0.1 %. S₃₁ needs either a fourth rung at ×0.35 (h = 0.0075, ≈ 0.9 M cells, likely over a 660 s window at `-n 8`) or the `xl` tier; pricing it is the weekly's.
