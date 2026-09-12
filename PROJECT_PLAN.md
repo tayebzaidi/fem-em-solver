@@ -4558,6 +4558,61 @@ lineage. Standard tier.
 > stays 🟡, `PORT-16` stays ✅, and `PORT-15` gate (i) stays closed. The
 > multiplicative-correction route is the weekly's to scope; item 4 (step 2c's
 > width lever at 64 MHz) is the independent read.
+>
+> **Step 2c (re-pointed) executed 2026-09-12 (09:00 slot). At 64 MHz the told
+> width's zero-crossing reads −κ_k to +3.1 % (C) and −4.2 % (L).** Tests only,
+> additive, in `test_port_lumped_rlc_termination.py`. `width_sweep_baseline` and
+> `width_sweep_case` take `_rlc_frequency_hz()` for both
+> `build_four_port_sweep` and `series_rlc_impedance` (flag unset ⇒
+> `FREQUENCY_HZ`, bit-identical arithmetic); the step-1c print lines name the
+> frequency; new `test_the_width_sweep_epsilon_star_fit_is_printed` fits
+> through (0, step 2's ε = 0 residual), (+5 %, A), (−5 %, B) once all three
+> configurations are in. One window:
+> `20260912T140430Z_PORT-14-step2c.log`, `FEM_EM_PORT14_WIDTH_SWEEP=1
+> FEM_EM_PORT14_STEP2_64MHZ=1`, `-n 2`, `-s`, `-k "width_sweep or
+> environment"`, `timeout -k 30 590`, durable capture: **23 passed,
+> 12 deselected in 183.45 s** (`:2163`), `[capture] rc=0` (`:2229`), Status 0,
+> **185 s** (`:2232–2233`). Heavy by ceiling.
+>
+> - **Anchors (asserted, unmoved), green.** f = 6.400000e+07 Hz on every line
+>   (`:1880, :1932, :2003, :2074`); 116 085 cells bitwise on A / B / C;
+>   reciprocity 1.351536152e-15 / 2.238321049e-15 / 1.934662477e-15 against
+>   1e-3; σ_max 0.999535567 / 0.999907252 / 0.999839277 against 1 + 1e-9
+>   (`:1937, :2008, :2079`).
+> - **Negative control (asserted).** Γ = 0 on all six terminations: Δ =
+>   0.4671 / 0.2400, 0.4928 / 0.2377, 0.4516 / 0.2319; misses 0.5454 / 0.2416,
+>   0.4431 / 0.2366, 0.5331 / 0.2335 — ≥ 234× the band against the 5× bar
+>   (`:1946–1947, :2017–2018, :2088–2089`).
+>
+> | config | C = 100 pF residual (× ε = 0) | L = 1 µH residual (× ε = 0) |
+> |---|---|---|
+> | ε = 0 (step 2, `…step2.log:1891, :1898`) | 1.354202e-02 | 5.021261e-04 |
+> | A common +5 % | 7.879573e-02 (×5.818610) | 2.862518e-03 (×5.700796) |
+> | B common −5 % | 5.047888e-02 (×3.727574) | 1.895173e-03 (×3.774297) |
+> | C alt. ±5.3 % | 8.205738e-02 (×6.059464) | 2.859601e-03 (×5.694986) |
+>
+> (`:1941–1942, :2012–2013, :2083–2084`.)
+> - **Fit (printed, `:2093–2098`).** ε\*(C) = **−0.010908** (10 MHz −0.010735),
+>   ε\*/(−κ_C) = **1.031340**; ε\*(L) = **−0.010199** (10 MHz −0.010970),
+>   ε\*/(−κ_L) = **0.957693**.
+> - **Predictions (printed only).** Within 10 % of −κ_k: **held** on both
+>   (3.1 %, 4.2 %). C/L within 2 %: **failed**, ε\*(C)/ε\*(L) = 1.069490.
+>   Both ±5 % directions raise L's residual: **held** (×5.70, ×3.77).
+> - **Negative-result bars: none fires.** Off −κ_k by > 30 %: clear. C vs L by
+>   > 2×: clear. All residuals within ±10 % of ε = 0: clear (factors 3.7–6.1).
+> - **Observation, not asserted.** C's parabola dips below zero,
+>   r²(ε\*) = −1.626e-05 against r₀² = 1.834e-04 (≈ 9 %; at 10 MHz it was
+>   −1.4e-07). So C's three 64 MHz points are not exactly `|r₀ + kε|`. L's
+>   minimum is +1.74e-08 against 2.52e-07. The ε = 0 point comes from step 2's
+>   window, which reproduced to ≤ 3e-7 across runs (step 2b anchor (c)).
+>
+> **Reading.** The width lever reaches the proportional law at 64 MHz. Each
+> element's zero-crossing sits within 5 % of its own −κ_k, as at 10 MHz. The
+> C/L split grew from 2 % at 10 MHz to 7 % at 64 MHz, and that is the only
+> pre-registered prediction that missed. It is the same order as C's
+> departure from the linear model above. **Not changed:** no record, no band,
+> no `Z_p` correction. The row stays 🟡 and `PORT-15` gate (i) stays closed.
+> Whether a `(1+κ)` correction becomes a registered route is the weekly's.
 
 **`PORT-15` — the circuit layer (HFSS + Circuit)** 🟡 *(**step 1 ✅
 2026-09-05, 22:30 slot** — the algebra and its three identities; digits in
@@ -8204,7 +8259,11 @@ a `[capture] rc=` line only when it is the *last* output line.
    record in §7 `PORT-14` and stop; the width lever (item 4) is then the
    remaining reading.
 
-4. **`PORT-14` step 2c (re-pointed) — step 1c's width lever at 64 MHz, read
+4. ✅ **DONE 2026-09-12 09:00 slot** (`20260912T140430Z_PORT-14-step2c.log`
+   23 passed / 12 deselected, `rc=0`, `Status: 0`, 185 s; ε\*/(−κ_k) =
+   1.0313 (C) / 0.9577 (L), C/L 1.0695 (2 % prediction failed), no
+   negative-result bar fires; record in §7 `PORT-14` step 2c).
+   **`PORT-14` step 2c (re-pointed) — step 1c's width lever at 64 MHz, read
    against κ** (implementer; tests only, no `src/`; complex; heavy; `main`;
    independent). *The 18:00 skip condition is retired by ruling (2); there is
    no skip condition.*

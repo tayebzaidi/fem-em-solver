@@ -1099,6 +1099,52 @@ def _width_sweep_enabled():
     return bool(os.environ.get(STEP1C_ENV, ""))
 
 
+# --- `PORT-14` step 2c: the width lever at 64 MHz, read against kappa ---------
+# With `FEM_EM_PORT14_STEP2_64MHZ` on, both width fixtures run at 64 MHz (flag
+# unset: FREQUENCY_HZ, bit-identical).  The three-point eps* fit needs the
+# eps = 0 residual at the frequency that ran; at 64 MHz that is step 2's
+# printed reading on the same mesh and the same terminations, restated as a
+# logged record with its source
+# (`20260911T183201Z_PORT-14-step2.log:1891, :1898`).  At 10 MHz it is step 1's
+# record, exactly as step 1c printed against.
+STEP2C_EPS0_RESIDUALS_64MHZ = {"C = 100 pF": 1.354202e-02, "L = 1 uH": 5.021261e-04}
+
+# Step 2b's post-hoc per-element kappa_k = dZ/(Z_p - z0) (real parts; the
+# imaginary parts are <= 4.1e-05), the comparand of eps* under the proportional
+# law.  64 MHz: `20260912T020824Z_PORT-14-step2b-w2.log:1948-1949`; 10 MHz:
+# `20260912T021021Z_PORT-14-step2b-default-w2.log:1949-1950`.  Logged records,
+# printed beside the fit and never asserted.
+STEP2B_KAPPA_K = {
+    STEP2_FREQUENCY_HZ: {"C = 100 pF": 1.057617e-02, "L = 1 uH": 1.064945e-02},
+    FREQUENCY_HZ: {"C = 100 pF": 1.058471e-02, "L = 1 uH": 1.059024e-02},
+}
+
+# The §9 item's pre-registered predictions and negative-result bars (rule (e):
+# all *predicted*, printed beside the measurement, never asserted).
+STEP2C_PREDICTED_KAPPA_FRACTION = 0.10  # eps* within 10 % of -kappa_k
+STEP2C_PREDICTED_C_OVER_L = 0.02  # eps*(C), eps*(L) within 2 % of each other
+STEP2C_NEGATIVE_KAPPA_FRACTION = 0.30  # eps* off -kappa_k by > 30 % => stop
+STEP2C_NEGATIVE_C_OVER_L_FACTOR = 2.0  # C and L eps* differ by > 2x => stop
+STEP2C_FLAT_FRACTION = 0.10  # every residual within +-10 % of eps = 0 => stop
+
+# Per-configuration residuals, filled by the fit test as each configuration
+# completes; the fit prints once all three are in (order-independent).
+_STEP2C_READINGS = {}
+
+
+def _width_sweep_eps0_residuals(frequency_hz):
+    """The eps = 0 residual per lossless element at ``frequency_hz``, with source."""
+    if float(frequency_hz) == float(STEP2_FREQUENCY_HZ):
+        return {
+            "residuals": dict(STEP2C_EPS0_RESIDUALS_64MHZ),
+            "source": "step 2, 20260911T183201Z_PORT-14-step2.log:1891, :1898",
+        }
+    return {
+        "residuals": dict(STEP1_RESIDUAL_RECORD),
+        "source": "step 1's record",
+    }
+
+
 @pytest.fixture(scope="module")
 def width_sweep_baseline():
     """The gate mesh and its unperturbed sheet geometry, built once.
@@ -1115,15 +1161,19 @@ def width_sweep_baseline():
             "only when a slot asks for them, so `main`'s red set is unchanged"
         )
     comm = MPI.COMM_WORLD
+    # Step 2c: the frequency the module was asked for (10 MHz unless
+    # `FEM_EM_PORT14_STEP2_64MHZ` is on) — flag unset, this is FREQUENCY_HZ.
+    frequency_hz = _rlc_frequency_hz()
     comm.Barrier()
     t0 = time.perf_counter()
-    sweep = build_four_port_sweep(frequency_hz=FREQUENCY_HZ)
+    sweep = build_four_port_sweep(frequency_hz=frequency_hz)
     comm.Barrier()
     seconds = time.perf_counter() - t0
     widths = [float(spec.sheet_width_m) for spec in sweep["specs"]]
     if comm.rank == 0:
         print(
-            f"\n[PORT-14 step1c] baseline (unperturbed) gate rung: "
+            f"\n[PORT-14 step1c] baseline (unperturbed) gate rung at "
+            f"f = {frequency_hz:.6e} Hz: "
             f"{int(sweep['cells'])} cells (record {STEP1_CELL_RECORD}); "
             f"mesh + four 50 Ohm drives in {seconds:.2f} s wall; "
             "sheet_width_m per port = " + ", ".join(f"{w:.9e}" for w in widths),
@@ -1166,15 +1216,18 @@ def width_sweep_case(request, width_sweep_baseline):
         "cells": base["cells"],
     }
 
+    # Step 2c: the sweep is rebuilt at the module's frequency (the `reuse` route
+    # is mesh-only) and the termination is evaluated at the same frequency.
+    frequency_hz = _rlc_frequency_hz()
     comm.Barrier()
     t0 = time.perf_counter()
-    sweep = build_four_port_sweep(frequency_hz=FREQUENCY_HZ, reuse=reuse)
+    sweep = build_four_port_sweep(frequency_hz=frequency_hz, reuse=reuse)
     comm.Barrier()
     baseline_seconds = time.perf_counter() - t0
 
     cases = []
     for label, element in STEP1B_TERMINATIONS:
-        z_term = series_rlc_impedance(FREQUENCY_HZ, **element)
+        z_term = series_rlc_impedance(frequency_hz, **element)
         comm.Barrier()
         t1 = time.perf_counter()
         measured, kept_ids, _results = _terminated_three_port(sweep, z_term)
@@ -1204,6 +1257,7 @@ def width_sweep_case(request, width_sweep_baseline):
     return {
         "key": key,
         "description": description,
+        "frequency_hz": float(frequency_hz),
         "epsilons": tuple(float(e) for e in epsilons),
         "sweep": sweep,
         "baseline_widths": list(width_sweep_baseline["widths"]),
@@ -1231,7 +1285,8 @@ def test_the_width_sweep_configuration_is_a_valid_four_port(width_sweep_case):
     cells = int(sweep["cells"])
     if MPI.COMM_WORLD.rank == 0:
         print(
-            f"\n[PORT-14 step1c] configuration {case['key']} ({case['description']}): "
+            f"\n[PORT-14 step1c] configuration {case['key']} ({case['description']}) "
+            f"at f = {case['frequency_hz']:.6e} Hz: "
             f"{cells} cells (record {STEP1_CELL_RECORD}, same mesh); four 50 Ohm "
             f"drives in {case['baseline_seconds']:.2f} s wall",
             flush=True,
@@ -1282,17 +1337,19 @@ def test_the_width_sweep_residuals_are_printed(width_sweep_case):
         return
     print(
         f"[PORT-14 step1c] configuration {case['key']} ({case['description']}) "
-        f"reduction identity residuals at f = {FREQUENCY_HZ:.3e} Hz on the "
-        f"{int(case['sweep']['cells'])}-cell gate mesh; step 1's record is on the "
-        "same mesh with the unperturbed widths. Printed, not asserted:",
+        f"reduction identity residuals at f = {case['frequency_hz']:.6e} Hz on the "
+        f"{int(case['sweep']['cells'])}-cell gate mesh; the eps = 0 reading at this "
+        "frequency is on the same mesh with the unperturbed widths. Printed, not "
+        "asserted:",
         flush=True,
     )
+    eps0 = _width_sweep_eps0_residuals(case["frequency_hz"])
     for entry in case["cases"]:
-        record = STEP1_RESIDUAL_RECORD[entry["label"]]
+        record = eps0["residuals"][entry["label"]]
         print(
             f"    {entry['label']:<12s} |Gamma| = {abs(entry['gamma']):.6f}   "
             f"residual = {entry['residual']:.6e}   "
-            f"(step 1 record {record:.6e}; factor "
+            f"(eps = 0 at this frequency {record:.6e}, {eps0['source']}; factor "
             f"{entry['residual'] / record:.6f})   "
             f"three drives in {entry['seconds']:.2f} s wall",
             flush=True,
@@ -1325,7 +1382,8 @@ def test_the_zero_gamma_control_misses_on_the_width_sweep(width_sweep_case):
     reached = [row for row in rows if row[1] >= CONTROL_DELTA_FLOOR]
     if MPI.COMM_WORLD.rank == 0:
         print(
-            f"[PORT-14 step1c] configuration {case['key']} Gamma = 0 control "
+            f"[PORT-14 step1c] configuration {case['key']} Gamma = 0 control at "
+            f"f = {case['frequency_hz']:.6e} Hz "
             f"(ceiling first), floor {CONTROL_DELTA_FLOOR:.0e}:",
             flush=True,
         )
@@ -1351,6 +1409,106 @@ def test_the_zero_gamma_control_misses_on_the_width_sweep(width_sweep_case):
             f"{REDUCTION_BAND:.0e} band, though the 4x4 predicts a coupling term "
             f"Delta = {delta:.3e}"
         )
+
+
+@complex_only
+def test_the_width_sweep_epsilon_star_fit_is_printed(width_sweep_case):
+    """**`PORT-14` step 2c — eps* at the frequency that ran, beside -kappa_k.**
+
+    Printed, never asserted (rule (e): no prior measurement of this comparison
+    at 64 MHz).  Each configuration's residuals are kept as it completes; once
+    A, B and C are all in, the three-point ``_epsilon_star`` fit through
+    (0, eps = 0 residual), (+0.05, A), (-0.05, B) prints per element beside
+    step 1c's 10 MHz eps*, the eps = 0 residual, -kappa_k and eps*/(-kappa_k),
+    with the §9 item's predictions and negative-result bars evaluated in words.
+    Residuals are comm-identical, so the bookkeeping is the same on every rank.
+    """
+    case = width_sweep_case
+    _STEP2C_READINGS[case["key"]] = {
+        "frequency_hz": float(case["frequency_hz"]),
+        "residuals": {e["label"]: float(e["residual"]) for e in case["cases"]},
+    }
+    if not {"A", "B", "C"} <= set(_STEP2C_READINGS):
+        return
+    if MPI.COMM_WORLD.rank != 0:
+        return
+
+    frequency_hz = case["frequency_hz"]
+    eps0 = _width_sweep_eps0_residuals(frequency_hz)
+    kappa = STEP2B_KAPPA_K.get(frequency_hz, {})
+    configs = {k: v["residuals"] for k, v in _STEP2C_READINGS.items()}
+    signed_eps = {key: eps[0] for key, _d, eps in WIDTH_CONFIGURATIONS}
+    print(
+        f"\n[PORT-14 step2c] eps* fit at f = {frequency_hz:.6e} Hz through "
+        f"(0, eps = 0 from {eps0['source']}), (+{signed_eps['A']:.2f}, A), "
+        f"({signed_eps['B']:+.2f}, B). Printed, never asserted:",
+        flush=True,
+    )
+    stars = {}
+    for label in STEP1C_RESIDUALS:
+        points = (
+            (0.0, eps0["residuals"][label]),
+            (signed_eps["A"], configs["A"][label]),
+            (signed_eps["B"], configs["B"][label]),
+        )
+        star, r2_star, a, b, c = _epsilon_star(points)
+        star_10, _r2_10, _a10, _b10, _c10 = _epsilon_star(STEP1C_RESIDUALS[label])
+        stars[label] = star
+        line = (
+            f"    {label:<12s} eps* = {star:+.6f}   r^2(eps*) = {r2_star:+.6e}   "
+            f"(r^2 = {a:.6e} eps^2 + {b:.6e} eps + {c:.6e})   "
+            f"step 1c 10 MHz eps* = {star_10:+.6f}   "
+            f"eps = 0 residual = {eps0['residuals'][label]:.6e}"
+        )
+        if label in kappa:
+            neg_kappa = -float(kappa[label])
+            ratio = star / neg_kappa
+            off = abs(ratio - 1.0)
+            line += (
+                f"   -kappa_k = {neg_kappa:+.6e}   eps*/(-kappa_k) = {ratio:.6f} "
+                f"(|ratio - 1| = {off:.4f}; predicted <= "
+                f"{STEP2C_PREDICTED_KAPPA_FRACTION:g}: "
+                f"{'HELD' if off <= STEP2C_PREDICTED_KAPPA_FRACTION else 'FAILED'}; "
+                f"negative-result bar > {STEP2C_NEGATIVE_KAPPA_FRACTION:g}: "
+                f"{'FIRES' if off > STEP2C_NEGATIVE_KAPPA_FRACTION else 'clear'})"
+            )
+        print(line, flush=True)
+
+    c_label, l_label = "C = 100 pF", "L = 1 uH"
+    c_over_l = stars[c_label] / stars[l_label]
+    spread = max(abs(c_over_l), 1.0 / abs(c_over_l)) if c_over_l != 0.0 else np.inf
+    print(
+        f"    eps*(C)/eps*(L) = {c_over_l:.6f} (|ratio - 1| = {abs(c_over_l - 1.0):.4f}; "
+        f"predicted <= {STEP2C_PREDICTED_C_OVER_L:g}: "
+        f"{'HELD' if abs(c_over_l - 1.0) <= STEP2C_PREDICTED_C_OVER_L else 'FAILED'}; "
+        f"negative-result bar: differ by > {STEP2C_NEGATIVE_C_OVER_L_FACTOR:g}x or "
+        f"opposite sign: "
+        f"{'FIRES' if (c_over_l <= 0.0 or spread > STEP2C_NEGATIVE_C_OVER_L_FACTOR) else 'clear'})",
+        flush=True,
+    )
+
+    l_zero = eps0["residuals"][l_label]
+    l_plus, l_minus = configs["A"][l_label], configs["B"][l_label]
+    raised = l_plus > l_zero and l_minus > l_zero
+    print(
+        f"    L residual: eps = 0 {l_zero:.6e}, +5% {l_plus:.6e} "
+        f"(x{l_plus / l_zero:.6f}), -5% {l_minus:.6e} (x{l_minus / l_zero:.6f}); "
+        f"predicted both directions raise it: {'HELD' if raised else 'FAILED'}",
+        flush=True,
+    )
+
+    factors = []
+    for key in ("A", "B", "C"):
+        for label in STEP1C_RESIDUALS:
+            factors.append(configs[key][label] / eps0["residuals"][label])
+    flat = all(abs(f - 1.0) <= STEP2C_FLAT_FRACTION for f in factors)
+    print(
+        "    residual / eps = 0 across A, B, C x (C, L) = "
+        + ", ".join(f"{f:.6f}" for f in factors)
+        + f"; negative-result bar (all within +-{STEP2C_FLAT_FRACTION:g}, width "
+        f"not a lever): {'FIRES' if flat else 'clear'}",
+        flush=True,
+    )
 
 
 # ---------------------------------------------------------------------------
