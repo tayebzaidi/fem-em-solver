@@ -1,0 +1,66 @@
+# Test Run
+- Chunk: ANS-4-step2e-smoke
+- Commit: b0f9e28af3b867c9a951525123a0b794a9b19c9d
+- Time (UTC): 2026-09-12 09:32:19
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.5.1
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && PYTHONPATH=/workspace/src:/workspace timeout -k 10 30 python3 -c "
+import os
+import tests.validation.test_ans4_resolution_ladder as m
+assert m._conductor_factor() is None
+os.environ[m.CONDUCTOR_FACTOR_ENV]=chr(48)+chr(46)+chr(52)+chr(53)
+assert m._conductor_factor()==0.45
+try:
+    m._require_explicit_c4_flag(()); raise SystemExit(chr(70))
+except ValueError as e: print(chr(79)+chr(75), str(e)[:120])
+os.environ[m.C4_CONGRUENT_ENV]=chr(49); m._require_explicit_c4_flag(())
+del os.environ[m.C4_CONGRUENT_ENV]; os.environ[m.CONDUCTOR_FACTOR_ENV]=chr(49); m._require_explicit_c4_flag(())
+print(chr(80)+chr(65)+chr(83)+chr(83))
+"'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 24
+drwxr-xr-x  3 taz5297 taz5297 4096 Sep  4 23:31 .
+drwxr-xr-x 16 taz5297 taz5297 4096 Sep 12 04:32 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  721 Sep  3 13:49 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 4264 Sep 10 12:01 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.5.1
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && PYTHONPATH=/workspace/src:/workspace timeout -k 10 30 python3 -c "
+import os
+import tests.validation.test_ans4_resolution_ladder as m
+assert m._conductor_factor() is None
+os.environ[m.CONDUCTOR_FACTOR_ENV]=chr(48)+chr(46)+chr(52)+chr(53)
+assert m._conductor_factor()==0.45
+try:
+    m._require_explicit_c4_flag(()); raise SystemExit(chr(70))
+except ValueError as e: print(chr(79)+chr(75), str(e)[:120])
+os.environ[m.C4_CONGRUENT_ENV]=chr(49); m._require_explicit_c4_flag(())
+del os.environ[m.C4_CONGRUENT_ENV]; os.environ[m.CONDUCTOR_FACTOR_ENV]=chr(49); m._require_explicit_c4_flag(())
+print(chr(80)+chr(65)+chr(83)+chr(83))
+"'\'''
+/workspace/tests/validation/test_port_birdcage_four_port.py:1: SyntaxWarning: invalid escape sequence '\*'
+  """`PORT-9` step 3 leg (d) — the 4x4 on the gapped birdcage at 50 Ohm.
+OK FEM_EM_ANS4_STEP2_C4_CONGRUENT is unset but the conductor_resolution ladder contains factor(s) x0.45 other than x1. On t
+PASS
+
+## Exit
+- Status: 0
+- Elapsed (s): 4
+- Filtered lines (gmsh optimisation chatter): 0

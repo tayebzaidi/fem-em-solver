@@ -149,6 +149,16 @@ DEGREE_2_ENV = "FEM_EM_ANS4_STEP2_DEGREE2"
 # class-spread break. A flag-on mesh is not the `GEO-19` record mesh.
 C4_CONGRUENT_ENV = "FEM_EM_ANS4_STEP2_C4_CONGRUENT"
 
+# `ANS-4` step 2e (ruling (4), 2026-09-12 03:00 review): a fixed
+# ``conductor_resolution`` factor applied to every rung of step 2c's **global**
+# ladder, so the bulk (``h_global``) can be refined at a fixed conductor grading.
+# 2a‴'s conductor-rung class moves stalled at ~0.7-0.9 % while ``h_global`` and
+# ``shell`` never moved; this is the knob that turns both. Unset or empty = off,
+# which passes no ``conductor_resolution`` and is every earlier 2c window bit
+# for bit. Read inside the 2c loop only: with ``RESOLUTION_ENV`` set,
+# ``_ladder_factors()`` is never consulted.
+CONDUCTOR_FACTOR_ENV = "FEM_EM_ANS4_STEP2_CONDUCTOR_FACTOR"
+
 # Richardson: fit S(h) = S_inf + C h^p on the three finest degree-1 rungs and
 # report p with the extrapolant.  A fit outside this bracket is not an
 # asymptotic reading and is reported as such rather than as a number.
@@ -210,6 +220,14 @@ def _c4_congruent_enabled():
     return raw.strip().lower() not in ("0", "false", "no", "off")
 
 
+def _conductor_factor():
+    """Step 2e's fixed conductor factor for the 2c ladder, or ``None`` when off."""
+    raw = os.environ.get(CONDUCTOR_FACTOR_ENV)
+    if raw is None or not raw.strip():
+        return None
+    return float(raw.strip())
+
+
 def _require_explicit_c4_flag(factors):
     """Refuse a ``conductor_resolution`` ladder beyond x1 with the flag *unset*.
 
@@ -226,6 +244,11 @@ def _require_explicit_c4_flag(factors):
     if raw is not None and raw.strip():
         return
     finer = [f for f in factors if float(f) != 1.0]
+    # Step 2e: the fixed conductor factor on the 2c ladder is the same knob, so
+    # the same C2-not-C4 cut refuses it with the flag unset.
+    conductor_factor = _conductor_factor()
+    if conductor_factor is not None and conductor_factor != 1.0:
+        finer.append(conductor_factor)
     if finer:
         raise ValueError(
             f"{C4_CONGRUENT_ENV} is unset but the conductor_resolution ladder "
@@ -364,22 +387,31 @@ def ladder():
     # --- step 2c: the global-resolution ladder, coarse to fine, with a stop
     # rule after each rung so a wall costs the next rung and not the ones
     # already measured.
+    # Step 2e: a fixed conductor factor, read here and never through `factors`.
+    conductor_factor = _conductor_factor() if resolutions else None
+    h_c = (
+        None if conductor_factor is None else conductor_factor * CONDUCTOR_RESOLUTION
+    )
+    cf_tag = "" if conductor_factor is None else f" conductor x{conductor_factor:g}"
     for res in resolutions:
         rung = _four_port_rung(
-            f"ANS-4 step2c h={res:g} degree 1 {c4_tag}",
+            f"ANS-4 step2c h={res:g}{cf_tag} degree 1 {c4_tag}",
             zeros,
             FREQUENCY_128_HZ,
             resolution=res,
+            conductor_resolution=h_c,
             c4_congruent_sheets=c4,
         )
-        _report_rung_rss(comm, f"step2c h={res:g} degree 1 {c4_tag}")
+        _report_rung_rss(comm, f"step2c h={res:g}{cf_tag} degree 1 {c4_tag}")
         rung["factor"] = float(res)
         rung["knob"] = "resolution"
+        rung["conductor_factor"] = conductor_factor
         rungs.append(rung)
         elapsed = time.perf_counter() - started
         if comm.rank == 0:
             print(
-                f"[ANS-4 step2c] rung h={res:g} ({c4_tag}): {rung['cells']} cells, mesh "
+                f"[ANS-4 step2c] rung h={res:g}{cf_tag} ({c4_tag}): "
+                f"{rung['cells']} cells, mesh "
                 f"{rung['mesh_time']:.1f} s, four drives {rung['sweep_time']:.1f} s "
                 f"at -n {comm.size}; ladder elapsed {elapsed:.0f} s",
                 flush=True,
@@ -468,7 +500,24 @@ def test_the_record_rung_reproduces_the_fixture(ladder):
     base = _control_rung(ladder["rungs"])
     if base is None:
         pytest.skip("the control rung is not in this ladder")
-    ratio = base["cells"] / STEP2_CELL_COUNT
+    base_cf = base.get("conductor_factor")
+    if base_cf is not None and base_cf != 1.0:
+        # Step 2e: `_control_rung` matches `resolution == RESOLUTION`, but with
+        # the conductor factor on that rung is the flag-on x{factor} mesh, not
+        # the 116 085 record — skip rather than widen STEP2_CELL_COUNT_BAND.
+        if comm.rank == 0:
+            print(
+                f"[ANS-4 step2e] control rung h={base['factor']:g} conductor "
+                f"x{base_cf:g}: {base['cells']} cells (not the `GEO-19` record "
+                f"{STEP2_CELL_COUNT}; record check skipped)",
+                flush=True,
+            )
+        pytest.skip(
+            f"{CONDUCTOR_FACTOR_ENV}={base_cf:g}: the h={base['factor']:g} rung "
+            f"meshed {base['cells']} cells at conductor x{base_cf:g}, not the "
+            "116 085-cell record fixture"
+        )
+    ratio =base["cells"] / STEP2_CELL_COUNT
     if comm.rank == 0:
         print(
             f"[ANS-4 step2] x1 rung: {base['cells']} cells against `GEO-19` "
