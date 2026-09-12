@@ -17559,3 +17559,33 @@ Windows 3–4 are 1–2 re-run after adding one **post-hoc, printed-only** κ fi
 **Cosmetic, for the review.** The shared PORT-9 rung print says "four driven solves … at -n 2" on an `-n 8` window (`:2139`), while the ANS-4 line (`:2159`) correctly says `-n 8`. That label predates this change and was not touched.
 
 **Hypothesis.** One more global rung (h ≈ 0.0075, *predicted* ≈ 650–700 k cells, ≈ 15 GiB, ≈ 130 s mesh, so it fits `-n 8` but is close to the 150 s mesh trap) would test whether p ≈ 3 holds. A cross rung (h = 0.012 at ×0.35) would separate the two knobs. Either is the weekly's to price against the Larmor verdict.
+
+## 2026-09-12T11:07Z (2026-09-12 06:00 CDT slot) — `PORT-19` step 5 — **complete: ruling (1) landed; anchor (A)'s field half asserts bit-identity at `-n 1` and is printed-then-skipped at `-n 2`; known-issues 2026-09-12 retired**
+
+**Preflight.** Tree clean, `fem-em-solver` Up 39 h. §9 item 1 was already done (04:30 slot), so this slot took item 2. The change was small and tests-only, so the slot executed it directly under `implementer.md`, with no executor spawned.
+
+**Tried.** One module, `tests/validation/test_port19_factor_reuse.py`. No `src/` change, no band change, and `REUSE_REPRODUCTION_RTOL` stays 1e-12.
+- `test_a_kept_fields_are_per_drive_and_match` keeps `distinct_fields` asserted at every width.
+- The field-deviation assertion runs only when `comm.size == 1`. At `comm.size > 1` the test prints the four deviations on rank 0, then `pytest.skip`s with a reason naming the known-issues ruling and the `OPS-43` (d) precedent. The skip is decided from `comm.size`, never from a rank-local value.
+- The docstring's anchor (A) paragraph says which half asserts at which width.
+
+**Windows.** The module alone, complex, `FEM_EM_REQUIRE_COMPLEX=1`, `tests/environment` first, `-v -s`, durable capture with `exit $rc`.
+- (1) `-n 1`, `timeout -k 30 400`: 18 passed, `[capture] rc=0`, `Status: 0`, 111 s (`20260912T110109Z_PORT-19-step5-n1.log:1950–1955`).
+- (2) `-n 2`, `timeout -k 30 300`: 17 passed / 1 skipped, `Status: 0`, 90 s (`20260912T110311Z_PORT-19-step5-n2.log:2046–2051`).
+
+Both match the item's expected tallies. Standard tier.
+
+**Anchors (asserted).**
+- At `-n 1`, `S`, `Z` and all four kept `E` read 0.000e+00 (`…n1.log:1872–1873`), so the ruling's premise held.
+- At `-n 2`, `S` 1.013e-14 and `Z` 1.124e-14, both ≤ 1e-12 (`…n2.log:1891`).
+- The factorisation counts (tests b) are green at both widths.
+
+**Negative control (asserted).** The stale factor separates at 1.073e-02 at `S₂₂` in both windows (`…n1.log:1879`, `…n2.log:1898`).
+
+**Printed (rule (e)).** The `-n 2` kept `E` deviations, a third draw, were P1 3.455e-11 / P2 4.455e-11 / P3 4.013e-11 / P4 3.537e-11 (`…n2.log:1892, :1907`). The item predicted 1e-11–5e-11, and the draw falls inside. P1, P3 and P4 repeat step 4 w1's digits exactly and P2 differs, so the drift takes a few discrete values rather than a fixed offset. That is information only.
+
+**Log note.** In the `-n 2` log both ranks write pytest progress, so the `SKIPPED` reason and `PASSED` tokens interleave (`:1903–1913`). The summary line is authoritative.
+
+**Records (this commit):** the test change, both logs, the test-results rows, the known-issues 2026-09-12 entry re-headed ✅ RETIRED with the readings (body kept, as the 52 other retired entries are), the §7 `PORT-19` step 5 annotation, and §9 item 2 DONE. The row stays ✅.
+
+**Hypothesis.** Nothing is left open on `PORT-19`. The `-n 2` MUMPS drift stays with the 2026-09-10 observation. If a `-n 2` field band is ever wanted, the repeat spread (≥ 5 windows) now has three draws: step 4 w1, step 4 isolation, and this one.

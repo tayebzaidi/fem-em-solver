@@ -15,8 +15,17 @@ reuse path against the per-drive path on the gated 4-leg fixture at 10 MHz
 * (A) Reused and per-drive sweeps agree entry by entry on ``S`` and ``Z`` to
   relative ≤ 1e-12 — the same arithmetic up to the 1-ULP ``-n 2`` MUMPS drift
   (known-issues 2026-09-10).  Each drive's kept ``E`` phasor (``keep_fields``,
-  `POST-6`) agrees to the same bound and is a distinct ``Function`` per drive,
-  so a later back-substitution cannot overwrite an earlier drive's field.
+  `POST-6`) is a distinct ``Function`` per drive at every width, so a later
+  back-substitution cannot overwrite an earlier drive's field.  **Which half
+  asserts at which width (`PORT-19` step 5, ruling (1) of the 2026-09-12 03:00
+  review):** ``S`` and ``Z`` are asserted at every width; the kept-``E``
+  agreement to 1e-12 is asserted **only at ``-n 1``** (bit-identity: all four
+  read 0.000e+00, ``20260912T051457Z_PORT-19-step4-n1.log:1872–1873``) and
+  printed, then skipped, at ``-n 2``.  At ``-n 2`` the per-drive comparand's four
+  separate factorisations are not bit-reproducible (~4e-11 measured,
+  ``…PORT-19-step4-isolation.log:1891–1892``), so that comparison measures MUMPS
+  drift, not the reuse path.  ``-n 1`` is the anchor width here by ruling — the
+  only such case besides `OPS-43` (d).  The band does not move.
 * (B) A counter on ``LinearProblem`` construction and on ``LinearProblem.solve``
   (each call re-assembles ``A`` and so re-factorises) reads exactly **1** on the
   reused sweep and **4** on the per-drive sweep.
@@ -326,6 +335,21 @@ def test_a_kept_fields_are_per_drive_and_match(reuse_case):
         "reused sweep returned a shared E Function across drives — keep_fields "
         "would hold the last drive's field for every port"
     )
+    comm = MPI.COMM_WORLD
+    if comm.size > 1:
+        # comm.size is identical on every rank; the deviations were printed by
+        # the fixture, and are repeated here so the skip carries the reading.
+        if comm.rank == 0:
+            print(
+                f"\n[PORT-19 step5] -n {comm.size}: kept E rel devs (printed only) "
+                + ", ".join(f"{pid} {d:.3e}" for pid, d in reuse_case["field_devs"].items()),
+                flush=True,
+            )
+        pytest.skip(
+            f"kept-E agreement is asserted at -n 1 only (bit-identity); at -n {comm.size} "
+            "the per-drive factorisations are not bit-reproducible — known-issues "
+            "2026-09-12 ruling, OPS-43 (d) precedent; deviations printed above"
+        )
     bad = {
         pid: d for pid, d in reuse_case["field_devs"].items() if not d <= REUSE_REPRODUCTION_RTOL
     }
