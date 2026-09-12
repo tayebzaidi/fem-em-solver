@@ -17500,3 +17500,32 @@ Windows 3–4 are 1–2 re-run after adding one **post-hoc, printed-only** κ fi
 **Records (this commit):** module, three logs, the harness-appended test-results rows, the §7 `WF-6` step 4j annotation, a known-issues row (entry stays OPEN), and §9 item 3 marked DONE. No band, record, `LADDER` or accounting change; `WF-6` stays 🟡.
 
 **Hypothesis.** The mid-gap edge facet on the ×0.0095 congruent cut is a sliver or rim cell whose N1curl tangential trace carries a spurious in-plane transverse component. A per-facet aspect-ratio and adjacent-cell-quality census of that facet across the three rungs (no solve) would confirm or refute it.
+
+## 2026-09-12T05:20Z (2026-09-12 00:00 CDT slot) — `PORT-19` step 4 — **complete (regression record), with a negative finding: callers green; step 2's anchor (A) field half red at `-n 2`, bit-identical at `-n 1`**
+
+**Preflight.** Tree clean, `fem-em-solver` Up 33 h, no stray `python3`. §9 items 1–3 done; item 4 taken.
+
+**Tried.** Runs only, no code change. Complex, `FEM_EM_REQUIRE_COMPLEX=1`, `tests/environment` first, `-v -s`, durable capture with `exit $rc`, `-n 2` unless stated.
+- (1) Leg offset sweep + `test_port19_factor_reuse.py`, `timeout -k 30 590`: 1 failed / 22 passed, `Status: 1`, 217 s (`20260912T050110Z_PORT-19-step4-w1.log`).
+- (2) Asymmetric, `timeout -k 30 400`: 16 passed, `Status: 0`, 209 s (`20260912T050540Z_PORT-19-step4-w2.log`).
+- (3) Sheet sweep, `timeout -k 30 590`: 14 passed, `Status: 0`, 139 s (`20260912T051151Z_PORT-19-step4-w3.log`).
+- Discriminator (added in-slot): the reuse module alone, step 2's shape, `timeout -k 30 300`: 1 failed / 17 passed, `Status: 1`, 119 s (`20260912T050930Z_PORT-19-step4-isolation.log`).
+- Discriminator (added in-slot): the same at `-n 1`, `timeout -k 30 400`: 18 passed, `Status: 0`, 137 s (`20260912T051457Z_PORT-19-step4-n1.log`).
+
+**Anchors.** Every quantitative gate in the three caller modules is green. The stale-factor negative control separates at 1.073e-02 (`S₂₂`) against > 1e-12, identical to step 2.
+
+**Compared, not asserted.**
+- Leg offset vs `20260909T093128Z_ANS-4-step2a.log`: the record lines are digit-identical (Z columns rel 1.788e-10 … 2.568e-10, σ_max 4.065e-10); only round-off reciprocity moved.
+- Asymmetric vs `20260824T020350Z_PORT-9-step3d3-asym.log.gz`: the item's `…step3d2` log predates the power-wave fix, so the step3d3 log was used. V / I / Z lines match at 10 digits. The worst non-round-off deviation is 1.3e-9 on the diagnostic terminated-Z asymmetry, against the printed-only ≤ 1e-9 prediction.
+- Sheet sweep: no prior log, not compared. It measured 139 s against the docstring's 500 s estimate.
+
+**The finding.** `test_a_kept_fields_are_per_drive_and_match` is red.
+- Kept `E` rel dev in window 1: 3.455e-11 / 4.602e-11 / 4.013e-11 / 3.537e-11. In isolation: 3.495e-11 / 4.190e-11 / 4.025e-11 / 0.000e+00.
+- `S` and `Z` agree to ≤ 1.3e-14 in both windows.
+- At `-n 1`, S, Z and all fields are 0.000e+00.
+- So this is `-n 2` factorisation non-reproducibility (known-issues 2026-09-10 observation), not a reuse defect. Step 2's lone `-n 2` window read 0.0.
+- Not relaxed, default not flipped. The known-issues 2026-09-12 entry was opened and §7 `PORT-19` step 4 annotated. The row's ✅ is left to the review.
+
+**Records (this commit):** five logs, the harness test-results rows, the known-issues entry, the §7 annotation, and §9 item 4 marked DONE. The permission layer denied one harness call because of a host-side `$?` echo after it. It was re-run without the echo, and no log was written for the denied call.
+
+**Hypothesis.** Anchor (A)'s field half can only be a stable gate as bit-identity at `-n 1` (the `OPS-43` (d) precedent), with `-n 2` printed. If a `-n 2` band is wanted, it should be registered from a measured repeat spread (≥ 5 windows), not from step 2's single draw.
