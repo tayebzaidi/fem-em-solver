@@ -17658,3 +17658,35 @@ Both match the item's expected tallies. Standard tier.
 **Records (commit `52b9fed`):** the test change, the log, the test-results row, the §7 `PORT-14` step 2c record and §9 item 4 DONE. `PORT-14` stays 🟡, `PORT-15` gate (i) stays closed, and no record or band was registered.
 
 **Hypothesis.** The proportional law holds in the width parametrisation at 64 MHz, at the level of a few percent per element. The C/L split (+3 % / −4 %) and C's negative fitted minimum both point at C's three-point fit rather than at κ. The next read is a fourth, in-window C point near ε ≈ −0.011 at 64 MHz, together with an in-window ε = 0 re-measurement: the step 1d pattern moved to 64 MHz. That would show whether the split is real or an artifact of mixing step 2's ε = 0 reading with this window's ±5 % points.
+
+## 2026-09-12T17:12Z (2026-09-12 12:00 CDT slot) — `ANS-4` step 2f — **complete (measurement): a fourth global rung at ×0.45 gives p = 1.44 / 1.91 / 1.46, not ≈ 3; step 2e's extrapolant moves by 0.99 / 0.29 / 1.23 %; no negative-result bar fires as written**
+
+**Preflight.** Tree clean at 12:00:06 CDT; `fem-em-solver` Up 45 h; no `recovered/*`. Zero stray `python3` in the container, `memory.max` 137438953472, and the FFCx 0-byte stub sweep found none. §9 item 1 was open and was taken. It is runs only, so the slot executed it directly under `implementer.md` rather than spawning an executor.
+
+**Tried.** One window, env only, no code: `C4_CONGRUENT=1`, `DEGREE2=0`, `RESOLUTION="0.012 0.0095 0.0075"`, `CONDUCTOR_FACTOR=0.45`. It ran at `-n 8` with `-s`, complex mode, `FEM_EM_REQUIRE_COMPLEX=1`, `tests/environment` first, `timeout -k 30 900`, and durable capture to `logs/ans4-step2f-raw.log` ending in `; exit $rc`. Heavy tier.
+
+**Result.** `20260912T170105Z_ANS-4-step2f.log`: 14 passed, 1 skipped (the record test, factor ≠ 1, by design), in 437.07 s. `[capture] rc=0` is the last output line, `Status: 0`, elapsed **440 s** (`:6666–6671`).
+
+**Anchors (asserted, bands unmoved).**
+- Every finer rung refines (`:6104–6106`).
+- Every rung passes the imported `PORT-11` gates (`:6115–6117`). At 0.0075: reciprocity 1.12e-15, σ_max 0.999211612914, `Z` spreads 0.0087 / 0.0126 / 0.0162 %.
+
+**Negative control (asserted by reproduction): held.** 0.012 and 0.0095 meshed 392 442 and 513 061 cells. Their S₁₁ / S₂₁ / S₃₁, σ_max and `Z` spreads equal `…step2e.log:6104, :6108, :6121–6127` to every printed digit. Only reciprocity moved, at round-off.
+
+**Printed (rule (e)).**
+- 0.0075 rung: **684 301 cells** (*predicted* 650–700 k, held), mesh 123.6 s, four drives 54.0 s (*predicted* ≈ 120 + 45 s), ladder 406.1 s.
+- `[mem]` **17.0052 GiB** summed over 8 ranks (*predicted* 14–15 GiB, exceeded; `:6094–6096`).
+
+**Readings (computed in the slot from the printed entries; step 2e's pair reproduced to the quoted digits).**
+- Class moves 0.0095 → 0.0075: **0.4460 / 0.3132 / 0.5832 %** (*predicted* ≈ 0.3 / 0.25 / 0.4 % if p ≈ 3). The previous step was 0.6214 / 0.4826 / 0.8064 %.
+- Step-move ratio: **0.7209 / 0.6466 / 0.7180**, against step 2e's 0.5021 / 0.5750 / 0.5214. The model ratio is 0.800 / 0.633 / 0.500 at p = 1 / 2 / 3.
+- Richardson on (0.012, 0.0095, 0.0075) (`:6141–6146`): **p = 1.4430 / 1.9062 / 1.4602**, against step 2e's 3.2264 / 2.6300 / 3.0608.
+- |ΔS_inf|/|S_inf| between the two fits: **0.9895 / 0.2941 / 1.2315 %**. The 0.0075 rung is 0.11 / 0.26 / 0.20 % from step 2e's S_inf; the new S_inf is 1.09 / 0.55 / 1.42 % beyond it.
+
+**Negative-result clauses.** None fires as worded: an estimate printed, p stayed inside (0.2, 6.0), and the move shrank. But the question "does p ≈ 3 hold?" is answered **no**. Recorded in §7 and not extended.
+
+**Harness note.** The first harness call was denied by the permission layer because the slot had appended `> /dev/null; echo …; ls …` to it (a compound command). No compute started. It was re-issued as the bare harness command.
+
+**Records (this commit):** the log, the test-results row, the §7 `ANS-4` step 2f record and §9 item 1 DONE. No code changed, no band moved, no AED number was compared, and the Larmor verdict stays with the 2026-09-13 weekly.
+
+**Hypothesis.** The global ladder at ×0.45 is only now entering its asymptotic range: the decay per rung slowed to ≈ ×0.7 and p fell to the degree-1 range. S₂₁'s p (1.91) still differs from S₁₁/S₃₁'s (≈ 1.45), so a fifth rung (h ≈ 0.006, *predicted* ≈ 0.9 M cells, ≈ 25 GiB, a (0.0095, 0.0075, 0.006) window ≈ 560–600 s at `-n 8`, at the edge of a slot) is what would test the new exponent. Three-point fits on this fixture have been revised by one more rung twice now (2a″, 2e).
