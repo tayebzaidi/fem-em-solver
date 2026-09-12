@@ -4520,6 +4520,44 @@ lineage. Standard tier.
 > a single multiplicative correction on the told sheet impedance is the
 > candidate route to a 64 MHz record for `PORT-15` gate (i) — the weekly's to
 > scope, never an in-slot change.
+>
+> **Step 2d executed 2026-09-12 (07:30 slot). At 64 MHz, C/terminal − 1 reads
+> κ(64) to −0.3 %.** Tests only, in the `PORT-16` module
+> (`test_birdcage_power_identity.py`), additive: env `FEM_EM_PORT16_64MHZ`, and
+> new `test_step2d_c_over_terminal_is_printed`. When the flag is on, (iv) prints
+> and skips. Two windows, `-n 2`, standard, `timeout -k 30 300`, `rc=0`:
+> - `20260912T123236Z_PORT-14-step2d-64mhz.log`: 16 passed / 1 skipped, 93 s;
+> - `20260912T123429Z_PORT-14-step2d-10mhz.log`: 17 passed, 92 s.
+>
+> - **Anchors (asserted).**
+>   - (i) closes at 64 MHz: 3.3e-15 to 7.0e-15 on P1–P4 and 4.3e-15 on the ×2
+>     control, against 1e-6 (`…64mhz.log:1882–1891, :1922`). (ii) and (iii)
+>     are green at 64 MHz.
+>   - Flag off, C/terminal − 1 reproduces the 10 MHz readings to ≤ 1.45e-10
+>     against rtol 1e-5 (`…10mhz.log:1938–1944`). The references are computed
+>     from the ten-digit C and gap values at `20260907T051231Z_PORT-16.log:1917–1920`.
+> - **Negative control (asserted).** S₁₁ at 64 MHz sits 6.045e-01 from
+>   `STEP1E_S11_S21_10MHZ` (`…64mhz.log:1940`), so the sweep was rebuilt.
+> - **Readings (printed, `…64mhz.log:1942–1949`).** C/terminal − 1 =
+>   1.060762e-02 / 1.060916e-02 / 1.061032e-02 / 1.060766e-02 on P1–P4.
+>   - Against pooled κ(64) = 1.064081e-02, that is 0.99688–0.99714×. The
+>     predicted 5 % window holds; the 20 % negative-result bar is far away.
+>   - The readings sit between κ_C (+0.30 %) and κ_L (−0.39 %).
+>   - The per-sheet spread is 1.06040e-02 to 1.06123e-02.
+> - **Frequency shift (printed).** From 10 to 64 MHz, C/terminal − 1 moves by
+>   +0.15 % (1.059204e-02 → 1.060762e-02 on P1), while κ moves by +0.51 %
+>   (1.058709e-02 → 1.064081e-02). The predicted sign held; the size is
+>   ≈ 0.3× κ's. So κ − (C/terminal − 1) grows from ≈ 5e-6 at 10 MHz to
+>   ≈ 3.3e-5 at 64 MHz.
+> - **Other printed readings.** The ×2 control's sheet factor at 64 MHz is
+>   0.349799, outside the predicted [0.5, 2]. That window is printed only.
+>
+> **Reading.** κ is the terminal form's Cauchy–Schwarz deficit to ≤ 0.5 % at
+> both frequencies. A frequency-growing ≈ 0.3 % remainder is not in that
+> deficit. **Not changed:** no record, no band, no `Z_p` correction. The row
+> stays 🟡, `PORT-16` stays ✅, and `PORT-15` gate (i) stays closed. The
+> multiplicative-correction route is the weekly's to scope; item 4 (step 2c's
+> width lever at 64 MHz) is the independent read.
 
 **`PORT-15` — the circuit layer (HFSS + Circuit)** 🟡 *(**step 1 ✅
 2026-09-05, 22:30 slot** — the algebra and its three identities; digits in
@@ -8101,7 +8139,10 @@ a `[capture] rc=` line only when it is the *last* output line.
    open with the new reading, do not land the skip, stop. Anything else red ⇒
    stop and report.
 
-3. **`PORT-14` step 2d — is κ the terminal form's Cauchy–Schwarz deficit?
+3. ✅ **DONE 2026-09-12 07:30 slot** (`20260912T123236Z_PORT-14-step2d-64mhz.log`
+   16 passed / 1 skipped, `rc=0`, `Status: 0`, 93 s;
+   `20260912T123429Z_PORT-14-step2d-10mhz.log` 17 passed, `rc=0`, `Status: 0`,
+   92 s; record in §7 `PORT-14` step 2d). **`PORT-14` step 2d — is κ the terminal form's Cauchy–Schwarz deficit?
    C/terminal − 1 at 64 MHz beside κ(64 MHz)** (implementer; tests only, one
    additive env in the `PORT-16` module, no `src/`; complex; standard;
    `main`; independent).

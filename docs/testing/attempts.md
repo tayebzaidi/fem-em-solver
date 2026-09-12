@@ -17589,3 +17589,38 @@ Both match the item's expected tallies. Standard tier.
 **Records (this commit):** the test change, both logs, the test-results rows, the known-issues 2026-09-12 entry re-headed ✅ RETIRED with the readings (body kept, as the 52 other retired entries are), the §7 `PORT-19` step 5 annotation, and §9 item 2 DONE. The row stays ✅.
 
 **Hypothesis.** Nothing is left open on `PORT-19`. The `-n 2` MUMPS drift stays with the 2026-09-10 observation. If a `-n 2` field band is ever wanted, the repeat spread (≥ 5 windows) now has three draws: step 4 w1, step 4 isolation, and this one.
+
+## 2026-09-12T12:40Z (2026-09-12 07:30 CDT slot) — `PORT-14` step 2d — **complete (measurement): at 64 MHz C/terminal − 1 reads κ(64) to −0.3 %, so κ is, to that level, the terminal form's Cauchy–Schwarz deficit; its 10 → 64 MHz shift has κ's sign but ≈ 0.3× κ's size**
+
+**Preflight.** Tree clean, `fem-em-solver` Up 40 h. §9 items 1 and 2 were already done, so this slot took item 3. The change was tests-only, so the slot executed it directly under `implementer.md`, with no executor spawned.
+
+**Tried.** One module, `tests/validation/test_birdcage_power_identity.py`, additive. No `src/` change and no band change.
+- New env `FEM_EM_PORT16_64MHZ` (unset/`0` = off). When on, the fixture calls `build_four_port_sweep(frequency_hz=64.0e6)`. The flag-off call is unchanged.
+- (iv) prints its residual under the flag and skips (rule (e)). The skip is decided from the environment.
+- New test `test_step2d_c_over_terminal_is_printed` runs at both frequencies. It prints pooled and per-sheet C/terminal − 1 beside κ(64), and S₁₁ beside `STEP1E_S11_S21_10MHZ`.
+  - Flag off, it asserts the four 10 MHz values at rtol 1e-5. Each reference is `gap/(C − gap)`, computed from the ten-digit C and gap values at `20260907T051231Z_PORT-16.log:1917–1920`. The single-figure 1.0592e-2 could not carry a 1e-5 rtol, because P2/P3 read 1.0593e-2.
+  - Flag on, it asserts f = 64 MHz and that S₁₁ moved by > 1e-7.
+
+**Windows.** `-n 2`, complex, `FEM_EM_REQUIRE_COMPLEX=1`, `tests/environment` first, `-v -s`, `timeout -k 30 300`, durable capture with `exit $rc`. Standard tier.
+- (1) Flag on: 16 passed / 1 skipped, `[capture] rc=0`, `Status: 0`, 93 s (`20260912T123236Z_PORT-14-step2d-64mhz.log:2079–2084`). The log shows `f = 6.400e+07 Hz` (`:1880`).
+- (2) Flag off: 17 passed, `[capture] rc=0`, `Status: 0`, 92 s (`20260912T123429Z_PORT-14-step2d-10mhz.log:2075–2080`).
+
+**Anchors (asserted).**
+- (i) at 64 MHz: rel dev 6.973e-15 / 3.320e-15 / 3.319e-15 / 6.143e-15 on P1–P4, against 1e-6 (`…64mhz.log:1882–1891`). The ×2 control reads 4.269e-15 (`:1922`).
+- (ii) and (iii) are green at 64 MHz. (iii)'s split is +10.87× / −9.87× the gap (`:1912–1915`); at 10 MHz it was −54× / +55×.
+- Flag off, C/terminal − 1 reproduces the 10 MHz readings to ≤ 1.45e-10 relative (`…10mhz.log:1938–1944`). (iv) is green there.
+
+**Negative control (asserted).** At 64 MHz, S₁₁ = +4.488964206e-02 + 5.803022759e-01j, |diff| 6.045e-01 from the 10 MHz record (`…64mhz.log:1940`). Flag off, the same diff is 3.898e-11, printed only; that is `-n 2` MUMPS drift against step 1e's record.
+
+**Readings (printed; the finding).**
+- **At 64 MHz:** C/terminal − 1 = 1.060762e-02 / 1.060916e-02 / 1.061032e-02 / 1.060766e-02 on P1–P4 (`…64mhz.log:1942–1948`).
+  - Against pooled κ(64) = 1.064081e-02, the ratio is 0.99688–0.99714 (−0.31 % to −0.29 %). That is inside the predicted 5 % and far inside the 20 % negative-result threshold.
+  - It sits between κ_C 1.057617e-02 (+0.30 %) and κ_L 1.064945e-02 (−0.39 %).
+  - Per-sheet ratios range from 1.06040e-02 to 1.06123e-02.
+- **At 10 MHz:** 1.059204e-02 against κ(10) 1.0587e-2, +0.05 %.
+- **Shift from 10 to 64 MHz:** C/terminal − 1 rises by +0.147 % to +0.162 %, while κ rose by +0.51 %. The sign matches the prediction; the size is ≈ 0.3× κ's. The unexplained remainder is κ − (C/T − 1) ≈ 3.3e-5 at 64 MHz, against ≈ 5e-6 at 10 MHz.
+- **×2 control factor at 64 MHz:** 0.349799, printed only; it was 0.484 at 10 MHz. It falls outside the predicted [0.5, 2] window, which is printed, never asserted.
+
+**Records (this commit):** the test change, both logs, the two test-results rows, the §7 `PORT-14` step 2d annotation and §9 item 3 DONE. `PORT-14` stays 🟡, `PORT-16` stays ✅, and `PORT-15` gate (i) stays closed.
+
+**Hypothesis.** The multiplicative correction `(1 + [C/terminal − 1])·Z_told` would take up about 99.7 % of κ at 64 MHz. The last ≈ 0.3 % is the part that grows with frequency, a candidate for the sheet's reactive (jωL-like) term, which the real-power C–S deficit cannot see. Item 4's width lever at 64 MHz is the independent read on it. Whether the correction becomes a route is the weekly's call.

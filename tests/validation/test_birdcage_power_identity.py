@@ -122,6 +122,18 @@ on the same 116 085-cell mesh.  Whether ``POWER_BALANCE_BAND`` is a band or a
 record, and whether the ``h`` rungs (step 2) are needed, is the review's call
 with this split in hand.
 
+**`PORT-14` step 2d — the same accounting at 64 MHz** (§9 2026-09-12 03:00,
+ruling (3)).  ``FEM_EM_PORT16_64MHZ`` (unset/``0`` = off, the default path
+bit-identical) builds the sweep at 64 MHz; ω everywhere comes from
+``sweep["problem"]``.  (i)–(iii) and the ×2 control stay asserted — theorems
+and arithmetic, frequency-independent.  (iv) was registered on a 10 MHz window,
+so under the flag it prints its residual and skips (rule (e)).
+``test_step2d_c_over_terminal_is_printed`` prints ``C/terminal − 1`` per drive
+and per sheet beside `PORT-14` step 2b's κ(64 MHz) — the question is whether κ
+*is* this deficit — and asserts, flag off, the 10 MHz readings of
+`20260907T051231Z_PORT-16.log:1917–1920` to rtol 1e-5 and, flag on, that S₁₁
+moved off the 10 MHz record (the flag reached the builder).
+
 Run (complex build required)::
 
     scripts/testing/run_and_log.sh PORT-16 "docker compose exec -T fem-em-solver \\
@@ -133,6 +145,7 @@ Run (complex build required)::
 
 from __future__ import annotations
 
+import os
 from dataclasses import replace
 
 import numpy as np
@@ -160,8 +173,52 @@ from tests.validation.test_port_birdcage_four_port import (
     build_four_port_sweep,
 )
 from tests.validation.test_port_drive_superposition import _loss_power_w
+from tests.validation.test_port_lumped_rlc_termination import STEP1E_S11_S21_10MHZ
 
 PORT_IDS = ("P1", "P2", "P3", "P4")
+
+# --- `PORT-14` step 2d: the terminal-form deficit at 64 MHz, measured ---------
+STEP2D_ENV = "FEM_EM_PORT16_64MHZ"
+STEP2D_FREQUENCY_HZ = 64.0e6
+
+# κ(64 MHz), `PORT-14` step 2b's proportional-law coefficient ΔZ = κ(Z_p − z0):
+# pooled and per element (`20260912T020824Z_PORT-14-step2b-w2.log:1947–1951`).
+# **Printed beside C/terminal − 1, never asserted** — rule (e), no prior 64 MHz
+# reading of this module exists.
+STEP2B_KAPPA_64MHZ_POOLED = 1.064081e-02
+STEP2B_KAPPA_64MHZ = {"C": 1.057617e-02, "L": 1.064945e-02, "R": 1.058671e-02}
+# *Predicted, printed only*: C/terminal − 1 at 64 MHz within this of κ(64).
+STEP2D_PREDICTED_KAPPA_RTOL = 0.05
+
+# The 10 MHz readings this module logged (`20260907T051231Z_PORT-16.log:1917–1920`):
+# per drive (C, gap) in W, gap = C − sheets_terminal to 3e-13, so
+# C/terminal − 1 = gap/(C − gap).  **Asserted** flag-off at STEP2D_10MHZ_RTOL.
+PORT16_10MHZ_C_AND_GAP_W = {
+    "P1": (6.407962372e-03, 6.716202469e-05),
+    "P2": (6.407717078e-03, 6.716397529e-05),
+    "P3": (6.405693150e-03, 6.714497009e-05),
+    "P4": (6.407255616e-03, 6.715513633e-05),
+}
+STEP2D_10MHZ_RTOL = 1.0e-5
+
+# Negative control (asserted, flag on): S11 at 64 MHz differs from the 10 MHz
+# record by more than 100x its 1e-9 print precision (`PORT-14` step 2 measured
+# a wholly different S at 64 MHz, `20260911T183201Z_PORT-14-step2.log:1859, :1880`).
+STEP2D_S11_MIN_MOVE = 100.0 * 1.0e-9
+
+
+def _step2d_enabled():
+    return os.environ.get(STEP2D_ENV, "") not in ("", "0")
+
+
+def _c_over_terminal_minus_one(exact, terminal):
+    """Pooled ``C/sheets_terminal − 1`` and the per-sheet ratios, for one drive."""
+    pooled = exact["sheet_ceiling_total"] / terminal["sheet_total"] - 1.0
+    per_sheet = {
+        pid: exact["sheet_ceiling"][pid] / terminal["sheets"][pid] - 1.0
+        for pid in PORT_IDS
+    }
+    return pooled, per_sheet
 
 # **Anchor (i)**, pre-registered by the 2026-09-06 18:00 review (§9 item 4).
 # ``a(E,E) = L(E)`` is exact for the discrete solution, so this is a statement
@@ -302,7 +359,10 @@ def power_identity_case():
     module so the terminal side of every comparison below is literally the
     fixture's own.
     """
-    sweep = build_four_port_sweep()
+    if _step2d_enabled():
+        sweep = build_four_port_sweep(frequency_hz=STEP2D_FREQUENCY_HZ)
+    else:
+        sweep = build_four_port_sweep()
     comm = sweep["mesh"].comm
 
     solves = {pid: _solve_driven(sweep, pid) for pid in PORT_IDS}
@@ -566,6 +626,25 @@ def test_the_cauchy_schwarz_deficit_of_the_terminal_form_reproduces_the_gap(
     """
     exact = power_identity_case["exact"]
     terminal = power_identity_case["terminal"]
+    if _step2d_enabled():
+        # Rule (e): registered on a 10 MHz window; at 64 MHz printed, not asserted.
+        # The skip is decided from the environment, identical on every rank.
+        if MPI.COMM_WORLD.rank == 0:
+            for pid in PORT_IDS:
+                ex, tm = exact[pid], terminal[pid]
+                gap = tm["supplied"] - tm["sheet_total"] - ex["p_vol"]
+                deficit = ex["sheet_ceiling_total"] - tm["sheet_total"]
+                print(
+                    f"[PORT-14 step2d] (iv) at {STEP2D_FREQUENCY_HZ:.3e} Hz {pid}: "
+                    f"gap {gap:.9e} W   C - sheets_terminal {deficit:.9e} W   "
+                    f"rel dev {abs(deficit - gap) / abs(gap):.3e} "
+                    f"(PRINTED; band {ATTRIBUTION_RTOL:g} registered at 10 MHz)",
+                    flush=True,
+                )
+        pytest.skip(
+            f"{STEP2D_ENV} on: (iv) was registered on a 10 MHz measurement; its "
+            "64 MHz residual is printed, not asserted (rule (e))"
+        )
     for pid in PORT_IDS:
         ex, tm = exact[pid], terminal[pid]
         gap = tm["supplied"] - tm["sheet_total"] - ex["p_vol"]
@@ -619,3 +698,80 @@ def test_doubling_the_sheet_resistivity_keeps_the_identity_and_moves_the_sheet_t
         f"exceeds its ceiling P_src,exact {ctl['p_src']:.9e} W"
     )
     assert ctl["p_vol"] > 0.0, "control (Z_p x2): the volume loss must be positive"
+
+
+@complex_only
+def test_step2d_c_over_terminal_is_printed(power_identity_case):
+    """`PORT-14` step 2d: is κ the terminal form's Cauchy–Schwarz deficit?
+
+    Runs at both frequencies.  Prints, per drive, ``C/terminal − 1`` pooled and
+    per sheet beside κ(64 MHz) — the comparison is *predicted* and never
+    asserted.  Asserted: flag off, the 10 MHz readings reproduce to
+    STEP2D_10MHZ_RTOL; flag on, S₁₁ moved off the 10 MHz record (the builder
+    was reached).
+    """
+    sweep = power_identity_case["sweep"]
+    exact = power_identity_case["exact"]
+    terminal = power_identity_case["terminal"]
+    on = _step2d_enabled()
+    freq = float(sweep["problem"].frequency_hz)
+    s11 = complex(np.asarray(sweep["s"], dtype=np.complex128)[0, 0])
+    s11_10 = complex(STEP1E_S11_S21_10MHZ[0])
+    s11_move = abs(s11 - s11_10)
+
+    readings = {
+        pid: _c_over_terminal_minus_one(exact[pid], terminal[pid]) for pid in PORT_IDS
+    }
+    refs = {
+        pid: gap / (c - gap) for pid, (c, gap) in PORT16_10MHZ_C_AND_GAP_W.items()
+    }
+
+    if MPI.COMM_WORLD.rank == 0:
+        print(
+            f"\n[PORT-14 step2d] {STEP2D_ENV} {'on' if on else 'off'}: "
+            f"f = {freq:.3e} Hz; S11 = {s11.real:+.9e}{s11.imag:+.9e}j   "
+            f"10 MHz record = {s11_10.real:+.9e}{s11_10.imag:+.9e}j   "
+            f"|diff| = {s11_move:.6e}"
+            + (f" (ASSERTED > {STEP2D_S11_MIN_MOVE:.1e})" if on else " (PRINTED)"),
+            flush=True,
+        )
+        kappa_line = "   ".join(f"{k} {v:.6e}" for k, v in STEP2B_KAPPA_64MHZ.items())
+        print(
+            f"[PORT-14 step2d] kappa(64 MHz) pooled {STEP2B_KAPPA_64MHZ_POOLED:.6e}   "
+            f"per element {kappa_line}   (step 2b; PREDICTED: C/terminal - 1 "
+            f"within {STEP2D_PREDICTED_KAPPA_RTOL:.0%} of pooled kappa at 64 MHz, "
+            "printed not asserted)",
+            flush=True,
+        )
+        for pid in PORT_IDS:
+            pooled, per_sheet = readings[pid]
+            sheets_line = "   ".join(
+                f"{other} {per_sheet[other]:.6e}" for other in PORT_IDS
+            )
+            print(
+                f"[PORT-14 step2d] drive {pid}: C/terminal - 1 = {pooled:.9e}   "
+                f"/kappa_pooled {pooled / STEP2B_KAPPA_64MHZ_POOLED:.6f}   "
+                f"(rel {pooled / STEP2B_KAPPA_64MHZ_POOLED - 1.0:+.4e})   "
+                f"10 MHz reference {refs[pid]:.9e}   "
+                f"shift vs 10 MHz {pooled / refs[pid] - 1.0:+.4e}"
+                + ("" if on else f" (ASSERTED rtol {STEP2D_10MHZ_RTOL:g})"),
+                flush=True,
+            )
+            print(f"                 per sheet: {sheets_line}", flush=True)
+
+    if on:
+        assert freq == STEP2D_FREQUENCY_HZ, (
+            f"{STEP2D_ENV} on but the sweep ran at {freq:.6e} Hz"
+        )
+        assert s11_move > STEP2D_S11_MIN_MOVE, (
+            f"{STEP2D_ENV} on but S11 {s11:.9e} sits {s11_move:.3e} from the "
+            f"10 MHz record — the frequency did not reach the builder"
+        )
+        return
+    for pid in PORT_IDS:
+        pooled, _ = readings[pid]
+        rel = abs(pooled - refs[pid]) / refs[pid]
+        assert rel <= STEP2D_10MHZ_RTOL, (
+            f"{pid}: C/terminal - 1 = {pooled:.9e} misses the 10 MHz reading "
+            f"{refs[pid]:.9e} by {rel:.3e} against {STEP2D_10MHZ_RTOL:g}"
+        )
