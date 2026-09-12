@@ -119,6 +119,17 @@ identity at the imported 1e-6 and (b) that the terminal residuals reproduce
 4h's flag-on readings to 1e-5.  ``C/terminal`` and the CS-corrected residual
 are printed, never asserted.  Unset, nothing new is computed.
 
+**Step 4j (2026-09-12) — opt-in sheet profile, test-side only.**
+``FEM_EM_WF6_SHEET_PROFILE=1`` (requires ``FEM_EM_WF6_EXACT_SHARES=1``, else
+its test skips with the reason) samples P1's driven ``E`` at the owned tagged
+facet midpoints of all four sheets through ``evaluate_vector_field_parallel``,
+and prints where on each sheet the Cauchy–Schwarz excess ``C/terminal − 1``
+lives: 5 width bins, 5 gap bins, a 5×5 grid, the top facets, the transverse
+shares and the sampled ratio ``R_s`` beside ``C/terminal``.  Asserted: only
+that ``C/terminal`` reproduces 4i per rung to 2e-6, with a swapped-rung
+negative control.  ``R_s`` and the transverse share are printed, never
+asserted.
+
 Run (complex build required)::
 
     scripts/testing/run_and_log.sh WF-6 "docker compose exec -T fem-em-solver \\
@@ -133,6 +144,7 @@ from __future__ import annotations
 
 import os
 
+import dolfinx
 import numpy as np
 import pytest
 from mpi4py import MPI
@@ -248,6 +260,43 @@ def _exact_shares_enabled():
 
 
 EXACT_SHARES = _exact_shares_enabled()
+
+# **`WF-6` step 4j — where on the sheet the Cauchy-Schwarz excess lives,
+# opt-in, test-side only.**  Unset or "0" = off.  "1" requires
+# ``FEM_EM_WF6_EXACT_SHARES=1`` (its anchor is 4i's printed C/terminal); without
+# it the profile is not computed and the step-4j test skips with the reason.
+SHEET_PROFILE_ENV = "FEM_EM_WF6_SHEET_PROFILE"
+PROFILE_BINS = 5
+# **Anchor (b), the reproduction control** — 4i's printed C/terminal per rung
+# and drive (`20260911T200251Z_WF-6-step4i.log:2047, 2051` for x1, `:4057`
+# region for x0.0095; `20260911T200634Z_WF-6-step4i-x0.012.log:2018` region for
+# x0.012), all flag-on.  7 significant figures printed, so the rtol is 2e-6.
+STEP4I_C_OVER_TERMINAL = {
+    "x1": {"P1": 1.010592, "P2": 1.010593},
+    "x0.012": {"P1": 1.008756, "P2": 1.008757},
+    "x0.0095": {"P1": 1.021491, "P2": 1.021491},
+}
+C_OVER_TERMINAL_RTOL = 2.0e-6
+# **Negative control (asserted, backed by the same two 4i logs):** x0.0095's
+# C/terminal held against x1's record (and x1's against x0.0095's) misses by
+# 1.08e-2 = 5 400x the rtol; the assertion requires > 100x, so a swapped rung
+# cannot pass.
+SWAPPED_RUNG_PAIRS = {"x1": "x0.0095", "x0.0095": "x1"}
+SWAPPED_RUNG_FACTOR = 100.0
+# *Predicted, printed only* (rule (e) — never measured): midpoint sampling
+# lands R_s within 1e-2 of C/terminal; the transverse share is small.
+PREDICTED_RS_GAP = 1.0e-2
+
+
+def _sheet_profile_requested():
+    raw = os.environ.get(SHEET_PROFILE_ENV)
+    if raw is None or not raw.strip():
+        return False
+    return raw.strip().lower() not in ("0", "false", "no", "off")
+
+
+SHEET_PROFILE_REQUESTED = _sheet_profile_requested()
+SHEET_PROFILE = SHEET_PROFILE_REQUESTED and EXACT_SHARES
 
 
 def _c4_congruent_enabled():
@@ -477,6 +526,8 @@ def rung(request):
         if EXACT_SHARES
         else None
     )
+    # Step 4j (opt-in): collective, identical on every rank.
+    profile = _sheet_profile(sweep, solves["P1"]) if SHEET_PROFILE else None
 
     gate_idx = _gate_indices()
     reading = {
@@ -492,6 +543,7 @@ def rung(request):
         "covariance": covariance,
         "shares": shares,
         "exact": exact,
+        "profile": profile,
         "valid": mask,
         "points": points,
         "gate_idx": gate_idx,
@@ -576,6 +628,217 @@ def _print_exact(reading):
                 f"{sh['sheets'][o]:.6e} = "
                 f"{ex['sheet_ceiling'][o] / sh['sheets'][o]:.6f}"
                 for o in sorted(sh["sheets"])
+            ),
+            flush=True,
+        )
+
+
+def _sheet_profile(sweep, solved):
+    """Step 4j: ``E`` at every sheet's **owned** tagged facet midpoints.
+
+    Collective — every rank calls it.  Owned facets only (index < the facet
+    index map's ``size_local``), so a facet on a process boundary is counted
+    once; per-facet geometry is gathered to rank 0 and broadcast, so the point
+    list handed to ``evaluate_vector_field_parallel`` is identical on every
+    rank and every number below is too.  All binning is numpy.
+
+    ``f = E·ĥ + E_src`` (``E_src = V_src/h`` on the driven sheet, 0 elsewhere):
+    the drive component of the field the Cauchy-Schwarz ceiling integrates,
+    ``C = ½Re(Y_s)∫|E_t + E_src ĥ|²``, while the terminal form is
+    ``½Re(Y_s)|∫f|²/A``.  So ``C/terminal = A∫(|f|² + |E_w|²)/|∫f|²`` with
+    ``E_w`` the in-plane transverse component; the normal component does not
+    enter ``C`` (and is side-ambiguous at a facet midpoint on an N1curl field).
+    """
+    msh = sweep["mesh"]
+    comm = msh.comm
+    fdim = msh.topology.dim - 1
+    msh.topology.create_connectivity(fdim, msh.topology.dim)
+    owned = int(msh.topology.index_map(fdim).size_local)
+    e = solved["fields"].e_complex
+    specs = {s.port_id: s for s in sweep["specs"]}
+    out = {}
+    for g in sweep["sheets"]:
+        pid = f"P{g['tag'] - SHEET_IFACE}"
+        sheet = specs[pid].sheet(driven=(pid == solved["driven"]))
+        facets = np.asarray(sweep["facet_tags"].find(g["tag"]), dtype=np.int32)
+        facets = facets[facets < owned]
+        if facets.size:
+            nodes = dolfinx.cpp.mesh.entities_to_geometry(
+                msh._cpp_object, fdim, facets, False
+            )
+            tri = msh.geometry.x[np.asarray(nodes)[:, :3]]
+            mid = np.asarray(
+                dolfinx.mesh.compute_midpoints(msh, fdim, facets), dtype=np.float64
+            )
+        else:
+            tri = np.zeros((0, 3, 3))
+            mid = np.zeros((0, 3))
+        chunks = comm.gather((tri, mid), root=0)
+        if comm.rank == 0:
+            tri = np.concatenate([c[0] for c in chunks], axis=0)
+            mid = np.concatenate([c[1] for c in chunks], axis=0)
+        else:
+            tri = mid = None
+        tri, mid = comm.bcast((tri, mid), root=0)
+        values, valid = evaluate_vector_field_parallel(e, mid)
+        values = np.asarray(values).reshape(-1, 3)
+        valid = np.asarray(valid, dtype=bool)
+
+        d = sheet.unit_drive()
+        e_src = complex(sheet.source_voltage_v) / float(sheet.gap_height_m)
+        cr = np.cross(tri[:, 1] - tri[:, 0], tri[:, 2] - tri[:, 0])
+        area = 0.5 * np.linalg.norm(cr, axis=1)
+        normal = cr / np.maximum(np.linalg.norm(cr, axis=1), 1e-300)[:, None]
+        width_dir = np.cross(normal, d)
+        width_dir /= np.maximum(np.linalg.norm(width_dir, axis=1), 1e-300)[:, None]
+        diam = np.max(
+            [np.linalg.norm(tri[:, a] - tri[:, b], axis=1) for a, b in ((0, 1), (1, 2), (2, 0))],
+            axis=0,
+        )
+        e_tot = values + e_src * d[None, :]
+        f = e_tot @ d  # no conjugation: d is real
+        e_w = np.einsum("ij,ij->i", e_tot, width_dir)
+        e_n = np.einsum("ij,ij->i", e_tot, normal)
+
+        m = valid
+        a, fm, ew, en = area[m], f[m], e_w[m], e_n[m]
+        mu = mid[m]
+        total_area = float(a.sum())
+        sum_f = complex(np.sum(a * fm))
+        mean_f = sum_f / total_area
+        sq_f = float(np.sum(a * np.abs(fm) ** 2))
+        sq_w = float(np.sum(a * np.abs(ew) ** 2))
+        sq_n = float(np.sum(a * np.abs(en) ** 2))
+        dev = a * np.abs(fm - mean_f) ** 2
+        dev_total = float(dev.sum())
+
+        axis = int(g["axis"])
+        wlo, whi = float(tri[:, :, axis].min()), float(tri[:, :, axis].max())
+        zc = int(np.argmax(np.abs(d)))
+        zlo, zhi = float(tri[:, :, zc].min()), float(tri[:, :, zc].max())
+        u = np.clip((mu[:, axis] - wlo) / (whi - wlo), 0.0, 1.0 - 1e-12)
+        v = np.clip((mu[:, zc] - zlo) / (zhi - zlo), 0.0, 1.0 - 1e-12)
+        ub = np.floor(u * PROFILE_BINS).astype(int)
+        vb = np.floor(v * PROFILE_BINS).astype(int)
+
+        def _marginal(bins):
+            rows = []
+            for k in range(PROFILE_BINS):
+                sel = bins == k
+                ak = float(a[sel].sum())
+                rows.append(
+                    {
+                        "n": int(sel.sum()),
+                        "area_share": ak / total_area,
+                        "mean_abs_f": float(np.sum(a[sel] * np.abs(fm[sel])) / ak)
+                        if ak > 0
+                        else float("nan"),
+                        "mean_abs_w": float(np.sum(a[sel] * np.abs(ew[sel])) / ak)
+                        if ak > 0
+                        else float("nan"),
+                        "dev_share": float(dev[sel].sum()) / dev_total,
+                    }
+                )
+            return rows
+
+        grid = np.zeros((PROFILE_BINS, PROFILE_BINS))
+        np.add.at(grid, (vb, ub), dev)
+        order = np.argsort(dev)[::-1]
+        z_mid = 0.5 * (zlo + zhi)
+        crossing = int(
+            np.count_nonzero(
+                (tri[m][:, :, zc].min(axis=1) <= z_mid) & (tri[m][:, :, zc].max(axis=1) > z_mid)
+            )
+        )
+        n_top1pct = max(1, int(np.ceil(0.01 * a.size)))
+        out[pid] = {
+            "driven": pid == solved["driven"],
+            "facets": int(area.size),
+            "valid": int(m.sum()),
+            "median_diam": float(np.median(diam)),
+            "width_bbox": whi - wlo,
+            "gap_bbox": zhi - zlo,
+            "across_by_diam": (whi - wlo) / float(np.median(diam)),
+            "crossing_mid_gap": crossing,
+            "normal_dot_drive": float(np.max(np.abs(normal @ d))),
+            "area": total_area,
+            "r_s": total_area * sq_f / abs(sum_f) ** 2,
+            "r_s_tan": total_area * (sq_f + sq_w) / abs(sum_f) ** 2,
+            "transverse_share": (sq_w + sq_n) / (sq_f + sq_w + sq_n),
+            "inplane_share": sq_w / (sq_f + sq_w),
+            "mean_f": mean_f,
+            "width": _marginal(ub),
+            "gap": _marginal(vb),
+            "grid": grid / dev_total,
+            "top_shares": {
+                "1": float(dev[order[:1]].sum()) / dev_total,
+                "5": float(dev[order[:5]].sum()) / dev_total,
+                f"1% ({n_top1pct})": float(dev[order[:n_top1pct]].sum()) / dev_total,
+            },
+            "top_uv": [
+                (float(u[i]), float(v[i]), float(dev[i] / dev_total), float(a[i] / total_area))
+                for i in order[:5]
+            ],
+        }
+    return out
+
+
+def _print_profile(reading):
+    spec = reading["spec"]
+    prof = reading["profile"]
+    sh, ex = reading["shares"]["P1"], reading["exact"]["P1"]
+    print(
+        f"[WF-6 step4j] rung {spec['key']}: sheet profile of P1's driven E at owned "
+        f"facet midpoints ({SHEET_PROFILE_ENV}=1); f = E.h + E_src; bins over the "
+        "sheet's vertex bbox; R_s = A*sum a|f|^2/|sum a f|^2 and R_s,tan (adds the "
+        "in-plane transverse |E_w|^2, the sampled analogue of C/terminal) PRINTED, "
+        f"PREDICTED within {PREDICTED_RS_GAP:g} of C/terminal, NEVER ASSERTED; "
+        "transverse share PREDICTED small, NEVER ASSERTED",
+        flush=True,
+    )
+    for pid in sorted(prof):
+        p = prof[pid]
+        c_t = ex["sheet_ceiling"][pid] / sh["sheets"][pid]
+        print(
+            f"  [{pid}{' driven' if p['driven'] else ''}] facets {p['facets']} "
+            f"(evaluated {p['valid']}), area {p['area']:.6e} m^2, width bbox "
+            f"{p['width_bbox']:.6e} m, gap bbox {p['gap_bbox']:.6e} m, median facet "
+            f"diameter {p['median_diam']:.6e} m, across width = width/median diam "
+            f"{p['across_by_diam']:.2f}, facets crossing mid-gap line "
+            f"{p['crossing_mid_gap']}, max|n.h| {p['normal_dot_drive']:.2e}\n"
+            f"      C/terminal {c_t:.6f}   R_s {p['r_s']:.6f} (R_s-1 = sampled "
+            f"normalised variance {p['r_s'] - 1:.6e})   R_s,tan {p['r_s_tan']:.6f}   "
+            f"R_s,tan - C/terminal {p['r_s_tan'] - c_t:+.3e}\n"
+            f"      transverse share sum a|E-E_d h|^2/sum a|E|^2 {p['transverse_share']:.6e}"
+            f"   in-plane only sum a|E_w|^2/sum a(|f|^2+|E_w|^2) {p['inplane_share']:.6e}"
+            f"   <f> {p['mean_f'].real:+.6e}{p['mean_f'].imag:+.6e}j V/m",
+            flush=True,
+        )
+        for label, rows in (("width", p["width"]), ("gap  ", p["gap"])):
+            print(
+                f"      {label} bins: "
+                + " | ".join(
+                    f"[{k}] n {r['n']} area {r['area_share'] * 100:5.2f}% "
+                    f"<|f|> {r['mean_abs_f']:.5e} <|E_w|> {r['mean_abs_w']:.3e} "
+                    f"var {r['dev_share'] * 100:5.2f}%"
+                    for k, r in enumerate(rows)
+                ),
+                flush=True,
+            )
+        print(
+            "      var share grid (rows = gap bin 0..4, cols = width bin 0..4, %): "
+            + " / ".join(
+                " ".join(f"{x * 100:5.2f}" for x in row) for row in p["grid"]
+            ),
+            flush=True,
+        )
+        print(
+            "      top facets' var share: "
+            + ", ".join(f"top {k} {s * 100:.2f}%" for k, s in p["top_shares"].items())
+            + "; top 5 (u_width, v_gap, var share, area share): "
+            + ", ".join(
+                f"({uu:.3f}, {vv:.3f}, {ss * 100:.2f}%, {aa * 100:.3f}%)"
+                for uu, vv, ss, aa in p["top_uv"]
             ),
             flush=True,
         )
@@ -683,6 +946,8 @@ def _print_rung(reading, previous, x1, delta_deg, azimuths, sweep):
             )
     if reading["exact"] is not None:
         _print_exact(reading)
+    if reading["profile"] is not None:
+        _print_profile(reading)
     print(
         f"[WF-6 step4g] rung {spec['key']}: the eleven z = 0 gate points "
         "(steps 4/4b's set, no closed form — the comparand path is deleted):",
@@ -859,6 +1124,57 @@ def test_the_terminal_residuals_reproduce_step_4h(rung):
             f"against step 4h's {records[pid]:.6e} ({rel:.3e} relative), outside "
             f"{REPRODUCTION_RTOL:g} — not 4h's fixture"
         )
+
+
+@complex_only
+def test_c_over_terminal_reproduces_step_4i_on_every_rung(rung):
+    """**Step 4j anchor (b)** — reproduction control plus swapped-rung control.
+
+    C/terminal reproduces 4i's printed value per rung and drive to 2e-6 (the
+    7-significant-figure print precision), so the profile was read on 4i's
+    fixture.  Negative control (asserted, backed by the same 4i logs): the x1 /
+    x0.0095 reading held against the *other* rung's record misses by > 100x the
+    rtol (measured 1.08e-2 = 5 400x).
+    """
+    if not SHEET_PROFILE_REQUESTED:
+        pytest.skip(f"{SHEET_PROFILE_ENV} unset: step 4j's profile not run")
+    if not EXACT_SHARES:
+        pytest.skip(
+            f"{SHEET_PROFILE_ENV}=1 requires {EXACT_SHARES_ENV}=1 — the anchor is "
+            "4i's C/terminal, which only the exact shares compute"
+        )
+    key = rung["spec"]["key"]
+    if not C4_CONGRUENT or key not in STEP4I_C_OVER_TERMINAL:
+        pytest.skip("4i's C/terminal records are flag-on readings only")
+    for pid in ("P1", "P2"):
+        measured = _exact_readings(rung["shares"][pid], rung["exact"][pid])[
+            "c_over_terminal"
+        ]
+        record = STEP4I_C_OVER_TERMINAL[key][pid]
+        rel = abs(measured - record) / record
+        assert rel <= C_OVER_TERMINAL_RTOL, (
+            f"rung {key} [{pid}]: C/terminal {measured:.7f} against 4i's "
+            f"{record:.6f} ({rel:.3e} relative), outside {C_OVER_TERMINAL_RTOL:g} "
+            "— not 4i's fixture"
+        )
+        other = SWAPPED_RUNG_PAIRS.get(key)
+        if other is not None:
+            swapped = STEP4I_C_OVER_TERMINAL[other][pid]
+            miss = abs(measured - swapped) / swapped
+            if MPI.COMM_WORLD.rank == 0:
+                print(
+                    f"\n[WF-6 step4j] rung {key} [{pid}]: C/terminal {measured:.7f} vs "
+                    f"own record {record:.6f} rel {rel:.3e} (ASSERTED <= "
+                    f"{C_OVER_TERMINAL_RTOL:g}); vs swapped {other} record "
+                    f"{swapped:.6f} rel {miss:.3e} = {miss / C_OVER_TERMINAL_RTOL:.0f}x "
+                    f"rtol (ASSERTED > {SWAPPED_RUNG_FACTOR:.0f}x)",
+                    flush=True,
+                )
+            assert miss > SWAPPED_RUNG_FACTOR * C_OVER_TERMINAL_RTOL, (
+                f"rung {key} [{pid}]: C/terminal {measured:.7f} lands within "
+                f"{SWAPPED_RUNG_FACTOR:.0f}x rtol of {other}'s record {swapped:.6f} "
+                f"({miss:.3e}) — the reproduction control cannot tell rungs apart"
+            )
 
 
 @complex_only

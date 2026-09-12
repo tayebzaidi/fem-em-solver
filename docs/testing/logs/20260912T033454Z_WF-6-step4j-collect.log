@@ -1,0 +1,100 @@
+# Test Run
+- Chunk: WF-6-step4j-collect
+- Commit: 7189ebdbcbf5652ee61ff2873544c338c494fda2
+- Time (UTC): 2026-09-12 03:34:54
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.5.1
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && source /usr/local/bin/dolfinx-complex-mode && FEM_EM_REQUIRE_COMPLEX=1 FEM_EM_WF6_C4_CONGRUENT=1 FEM_EM_WF6_EXACT_SHARES=1 FEM_EM_WF6_SHEET_PROFILE=1 FEM_EM_WF6_LADDER_KEYS="x1 x0.0095" PYTHONPATH=/workspace/src timeout -k 30 30 mpiexec -n 2 python3 -m pytest tests/validation/test_birdcage_b1_plus_closed_form.py --collect-only -q -s'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 24
+drwxr-xr-x  3 taz5297 taz5297 4096 Sep  4 23:31 .
+drwxr-xr-x 16 taz5297 taz5297 4096 Sep 11 22:34 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  721 Sep  3 13:49 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 4264 Sep 10 12:01 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.5.1
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && source /usr/local/bin/dolfinx-complex-mode && FEM_EM_REQUIRE_COMPLEX=1 FEM_EM_WF6_C4_CONGRUENT=1 FEM_EM_WF6_EXACT_SHARES=1 FEM_EM_WF6_SHEET_PROFILE=1 FEM_EM_WF6_LADDER_KEYS="x1 x0.0095" PYTHONPATH=/workspace/src timeout -k 30 30 mpiexec -n 2 python3 -m pytest tests/validation/test_birdcage_b1_plus_closed_form.py --collect-only -q -s'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collected 18 items
+
+<Dir workspace>
+  <Dir tests>
+    <Dir validation>
+      <Module test_birdcage_b1_plus_closed_form.py>
+        <Function test_the_x1_rung_reproduces_its_recorded_cell_count[x1]>
+        <Function test_the_x1_rung_reproduces_the_recorded_c4_spread[x1]>
+        <Function test_every_lattice_point_was_evaluated_on_every_rung[x1]>
+        <Function test_power_accounting_closes_on_every_rung[x1]>
+        <Function test_the_exact_discrete_identity_closes_on_every_rung[x1]>
+        <Function test_the_terminal_residuals_reproduce_step_4h[x1]>
+        <Function test_c_over_terminal_reproduces_step_4i_on_every_rung[x1]>
+        <Function test_the_map_is_c4_covariant_on_every_rung[x1]>
+        <Function test_the_cw_drive_spread_dwarfs_the_ccw_spread_on_every_rung[x1]>
+        <Function test_the_x1_rung_reproduces_its_recorded_cell_count[x0.0095]>
+        <Function test_the_x1_rung_reproduces_the_recorded_c4_spread[x0.0095]>
+        <Function test_every_lattice_point_was_evaluated_on_every_rung[x0.0095]>
+        <Function test_power_accounting_closes_on_every_rung[x0.0095]>
+        <Function test_the_exact_discrete_identity_closes_on_every_rung[x0.0095]>
+        <Function test_the_terminal_residuals_reproduce_step_4h[x0.0095]>
+        <Function test_c_over_terminal_reproduces_step_4i_on_every_rung[x0.0095]>
+        <Function test_the_map_is_c4_covariant_on_every_rung[x0.0095]>
+        <Function test_the_cw_drive_spread_dwarfs_the_ccw_spread_on_every_rung[x0.0095]>
+
+========================= 18 tests collected in 2.24s ==========================
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collected 18 items
+
+<Dir workspace>
+  <Dir tests>
+    <Dir validation>
+      <Module test_birdcage_b1_plus_closed_form.py>
+        <Function test_the_x1_rung_reproduces_its_recorded_cell_count[x1]>
+        <Function test_the_x1_rung_reproduces_the_recorded_c4_spread[x1]>
+        <Function test_every_lattice_point_was_evaluated_on_every_rung[x1]>
+        <Function test_power_accounting_closes_on_every_rung[x1]>
+        <Function test_the_exact_discrete_identity_closes_on_every_rung[x1]>
+        <Function test_the_terminal_residuals_reproduce_step_4h[x1]>
+        <Function test_c_over_terminal_reproduces_step_4i_on_every_rung[x1]>
+        <Function test_the_map_is_c4_covariant_on_every_rung[x1]>
+        <Function test_the_cw_drive_spread_dwarfs_the_ccw_spread_on_every_rung[x1]>
+        <Function test_the_x1_rung_reproduces_its_recorded_cell_count[x0.0095]>
+        <Function test_the_x1_rung_reproduces_the_recorded_c4_spread[x0.0095]>
+        <Function test_every_lattice_point_was_evaluated_on_every_rung[x0.0095]>
+        <Function test_power_accounting_closes_on_every_rung[x0.0095]>
+        <Function test_the_exact_discrete_identity_closes_on_every_rung[x0.0095]>
+        <Function test_the_terminal_residuals_reproduce_step_4h[x0.0095]>
+        <Function test_c_over_terminal_reproduces_step_4i_on_every_rung[x0.0095]>
+        <Function test_the_map_is_c4_covariant_on_every_rung[x0.0095]>
+        <Function test_the_cw_drive_spread_dwarfs_the_ccw_spread_on_every_rung[x0.0095]>
+
+========================= 18 tests collected in 2.24s ==========================
+
+## Exit
+- Status: 0
+- Elapsed (s): 4
+- Filtered lines (gmsh optimisation chatter): 0

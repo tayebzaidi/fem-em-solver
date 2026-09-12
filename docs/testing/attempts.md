@@ -17468,3 +17468,35 @@ Windows 3–4 are 1–2 re-run after adding one **post-hoc, printed-only** κ fi
 2. κ(10 MHz) = 1.0587e-2 agrees with step 1c's −ε\* (1.07 / 1.10e-2) and with `PORT-16`'s C/terminal − 1 = 1.0592e-2 on the same `build_four_port_sweep()` fixture (`20260907T051231Z_PORT-16.log:1895–1910`).
 
 **Hypothesis.** κ is the terminal-current sheet form's Cauchy–Schwarz deficit (the `PORT-16` / `WF-6` 4i quantity), not a width error. The discriminating window compares κ with C/terminal − 1 on one rung where that ratio moves: `WF-6` 4i reads 1.0215 at ×0.0095, `20260911T200251Z_WF-6-step4i.log:4057`. It could be done on `PORT-14` step 1b's ×0.75 / ×0.6 rungs with the step 2b fitter.
+
+## 2026-09-12T03:43Z (2026-09-11 22:30 CDT slot) — `WF-6` step 4j — **complete (measurement): the ×0.0095 excess is mostly in-plane transverse field, and its drive part sits on one mid-gap rim facet**
+
+**Tried.** §9 item 3, test-side and additive in `tests/validation/test_birdcage_b1_plus_closed_form.py`, no `src/` edit.
+- Env `FEM_EM_WF6_SHEET_PROFILE=1` requires `FEM_EM_WF6_EXACT_SHARES=1`; the new test skips with the reason otherwise.
+- P1's driven `E` is sampled at each sheet's owned tagged facet midpoints (`compute_midpoints`) through `evaluate_vector_field_parallel`, with the point list gathered and broadcast so it is identical on every rank.
+- `f = E·ĥ + E_src`, with in-plane transverse `E_w` and normal remainder. Binning is numpy: 5 width bins, 5 gap bins, a 5×5 grid, and the top facets.
+
+**Windows.** All at `-n 4`, complex, `FEM_EM_REQUIRE_COMPLEX=1`, `-v -s`, durable capture with `exit $rc`.
+- Smoke collect: 18 collected, Status 0 (`20260912T033454Z_WF-6-step4j-collect.log`).
+- (1) Keys `x1 x0.0095`, `timeout -k 30 590`: 1 failed (by-design `test_power_accounting_closes_on_every_rung[x0.0095]`) / 24 passed / 4 skipped in 198.02 s, elapsed 199 s, `[capture] rc=1` (`20260912T033518Z_WF-6-step4j.log`).
+- (2) Key `x0.012`, `timeout -k 30 400`: 17 passed / 3 skipped in 99.33 s, elapsed 101 s, rc 0 (`20260912T033918Z_WF-6-step4j-x0.012.log`).
+
+**Anchors (asserted).**
+- (a) 4i's discrete identity is green on every rung.
+- (b) C/terminal reproduces 4i at rtol 2e-6: ×1 1.0105922 / 1.0105927 (rel 1.8e-7 / 3.2e-7), ×0.0095 1.0214908 / 1.0214906 (2.1e-7 / 3.5e-7), and ×0.012 green.
+- Negative control: the swapped rung misses by 5 335× / 5 392× the rtol against the > 100× bar (`:2126–2128, 4179–4181`).
+
+**Readings** (P1 sheet; P2–P4 identical to ~1e-3 relative, mirrored u → 1−u; ×1 / ×0.012 / ×0.0095):
+- Facets per sheet: 26 / 26 / 29. Width/median diameter: 3.53 / 3.80 / 3.66.
+- `R_s,tan` equals C/terminal to ≤ 3e-8 on all twelve sheet-rungs, so the split below is exact.
+- Drive variance `R_s − 1`: 8.145e-3 / 6.691e-3 / 1.2045e-2.
+- In-plane transverse term: 2.447e-3 / 2.065e-3 / 9.446e-3, which is 64 % of the ×1 → ×0.0095 growth.
+- ×0.0095 location: one facet (u 0.164, v 0.422, 6.7 % area) carries 42.25 % of the drive variance, with `<|E_w|>` 20.9 V/m against 3–8. The top 5 carry 75 %. Gap-end bins carry 17.3 % on 40.8 % of the area.
+
+**Predictions (printed only).**
+- R_s within 1e-2 of C/terminal: held (2.4e-3 / 2.1e-3 / 9.4e-3).
+- Transverse share small: held (≤ 1.5e-2).
+
+**Records (this commit):** module, three logs, the harness-appended test-results rows, the §7 `WF-6` step 4j annotation, a known-issues row (entry stays OPEN), and §9 item 3 marked DONE. No band, record, `LADDER` or accounting change; `WF-6` stays 🟡.
+
+**Hypothesis.** The mid-gap edge facet on the ×0.0095 congruent cut is a sliver or rim cell whose N1curl tangential trace carries a spurious in-plane transverse component. A per-facet aspect-ratio and adjacent-cell-quality census of that facet across the three rungs (no solve) would confirm or refute it.
