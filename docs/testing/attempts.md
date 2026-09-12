@@ -17392,3 +17392,28 @@ Per-sheet ceiling/terminal is uniform to ±1e-6 within each port. `[mem]` 2.62 /
 **For the review.** Audit the `PORT-19` ✅. The five lumped-sheet callers step 2 listed as unrun on the reuse-on default remain unrun; they are outside this done-when but are the natural sweep to schedule next.
 
 **Hypothesis.** On larger meshes the factor dominates the per-drive cost even more (ANS-4 step 2d: ~all of 1335 s/drive), so the ≈ 11× solve-sum ratio here is a floor for the human-scale 32-port sweep; the next measurement is one reuse sweep at the `ANS-4` resolution inside a single window.
+
+## 2026-09-12T00:40Z (2026-09-11 19:30 CDT slot) — `ANS-4` step 2a‴ — **complete (negative result): 2a″'s Richardson fit is not asymptotic**
+
+**Preflight.** Tree clean at 19:30:05 CDT (`7406f38`), and `fem-em-solver` was Up (28 h, `memory.max` 128 G, 0 stray `python3`). No `recovered/*` branches. §9 item 1 (18:00 queue) was the first open item. It was env only, one window, so I ran it myself under `implementer.md`; no executor was spawned.
+
+**Window (heavy, one).** `FEM_EM_ANS4_STEP2_C4_CONGRUENT=1`, `DEGREE2=0`, `RUNGS="0.6 0.45 0.35"`, `-n 8`, `-s`, complex + `FEM_EM_REQUIRE_COMPLEX=1`, `tests/environment` first, `timeout -k 30 590`, durable capture with `exit $rc` (W2's command copied, only the rungs and the raw filename changed). `20260912T003101Z_ANS-4-step2a-tprime.log`: **14 passed, 1 skipped (record-rung test, no ×1 by design), Status 0, 247 s** (pytest 244.75 s, `:6512`), `[capture] rc=0` (`:6643`).
+- Cells: 209 544 / 293 534 / **394 481** (`:2112, :4078, :6071`). ×0.35 was *predicted* at 380–420 k.
+- Mesh 38.5 / 54.5 / 74.8 s; four drives 7.2 / 10.7 / 18.1 s at `-n 8`. The item *predicted* ×0.35 at ≈ 80 + 60 s. The drives are faster than 2a″'s because `PORT-19`'s reuse-on default landed in between.
+- `[mem]` 4.6957 / 5.8522 / **7.1558 GiB** summed over 8 ranks (`:2111, :4077, :6070`); *predicted* 7–8.
+- **Anchors (asserted):** refinement 209 544 < 293 534 < 394 481 (`:6080–6082`). Imported gates on every rung (`:6091–6093`). At ×0.35: reciprocity 9.157886869e-16, σ_max 0.999071644712, `Z` spreads self / adjacent / opposite **0.0510 / 0.0619 / 0.0476 %** against the unmoved 0.5 %.
+- **Negative control (asserted by reproduction):** ×0.6 and ×0.45 cell counts equal 2a″'s exactly. Their spreads and σ_max equal `w2:5967–5968`, and their `S` entries (`:6104–6111`) equal `w2:5984–5990`, to every printed digit (*predicted* equality held). Reciprocity 8.6e-16 / 3.6e-16 against 2a″'s 3.4e-14 / 2.1e-14 (round-off either way).
+- **Richardson (printed only, `:6117–6121`):** on (×0.6, ×0.45, ×0.35), **"no estimate" for all three classes**. Diagnosis (numpy in the container on the printed entries, not a harness window):
+  - `|d2|/|d1|` = **1.0223 / 1.1494 / 1.1660** for S₁₁ / S₂₁ / S₃₁, while the model ratio over the p bracket spans 0.1686–0.8277. There is no root, because the step moves *grow*.
+  - Relative step moves: 1.17 / 1.10 / 1.19 % (×0.75→×0.6), then 0.87 / 0.72 / 0.75 % (→×0.45), then 0.89 / 0.83 / 0.88 % (→×0.35).
+  - ×0.35 sits 1.38 / 1.17 / 0.68 % from 2a″'s extrapolant, against ×0.45's 1.03 / 0.64 / 0.59 %.
+  - "S_inf move between the two fits" is not computable: there is only one fit.
+  - ×0.35 S-class spreads: 0.0414 / 0.0761 / 0.0091 %.
+
+**Outcome per the item's negative-result clause.** No spread broke, so there is no known-issues entry. The fit is "not asymptotic", recorded as a measurement. No band moved, no code changed, no AED number was written, and the mesher default is unchanged.
+
+**Deviations / denials.** My first harness call was denied as a compound command, because I had appended `> /dev/null; echo; ls` to it. It was re-run bare at top level; nothing ran twice.
+
+**Records.** In this commit: §7 `ANS-4` step 2a‴ paragraph, §9 item 1 marked DONE, the harness-appended test-results row, and the log.
+
+**Hypothesis / for the review and the 2026-09-13 weekly.** The degree-1 step moves stall at ≈ 0.7–0.9 % per rung from ×0.6 on. The `conductor_resolution` knob refines only the conductor grading (h_c 0.96 → 0.56 mm, `:196, :2115, :4081`), and `h_global` 15 mm and `shell` 12 mm are fixed on every rung. So the likeliest floor is bulk/phantom discretisation the ladder never touches. That is unmeasured. The discriminating next window would refine the global size at fixed ×0.45 conductor grading. No test-side knob does that jointly today: `RESOLUTION` (step 2c) turns `resolution` alone, and `RUNGSPEC` (step 2d) takes `h:degree` pairs. It would need an additive keyword, which is the review's to scope. Until then, 2a″'s extrapolant must not be used as the h → 0 reference for the Larmor verdict.
