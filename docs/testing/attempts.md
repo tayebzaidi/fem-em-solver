@@ -17417,3 +17417,54 @@ Per-sheet ceiling/terminal is uniform to ±1e-6 within each port. `[mem]` 2.62 /
 **Records.** In this commit: §7 `ANS-4` step 2a‴ paragraph, §9 item 1 marked DONE, the harness-appended test-results row, and the log.
 
 **Hypothesis / for the review and the 2026-09-13 weekly.** The degree-1 step moves stall at ≈ 0.7–0.9 % per rung from ×0.6 on. The `conductor_resolution` knob refines only the conductor grading (h_c 0.96 → 0.56 mm, `:196, :2115, :4081`), and `h_global` 15 mm and `shell` 12 mm are fixed on every rung. So the likeliest floor is bulk/phantom discretisation the ladder never touches. That is unmeasured. The discriminating next window would refine the global size at fixed ×0.45 conductor grading. No test-side knob does that jointly today: `RESOLUTION` (step 2c) turns `resolution` alone, and `RUNGSPEC` (step 2d) takes `h:degree` pairs. It would need an additive keyword, which is the review's to scope. Until then, 2a″'s extrapolant must not be used as the h → 0 reference for the Larmor verdict.
+
+## 2026-09-12T02:15Z (2026-09-11 21:00 CDT slot) — `PORT-14` step 2b — **complete (measurement): one realised termination carries every residual at 10 and 64 MHz**
+
+**Preflight.** At 21:00:06 CDT the tree was clean (`4e57951`) and `fem-em-solver` was Up (30 h). No `recovered/*` branches. §9 item 1 (`ANS-4` 2a‴) was DONE, so item 2 was the first open item. It was tests-only, so I ran it myself under `implementer.md` and spawned no executor.
+
+**Change** (`tests/validation/test_port_lumped_rlc_termination.py`, additive; the default numbers are bit-identical, as the 10 MHz records reproducing shows):
+- `_realised_termination(s4, measured, z0, index=0)`, the item's closed form;
+- the fixture keeps `results`;
+- `test_step2b_the_realised_termination_is_printed`;
+- `STEP2_RESIDUALS_64MHZ`, restated from `20260911T183201Z_PORT-14-step2.log:1891, :1898, :1905`.
+
+**Windows** (all `-n 2`, standard, complex + `FEM_EM_REQUIRE_COMPLEX=1`, `tests/environment` first, `-s`, `timeout -k 30 300`, foreground; step 2's command verbatim):
+1. `20260912T020247Z_PORT-14-step2b.log`: 64 MHz, 14 passed, 18 skipped, Status 0, **122 s**.
+2. `20260912T020500Z_PORT-14-step2b-default.log`: 10 MHz, 16 passed, 16 skipped, Status 0, **118 s**.
+3. `20260912T020824Z_PORT-14-step2b-w2.log`: 64 MHz, Status 0, 116 s.
+4. `20260912T021021Z_PORT-14-step2b-default-w2.log`: 10 MHz, Status 0, 118 s.
+
+Windows 3–4 are 1–2 re-run after adding one **post-hoc, printed-only** κ fit (disclosed below). All four windows ran sequentially.
+
+**Anchors (asserted, green in all four):**
+- (a) Recovery from the exact reduction: ≤ 1.227e-15 against 1e-9.
+- (b) ×1.01 sensitivity: ≤ 7.856e-16 against 1e-6.
+- (c) Reproduction at 64 MHz: 2.827e-07 / 7.581e-08 / 4.728e-08 against rtol 1e-5.
+
+**Negative control (asserted):** held against the other frequency, every residual misses by ≥ 2 631× the rtol (R) against the 100× bar.
+
+**Readings** (full table in §7 `PORT-14` step 2b):
+- The non-rank-1 remainder is **≤ 2.5e-6 of the nominal residual** on all six (element, frequency) pairs: C 64 MHz 2.334778e-08 against 1.354202e-02.
+- Re ΔZ = −0.529 Ω on C and L at both frequencies, and +1.588 Ω on R.
+- Im ΔZ/ω signs differ across elements.
+- |Z_eff/Z_p − 1| spread: 1.70× at 10 MHz, 2.99× at 64 MHz.
+- Post-hoc `ΔZ = κ(Z_p − z0)`: pooled κ = 1.058709e-02 at 10 MHz (misfit ≤ 3.4e-4) and 1.064081e-02 at 64 MHz (misfit ≤ 6.2e-3), `w2:1947–1951`.
+- Residuals order exactly as `|I_P1|/|I_drive|` does. C at 64 MHz carries 0.81 of the drive current.
+
+**Pre-registered predictions:**
+- Remainder ≪ nominal: **held**.
+- Common series inductance: **refuted**.
+- Common `Z_eff/Z_p − 1`: held at 10 MHz, failed at 64 MHz.
+
+**Disclosed deviations.**
+1. Anchor (c) also asserts at 10 MHz against `REDUCTION_FLOOR_F_SMALL`: 2.380e-07 / 1.065e-07 / 3.391e-08, backed by `20260911T183421Z_PORT-14-step2-default.log`. This is additive; the item scoped (c) to flag-on only.
+2. The κ print was registered *after* windows 1–2 were read, so it is labelled post-hoc in the code and asserts nothing. Windows 1–2 are committed as the pre-registered evidence.
+3. One `for f in …` grep loop was denied (simple_expansion) and re-issued as two plain greps; nothing ran twice.
+
+**Records (this commit):** module, four logs, the harness-appended test-results rows, the §7 `PORT-14` step 2b paragraph, and §9 item 2 marked DONE. No band, record or `src/` change; `PORT-14` stays 🟡 and `PORT-15` gate (i) stays closed. `auditor` was not spawned.
+
+**For the review.**
+1. §9 item 5's literal skip condition fires (C:L `Z_eff/Z_p − 1` = 2.21× > 2×). The slot's derivation says that is the wrong observable: if all four sheets realise `(1+κ)Z_told` while V is reported from `Z_told`, the 50 Ω 4×4 carries a series `κz0` per port and a termination presents exactly `Z_p + κ(Z_p − z0)`. So rule on whether item 5 is BLOCKED or re-pointed at κ; I did not mark it.
+2. κ(10 MHz) = 1.0587e-2 agrees with step 1c's −ε\* (1.07 / 1.10e-2) and with `PORT-16`'s C/terminal − 1 = 1.0592e-2 on the same `build_four_port_sweep()` fixture (`20260907T051231Z_PORT-16.log:1895–1910`).
+
+**Hypothesis.** κ is the terminal-current sheet form's Cauchy–Schwarz deficit (the `PORT-16` / `WF-6` 4i quantity), not a width error. The discriminating window compares κ with C/terminal − 1 on one rung where that ratio moves: `WF-6` 4i reads 1.0215 at ×0.0095, `20260911T200251Z_WF-6-step4i.log:4057`. It could be done on `PORT-14` step 1b's ×0.75 / ×0.6 rungs with the step 2b fitter.

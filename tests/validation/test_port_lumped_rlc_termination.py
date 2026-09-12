@@ -31,6 +31,9 @@ routes on one fixture at one frequency, exactly as `PORT-9`/`PORT-11` are.  Read
 PROJECT_PLAN.md §2 before quoting anything here.  10 MHz by default; step 2
 (``FEM_EM_PORT14_STEP2_64MHZ=1``) measures the same identity at 64 MHz on the
 same record mesh, printed against the 10 MHz records and not asserted at them.
+Step 2b (both frequencies, no flag of its own) fits the termination the field
+solve *realised* — ``Γ_eff`` by a closed-form rank-1 projection — and prints it
+beside the nominal ``Z_p``; it measures, and registers nothing.
 
 **Construction is imported, never restated** (`ANS-1` rule): the mesh, the
 narrowed sheets, the material map and the 50 Ω sweep all come from
@@ -240,7 +243,7 @@ def rlc_termination_cases():
         z_term = series_rlc_impedance(frequency_hz, **element)
         comm.Barrier()
         t0 = time.perf_counter()
-        measured, kept_ids, _results = _terminated_three_port(sweep, z_term)
+        measured, kept_ids, results = _terminated_three_port(sweep, z_term)
         comm.Barrier()
         elapsed = time.perf_counter() - t0
         predicted = reduce_terminated_ports(
@@ -257,6 +260,8 @@ def rlc_termination_cases():
                 "predicted": predicted,
                 "kept_ids": kept_ids,
                 "seconds": float(elapsed),
+                # Step 2b reads the terminated sheet's current off these.
+                "results": results,
             }
         )
 
@@ -540,6 +545,281 @@ def test_the_zero_gamma_control_misses(rlc_termination_cases):
             f"{REDUCTION_BAND:.0e} band, even though the 4x4 predicts a coupling "
             f"term Delta = {delta:.3e}. The gate above is then not resolving the "
             "termination and means nothing"
+        )
+
+
+# ---------------------------------------------------------------------------
+# `PORT-14` step 2b — the termination the field solve actually realised
+# ---------------------------------------------------------------------------
+#
+# For one terminated port the reduction is rank 1 in the kept block:
+# ``S' - S_aa = t * M`` with ``M = S_a1 S_1a`` (outer product) and
+# ``t = Gamma/(1 - S11 Gamma)``.  So the least-squares ``t`` against the
+# *measured* 3x3 is a closed-form projection, it inverts to
+# ``Gamma_eff = t/(1 + S11 t)``, and ``Z_eff = z0 (1 + Gamma_eff)/(1 - Gamma_eff)``
+# is the termination the field solve behaves as if it saw.  What the fit cannot
+# absorb — the non-rank-1 remainder — is error living in the kept block itself.
+# Measures only: no record, no band, no ``Z_p`` correction anywhere.
+
+# Step 2's printed 64 MHz residuals, `20260911T183201Z_PORT-14-step2.log:1891,
+# :1898, :1905` (`-n 2`, flag on).  Logged readings restated with their source
+# for the reproduction anchor; *not* a registered record (the review owns that).
+STEP2_RESIDUALS_64MHZ = {
+    "C = 100 pF": 1.354202e-02,
+    "L = 1 uH": 5.021261e-04,
+    "R = 200 Ohm": 7.445387e-04,
+}
+
+# Reproduction rtol on the nominal-Gamma residuals.  The records are printed to
+# 7 significant figures (rounding <= 3.7e-7 relative) and the step 2 default
+# window reproduced the 10 MHz ones to <= 2.380e-07
+# (`20260911T183421Z_PORT-14-step2-default.log:1888, :1895, :1903`).
+STEP2B_REPRODUCTION_RTOL = 1.0e-5
+
+# Anchor (a): the fitter recovers Z_p from the exact reduction (C2).
+STEP2B_RECOVERY_RTOL = 1.0e-9
+# Anchor (b): it follows a 1 % shift in the termination rather than echoing Z_p.
+STEP2B_SENSITIVITY_FACTOR = 1.01
+STEP2B_SENSITIVITY_TOL = 1.0e-6
+# Negative control: a residual held against the *other* frequency's reading must
+# miss the reproduction rtol by more than this multiple.  Asserted, backed by
+# step 2's × record column (`…183201Z_PORT-14-step2.log:1891, :1898, :1905`):
+# the tightest pair is R at |1.027018 - 1| = 2.7e-2, i.e. 2 700x the rtol.
+STEP2B_CONTROL_MISS_FACTOR = 100.0
+
+
+def _realised_termination(s4, measured, z0, index=TERMINATED_PORT_INDEX):
+    """Fit the single termination that best explains ``measured``, all numpy.
+
+    ``s4`` is the 50 Ohm N×N at the real ``z0``; ``measured`` is the (N−1)×(N−1)
+    with port ``index`` terminated, kept ports in ascending index order (the
+    order :func:`reduce_terminated_ports` returns).  Returns ``t``,
+    ``gamma_eff``, ``z_eff`` and the absolute Frobenius norm of the non-rank-1
+    remainder ``S'_meas − S_aa − t M``.
+    """
+    matrix = np.asarray(s4, dtype=np.complex128)
+    kept = [i for i in range(matrix.shape[0]) if i != index]
+    s_aa = matrix[np.ix_(kept, kept)]
+    m = np.outer(matrix[kept, index], matrix[index, kept])
+    d = np.asarray(measured, dtype=np.complex128) - s_aa
+    # `np.vdot` conjugates its first argument: <M, D>/<M, M> is the projection.
+    t = complex(np.vdot(m, d) / np.vdot(m, m))
+    gamma_eff = t / (1.0 + complex(matrix[index, index]) * t)
+    z_eff = float(z0) * (1.0 + gamma_eff) / (1.0 - gamma_eff)
+    return {
+        "t": t,
+        "gamma_eff": complex(gamma_eff),
+        "z_eff": complex(z_eff),
+        "remainder_fro": float(np.linalg.norm(d - t * m)),
+    }
+
+
+def _spread_note(values):
+    """max|x|/min|x| and whether the signs agree, for the predicted readings."""
+    mags = [abs(v) for v in values]
+    signs = {np.sign(v) for v in values if v != 0.0}
+    ratio = max(mags) / min(mags) if min(mags) > 0.0 else float("inf")
+    return f"max/min |.| = {ratio:.4f}, signs {'agree' if len(signs) <= 1 else 'DIFFER'}"
+
+
+@complex_only
+def test_step2b_the_realised_termination_is_printed(rlc_termination_cases):
+    """**`PORT-14` step 2b — fit ``Γ_eff``, print ``ΔZ``; three anchors asserted.**
+
+    (a) The fitter returns ``Z_p`` from the exact reduction to 1e-9; (b) it
+    returns ``1.01·Z_p`` from the reduction at ``1.01·Z_p`` to 1e-6, so it does
+    not echo the nominal value; (c) at ``RECORD_RANK_WIDTH`` the nominal-Γ
+    residuals reproduce this frequency's reading to 1e-5 (step 2's 64 MHz
+    residuals under the flag, ``REDUCTION_FLOOR_F_SMALL`` without it).  Negative
+    control: held against the other frequency's reading, every residual misses
+    by > 100× that rtol.  Everything else is printed, never asserted.
+    """
+    comm = MPI.COMM_WORLD
+    sweep = rlc_termination_cases["sweep"]
+    cases = rlc_termination_cases["cases"]
+    s4 = np.asarray(sweep["s"], dtype=np.complex128)
+    z0 = float(REFERENCE_IMPEDANCE_OHM)
+    frequency_hz = _rlc_frequency_hz()
+    omega = 2.0 * np.pi * frequency_hz
+    step2 = _step2_enabled()
+    reading = STEP2_RESIDUALS_64MHZ if step2 else REDUCTION_FLOOR_F_SMALL
+    other = REDUCTION_FLOOR_F_SMALL if step2 else STEP2_RESIDUALS_64MHZ
+    terminated_id = sweep["port_defs"][TERMINATED_PORT_INDEX].port_id
+    nominal = _reduction_residuals(cases)
+
+    rows = []
+    for case in cases:
+        label = case["label"]
+        z_p = complex(case["z"])
+        exact = _realised_termination(
+            s4, reduce_terminated_ports(s4, z0, {TERMINATED_PORT_INDEX: z_p}), z0
+        )
+        shifted = _realised_termination(
+            s4,
+            reduce_terminated_ports(
+                s4, z0, {TERMINATED_PORT_INDEX: STEP2B_SENSITIVITY_FACTOR * z_p}
+            ),
+            z0,
+        )
+        fit = _realised_termination(s4, case["measured"], z0)
+        dz = fit["z_eff"] - z_p
+        currents = []
+        for driven_id in case["kept_ids"]:
+            responses = case["results"][driven_id].responses
+            if terminated_id in responses:
+                currents.append(
+                    (
+                        driven_id,
+                        abs(responses[terminated_id].current_a)
+                        / abs(responses[driven_id].current_a),
+                    )
+                )
+        rows.append(
+            {
+                "label": label,
+                "z_p": z_p,
+                "gamma": complex(case["gamma"]),
+                "recovery": abs(exact["z_eff"] / z_p - 1.0),
+                "sensitivity": abs(shifted["z_eff"] / z_p - STEP2B_SENSITIVITY_FACTOR),
+                "fit": fit,
+                "dz": dz,
+                "l_series_h": dz.imag / omega,
+                "rel": fit["z_eff"] / z_p - 1.0,
+                "kappa": dz / (z_p - z0),
+                "remainder": fit["remainder_fro"] / float(np.linalg.norm(case["predicted"])),
+                "nominal": nominal[label],
+                "currents": currents,
+            }
+        )
+
+    if comm.rank == 0:
+        print(
+            f"\n[PORT-14 step2b] realised termination at f = {frequency_hz:.6e} Hz "
+            f"(omega = {omega:.6e} rad/s), terminated port '{terminated_id}', "
+            f"z0 = {z0:.6e} Ohm. Printed, not asserted, except anchors (a)-(c):",
+            flush=True,
+        )
+        for row in rows:
+            fit = row["fit"]
+            print(
+                f"    {row['label']:<12s} Gamma = {row['gamma'].real:+.9f}"
+                f"{row['gamma'].imag:+.9f}j   Gamma_eff = {fit['gamma_eff'].real:+.9f}"
+                f"{fit['gamma_eff'].imag:+.9f}j   |Gamma_eff| = "
+                f"{abs(fit['gamma_eff']):.9f}",
+                flush=True,
+            )
+            print(
+                f"        Z_p = {row['z_p'].real:+.9e}{row['z_p'].imag:+.9e}j Ohm   "
+                f"Z_eff = {fit['z_eff'].real:+.9e}{fit['z_eff'].imag:+.9e}j Ohm",
+                flush=True,
+            )
+            print(
+                f"        dZ = Z_eff - Z_p = {row['dz'].real:+.9e} (Re) "
+                f"{row['dz'].imag:+.9e} (Im) Ohm   Im dZ/omega = "
+                f"{row['l_series_h']:+.9e} H   Z_eff/Z_p - 1 = "
+                f"{row['rel'].real:+.9e}{row['rel'].imag:+.9e}j "
+                f"(|.| = {abs(row['rel']):.9e})",
+                flush=True,
+            )
+            print(
+                f"        non-rank-1 remainder = {row['remainder']:.6e}   nominal "
+                f"residual = {row['nominal']:.6e}   remainder/nominal = "
+                f"{row['remainder'] / row['nominal']:.6f}   t = "
+                f"{fit['t'].real:+.9e}{fit['t'].imag:+.9e}j",
+                flush=True,
+            )
+            if row["currents"]:
+                print(
+                    "        |I_" + terminated_id + "|/|I_drive| = "
+                    + "  ".join(f"{did}: {ratio:.9e}" for did, ratio in row["currents"]),
+                    flush=True,
+                )
+            else:
+                print(f"        |I_{terminated_id}|/|I_drive|: not exposed", flush=True)
+            print(
+                f"        anchor (a) |Z_eff/Z_p - 1| on the exact reduction = "
+                f"{row['recovery']:.3e} (<= {STEP2B_RECOVERY_RTOL:.0e});   anchor (b) "
+                f"|Z_eff/Z_p - {STEP2B_SENSITIVITY_FACTOR:g}| on the x"
+                f"{STEP2B_SENSITIVITY_FACTOR:g} reduction = {row['sensitivity']:.3e} "
+                f"(<= {STEP2B_SENSITIVITY_TOL:.0e})",
+                flush=True,
+            )
+        print(
+            "    predicted (never asserted): series inductance Im dZ/omega across "
+            "C/L/R: " + _spread_note([row["l_series_h"] for row in rows])
+            + ";   |Z_eff/Z_p - 1| across C/L/R: "
+            + _spread_note([abs(row["rel"]) for row in rows]),
+            flush=True,
+        )
+        # Post-hoc, printed only: registered by the 2026-09-11 21:00 slot after
+        # its first two windows read Re dZ ~ -0.53 Ohm on C and L and +1.59 Ohm
+        # on R, i.e. dZ = kappa (Z_p - z0) with one kappa ~ 1.06e-2.  Complex
+        # least squares over the three elements; per-element kappa beside it.
+        v = np.array([row["z_p"] - z0 for row in rows], dtype=np.complex128)
+        dzs = np.array([row["dz"] for row in rows], dtype=np.complex128)
+        kappa = complex(np.vdot(v, dzs) / np.vdot(v, v))
+        print(
+            f"    post-hoc (printed only): dZ = kappa (Z_p - z0), pooled kappa = "
+            f"{kappa.real:+.9e}{kappa.imag:+.9e}j",
+            flush=True,
+        )
+        for row, vk, dzk in zip(rows, v, dzs):
+            print(
+                f"        {row['label']:<12s} kappa_k = dZ/(Z_p - z0) = "
+                f"{row['kappa'].real:+.9e}{row['kappa'].imag:+.9e}j   "
+                f"|dZ - kappa (Z_p - z0)|/|dZ| = {abs(dzk - kappa * vk) / abs(dzk):.3e}",
+                flush=True,
+            )
+        print(
+            f"    reproduction (c) against {'step 2 64 MHz' if step2 else '10 MHz record'} "
+            f"(rtol {STEP2B_REPRODUCTION_RTOL:.0e}, -n {RECORD_RANK_WIDTH} only; this "
+            f"run -n {comm.size}); control against "
+            f"{'10 MHz record' if step2 else 'step 2 64 MHz'} (> "
+            f"{STEP2B_CONTROL_MISS_FACTOR:g}x rtol):",
+            flush=True,
+        )
+        for row in rows:
+            label = row["label"]
+            print(
+                f"    {label:<12s} nominal {row['nominal']:.6e}   reading "
+                f"{reading[label]:.6e} |ratio - 1| = "
+                f"{abs(row['nominal'] / reading[label] - 1.0):.3e}   other "
+                f"{other[label]:.6e} |ratio - 1| = "
+                f"{abs(row['nominal'] / other[label] - 1.0):.3e} "
+                f"({abs(row['nominal'] / other[label] - 1.0) / STEP2B_REPRODUCTION_RTOL:.1f}x rtol)",
+                flush=True,
+            )
+
+    for row in rows:
+        assert row["recovery"] <= STEP2B_RECOVERY_RTOL, (
+            f"{row['label']}: the fitter returns Z_eff/Z_p - 1 = {row['recovery']:.3e} "
+            f"on the exact (C2) reduction, above {STEP2B_RECOVERY_RTOL:.0e} — the "
+            "fitter or reduce_terminated_ports is wrong (step 2b: known-issues, stop)"
+        )
+        assert row["sensitivity"] <= STEP2B_SENSITIVITY_TOL, (
+            f"{row['label']}: fed the reduction at {STEP2B_SENSITIVITY_FACTOR:g} Z_p "
+            f"the fitter misses {STEP2B_SENSITIVITY_FACTOR:g} by {row['sensitivity']:.3e} "
+            f"> {STEP2B_SENSITIVITY_TOL:.0e} — it does not follow the termination"
+        )
+    for row in rows:
+        miss = abs(row["nominal"] / other[row["label"]] - 1.0)
+        assert miss > STEP2B_CONTROL_MISS_FACTOR * STEP2B_REPRODUCTION_RTOL, (
+            f"{row['label']}: the residual {row['nominal']:.6e} reproduces the other "
+            f"frequency's reading {other[row['label']]:.6e} to {miss:.3e}, within "
+            f"{STEP2B_CONTROL_MISS_FACTOR:g}x the rtol — the reproduction anchor "
+            "cannot tell the two frequencies apart"
+        )
+    if comm.size != RECORD_RANK_WIDTH:
+        pytest.skip(
+            f"step 2b's reproduction readings were set at -n {RECORD_RANK_WIDTH}; "
+            f"this is -n {comm.size} — readings printed above"
+        )
+    for row in rows:
+        miss = abs(row["nominal"] / reading[row["label"]] - 1.0)
+        assert miss <= STEP2B_REPRODUCTION_RTOL, (
+            f"{row['label']}: the nominal-Gamma residual {row['nominal']:.6e} does "
+            f"not reproduce {reading[row['label']]:.6e} (|ratio - 1| = {miss:.3e} > "
+            f"{STEP2B_REPRODUCTION_RTOL:.0e})"
         )
 
 

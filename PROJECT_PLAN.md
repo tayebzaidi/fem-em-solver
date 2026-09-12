@@ -4434,6 +4434,80 @@ lineage. Standard tier.
 > proportional width law. **Step 2c** runs step 1c's width configurations at
 > 64 MHz. Neither step registers a record or moves a band, and `PORT-15` gate
 > (i) stays closed until a 64 MHz record exists.
+>
+> **Step 2b executed 2026-09-11 (21:00 slot). One realised termination carries
+> the whole residual at both frequencies.** Tests only, no `src/` change:
+> `_realised_termination` and `test_step2b_the_realised_termination_is_printed`
+> were added, and the fixture now keeps `results`. Four windows, all `-n 2`,
+> standard, `timeout -k 30 300`, each Status 0:
+> - `20260912T020247Z_PORT-14-step2b.log` (64 MHz, 14 passed / 18 skipped,
+>   122 s);
+> - `20260912T020500Z_PORT-14-step2b-default.log` (10 MHz, 16 / 16, 118 s);
+> - the same two re-run with one added post-hoc κ print:
+>   `20260912T020824Z_PORT-14-step2b-w2.log` (116 s) and
+>   `20260912T021021Z_PORT-14-step2b-default-w2.log` (118 s).
+>
+> The nominal residuals, `Z_eff` and `t` reproduced to every printed digit in the
+> re-runs, and the remainders to ≤ 3e-6 relative. Readings (w2 logs, 64 MHz
+> `:1927–1954`, 10 MHz `:1927–1955`):
+>
+> | Element | f | \|Z_eff/Z_p − 1\| | Re ΔZ (Ω) | Im ΔZ/ω (H) | remainder / nominal | κ_k = ΔZ/(Z_p − z0) | \|I_P1\|/\|I_drive\| (P2/P3/P4) |
+> |---|---|---|---|---|---|---|---|
+> | C | 10 MHz | 1.109475e-02 | −0.5294121 | −2.681e-08 | 2.2e-7 | 1.058471e-02 | 0.180 / 0.166 / 0.180 |
+> | L | 10 MHz | 1.353422e-02 | −0.5292585 | +1.059e-08 | 2.3e-7 | 1.059024e-02 | 0.355 / 0.338 / 0.355 |
+> | R | 10 MHz | 7.941857e-03 | +1.588371 | −1.543e-11 | 2.5e-7 | 1.058914e-02 | 0.120 / 0.112 / 0.120 |
+> | C | 64 MHz | 2.374962e-02 | −0.5295059 | −6.506e-10 | 1.7e-6 | 1.057617e-02 | 0.811 / 0.727 / 0.811 |
+> | L | 64 MHz | 1.073146e-02 | −0.5278062 | +1.065e-08 | 2.1e-6 | 1.064945e-02 | 0.084 / 0.064 / 0.084 |
+> | R | 64 MHz | 7.940094e-03 | +1.588007 | −1.527e-11 | 2.1e-6 | 1.058671e-02 | 0.159 / 0.120 / 0.159 |
+>
+> The κ_k imaginary parts are ≤ 4.1e-05. Pooled post-hoc κ is
+> 1.058709e-02 − 3.6e-06j at 10 MHz (per-element misfit ≤ 3.4e-4, `:1948–1951`)
+> and 1.064081e-02 − 1.5e-05j at 64 MHz (misfit ≤ 6.2e-3, `:1947–1950`).
+> - **Anchors (asserted), green in all four windows.**
+>   - (a) Recovery from the exact (C2) reduction: ≤ 1.227e-15 against 1e-9.
+>   - (b) The ×1.01 reduction: ≤ 7.856e-16 against 1e-6.
+>   - (c) Reproduction of step 2's 64 MHz residuals: 2.827e-07 / 7.581e-08 /
+>     4.728e-08 against rtol 1e-5. *Disclosed extension:* the same assertion
+>     also runs at 10 MHz against `REDUCTION_FLOOR_F_SMALL` (2.380e-07 /
+>     1.065e-07 / 3.391e-08). That is additive and backed by
+>     `20260911T183421Z_PORT-14-step2-default.log:1888, :1895, :1903`.
+> - **Negative control (asserted).** Held against the other frequency's reading,
+>   every residual misses by ≥ 2 631× the rtol (R, 10 MHz) against the 100× bar.
+> - **Pre-registered predictions (printed only).**
+>   - Remainder ≪ nominal: **held**, ≤ 2.5e-6 of nominal everywhere, so no
+>     error lives in the kept block.
+>   - Common `Im ΔZ/ω` within 2×: **failed** at both frequencies (signs differ).
+>     The unmodelled-series-inductance reading is refuted.
+>   - Common `Z_eff/Z_p − 1` within 2×: **held at 10 MHz** (1.70×), **failed
+>     at 64 MHz** (2.99×; C:L 2.21×).
+> - **Observation, not asserted.** The six nominal residuals order exactly as
+>   `|I_P1|/|I_drive|` does. C at 64 MHz carries 0.81 of the drive current and
+>   the largest residual.
+>
+> **Reading: slot derivation, a hypothesis for the review.** The post-hoc fit
+> `ΔZ = κ(Z_p − z0)` with a single real κ holds on all six readings. Suppose
+> every sheet realises `(1+κ)·Z_told` while the port voltage is still reported
+> as `V_src − I·Z_told`. Then the 50 Ω 4×4 is the network plus a series `κ·z0`
+> at each port, and a terminated sheet presents `Z_p + κ(Z_p − z0)` to it. That
+> is the printed form. So step 1c's proportional law, applied to *all four*
+> sheets, would explain C's 64 MHz jump as the same κ reached through a larger
+> sheet current, not a new mechanism. It would also explain why the literal
+> `Z_eff/Z_p − 1` test is not common, since that quantity is `κ(1 − z0/Z_p)`.
+> Three independent numbers agree to about three figures:
+> - κ at 10 MHz, 1.0587e-2;
+> - step 1c's −ε\* ≈ 1.07 / 1.10e-2;
+> - `PORT-16`'s C/terminal − 1 = 1.0592e-2 on the same `build_four_port_sweep()`
+>   fixture (`20260907T051231Z_PORT-16.log:1895–1910`).
+>
+> That points at the Cauchy–Schwarz sheet-field non-uniformity as κ's origin.
+> This is unproven here.
+>
+> **§9 item 5 (step 2c).** Its literal skip condition fires: at 64 MHz C and
+> L's `Z_eff/Z_p − 1` differ by 2.21× > 2×. But the reading above says that
+> observable is the wrong test of the proportional law, so whether 2c is
+> BLOCKED or re-pointed at κ is the review's ruling. **Not changed:** no
+> record, no band, no `Z_p` correction; `PORT-15` gate (i) stays closed and the
+> row stays 🟡.
 
 **`PORT-15` — the circuit layer (HFSS + Circuit)** 🟡 *(**step 1 ✅
 2026-09-05, 22:30 slot** — the algebra and its three identities; digits in
@@ -7916,7 +7990,13 @@ a `[capture] rc=` line only when it is the *last* output line.
      asymptotic" ⇒ a measurement, recorded as such.
    - No band moves.
 
-2. **`PORT-14` step 2b — fit the termination the field solve realised, at 10
+2. ✅ **DONE 2026-09-11 21:00 slot — one realised termination carries every
+   residual (non-rank-1 remainder ≤ 2.5e-6 of nominal at both frequencies);
+   post-hoc `ΔZ = κ(Z_p − z0)` with κ = 1.0587e-2 / 1.0641e-2 at 10 / 64 MHz;
+   item 5's literal skip condition fires (C:L 2.21×) but is flagged for the
+   review** (§7 `PORT-14` step 2b; `20260912T020824Z_PORT-14-step2b-w2.log`,
+   `20260912T021021Z_PORT-14-step2b-default-w2.log`).
+   **`PORT-14` step 2b — fit the termination the field solve realised, at 10
    and 64 MHz** (implementer; tests only, numpy on fixture outputs, no new
    solve route, no `src/`; complex; standard; `main`; independent).
    **Why:** ruling (1). At 64 MHz C's residual is 27× L's, but the reduction's
