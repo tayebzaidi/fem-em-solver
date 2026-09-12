@@ -17529,3 +17529,33 @@ Windows 3–4 are 1–2 re-run after adding one **post-hoc, printed-only** κ fi
 **Records (this commit):** five logs, the harness test-results rows, the known-issues entry, the §7 annotation, and §9 item 4 marked DONE. The permission layer denied one harness call because of a host-side `$?` echo after it. It was re-run without the echo, and no log was written for the denied call.
 
 **Hypothesis.** Anchor (A)'s field half can only be a stable gate as bit-identity at `-n 1` (the `OPS-43` (d) precedent), with `-n 2` printed. If a `-n 2` band is wanted, it should be registered from a measured repeat spread (≥ 5 windows), not from step 2's single draw.
+
+## 2026-09-12T09:45Z (2026-09-12 04:30 CDT slot) — `ANS-4` step 2e — **complete: the global ladder at fixed ×0.45 conductor grading moves every class by more than the conductor rungs did, so the bulk is a real contributor**
+
+**Preflight.** Tree clean, `fem-em-solver` Up 37 h. §9 item 1 taken and delegated to `implementer` in the foreground. Landed as `e0a9fdc` (test change, both logs, test-results rows, §7 annotation, §9 item 1 DONE). The slot checked the log lines cited below itself.
+
+**Tried.** One additive test-side env, `FEM_EM_ANS4_STEP2_CONDUCTOR_FACTOR`, in `tests/validation/test_ans4_resolution_ladder.py`. No `src/` change. Unset means off and the default path is unchanged. `_require_explicit_c4_flag` now also refuses a factor other than 1 when the C4 flag is unset. The record-rung test skips when the factor is not 1; the executor read "factor on" as a factor other than 1, so an explicit 1 still asserts.
+- Smoke (guard only): `Status: 0`, 4 s (`20260912T093219Z_ANS-4-step2e-smoke.log`).
+- Window: `C4_CONGRUENT=1 DEGREE2=0 RESOLUTION="0.015 0.012 0.0095" CONDUCTOR_FACTOR=0.45`, `-n 8`, `timeout -k 30 590`, `-s`, durable capture: 14 passed / 1 skipped (the record test, by design), `[capture] rc=0`, `Status: 0`, 325.6 s pytest (`20260912T093235Z_ANS-4-step2e.log:6198, :6654, :6657`). Heavy tier.
+
+**Negative control (asserted by reproduction): held.** The h = 0.015 rung meshed 293 534 cells (`:2159`). Its S₁₁ / S₂₁ / S₃₁ at `:6117–6119` match `20260912T003101Z_ANS-4-step2a-tprime.log:6109–6111` to every printed digit, including the S-class spreads.
+
+**Anchors.** All green on every rung: reciprocity ≤ 1.23e-15, σ_max ≤ 0.99917, largest `Z` class spread 0.1072 % (h = 0.015).
+
+**Measured.**
+- Cells: 293 534 / 392 442 / 513 061.
+- Mesh + four drives: 54.8 + 10.8 s, 71.1 + 22.1 s, 91.9 + 31.6 s.
+- `[mem]` summed over ranks: 5.80 / 7.96 / 10.94 GiB.
+- Class moves from h = 0.015 (S₁₁ / S₂₁ / S₃₁): 1.2524 / 0.8394 / 1.5295 % at h = 0.012, then 1.8423 / 1.2053 / 2.3073 % at h = 0.0095 (`:6121–6127`). Step to step, 1.25 / 0.84 / 1.53 % then 0.62 / 0.48 / 0.81 %, a ratio of about 0.5 on each class. 2a‴'s conductor-rung moves (0.87 / 0.72 / 0.75 %, then 0.89 / 0.83 / 0.88 %) did not shrink.
+- Richardson on the three global rungs gives an estimate for every class: p = 3.2264 / 2.6300 / 3.0608, extrapolant 2.3835 / 1.7124 / 3.0616 % from h = 0.015 (`:6131–6133`).
+
+**Predictions missed (rule (e), printed, not asserted).** The finer rungs were predicted at ≈ 326 k / 375 k cells and ≤ 8 GiB, but measured 392 k / 513 k and 10.94 GiB. Global and conductor refinement multiply rather than add, so the additive increments from the flag-on ×1 ladder under-predict. The 0.0095 mesh time (91.9 s) stayed inside the 150 s trap, and memory stayed far below the 128 G limit.
+
+**Reading.** The "bulk is not the floor" clause (< 0.2 %) is nowhere near triggered. Global refinement moves the classes more than the conductor rungs did, and the moves are shrinking. There is no Larmor verdict (that is the weekly's, 2026-09-13), and no band moved. Caveats, also in §7:
+- The fit uses three points, and 2a″'s three-point fit also looked asymptotic until 2a‴ refuted it.
+- p ≈ 2.6–3.2 is higher than degree-1 N1curl normally gives, which suggests pre-asymptotic cancellation.
+- The conductor grading is held at ×0.45, so the extrapolant is not a limit in both knobs.
+
+**Cosmetic, for the review.** The shared PORT-9 rung print says "four driven solves … at -n 2" on an `-n 8` window (`:2139`), while the ANS-4 line (`:2159`) correctly says `-n 8`. That label predates this change and was not touched.
+
+**Hypothesis.** One more global rung (h ≈ 0.0075, *predicted* ≈ 650–700 k cells, ≈ 15 GiB, ≈ 130 s mesh, so it fits `-n 8` but is close to the 150 s mesh trap) would test whether p ≈ 3 holds. A cross rung (h = 0.012 at ×0.35) would separate the two knobs. Either is the weekly's to price against the Larmor verdict.
