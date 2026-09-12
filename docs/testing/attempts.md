@@ -17624,3 +17624,37 @@ Both match the item's expected tallies. Standard tier.
 **Records (this commit):** the test change, both logs, the two test-results rows, the §7 `PORT-14` step 2d annotation and §9 item 3 DONE. `PORT-14` stays 🟡, `PORT-16` stays ✅, and `PORT-15` gate (i) stays closed.
 
 **Hypothesis.** The multiplicative correction `(1 + [C/terminal − 1])·Z_told` would take up about 99.7 % of κ at 64 MHz. The last ≈ 0.3 % is the part that grows with frequency, a candidate for the sheet's reactive (jωL-like) term, which the real-power C–S deficit cannot see. Item 4's width lever at 64 MHz is the independent read on it. Whether the correction becomes a route is the weekly's call.
+
+## 2026-09-12T14:09Z (2026-09-12 09:00 CDT slot) — `PORT-14` step 2c (re-pointed) — **complete (measurement): at 64 MHz the width lever's ε\* reads −κ_k to +3.1 % (C) / −4.2 % (L); the C/L 2 % prediction missed (1.0695); no negative-result bar fires**
+
+**Preflight.** Tree clean, `fem-em-solver` Up 42 h, no `recovered/*`. §9 items 1–3 were already done, so this slot took item 4. It was delegated to `implementer` in the foreground; the slot verified the commit, the diff and the log lines listed below before writing this entry.
+
+**Tried.** Tests only, additive, in `tests/validation/test_port_lumped_rlc_termination.py`; no `src/` change.
+- `width_sweep_baseline` and `width_sweep_case` now take `_rlc_frequency_hz()` for both `build_four_port_sweep` and `series_rlc_impedance`. With the flag unset this is `FREQUENCY_HZ`: the arithmetic is unchanged and only the print text differs.
+- Print lines name the frequency that ran.
+- New print-only test `test_the_width_sweep_epsilon_star_fit_is_printed`. It fits three points: (0, step 2's ε = 0 residual), (+0.05, A) and (−0.05, B). It prints the fit beside step 1c's 10 MHz ε\* and step 2b's −κ_k, and evaluates the predictions and negative-result bars in words. Nothing new is asserted.
+- The ε = 0 point is step 2's logged reading (`20260911T183201Z_PORT-14-step2.log:1891, :1898`), restated as a constant. It was not re-measured in this window.
+
+**Window.** One window, `FEM_EM_PORT14_WIDTH_SWEEP=1 FEM_EM_PORT14_STEP2_64MHZ=1`, run with `-n 2 -s`, complex mode, `FEM_EM_REQUIRE_COMPLEX=1`, `tests/environment` first, `timeout -k 30 590` and durable capture. Heavy tier.
+- **Selection:** `-k "width_sweep or environment"`. The width sweep shares its env flag with step 1d, so this keeps step 1d's configuration D out of the window.
+- **Result:** 23 passed / 12 deselected in 183.45 s, `[capture] rc=0` as the last line, `Status: 0`, 185 s (`20260912T140430Z_PORT-14-step2c.log:2163, :2229–2233`). Every configuration line reads f = 6.400000e+07 Hz (`:1880, :1932, :2003, :2074`).
+
+**Anchors and negative control (asserted, green on A/B/C).**
+- Cell count is 116 085.
+- Reciprocity: 1.35e-15 / 2.24e-15 / 1.93e-15, against 1e-3.
+- σ_max: 0.999535567 / 0.999907252 / 0.999839277 (`:1937, :2008, :2079`).
+- The Γ = 0 control misses by ≥ 234× the floor, against the 5× bar (`:1946–1947, :2017–2018, :2088–2089`).
+
+**Readings (printed; `:2093–2098`).**
+- **Fit:** ε\*(C) = −0.010908 (step 1c 10 MHz: −0.010735), so ε\*/(−κ_C) = 1.031340. ε\*(L) = −0.010199 (10 MHz: −0.010970), so ε\*/(−κ_L) = 0.957693. Both are inside the predicted 10 % and the 30 % bar.
+- **C/L:** ε\*(C)/ε\*(L) = 1.069490. The 2 % prediction **failed**; the 2× bar is clear.
+- **L residual:** raised in both directions (×5.700796 at +5 %, ×3.774297 at −5 %), as predicted.
+- **Residual ÷ ε = 0 on A/B/C × (C, L):** 5.818610, 5.700796, 3.727574, 3.774297, 6.059464, 5.694986. Width is a lever at 64 MHz.
+- **Observation, not asserted:** C's fitted quadratic has a **negative minimum**, r²(ε\*) = −1.625878e-05. That is ≈ 9 % of r₀² = 1.833863e-04; at 10 MHz it was ≈ −1.4e-07. A squared residual that is linear in ε cannot go below zero, so C's three 64 MHz points are not exactly of that form. L's minimum is +1.743697e-08, which is fine.
+- **Arithmetic done in this entry, not printed by the test:** the mean of ε\*(C) and ε\*(L) is −0.010554, which is 0.992× pooled κ(64) = 1.064081e-02. For comparison, step 2d's C/terminal − 1 at 64 MHz is ≈ 1.0608e-2.
+
+**Harness note.** The executor piped the harness wrapper's *host-side* stdout through `| tail -3`. The container side used durable capture with no pipe or tee, and the harness log is complete and footered. It still breaks the "no pipe" rule and is disclosed here. The executor also hit three denials and worked around each without spending compute: the bash guard denied a `grep` because the command contained "pytest", a compound `awk` needed approval, and so did `cd … && grep`.
+
+**Records (commit `52b9fed`):** the test change, the log, the test-results row, the §7 `PORT-14` step 2c record and §9 item 4 DONE. `PORT-14` stays 🟡, `PORT-15` gate (i) stays closed, and no record or band was registered.
+
+**Hypothesis.** The proportional law holds in the width parametrisation at 64 MHz, at the level of a few percent per element. The C/L split (+3 % / −4 %) and C's negative fitted minimum both point at C's three-point fit rather than at κ. The next read is a fourth, in-window C point near ε ≈ −0.011 at 64 MHz, together with an in-window ε = 0 re-measurement: the step 1d pattern moved to 64 MHz. That would show whether the split is real or an artifact of mixing step 2's ε = 0 reading with this window's ±5 % points.
