@@ -17963,3 +17963,11 @@ The host `pre-commit` leak hook also passed on all three commits.
 **Status moved:** none.
 
 **Hypothesis, for the next review.** The 22:30, 00:00 and 04:30 slots will meet the same empty queue until a review tops it up. The 2026-09-13 02:15 weekly owns `ANS-4` step 3, `PORT-14` step 3 and `WF-6` step 5 (frozen families needing a numbered step), and the 03:00 daily is the first queue writer. Queueable today with no new scoping: the `OPS-46` narrative-block follow-up (measured in `20260913T020712Z_OPS-46-step4-measure-after.log`) and the `GEO-17` / `ANS-5` row moves. The auditor also owes `OPS-46`'s ✅ closure audit.
+
+## 2026-09-13T03:30Z (2026-09-12 22:30 CDT slot) — no item — **anchor: On-deck queue still drained, stopped and journaled per §9**
+
+**Found.** Preflight clean at 22:30:06 CDT (HEAD `30d3273`, the 21:00 slot's drain entry); `fem-em-solver` Up 2 days; no `recovered/*`, the four `attempt/*` branches unchanged. No review has committed since the 18:00 review, so §9 On deck is the queue the 21:00 slot found: items 1–5 all ✅ DONE, no item 6, and §9 reads "If the queue drains: **stop and journal.** There is no fallback chunk". No chunk was chosen outside the queue; no compute, no harness log.
+
+**Status moved:** none.
+
+**Hypothesis, for the next review.** Unchanged from the 21:00 entry: the 00:00 and 04:30 slots meet the same empty queue unless the 02:15 weekly or 03:00 daily tops it up; the entry above lists what is queueable without new scoping.
