@@ -4508,7 +4508,7 @@ review; commissioned 2026-08-23 weekly review as §10 subgoal 2b, serial on `POR
 | `WF-4` | Scenario presets (debug/dev/benchmark-lite) | 🧪 | standard |
 | `WF-5` | Loaded birdcage: frequency shift & Q degradation | ⬜ | heavy |
 | `WF-6` | B1+ field mapping and homogeneity (CV) | ✅ 2026-09-13 (step 5) on the re-scoped subgoal-4 target: on the unloaded F-small birdcage at 10 MHz, CG1, the worst-radius C4 four-copy spread of `\|B₁⁺\|` falls 5.2506 → 2.0719 % and the C4 covariance 3.6159 → 1.6815 % as resolution goes 0.015 → 0.012 m — both falls asserted, both spreads reproduced at rtol 1e-3 (`20260913T170259Z_WF-6-step5.log`, 24 passed, Status 0, 156 s at `-n 4`). A convergence statement only — no closed-form, homogeneity, absolute, C95.3 or Larmor claim; the flag-on ×0.0095 power residual stays banked OPEN in known-issues. *History: `docs/planning/chunks/WF-6.md`.* | heavy (step 1 standard, complex; steps 3h 194 s / 3f′ 117 s / 3i 96 s standard; step 4a 4 s smoke, `-n 1`, real; **step 4g 204 s at `-n 4`**; **step 5 156 s at `-n 4`**; **step 4h 199 s at `-n 4`** + 52 s flag-off control; **step 4i 198 s + 104 s at `-n 4`**; **step 4j 199 s + 101 s at `-n 4`**; step 4k 29 + 32 + 39 + 38 s smoke, `-n 1`, no solve) |
-| `WF-7` | SAR10g hotspot identification | ⬜ | heavy |
+| `WF-7` | SAR10g hotspot identification | 🧪 Step 0 (cost probe, 2026-09-13): one degree-1 single-drive lumped-sheet solve on the F-human rung (longitudinal ring sheets, 507 266 cells, +0.52 % vs `GEO-25`'s transverse record) at 64 MHz, `-n 8` — 607 039 unknowns, solve 37 s, mesh build 123 s, summed `ru_maxrss` 10.93 GiB (`20260913T190102Z_WF-7-step0.log:10419–10427`, 178 s); below the predicted 11–33 GiB / 3–8 min bracket. A measurement for the XXL commissioning, no physics claim. | heavy |
 | `WF-8` | Publication-quality visualization pipeline | ⬜ | standard |
 | `WF-9` | **Implant transfer-function excitation (ISO 10974 Tier 3)** — a local impressed source stepped along a lead path + the tangential-`E` path-integral post-processor; heating from `∫ TF(z)·E_tan(z) dz` gated against the direct lead-in-phantom solve — **feature ladder C1** (operator directive 2026-09-04; Phase 7; `WF-7` is to be scoped with this in mind) | ⬜ | heavy |
 
@@ -7891,7 +7891,12 @@ blocked.
    **Negative result:** (i) red is a finding on the 32-port fixture's C16 —
    known-issues entry, row stays 🟡, stop.
 
-5. **`WF-7` step 0 — the F-human cost probe: one single-drive degree-1
+5. ✅ **DONE 2026-09-13 13:30 slot** (`20260913T190102Z_WF-7-step0.log`:
+   Status 0, 178 s at `-n 8` — 507 266 cells (longitudinal sheets, +0.52 %
+   vs the transverse record, inside the band), 607 039 unknowns, solve
+   37 s, summed `ru_maxrss` 10.93 GiB — both *below* the predicted bracket;
+   `WF-7` → 🧪).
+   **`WF-7` step 0 — the F-human cost probe: one single-drive degree-1
    lumped-sheet solve on the `GEO-25` rung at 64 MHz, memory and time
    printed** (implementer; a filed probe script
    `scripts/probes/wf7_step0_f_human_cost.py` on the `OPS-30` survivors'

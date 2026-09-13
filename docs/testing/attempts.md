@@ -12335,3 +12335,25 @@ The host `pre-commit` leak hook also passed on all three commits.
 **Stop.** Commit lands after minute 30 of the slot ⇒ no third item (step 2's take-next window closed); item 5 (`WF-7` step 0) is the next slot's.
 
 **Hypothesis, for the next reader.** The auditor should re-trace `185043Z:11798–11801` and `185405Z:1913`. Two caveats: the sample cylinder holds exactly `MIN_SAMPLE_POINTS` = 50 (`:11780`) — any re-mesh that drops one point turns (i)/(ii) into a sample-floor red with no physics behind it; and the gate window is heavy by 11 s over the standard ceiling, which the item already priced as heavy.
+
+## 2026-09-13T19:00Z (2026-09-13 13:30 CDT slot, third item under take-next) — `WF-7` step 0 — **complete (cost probe measured; `WF-7` ⬜ → 🧪; both readings below the predicted bracket)**
+
+**Correction to the entry above.** Its "Stop" paragraph says the `POST-6` commit landed after minute 30. That was written before the commit; `fa55a0f` actually landed at 13:57:40 CDT (minute 27) with `git status --porcelain` empty, so step 2's take-next licence held and this item was taken. The entry above is otherwise accurate; append-only, so corrected here.
+
+**Licence.** `fa55a0f` clean at minute 27 < 30; §9 item 5 independent. In-container `pgrep -c python3` = 0 before spawning. Delegated to `implementer` (foreground; no commit; one window, container-side `timeout -k 30 570`, start by 14:08, return by 14:20); returned 14:04. Log re-read by this session (`:10419–10435`).
+
+**Change.** New `scripts/probes/wf7_step0_f_human_cost.py` (measurement only; one assert). Fixture `test_birdcage_f_human_rung._params(0.15, scale_sizing=False)` imported, plus `ring_sheet_orientation="longitudinal"`; mesh rebuilt in-script (`_build_rung` drops facet tags). Drive via the imported `test_port_birdcage_ring_column._solve_one_drive` (`PORT-13`'s lumped-sheet forms, materials, PEC), P17 at 1 V, 31 sheets at 50 Ω, degree 1, 64 MHz. Each phase prints and flushes timing and per-rank `ru_maxrss`.
+
+**Departures from the item text (disclosed, for the review).** (1) The item says "through `run_lumped_sheet_port_case`"; the probe uses `PORT-13`'s `_solve_one_drive` (same forms), chosen to avoid rebuilding port-definition objects in-slot. The cost reading is a single degree-1 MUMPS solve either way. (2) The item's anchor is "the cell record at `GEO-25`'s band", but that record (504 642) is the fixture's *transverse*-sheet mesh. The item's longitudinal layout meshes **507 266** cells (+5.200e-03, inside `CELL_COUNT_BAND` 0.01, `:10419`), so the anchor passes on a neighbouring mesh, not the record mesh. Not a gate on anything.
+
+**Windows.** `20260913T190042Z_WF-7-step0-smoke.log` (import check, Status 0, 1 s). `20260913T190102Z_WF-7-step0.log`: `-n 8`, complex, `FEM_EM_REQUIRE_COMPLEX=1`, durable capture, **Status 0, 178 s**, `[capture] rc=0` `:10431`, orphans 0 before (`:35`) and after (`:10430`).
+
+**Measured.** Cells 507 266; unknowns **607 039** (`:10424`); mesh build 123.3 s (gmsh wall 114.6 s, `:10419`); assemble + factorise + solve **37.02 s** (`:10424`); `ru_maxrss` per rank 1.14–1.69 GiB, **summed 10.932 GiB**, max 1.687 GiB (`:10427`); after the mesh build 2.564 GiB summed (`:10420`). Printed only: supplied 2.962883e-03 W, sheets 2.702393e-03 W, conductor 2.467089e-04 W, phantom 1.374313e-06 W, residual 4.187e-03, `S_driven` 0.407423+0.344417j (`:10425`). **Against the prediction (the control):** memory 0.07 GiB under the 11 GiB floor (borderline); solve ≈ 5× under the 3 min floor (a clear miss). The mesh build, not the solve, dominates a degree-1 F-human window.
+
+**Same commit.** Probe script, two logs, test-results rows, §7 `WF-7` row ⬜ → 🧪 with the step-0 reading, §9 item 5 marked DONE.
+
+**Status moved:** `WF-7` ⬜ → 🧪.
+
+**Stop.** Commit lands after minute 30 ⇒ no fourth item; item 6 (`OPS-47` step 1) is the next slot's.
+
+**Hypothesis, for the next reader.** The 09-16 weekly's XXL arithmetic should read ≈ 11 GiB / 37 s per degree-1 single drive at 0.6 M unknowns, `-n 8`. A degree-2 F-human solve is the case that needs pricing (ANS-4 2b: degree 2 ≈ 5.4× the unknowns and ≈ 17 GiB per drive on a 116 k-cell mesh), not degree 1. If the review wants the record-mesh anchor, rerun the probe with the transverse default or register 507 266 as the longitudinal record.
