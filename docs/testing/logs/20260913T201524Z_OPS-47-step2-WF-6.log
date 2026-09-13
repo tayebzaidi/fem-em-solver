@@ -1,0 +1,82 @@
+# Test Run
+- Chunk: OPS-47-step2-WF-6
+- Commit: 0968eda8f2338e0b71283a79ff2b2a7f028ee054
+- Time (UTC): 2026-09-13 20:15:24
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.5.1
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && timeout -k 30 30 bash scripts/probes/ops47_step2_move.sh move WF-6'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 24
+drwxr-xr-x  3 taz5297 taz5297 4096 Sep  4 23:31 .
+drwxr-xr-x 16 taz5297 taz5297 4096 Sep 13 15:15 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  721 Sep  3 13:49 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 4264 Sep 10 12:01 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.5.1
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && timeout -k 30 30 bash scripts/probes/ops47_step2_move.sh move WF-6'\'''
+pre-commit revision HEAD 0968eda8f2338e0b71283a79ff2b2a7f028ee054
+[anchor] pre-worktree-plan-equals-HEAD: PASS (rc=0, expected 0)
+chunk file at HEAD: 48423 B
+(iii) BEFORE: PROJECT_PLAN.md 7838 lines, 690121 B
+[anchor] iii-measure-before-exit: PASS (rc=0, expected 0)
+(iii) BEFORE measure_plan_sections.py: §7 lines 4367 chunks 219
+== dry run
+WF-6      narrative lines 2420-4712 (2293 lines)  span 163066 B -> pointer 90 B  (plan shrinks 162976 B)  chunk file exists
+PROJECT_PLAN.md: 690121 -> 527145 B, 7838 -> 5546 lines (projected)
+dry run: nothing written
+[size-assert] projected plan bytes 527145 < 690121: PASS
+[size-assert] projected plan lines 5546 < 7838: PASS
+[anchor] dry-run-exit: PASS (rc=0, expected 0)
+WF-6      narrative lines 2420-4712 (2293 lines)  span 163066 B -> pointer 90 B  (plan shrinks 162976 B)  chunk file exists
+PROJECT_PLAN.md: 690121 -> 527145 B, 7838 -> 5546 lines (projected)
+dry run: nothing written
+[size-assert] projected plan lines 5546 < 4000: FAIL
+[guide] projected post-WF-6 plan --assert-below-lines 4000: rc=3 (3 = the 4 000-line guide is NOT met; a reading)
+[anchor] dry-run-wrote-nothing: PASS (rc=0, expected 0)
+== real move (rider: strict shrink asserted against the pre-move size)
+WF-6      narrative lines 2420-4712 (2293 lines)  span 163066 B -> pointer 90 B  (plan shrinks 162976 B)  chunk file exists
+PROJECT_PLAN.md: 690121 -> 527145 B, 7838 -> 5546 lines
+WF-6: chunk-file narrative equals the extracted span (163066 B)
+PROJECT_PLAN.md: written, 162976 B moved out
+[size-assert] plan bytes 527145 < 690121: PASS
+[size-assert] plan lines 5546 < 7838: PASS
+[anchor] move-exit-and-size-assert: PASS (rc=0, expected 0)
+== (i) independent re-extraction from git HEAD vs the chunk-file span
+git-HEAD re-extraction: lines 2420-4712 (2293 lines), 163066 B; 1 same-ID opener line(s) inside; pointer lines in plan 1; chunk file 48423 -> 211558 B
+history prefix preserved: True; single header: True; trailing newline: True
+[anchor] i-reextract-prefix-header-pointer: PASS (rc=0, expected 0)
+[anchor] i-cmp-git-HEAD-span-vs-chunkfile-span: PASS (rc=0, expected 0)
+[anchor] i-cmp-plan-equals-HEAD-with-span-replaced-by-pointer: PASS (rc=0, expected 0)
+(iii) AFTER: PROJECT_PLAN.md 5546 lines, 527145 B (was 7838 lines, 690121 B; -2292 lines, -162976 B; span 163066 B - pointer 90 B = 162976 B)
+[anchor] iii-shrink-equals-span-minus-pointer: PASS (rc=0, expected 0)
+[anchor] iii-measure-after-exit: PASS (rc=0, expected 0)
+(iii) AFTER measure_plan_sections.py: §7 lines 2075 chunks 219
+== (ii) leak audit
+clean: no tracked file carries any of the 501 AED figures (>= 8 digits, >= 5 distinct)
+[anchor] ii-leak-audit: PASS (rc=0, expected 0)
+ PROJECT_PLAN.md              | 2294 +----------------------------------------
+ docs/planning/chunks/WF-6.md | 2296 ++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 2297 insertions(+), 2293 deletions(-)
+== summary: fail=0
+
+## Exit
+- Status: 0
+- Elapsed (s): 11
+- Filtered lines (gmsh optimisation chatter): 0
