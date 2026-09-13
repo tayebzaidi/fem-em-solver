@@ -17955,3 +17955,11 @@ The host `pre-commit` leak hook also passed on all three commits.
 **Status moved:** `OPS-46` 🟡 → ✅ (the review audits it).
 
 **Hypothesis.** The next size lever is the `>`-blockquote narrative blocks, not rows. After the moves, the top-45 is led by `WF-6` (158.4 kchars of chunk span), `TH-15` (85.7), `PORT-14` (49.9), `MAT-4` (21.6) and `POST-6` (10.9). A follow-up chunk moving `nar` blocks over 2 KB with the same `cmp` discipline would take the plan well under 0.7 MB. The weekly should scope it, along with `GEO-17` / `ANS-5`.
+
+## 2026-09-13T02:10Z (2026-09-12 21:00 CDT slot, after the second item) — no item — **anchor: On-deck queue drained, stopped and journaled per §9**
+
+**Found.** The item-5 closure commit `1f4e706` left `git status --porcelain` empty at 21:09:20 CDT (minute 9), so step 2 was re-entered. All five On-deck items are marked ✅ DONE (§9 lines 8143, 8212, 8266, 8312, 8331), and there is no item 6. Step 2's fallback also fails: `grep -i "obvious next entry"` matches nothing in `PROJECT_PLAN.md` or `daily-review.md`, and §9 says "If the queue drains: **stop and journal.** There is no fallback chunk". The 18:00 review's preamble had already named the drain ("A slot that finds nothing takeable **stops and journals**") and listed what was deliberately not queued: `WF-6` 4l, `ANS-4` 2h and `PORT-14` 2f (frozen families); `PORT-15` step 2; `TH-5`/`TH-14`/`TH-16`–`TH-18`; `TH-19`; the `-n 2` MUMPS drift. No chunk was chosen outside the queue.
+
+**Status moved:** none.
+
+**Hypothesis, for the next review.** The 22:30, 00:00 and 04:30 slots will meet the same empty queue until a review tops it up. The 2026-09-13 02:15 weekly owns `ANS-4` step 3, `PORT-14` step 3 and `WF-6` step 5 (frozen families needing a numbered step), and the 03:00 daily is the first queue writer. Queueable today with no new scoping: the `OPS-46` narrative-block follow-up (measured in `20260913T020712Z_OPS-46-step4-measure-after.log`) and the `GEO-17` / `ANS-5` row moves. The auditor also owes `OPS-46`'s ✅ closure audit.
