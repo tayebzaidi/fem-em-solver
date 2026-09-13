@@ -1,0 +1,84 @@
+# Test Run
+- Chunk: TH-19-step3-collect
+- Commit: dd465d4b180217197fdecc0dfaec490c01cda298
+- Time (UTC): 2026-09-13 18:34:20
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.5.1
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && source /usr/local/bin/dolfinx-complex-mode && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 TH19_STEP3_FREQ_MHZ=10 timeout -k 30 60 mpiexec -n 2 python3 -m pytest tests/validation/test_birdcage_power_identity_degree2.py --collect-only -q'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 24
+drwxr-xr-x  3 taz5297 taz5297 4096 Sep  4 23:31 .
+drwxr-xr-x 16 taz5297 taz5297 4096 Sep 13 13:33 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  721 Sep  3 13:49 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 4264 Sep 10 12:01 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.5.1
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && source /usr/local/bin/dolfinx-complex-mode && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 TH19_STEP3_FREQ_MHZ=10 timeout -k 30 60 mpiexec -n 2 python3 -m pytest tests/validation/test_birdcage_power_identity_degree2.py --collect-only -q'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collected 4 items
+
+<Dir workspace>
+  <Dir tests>
+    <Dir validation>
+      <Module test_birdcage_power_identity_degree2.py>
+        <Function test_the_mesh_is_the_record_mesh_and_degree_reaches_the_space>
+        <Function test_degree1_control_reproduces_port16_step1>
+        <Function test_degree2_discrete_power_identity>
+        <Function test_degree2_reactive_identity>
+
+=============================== warnings summary ===============================
+tests/validation/test_port_birdcage_four_port.py:1
+  /workspace/tests/validation/test_port_birdcage_four_port.py:1: SyntaxWarning: invalid escape sequence '\*'
+    """`PORT-9` step 3 leg (d) — the 4x4 on the gapped birdcage at 50 Ohm.
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+========================== 4 tests collected in 2.18s ==========================
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collected 4 items
+
+<Dir workspace>
+  <Dir tests>
+    <Dir validation>
+      <Module test_birdcage_power_identity_degree2.py>
+        <Function test_the_mesh_is_the_record_mesh_and_degree_reaches_the_space>
+        <Function test_degree1_control_reproduces_port16_step1>
+        <Function test_degree2_discrete_power_identity>
+        <Function test_degree2_reactive_identity>
+
+=============================== warnings summary ===============================
+tests/validation/test_port_birdcage_four_port.py:1
+  /workspace/tests/validation/test_port_birdcage_four_port.py:1: SyntaxWarning: invalid escape sequence '\*'
+    """`PORT-9` step 3 leg (d) — the 4x4 on the gapped birdcage at 50 Ohm.
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+========================== 4 tests collected in 2.17s ==========================
+
+## Exit
+- Status: 0
+- Elapsed (s): 3
+- Filtered lines (gmsh optimisation chatter): 0

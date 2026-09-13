@@ -1748,7 +1748,7 @@ from `OPS-26` step 2's four sites. Full narrative and both step-2 rubrics archiv
 | `TH-16` | **Symmetry planes: per-face PEC / PMC on cut faces with port rescaling** — HFSS *Perfect E* / *Perfect H* symmetry; quarter the birdcage, the memory lever for the F-human *refinement* rungs — **feature ladder B2** (operator directive 2026-09-04). *(Re-dated 2026-09-06 weekly: the "62 GiB F-human wall" was `TH-12` step 2's degree-2 figure on the 138 k-cell F-small and the r³ extrapolation; `GEO-25` measured F-human at fixed sizing as **504 642 cells** (exponent 0.84, 112 s to mesh), and the two priced degree-1 solves — `TH-11` step 5's 0.99 M cells at 64 GiB and `PORT-13` step 1's 270 k cells at 5.7 GiB summed RSS — bracket a first F-human 64 MHz degree-1 solve at ≈ 11–33 GiB, inside the 128 GiB box either way. Symmetry planes buy the degree-2 and h-refined F-human rungs, not the first solve; that solve is priced, not gated, by `WF-7` step 0.)* | ⬜ | standard |
 | `TH-17` | **Birdcage eigenmodes** — the `TH-9` eigensolver on the loaded birdcage with a PEC coil (`TH-15`) and `PORT-14`'s capacitor sheets; mode frequencies vs the ladder-network closed form, Phase 6's named first target — **feature ladder B3** (operator directive 2026-09-04; serial on `TH-15`, `PORT-14`) | ⬜ | heavy |
 | `TH-18` | **Layered impedance boundary** — thin copper foil on a substrate (HFSS *Layered Impedance*), the construction of real coils; a refinement of `TH-14` — **feature ladder B4** (operator directive 2026-09-04; serial on `TH-14`) | ⬜ | standard |
-| `TH-19` | Carry the matched source projection to the coil, and retest the production element order | ⬜ Open: the matched source projection is shown to do the work on the coil fixture, and the disposition is referred to the weekly with no default change. The birdcage's lumped-sheet drive still bypasses the projection. **Ruled 2026-09-13 (weekly): outcome (a) accepted, no default change; step 3 re-scoped as the two degree-2 power identities on the sheet-driven 4-leg birdcage at 10 / 128 MHz (§10) — the production-order decision follows it at the 09-16 weekly.** *History: `docs/planning/chunks/TH-19.md`.* | standard (steps 1–2), heavy (step 3) |
+| `TH-19` | Carry the matched source projection to the coil, and retest the production element order | ⬜ Open: the matched source projection is shown to do the work on the coil fixture, and the disposition is referred to the weekly with no default change. The birdcage's lumped-sheet drive still bypasses the projection. **Ruled 2026-09-13 (weekly): outcome (a) accepted, no default change; step 3 re-scoped as the two degree-2 power identities on the sheet-driven 4-leg birdcage at 10 / 128 MHz (§10) — the production-order decision follows it at the 09-16 weekly.** **Step 3 executed 2026-09-13 13:30: both degree-2 identities green on the sheet-driven birdcage at 10 / 128 MHz — (a) 4.6e-15 / 8.9e-15 vs 1e-6, (b) 6.8e-11 / 1.8e-12 vs 1e-9, `W_e/W_m` unmoved by the order (`20260913T183446Z_TH-19-step3-10MHz.log`, `…183723Z_…-128MHz.log`, 134 / 118 s at `-n 8`); no default change, the decision is the 09-16 weekly's.** *History: `docs/planning/chunks/TH-19.md`.* | standard (steps 1–2), heavy (step 3) |
 
 **`TH-10` — lossy dielectric sphere, full-wave, 64/128 MHz (Larmor gate)**
 ✅ *(steps 1–4 ✅ 2026-08-13, chunk closed by the 10:30 review; full step
@@ -7806,7 +7806,11 @@ blocked.
    derived κ differ by more than the residual slope allows — known-issues
    entry, row stays 🟡, stop, no fit.
 
-3. **`TH-19` step 3 — the two degree-2 power identities on the sheet-driven
+3. ✅ **DONE 2026-09-13 13:30 slot** (`20260913T183446Z_TH-19-step3-10MHz.log`
+   / `20260913T183723Z_TH-19-step3-128MHz.log`: 15 passed each, Status 0,
+   134 / 118 s at `-n 8`; degree-2 (a) 4.6e-15 / 8.9e-15, (b) 6.8e-11 /
+   1.8e-12 — both green; production order to the 09-16 weekly).
+   **`TH-19` step 3 — the two degree-2 power identities on the sheet-driven
    4-leg birdcage at 10 and 128 MHz** (implementer; tests only, new tests on
    the pattern of `tests/validation/test_coil_loading_degree2_pair.py`;
    complex; heavy; `-n 8`; `main`; independent; **21 slot-min**: ≈ 6 min +
