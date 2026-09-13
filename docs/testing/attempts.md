@@ -12317,3 +12317,21 @@ The host `pre-commit` leak hook also passed on all three commits.
 **Status moved:** none (item text: "none directly"); the `TH-19` row records the outcome; the production-order decision goes to the 09-16 weekly with both fixtures identity-clean.
 
 **Hypothesis, for the next reader.** Two things for the review: (1) (b)'s 10 MHz degree-2 margin is only 15× — cancellation round-off of the class `TH-19` step 1 saw move 3.9e-09 → 2.4e-09 between runs, so a second observation before the weekly leans on it; (2) the `TH-13` step-3a known-issues expectation that the coil's `W_e` excess would reappear on the sheets as their own discrete divergence is **not** borne out — `W_e` *falls* ~7 % from degree 1 to 2 on this drive — so that entry's sheet clause wants a pointer to these logs.
+
+## 2026-09-13T18:42Z (2026-09-13 13:30 CDT slot, second item under take-next) — `POST-6` step 3 — **complete (`POST-6` 🟡 → ✅ on the re-scoped done-when: (i)–(iii) green)**
+
+**Licence.** Item 3 (`TH-19` step 3) committed `ecde8ed` with `git status --porcelain` empty at 13:41:44 CDT (minute 11 < 30); §9 item 4 independent. Delegated to `implementer` (foreground; no commit, no plan/journal edits, windows ≤ 590 s container-side in 660 s Bash, `-s`, no new window after 14:12); returned 13:56. Logs re-checked by this session.
+
+**Change (tests only, `src/` untouched).** Step-3 block appended to `tests/validation/test_port_drive_superposition.py` (+390 lines): `PORT-13`'s `_build_ring_context` imported; 32 drives, one `run_n_port_sparameter_sweep(keep_fields=True)`, `PORT-19` reuse default; ccw weights via `quadrature_phase_weights` at fractional index, bottom ring ×(−1); `superpose_drives`; CG1 `|B₁⁺|` compared at rotated/mirrored **points** via `evaluate_vector_field_parallel`. Env-gated `FEM_EM_POST6_STEP3=1`. Import cycle broken by a lazy `_step3_imports()`. Bands imported: `C4_COVARIANCE_BAND` 5 % (`test_birdcage_b1_plus_map.py:120`), `DISCRETE_IDENTITY_RTOL` 1e-6.
+
+**Windows.** `20260913T184909Z_POST-6-step3.log` — collection ImportError (cycle), Status 4, 4 s, no solve, kept. `20260913T185043Z_POST-6-step3.log` — gate, `-n 8`, env on, **15 passed, Status 0, 191 s**, `[capture] rc=0` `:12347`. `20260913T185405Z_POST-6-step3.log` — module regression `-n 2`, env off, **24 passed / 4 skipped, Status 0, 76 s**, `:2118`. No orphaned ranks (executor-reported, 0 before and after).
+
+**Measured.** (i) worst C16 spread **0.8102 %** (R₆; 15 rotations 0.4906–0.8102 %) ≤ 5 % (`185043Z:11798`); (ii) mirror **0.6769 %** ≤ 5 % (`:11799`); (iii) exact power identity **3.961e-15** ≤ 1e-6 (`:11800`). Negative control: 32-port cw factor *predicted*, printed only — 98.9915 % measured vs 99.0609 % predicted (122.17× vs 122.26×, `:11801`); 4-leg `RECORDED_CW_SPREAD` 95.1975 % *asserted by record*, rel 5.248e-07, ≈ 97× over ccw 0.9818 % (`185405Z:1911–1913`). Price: build 81.8 s, sweep 30.3 s, identity 44.0 s, summed `ru_maxrss` 9.32 GiB (`:11802`).
+
+**Same commit.** Test module, three logs, test-results rows, §7 `POST-6` row 🟡 → ✅ (tier cell gains step 3's heavy 191 s), §9 item 4 marked DONE, step narrative appended to `docs/planning/chunks/POST-6.md`.
+
+**Status moved:** `POST-6` 🟡 → ✅.
+
+**Stop.** Commit lands after minute 30 of the slot ⇒ no third item (step 2's take-next window closed); item 5 (`WF-7` step 0) is the next slot's.
+
+**Hypothesis, for the next reader.** The auditor should re-trace `185043Z:11798–11801` and `185405Z:1913`. Two caveats: the sample cylinder holds exactly `MIN_SAMPLE_POINTS` = 50 (`:11780`) — any re-mesh that drops one point turns (i)/(ii) into a sample-floor red with no physics behind it; and the gate window is heavy by 11 s over the standard ceiling, which the item already priced as heavy.

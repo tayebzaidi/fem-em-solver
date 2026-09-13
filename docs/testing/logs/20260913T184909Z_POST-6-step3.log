@@ -1,0 +1,391 @@
+# Test Run
+- Chunk: POST-6-step3
+- Commit: ecde8ed8bc3e91b90ce8e00b4c54c25d4dd68066
+- Time (UTC): 2026-09-13 18:49:09
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.5.1
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && source /usr/local/bin/dolfinx-complex-mode && mkdir -p /workspace/logs && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 FEM_EM_POST6_STEP3=1 timeout -k 30 590 mpiexec -n 8 python3 -m pytest tests/environment tests/validation/test_port_drive_superposition.py::test_step3_the_ring_drive_came_off_the_port13_fixture tests/validation/test_port_drive_superposition.py::test_step3_the_ccw_ring_drive_is_c16_invariant tests/validation/test_port_drive_superposition.py::test_step3_the_ring_drive_mirror_identity tests/validation/test_port_drive_superposition.py::test_step3_the_ring_drive_power_identity_closes -v -s --tb=short > /workspace/logs/post6-step3-A-raw.log 2>&1; rc=$?; echo "[capture] rc=$rc" >> /workspace/logs/post6-step3-A-raw.log; cat /workspace/logs/post6-step3-A-raw.log; exit $rc'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 24
+drwxr-xr-x  3 taz5297 taz5297 4096 Sep  4 23:31 .
+drwxr-xr-x 16 taz5297 taz5297 4096 Sep 13 13:48 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  721 Sep  3 13:49 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 4264 Sep 10 12:01 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.5.1
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && source /usr/local/bin/dolfinx-complex-mode && mkdir -p /workspace/logs && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 FEM_EM_POST6_STEP3=1 timeout -k 30 590 mpiexec -n 8 python3 -m pytest tests/environment tests/validation/test_port_drive_superposition.py::test_step3_the_ring_drive_came_off_the_port13_fixture tests/validation/test_port_drive_superposition.py::test_step3_the_ccw_ring_drive_is_c16_invariant tests/validation/test_port_drive_superposition.py::test_step3_the_ring_drive_mirror_identity tests/validation/test_port_drive_superposition.py::test_step3_the_ring_drive_power_identity_closes -v -s --tb=short > /workspace/logs/post6-step3-A-raw.log 2>&1; rc=$?; echo "[capture] rc=$rc" >> /workspace/logs/post6-step3-A-raw.log; cat /workspace/logs/post6-step3-A-raw.log; exit $rc'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... ERROR: found no collectors for /workspace/tests/validation/test_port_drive_superposition.py::test_step3_the_ring_drive_came_off_the_port13_fixture
+
+ERROR: found no collectors for /workspace/tests/validation/test_port_drive_superposition.py::test_step3_the_ccw_ring_drive_is_c16_invariant
+
+ERROR: found no collectors for /workspace/tests/validation/test_port_drive_superposition.py::test_step3_the_ring_drive_mirror_identity
+
+ERROR: found no collectors for /workspace/tests/validation/test_port_drive_superposition.py::test_step3_the_ring_drive_power_identity_closes
+
+collected 0 items / 1 error
+
+==================================== ERRORS ====================================
+______ ERROR collecting tests/validation/test_port_drive_superposition.py ______
+ImportError while importing test module '/workspace/tests/validation/test_port_drive_superposition.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/dolfinx-env/lib/python3.12/site-packages/_pytest/python.py:507: in importtestmodule
+    mod = import_path(
+/dolfinx-env/lib/python3.12/site-packages/_pytest/pathlib.py:561: in import_path
+    mod = _import_module_using_spec(
+/dolfinx-env/lib/python3.12/site-packages/_pytest/pathlib.py:725: in _import_module_using_spec
+    spec.loader.exec_module(mod)  # type: ignore[union-attr]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/dolfinx-env/lib/python3.12/site-packages/_pytest/assertion/rewrite.py:197: in exec_module
+    exec(co, module.__dict__)
+tests/validation/test_port_drive_superposition.py:129: in <module>
+    from tests.validation.test_birdcage_b1_plus_closed_form import (
+/dolfinx-env/lib/python3.12/site-packages/_pytest/assertion/rewrite.py:197: in exec_module
+    exec(co, module.__dict__)
+tests/validation/test_birdcage_b1_plus_closed_form.py:193: in <module>
+    from tests.validation.test_birdcage_power_identity import (
+/dolfinx-env/lib/python3.12/site-packages/_pytest/assertion/rewrite.py:197: in exec_module
+    exec(co, module.__dict__)
+tests/validation/test_birdcage_power_identity.py:175: in <module>
+    from tests.validation.test_port_drive_superposition import _loss_power_w
+E   ImportError: cannot import name '_loss_power_w' from 'tests.validation.test_port_drive_superposition' (/workspace/tests/validation/test_port_drive_superposition.py)
+=========================== short test summary info ============================
+ERROR tests/validation/test_port_drive_superposition.py
+=============================== 1 error in 1.67s ===============================
+ERROR: found no collectors for /workspace/tests/validation/test_port_drive_superposition.py::test_step3_the_ring_drive_came_off_the_port13_fixture
+
+ERROR: found no collectors for /workspace/tests/validation/test_port_drive_superposition.py::test_step3_the_ccw_ring_drive_is_c16_invariant
+
+ERROR: found no collectors for /workspace/tests/validation/test_port_drive_superposition.py::test_step3_the_ring_drive_mirror_identity
+
+ERROR: found no collectors for /workspace/tests/validation/test_port_drive_superposition.py::test_step3_the_ring_drive_power_identity_closes
+
+collected 0 items / 1 error
+
+==================================== ERRORS ====================================
+______ ERROR collecting tests/validation/test_port_drive_superposition.py ______
+ImportError while importing test module '/workspace/tests/validation/test_port_drive_superposition.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/dolfinx-env/lib/python3.12/site-packages/_pytest/python.py:507: in importtestmodule
+    mod = import_path(
+/dolfinx-env/lib/python3.12/site-packages/_pytest/pathlib.py:561: in import_path
+    mod = _import_module_using_spec(
+/dolfinx-env/lib/python3.12/site-packages/_pytest/pathlib.py:725: in _import_module_using_spec
+    spec.loader.exec_module(mod)  # type: ignore[union-attr]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/dolfinx-env/lib/python3.12/site-packages/_pytest/assertion/rewrite.py:197: in exec_module
+    exec(co, module.__dict__)
+tests/validation/test_port_drive_superposition.py:129: in <module>
+    from tests.validation.test_birdcage_b1_plus_closed_form import (
+/dolfinx-env/lib/python3.12/site-packages/_pytest/assertion/rewrite.py:197: in exec_module
+    exec(co, module.__dict__)
+tests/validation/test_birdcage_b1_plus_closed_form.py:193: in <module>
+    from tests.validation.test_birdcage_power_identity import (
+/dolfinx-env/lib/python3.12/site-packages/_pytest/assertion/rewrite.py:197: in exec_module
+    exec(co, module.__dict__)
+tests/validation/test_birdcage_power_identity.py:175: in <module>
+    from tests.validation.test_port_drive_superposition import _loss_power_w
+E   ImportError: cannot import name '_loss_power_w' from 'tests.validation.test_port_drive_superposition' (/workspace/tests/validation/test_port_drive_superposition.py)
+=========================== short test summary info ============================
+ERROR tests/validation/test_port_drive_superposition.py
+=============================== 1 error in 1.67s ===============================
+ERROR: found no collectors for /workspace/tests/validation/test_port_drive_superposition.py::test_step3_the_ring_drive_came_off_the_port13_fixture
+
+ERROR: found no collectors for /workspace/tests/validation/test_port_drive_superposition.py::test_step3_the_ccw_ring_drive_is_c16_invariant
+
+ERROR: found no collectors for /workspace/tests/validation/test_port_drive_superposition.py::test_step3_the_ring_drive_mirror_identity
+
+ERROR: found no collectors for /workspace/tests/validation/test_port_drive_superposition.py::test_step3_the_ring_drive_power_identity_closes
+
+collected 0 items / 1 error
+
+==================================== ERRORS ====================================
+______ ERROR collecting tests/validation/test_port_drive_superposition.py ______
+ImportError while importing test module '/workspace/tests/validation/test_port_drive_superposition.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/dolfinx-env/lib/python3.12/site-packages/_pytest/python.py:507: in importtestmodule
+    mod = import_path(
+/dolfinx-env/lib/python3.12/site-packages/_pytest/pathlib.py:561: in import_path
+    mod = _import_module_using_spec(
+/dolfinx-env/lib/python3.12/site-packages/_pytest/pathlib.py:725: in _import_module_using_spec
+    spec.loader.exec_module(mod)  # type: ignore[union-attr]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/dolfinx-env/lib/python3.12/site-packages/_pytest/assertion/rewrite.py:197: in exec_module
+    exec(co, module.__dict__)
+tests/validation/test_port_drive_superposition.py:129: in <module>
+    from tests.validation.test_birdcage_b1_plus_closed_form import (
+/dolfinx-env/lib/python3.12/site-packages/_pytest/assertion/rewrite.py:197: in exec_module
+    exec(co, module.__dict__)
+tests/validation/test_birdcage_b1_plus_closed_form.py:193: in <module>
+    from tests.validation.test_birdcage_power_identity import (
+/dolfinx-env/lib/python3.12/site-packages/_pytest/assertion/rewrite.py:197: in exec_module
+    exec(co, module.__dict__)
+tests/validation/test_birdcage_power_identity.py:175: in <module>
+    from tests.validation.test_port_drive_superposition import _loss_power_w
+E   ImportError: cannot import name '_loss_power_w' from 'tests.validation.test_port_drive_superposition' (/workspace/tests/validation/test_port_drive_superposition.py)
+=========================== short test summary info ============================
+ERROR tests/validation/test_port_drive_superposition.py
+=============================== 1 error in 1.70s ===============================
+ERROR: found no collectors for /workspace/tests/validation/test_port_drive_superposition.py::test_step3_the_ring_drive_came_off_the_port13_fixture
+
+ERROR: found no collectors for /workspace/tests/validation/test_port_drive_superposition.py::test_step3_the_ccw_ring_drive_is_c16_invariant
+
+ERROR: found no collectors for /workspace/tests/validation/test_port_drive_superposition.py::test_step3_the_ring_drive_mirror_identity
+
+ERROR: found no collectors for /workspace/tests/validation/test_port_drive_superposition.py::test_step3_the_ring_drive_power_identity_closes
+
+collected 0 items / 1 error
+
+==================================== ERRORS ====================================
+______ ERROR collecting tests/validation/test_port_drive_superposition.py ______
+ImportError while importing test module '/workspace/tests/validation/test_port_drive_superposition.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/dolfinx-env/lib/python3.12/site-packages/_pytest/python.py:507: in importtestmodule
+    mod = import_path(
+/dolfinx-env/lib/python3.12/site-packages/_pytest/pathlib.py:561: in import_path
+    mod = _import_module_using_spec(
+/dolfinx-env/lib/python3.12/site-packages/_pytest/pathlib.py:725: in _import_module_using_spec
+    spec.loader.exec_module(mod)  # type: ignore[union-attr]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/dolfinx-env/lib/python3.12/site-packages/_pytest/assertion/rewrite.py:197: in exec_module
+    exec(co, module.__dict__)
+tests/validation/test_port_drive_superposition.py:129: in <module>
+    from tests.validation.test_birdcage_b1_plus_closed_form import (
+/dolfinx-env/lib/python3.12/site-packages/_pytest/assertion/rewrite.py:197: in exec_module
+    exec(co, module.__dict__)
+tests/validation/test_birdcage_b1_plus_closed_form.py:193: in <module>
+    from tests.validation.test_birdcage_power_identity import (
+/dolfinx-env/lib/python3.12/site-packages/_pytest/assertion/rewrite.py:197: in exec_module
+    exec(co, module.__dict__)
+tests/validation/test_birdcage_power_identity.py:175: in <module>
+    from tests.validation.test_port_drive_superposition import _loss_power_w
+E   ImportError: cannot import name '_loss_power_w' from 'tests.validation.test_port_drive_superposition' (/workspace/tests/validation/test_port_drive_superposition.py)
+=========================== short test summary info ============================
+ERROR tests/validation/test_port_drive_superposition.py
+=============================== 1 error in 1.69s ===============================
+ERROR: found no collectors for /workspace/tests/validation/test_port_drive_superposition.py::test_step3_the_ring_drive_came_off_the_port13_fixture
+
+ERROR: found no collectors for /workspace/tests/validation/test_port_drive_superposition.py::test_step3_the_ccw_ring_drive_is_c16_invariant
+
+ERROR: found no collectors for /workspace/tests/validation/test_port_drive_superposition.py::test_step3_the_ring_drive_mirror_identity
+
+ERROR: found no collectors for /workspace/tests/validation/test_port_drive_superposition.py::test_step3_the_ring_drive_power_identity_closes
+
+collected 0 items / 1 error
+
+==================================== ERRORS ====================================
+______ ERROR collecting tests/validation/test_port_drive_superposition.py ______
+ImportError while importing test module '/workspace/tests/validation/test_port_drive_superposition.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/dolfinx-env/lib/python3.12/site-packages/_pytest/python.py:507: in importtestmodule
+    mod = import_path(
+/dolfinx-env/lib/python3.12/site-packages/_pytest/pathlib.py:561: in import_path
+    mod = _import_module_using_spec(
+/dolfinx-env/lib/python3.12/site-packages/_pytest/pathlib.py:725: in _import_module_using_spec
+    spec.loader.exec_module(mod)  # type: ignore[union-attr]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/dolfinx-env/lib/python3.12/site-packages/_pytest/assertion/rewrite.py:197: in exec_module
+    exec(co, module.__dict__)
+tests/validation/test_port_drive_superposition.py:129: in <module>
+    from tests.validation.test_birdcage_b1_plus_closed_form import (
+/dolfinx-env/lib/python3.12/site-packages/_pytest/assertion/rewrite.py:197: in exec_module
+    exec(co, module.__dict__)
+tests/validation/test_birdcage_b1_plus_closed_form.py:193: in <module>
+    from tests.validation.test_birdcage_power_identity import (
+/dolfinx-env/lib/python3.12/site-packages/_pytest/assertion/rewrite.py:197: in exec_module
+    exec(co, module.__dict__)
+tests/validation/test_birdcage_power_identity.py:175: in <module>
+    from tests.validation.test_port_drive_superposition import _loss_power_w
+E   ImportError: cannot import name '_loss_power_w' from 'tests.validation.test_port_drive_superposition' (/workspace/tests/validation/test_port_drive_superposition.py)
+=========================== short test summary info ============================
+ERROR tests/validation/test_port_drive_superposition.py
+=============================== 1 error in 1.71s ===============================
+ERROR: found no collectors for /workspace/tests/validation/test_port_drive_superposition.py::test_step3_the_ring_drive_came_off_the_port13_fixture
+
+ERROR: found no collectors for /workspace/tests/validation/test_port_drive_superposition.py::test_step3_the_ccw_ring_drive_is_c16_invariant
+
+ERROR: found no collectors for /workspace/tests/validation/test_port_drive_superposition.py::test_step3_the_ring_drive_mirror_identity
+
+ERROR: found no collectors for /workspace/tests/validation/test_port_drive_superposition.py::test_step3_the_ring_drive_power_identity_closes
+
+collected 0 items / 1 error
+
+==================================== ERRORS ====================================
+______ ERROR collecting tests/validation/test_port_drive_superposition.py ______
+ImportError while importing test module '/workspace/tests/validation/test_port_drive_superposition.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/dolfinx-env/lib/python3.12/site-packages/_pytest/python.py:507: in importtestmodule
+    mod = import_path(
+/dolfinx-env/lib/python3.12/site-packages/_pytest/pathlib.py:561: in import_path
+    mod = _import_module_using_spec(
+/dolfinx-env/lib/python3.12/site-packages/_pytest/pathlib.py:725: in _import_module_using_spec
+    spec.loader.exec_module(mod)  # type: ignore[union-attr]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/dolfinx-env/lib/python3.12/site-packages/_pytest/assertion/rewrite.py:197: in exec_module
+    exec(co, module.__dict__)
+tests/validation/test_port_drive_superposition.py:129: in <module>
+    from tests.validation.test_birdcage_b1_plus_closed_form import (
+/dolfinx-env/lib/python3.12/site-packages/_pytest/assertion/rewrite.py:197: in exec_module
+    exec(co, module.__dict__)
+tests/validation/test_birdcage_b1_plus_closed_form.py:193: in <module>
+    from tests.validation.test_birdcage_power_identity import (
+/dolfinx-env/lib/python3.12/site-packages/_pytest/assertion/rewrite.py:197: in exec_module
+    exec(co, module.__dict__)
+tests/validation/test_birdcage_power_identity.py:175: in <module>
+    from tests.validation.test_port_drive_superposition import _loss_power_w
+E   ImportError: cannot import name '_loss_power_w' from 'tests.validation.test_port_drive_superposition' (/workspace/tests/validation/test_port_drive_superposition.py)
+=========================== short test summary info ============================
+ERROR tests/validation/test_port_drive_superposition.py
+=============================== 1 error in 1.69s ===============================
+ERROR: found no collectors for /workspace/tests/validation/test_port_drive_superposition.py::test_step3_the_ring_drive_came_off_the_port13_fixture
+
+ERROR: found no collectors for /workspace/tests/validation/test_port_drive_superposition.py::test_step3_the_ccw_ring_drive_is_c16_invariant
+
+ERROR: found no collectors for /workspace/tests/validation/test_port_drive_superposition.py::test_step3_the_ring_drive_mirror_identity
+
+ERROR: found no collectors for /workspace/tests/validation/test_port_drive_superposition.py::test_step3_the_ring_drive_power_identity_closes
+
+collected 0 items / 1 error
+
+==================================== ERRORS ====================================
+______ ERROR collecting tests/validation/test_port_drive_superposition.py ______
+ImportError while importing test module '/workspace/tests/validation/test_port_drive_superposition.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/dolfinx-env/lib/python3.12/site-packages/_pytest/python.py:507: in importtestmodule
+    mod = import_path(
+/dolfinx-env/lib/python3.12/site-packages/_pytest/pathlib.py:561: in import_path
+    mod = _import_module_using_spec(
+/dolfinx-env/lib/python3.12/site-packages/_pytest/pathlib.py:725: in _import_module_using_spec
+    spec.loader.exec_module(mod)  # type: ignore[union-attr]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/dolfinx-env/lib/python3.12/site-packages/_pytest/assertion/rewrite.py:197: in exec_module
+    exec(co, module.__dict__)
+tests/validation/test_port_drive_superposition.py:129: in <module>
+    from tests.validation.test_birdcage_b1_plus_closed_form import (
+/dolfinx-env/lib/python3.12/site-packages/_pytest/assertion/rewrite.py:197: in exec_module
+    exec(co, module.__dict__)
+tests/validation/test_birdcage_b1_plus_closed_form.py:193: in <module>
+    from tests.validation.test_birdcage_power_identity import (
+/dolfinx-env/lib/python3.12/site-packages/_pytest/assertion/rewrite.py:197: in exec_module
+    exec(co, module.__dict__)
+tests/validation/test_birdcage_power_identity.py:175: in <module>
+    from tests.validation.test_port_drive_superposition import _loss_power_w
+E   ImportError: cannot import name '_loss_power_w' from 'tests.validation.test_port_drive_superposition' (/workspace/tests/validation/test_port_drive_superposition.py)
+=========================== short test summary info ============================
+ERROR tests/validation/test_port_drive_superposition.py
+=============================== 1 error in 1.71s ===============================
+ERROR: found no collectors for /workspace/tests/validation/test_port_drive_superposition.py::test_step3_the_ring_drive_came_off_the_port13_fixture
+
+ERROR: found no collectors for /workspace/tests/validation/test_port_drive_superposition.py::test_step3_the_ccw_ring_drive_is_c16_invariant
+
+ERROR: found no collectors for /workspace/tests/validation/test_port_drive_superposition.py::test_step3_the_ring_drive_mirror_identity
+
+ERROR: found no collectors for /workspace/tests/validation/test_port_drive_superposition.py::test_step3_the_ring_drive_power_identity_closes
+
+collected 0 items / 1 error
+
+==================================== ERRORS ====================================
+______ ERROR collecting tests/validation/test_port_drive_superposition.py ______
+ImportError while importing test module '/workspace/tests/validation/test_port_drive_superposition.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/dolfinx-env/lib/python3.12/site-packages/_pytest/python.py:507: in importtestmodule
+    mod = import_path(
+/dolfinx-env/lib/python3.12/site-packages/_pytest/pathlib.py:561: in import_path
+    mod = _import_module_using_spec(
+/dolfinx-env/lib/python3.12/site-packages/_pytest/pathlib.py:725: in _import_module_using_spec
+    spec.loader.exec_module(mod)  # type: ignore[union-attr]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/dolfinx-env/lib/python3.12/site-packages/_pytest/assertion/rewrite.py:197: in exec_module
+    exec(co, module.__dict__)
+tests/validation/test_port_drive_superposition.py:129: in <module>
+    from tests.validation.test_birdcage_b1_plus_closed_form import (
+/dolfinx-env/lib/python3.12/site-packages/_pytest/assertion/rewrite.py:197: in exec_module
+    exec(co, module.__dict__)
+tests/validation/test_birdcage_b1_plus_closed_form.py:193: in <module>
+    from tests.validation.test_birdcage_power_identity import (
+/dolfinx-env/lib/python3.12/site-packages/_pytest/assertion/rewrite.py:197: in exec_module
+    exec(co, module.__dict__)
+tests/validation/test_birdcage_power_identity.py:175: in <module>
+    from tests.validation.test_port_drive_superposition import _loss_power_w
+E   ImportError: cannot import name '_loss_power_w' from 'tests.validation.test_port_drive_superposition' (/workspace/tests/validation/test_port_drive_superposition.py)
+=========================== short test summary info ============================
+ERROR tests/validation/test_port_drive_superposition.py
+=============================== 1 error in 1.66s ===============================
+[capture] rc=4
+
+## Exit
+- Status: 4
+- Elapsed (s): 4
+- Filtered lines (gmsh optimisation chatter): 0

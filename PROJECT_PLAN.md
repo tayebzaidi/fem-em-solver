@@ -3352,7 +3352,7 @@ log `20260731T020427Z_TH-6-gate3.log`, 21 s at `-n 2`, complex build)*
 | `POST-3` | Replace vacuous consistency metrics | 🟡 | standard |
 | `POST-4` | Centerline point evaluation is rank-count-dependent: attribute and fix the ownership tie-break in `evaluate_vector_field_parallel` | ✅ *(chunk closed 2026-08-12 — every step closed or dispositioned; note the title's premise was itself refuted, the tie-break was never the defect. Step 1 ✅ 2026-08-11 — ownership **refuted**, 0/120 multi-claims; locus is the Lagrange-P1 interpolation, 1.163e+04× separation. Step 2 🚫 skipped. Step 3 ✅ 2026-08-11 — the centerline samples the source fields: **23.5539% → 0.008613%**, a 2735× collapse; known-issues entry **retired**. Step 4 ✅ 2026-08-12 — the export-path P1 artifact is **bounded and attributed**: midpoint relative medians **51.17% / 52.47% / 20.18%** (`A`/`B`/`E`), vertex/midpoint separation **0.42–0.68×** so the step's vertex-localization hypothesis is **REFUTED**, and a DG1 target reproduces all three sources to round-off — 100% of it is the P1 continuity constraint. All four steps now closed or dispositioned)* | standard |
 | `POST-5` | Real Poynting power balance: wrong-sign boundary flux on the time-harmonic smoke fixture + `poynting_power_balance` raises on scalar `sigma=0.0` (`OPS-17` … | ✅ Closed: `poynting_power_balance` no longer raises on scalar zero conductivity, and step 3 found the boundary leg sound against closed form, overturning step 2's verdict. *History: `docs/planning/chunks/POST-5.md`.* | standard |
-| `POST-6` | Arbitrary multi-port drive superposition | 🟡 Open: step 1's four anchors are met, gate (iii) as re-pointed by `PORT-16` step 2 at the exact discrete identity; the 09-06 common-mode "step 2" is void, superseded before it ran. **Re-scoped 2026-09-13 (weekly, `auditor` DEMOTE(scope) concurring): the row closes on step 3 — the 32-port C16 quadrature drive on `PORT-13`'s fixture through `superpose_drives` (§10); the `WF-6`/`WF-7` re-pointing clause is dropped.** *History: `docs/planning/chunks/POST-6.md`.* | standard |
+| `POST-6` | Arbitrary multi-port drive superposition | ✅ 2026-09-13: the 32-port ccw quadrature drive on `PORT-13`'s 16-leg ring fixture, superposed through `superpose_drives` at 10 MHz, is C16-invariant — worst `|B₁⁺|` rotation spread 0.8102 %, mirror 0.6769 % (both ≤ the imported 5 %), exact power identity 3.961e-15 (`20260913T185043Z_POST-6-step3.log:11798–11800`), with step 1's four anchors and the 4-leg cw control by record green (`…185405Z_…:1913`). Re-scoped 2026-09-13 (weekly, `auditor` DEMOTE(scope) concurring) to close on step 3; the `WF-6`/`WF-7` re-pointing clause dropped; no homogeneity, absolute or Larmor claim. *History: `docs/planning/chunks/POST-6.md`.* | standard; step 3 heavy (191 s at `-n 8`) |
 
 > *(Closed-step plans, execution journals and audits for `POST-1` and
 > `POST-3` are archived verbatim in `docs/planning/plan-archive.md`.)*
@@ -7852,7 +7852,11 @@ blocked.
    way.
    **Negative result:** report the residuals, known-issues addendum, stop.
 
-4. **`POST-6` step 3 — the 32-port ccw quadrature drive on `PORT-13`'s
+4. ✅ **DONE 2026-09-13 13:30 slot** (`20260913T185043Z_POST-6-step3.log`:
+   15 passed, Status 0, 191 s at `-n 8` — (i) C16 0.8102 %, (ii) mirror
+   0.6769 %, (iii) 3.961e-15; module regression `…185405Z_…` 24 passed / 4
+   skipped at `-n 2`; `POST-6` → ✅).
+   **`POST-6` step 3 — the 32-port ccw quadrature drive on `PORT-13`'s
    fixture through `superpose_drives`, gated on C16 invariance of `|B₁⁺|`**
    (implementer; tests in `tests/validation/test_port_drive_superposition.py`;
    complex; heavy; `-n 8`; `main`; independent; **23 slot-min**: ≈ 8 min +

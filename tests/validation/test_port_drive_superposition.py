@@ -111,12 +111,17 @@ Run (complex build required)::
 
 from __future__ import annotations
 
+import os
+import resource
+import time
 from dataclasses import replace
 
 import numpy as np
 import pytest
+from mpi4py import MPI
 
 from fem_em_solver.ports import run_n_port_sparameter_sweep, superpose_drives
+from fem_em_solver.ports.definitions import PortDefinition
 from fem_em_solver.post import magnetic_flux_density_from_e, mean_sar, project_to_cg1
 
 from tests.complex_mode import complex_only
@@ -124,6 +129,7 @@ from tests.mesh.test_birdcage_port_sheets import SHEET_IFACE
 from tests.validation.test_birdcage_b1_plus_map import (  # noqa: F401 — imported bands/helpers
     CG1_RECORD_RTOL,
     C4_COVARIANCE_BAND,
+    MIN_SAMPLE_POINTS,
     PHANTOM_RHO_KG_PER_M3,
     POWER_BALANCE_BAND,
     STEP1_GATE_I_P1_RESIDUAL,
@@ -143,6 +149,7 @@ from tests.validation.test_birdcage_b1_quadrature import (
     quadrature_phase_weights,
 )
 from tests.validation.test_port_birdcage_four_port import (
+    REFERENCE_IMPEDANCE_OHM,
     TERMINATED_PORT_IMPEDANCE_OHM,
     build_four_port_sweep,
 )
@@ -1117,3 +1124,386 @@ def test_zeroing_the_reflection_diagonal_breaks_the_power_wave_identity(
             f"predicts |S_kk|²/(1 − Σ|S_ik|²) = {ceiling:.9e}; the perturbation "
             "is not the one this control claims to make"
         )
+
+
+# ===========================================================================
+# `POST-6` step 3 — the 32-port ccw quadrature drive on `PORT-13`'s fixture
+# ===========================================================================
+#
+# **What.**  The 16-leg / 32-ring-port high-pass rung is built by
+# ``_build_ring_context`` (imported from `PORT-13` step 3's matrix module, never
+# copied), all 32 drives are solved once through
+# ``run_n_port_sparameter_sweep(keep_fields=True)`` under `PORT-19`'s factor-reuse
+# default, and the m = 1 quadrature pattern is formed through
+# ``ports.superpose_drives``.
+#
+# **Weights.**  One port per 22.5 deg slot on each ring, located from the
+# **measured** azimuth and the measured sign of the sheet centre's ``z`` — no
+# ordinal arithmetic.  The phase is ``quadrature_phase_weights`` (the single
+# source of the ``e^{∓jkπ/2}`` convention) evaluated at the *fractional*
+# quadrature index ``k·22.5/90``, i.e. ``e^{∓jφ_k}``.  Each ring port drives along
+# its own ``φ̂``, and the m = 1 mode is odd under ``z → −z`` (uniform transverse
+# ``B`` is a pseudovector), so its ring currents at one azimuth are equal and
+# opposite on the two rings: the bottom-ring weights carry a ``−1``.  That sign
+# does not enter (i)–(iii) — all three hold for either sign by symmetry alone —
+# so it is stated, not gated.
+#
+# **Anchors (asserted).**  (i) C16 invariance of the CG1 ``|B₁⁺|`` map: the
+# relative L2 between ``|B₁⁺|_ccw(R_m x)`` and ``|B₁⁺|_ccw(x)`` at every rotation
+# m·22.5 deg, m = 1…15, the **worst** of the fifteen within the imported
+# ``C4_COVARIANCE_BAND`` (5%, `WF-6`'s).  Compared at rotated **points**, never by
+# facet index — the ring-sheet triangulation is two-state under the rotation
+# (`GEO-26` step 3, `EX-45`).  (ii) the mirror identity ``|B₁⁻|_cw(Mx)`` vs
+# ``|B₁⁺|_ccw(x)``, mirror in the plane through the reference port's azimuth,
+# same band.  (iii) `PORT-16`'s exact discrete identity
+# ``P_src,exact(w) = P_vol(w) + P_sheet,exact(w)`` on the superposed ccw field at
+# ``DISCRETE_IDENTITY_RTOL``, through the weighted helper above.
+#
+# **Negative control.**  On *this* fixture the mis-paired comparison
+# ``|B₁⁺|_cw(Mx)`` vs ``|B₁⁺|_ccw(x)`` has no record, so it is **predicted and
+# printed, never asserted** (§9 rule (e)): the prediction is formed from the ccw
+# field alone, ``|B₁⁻|_ccw(x)`` vs ``|B₁⁺|_ccw(x)``, which the mirror identity says
+# the cw reading must equal.  The asserted control is the one a record backs —
+# the 4-leg ``RECORDED_CW_SPREAD`` with its ``CW_SEPARATION_FACTOR``.
+#
+# **Selected by environment only** (``FEM_EM_POST6_STEP3=1``), never by ``-k``;
+# unset, the 32-port tests skip and the 4-leg module runs as before.
+#
+# **Scope.**  10 MHz, degree 1, one fixture; no homogeneity, absolute or Larmor
+# claim.
+STEP3_ENV = "FEM_EM_POST6_STEP3"
+STEP3_ORIENTATION = "ring_gap_phi_hat_plus"
+
+
+def _step3_on():
+    return os.environ.get(STEP3_ENV, "").strip() == "1"
+
+
+def _step3_imports():
+    """The ring fixture and the cw record, imported **lazily and read-only**.
+
+    Same reason as :func:`_step1`: a module-level import of the ring modules or
+    of `WF-6`'s closed-form module reaches ``test_birdcage_power_identity``,
+    which imports :func:`_loss_power_w` back from this half-initialised module
+    (collection error on the first step-3 run,
+    ``20260913T184909Z_POST-6-step3.log:116``).
+    """
+    from types import SimpleNamespace
+
+    from tests.validation import test_birdcage_b1_plus_closed_form as closed_form
+    from tests.validation import test_port_birdcage_ring_matrix as ring
+
+    return SimpleNamespace(
+        AZIMUTH_MATCH_DEG=ring.AZIMUTH_MATCH_DEG,
+        AZIMUTH_STEP_DEG=ring.AZIMUTH_STEP_DEG,
+        CELL_COUNT_BAND=ring.CELL_COUNT_BAND,
+        RING_LONGITUDINAL_SCALED_CELL_RECORD=ring.RING_LONGITUDINAL_SCALED_CELL_RECORD,
+        SCALED_LEG_COUNT=ring.SCALED_LEG_COUNT,
+        build_ring_context=ring._build_ring_context,
+        CW_SEPARATION_FACTOR=closed_form.CW_SEPARATION_FACTOR,
+        RECORDED_CW_SPREAD=closed_form.RECORDED_CW_SPREAD,
+    )
+
+
+def _ring_quadrature_slots(sheets):
+    """``(azimuth_ref_deg, {pid: (slot k, ring sign)})`` from measured geometry.
+
+    The reference is the lowest-ordinal **top-ring** port; ``k`` is its 22.5 deg
+    slot, asserted on the grid to ``AZIMUTH_MATCH_DEG``, and each ring must fill
+    all sixteen slots exactly once.
+    """
+    names = _step3_imports()
+    SCALED_LEG_COUNT = names.SCALED_LEG_COUNT
+    AZIMUTH_STEP_DEG = names.AZIMUTH_STEP_DEG
+    AZIMUTH_MATCH_DEG = names.AZIMUTH_MATCH_DEG
+    top = [s for s in sheets if s["z"] > 0.0]
+    bottom = [s for s in sheets if s["z"] < 0.0]
+    assert len(top) == len(bottom) == SCALED_LEG_COUNT, (
+        f"measured {len(top)} top / {len(bottom)} bottom ring ports, not "
+        f"{SCALED_LEG_COUNT} each"
+    )
+    az_ref = float(min(top, key=lambda s: s["ordinal"])["azimuth_deg"])
+    slots = {}
+    for s in sheets:
+        turns = ((float(s["azimuth_deg"]) - az_ref) % 360.0) / AZIMUTH_STEP_DEG
+        nearest = round(turns)
+        residual_deg = abs(turns - nearest) * AZIMUTH_STEP_DEG
+        assert residual_deg < AZIMUTH_MATCH_DEG, (
+            f"P{s['ordinal']} at {s['azimuth_deg']:.9f} deg is {residual_deg:.3e} deg "
+            f"off the {AZIMUTH_STEP_DEG} deg grid referenced at {az_ref:.9f} deg"
+        )
+        slots[f"P{s['ordinal']}"] = (
+            int(nearest) % SCALED_LEG_COUNT,
+            1.0 if s["z"] > 0.0 else -1.0,
+        )
+    for sign in (1.0, -1.0):
+        ks = sorted(k for k, sg in slots.values() if sg == sign)
+        assert ks == list(range(SCALED_LEG_COUNT)), (
+            f"ring sign {sign:+.0f} fills slots {ks}, not each of 0…"
+            f"{SCALED_LEG_COUNT - 1} once"
+        )
+    return az_ref, slots
+
+
+@pytest.fixture(scope="module")
+def ring_quadrature_case():
+    """One 32-drive field-keeping sweep on the ring rung; both senses; CG1 reads."""
+    if not _step3_on():
+        pytest.skip(
+            f"{STEP3_ENV} unset: the 32-port step-3 drive is a heavy -n 8 window "
+            "selected by environment only"
+        )
+    names = _step3_imports()
+    SCALED_LEG_COUNT = names.SCALED_LEG_COUNT
+    AZIMUTH_STEP_DEG = names.AZIMUTH_STEP_DEG
+    RING_LONGITUDINAL_SCALED_CELL_RECORD = names.RING_LONGITUDINAL_SCALED_CELL_RECORD
+    RECORDED_CW_SPREAD = names.RECORDED_CW_SPREAD
+    CW_SEPARATION_FACTOR = names.CW_SEPARATION_FACTOR
+    t_start = time.perf_counter()
+    built = names.build_ring_context()
+    comm = built["comm"]
+    ctx = built["ctx"]
+
+    def say(msg):
+        if comm.rank == 0:
+            print(f"[POST-6 step3] {msg}", flush=True)
+
+    say(
+        f"built the ring rung: {built['cells']} cells (record "
+        f"{RING_LONGITUDINAL_SCALED_CELL_RECORD}), {len(built['sheets'])} ring "
+        f"ports, {time.perf_counter() - t_start:.2f} s at -n {comm.size}"
+    )
+
+    specs = ctx["specs"]
+    port_defs = [
+        PortDefinition(
+            port_id=spec.port_id,
+            positive_tag=int(spec.facet_tag),
+            negative_tag=CONDUCTOR_CELL_TAG,
+            orientation=STEP3_ORIENTATION,
+            z0_ohm=REFERENCE_IMPEDANCE_OHM,
+        )
+        for spec in specs
+    ]
+    comm.Barrier()
+    t0 = time.perf_counter()
+    result = run_n_port_sparameter_sweep(
+        ctx["solver"].problem,
+        port_defs,
+        lumped_sheet_ports=specs,
+        lumped_sheet_facet_tags=ctx["tags_f"],
+        keep_fields=True,
+    )
+    comm.Barrier()
+    t_sweep = time.perf_counter() - t0
+    port_ids = list(result.port_ids)
+    say(f"32-drive sweep (PORT-19 reuse default, keep_fields) {t_sweep:.2f} s")
+
+    az_ref, slots = _ring_quadrature_slots(built["sheets"])
+    ks = np.array(
+        [slots[pid][0] * AZIMUTH_STEP_DEG / QUADRATURE_STEP_DEG for pid in port_ids]
+    )
+    ring_sign = np.array([slots[pid][1] for pid in port_ids])
+    weights = {
+        sense: ring_sign * quadrature_phase_weights(ks, sense) for sense in ("ccw", "cw")
+    }
+    drives = {
+        sense: superpose_drives(result, weights[sense], name=f"E_ring_{sense}")
+        for sense in weights
+    }
+
+    sweep = {
+        "mesh": ctx["msh"],
+        "cell_tags": ctx["cell_tags"],
+        "facet_tags": ctx["tags_f"],
+        "specs": specs,
+    }
+    points = _sample_points(sweep)
+
+    comm.Barrier()
+    t0 = time.perf_counter()
+    cg1 = {
+        sense: project_to_cg1(drives[sense].b_complex, name=f"B_ring_{sense}_cg1")
+        for sense in drives
+    }
+    comm.Barrier()
+    t_proj = time.perf_counter() - t0
+    say(f"two CG1 projections {t_proj:.2f} s; {points.shape[0]} sample points")
+
+    comm.Barrier()
+    t0 = time.perf_counter()
+    rotations = tuple(range(1, SCALED_LEG_COUNT))
+    ccw_reads = {0: _read_senses(cg1["ccw"], points)}
+    for m in rotations:
+        ccw_reads[m] = _read_senses(
+            cg1["ccw"], _rotate_z(points, np.radians(m * AZIMUTH_STEP_DEG))
+        )
+    cw_plus_mx, cw_minus_mx, cw_valid = _read_senses(
+        cg1["cw"], _mirror_xy(points, az_ref)
+    )
+    mask = np.logical_and.reduce([r[2] for r in ccw_reads.values()] + [cw_valid])
+    comm.Barrier()
+    t_eval = time.perf_counter() - t0
+
+    plus_x, minus_x = ccw_reads[0][0], ccw_reads[0][1]
+    c16 = {m: _relative_l2(ccw_reads[m][0], plus_x, mask) for m in rotations}
+    worst_m = max(c16, key=c16.get)
+    mirror = _relative_l2(cw_minus_mx, plus_x, mask)
+    control = _relative_l2(cw_plus_mx, plus_x, mask)
+    predicted_control = _relative_l2(minus_x, plus_x, mask)
+
+    # (iii) the exact discrete identity on the superposed ccw field.
+    comm.Barrier()
+    t0 = time.perf_counter()
+    omega = 2.0 * np.pi * float(result.frequency_hz)
+    step1 = _step1()
+    drive = drives["ccw"]
+    w_by_pid = {pid: complex(drive.weights[i]) for i, pid in enumerate(port_ids)}
+    ex = _exact_shares_w(sweep, drive.e_complex, w_by_pid, omega, step1=step1)
+    phantom, conductor = _loss_power_w(
+        sweep, drive.e_complex, result.fields[port_ids[0]].sigma_field
+    )
+    p_vol = float(phantom + conductor)
+    identity_dev = abs(ex["p_src"] - p_vol - ex["sheet_field_total"]) / abs(ex["p_src"])
+    comm.Barrier()
+    t_power = time.perf_counter() - t0
+
+    rss_gib = float(
+        comm.allreduce(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss, op=MPI.SUM)
+    ) / (1024.0 * 1024.0)
+    n_valid = int(np.count_nonzero(mask))
+    worst = c16[worst_m]
+
+    if comm.rank == 0:
+        print(
+            f"\n[POST-6 step3] 32-port ccw quadrature on the PORT-13 ring rung: "
+            f"{built['cells']} cells, f = {result.frequency_hz:.3e} Hz, degree 1, "
+            f"z0 = {drive.z0_ohm:.3e} Ohm, reference port azimuth {az_ref:.6f} deg, "
+            f"{n_valid}/{points.shape[0]} sample points valid on every image",
+            flush=True,
+        )
+        for m in rotations:
+            print(
+                f"[POST-6 step3]   (i) C16 R_{m:<2d} ({m * AZIMUTH_STEP_DEG:6.1f} deg) "
+                f"|B1+|_ccw(Rx) vs |B1+|_ccw(x): {c16[m] * 100:.4f}%",
+                flush=True,
+            )
+        print(
+            f"[POST-6 step3] (i) worst C16 spread {worst * 100:.4f}% at R_{worst_m} "
+            f"(ASSERTED <= C4_COVARIANCE_BAND {C4_COVARIANCE_BAND * 100:.1f}%)\n"
+            f"[POST-6 step3] (ii) mirror |B1-|_cw(Mx) vs |B1+|_ccw(x): "
+            f"{mirror * 100:.4f}% (ASSERTED <= {C4_COVARIANCE_BAND * 100:.1f}%)\n"
+            f"[POST-6 step3] (iii) exact identity rel dev {identity_dev:.3e} "
+            f"(ASSERTED <= DISCRETE_IDENTITY_RTOL {step1.DISCRETE_IDENTITY_RTOL:g}): "
+            f"P_src,exact {ex['p_src']:.9e} W = P_vol {p_vol:.9e} W (phantom "
+            f"{phantom:.9e}, conductor {conductor:.9e}) + P_sheet,exact "
+            f"{ex['sheet_field_total']:.9e} W; package P_acc {drive.accepted_power_w:.9e} W "
+            f"(printed, not asserted)\n"
+            f"[POST-6 step3] negative control (PREDICTED, never asserted): cw "
+            f"mis-paired |B1+|_cw(Mx) vs |B1+|_ccw(x) measured {control * 100:.4f}% vs "
+            f"predicted {predicted_control * 100:.4f}% (|B1-|_ccw(x) vs |B1+|_ccw(x), "
+            f"ccw field only); cw factor over the worst C16 spread measured "
+            f"{control / worst:.2f}x vs predicted {predicted_control / worst:.2f}x "
+            f"(4-leg record {RECORDED_CW_SPREAD * 100:.4f}%, bar "
+            f"{CW_SEPARATION_FACTOR:.0f}x there); mean |B1+|_ccw "
+            f"{float(np.mean(plus_x[mask])):.6e} T, mean |B1-|_ccw "
+            f"{float(np.mean(minus_x[mask])):.6e} T\n"
+            f"[POST-6 step3] PRICE: 32-drive sweep {t_sweep:.2f} s, projections "
+            f"{t_proj:.2f} s, {len(ccw_reads) + 1} point evaluations {t_eval:.2f} s, "
+            f"power identity {t_power:.2f} s, fixture {time.perf_counter() - t_start:.2f} s "
+            f"wall at -n {comm.size}; summed ru_maxrss {rss_gib:.3f} GiB",
+            flush=True,
+        )
+
+    return {
+        "cells": int(built["cells"]),
+        "port_ids": port_ids,
+        "weights": weights,
+        "ring_sign": ring_sign,
+        "n_valid": n_valid,
+        "c16": c16,
+        "worst_m": worst_m,
+        "mirror": mirror,
+        "control": control,
+        "predicted_control": predicted_control,
+        "identity_dev": float(identity_dev),
+        "identity_rtol": float(step1.DISCRETE_IDENTITY_RTOL),
+    }
+
+
+@complex_only
+def test_step3_the_ring_drive_came_off_the_port13_fixture(ring_quadrature_case):
+    """The rung is `GEO-26` step 2's record, 32 ports, and the read is populated."""
+    names = _step3_imports()
+    RING_LONGITUDINAL_SCALED_CELL_RECORD = names.RING_LONGITUDINAL_SCALED_CELL_RECORD
+    CELL_COUNT_BAND = names.CELL_COUNT_BAND
+    SCALED_LEG_COUNT = names.SCALED_LEG_COUNT
+    c = ring_quadrature_case
+    ratio = c["cells"] / RING_LONGITUDINAL_SCALED_CELL_RECORD
+    assert abs(ratio - 1.0) < CELL_COUNT_BAND, (
+        f"{c['cells']} cells against the record {RING_LONGITUDINAL_SCALED_CELL_RECORD}"
+    )
+    assert len(c["port_ids"]) == 2 * SCALED_LEG_COUNT
+    assert c["n_valid"] >= MIN_SAMPLE_POINTS, (
+        f"only {c['n_valid']} sample points are valid on every rotated/mirrored image"
+    )
+    for sense, w in c["weights"].items():
+        assert np.allclose(np.abs(w), 1.0, rtol=0.0, atol=1e-12), sense
+
+
+@complex_only
+def test_step3_the_ccw_ring_drive_is_c16_invariant(ring_quadrature_case):
+    """**(i)** worst of the fifteen C16 images inside the imported 5% band."""
+    c = ring_quadrature_case
+    worst = c["c16"][c["worst_m"]]
+    assert worst <= C4_COVARIANCE_BAND, (
+        f"|B1+|_ccw is not C16-invariant: R_{c['worst_m']} reads {worst * 100:.4f}% "
+        f"against the imported {C4_COVARIANCE_BAND * 100:.1f}% band (§9 negative "
+        "result: known-issues entry, row stays 🟡)"
+    )
+
+
+@complex_only
+def test_step3_the_ring_drive_mirror_identity(ring_quadrature_case):
+    """**(ii)** ``|B₁⁻|_cw(Mx)`` equals ``|B₁⁺|_ccw(x)`` inside the imported band."""
+    c = ring_quadrature_case
+    assert c["mirror"] <= C4_COVARIANCE_BAND, (
+        f"the mirror identity reads {c['mirror'] * 100:.4f}% against the imported "
+        f"{C4_COVARIANCE_BAND * 100:.1f}% band"
+    )
+
+
+@complex_only
+def test_step3_the_ring_drive_power_identity_closes(ring_quadrature_case):
+    """**(iii)** `PORT-16`'s exact discrete identity on the superposed ccw field."""
+    c = ring_quadrature_case
+    assert c["identity_dev"] <= c["identity_rtol"], (
+        f"P_src,exact − P_vol − P_sheet,exact misses by {c['identity_dev']:.6e} of "
+        f"P_src against DISCRETE_IDENTITY_RTOL {c['identity_rtol']:g}"
+    )
+
+
+@complex_only
+def test_the_four_leg_cw_control_reproduces_its_record_with_its_separation(
+    superposition_case,
+):
+    """The asserted negative control: the 4-leg cw reading a record backs.
+
+    The mis-paired ``|B₁⁺|_cw(Mx)`` vs ``|B₁⁺|_ccw(x)`` reproduces
+    ``RECORDED_CW_SPREAD`` at ``CG1_RECORD_RTOL`` and clears
+    ``CW_SEPARATION_FACTOR`` × the ccw C4 reading on the same superposed drive.
+    """
+    names = _step3_imports()
+    RECORDED_CW_SPREAD = names.RECORDED_CW_SPREAD
+    CW_SEPARATION_FACTOR = names.CW_SEPARATION_FACTOR
+    identities = superposition_case["package_identities"]
+    control = identities["control |B1+|_cw(Mx) vs |B1+|_ccw(x)"]
+    c4 =identities["(a) C4 |B1+|_ccw(Rx) vs |B1+|_ccw(x)"]
+    assert control == pytest.approx(RECORDED_CW_SPREAD, rel=CG1_RECORD_RTOL), (
+        f"the 4-leg cw control reads {control * 100:.6f}%, not the recorded "
+        f"{RECORDED_CW_SPREAD * 100:.4f}%"
+    )
+    assert control >= CW_SEPARATION_FACTOR * c4, (
+        f"the cw control {control * 100:.4f}% is not {CW_SEPARATION_FACTOR:.0f}x the "
+        f"ccw C4 reading {c4 * 100:.4f}%"
+    )
