@@ -96,18 +96,25 @@ are yours.
    chunks are never riders on physics chunks and never target ungated
    capability.
 
-6. Refresh **"On deck"** in §9: top it up to **at least 5** items not done or
-   blocked — the 4 runs before the next review, plus one spare — ordered, each
-   sized for one implementer run (≤ 1 h wall clock, ≤ 20 min per compute
-   command, ≤ 12 ranks). Since 2026-09-12 a slot that commits its item with a
-   clean tree before minute 30 takes the next one (implementer-run.md step 2),
-   so a queue of cheap items can drain faster than four per interval; when
-   the items are short, queue more than five rather than leave the later
-   slots to the drain instruction. If fewer than 5 ready items exist, list
-   what exists and say so — step 5 still forbids inventing work. Each listed
-   item meets the rubric below; an item that cannot yet state its anchor is
-   not ready to queue, and writing that anchor is itself the better queue
-   item.
+6. Refresh **"On deck"** in §9. **The restock floor counts slot-minutes, not
+   items (operator directive 2026-09-13, on the weekly review's finding):**
+   the queue must carry **≥ 240 predicted slot-minutes** of open, unblocked
+   work — the four runs before the next review — **and ≥ 5 items** (the
+   spare). An item's predicted slot-minutes are its costed wall clock from
+   rubric element 3 (every verification window, not just the solve) **plus
+   15 min** of fixed cost (onboarding, journal, commit). Write the running
+   total beside the list. Since 2026-09-12 a slot that commits its item with
+   a clean tree before minute 30 takes the next one (implementer-run.md
+   step 2), which is why five items is not a floor any more: on 09-12 a
+   five-item queue of cheap serial moves lasted two slots and three further
+   slots drained with every review alive. Each item is still sized for one
+   run (≤ 1 h wall clock, ≤ 20 min per compute command, ≤ 12 ranks) and
+   ordered; independent items first. If the ready items do not reach the
+   floor, list what exists, **state the shortfall in minutes**, and say so —
+   step 5 still forbids inventing work, and a visible shortfall is the
+   signal the weekly needs. Each listed item meets the rubric below; an item
+   that cannot yet state its anchor is not ready to queue, and writing that
+   anchor is itself the better queue item.
 
    **The family cap (operator directive 2026-09-12, four attempts).** A
    *step family* is a numbered step plus all of its lettered sub-steps

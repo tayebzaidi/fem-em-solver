@@ -7482,9 +7482,12 @@ failure.
 ### On deck — maintained by the scheduled daily review
 
 The next scheduled implementer run takes the **first** item below that is not
-marked done or blocked (see `docs/automation/implementer-run.md`). At least five
-open items — the four runs before the next review, plus a spare — ordered, each
-sized for one run: ≤ 1 h wall clock, ≤ 20 min per compute command. Prefer items
+marked done or blocked (see `docs/automation/implementer-run.md`). **Restock
+floor (operator directive 2026-09-13): ≥ 240 predicted slot-minutes of open,
+unblocked work and ≥ 5 items** — each item's costed wall clock plus 15 min
+fixed, running total written beside the list, shortfall stated in minutes when
+the floor is not met (daily-review.md step 6). Items are ordered, each sized
+for one run: ≤ 1 h wall clock, ≤ 20 min per compute command. Prefer items
 that do not depend on each other; where the critical path is genuinely serial,
 say so in the item. If every item is done or blocked, the drain instruction at the
 end of this section applies: **stop and journal**.
