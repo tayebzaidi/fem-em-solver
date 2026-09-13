@@ -4353,6 +4353,23 @@ lineage. Standard tier.
 > 128 MHz pair with in-run κ(128) printed and *predicted* under, never
 > asserted. Moves the row 🟡 → ✅ with κ carried as the sheet's named
 > systematic. Full item in §10 (the three frozen families).
+>
+> **Step 3 executed 2026-09-13 12:00 slot — 🚫 incomplete on a
+> mis-registered anchor; code parked on
+> `attempt/PORT-14-step3-20260913T172330Z` (`86c93f6`).** (0) lifted
+> `C/terminal − 1` = test helper bitwise; (ii) corrected 64 MHz lossless
+> residuals **5.359129e-05 / 1.998404e-06** ≤ 1e-3; (iii) the 10 MHz floor
+> reproduces unmoved; negative control green; printed κ(128)
+> 1.064828193e-02 with corrected 4.013e-05 / 5.599e-06 under 1e-3. **(i)
+> red:** derived κ(64) 1.060762155e-02 vs "2d's 1.0641e-2" misses by
+> 3.119e-03 — but 1.0641e-2 is 2b's *pooled fit*; 2d's `C/terminal − 1` is
+> 1.060762e-02 on P1 (reproduced to 1.457e-07), and the step-2d text above
+> already records the 0.99688–0.99714× gap. The comparand, not the route,
+> is wrong. **Sign:** 2e's fitted ×0.989446732 is `1/(1 + κ)`, not
+> `(1 + κ)`; the parked code implements `1/(1 + κ)`. Not loosened; a review
+> re-registers (i). Logs `20260913T171434Z_PORT-14-step3-64mhz.log`
+> (Status 1, 114 s), `…171649Z_…-10mhz.log` (197 s),
+> `…172026Z_…-128mhz.log` (114 s), all `-n 2`.
 
 **`PORT-15` — the circuit layer (HFSS + Circuit)** 🟡 *(**step 1 ✅
 2026-09-05, 22:30 slot** — the algebra and its three identities; digits in
@@ -7728,7 +7745,19 @@ blocked.
    known-issues entry with the readings, row stays 🟡, stop; never widen the
    rtol.
 
-2. **`PORT-14` step 3 — the κ-derived width route, registered at 64 MHz,
+2. 🚫 **BLOCKED 2026-09-13 12:00 slot — anchor (i)'s comparand is
+   mis-registered; code parked on `attempt/PORT-14-step3-20260913T172330Z`
+   (`86c93f6`).** (0), (ii), (iii) and the negative control green; (i) red
+   at 3.119e-03 vs rtol 1e-3 because 1.064081e-02 is step 2b's *pooled fit*,
+   which this plan's own 2d reading puts at 0.99688–0.99714× `C/terminal − 1`
+   (`:4208–4209`) — the derived κ(64) 1.060762155e-02 matches 2d's P1 record
+   to 1.457e-07. Also: "scale by `(1 + κ)`" is sign-inverted — 2e's fitted
+   ×0.989446732 is `1/(1 + κ)`, which is what the parked code implements.
+   **Unblocks when** a review re-registers (i) against 2d's `C/terminal − 1`
+   record (and corrects the sign text); then the parked branch re-runs as-is.
+   Logs `20260913T171434Z_PORT-14-step3-64mhz.log` (Status 1),
+   `…171649Z_…-10mhz.log`, `…172026Z_…-128mhz.log` (Status 0).
+   **`PORT-14` step 3 — the κ-derived width route, registered at 64 MHz,
    out-of-sample at 128 MHz (the tuned-birdcage chain's first step)**
    (implementer; one additive `src/` opt-in + tests in
    `tests/validation/test_port_lumped_rlc_termination.py`; complex; heavy by

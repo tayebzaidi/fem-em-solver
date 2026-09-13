@@ -12283,3 +12283,21 @@ The host `pre-commit` leak hook also passed on all three commits.
 **Status moved:** `WF-6` 🟡 → ✅; §2.2's B₁⁺ clause.
 
 **Hypothesis, for the next reader.** The review audits this closure (the auditor should re-trace `:1987, :3831, :3836` and confirm no band moved). The printed interior CV (8.2 → 6.6 %, above the unshielded filament's 3.6 %) is the first CV-on-a-ladder reading for any later homogeneity subgoal — context only, since shield and filament differ.
+
+## 2026-09-13T17:23Z (2026-09-13 12:00 CDT slot, second item under take-next) — `PORT-14` step 3 — **incomplete (anchor (i) red on a mis-registered comparand; parked on `attempt/PORT-14-step3-20260913T172330Z`, `86c93f6`)**
+
+**Licence.** Item 1 (`WF-6` step 5) committed `8ad4548` with `git status --porcelain` empty at 12:07:46 CDT (minute 7 < 30); §9 item 2 independent. Delegated to `implementer` (foreground, told: no commit, harness windows ≤ 590 s container-side inside 660 s Bash, no new window after 12:40); returned 12:23.
+
+**Change (parked, not on `main`).** New `src/fem_em_solver/ports/shares.py` (`sheet_ceiling_dissipation_w`, `terminal_form_deficit` — the lifted `C/terminal − 1`, MPI-reduced); `ports/lumped.py` default-off `width_correction_kappa=None` on `sheet_resistivity_ohm_per_square` threaded through `LumpedPortSheet`/`LumpedSheetPortSpec` (R = Z_p·(w/(1+κ))/h; `None` bit-identical); `build_four_port_sweep` gains the same default-off keyword; `test_port_lumped_rlc_termination.py` step-3 block selected by `FEM_EM_PORT14_STEP3_FREQUENCY_HZ`. `test_birdcage_power_identity.py` untouched (lazy import), so no rule-(c) re-run was owed.
+
+**Windows (all `-n 2`, complex, `-s`, `timeout -k 30 590`).** `20260913T171434Z_PORT-14-step3-64mhz.log`: 1 failed / 16 passed, Status 1, 114 s. `20260913T171649Z_PORT-14-step3-10mhz.log`: 17 passed / 2 skipped, Status 0, 197 s. `20260913T172026Z_PORT-14-step3-128mhz.log`: 15 passed / 2 skipped, Status 0, 114 s.
+
+**Measured (64 MHz log unless noted).** (0) lifted vs test helper |ratio − 1| = 0.000e+00 pooled and per sheet at all three frequencies (`:1941–1945`). **(i) red:** derived κ(64) **1.060762155e-02** vs the item's 1.064081e-02, 3.119e-03 > 1e-3 (`:1949, :1966`); vs 2d's P1 `C/terminal − 1` record 1.060762e-02, **1.457e-07** (printed). (ii) green: corrected lossless residuals C **5.359129e-05**, L **1.998404e-06** ≤ 1e-3 (`:1958–1959`), uncorrected records 1.354202e-02 / 5.021261e-04; corrected 4×4 116 085 cells, reciprocity 9.39e-16, σ_max 0.999760402 (`:1954`). (iii) green: `REDUCTION_FLOOR_F_SMALL` at 10 MHz uncorrected 1.595580e-03 / 3.370512e-03 / 7.249519e-04 reproduces to ≤ 2.4e-07 (10 MHz log `:1887–1902`). Negative control by record green (`:77, :85`). Printed: κ(10) 1.059204217e-02, corrected 1.099e-06 / 1.397e-06 (10 MHz `:3768, :3789–3790`); **κ(128) 1.064828193e-02, corrected 4.013e-05 / 5.599e-06 — out-of-sample under 1e-3** (128 MHz `:1937, :1958–1959`).
+
+**Why not landed.** The comparand of (i) is step 2b's pooled κ, which `PROJECT_PLAN.md:4208–4209` itself records as 0.99688–0.99714× 2d's `C/terminal − 1` — outside rtol 1e-3 by construction. Not loosened, not re-registered in-slot (review's call). **Second defect in the item text:** "scale the told width by `(1 + κ)`" is sign-inverted; 2e's fitted width ×0.989446732 (`:4303`) is `1/(1 + κ)` (derived 0.989503719, diff 5.699e-05), and the parked code implements `1/(1 + κ)`.
+
+**Same commit on `main`:** the three logs, their test-results rows, §9 item 2 marked 🚫 BLOCKED with the unblock condition, a `PORT-14` blockquote annotation.
+
+**Status moved:** none (`PORT-14` stays 🟡).
+
+**Hypothesis, for the next reader.** Re-register (i) as "derived κ(64) reproduces 2d's P1 `C/terminal − 1` 1.060762e-02 at rtol 1e-3" (1.457e-07 measured) and fix the sign sentence in §9/§10/blockquote; then `git checkout attempt/PORT-14-step3-20260913T172330Z -- src tests` plus the one-constant edit re-runs the 64 MHz window (~2 min) and should close `PORT-14` ✅ on (0)–(iii).
