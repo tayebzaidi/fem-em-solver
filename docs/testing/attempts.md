@@ -12267,3 +12267,19 @@ The host `pre-commit` leak hook also passed on all three commits.
 **Status moved:** none. No compute, no harness log, no executor spawned.
 
 **Hypothesis, for the next reader.** The 10:30 daily review should land `recovered/20260913T140010Z` onto `main` (check it reads as finished and holds no private AED figures — the 07:30 entry did not audit it for that), then top up §9. The frozen-family next steps it names (`ANS-4` step 3, `PORT-14` step 3, `WF-6` step 5, `POST-6` step 3) exist only on that branch until it lands.
+
+## 2026-09-13T17:00Z (2026-09-13 12:00 CDT slot) — `WF-6` step 5 — **complete (`WF-6` 🟡 → ✅ on the re-scoped subgoal-4 target; the Phase-5 exit item)**
+
+**Preflight.** Tree clean at 12:00:07 CDT, HEAD `447fc0c`; `fem-em-solver` Up 2 days. §9 On deck item 1 (`WF-6` step 5) open, no dependency. Executed in-session under `implementer.md` (no executor spawned).
+
+**Change (tests only).** `tests/validation/test_birdcage_b1_plus_closed_form.py`: `STEP5_RECORDED_SPREADS` (4g's 5.2506e-02 / 2.0719e-02, `20260909T200431Z_WF-6.log:1989–1990, 3811`) at `STEP5_SPREAD_RTOL` 1e-3; `test_step5_the_worst_spread_reproduces_its_4g_record` (per rung) and `test_step5_the_ladder_falls_monotonically` (on ×0.012, reading ×1 from `_LADDER_READINGS`); printed-only helpers `_interior_cv` and `_filament_interior_cv` (step 4a's `birdcage_filament_field`, mode-1 quadrature, free space). Nothing deleted, loosened or re-banded; both new tests skip under `FEM_EM_WF6_C4_CONGRUENT`.
+
+**Window.** `20260913T170259Z_WF-6-step5.log` — `tests/environment` + the module, `-n 4` (the record width), complex, `timeout -k 30 590` (not the item's 1200: sized to return inside the 660 s foreground Bash window per implementer-run.md; 4g measured 204 s), `-v -s`, no pipe on the container side: **24 passed / 9 skipped / 0 failed, 154.10 s, Status 0, elapsed 156 s**.
+
+**Measured.** (i) spread ×1 **5.250630 %** rel 5.709e-06, ×0.012 **2.071886 %** rel 6.912e-06 (`:1987, :3831`); (ii) spread 5.2506 → 2.0719 % (0.3946), covariance 3.6159 → 1.6815 %, both asserted to fall (`:3836`); (iii) all pre-existing anchors green. Printed only: interior CV of `|B₁⁺|` over the 21 z = 0 points **8.1710 % / 6.6430 %** vs free-space filament **3.5703 %** (`:1988, :3832`); §10's S₁₁ miss record (`:3837`).
+
+**Same commit.** §2.2 B₁⁺ clause re-worded to the convergence statement; §7 `WF-6` row → ✅ (tier cell gains step 5 156 s); §6 row 5 one-line pointer only (the weekly's sentence untouched); §9 item 1 marked DONE; step narrative appended to `docs/planning/chunks/WF-6.md`; known-issues ×0.0095 entry untouched (OPEN).
+
+**Status moved:** `WF-6` 🟡 → ✅; §2.2's B₁⁺ clause.
+
+**Hypothesis, for the next reader.** The review audits this closure (the auditor should re-trace `:1987, :3831, :3836` and confirm no band moved). The printed interior CV (8.2 → 6.6 %, above the unshielded filament's 3.6 %) is the first CV-on-a-ladder reading for any later homogeneity subgoal — context only, since shield and filament differ.

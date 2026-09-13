@@ -130,6 +130,20 @@ that ``C/terminal`` reproduces 4i per rung to 2e-6, with a swapped-rung
 negative control.  ``R_s`` and the transverse share are printed, never
 asserted.
 
+**Step 5 (2026-09-13) — the two-rung convergence statement, registered.**
+The 2026-09-13 weekly's Phase-5 exit decision (§10) re-scoped subgoal 4's
+B₁⁺ target to what 4g measured; on the default ``LADDER`` (flag off) this
+module now asserts it.  Anchors: (i) the worst-radius C4 four-copy spread
+reproduces 4g's **5.2506%** (×1) and **2.0719%** (×0.012) at rtol 1e-3
+(`20260909T200431Z_WF-6.log:1989-1990, 3811`) — additional to, not replacing,
+the 10% ×1 control above; (ii) the fall is monotone: ``spread(×0.012) <
+spread(×1)`` and ``covariance(×0.012) < covariance(×1)`` (3.6159% → 1.6815%).
+Printed, never asserted (rule (e)): the 21-point interior CV of ``|B₁⁺|`` on
+both rungs beside the free-space filament closed form's CV on the same points
+(step 4a's function, no shield), and §10's record of the ×1 eleven-point miss
+against ``S₁₁``.  Scope: a convergence statement on F-small at 10 MHz, CG1 —
+no homogeneity, absolute, closed-form, C95.3, Larmor or human-scale claim.
+
 Run (complex build required)::
 
     scripts/testing/run_and_log.sh WF-6 "docker compose exec -T fem-em-solver \\
@@ -150,6 +164,7 @@ import pytest
 from mpi4py import MPI
 
 from fem_em_solver.core import HomogeneousMaterial
+from fem_em_solver.utils.analytical import birdcage_filament_field
 from fem_em_solver.utils.instrumentation import report_peak_rss
 from fem_em_solver.post import (
     evaluate_vector_field_parallel,
@@ -160,7 +175,7 @@ from fem_em_solver.post import (
 from tests.complex_mode import complex_only
 from tests.mesh.test_birdcage_port_sheet_prerequisite import CELL_COUNT_BAND
 from tests.mesh.test_birdcage_port_sheets import SHEET_IFACE
-from tests.mesh.test_birdcage_port_tags import LEG_COUNT, RING_RADIUS
+from tests.mesh.test_birdcage_port_tags import COIL_LENGTH, LEG_COUNT, RING_RADIUS
 from tests.validation.test_birdcage_b1_plus_map import (
     C4_COVARIANCE_BAND,
     POWER_BALANCE_BAND,
@@ -376,6 +391,49 @@ QUADRANT_DEG = (0.0, 90.0, 180.0, 270.0)
 # ≲ 0.1% (`20260908T183317Z_GEO-28.log:1800-1830`).  Printed as the target the
 # field spread is *predicted* to fall toward — never asserted (rule (e)).
 PREDICTED_MESH_FLOOR = 1.0e-3
+
+# **`WF-6` step 5 — the convergence statement's records** (flag off, default
+# ``LADDER``).  Step 4g's worst-radius four-copy spreads on this fixture, same
+# statistic, same width (`-n 4`): `20260909T200431Z_WF-6.log:1989-1990` (×1)
+# and `:3811` (×0.012).  Reproduced at rtol 1e-3 — the print carries four
+# decimals of a percent, a rounding of ≤ 1e-5 relative, so 1e-3 is a record
+# test, not a band.  Covariances 3.6159% / 1.6815% (`:1992, :3813`) enter only
+# through the monotone identity, never as values.
+STEP5_RECORDED_SPREADS = {"x1": 5.2506e-02, "x0.012": 2.0719e-02}
+STEP5_SPREAD_RTOL = 1.0e-3
+# §10's Phase-5 exit decision (2026-09-13) records the ×1 eleven-point miss
+# against the odd-order cube sum ``S₁₁`` (step 4e's comparand, since deleted
+# from this module).  Printed as that record, never recomputed or asserted.
+STEP5_S11_MISS_RECORD = "≈ 3.2% at the centre, ≈ 5.3% / 7.9% at 0.4R / 0.5R"
+
+
+def _interior_cv(values):
+    """Population CV ``std/mean`` of ``|B₁⁺|`` over the 21 ``z = 0`` points."""
+    v = np.asarray(values, dtype=float)
+    return float(np.std(v) / np.mean(v))
+
+
+def _filament_interior_cv():
+    """The free-space filament closed form's CV on the same 21 points.
+
+    `WF-6` step 4a's ``birdcage_filament_field`` (legs + Kirchhoff rings, no
+    PEC shield) under the mode-1 drive in quadrature: ``B = B_cos ± j B_sin``;
+    the co-rotating sense is the one with the larger centre ``|B₁⁺|``.  Pure
+    numpy, identical on every rank.  Printed only — the FEM domain is shielded
+    and the filament is not, so this is context, never a comparand.
+    """
+    theta = 2.0 * np.pi * np.arange(LEG_COUNT) / LEG_COUNT
+    points = _master_points()
+    kwargs = {"ring_radius": RING_RADIUS, "coil_length": COIL_LENGTH}
+    b_cos = birdcage_filament_field(points, leg_currents=np.cos(theta), **kwargs)
+    b_sin = birdcage_filament_field(points, leg_currents=np.sin(theta), **kwargs)
+    best = None
+    for sign in (1.0, -1.0):
+        b = np.asarray(b_cos, dtype=complex) + sign * 1j * np.asarray(b_sin)
+        b1 = np.abs(b[:, 0] + 1j * b[:, 1]) / 2.0
+        if best is None or b1[0] > best[0]:
+            best = b1
+    return _interior_cv(best)
 
 # Filled in as the ladder runs (identically on every rank, from
 # already-reduced quantities), so a later rung can print its ratio to the ×1
@@ -1212,4 +1270,79 @@ def test_the_cw_drive_spread_dwarfs_the_ccw_spread_on_every_rung(rung):
         f"{ccw * 100:.4f}%, below the {CW_SEPARATION_FACTOR:.0f}x separation "
         f"POST-6 step 1's 95.1975% backs — the statistic is not discriminating "
         "the co-rotating drive from the counter-rotating one"
+    )
+
+
+@complex_only
+def test_step5_the_worst_spread_reproduces_its_4g_record(rung):
+    """**`WF-6` step 5 anchor (i)** — each rung's spread is 4g's, at rtol 1e-3.
+
+    Additional to the 10% ×1 control above (which stays): this pins *both*
+    rungs of the convergence statement to the numbers §10 registers, so the
+    statement is re-measured every run rather than quoted.  A miss is an
+    `OPS-18`-class record drift — report it; never widen the rtol.
+    """
+    key = rung["spec"]["key"]
+    if C4_CONGRUENT:
+        pytest.skip("flag-on mesh is not the record mesh (`GEO-32`)")
+    if key not in STEP5_RECORDED_SPREADS:
+        pytest.skip(f"no step-5 record for rung {key} (x0.0095 stays out)")
+    measured = rung["worst_spread"]
+    record = STEP5_RECORDED_SPREADS[key]
+    rel = abs(measured - record) / record
+    if MPI.COMM_WORLD.rank == 0:
+        print(
+            f"\n[WF-6 step5] rung {key}: worst-radius C4 four-copy spread "
+            f"{measured * 100:.6f}% vs 4g record {record * 100:.4f}% rel "
+            f"{rel:.3e} (ASSERTED <= {STEP5_SPREAD_RTOL:g})\n"
+            f"[WF-6 step5] rung {key}: interior CV of |B1+| over "
+            f"{rung['points'].shape[0]} z = 0 points {_interior_cv(rung['ccw']) * 100:.4f}% "
+            f"beside the free-space filament closed form's (step 4a, no shield) "
+            f"{_filament_interior_cv() * 100:.4f}% (PRINTED, NEVER ASSERTED)",
+            flush=True,
+        )
+    assert rel <= STEP5_SPREAD_RTOL, (
+        f"rung {key}: worst-radius C4 four-copy spread {measured * 100:.6f}% "
+        f"against 4g's {record * 100:.4f}% ({rel:.3e} relative), outside "
+        f"{STEP5_SPREAD_RTOL:g} — OPS-18-class drift, not the 4g fixture"
+    )
+
+
+@complex_only
+def test_step5_the_ladder_falls_monotonically(rung):
+    """**`WF-6` step 5 anchor (ii)** — the convergence statement, identity form.
+
+    On the finer rung, with the ×1 reading already taken in this process
+    (``_LADDER_READINGS`` is filled per rung from reduced quantities): the
+    worst-radius spread *and* the C4 covariance both fall.  Asserted as strict
+    inequalities, never as a ratio or rate.
+    """
+    key = rung["spec"]["key"]
+    if C4_CONGRUENT:
+        pytest.skip("flag-on ladder is not the registered ladder (`GEO-32`)")
+    if key != "x0.012":
+        pytest.skip("the monotone identity is read on the x0.012 rung")
+    x1 = _LADDER_READINGS.get("x1")
+    if x1 is None:
+        pytest.skip("the x1 rung was not run in this process")
+    if MPI.COMM_WORLD.rank == 0:
+        print(
+            f"\n[WF-6 step5] convergence statement (unloaded F-small, 10 MHz, "
+            f"CG1): worst-radius C4 spread {x1['worst_spread'] * 100:.4f}% -> "
+            f"{rung['worst_spread'] * 100:.4f}% (ratio "
+            f"{rung['worst_spread'] / x1['worst_spread']:.4f}), C4 covariance "
+            f"{x1['covariance'] * 100:.4f}% -> {rung['covariance'] * 100:.4f}% "
+            f"as resolution {x1['spec']['resolution']} -> "
+            f"{rung['spec']['resolution']} m (both ASSERTED to fall)\n"
+            f"[WF-6 step5] x1 eleven-point miss against S11, §10 record: "
+            f"{STEP5_S11_MISS_RECORD} (PRINTED, NEVER ASSERTED)",
+            flush=True,
+        )
+    assert rung["worst_spread"] < x1["worst_spread"], (
+        f"the worst-radius C4 spread does not fall: x1 "
+        f"{x1['worst_spread'] * 100:.4f}% -> x0.012 {rung['worst_spread'] * 100:.4f}%"
+    )
+    assert rung["covariance"] < x1["covariance"], (
+        f"the C4 covariance does not fall: x1 {x1['covariance'] * 100:.4f}% -> "
+        f"x0.012 {rung['covariance'] * 100:.4f}%"
     )
