@@ -12407,3 +12407,44 @@ Driver: `scripts/probes/ops47_step1_anchors.sh [moves|leak]`, modelled on the `O
 **Status moved:** `OPS-47` ⬜ → 🟡.
 
 **Hypothesis / next step (item 7).** The four moves together should take the plan to **9 939 − 4 405 = 5 534 lines** and **836 984 − 311 358 = 525 626 B** (projected, not measured). The 4 000-line guide is therefore **not met**, as the item predicts. Item 7's (iii) is now a `--assert-below-lines 4000` that will FAIL, and that result should be recorded, not the guide widened. Spec pointers in the form `**`ID` narrative** — moved byte for byte to `docs/planning/chunks/<ID>.md` (`OPS-47`).` pass the tool's checks. Note that `WF-6` and `POST-6` are now ✅ rows, so "open chunks" no longer describes two of the four.
+
+## 2026-09-13T20:11Z (2026-09-13 15:00 CDT slot, second item under take-next) — `OPS-47` step 2 — **complete (four narratives moved, one commit each; (i)–(iv) green on all four; 4 000-line guide NOT met at 5 546 lines; `OPS-47` 🟡 → ✅)**
+
+**Preflight.** Tree clean, HEAD `663a223` (step 1 on `main`); `fem-em-solver` Up 3 days. §9 item 7. Smoke tier, no `mpiexec`, every script run inside the container through the harness, `timeout -k 30 30`.
+
+**Span definition (ratified for this slot by the slot owner; disclosed in the §7 row).** This is the step-1 tool's definition. A narrative runs from the chunk's opener line `**`ID` …` to the line before the next §7 table row, `##`/`###` heading or another chunk's opener. Same-ID openers continue the section, and trailing blank lines are dropped. `POST-6`'s 44 leading `POST-1`/`POST-3` lines are therefore not part of its span and stay in the plan. The item's "contiguous `>` block" wording selects nothing: none of the four opens on a `>` line (step-1 entry).
+
+**Driver.** `scripts/probes/ops47_step2_move.sh neg | move ID | final`.
+- The spec pointer is `**`ID` narrative** — moved byte for byte to `docs/planning/chunks/<ID>.md` (`OPS-47`).`.
+- (i) uses its own scanner, not the tool's, on `git show HEAD:PROJECT_PLAN.md` written to gitignored `logs/ops47-step2/<ID>/`. It asserts three things:
+  - the chunk-file span is `cmp`-equal to the re-extracted span;
+  - the whole written plan is `cmp`-equal to HEAD with that span replaced by the pointer;
+  - the HEAD chunk file (or `# PORT-14\n` for the new file) is a byte prefix of the new one.
+- The tool's `--assert-below-lines/--assert-below-bytes` rider runs on each real move with the pre-move size as the strict bound.
+
+**Negative control (asserted, once, before the first move).** The spec named `OPS-46`, a chunk with a §7 row but no narrative. The tool refused with rc 1: `REFUSED: OPS-46: 0 §7 narrative sections …`. The plan sha256 and the chunks-dir listing were unchanged (`20260913T201336Z_OPS-47-step2-neg.log:37–42`, 1 s). The same window re-measured the four with a dry run: plan 9 951 lines / 838 503 B → projected 5 546 / 527 145 (`:44–50`). The spans still sat at step 1's line numbers, because only §7-row/§9 text had shifted below them.
+
+**Moves.** Each window is 10–11 s, and every anchor printed PASS.
+
+| Chunk | Pre-commit HEAD | Span at HEAD (lines, B) | Plan lines before → after | Plan B before → after | Shrink = span − pointer | §7 lines (measure) | Chunk file B | Log (anchor lines) | Commit |
+|---|---|---|---|---|---|---|---|---|---|
+| `POST-6` | `663a223` | 3400–3511 (112, 8 141) | 9 951 → 9 840 | 838 503 → 830 456 | 8 047 = 8 141 − 94 | 6 480 → 6 369 | 8 398 → 16 608 | `20260913T201352Z_OPS-47-step2-POST-6.log:35–68` | `dc39b23` |
+| `PORT-14` | `dc39b23` | 3499–4261 (763, 51 951) | 9 840 → 9 078 | 830 456 → 778 601 | 51 855 = 51 951 − 96 | 6 369 → 5 607 | absent → 52 030 (created) | `20260913T201427Z_OPS-47-step2-PORT-14.log:34–69` | `d0b8af6` |
+| `TH-15` | `d0b8af6` | 1939–3179 (1 241, 88 572) | 9 078 → 7 838 | 778 601 → 690 121 | 88 480 = 88 572 − 92 | 5 607 → 4 367 | 6 804 → 95 445 | `20260913T201455Z_OPS-47-step2-TH-15.log:34–68` | `0968eda` |
+| `WF-6` | `0968eda` | 2420–4712 (2 293, 163 066) | 7 838 → 5 546 | 690 121 → 527 145 | 162 976 = 163 066 − 90 | 4 367 → 2 075 | 48 423 → 211 558 | `20260913T201524Z_OPS-47-step2-WF-6.log:34–73` | `20689ba` |
+
+In total 4 409 span lines and 311 730 B left the plan; it went from 9 951 to 5 546 lines (−4 405, one pointer line per chunk). No (i) mismatch occurred.
+
+**(iv).** `20260913T201542Z_OPS-47-step2-final.log:46–49`: 88 `§N`/`§N.M` references in CLAUDE.md and `docs/automation/*.md` (§1, 2, 4, 5, 5.1, 5.2, 5.4, 6, 7, 9, 10). All resolve to `## N.` / `### N.M` plan headings; 0 unresolved. The census of remaining narratives ≥ 100 lines is 0 sections (`:44`). This window ran on the working tree after the `WF-6` move and before its commit, so its header shows HEAD `0968eda`. The plan bytes are those of `20689ba`.
+
+**4 000-line guide: NOT met.** The plan is 5 546 lines. The projected `--assert-below-lines 4000` gave FAIL, rc 3 (`WF-6.log:50`), and `final.log:50` reads "NOT MET". This matches the prediction (≈ 4 800). The miss is recorded and the guide is not widened. The largest remaining §7 owner is `TH-14` at 71 lines (`final.log:37`), so what is left is spread across §9/§10 rather than in any one narrative.
+
+**Stale line cites.** `neg.log:54–55` scanned `PROJECT_PLAN.md` outside the spans and `docs/testing/known-issues.md` for cites landing inside the four pre-move spans, and found **none**. A wider `git grep` on HEAD for `PROJECT_PLAN.md:NNNN` / `plan line(s) NNNN` / `lines NNNN` over the span ranges also found none; its only `PROJECT_PLAN.md:NNN` hit is `:358–369` in §9, which is outside the spans. The item's trap expected such cites, but these patterns found no line-number cite to repoint. Cites by name (e.g. "the `TH-15` block") still resolve through the pointer lines to `docs/planning/chunks/<ID>.md`.
+
+**Bookkeeping slip.** The `WF-6` window's test-results.md row was not staged in `20689ba`. It lands in the closing commit with the `final` row, and the `WF-6` log itself is in `20689ba`.
+
+**Denials.** None.
+
+**Status moved:** `OPS-47` 🟡 → ✅ (§7 row), §9 item 7 DONE. Elapsed ≈ 17 min (15:00–15:17 CDT).
+
+**Hypothesis / next step.** At 5 546 lines, the guide's remaining ~1 550 lines must come from §9's DONE items and §10's dated roadmap prose, not §7 narratives (§7 is now 2 075 lines, largest owner 71). A census of §9/§10 by block would size a follow-on rotation.
