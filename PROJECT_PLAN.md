@@ -909,7 +909,7 @@ re-deriving a closed step's diagnosis. (The older per-chunk log,
 | `OPS-43` | Long-window robustness: durable capture, orphan-rank cleanup, and per-run memory instrumentation | ✅ Closed at the 2026-09-11 03:00 daily review: durable capture, orphan-rank refusal, per-run memory instrumentation and the solver-progress inertness gate all landed. The tier was corrected to standard, not the evidence. *History: `docs/planning/chunks/OPS-43.md`.* | standard *(re-declared 2026-09-11 03:00 review from *smoke*: measured 6–61 s under 120–180 s wrappers)* |
 | `OPS-44` | Re-pin `COMMITTED_EXAMPLE_ARTIFACTS` to the five artifacts git actually tracks | ✅ Closed 2026-09-09: `COMMITTED_EXAMPLE_ARTIFACTS` is re-pinned to the five artifacts git tracks, and the exemption still means tracked by git rather than anything under `examples/`. *History: `docs/planning/chunks/OPS-44.md`.* | smoke |
 | `OPS-45` | The harness footer must not call a red durable-capture window green | ✅ Closed and audited PASS at the 2026-09-11 18:00 review: the harness footer no longer calls a red durable-capture window green. *History: `docs/planning/chunks/OPS-45.md`.* | smoke |
-| `OPS-46` | Move the heavy §7 chunk histories out of `PROJECT_PLAN.md` | ✅ Closed 2026-09-12 21:00 slot: all 73 listed rows are moved byte for byte with anchors (i), (ii) and (iv) green (plan 806 962 B, under 850 000 B); (iii) is operator-pending. The narrative blocks are the named follow-up, and the review audits the closure. *History: `docs/planning/chunks/OPS-46.md`.* | smoke |
+| `OPS-46` | Move the heavy §7 chunk histories out of `PROJECT_PLAN.md` | ✅ Closed 2026-09-12 21:00 slot: all 73 listed rows are moved byte for byte with anchors (i), (ii) and (iv) green (plan 806 962 B, under 850 000 B); (iii) landed by the operator (`2a0ca4d`) and exercised by the 2026-09-13 10:30 review. **Audited PASS 2026-09-13 10:30** (log lines re-cited in the history file; two caveats: (iv) was a printed `wc -c`, not a scripted assert — an `OPS-47` step 1 rider — and "74 rows" was the census discrepancy, 73 were listed and moved). The narrative blocks are `OPS-47`. *History: `docs/planning/chunks/OPS-46.md`.* | smoke |
 | `OPS-47` | **Move the open chunks' blockquote narratives out of `PROJECT_PLAN.md`** — *opened 2026-09-13 weekly review (§10 plan hygiene; row written by the operator's interactive session, which landed that review after the scheduled session died on the account limit).* **The defect, measured 2026-09-13:** `OPS-46` moved the 73 heavy table *rows* (806 962 B, under its 850 000 B bound), but the `>`-blockquote narratives it declared out of scope are the line count — `WF-6` 2 295, `TH-15` 1 243, `PORT-14` 736, `POST-6` 157 lines, **4 431 lines = 48 % of the file** — all under **open** chunks, which the archive contract forbids summarising or compressing. It does not forbid moving them byte for byte. **Change:** extend `scripts/maintenance/rotate_plan_archive.py chunks` to a chunk's blockquote narrative: the contiguous `>` block(s) under a §7 family table that name one chunk move verbatim to `docs/planning/chunks/<ID>.md` (appended after the row history the `OPS-46` move put there), replaced in place by one pointer line; same byte-identity refusal (the re-read file body must equal the extracted span), never overwrite, `--dry-run` and `--census` as for rows. **Anchors (asserted):** (i) every moved block is byte-identical to its new file span — an empty diff per chunk; (ii) `check_private_leak.py --audit` exit 0 after the move, with a planted synthetic value under `docs/planning/chunks/` caught first (positive control); (iii) `PROJECT_PLAN.md` line count re-measured before/after with `scripts/probes/measure_plan_sections.py` and recorded — the 4 000-line guide (weekly-review.md step 6) is the target, and the row says plainly whether it is met; (iv) every § reference in CLAUDE.md and `docs/automation/*.md` still resolves. Docs/tooling only — no `src/`, no test, no band. One commit for the tool, one per chunk for the moves. | ⬜ | smoke |
 | `OPS-1` | Executable verification environment (Docker) | ✅ | smoke |
 | `OPS-2` | CI runs the real test suite, not just `tests/unit` | ✅ | standard |
@@ -1741,7 +1741,7 @@ from `OPS-26` step 2's four sites. Full narrative and both step-2 rubrics archiv
 | `TH-11` | Coil-loading trend across the eddy→displacement transition (`MAT-6`'s ΔR machinery at rising f) | ✅ Closed on step 4's answer plus step 5's measured negative, on the `GEO-14` precedent: the degree-1 coil-loading ladder hits a superlinear memory wall. Any reopening needs an `xl` slot and a review re-pricing it. *History: `docs/planning/chunks/TH-11.md`.* | standard (steps 4–5 heavy; step 5d **`xl`**) |
 | `TH-12` | Second-order elements (degree-2 N1curl): accuracy-per-DOF and cost, measured (operator directive 2026-08-18; decides the production element order for §10 Phase … | ✅ Closed at the 2026-09-02 weekly review, with the decision clause on production element order re-affirmed. Degree 2 buys accuracy per cell at a measured cost, and the coil rung meets the same memory wall. *History: `docs/planning/chunks/TH-12.md`.* | standard (step 2 heavy) |
 | `TH-13` | The degree-2 gradient-subspace injector: feed model or any `W_m ≫ W_e` fixture? — the discriminator `TH-12` step 3 named (commissioned 2026-08-23 weekly review; cheap fixtures only) | ✅ *(closed 2026-08-31 on step 2 — (A) holds at round-off, the injector is the degree-1-only `H¹₀`-only source projection; audited COMPLIANT 03:00 review. Follow-on **step 3a** — the matched projection, opt-in, loop fixture only — scoped 03:00 review, §9 item 1, **executed 2026-08-31 04:30 slot and 🟡**: both anchors met with 6–14 orders of margin (residue 1.298386e-02 / 1.045186e-01 → **8.109635e-17 / 1.790460e-16** vs ≤ 1e-8; gradient share of `W_e` 99.98% / 99.9997% → **4.6e-23 / 3.1e-21** vs ≤ 1e-6; `W_e` to 0.018% / 2.6e-4 % of record vs ≤ 2% / ≤ 1%), default path bit-identical on control (b) at **0.000e+00**, but one of the two owed regression re-runs — `test_coil_loading_degree2.py` — **could not be executed** (exit 124 at 571 s, twice — step 3a″ on 2026-08-31 measured the cost as the degree-2 pair alone, ≥ 524 s, mesh 4.3 s; known-issues entry), so the coil identity tests' 1e-9 reds are unverified on this commit — the degree-1 half of the owed claim was re-observed by 3a″ (+0.00039 pp of record), and **step 3a‴ (module split, one σ-half per window) closed that gap on 2026-09-01**: the two reds are now **observed** at 3.8990e-09 / 3.7235e-09 against the unloosened 1e-9, one per half, each window footered inside its 600 s ceiling — see the step-3a‴ bullet; the lumped-sheet coil drive is `project_source=False` and out of 3a's reach, see entry)* | standard |
-| `TH-15` | Internal perfect-electric-conductor bodies | 🟡 Open: step 1 of 3 landed with its fitted dipole coefficient, convergence-rate field anchor and natural-cavity control. The later steps' windows and review rulings are in the history file. *History: `docs/planning/chunks/TH-15.md`.* | standard (step 3 heavy) |
+| `TH-15` | Internal perfect-electric-conductor bodies | 🟡 Open: ✅ step 1 (the PEC sphere as a hole against its closed form), 2a and 2d (the two-torus hole route; the gap-displacement port current on the open-circuit anchor, 2026-09-07), 3a (`birdcage_port_domain(as_hole=True)`, the 80 181-cell hole beside the 116 085-cell solid, 2026-09-06) and 3b (`gap_cell_tags`, default unflipped, 2026-09-09). Open: step 2's unitarity gate — eight sub-steps, 2f attributed the 2 % `Z` asymmetry to the point-sampled `_path_voltage`, 2h 🧪 2026-09-09, the `src/` replacement specified but unwritten — and step 3, the birdcage 4×4 as a PEC hole (§10 chain step 4; queued 2026-09-13 10:30 review). *State line refreshed 2026-09-13 10:30 review from the history — the `OPS-46` line was written from a ruling that predated 3a / 2d / 3b. History: `docs/planning/chunks/TH-15.md`.* | standard (step 3 heavy) |
 | `TH-14` | **Surface-impedance (Leontovich) boundary on conductor surfaces** — `n × E = Z_s n × (n × H)`, `Z_s = (1 + j)/(σδ)`, so copper (σ = 5.8e7 S/m) is affordable at any frequency; Jin §1.5.3 (1.54)–(1.56) and §5.8.3 (third-kind boundary term) (operator directive 2026-09-04; the second conductor-model route; **serial on `TH-15`** for the conductor-as-hole mesh and facet tags) | ⬜ | standard (step 3 heavy) |
 | `TH-16` | **Symmetry planes: per-face PEC / PMC on cut faces with port rescaling** — HFSS *Perfect E* / *Perfect H* symmetry; quarter the birdcage, the memory lever for the F-human *refinement* rungs — **feature ladder B2** (operator directive 2026-09-04). *(Re-dated 2026-09-06 weekly: the "62 GiB F-human wall" was `TH-12` step 2's degree-2 figure on the 138 k-cell F-small and the r³ extrapolation; `GEO-25` measured F-human at fixed sizing as **504 642 cells** (exponent 0.84, 112 s to mesh), and the two priced degree-1 solves — `TH-11` step 5's 0.99 M cells at 64 GiB and `PORT-13` step 1's 270 k cells at 5.7 GiB summed RSS — bracket a first F-human 64 MHz degree-1 solve at ≈ 11–33 GiB, inside the 128 GiB box either way. Symmetry planes buy the degree-2 and h-refined F-human rungs, not the first solve; that solve is priced, not gated, by `WF-7` step 0.)* | ⬜ | standard |
 | `TH-17` | **Birdcage eigenmodes** — the `TH-9` eigensolver on the loaded birdcage with a PEC coil (`TH-15`) and `PORT-14`'s capacitor sheets; mode frequencies vs the ladder-network closed form, Phase 6's named first target — **feature ladder B3** (operator directive 2026-09-04; serial on `TH-15`, `PORT-14`) | ⬜ | heavy |
@@ -7510,107 +7510,84 @@ since 2a″), `PORT-14` step 2 (2, 2b–2e; no gate landed) — each carries its
 ruling in §7.
 
 
-Last reviewed **2026-09-12, 18:00 review**. *(The 2026-09-12 10:30 interval
+Last reviewed **2026-09-13, 10:30 review**. *(The 2026-09-12 18:00 interval
 narrative is archived verbatim in `docs/planning/plan-archive.md`.)*
 
-**Interval (10:30 → 18:00): four slots fired and all four did chunk work.
-Items 1–4 of the 10:30 queue are consumed; its item 5 carries as item 2.**
+**Interval (09-12 18:00 → 09-13 10:30, one review interval doubled): the
+03:00 review did not run.** The account session limit ("resets 7:10am")
+killed the 02:15 weekly mid-edit and swallowed the 03:00 review and the
+04:30 / 06:00 slots before they started (launcher logs 117 / 117 / 65 / 65
+bytes). Of the six slots that fired, two did chunk work and consumed the
+whole 18:00 queue under the take-next rule, two stopped on the drained
+queue, two stopped on the stranded weekly diff.
 
 | Slot | Chunk | Outcome |
 |---|---|---|
-| 12:00 | `ANS-4` step 2f (440 s, `-n 8`, runs only) | landed `c7545a5`: the fourth global rung h = 0.0075 at ×0.45 (684 301 cells, 17.0 GiB summed) refits Richardson p = **1.4430 / 1.9062 / 1.4602** against step 2e's 3.2264 / 2.6300 / 3.0608; the two extrapolants differ by 0.99 / 0.29 / 1.23 %; class move 0.0095 → 0.0075 is 0.446 / 0.313 / 0.583 % (step ratio ≈ 0.7, not 0.5). p ≈ 3 did not hold |
-| 13:30 | `PORT-14` step 2e (191 s, `-n 2`) | landed `37fbc85`: configuration D (told widths × 0.989447) at 64 MHz reads C **1.190127e-04** / L **9.581734e-07** — both under `REDUCTION_BAND` 1e-3, printed never asserted — beside an in-window ε = 0 that reproduces step 2's 1.354202e-02 / 5.021261e-04 to 2.8e-07 / 7.6e-08; D is a valid four-port (116 085 cells, reciprocity 1.9e-15, σ_max 0.99976); Γ = 0 misses by ≥ 239× |
-| 15:00 | `ANS-4` step 2g (432 s, `-n 8`, runs only) | landed `76e1ea0`: the global ladder at ×0.35 (394 481 / 524 983 / 693 462 cells, 13.40 GiB) — cumulative-move ratio ×0.35/×0.45 at h = 0.012 **0.92 / 1.69 / 0.58**; S₃₁'s step ratio 1.00 and p 0.24; S_inf apart 0.80 / 0.87 / **14.9 %**. The interaction clause fires; stopped as instructed |
-| 16:30 | `WF-6` step 4k (`mesh-probe`, 29 / 32 / 39 / 38 s, `-n 1`, no solve) | landed `308ea96`: on ×0.0095 the 4j facet ranks 5/29 on edge ratio and R/r, 23/29 on adjacent-tet 3r/R and dihedral, **29/29 on area**, lateral-rim edge, no terminal edge; repeat build hash-identical. Sliver hypothesis refuted on shape |
+| 19:30 | `OPS-46` step 1, `PORT-19` step 6, `OPS-46` step 2 (WF, ANS, PORT), `OPS-46` step 3 (MAG, GEO) — four items in one slot | `a962e78` tooling landed, anchors green, nothing moved; `b260450` `ports:3` 195 s / `ports:13` 43 s green, census exit 0, `PORT-19` stays ✅; `2592c5b` / `efb05ed` / `8404422` and `c96873e` / `ac1b22c` — every anchor green, one commit per family |
+| 21:00 | `OPS-46` step 3 (OPS), step 4 (TH, MAT, POST, EX), re-measurement | `b27e690`; `7abb7f0` / `294603d` / `dfa6377` / `6c0c529`; closure `1f4e706`: plan 927 147 → **806 962 B**, 73 tracked chunk files, leak audit rc 0 — `OPS-46` 🟡 → ✅ with (iii) operator-pending |
+| 22:30, 00:00 | — | queue drained; stopped and journaled |
+| 02:15 weekly | ran on schedule | archive rotation committed (`bf1ea49`), then died on the limit with +566/−18 plan lines uncommitted |
+| 03:00 review, 04:30, 06:00 | — | did not start (session limit) |
+| 07:30 | — | first encounter of the stranded diff, stopped per step 1 (`9ed6195`) |
+| 09:00 | — | second encounter: parked on `recovered/20260913T140010Z`, queue drained, stopped (`ef8dc53`) |
 
-**Operator activity:** one interactive session at 12:11 (`247290d`) measured
-the automation's output (79 chunk-step commits in 7 days, two closures in
-four, steps-per-closure ≈ 15:1) and left four directives above this queue for
-this review to dispose of; disposed below and the block deleted. This review
-ran on `claude-fable-5-1`, no override set
-(`logs/automation/20260912T230001Z_daily-review.log`).
+**Operator activity:** one interactive session (09:48–10:10) landed the
+recovered weekly diff on `main` (`c1d7200`, `63eb49c`), enacted the
+slot-minutes restock floor (`ca524af`), and made the agent-definition edits
+`OPS-46` anchor (iii) waited on plus the five carried one-liners and the
+`implementer.md` footer (`2a0ca4d`, `86bb3e7`) — dashboard items 1 and 7
+close. No `recovered/*` branch remains. This review ran on
+`claude-fable-5-1`, no override
+(`logs/automation/20260913T153001Z_daily-review.log`).
 
-**Tree and branches.** Clean at review start; `fem-em-solver` Up 2 days; no
-`recovered/*`. The four `attempt/*` branches (`TH-15-step2proper`,
-`WF-6-step4b/4c/4e`) are kept, unchanged, on the 2026-09-09 18:00 ruling.
+**Tree and branches.** Clean at review start; `fem-em-solver` Up 2 days;
+the four `attempt/*` branches (`TH-15-step2proper`, `WF-6-step4b/4c/4e`)
+kept unchanged on the 2026-09-09 18:00 ruling; no new attempt, nothing to
+rescope (step 4). The session-limit loss is the second Sunday running for
+the 02:15 weekly (09-06, 09-13) and this time took the 03:00 review and
+two slots with it — an operator matter, on the dashboard.
 
-**Audit (§4).** No row changed to ✅ this interval; nothing to audit and no
-`auditor` spawned. **Example step (§5.4):** no new gate closed, so no example
-chunk opens.
+**Audit (§4).** `OPS-46` ✅ (`1f4e706`) — `auditor` **PASS**, re-cited by
+this review: plan **806 962 B** and **73** chunk files
+(`20260913T020712Z_OPS-46-step4-measure-after.log:34–35`); leak audit
+`leak_audit_rc=0`, Status 0, 17 s
+(`20260913T020720Z_OPS-46-step4-leak-audit.log:34–42`); per-family
+`[anchor] … PASS` gates 15 / 11 / 11 / 45 with 0 FAIL in the TH / MAT /
+POST / EX step-4 logs; `git show --stat 1f4e706` docs-only; smoke tier
+honest (worst window 17 s). **Anchor (iii) exercised here:**
+`plan-navigator` answered a chunk-only question from
+`docs/planning/chunks/OPS-46.md:15` with the citation (the leak-audit log,
+17 s, 73 files), which this review checked against the file directly — the
+corpus edit (`2a0ca4d`) works. Two caveats recorded in the row: anchor
+(iv)'s `< 850 000 B` was a printed `wc -c` compared by hand, not a scripted
+assert (a rider on item 6 below); and the row's "74 rows" is the step-1
+census discrepancy — 73 IDs were listed and moved, `GEO-17` / `ANS-5` are
+over 2 KB but in no list. `PORT-19` step 6 was a regression record under an
+existing ✅, not a status change — no audit. **Example step (§5.4):** `OPS-46`
+gates tooling, not a physics capability; no example chunk opens.
 
-**Operator directives (`247290d`), disposed — all four ACCEPTED.**
-(1) **`OPS-46` accepted and queued as items 1, 3, 4, 5** (tooling first,
-   then the 74 rows over 2 KB in three family groups, then the
-   re-measurement). Two corrections recorded in the §7 row: the two
-   agent-definition edits (`plan-navigator` corpus, `auditor` step 1) are
-   **operator-owned** — `Edit(.claude/**)` sits on the *ask* list in
-   `.claude/settings.json`, which no headless session can answer — so they
-   are a dashboard Waiting-on-you item and anchor (iii) waits on them; and
-   the `>`-blockquote narrative blocks below the tables (`PORT-14`, `TH-15`)
-   are outside the 2 KB-row rule and get measured for a follow-up, not
-   moved.
-(2) **"A slot that finishes early takes the next item" — enacted** in
-   `docs/automation/implementer-run.md` (Timebox + step 2): before minute 30,
-   from a committed clean tree only, stated dependencies honoured, one
-   outcome commit and one journal entry per item. daily-review.md step 6
-   now says to queue more than five when items are short.
-(3) **The four-attempt family cap — enacted** in daily-review.md step 6 and
-   this section's preamble, at the operator's four. Applied now: `WF-6`
-   step 4, `ANS-4` step 2 and `PORT-14` step 2 are frozen, each with a §7
-   ruling that banks its measured result and names the *numbered* step
-   that would move the row (all three are the 2026-09-13 weekly's to
-   scope).
-(4) **Rubric element 7 ("the status its result can move") — enacted** in
-   daily-review.md; every item below states it.
+**§10 assessment (step 5).** No gap: the weekly enumerated the
+tuned-birdcage chain (§10, ten numbered steps) and named five independent
+steps for this queue plus `OPS-47`; nothing is invented here. Row
+housekeeping done in this commit: `TH-15`'s state line refreshed from its
+history (weekly flag 4 — it read "step 1 of 3 landed" against 3a ✅ 09-06,
+2d ✅ 09-07, 3b ✅ 09-09, 2h 🧪 09-09).
 
-**Rulings banked this review.**
-(1) **`ANS-4` steps 2f and 2g accepted; family frozen; the negative banked
-   for the weekly's Larmor verdict.** Re-read
-   `20260912T170105Z_ANS-4-step2f.log:6141–6146` (p 1.4430 / 1.9062 /
-   1.4602) and `20260912T200107Z_ANS-4-step2g.log:6199–6211` (cumulative
-   moves 1.1529 / 1.4174 / 0.8893 % and 1.4722 / 1.6609 / 1.6316 %; p
-   2.3270 / 4.6812 / 0.2363). No degree-1 ladder on this fixture is in a
-   proven asymptotic range on either knob, and the knobs interact in S₃₁;
-   a degree-1 extrapolant is not an h → 0 reference. The 2g slot's
-   `timeout` deviation (600 for the item's 900, to fit the 660 s window)
-   was right and is the rule; the item was mis-sized.
-(2) **`PORT-14` step 2e accepted; family frozen; the question closes
-   positive.** Re-read `20260912T183330Z_PORT-14-step2e.log:3825–3827,
-   :1886, :1893`. A (1 + κ)-corrected width takes both lossless residuals
-   under 1e-3 at 64 MHz on the gate mesh. Registering a κ-*derived* route
-   (128 MHz out-of-sample) is the weekly's numbered step 3, not a 2f.
-(3) **`WF-6` step 4k accepted; family frozen; the field-side reading
-   declined.** Re-read `20260912T213439Z_WF-6-step4k-x0.0095.log:1928–1933`.
-   The ×0.0095 rung is off `LADDER` since 2026-09-09; four slots have
-   diagnosed it without a status they could move. Known-issues entry gains
-   this ruling and stays OPEN as a banked negative.
-(4) **`PORT-19` step 6 carries as item 2**, now with its status line: a red
-   imported assertion demotes the ✅ row.
-
-**For the weekly (2026-09-13 02:15), added:** the Larmor verdict now has
-2f (p in the degree-1 range), 2g (knob interaction) and 2d's converging
-degree-2 sequence as inputs; three frozen families each need a numbered
-next step or a closure — `ANS-4` step 3 (two-knob or degree-2 rung, `xl`
-pricing), `PORT-14` step 3 (κ-derived route), `WF-6` step 5 (×0.0095 back
-on the ladder under rule (f), or the two-rung ladder as the convergence
-statement); `POST-6`'s row is 🟡 while its open item was absorbed by
-`PORT-16` ✅ (plan-navigator staleness flag this review) — audit its
-done-when against `PORT-16`'s logs and close or re-scope; `OPS-46`'s
-operator-owned agent edits; the `-n 2` MUMPS drift's third draw.
+**Restock (step 6).** Nine items, each with its predicted slot-minutes,
+running total **192 of the 240-minute floor — shortfall 48 min**, stated
+rather than filled. What exists and is not queued, and why: `ANS-4` step 3
+(`xl`; cannot run before Thursday 09-17 02:00 — the 09-16 weekly's to copy
+into `xl-queue.env`); `WF-6` 4l, `ANS-4` 2h, `PORT-14` 2f (families frozen);
+`PORT-15` steps 2–3 (serial on item 2 landing); `TH-14` step 1 (serial on
+item 8's facet tags); `TH-17` step 1 (serial on items 2 and 8); the `-n 2`
+MUMPS drift's third draw (no status it can move). A note on the metric, not
+a change to it: items 2–4 and 8 write `src/` or test code and will use most
+of a slot whatever their window minutes say; the directive counts windows,
+and this review does not pad them.
 
 **Residual `main` reds at `-n 2`: 3 deliberate/known**, plus the padding
 module's red at `-n 4` (known-issues, 2026-09-09). The `WF-6` ×0.0095 red is
 opt-in only and is not counted.
-
-**Five items; four of them are one chunk in a stated serial chain.** Item 2
-is independent. Items 3–5 depend on item 1 landing and say so; item 5's
-closure claim also depends on 3 and 4. Under the new take-next rule one slot
-may run items 1, 3, 4 and 5 in sequence. Fewer than five *independent* items
-exist, and this review says so rather than invent one. Not queued, and why:
-`WF-6` 4l, `ANS-4` 2h, `PORT-14` 2f (families frozen); `PORT-15` step 2 (no
-registered 64 MHz record); `TH-5`/`TH-14`/`TH-16`–`TH-18` (unscoped);
-`TH-19` (the weekly's); the `-n 2` MUMPS drift (no gate depends on it). A
-slot that finds nothing takeable **stops and journals**.
 
 **⚠️ Standing constraint on the compose allow — read before editing that
 file.** `docker-compose.yml` line 9 is `- ..:/workspace`, so write access
@@ -7675,239 +7652,395 @@ never widened silently and never on a quantity that was already green.
 (`TH-15` step 2f, `OPS-41`), each re-run only because the executor
 noticed; a log without the readings is a window not spent.
 
-
-
-*(The 10:30 queue's items 1–4 are done: `ANS-4` step 2f `c7545a5`, `PORT-14`
-step 2e `37fbc85`, `ANS-4` step 2g `76e1ea0`, `WF-6` step 4k `308ea96`. Their
-item texts are in `git show d841492` and `docs/testing/attempts.md`. Its
-item 5 carries as item 2 below.)*
+*(The 18:00 queue's five items are done: `OPS-46` steps 1–4 (`a962e78`,
+`2592c5b`/`efb05ed`/`8404422`, `c96873e`/`ac1b22c`/`b27e690`,
+`7abb7f0`/`294603d`/`dfa6377`/`6c0c529`, closure `1f4e706`) and `PORT-19`
+step 6 (`b260450`). Their item texts are in `git show 122f7f7` and
+`docs/testing/attempts.md`.)*
 
 **Every window below that uses §5.1 durable capture copies the idiom
 verbatim, trailing `; exit $rc` included.** Since `OPS-45` the footer honours
 a `[capture] rc=` line only when it is the *last* output line. **Every
-`OPS-46` window runs its script inside the container** (`docker compose exec
+`OPS-47` window runs its script inside the container** (`docker compose exec
 -T fem-em-solver bash -lc 'cd /workspace && python3 scripts/…'` through
-`run_and_log.sh`) — host `python3` is denied.
+`run_and_log.sh`) — host `python3` is denied. **Every pytest window runs
+with `-s`** (rule (g)).
 
-1. **✅ DONE 2026-09-12 19:30 slot (`OPS-46` ⬜ → 🟡; anchors in
-   `20260913T003904Z_OPS-46-step1.log`; journal in attempts.md).**
-   **`OPS-46` step 1 — the tooling, nothing moved: leak-check coverage of
-   `docs/planning/chunks/`, the `chunks` subcommand with its byte-identity
-   refusal, the protocol sentences, and a dry run over the 74 rows**
-   (implementer; docs/tooling only, no `src/`, no test module, no band;
-   either build; smoke; `-n 1`; `main`; independent — first in the chain).
-   **Why:** operator directive (1), ruled in the §7 `OPS-46` row: the plan is
-   1.35 MB, §7 is 85 % of it, and every scheduled session pays that before
-   it works; nothing may move until a byte-identity check and the privacy
-   check both exist for the new path.
-   **The change:**
-   - `scripts/testing/check_private_leak.py`: **read it first** — if the
-     scanned corpus is "tracked files at HEAD plus this commit's diff" with
-     no path filter, the directive's pattern-set edit is unnecessary and the
-     positive control below is the whole proof; if a path glob selects the
-     corpus, add `docs/planning/chunks/**`. Record which in the journal.
-   - `scripts/maintenance/rotate_plan_archive.py` gains a `chunks` subcommand
-     (same file, same zero-loss discipline): spec `=== <ID>` followed by one
-     state line (≤ 2 sentences, written from the row's *last ruling*, no
-     number the row does not already carry); for each ID it finds the single
-     table row `| \`ID\` |`, splits cells on **unescaped** `|` only (the
-     cells carry `\|`), writes `docs/planning/chunks/<ID>.md` as a one-line
-     `# <ID> — <title>` header, a blank line, then the status cell **byte for
-     byte**, and rewrites the cell to `<glyph> <state line> *History:
-     \`docs/planning/chunks/<ID>.md\`.*` with the tier cell untouched. Before
-     it writes the plan it re-reads the chunk file and **refuses (non-zero
-     exit, nothing written) unless the body after the header equals the
-     extracted cell**. `--dry-run` prints ID, glyph, cell bytes and the
-     replacement bytes, and writes nothing.
-   - One sentence each in `implementer-run.md` step 4 (a chunk that has a
-     file gets its narrative appended there; the status flip and the state
-     line stay in the row), `daily-review.md` step 3 (the auditor reads the
-     row plus the file), `weekly-review.md` step 6 (closed chunks' files stay
-     in `docs/planning/chunks/`; the rotation is unchanged — a deliberate
-     simplification of the directive's "existing archive path", recorded),
-     and `AGENTS.md` rule 4 (chunk files are a §7 surface).
-   - **Do not attempt** `.claude/agents/*` — `Edit(.claude/**)` is denied
-     headless; journal the two needed one-liners for the operator instead.
-   **Anchors (asserted, each in a footered harness log):**
-   (a) **Leak-check positive control:** run the script's own positive
-   control with the planted figure placed in a scratch file under
-   `docs/planning/chunks/` — it must exit non-zero naming the file; remove
-   the plant; the script exits 0 on the tree. (b) **Subcommand self-test on
-   a *copy*** of `PROJECT_PLAN.md` under gitignored `logs/`: move `OPS-36`
-   (2 225 B, the smallest row) — the chunk-file body must equal the
-   extracted cell (`cmp` exit 0, byte count equal), and the copy's row must
-   shrink by exactly (cell bytes − replacement bytes); `git diff --stat
-   PROJECT_PLAN.md` is empty (the real plan is untouched). (c) `--dry-run`
-   over the 74 rows lists them with byte totals per family matching this
-   review's census (OPS 20, EX 19, GEO 12, PORT 8, TH 4, ANS 3, MAG 2, MAT 2,
-   POST 2, WF 1; ≈ 552 KB).
-   **Negative control (asserted):** a chunk file with one byte altered after
-   extraction makes the tool refuse — non-zero exit and the plan copy
-   unchanged (`cmp` against its pre-run copy exit 0).
-   **Tier / ranks / cost:** seconds per script run; smoke; `-n 1`, no
-   `mpiexec`. Budget the slot for the code, not the compute.
-   **Traps:** the plan is 1.35 MB — Grep for a row, never Read the file
-   whole; the `WF-6` and `ANS-4` cells carry many `\|`; a row is one line
-   with no newline inside; commit with a literal multi-line `-m`; no pipe in
-   the harness command; `; exit $rc` verbatim if durable capture is used.
-   **Scope:** nothing moved, no row edited by hand, no band, no `src/`.
-   **Status it can move:** `OPS-46` ⬜ → 🟡 (tooling landed, anchors (a)
-   and (b) green). Nothing else.
-   **Negative result:** the positive control is *not* caught under the new
-   path ⇒ stop, known-issues entry, mark items 3–5 BLOCKED in the same
-   commit (no move may proceed); the self-test fails ⇒ fix in-slot (it is
-   tooling) or park on `attempt/*` and mark items 3–5 BLOCKED.
+**Predicted slot-minutes (rubric element 3 + 15 min fixed), running total:**
+item 1 → 19 · item 2 → 44 · item 3 → 65 · item 4 → 88 · item 5 → 111 ·
+item 6 → 127 · item 7 → 143 · item 8 → 166 · item 9 → **192**. Floor 240:
+**shortfall 48 min**, stated, not filled (see the narrative above for what
+exists and why it is not queued). Items 1–6 and 8 are mutually independent;
+item 7 depends on item 6; item 9 is taken only when 1–8 are all done or
+blocked.
 
-2. **✅ DONE 2026-09-12 19:30 slot (both green, census exit 0; `PORT-19`
-   stays ✅; record in the §7 row; journal in attempts.md).**
-   **`PORT-19` step 6 — the two unrun example callers on the reuse-on
-   default: `ports:3` and `ports:13`** (implementer; runs only, through
-   `./run_examples.sh`, no example edit; complex; heavy by measurement for
-   window 1, standard for window 2; `-n 2`; `main`; independent).
-   **Why:** 10:30 ruling (4). Step 2 listed both as unrun on the new default;
-   every other lumped-sheet caller is green (step 4). A regression record
-   under the ✅ row, not a reopening.
-   **Windows:** (1) `./run_examples.sh -e ports:3 -n 2 -t 400` through the
-   harness (the `EX-36` leg-b command, `20260901T170411Z_EX-36-leg-portsans-b.log:12`);
-   (2) `./run_examples.sh -e ports:13 -n 2 -t 300` (`EX-49` ran the inner
-   command directly with `timeout -k 30 590`, `20260905T201151Z_EX-49.log:12`
-   — either entry point); (3) the docrefs census as `EX-53` ran it
-   (`20260907T140926Z_EX-53-census-post.log:12`), gated on `exit != 1`
-   (`exit 2` = staleness is information).
-   **Anchors (asserted by the examples themselves, imported, unmoved):**
-   `ports:3` — cross-route at `f = 0.5` ≤ 5 % (record 1.9222 %), `f = 1.0`
-   reproduces `STEP1_CROSS_ROUTE_RECORD` 7.7431 % at 1e-4, reciprocity ≤ 1e-3
-   (record 2.574296e-11), mesh 184 919 cells
-   (`examples/ports/03_lumped_sheet_port_widths.md:62–67, :87`); `ports:13` —
-   116 085 cells at `STEP2_CELL_COUNT_BAND`, the C4 covariance identity, and
-   `WF-6` step 2's 0.9818 % record at `CG1_RECORD_RTOL` 1e-3
-   (`examples/ports/13_birdcage_asymmetric_drive.md:43–53`).
-   **Negative control (asserted, inside `ports:3`):** control (iii) — `f = 1.0`
-   is asserted to **miss** the 5 % band (7.7431 % > 5 %, guide `:65`).
-   **Printed (rule (e)):** each example's wall time beside its pre-reuse
-   window (228 s / 73 s at `-n 2`; *predicted* lower — the 4-leg fixture's
-   sweep line fell 23.74 → 6.68 s under reuse, `PORT-19` step 2); the census
-   `RESULT:` line.
-   **Tier / ranks / cost:** 228 + 73 s measured pre-reuse at `-n 2`, plus the
-   census (≤ 2 s). ≈ 6 min.
-   **Traps:**
-   - Runner trap (`permission denied … /var/run/docker.sock`): emit with
-     `--dry-run`, run the emitted command verbatim through `run_and_log.sh`
-     and journal the denial.
-   - The allowlist entry is the repo-relative `scripts/testing/run_and_log.sh`;
-     an absolute path is denied.
-   - `paraview_output/` artifacts are gitignored; the census reads them, the
-     commit does not carry them.
-   - No pipe; `timeout -k 30`; foreground; the runner's own `-t` is the
-     container-side timeout.
-   **Scope:** runs only. A red example is a negative result, not a fix in
-   slot; no example, guide, record or band is edited.
-   **Status it can move:** a red imported assertion **demotes `PORT-19`
-   ✅ → 🟡** (its step-4 claim that every caller is green on the reuse
-   default would be false) and opens a known-issues entry naming the example
-   and the assertion; green adds a regression record under the ✅ row and
-   moves nothing.
-   **Negative result:** an imported assertion red on the reuse-on default ⇒
-   the reuse path differs from per-drive on a caller step 4 did not cover:
-   known-issues entry, the demotion above, stop. A wall time not lower than
-   the pre-reuse window is information, printed.
+1. **`WF-6` step 5 — register the two-rung convergence statement and close
+   the F-small B₁⁺ deliverable (the Phase-5 exit item)** (implementer; tests
+   only, `tests/validation/test_birdcage_b1_plus_closed_form.py`; complex;
+   heavy by measurement; `-n 4`; `main`; independent; **19 slot-min**:
+   204 + 34 s windows + 15).
+   **Why:** the 2026-09-13 weekly's Phase-5 exit decision (§10): the 09-09
+   rule fired, subgoal 4's B₁⁺ target is the convergence statement, and this
+   step registers it. Not a 4l — nothing here diagnoses ×0.0095.
+   **The change:** on the default `LADDER` (×1, ×0.012; `ACTIVE_LADDER` and
+   the ×0.0095 opt-in untouched, off), new step-5 tests:
+   **Anchors (asserted):** (i) the ×1 worst-radius four-copy spread of
+   `|B₁⁺|` reproduces **5.2506 %** and the ×0.012 spread **2.0719 %** at
+   rtol 1e-3 — records backed by 4g on the same fixture, statistic and
+   width (`20260909T200431Z_WF-6.log:1982–1994`, 204 s at `-n 4`,
+   test-results row 2026-09-09 20:07:55); (ii) the fall is monotone —
+   `spread(×0.012) < spread(×1)` and `covariance(×0.012) < covariance(×1)`
+   (3.6159 % → 1.6815 %), the identity form; (iii) the existing anchors
+   unchanged — cell counts at `CELL_COUNT_BAND`, covariance ≤ the imported
+   5 %, power residual ≤ the imported 1e-2, cw separation ≥ 5×.
+   **Printed, never asserted (rule (e)):** the interior CV of `|B₁⁺|` on
+   both rungs beside step 4a's filament closed-form CV; the ×1 eleven-point
+   miss against `S₁₁` (the §10 record: ≈ 3.2 % centre, ≈ 5.3 / 7.9 % at
+   0.4R / 0.5R).
+   **Negative control (asserted, by record, already in the module):** the
+   cw-weight spread `RECORDED_CW_SPREAD` 0.951975 against the ccw records —
+   the ≥ 5× separation is the control; no new factor is introduced.
+   **Tier / ranks / cost:** heavy by measurement (204 s at `-n 4`, 4g),
+   `timeout -k 30 1200`, complex build, `tests/environment` first, `-s`.
+   **Traps:** `-n 4` is the record width — the `-n 2` MUMPS drift
+   (known-issues 09-09) shows as a 1e-4-class miss at other widths, and 4g
+   ran at `-n 4`; `RECORDED_X1_WORST_SPREAD` already exists at a 10 %
+   tolerance for the 4h flag-off control — the rtol 1e-3 pair is
+   *additional*, delete or loosen nothing; do not enable the ×0.0095 rung;
+   no pipe.
+   **Same commit:** §2.2's B₁⁺ bullet (the sentences from "Its closed-form
+   gate (step 4, 2026-09-07/08) is still parked" to "says how",
+   `PROJECT_PLAN.md:358–369`) re-worded to the convergence statement in
+   §10's Phase-5-exit words; the §7 `WF-6` row 🟡 → ✅ with a state line
+   written from that statement; known-issues' ×0.0095 entry untouched
+   (banked, OPEN). The §6 row-5 sentence is the weekly's — leave a one-line
+   pointer, do not restructure.
+   **Scope:** a convergence statement on F-small at 10 MHz, CG1; no
+   homogeneity, absolute, C95.3, closed-form-B₁⁺, Larmor or human-scale
+   claim.
+   **Status it can move:** `WF-6` 🟡 → **✅** on the re-scoped target, and
+   §2.2's clause with it.
+   **Negative result:** (i) or (ii) red ⇒ an `OPS-18`-class record drift —
+   known-issues entry with the readings, row stays 🟡, stop; never widen the
+   rtol.
 
-3. **✅ DONE 2026-09-12 19:30 slot (`2592c5b` WF, `efb05ed` ANS,
-   `8404422` PORT; every anchor green; `OPS-46` stays 🟡; journal in
-   attempts.md).** Items 4–5 run the same
-   `scripts/probes/ops46_move_family.sh <FAM> <spec>` per family.
-   **`OPS-46` step 2 — move the WF, ANS and PORT families (12 rows,
-   ≈ 175 KB): `WF-6`; `ANS-1`, `ANS-2`, `ANS-4`; `PORT-9`, `PORT-11`,
-   `PORT-12`, `PORT-13`, `PORT-15`, `PORT-16`, `PORT-18`, `PORT-19`**
-   (implementer; docs only; smoke; `-n 1`; `main`; **depends on item 1
-   landing — if `OPS-46` step 1's commit is not on `main`, do not start
-   this item; stop and journal**).
-   **Why:** the three families with the two largest cells (`WF-6` 43 961 B,
-   `ANS-4` 41 811 B) and the privacy-sensitive one (`ANS-4`), moved first so
-   the leak check is exercised on the hardest case.
-   **The change:** three runs of the `chunks` subcommand, **one commit per
-   family** (`OPS-46 step 2: move the WF family` …), each from a spec whose
-   state lines are written from the row's last ruling and carry no number
-   the row does not already have.
-   **Anchors (asserted, per family, in the journal with the harness log):**
-   (i) for every moved row, `git show HEAD:PROJECT_PLAN.md` at the
-   pre-commit revision's row cell equals the chunk-file body (`cmp` exit 0,
-   done in the container on the extracted text) — the tool's own refusal is
-   the first line of defence, this re-extraction from git is the second;
-   (ii) `check_private_leak.py` exits 0 after each family; (iii) `git diff
-   --stat` on the plan shows exactly one changed line per moved row and only
-   new files elsewhere.
+2. **`PORT-14` step 3 — the κ-derived width route, registered at 64 MHz,
+   out-of-sample at 128 MHz (the tuned-birdcage chain's first step)**
+   (implementer; one additive `src/` opt-in + tests in
+   `tests/validation/test_port_lumped_rlc_termination.py`; complex; heavy by
+   ceiling; `-n 2`; `main`; independent; **25 slot-min**: ≈ 3 × 191 s + 15).
+   **Why:** §10's chain step 1 and the 09-16 weekly's watch condition; the
+   step-2 family is frozen on a positive-but-unregistered reading (2e). The
+   scoped text is the `PORT-14` blockquote's "Step 3 scoped 2026-09-13".
+   **Trap first, it decides the design:** `_exact_shares` lives in
+   `tests/validation/test_birdcage_power_identity.py:313`, not in `src/` —
+   `src/` cannot import `tests/`. Lift the `C/terminal − 1` computation into
+   `src/` (beside `superpose_drives` in `ports/superposition.py`, or a new
+   `ports/shares.py`) and assert **(0)** the lifted function reproduces the
+   test helper on the 4-leg fixture's P1 drive at rtol 1e-12 before
+   anything else.
+   **The change:** an opt-in keyword on the lumped-sheet law (default off)
+   scaling the told width by `(1 + κ)`, **κ computed in-run** from the ε = 0
+   solve's `C/terminal − 1` — never fitted, never a literal.
+   **Anchors (asserted):** (i) the derived κ(64) reproduces 2d's pooled
+   **1.064081e-02** at rtol 1e-3 (`e92e34e`, same fixture); (ii) with the
+   derived width both 64 MHz lossless residuals on the 116 085-cell gate
+   mesh ≤ `REDUCTION_BAND` 1e-3 (2e's fitted-width reading 1.190127e-04 /
+   9.581734e-07, `20260912T183330Z_PORT-14-step2e.log:3825–3827`, fitted
+   width within 3e-4 of the derived one); (iii) `REDUCTION_FLOOR_F_SMALL`
+   at 10 MHz reproduces on the *uncorrected* route, unmoved.
+   **Negative control (asserted, by record):** the uncorrected 64 MHz miss
+   1.354202e-02 / 5.021261e-04 (step 2; 2e reproduced it to 2.8e-07 /
+   7.6e-08, `…step2e.log:1886, :1893`).
+   **Printed, *predicted* under 1e-3, never asserted:** the corrected 10 MHz
+   pair; the 128 MHz pair with its own in-run κ(128) — the out-of-sample
+   reading a review decides on.
+   **Tier / ranks / cost:** heavy by ceiling: 2e's 64 MHz pair (ε = 0 +
+   corrected) was 191 s at `-n 2`; three pairs ≈ 10 min in one or three
+   windows, `timeout -k 30 1200` each, `-s`.
+   **Traps:** default-off so every existing gate is unchanged (rule (c);
+   if the lift touches `test_birdcage_power_identity.py`'s import path,
+   re-run that module green in the same slot, 104 s); `-n 2` is this
+   module's record width — `OPS-41`: the point-sampled `V` carries a 1e-4
+   width sensitivity, never compare a record across widths; no pipe.
+   **Scope:** registers the route at 64 MHz; 128 MHz is a printed reading;
+   no tuning, resonance or `TH-17` claim.
+   **Status it can move:** `PORT-14` 🟡 → **✅** on (0)–(iii) green, with κ
+   carried as the sheet's **named systematic** (09-06 ruling) and `TH-17`
+   barred from gating a mode frequency tighter than it; `PORT-15` gate (i)
+   unblocks (chain step 2, the next review writes it into §7).
+   **Negative result:** (ii) red with the derived width ⇒ the fitted and
+   derived κ differ by more than the residual slope allows — known-issues
+   entry, row stays 🟡, stop, no fit.
+
+3. **`TH-19` step 3 — the two degree-2 power identities on the sheet-driven
+   4-leg birdcage at 10 and 128 MHz** (implementer; tests only, new tests on
+   the pattern of `tests/validation/test_coil_loading_degree2_pair.py`;
+   complex; heavy; `-n 8`; `main`; independent; **21 slot-min**: ≈ 6 min +
+   15).
+   **Why:** the weekly's `TH-19` outcome-(a) ruling (§10): the production
+   order is live again because the `ANS-4` verdict measured the degree-1
+   128 MHz entries 5–7 % from their order-matched value, and the objection
+   has never been tested on the sheet drive, which bypasses the projection
+   (`ports/lumped.py:480–483`) — that bypass is the object under test.
+   **The change:** `run_lumped_sheet_port_case(…, degree=2)` (the driver
+   takes `degree`, `ports/lumped.py:422`), single drive P1, 116 085-cell
+   mesh, 10 and 128 MHz.
+   **Anchors (asserted):** (a) `PORT-16`'s exact discrete power identity
+   `P_src,exact = P_vol + P_sheet,exact` at the imported
+   `DISCRETE_IDENTITY_RTOL` 1e-6 (`test_birdcage_power_identity.py:227`);
+   (b) the reactive identity `Im P_src = 2ω(W_m − W_e)` at the `TH-12`
+   family band, imported from that module, never restated. `W_e / W_m`
+   printed beside degree 1's.
+   **Negative control (asserted):** degree 1 reproduces `PORT-16` step 1's
+   four readings — the same module's own records
+   (`20260907T110826Z_PORT-16.log`, 23 passed, 104 s).
+   **Tier / ranks / cost:** heavy; priced by `ANS-4` 2b — degree 2 on this
+   mesh solved four drives in 178 s at `-n 16` (≈ 16.6 GiB) ⇒ two single
+   drives at `-n 8` ≈ 3–4 min, plus the degree-1 control ≈ 6 min;
+   `timeout -k 30 1200`; print `ru_maxrss` per rank (`OPS-43`); durable
+   capture with `; exit $rc`.
+   **Traps:** do not route the sheet drive through the injector — the
+   untouched bypass is the point; a `SpatialCoordinate`-bearing facet
+   integral on the gmsh mesh needs a pinned `quadrature_degree` (`POST-5`
+   step 1, nine-minute compile); a single drive needs no sweep and no
+   reuse; `-s`.
+   **Scope:** two identities at degree 2 on one fixture; no accuracy claim;
+   no default change in-slot.
+   **Status it can move:** none directly — both green sends the
+   production-order decision to the 09-16 weekly with both fixtures
+   identity-clean; a red identity opens the gauged degree-2 formulation
+   chunk `TH-12` step 3 named and adds the reading to the `TH-13`-era
+   degree-2 known-issues entry. The `TH-19` row records the outcome either
+   way.
+   **Negative result:** report the residuals, known-issues addendum, stop.
+
+4. **`POST-6` step 3 — the 32-port ccw quadrature drive on `PORT-13`'s
+   fixture through `superpose_drives`, gated on C16 invariance of `|B₁⁺|`**
+   (implementer; tests in `tests/validation/test_port_drive_superposition.py`;
+   complex; heavy; `-n 8`; `main`; independent; **23 slot-min**: ≈ 8 min +
+   15).
+   **Why:** the row's re-scoped done-when (weekly 09-13, `auditor`
+   DEMOTE(scope) concurring): step 1's anchors are met, the 09-06 "step 2"
+   is void, and the original 32-port quadrature gate has never run.
+   **The change:** the 32-ring-port high-pass fixture imported from
+   `tests/validation/test_port_birdcage_ring_matrix.py` (never copied), the
+   16-fold ccw quadrature weights through `superpose_drives` at 10 MHz under
+   `PORT-19`'s reuse default.
+   **Anchors (asserted):** (i) C16 invariance of the CG1 `|B₁⁺|` map at the
+   imported `WF-6` 5 % band (the b1_plus module's constant); (ii) the mirror
+   identity; (iii) `PORT-16`'s exact power identity on the superposed field
+   at `DISCRETE_IDENTITY_RTOL` 1e-6.
+   **Negative control:** the cw / mis-paired weights. **Asserted** only on
+   the comparison a record backs — the 4-leg `RECORDED_CW_SPREAD` 0.951975
+   with its ≥ 5× separation; on the 32-port fixture the cw factor is
+   ***predicted*** and printed beside the measured one, never asserted
+   (rule (e)).
+   **Tier / ranks / cost:** heavy; `PORT-13` measured 9–10 s/solve at
+   `-n 8` (windows 271–274 s, test-results 2026-09-04 17:09–17:14) ⇒ 32
+   drives ≈ 6 min with reuse, plus the CG1 projection ≈ 8 min;
+   `timeout -k 30 1200`; durable capture, `; exit $rc`.
+   **Traps:** point samples through `evaluate_vector_field_parallel`, never
+   `f.eval`; `cell_tags.values` is rank-local; the ring-sheet
+   triangulation is two-state under the rotation (`GEO-26` step 3, `EX-45`)
+   — compare at rotated points, never by facet index; `-s`.
+   **Scope:** 10 MHz only; no homogeneity, absolute or Larmor claim; the
+   `WF-6`/`WF-7` re-pointing clause is dropped (weekly).
+   **Status it can move:** `POST-6` 🟡 → **✅** on (i)–(iii) green.
+   **Negative result:** (i) red is a finding on the 32-port fixture's C16 —
+   known-issues entry, row stays 🟡, stop.
+
+5. **`WF-7` step 0 — the F-human cost probe: one single-drive degree-1
+   lumped-sheet solve on the `GEO-25` rung at 64 MHz, memory and time
+   printed** (implementer; a filed probe script
+   `scripts/probes/wf7_step0_f_human_cost.py` on the `OPS-30` survivors'
+   pattern; complex; heavy; `-n 8`; `main`; independent; 🧪 by the §3 rule;
+   **23 slot-min**: predicted 3–8 min + 15).
+   **Why:** §10 2026-09-13: the XXL window of 09-19 cannot be commissioned
+   without a measured memory price at human scale, and §5.1 forbids marking
+   one without it. This number is what the 09-16 weekly reads.
+   **The change:** the F-human fixture from
+   `tests/validation/test_birdcage_f_human_rung.py` (record 504 642 cells,
+   32-ring-port longitudinal layout), 64 MHz, degree 1, one driven sheet +
+   31 terminated through `run_lumped_sheet_port_case`; print cells,
+   unknowns, factorisation time, `ru_maxrss` on every rank and summed
+   (`OPS-43`'s instrumentation).
+   **Anchor (asserted):** the cell record only, at `GEO-25`'s imported band.
+   Everything else is printed.
+   **Negative control:** the *prediction* is the control — 11–33 GiB and
+   3–8 min from the two priced degree-1 points (`TH-11` 0.99 M cells /
+   64 GiB; `PORT-13` 270 k / 5.7 GiB); a reading outside that bracket is the
+   finding, printed.
+   **Tier / ranks / cost:** heavy, `-n 8`, `timeout -k 30 1200`, durable
+   capture with `; exit $rc`; include the `GEO-25` mesh build in the window
+   (its own gate ran ≈ 3.5 min); container memory limit 128 G, so the upper
+   prediction fits.
+   **Traps:** orphan check `pgrep -c python3` inside the container before
+   and after (never `pgrep -f "python3 -m pytest"`); no `f.eval`; one
+   command, one window — if it is killed, check for orphaned ranks before
+   anything else (§5.1).
+   **Scope:** one reading; no physics, no gate, no F-human claim.
+   **Status it can move:** the §7 `WF-7` row ⬜ → **🧪** with the reading as a
+   step-0 line; the 09-16 weekly's XXL commissioning reads it.
+   **Negative result:** OOM or a wedge ⇒ the failure *is* the reading —
+   record it (known-issues), recover the container per known-issues, stop.
+
+6. **`OPS-47` step 1 — the tooling: `chunks` learns blockquote narratives,
+   with the byte-identity refusal, a scripted size assert, and a dry run
+   over the four blocks** (implementer; docs/tooling only, no `src/`, no
+   test module, no band; either build; smoke; `-n 1`; `main`; independent;
+   **16 slot-min**).
+   **Why:** the §7 `OPS-47` row (weekly 09-13): the four `>`-blockquote
+   narratives under open chunks are 4 431 lines = 48 % of the plan, and the
+   archive contract forbids compressing them but not moving them byte for
+   byte.
+   **The change:** extend `scripts/maintenance/rotate_plan_archive.py chunks`
+   per the row — the contiguous `>` block(s) under a §7 family table naming
+   one chunk move verbatim to `docs/planning/chunks/<ID>.md`, appended after
+   the row history, replaced by one pointer line; refuse unless the re-read
+   file span equals the extracted span; never overwrite; `--dry-run`,
+   `--census`. **Rider (auditor caveat on `OPS-46`, 2026-09-13):** anchor
+   (iv)'s `< 850 000 B` was a printed `wc -c` compared by hand — add a
+   scripted size assert to the move script so step 2's re-measurement is an
+   assert, not a reading.
+   **Anchors (asserted, each in a footered harness log):** (a) leak-check
+   positive control — a planted synthetic value in a scratch file under
+   `docs/planning/chunks/` is caught (non-zero, file named), removed, exit 0
+   on the tree; (b) self-test on a *copy* of the plan under gitignored
+   `logs/`: move `POST-6`'s block (157 lines, the smallest) — file span
+   `cmp`-equal to the extracted span, the copy shrinks by exactly (span
+   bytes − pointer bytes), `git diff --stat PROJECT_PLAN.md` empty; (c)
+   `--dry-run` over the four blocks lists them with line counts matching
+   `measure_plan_sections.py --blocks` (`WF-6` 2 295, `TH-15` 1 243,
+   `PORT-14` 736, `POST-6` 157 at the weekly's measurement — re-measure, the
+   weekly's own edits shifted lines).
+   **Negative control (asserted):** one byte altered in the extracted file
+   ⇒ refusal, non-zero, the copy unchanged (`cmp` against its pre-run copy).
+   **Tier / ranks / cost:** seconds per run; smoke; `-n 1`, no `mpiexec`;
+   budget the slot for the code.
+   **Traps:** Grep for a block, never Read the plan whole; the blocks carry
+   nested `>` lines and `\|`; a block may be several contiguous `>`
+   paragraphs separated by bare `>` lines — the span is from the first `>`
+   line naming the chunk to the last `>` line before a non-`>` line; commit
+   with a literal multi-line message via `-F`; no pipe in the harness
+   command.
+   **Scope:** nothing moved on the real plan; no row edited by hand.
+   **Status it can move:** `OPS-47` ⬜ → 🟡 (tooling landed, (a)–(c) green).
+   **Negative result:** the positive control is not caught ⇒ stop,
+   known-issues, mark item 7 BLOCKED in the same commit; the self-test fails
+   ⇒ fix in-slot or park on `attempt/*` and mark item 7 BLOCKED.
+
+7. **`OPS-47` step 2 — move the four blocks, one commit per chunk, and
+   re-measure the plan** (implementer; docs only; smoke; `-n 1`; `main`;
+   **depends on item 6 landing — if `OPS-47` step 1's commit is not on
+   `main`, skip to item 8**; **16 slot-min**).
+   **The change:** `POST-6`, `PORT-14`, `TH-15`, `WF-6` in that order
+   (smallest first), each from a spec whose pointer line names the chunk
+   file; one commit per chunk.
+   **Anchors (asserted, per chunk, in the journal with the harness log):**
+   (i) the moved span re-extracted from git at the pre-commit revision is
+   `cmp`-equal to the chunk-file span; (ii) `check_private_leak.py --audit`
+   exit 0 after each chunk; (iii) plan line count before and after each move
+   via `measure_plan_sections.py`, recorded — and the row says plainly
+   whether the 4 000-line guide is met (*predicted* not met: ≈ 9 200 − 4 431
+   ≈ 4 800 lines; a miss is recorded, never a widened guide); (iv) every §
+   reference in `CLAUDE.md` and `docs/automation/*.md` still resolves
+   (grep each `§N` / `§N.M` against the plan's headings).
    **Negative control (asserted, once, before the first real move):** the
-   tool refuses a spec naming a row that does not exist (non-zero, nothing
-   written).
-   **Tier / ranks / cost:** seconds per run; smoke. Budget the slot for
-   writing 12 state lines honestly.
-   **Traps:** `ANS-4`'s cell contains the sentence about redacted AED gaps —
-   it is prose, not a number, and the leak check is what rules, not a
-   reading; `WF-6`'s cell has `\|` throughout; the §9 items and known-issues
-   entries cite "§7 `WF-6` row" — still valid, the row exists; do not touch
-   the `>`-blockquote narratives under the PORT table (`PORT-14` lives
-   there) — out of scope, measured in item 5.
-   **Scope:** these 12 rows only; no glyph changes; no band.
-   **Status it can move:** none directly — `OPS-46` stays 🟡; a moved row's
-   glyph is unchanged by construction. A failed anchor (i) is what would
-   *stop* the chunk (BLOCKED).
-   **Negative result:** any (i) mismatch ⇒ do not commit that family (or
-   revert its commit), journal the row and the byte offset, mark items 4–5
-   BLOCKED in the same commit, stop. A leak-check non-zero ⇒ the same, and
-   the flagged digits go to the journal by *file and line only*, never
-   quoted.
+   tool refuses a spec naming a chunk with no block.
+   **Tier / ranks / cost:** seconds per run; smoke.
+   **Traps:** items 1–4 above and several known-issues entries cite these
+   blocks by plan line number — after the move a line cite is stale; the
+   journal lists each cite it saw and points it at the chunk file, the
+   review fixes the rest; the `TH-15` block spans the `TH` table's
+   blockquote *and* a `>` "Done-when" paragraph — the span is the whole
+   contiguous block; `WF-6`'s block is 2 295 lines of `\|`.
+   **Scope:** these four blocks only; no glyph, no band.
+   **Status it can move:** `OPS-47` 🟡 → **✅** when (i)–(iv) hold on all four
+   and the guide question is answered in the row.
+   **Negative result:** any (i) mismatch ⇒ do not commit that chunk (or
+   revert), journal the chunk and byte offset, stop.
 
-4. **✅ DONE 2026-09-12 21:00 slot — MAG (`c96873e`, 19:30 slot), GEO
-   (`ac1b22c`, 19:30 slot) and OPS (`b27e690`, 21:00 slot,
-   `20260913T020237Z_OPS-46-step3-OPS.log`, 47 PASS / 0 FAIL) moved, every
-   anchor green; plan → 927 309 B; `OPS-46` stays 🟡, its history now in
-   `docs/planning/chunks/OPS-46.md`; journal in attempts.md.**
-   **`OPS-46` step 3 — move the OPS, GEO and MAG families (34 rows,
-   ≈ 245 KB): `OPS-17`, `OPS-18`, `OPS-26`, `OPS-27`, `OPS-30`–`OPS-34`,
-   `OPS-36`–`OPS-46`; `GEO-19`, `GEO-20`, `GEO-23`–`GEO-32`; `MAG-18`,
-   `MAG-19`** (implementer; docs only; smoke; `-n 1`; `main`; **depends on
-   item 1 landing**, independent of item 3).
-   **Why / change / anchors / negative control / tier / traps:** item 3's,
-   verbatim, one commit per family. `OPS-46`'s own row is in this set: its
-   state line is "in progress, steps 1–3 landed" and its history file then
-   receives step 4's closure note.
-   **Scope:** these 34 rows only.
-   **Status it can move:** none directly (`OPS-46` stays 🟡); a failed
-   anchor blocks the chunk.
-   **Negative result:** item 3's.
+8. **`TH-15` step 3 — the birdcage as a PEC hole: `PORT-9`/`PORT-11`'s three
+   gates at 10 / 64 / 128 MHz on `birdcage_port_domain(as_hole=True)`, plus
+   the lossless power identity** (implementer; `src/` plumbing if needed +
+   tests; complex; heavy; `-n 2`; `main`; independent of items 1–7;
+   **23 slot-min**: predicted 5–8 min + 15).
+   **Why:** §10's chain step 4, "serial on nothing" — the mesh route (3a,
+   80 181-cell hole vs the 116 085-cell solid,
+   `tests/mesh/test_birdcage_conductor_hole.py`) and `gap_cell_tags` (3b)
+   are ✅; the solve on it has never run. Unblocks `TH-14` step 1 (chain
+   step 7) on its facet tags.
+   **The change:** the hole fixture with the phantom present, PEC on the
+   cavity wall `BIRDCAGE_CONDUCTOR_SURFACE_TAG` 401 through
+   `TimeHarmonicProblem.pec_facet_tags` (step 1's hook,
+   `tests/validation/test_pec_sphere_hole.py:20, :207`) — **check first**
+   whether `run_lumped_sheet_port_case` passes `pec_facet_tags` through to
+   the problem; if not, one additive keyword (rule (c): disclosed, the
+   `PORT-9` gate module re-run green in the same slot). Three sweeps under
+   `PORT-19` reuse.
+   **Anchors (asserted, every band imported from the `PORT-9` / `PORT-11`
+   modules):** reciprocity ≤ 1e-3, σ_max ≤ 1, C4 class spreads at the
+   tightened (iii′) 0.5 %, at all three frequencies; plus
+   `Re P_in = ½∫_phantom σ|E|²` to ≤ 1e-3 (all loss is in the phantom by
+   construction).
+   **Negative control (asserted, by record):** the solid route reproduces
+   `PORT-11`'s own 4×4 reproduction records at `-n 2` in the same window —
+   same module, same fixture, same width.
+   **Printed, gated by nothing:** the 4×4 beside the σ = 800 record and
+   `max|ΔS|` per class — the number `TH-14` step 3 brackets; and the
+   natural-cavity control (tag 401 *not* in `pec_facet_tags`), *predicted*
+   to break the power identity as step 1's did.
+   **Tier / ranks / cost:** heavy; `PORT-11`'s sweeps on the solid at `-n 2`
+   were 67 / 179 / 201 s (10 / 64 / 128 MHz); the hole has 0.69× the cells,
+   so three sweeps under reuse are *predicted* 5–8 min; `timeout -k 30 1200`;
+   `-s`; durable capture.
+   **Traps:** `as_hole` requires `port_gap and emit_port_sheet`
+   (`io/mesh.py:1226`) and the 3b default is unflipped — pass what 3a's
+   gate passes; the terminals are surface-only on the hole route (3a: the
+   sheets still touch them) — the sheet-current facet integral must not
+   assume a conductor cell on either side (`PORT-18` measured the normal
+   azimuthal); the N1curl DOFs on tag 401 are Dirichlet (step 1's
+   `_cavity_dofs` pattern); `-n 2` is the record width (`OPS-41`).
+   **Scope:** the birdcage as a PEC hole with its identities; no copper, no
+   Larmor-accuracy or `TH-14` claim; **step 2's `Re Z = 0` two-torus
+   identity is not this item** — the weekly rules whether the parked
+   `attempt/TH-15-step2proper` lands with it or is a record.
+   **Status it can move:** `TH-15` step 3 ✅ as a gated step in the row; the
+   row 🟡 → ✅ only if the weekly's step-2 ruling has landed, otherwise the
+   row stays 🟡 with step 3 recorded ✅.
+   **Negative result:** a red gate on the hole with the solid control green
+   ⇒ a finding on the PEC-hole route (known-issues), stop; a red control ⇒
+   an environment/record drift, `tests/environment` first, stop.
 
-5. **✅ DONE 2026-09-12 21:00 slot (`7abb7f0` TH, `294603d` MAT,
-   `dfa6377` POST, `6c0c529` EX; every anchor green; plan 927 147 →
-   **806 962 B**, under 850 000; final-tree `--audit` leak check exit 0 on
-   73 tracked chunk files; `OPS-46` 🟡 → ✅ with (iii) operator-pending and
-   73 rows moved, not 74 — see the step-1 census; journal in attempts.md).**
-   **`OPS-46` step 4 — move the TH, MAT, POST and EX families (27 rows,
-   ≈ 130 KB): `TH-11`, `TH-12`, `TH-15`, `TH-19`; `MAT-6`, `MAT-8`;
-   `POST-5`, `POST-6`; `EX-24`–`EX-28`, `EX-30`, `EX-36`, `EX-42`–`EX-53` —
-   then the re-measurement and the closure claim** (implementer; docs only;
-   smoke; `-n 1`; `main`; **depends on item 1 landing; the closure claim
-   also depends on items 3 and 4** — if either did not land, do this item's
-   moves and the measurement and hold `OPS-46` at 🟡).
-   **Why / change / anchors / negative control / tier / traps:** item 3's,
-   verbatim, one commit per family (four), plus:
-   **Anchor (iv), asserted:** `wc -c PROJECT_PLAN.md` **< 850 000 B** after
-   the last move, recorded beside the before figure (1 345 612 B at this
-   review) and `scripts/probes/measure_plan_sections.py`'s top-45 before and
-   after — *predicted* ≈ 0.80–0.83 MB (1.35 MB − ≈ 552 KB + 74 replacement
-   cells of ≈ 300 B), which is inside the bound but not by much: **if it
-   lands above 0.85 MB that is a negative result recorded as such, not a
-   widened bound** — the follow-up is the narrative blocks. Also print, for
-   the follow-up, `measure_plan_sections.py --blocks` on `PORT-14`, `TH-15`
-   and any chunk whose `nar` block exceeds 2 KB.
-   **Scope:** these 27 rows; the closure claim.
-   **Status it can move:** `OPS-46` 🟡 → **✅** when (i) held on all 74 rows
-   across items 3–5, (ii) exit 0 on the final tree, (iv) < 0.85 MB, and
-   (iii) is recorded as **operator-pending** (the agent-definition edits) —
-   say so in the closing note; the review audits it. Above 0.85 MB ⇒ stays
-   🟡 with the measurement.
-   **Negative result:** item 3's for the moves; the size bound missed ⇒
-   record, stop.
+9. **Refresh the twelve examples that cross the 14-day census window on
+   2026-09-14 (`th:1`–`8`, `ports:4`–`7`), `EX-30` pattern** (`example-runner`;
+   runs only, through `./run_examples.sh`, no example edit; complex; `-n 2`;
+   `main`; **taken only when items 1–8 are all done or blocked** — the
+   weekly authorised it as a drained-slot leg, not as work; **26 slot-min**:
+   ≈ 11 min of windows + 15).
+   **Windows:** the `EX-36` leg commands verbatim
+   (`20260831T123115Z_EX-36-leg-th-a.log:12`,
+   `20260901T170411Z_EX-36-leg-portsans-b.log:12`), census before and after
+   as `EX-53` ran it, gated on `exit != 1` (`exit 2` = staleness is
+   information; the after-census is *predicted* `stale=0`).
+   **Anchors (asserted by the examples themselves, imported, unmoved):**
+   each example's own assertions; the census `RESULT:` line.
+   **Negative control:** none — a refresh; a red imported assertion is a
+   finding, not a fix in slot.
+   **Tier / ranks / cost:** measured 08-31 / 09-01: `th` legs 27 + 56 s;
+   the `ports`/`ans` legs 141 + 228 + 182 s (superset) ⇒ ≈ 11 min; the
+   runner's `-t` is the container-side timeout; foreground, the spawn
+   prompt states the rule.
+   **Traps:** runner trap (`permission denied … /var/run/docker.sock`) —
+   emit with `--dry-run`, run the emitted command through `run_and_log.sh`,
+   journal the denial; the allowlist entry is the repo-relative
+   `scripts/testing/run_and_log.sh`; `paraview_output/` is gitignored.
+   **Scope:** runs only.
+   **Status it can move:** the corpus census from `exit 2` back to `exit 0`
+   — the state every `EX-*` item's gate reads; no §7 row.
+   **Negative result:** a red imported assertion ⇒ known-issues entry naming
+   the example and the assertion, stop.
 
 *(The per-review journal — slot recap, completion audits, plan-work notes,
 §10 assessment — lives in the review commits and

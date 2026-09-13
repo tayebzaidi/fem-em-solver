@@ -30177,3 +30177,107 @@ and one combined XDMF (the P1-driven field at 128 MHz through the shared
 > self-consistency identities on one fixture, and the AED replication at
 > **both** orders is now the dashboard's Waiting-on-you; adjudication is a
 > weekly review's, on the numbers the operator returns.
+## §9 On-deck interval narrative (2026-09-12 18:00 review) — archived 2026-09-13 (10:30 daily review)
+
+Last reviewed **2026-09-12, 18:00 review**. *(The 2026-09-12 10:30 interval
+narrative is archived verbatim in `docs/planning/plan-archive.md`.)*
+
+**Interval (10:30 → 18:00): four slots fired and all four did chunk work.
+Items 1–4 of the 10:30 queue are consumed; its item 5 carries as item 2.**
+
+| Slot | Chunk | Outcome |
+|---|---|---|
+| 12:00 | `ANS-4` step 2f (440 s, `-n 8`, runs only) | landed `c7545a5`: the fourth global rung h = 0.0075 at ×0.45 (684 301 cells, 17.0 GiB summed) refits Richardson p = **1.4430 / 1.9062 / 1.4602** against step 2e's 3.2264 / 2.6300 / 3.0608; the two extrapolants differ by 0.99 / 0.29 / 1.23 %; class move 0.0095 → 0.0075 is 0.446 / 0.313 / 0.583 % (step ratio ≈ 0.7, not 0.5). p ≈ 3 did not hold |
+| 13:30 | `PORT-14` step 2e (191 s, `-n 2`) | landed `37fbc85`: configuration D (told widths × 0.989447) at 64 MHz reads C **1.190127e-04** / L **9.581734e-07** — both under `REDUCTION_BAND` 1e-3, printed never asserted — beside an in-window ε = 0 that reproduces step 2's 1.354202e-02 / 5.021261e-04 to 2.8e-07 / 7.6e-08; D is a valid four-port (116 085 cells, reciprocity 1.9e-15, σ_max 0.99976); Γ = 0 misses by ≥ 239× |
+| 15:00 | `ANS-4` step 2g (432 s, `-n 8`, runs only) | landed `76e1ea0`: the global ladder at ×0.35 (394 481 / 524 983 / 693 462 cells, 13.40 GiB) — cumulative-move ratio ×0.35/×0.45 at h = 0.012 **0.92 / 1.69 / 0.58**; S₃₁'s step ratio 1.00 and p 0.24; S_inf apart 0.80 / 0.87 / **14.9 %**. The interaction clause fires; stopped as instructed |
+| 16:30 | `WF-6` step 4k (`mesh-probe`, 29 / 32 / 39 / 38 s, `-n 1`, no solve) | landed `308ea96`: on ×0.0095 the 4j facet ranks 5/29 on edge ratio and R/r, 23/29 on adjacent-tet 3r/R and dihedral, **29/29 on area**, lateral-rim edge, no terminal edge; repeat build hash-identical. Sliver hypothesis refuted on shape |
+
+**Operator activity:** one interactive session at 12:11 (`247290d`) measured
+the automation's output (79 chunk-step commits in 7 days, two closures in
+four, steps-per-closure ≈ 15:1) and left four directives above this queue for
+this review to dispose of; disposed below and the block deleted. This review
+ran on `claude-fable-5-1`, no override set
+(`logs/automation/20260912T230001Z_daily-review.log`).
+
+**Tree and branches.** Clean at review start; `fem-em-solver` Up 2 days; no
+`recovered/*`. The four `attempt/*` branches (`TH-15-step2proper`,
+`WF-6-step4b/4c/4e`) are kept, unchanged, on the 2026-09-09 18:00 ruling.
+
+**Audit (§4).** No row changed to ✅ this interval; nothing to audit and no
+`auditor` spawned. **Example step (§5.4):** no new gate closed, so no example
+chunk opens.
+
+**Operator directives (`247290d`), disposed — all four ACCEPTED.**
+(1) **`OPS-46` accepted and queued as items 1, 3, 4, 5** (tooling first,
+   then the 74 rows over 2 KB in three family groups, then the
+   re-measurement). Two corrections recorded in the §7 row: the two
+   agent-definition edits (`plan-navigator` corpus, `auditor` step 1) are
+   **operator-owned** — `Edit(.claude/**)` sits on the *ask* list in
+   `.claude/settings.json`, which no headless session can answer — so they
+   are a dashboard Waiting-on-you item and anchor (iii) waits on them; and
+   the `>`-blockquote narrative blocks below the tables (`PORT-14`, `TH-15`)
+   are outside the 2 KB-row rule and get measured for a follow-up, not
+   moved.
+(2) **"A slot that finishes early takes the next item" — enacted** in
+   `docs/automation/implementer-run.md` (Timebox + step 2): before minute 30,
+   from a committed clean tree only, stated dependencies honoured, one
+   outcome commit and one journal entry per item. daily-review.md step 6
+   now says to queue more than five when items are short.
+(3) **The four-attempt family cap — enacted** in daily-review.md step 6 and
+   this section's preamble, at the operator's four. Applied now: `WF-6`
+   step 4, `ANS-4` step 2 and `PORT-14` step 2 are frozen, each with a §7
+   ruling that banks its measured result and names the *numbered* step
+   that would move the row (all three are the 2026-09-13 weekly's to
+   scope).
+(4) **Rubric element 7 ("the status its result can move") — enacted** in
+   daily-review.md; every item below states it.
+
+**Rulings banked this review.**
+(1) **`ANS-4` steps 2f and 2g accepted; family frozen; the negative banked
+   for the weekly's Larmor verdict.** Re-read
+   `20260912T170105Z_ANS-4-step2f.log:6141–6146` (p 1.4430 / 1.9062 /
+   1.4602) and `20260912T200107Z_ANS-4-step2g.log:6199–6211` (cumulative
+   moves 1.1529 / 1.4174 / 0.8893 % and 1.4722 / 1.6609 / 1.6316 %; p
+   2.3270 / 4.6812 / 0.2363). No degree-1 ladder on this fixture is in a
+   proven asymptotic range on either knob, and the knobs interact in S₃₁;
+   a degree-1 extrapolant is not an h → 0 reference. The 2g slot's
+   `timeout` deviation (600 for the item's 900, to fit the 660 s window)
+   was right and is the rule; the item was mis-sized.
+(2) **`PORT-14` step 2e accepted; family frozen; the question closes
+   positive.** Re-read `20260912T183330Z_PORT-14-step2e.log:3825–3827,
+   :1886, :1893`. A (1 + κ)-corrected width takes both lossless residuals
+   under 1e-3 at 64 MHz on the gate mesh. Registering a κ-*derived* route
+   (128 MHz out-of-sample) is the weekly's numbered step 3, not a 2f.
+(3) **`WF-6` step 4k accepted; family frozen; the field-side reading
+   declined.** Re-read `20260912T213439Z_WF-6-step4k-x0.0095.log:1928–1933`.
+   The ×0.0095 rung is off `LADDER` since 2026-09-09; four slots have
+   diagnosed it without a status they could move. Known-issues entry gains
+   this ruling and stays OPEN as a banked negative.
+(4) **`PORT-19` step 6 carries as item 2**, now with its status line: a red
+   imported assertion demotes the ✅ row.
+
+**For the weekly (2026-09-13 02:15), added:** the Larmor verdict now has
+2f (p in the degree-1 range), 2g (knob interaction) and 2d's converging
+degree-2 sequence as inputs; three frozen families each need a numbered
+next step or a closure — `ANS-4` step 3 (two-knob or degree-2 rung, `xl`
+pricing), `PORT-14` step 3 (κ-derived route), `WF-6` step 5 (×0.0095 back
+on the ladder under rule (f), or the two-rung ladder as the convergence
+statement); `POST-6`'s row is 🟡 while its open item was absorbed by
+`PORT-16` ✅ (plan-navigator staleness flag this review) — audit its
+done-when against `PORT-16`'s logs and close or re-scope; `OPS-46`'s
+operator-owned agent edits; the `-n 2` MUMPS drift's third draw.
+
+**Residual `main` reds at `-n 2`: 3 deliberate/known**, plus the padding
+module's red at `-n 4` (known-issues, 2026-09-09). The `WF-6` ×0.0095 red is
+opt-in only and is not counted.
+
+**Five items; four of them are one chunk in a stated serial chain.** Item 2
+is independent. Items 3–5 depend on item 1 landing and say so; item 5's
+closure claim also depends on 3 and 4. Under the new take-next rule one slot
+may run items 1, 3, 4 and 5 in sequence. Fewer than five *independent* items
+exist, and this review says so rather than invent one. Not queued, and why:
+`WF-6` 4l, `ANS-4` 2h, `PORT-14` 2f (families frozen); `PORT-15` step 2 (no
+registered 64 MHz record); `TH-5`/`TH-14`/`TH-16`–`TH-18` (unscoped);
+`TH-19` (the weekly's); the `-n 2` MUMPS drift (no gate depends on it). A
+slot that finds nothing takeable **stops and journals**.
+
