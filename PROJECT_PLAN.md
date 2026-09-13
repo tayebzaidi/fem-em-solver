@@ -885,7 +885,7 @@ re-deriving a closed step's diagnosis. (The older per-chunk log,
 | `OPS-43` | Long-window robustness: durable capture, orphan-rank cleanup, and per-run memory instrumentation | ✅ Closed at the 2026-09-11 03:00 daily review: durable capture, orphan-rank refusal, per-run memory instrumentation and the solver-progress inertness gate all landed. The tier was corrected to standard, not the evidence. *History: `docs/planning/chunks/OPS-43.md`.* | standard *(re-declared 2026-09-11 03:00 review from *smoke*: measured 6–61 s under 120–180 s wrappers)* |
 | `OPS-44` | Re-pin `COMMITTED_EXAMPLE_ARTIFACTS` to the five artifacts git actually tracks | ✅ Closed 2026-09-09: `COMMITTED_EXAMPLE_ARTIFACTS` is re-pinned to the five artifacts git tracks, and the exemption still means tracked by git rather than anything under `examples/`. *History: `docs/planning/chunks/OPS-44.md`.* | smoke |
 | `OPS-45` | The harness footer must not call a red durable-capture window green | ✅ Closed and audited PASS at the 2026-09-11 18:00 review: the harness footer no longer calls a red durable-capture window green. *History: `docs/planning/chunks/OPS-45.md`.* | smoke |
-| `OPS-46` | Move the heavy §7 chunk histories out of `PROJECT_PLAN.md` | 🟡 In progress, steps 1–3 landed: the move tooling exists and the WF, ANS, PORT, MAG, GEO and OPS families are moved. *History: `docs/planning/chunks/OPS-46.md`.* | smoke |
+| `OPS-46` | Move the heavy §7 chunk histories out of `PROJECT_PLAN.md` | ✅ Closed 2026-09-12 21:00 slot: all 73 listed rows are moved byte for byte with anchors (i), (ii) and (iv) green (plan 806 962 B, under 850 000 B); (iii) is operator-pending. The narrative blocks are the named follow-up, and the review audits the closure. *History: `docs/planning/chunks/OPS-46.md`.* | smoke |
 | `OPS-1` | Executable verification environment (Docker) | ✅ | smoke |
 | `OPS-2` | CI runs the real test suite, not just `tests/unit` | ✅ | standard |
 | `OPS-3` | Deterministic test tolerance policy | ✅ | smoke |
@@ -8328,7 +8328,12 @@ a `[capture] rc=` line only when it is the *last* output line. **Every
    anchor blocks the chunk.
    **Negative result:** item 3's.
 
-5. **`OPS-46` step 4 — move the TH, MAT, POST and EX families (27 rows,
+5. **✅ DONE 2026-09-12 21:00 slot (`7abb7f0` TH, `294603d` MAT,
+   `dfa6377` POST, `6c0c529` EX; every anchor green; plan 927 147 →
+   **806 962 B**, under 850 000; final-tree `--audit` leak check exit 0 on
+   73 tracked chunk files; `OPS-46` 🟡 → ✅ with (iii) operator-pending and
+   73 rows moved, not 74 — see the step-1 census; journal in attempts.md).**
+   **`OPS-46` step 4 — move the TH, MAT, POST and EX families (27 rows,
    ≈ 130 KB): `TH-11`, `TH-12`, `TH-15`, `TH-19`; `MAT-6`, `MAT-8`;
    `POST-5`, `POST-6`; `EX-24`–`EX-28`, `EX-30`, `EX-36`, `EX-42`–`EX-53` —
    then the re-measurement and the closure claim** (implementer; docs only;

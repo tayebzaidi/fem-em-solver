@@ -17929,3 +17929,29 @@ The host `pre-commit` leak hook also passed on all three commits.
 **Status moved:** none (`OPS-46` stays 🟡).
 
 **Hypothesis.** Item 5 is the same script over four families (TH 4, MAT 2, POST 2, EX 19), then anchor (iv). A plan at 927 309 B minus the roughly 130 KB item 5 predicts about 0.80 MB, which is inside < 850 000 B. The `GEO-17` / `ANS-5` question (over 2 048 B, in no list) is still the review's.
+
+## 2026-09-13T02:10Z (2026-09-12 21:00 CDT slot, second item) — `OPS-46` step 4 — **complete: TH, MAT, POST and EX families moved, anchors (i)/(ii)/(iv) green, `OPS-46` 🟡 → ✅ with (iii) operator-pending**
+
+**Preflight.** Item 4's journal commit `1661440` left `git status --porcelain` empty at 21:03:59 CDT, minute 4. Item 5's dependencies were on `main`: item 1 `a962e78` for the moves, and items 3 and 4 (`8404422`, `b27e690`) for the closure claim.
+
+**Tried and landed.**
+- **Before-measurement.** Taken before any move: `20260913T020422Z_OPS-46-step4-measure-before.log`, Status 0, `wc -c` 927 147 B plus the top-45.
+- **Digest.** `logs/ops46/digest_ids.py` (gitignored, a container lookup) printed each row's head, status and tail. Four spec files were written under `logs/ops46/` and each was dry-run. TH, MAT and POST passed first time. EX was **refused** on `EX-24` (digit run `31` absent from the row), the line was reworded, and the re-dry-run passed. Glyph read-back: TH-11 ✅, TH-12 ✅, TH-15 🟡, TH-19 ⬜, MAT-6 ✅, MAT-8 ✅, POST-5 ✅, POST-6 🟡, EX all ✅.
+- **Moves.** One harness window and one commit per family:
+  - TH `20260913T020527Z_OPS-46-step4-TH.log`: 15 PASS / 0 FAIL, 3 s, 927 147 → 898 428 B, commit `7abb7f0` (the before-log rides in it).
+  - MAT `…020555Z_…-MAT.log`: 11 / 0, 3 s, → 889 116 B, commit `294603d`.
+  - POST `…020624Z_…-POST.log`: 11 / 0, 2 s, → 882 390 B, commit `dfa6377`.
+  - EX `…020641Z_…-EX.log`: 45 / 0, 4 s, → 806 962 B, commit `6c0c529`.
+  
+  Every window was Status 0 with `summary: fail=0`; (i) all `cmp` green, (iii) N/N plan lines and N new files, (ii) leak check exit 0 on a scratch index that saw N + 1 paths.
+- **After-measurement.** `20260913T020712Z_OPS-46-step4-measure-after.log`, Status 0: **806 962 B < 850 000 B** (predicted about 0.80 MB in the item and in item 4's hypothesis; met), 73 files in `docs/planning/chunks/`, top-45, and `--blocks PORT-14,TH-15` (`nar` 735 and 1 242 lines).
+- **Final-tree leak audit.** `20260913T020720Z_OPS-46-step4-leak-audit.log`, Status 0, 17 s: HEAD `6c0c529`, `git ls-files docs/planning/chunks` = 73 (not vacuous), `--audit` "clean", rc 0.
+- **Records.** Closure note appended to `docs/planning/chunks/OPS-46.md`; §7 row flipped to ✅ with a new state line; §9 item 5 marked DONE.
+
+**Closure accounting.** (i) held on **73** moved rows (12 + 34 + 27), not the 74 the item text says. §9 items 3–5 list 73 IDs, the step-1 census already recorded the off-by-one, and `GEO-17` / `ANS-5` (over 2 048 B, in no list) were deliberately not moved. (iii) is recorded as operator-pending. The auditor should check that 73 against 74 is acceptable.
+
+**State-line honesty flags for the review.** `OPS-26` (item 4) and `TH-11` / `TH-12` / `MAT-6` (this item) were partly written from §9 and CLAUDE.md context. That was necessary because the rows' closing ruling is buried mid-cell, and the digests showed only heads and tails. The byte-identical history files hold the full text, and a review may sharpen these lines.
+
+**Status moved:** `OPS-46` 🟡 → ✅ (the review audits it).
+
+**Hypothesis.** The next size lever is the `>`-blockquote narrative blocks, not rows. After the moves, the top-45 is led by `WF-6` (158.4 kchars of chunk span), `TH-15` (85.7), `PORT-14` (49.9), `MAT-4` (21.6) and `POST-6` (10.9). A follow-up chunk moving `nar` blocks over 2 KB with the same `cmp` discipline would take the plan well under 0.7 MB. The weekly should scope it, along with `GEO-17` / `ANS-5`.
