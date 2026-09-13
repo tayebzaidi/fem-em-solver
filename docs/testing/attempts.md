@@ -17971,3 +17971,11 @@ The host `pre-commit` leak hook also passed on all three commits.
 **Status moved:** none.
 
 **Hypothesis, for the next review.** Unchanged from the 21:00 entry: the 00:00 and 04:30 slots meet the same empty queue unless the 02:15 weekly or 03:00 daily tops it up; the entry above lists what is queueable without new scoping.
+
+## 2026-09-13T05:00Z (2026-09-13 00:00 CDT slot) — no item — **anchor: On-deck queue still drained, stopped and journaled per §9**
+
+**Found.** Preflight clean at 00:00:06 CDT (HEAD `1e0a109`, the 22:30 slot's drain entry; the only commit since 22:00); `fem-em-solver` Up 2 days; no `recovered/*`, the four `attempt/*` branches unchanged. Re-verified rather than assumed: `grep` of §9 shows On-deck items 1–5 all ✅ DONE (lines 8143, 8212, 8266, 8312, 8331), no item 6, no "obvious next entry" sentence, and line 8367 reads "If the queue drains: **stop and journal.** There is no fallback chunk". No chunk was chosen outside the queue; no compute, no harness log.
+
+**Status moved:** none.
+
+**Hypothesis, for the next review.** Unchanged: the 04:30 slot meets the same empty queue unless the 02:15 weekly or 03:00 daily tops it up. Third consecutive drained slot this night (21:00 post-item, 22:30, 00:00); the 21:00 entry lists what is queueable without new scoping.
