@@ -1,0 +1,86 @@
+# Test Run
+- Chunk: OPS-46-step4-measure-before
+- Commit: 1661440a078c5377f8cd29661de65bac63eceba4
+- Time (UTC): 2026-09-13 02:04:22
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.5.1
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && timeout -k 10 60 bash -c "wc -c PROJECT_PLAN.md && python3 scripts/probes/measure_plan_sections.py PROJECT_PLAN.md"'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 24
+drwxr-xr-x  3 taz5297 taz5297 4096 Sep  4 23:31 .
+drwxr-xr-x 16 taz5297 taz5297 4096 Sep 12 21:04 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  721 Sep  3 13:49 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 4264 Sep 10 12:01 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.5.1
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && timeout -k 10 60 bash -c "wc -c PROJECT_PLAN.md && python3 scripts/probes/measure_plan_sections.py PROJECT_PLAN.md"'\'''
+927147 PROJECT_PLAN.md
+ID       status   lines  kchars  first-last
+WF-6     🟡         2295   158.4  4816-7132
+TH-15    🟡         1243    92.0  1719-3153
+PORT-14  🟡          736    49.9  3896-4679
+MAT-4    E          305    21.6  3282-3593
+POST-6   🟡          158    15.7  3690-3847
+ANS-4    ✅           81     5.8  7592-7767
+MAT-6    ✅           72     8.8  3284-3680
+TH-14    ⬜           71     5.1  1720-3223
+ANS-3    ✅           64     4.1  7591-7687
+OPS-24   ✅           50     3.7  912-982
+MAG-13   ✅           44     3.5  1241-1342
+PORT-5   🧪           41     2.7  3887-4765
+EX-22    ✅           41     4.4  7168-7294
+EX-23    ✅           41     4.3  7169-7254
+TH-12    ✅           38    10.3  1717-1795
+ANS-6    ⬜           38     2.7  7594-7802
+TH-1     ✅           37     2.2  1706-1844
+PORT-12  ✅           37     2.8  3894-3944
+GEO-15   ✅           36     3.4  1419-1570
+GEO-20   ✅           36    14.5  1424-1653
+MAG-6    ✅           33     2.6  1234-1299
+PORT-1   ✅           33     3.1  3883-4725
+OPS-28   ✅           30     3.9  916-1043
+MAG-20   ✅           29     3.6  1248-1398
+OPS-12   ✅           28     1.8  900-1206
+TH-5     ⬜           26     1.8  1710-3248
+OPS-10   ✅           23     1.5  898-1179
+GEO-24   ✅           23     2.8  1428-1460
+TH-8     ✅           23     1.4  1713-1895
+TH-10    ✅           23     2.1  1715-1747
+POST-4   ✅           23     2.4  3688-3875
+WF-9     ⬜           20     1.4  4819-4838
+EX-4     ✅           20     1.3  7150-7313
+EX-31    ✅           18     2.8  7177-7452
+EX-34    Im          18     2.6  7180-7484
+EX-35    ✅           18     2.2  7182-7517
+OPS-11   ✅           17     1.1  899-1157
+OPS-26   ✅           17     1.4  914-998
+OPS-27   ✅           17     1.6  915-1014
+GEO-17   ✅           17     3.8  1421-1595
+GEO-19   ✅           17     2.5  1423-1618
+GEO-21   ✅           17     3.5  1425-1669
+GEO-22   ✅           17     3.9  1426-1685
+GEO-23   ✅           17     2.5  1427-1701
+TH-13    ✅           17     2.6  1718-1911
+§7 lines 6941 chunks 218
+
+## Exit
+- Status: 0
+- Elapsed (s): 1
+- Filtered lines (gmsh optimisation chatter): 0
