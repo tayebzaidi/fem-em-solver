@@ -74,6 +74,17 @@ If the prompt names none, or more than one, stop and say so.
 - If blocked: record what you learned in the chunk's §7 entry (status 🚫 with
   the blocker named), commit that, and stop. Your final report is not durable —
   anything worth keeping goes in the repo.
+- If you park the item on `attempt/*`, or otherwise leave it neither done nor
+  runnable: mark the §9 item BLOCKED with its unblock condition in the
+  **same** commit as the record (§9 standing rule (d)) — the next slot reads
+  §9 first, and an unmarked item costs it ten minutes.
+- A pre-registered negative-control factor that fails and carries no
+  *asserted* / *predicted* label is a negative result to report, not a call
+  to make in-slot (§9 standing rule (e), `EX-49`, `MAT-6` step 11).
 - No-op guard (§5.2): if your cycle produced only documentation edits and
   executed no verification command, stop and escalate instead of committing an
   audit note.
+
+Last verified against: OPS-46 steps 1–4 (four items in one slot under
+take-next, 2026-09-12 19:30), PORT-19 step 5 (the `-n 1` re-anchor), PORT-14
+step 2e — 2026-09-13.

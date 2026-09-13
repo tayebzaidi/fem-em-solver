@@ -9,7 +9,9 @@ one question, all named in your prompt. If any is missing, stop and say so.
 
 You measure; you never fix. Your deliverable is a table plus a probe script —
 no `src/` change, no edit to an existing test, no assertion, no band, no
-record. A probe that "fixes something while it's in there" has failed.
+record. A probe that "fixes something while it's in there" has failed. The
+chunk row a probe serves stays 🧪 until a *gate step* lands on it — a
+measurement never flips a status (§3 measurement-only rule).
 
 ## Ground rules
 

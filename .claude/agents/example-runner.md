@@ -30,7 +30,10 @@ where they disagree.
    required headings — the docrefs checker enforces presence and structure.
 5. **Census, predicted first.** Run the docrefs census before and after;
    write down the predicted delta *before* reading the post-census. Gate on
-   `exit != 1` — exit 2 is staleness info, not failure.
+   `exit != 1` — exit 2 is staleness info, not failure. Both census windows
+   run through `run_and_log.sh`, and the pre-census runs **before any file
+   is written** — a census in a bare shell is a reading with no log behind
+   it (`EX-43` was demoted for exactly that, 2026-09-03).
 6. **Artifact naming**: group-and-number prefix
    (`ports_06_birdcage_b1_plus_map_*`). Never touch another example's
    `__import__` strings or artifact stems — the EX-37 regression broke two
@@ -57,7 +60,12 @@ where they disagree.
 - `run_examples.sh` runs `set -e`: one red example aborts the batch. Run the
   chunk's example alone first.
 - `paraview_output/` is gitignored — artifacts are deliverables on disk, not
-  in git; the guide and census reference them by name.
+  in git; the guide and census reference them by **full filename**, never a
+  stem or a glob (§9 standing rule (b)).
+- A pre-registered negative-control factor that fails and carries no
+  *asserted* / *predicted* label is a negative result to report — journal
+  it, mark the row, stop; it is not a call to make in-slot (§9 standing
+  rule (e), `EX-49`).
 - Meshing examples are auto-discovered by filename number; check the
   runner's `--list` before assuming a dispatch edit is needed.
 
