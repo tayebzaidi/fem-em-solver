@@ -17900,3 +17900,17 @@ The host `pre-commit` leak hook also passed on all three commits.
 **Status moved:** none (`OPS-46` stays 🟡).
 
 **Hypothesis.** Items 4 and 5 are the same script with no change: `bash scripts/probes/ops46_move_family.sh <FAM> <spec>`, one harness window and one commit per family. Their cost is reading row tails for honest state lines, about a minute a row. Item 4's 34 rows are more than a half-slot. Item 5's census reading: `GEO-17` and `ANS-5` are also over 2 048 B on the current plan and are in no list (step 1 entry). The review decides whether they move.
+
+## 2026-09-13T00:56Z (2026-09-12 19:30 CDT slot, fourth item) — `OPS-46` step 3 — **incomplete (by choice, not blocked): MAG and GEO families moved with every anchor green; the OPS family (20 rows) is left for the next slot**
+
+**Preflight.** Item 3's journal commit `a0df478` left the tree clean at 19:52:54 CDT, minute 23 of the slot. Item 4's dependency (item 1, `a962e78`) is on `main`, so the item was taken.
+
+**Tried and landed.** The same `scripts/probes/ops46_move_family.sh` was used, one harness window and one commit per family. State lines were written from each row's tail. GEO rows were mapped to their tails by line number, and the glyphs were checked against the step-1 census.
+- **MAG** (`MAG-18`, `MAG-19`): `20260913T005401Z_OPS-46-step3-MAG.log`, Status 0. (i) both `cmp` green, (iii) 2/2 plan lines and 2 new files, (ii) leak check exit 0. Plan 1166593 → 1160872 B. Commit `c96873e`.
+- **GEO** (`GEO-19`, `-20`, `-23`–`-32`): `20260913T005431Z_OPS-46-step3-GEO.log`, Status 0, 31 anchors PASS and 0 FAIL. Plan → 1064162 B. Commit `ac1b22c`. `GEO-17` is over 2 048 B but is not in the §9 list, so it was not moved.
+
+**Not done: the OPS family** (`OPS-17`, `-18`, `-26`, `-27`, `-30`–`-34`, `-36`–`-46`). At minute 25 the row tails in hand were mostly audit re-traces. Twenty honest state lines need each row's last *ruling*, not its last audit sentence, and that did not fit before minute 45. It was stopped rather than written thin. Nothing is parked, and there is no branch: the two landed families are complete commits, which the item allows (one commit per family). §9 item 4 is marked PARTLY DONE with the remainder runnable.
+
+**Status moved:** none (`OPS-46` stays 🟡).
+
+**Hypothesis.** The OPS family is one slot's work with no tooling change. For each row, read the head of its status cell (where the ✅ note sits) plus its tail, write the spec, then do one harness window and one commit. `OPS-46`'s own line is "in progress, steps 1–3 landed". Item 5 (TH/MAT/POST/EX plus the size bound) is still independent of the OPS remainder for its moves. Its closure claim needs item 4 finished. The plan is now at 1 064 162 B, so the < 850 000 B bound looks reachable once all families are moved.
