@@ -17838,3 +17838,34 @@ All three reds were parser defects in the census dry run. The self-test, the neg
 **Records (this commit):** the tool, the anchor script, four logs, test-results rows, the four protocol sentences, the §7 `OPS-46` row (🟡, with the step-1 record) and §9 item 1 DONE. No `src/`, no test, no band.
 
 **Hypothesis.** Items 3–5 are mechanical now. The slot's real cost is writing honest state lines (the tool refuses any digit the row lacks). They also need the container leak check run with the safe.directory env, or it proves nothing.
+
+## 2026-09-13T00:47Z (2026-09-12 19:30 CDT slot, second item) — `PORT-19` step 6 — **complete (regression record, moves nothing): `ports:3` and `ports:13` are green on the reuse-on default; census exit 0**
+
+**Preflight.** Item 1 (`OPS-46` step 1) was committed as `a962e78`. At 19:40 CDT (minute 10) `git status --porcelain` was empty, so §9 item 2 was taken under step 2's take-next rule. The item is independent.
+
+**Tried.** Both commands were emitted with `./scripts/run_examples.sh … --dry-run` and run verbatim through the harness, foreground, one after the other. No example, guide, record or band was edited.
+
+**Logs.**
+- `20260913T004104Z_PORT-19-step6-ports3.log`: `-n 2`, `timeout -k 30 400`. Status 0, 195 s, `All gates hold` (`:1013–1017`).
+- `20260913T004444Z_PORT-19-step6-ports13.log`: `-n 2`, `timeout -k 30 300`. Status 0, 43 s, `All gates hold` (`:1886–1890`).
+- `20260913T004551Z_PORT-19-step6-census.log`: `RESULT: dead=0 guide=0 stale=0 stale_severity=report exit=0` (`:39`), 1 s.
+
+**Anchors (asserted by the examples, imported):**
+- **`ports:3`:**
+  - Cross-route at f = 0.5 is 1.9222 % against the 5 % band. f = 1.0 reproduces 7.7431 % and is asserted to MISS; that is negative control (iii), which held (`:970, :973`).
+  - Reciprocity is 2.047420e-07 against 1e-3 (`:998`).
+  - The mesh has 184 176 cells, gap volume 1.000000000000 (`:956`).
+- **`ports:13`:**
+  - 116 085 cells at record.
+  - Power residuals P1–P4 are 9.795751e-03 / 9.796209e-03 / 9.794985e-03 / 9.795283e-03, with P1 at record.
+  - Linearity reads 0.000e+00 on both the field and the currents.
+  - Quad C4 is 0.9818 % at record (`:1866–1875`).
+- **Control, printed.** The linear drive reads 9.8768 % = 1.9754× the band (`:1877`), the same margin known-issues records for `EX-49`.
+
+**Printed (rule (e)).** Wall times were lower than before reuse, as predicted: 195 s vs 228 s, and 43 s vs 73 s.
+
+**One reading, not a regression.** The item's quoted `ports:3` records came from the 2026-08-18 guide: 184 919 cells and reciprocity 2.574296e-11. The pre-reuse `EX-36` leg-b run (`20260901T170411Z_EX-36-leg-portsans-b.log`, 0.11 image, per-drive) already read 184 176 cells and 2.047415e-07. Both differences therefore predate the reuse default; reuse reproduces per-drive reciprocity to ≈ 2e-6 relative. The guide's own records table still carries the old figures. That is a doc staleness for an example chunk to reconcile, not this item's to edit (scope: no guide edit).
+
+**Status moved:** none — `PORT-19` stays ✅, and the regression record sits in its §7 row.
+
+**Hypothesis.** None needed for `PORT-19`. A future `EX-*`/`record-reconciler` pass should re-record `examples/ports/03_lumped_sheet_port_widths.md`'s cell count and reciprocity row from the 0.11 image.
