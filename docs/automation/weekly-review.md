@@ -143,7 +143,11 @@ mitigations.
    docs/automation/*.md must still resolve. Same treatment for
    `docs/testing/attempts.md`: entries older than 14 days move verbatim
    to `docs/testing/attempts-archive.md` (create it with a one-paragraph
-   preamble mirroring plan-archive.md's on first use).
+   preamble mirroring plan-archive.md's on first use). A §7 row whose
+   history already moved to `docs/planning/chunks/<ID>.md` (`OPS-46`,
+   `rotate_plan_archive.py chunks`) keeps that file where it is when the
+   chunk closes — closed chunks' files are not rotated into
+   `plan-archive.md`; this rotation is otherwise unchanged.
 
    **Commit-first checkpoint (added 2026-08-30).** Do the rotation
    **before** any other edit in this session and commit it on its own as

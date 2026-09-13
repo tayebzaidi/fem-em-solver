@@ -157,7 +157,10 @@ never invent an XL run yourself.
    - **Complete** (§4-done: verification executed, quantitative assertion,
      harness log + elapsed time recorded): commit code + tests + logs +
      §7 status flip together on `main`, marking the On-deck item done in the
-     same commit.
+     same commit. A chunk whose §7 row points to a history file
+     (`docs/planning/chunks/<ID>.md`, `OPS-46`) gets its step narrative
+     appended to that file; the status flip and the ≤ 2-sentence state line
+     stay in the row.
    - **Incomplete** (out of time, or blocked): park ALL code changes on a
      branch `attempt/<CHUNK-ID>-<UTC-timestamp>` (commit there, return to a
      clean `main`). On `main`, commit only the attempts.md entry plus any §7

@@ -42,7 +42,9 @@ things that will otherwise bite.
    §9 On-deck queue. The weekly review owns §1, §6, §10, examples health and
    Ansys commissioning, and **never edits §9**. An implementer edits the row
    for its own chunk. Writing outside your role's section silently undoes
-   someone else's reasoning.
+   someone else's reasoning. A chunk's history file under
+   `docs/planning/chunks/<ID>.md` is part of its §7 row and carries the same
+   ownership (and the same no-Ansys-numbers rule).
 
 ## What a review role may and may not do
 

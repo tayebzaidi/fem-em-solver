@@ -60,7 +60,9 @@ are yours.
    executed by the agent itself, is at least one assertion quantitative
    (closed form / convergence rate / conservation, reciprocity, or symmetry
    identity), is elapsed time recorded? Demote anything non-compliant to 🧪
-   with a dated note. Do not re-run anything. Delegate each audit to the
+   with a dated note. Do not re-run anything. A chunk's evidence is its §7
+   row **plus** its history file `docs/planning/chunks/<ID>.md` when the row
+   points to one (`OPS-46`); the auditor reads both. Delegate each audit to the
    `auditor` agent; treat its DEMOTE/PASS as evidence and re-cite its
    log:line evidence yourself in the review commit. Through 2026-09-03:
    re-verify one cited claim per agent report (a random digit trace) before

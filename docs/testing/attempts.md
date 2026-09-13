@@ -17799,3 +17799,42 @@ The executor's report said the last three windows ran at the same time. The log 
 **Records (this commit):** the probe, four logs, four test-results rows, the §7 `WF-6` step 4k record, a known-issues reading row, and §9 item 4 DONE. No `src/`, no existing test, no band.
 
 **Hypothesis.** The shared feature across rungs is size and position, not shape: the top-variance facet is the sheet's largest (or near-largest) mid-gap facet on the lateral rim of a sheet only ≈ 3.5 facets wide. A degree-1 N1curl trace on one large rim facet cannot follow the strip-edge field, so its in-plane component carries the error. The next reading is field-side: the tangential trace on that facet's adjacent cells, or the same probe with the sheet narrowing refined so the rim facet shrinks. A review scopes it.
+
+## 2026-09-13T00:42Z (2026-09-12 19:30 CDT slot) — `OPS-46` step 1 — **complete (tooling, nothing moved): `rotate_plan_archive.py chunks` with byte-identity refusal, all anchors and both negative controls green; `OPS-46` ⬜ → 🟡**
+
+**Preflight.** Tree clean at 19:30:05 CDT; `fem-em-solver` Up 2 days. §9 item 1 taken. Executed in-session (docs/tooling, no compute), following implementer.md.
+
+**Tried.**
+- `scripts/maintenance/rotate_plan_archive.py` gained a `chunks` subcommand. It takes a spec of `=== <ID>` plus one state line, with `--dry-run` and `--census [--min-bytes]`. The state line is refused if it runs past two sentences, contains an unescaped `|`, or carries a digit run the row lacks. An existing chunk file is compared, never overwritten.
+- `scripts/probes/ops46_step1_anchors.sh` (tracked) runs every anchor in one container window.
+- The four protocol sentences went in: implementer-run.md step 4, daily-review.md step 3, weekly-review.md step 6, AGENTS.md rule 4. `.claude/agents/*` was not attempted, per the item.
+
+**Logs.**
+- `20260913T003345Z_OPS-46-step1-census.log` — Status 1. The first parser split cells from the left; 27 of 75 rows were unparseable.
+- `20260913T003716Z_OPS-46-step1.log` — Status 1. `c-census-all-parse` was red on MAG-18/19: they sit under the 5-column `Result` header with no Result cell.
+- `20260913T003819Z_OPS-46-step1.log` — Status 1. MAG-18's title head carries a code span with bare pipes.
+- `20260913T003904Z_OPS-46-step1.log` — **Status 0, 20 s, smoke, no `mpiexec`.** This is the gating log.
+
+All three reds were parser defects in the census dry run. The self-test, the negative controls and the leak anchors were green in every run. No assertion was changed; the parser was fixed.
+
+**Anchors (asserted, `…003904Z` log):**
+- **(b) Self-test.** `OPS-36` moved on a copy under `logs/`. The chunk body equals an independent Python re-extraction of the row (`cmp` 0, 2212 B each). The copy shrank by exactly cell − replacement (2212 − 229 B). `git diff --stat PROJECT_PLAN.md` was empty.
+- **Negative control 1.** One chunk-file byte altered: refused, exit 1, first difference named, plan copy `cmp` 0.
+- **Negative control 2.** A spec naming `OPS-999`: refused, exit 1, nothing written.
+- **(a) Leak check.**
+  - A synthetic secret (a made-up 13-digit value, not an AED figure) went under a scratch `aed_results/`. A plant file under `docs/planning/chunks/` was staged into a *throwaway* index and object directory under `logs/`, so the real `.git` was never written as root.
+  - The check exited 1 and named the plant file.
+  - After cleanup it exited 0 in hook mode and in `--audit` mode.
+- **(c) Census.** 75 rows over 2 048 B, 0 unparseable, and the plan was unchanged.
+
+**Readings for the review and items 3–5:**
+1. **No leak-check edit was needed.** `check_private_leak.py` has no path glob: its corpus is the staged diff, or every tracked file under `--audit`.
+2. **The moved span is Title + Status.** §7 rows are `ID | Title | Status | Tier`, and the history sits mainly in the **Title** cell (`OPS-36`, `WF-6`, `OPS-46`) — `TH-15` is the case with it in Status. The tool therefore moves the span from the ID cell's end to the Tier cell's start, byte for byte, and not the "status cell" alone as the item worded it. The Tier cell is counted from the right, because bare pipes occur inside code spans.
+3. **Census vs the review.** The review said 74 rows, GEO 12, ANS 3. On the current plan the census adds `GEO-17` and `ANS-5`, which the §9 lists do not name, and misses none of the 73 listed IDs. Items 3–5 move only their listed rows; whether the two extras move is the review's call.
+4. **Trap: leak check in the container.** Container `git` refuses `/workspace` as "dubious ownership", and `check_private_leak.py` swallows git errors into "nothing staged". Run in the container without `GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=safe.directory GIT_CONFIG_VALUE_0=/workspace`, it passed the plant with exit 0. That is printed in the log, not asserted. Items 3–5's "leak check exits 0" must set that env, or be read from the host `pre-commit` hook. The hook runs on the host and is unaffected.
+
+**Operator-pending (dashboard).** Two one-line edits are still needed: `plan-navigator`'s corpus gains `docs/planning/chunks/`, and `auditor` step 1 reads the row plus `docs/planning/chunks/<ID>.md` when the row points to one.
+
+**Records (this commit):** the tool, the anchor script, four logs, test-results rows, the four protocol sentences, the §7 `OPS-46` row (🟡, with the step-1 record) and §9 item 1 DONE. No `src/`, no test, no band.
+
+**Hypothesis.** Items 3–5 are mechanical now. The slot's real cost is writing honest state lines (the tool refuses any digit the row lacks). They also need the container leak check run with the safe.directory env, or it proves nothing.
