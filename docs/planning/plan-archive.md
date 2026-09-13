@@ -30281,3 +30281,84 @@ registered 64 MHz record); `TH-5`/`TH-14`/`TH-16`–`TH-18` (unscoped);
 `TH-19` (the weekly's); the `-n 2` MUMPS drift (no gate depends on it). A
 slot that finds nothing takeable **stops and journals**.
 
+
+## §9 On-deck interval narrative (2026-09-13 10:30 review) — archived 2026-09-13 (18:00 daily review)
+
+Last reviewed **2026-09-13, 10:30 review**. *(The 2026-09-12 18:00 interval
+narrative is archived verbatim in `docs/planning/plan-archive.md`.)*
+
+**Interval (09-12 18:00 → 09-13 10:30, one review interval doubled): the
+03:00 review did not run.** The account session limit ("resets 7:10am")
+killed the 02:15 weekly mid-edit and swallowed the 03:00 review and the
+04:30 / 06:00 slots before they started (launcher logs 117 / 117 / 65 / 65
+bytes). Of the six slots that fired, two did chunk work and consumed the
+whole 18:00 queue under the take-next rule, two stopped on the drained
+queue, two stopped on the stranded weekly diff.
+
+| Slot | Chunk | Outcome |
+|---|---|---|
+| 19:30 | `OPS-46` step 1, `PORT-19` step 6, `OPS-46` step 2 (WF, ANS, PORT), `OPS-46` step 3 (MAG, GEO) — four items in one slot | `a962e78` tooling landed, anchors green, nothing moved; `b260450` `ports:3` 195 s / `ports:13` 43 s green, census exit 0, `PORT-19` stays ✅; `2592c5b` / `efb05ed` / `8404422` and `c96873e` / `ac1b22c` — every anchor green, one commit per family |
+| 21:00 | `OPS-46` step 3 (OPS), step 4 (TH, MAT, POST, EX), re-measurement | `b27e690`; `7abb7f0` / `294603d` / `dfa6377` / `6c0c529`; closure `1f4e706`: plan 927 147 → **806 962 B**, 73 tracked chunk files, leak audit rc 0 — `OPS-46` 🟡 → ✅ with (iii) operator-pending |
+| 22:30, 00:00 | — | queue drained; stopped and journaled |
+| 02:15 weekly | ran on schedule | archive rotation committed (`bf1ea49`), then died on the limit with +566/−18 plan lines uncommitted |
+| 03:00 review, 04:30, 06:00 | — | did not start (session limit) |
+| 07:30 | — | first encounter of the stranded diff, stopped per step 1 (`9ed6195`) |
+| 09:00 | — | second encounter: parked on `recovered/20260913T140010Z`, queue drained, stopped (`ef8dc53`) |
+
+**Operator activity:** one interactive session (09:48–10:10) landed the
+recovered weekly diff on `main` (`c1d7200`, `63eb49c`), enacted the
+slot-minutes restock floor (`ca524af`), and made the agent-definition edits
+`OPS-46` anchor (iii) waited on plus the five carried one-liners and the
+`implementer.md` footer (`2a0ca4d`, `86bb3e7`) — dashboard items 1 and 7
+close. No `recovered/*` branch remains. This review ran on
+`claude-fable-5-1`, no override
+(`logs/automation/20260913T153001Z_daily-review.log`).
+
+**Tree and branches.** Clean at review start; `fem-em-solver` Up 2 days;
+the four `attempt/*` branches (`TH-15-step2proper`, `WF-6-step4b/4c/4e`)
+kept unchanged on the 2026-09-09 18:00 ruling; no new attempt, nothing to
+rescope (step 4). The session-limit loss is the second Sunday running for
+the 02:15 weekly (09-06, 09-13) and this time took the 03:00 review and
+two slots with it — an operator matter, on the dashboard.
+
+**Audit (§4).** `OPS-46` ✅ (`1f4e706`) — `auditor` **PASS**, re-cited by
+this review: plan **806 962 B** and **73** chunk files
+(`20260913T020712Z_OPS-46-step4-measure-after.log:34–35`); leak audit
+`leak_audit_rc=0`, Status 0, 17 s
+(`20260913T020720Z_OPS-46-step4-leak-audit.log:34–42`); per-family
+`[anchor] … PASS` gates 15 / 11 / 11 / 45 with 0 FAIL in the TH / MAT /
+POST / EX step-4 logs; `git show --stat 1f4e706` docs-only; smoke tier
+honest (worst window 17 s). **Anchor (iii) exercised here:**
+`plan-navigator` answered a chunk-only question from
+`docs/planning/chunks/OPS-46.md:15` with the citation (the leak-audit log,
+17 s, 73 files), which this review checked against the file directly — the
+corpus edit (`2a0ca4d`) works. Two caveats recorded in the row: anchor
+(iv)'s `< 850 000 B` was a printed `wc -c` compared by hand, not a scripted
+assert (a rider on item 6 below); and the row's "74 rows" is the step-1
+census discrepancy — 73 IDs were listed and moved, `GEO-17` / `ANS-5` are
+over 2 KB but in no list. `PORT-19` step 6 was a regression record under an
+existing ✅, not a status change — no audit. **Example step (§5.4):** `OPS-46`
+gates tooling, not a physics capability; no example chunk opens.
+
+**§10 assessment (step 5).** No gap: the weekly enumerated the
+tuned-birdcage chain (§10, ten numbered steps) and named five independent
+steps for this queue plus `OPS-47`; nothing is invented here. Row
+housekeeping done in this commit: `TH-15`'s state line refreshed from its
+history (weekly flag 4 — it read "step 1 of 3 landed" against 3a ✅ 09-06,
+2d ✅ 09-07, 3b ✅ 09-09, 2h 🧪 09-09).
+
+**Restock (step 6).** Nine items, each with its predicted slot-minutes,
+running total **192 of the 240-minute floor — shortfall 48 min**, stated
+rather than filled. What exists and is not queued, and why: `ANS-4` step 3
+(`xl`; cannot run before Thursday 09-17 02:00 — the 09-16 weekly's to copy
+into `xl-queue.env`); `WF-6` 4l, `ANS-4` 2h, `PORT-14` 2f (families frozen);
+`PORT-15` steps 2–3 (serial on item 2 landing); `TH-14` step 1 (serial on
+item 8's facet tags); `TH-17` step 1 (serial on items 2 and 8); the `-n 2`
+MUMPS drift's third draw (no status it can move). A note on the metric, not
+a change to it: items 2–4 and 8 write `src/` or test code and will use most
+of a slot whatever their window minutes say; the directive counts windows,
+and this review does not pad them.
+
+**Residual `main` reds at `-n 2`: 3 deliberate/known**, plus the padding
+module's red at `-n 4` (known-issues, 2026-09-09). The `WF-6` ×0.0095 red is
+opt-in only and is not counted.

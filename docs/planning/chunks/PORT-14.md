@@ -765,3 +765,17 @@ lineage. Standard tier.
 > re-registers (i). Logs `20260913T171434Z_PORT-14-step3-64mhz.log`
 > (Status 1, 114 s), `…171649Z_…-10mhz.log` (197 s),
 > `…172026Z_…-128mhz.log` (114 s), all `-n 2`.
+
+## Ruling appended 2026-09-13 18:00 daily review — step 3 anchor (i) re-registered
+
+The parked step-3 run (`attempt/PORT-14-step3-20260913T172330Z`, `86c93f6`) is
+ruled correct in its route and wrong only in its comparand: anchor (i) named
+step 2b's pooled fit 1.064081e-02, which the step-2d record above
+(`:602–605`) already puts at 0.99688–0.99714× the `C/terminal − 1` the
+derived κ actually computes. (i) is re-registered as *the in-run derived
+κ(64) reproduces 2d's P1 `C/terminal − 1` record 1.060762e-02 at rtol 1e-3*
+(`20260912T123236Z_PORT-14-step2d-64mhz.log:1942–1949`; the parked window
+read 1.457e-07). The scoping text's "scale the told width by `(1 + κ)`" is
+sign-inverted — 2e's fitted ×0.989446732 is `1/(1 + κ)`, which the parked
+code implements; the §10 sentence is corrected, this history is not
+rewritten. No band moved. Re-queued as §9 item 1 of the 18:00 review.
