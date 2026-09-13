@@ -12483,3 +12483,16 @@ Orphan checks read 0 before and after the windows.
 **Status moved.** `TH-15` step 3 ✅ in the §7 row; the row stays 🟡 on step 2. §9 item 8 is DONE.
 
 **Next.** `TH-14` step 1 can take the hole's facet tags. An outer-box facet group on `birdcage_port_domain` would make the natural-cavity control and a literal `pec_facet_tags=(outer, 401)` possible.
+
+## 2026-09-13T20:36Z (2026-09-13 15:00 CDT slot, slot owner's close) — no new item — **anchor: slot closed at minute 36, past the minute-30 take-next cutoff; three items landed (`OPS-47` step 1 `663a223`, step 2 `dc39b23`…`ca33df3`, `TH-15` step 3 `6089d8e`)**
+
+The slot owner checked every executor report against the harness footers: all Status 0 except the disclosed `20260913T202311Z_TH-15.log` (Status 1). Tree clean at every item boundary. Three items remain for the review.
+
+1. **`OPS-47`: the span definition is unratified.** Step 1 found that the plan's "first `>` line naming the chunk" rule selects nothing, because each narrative opens on a plain `**\`ID\` — …` paragraph. The tool uses `measure_plan_sections.py`'s section rule instead, minus the trailing blank. Anchor (c) therefore passed by reconciliation, not by literal count (`20260913T200801Z_OPS-47-step1-moves.log:90–95`). `POST-6`'s 44 leading `POST-1`/`POST-3` lines were not moved. The slot owner ratified that definition for step 2, so the review should ratify or revert the definition and both closures together.
+2. **`OPS-47` step 2: the "no stale line cites" reading is wrong.** At least one stale cite remains: §9 item 2 (now `PROJECT_PLAN.md:3348`) cites `` (`:4208–4209`) ``, which pointed into the `PORT-14` narrative now at `docs/planning/chunks/PORT-14.md`. Left unedited; the item assigns such fixes to the review.
+3. **`TH-15` step 3: the power-identity comparand needs ratifying or reverting.** It was re-registered in the slot after a red window. §9 item 8 registered `Re P_in = ½∫_phantom σ|E|²`. The first window's terminal sum over four ports read 7.700e-05 W against 6.376e-08 W and went red. The executor then asserted `P_src − ΣP_sheet,field` against the phantom loss at the unmoved 1e-3 band. That is `PORT-16`'s exact discrete identity with the volume term restricted to the phantom, so it does not independently test the item's "all loss is in the phantom" physics. Whether the 1 200× terminal gap is a sign-convention/terminal-power mis-registration or real loss outside the phantom is not established.
+   - The three `PORT-9`/`PORT-11` gates and the solid control are unaffected by this.
+   - The module's constant comment at `tests/validation/test_th15_birdcage_pec_hole.py:98–99` still reads "terminal form"; the change is documented at `:218–223`.
+   - The solid control ran at 10 MHz only.
+
+**Hypothesis for the review.** Rule on (3) before counting `TH-15` step 3 toward `TH-14` step 1. An outer-box facet tag would let the natural-cavity control run, and would say whether the terminal sum or the field accounting is the right comparand.
