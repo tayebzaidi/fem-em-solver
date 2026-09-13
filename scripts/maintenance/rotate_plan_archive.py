@@ -55,6 +55,13 @@ Usage:
           [--plan PATH] [--chunks-dir DIR]
   python3 scripts/maintenance/rotate_plan_archive.py chunks --census
           [--min-bytes N] [--plan PATH]
+  python3 scripts/maintenance/rotate_plan_archive.py chunks SPEC --narratives
+          [--dry-run] [--plan PATH] [--chunks-dir DIR]
+          [--assert-below-bytes N] [--assert-below-lines N]
+  python3 scripts/maintenance/rotate_plan_archive.py chunks --census --narratives
+          [--min-lines N]
+(OPS-47 ``--narratives``: see rotate_narratives; ``--assert-below-*`` also
+apply to the row mode after a write, exit 3 on FAIL.)
 DATE is the review date written into the archive headers (YYYY-MM-DD).
 """
 from __future__ import annotations
@@ -389,21 +396,212 @@ def census_chunks(plan_path: Path, min_bytes: int) -> int:
     return 1 if bad else 0
 
 
+# ---------------------------------------------------------------------------
+# OPS-47: narratives. A §7 chunk's narrative is not a table row but a section
+# below its family table, opened by a paragraph line ``**`ID` — …`` and
+# carrying prose and ``>`` blockquotes (nested ``>``, ``\|``, bare ``>``
+# separators). Measured 2026-09-13 (OPS-47 step 1): none of the four targets
+# opens on a ``>`` line, so the span rule is the one
+# scripts/probes/measure_plan_sections.py attributes by — from the opener line
+# to the line before the next boundary (a §7 table row, a ``##``/``###``
+# heading, or another ID's opener; further openers of the same ID continue the
+# section) — with trailing blank lines trimmed. Unlike that probe, lines
+# between a table row and the chunk's opener are NOT part of the narrative
+# (POST-6: the POST-1/POST-3 blockquote under the POST table).
+NARRATIVE_HEADER = "## Narrative — moved verbatim from PROJECT_PLAN.md §7 (OPS-47)"
+_OPEN_RE = re.compile(r"^(?:[-*] )?\*\*`?([A-Z]+-[0-9]+)`?")
+_ROWID_RE = re.compile(r"^\| `([A-Z]+-[0-9]+)`")
+
+
+def _narrative_sections(plan: list[str]) -> dict[str, list[tuple[int, int]]]:
+    """Every §7 narrative section: ID -> [(first, last)] 0-indexed inclusive."""
+    start, end = _section7(plan)
+    out: dict[str, list[tuple[int, int]]] = {}
+    owner, first = None, None
+
+    def close(last: int) -> None:
+        if owner is None:
+            return
+        while last >= first and not plan[last].strip():
+            last -= 1
+        out.setdefault(owner, []).append((first, last))
+
+    for i in range(start, end):
+        l = plan[i]
+        m = _OPEN_RE.match(l)
+        if m and m.group(1) == owner:
+            continue  # same-ID opener continues the section
+        if m or _ROWID_RE.match(l) or l.startswith("## ") or l.startswith("### "):
+            close(i - 1)
+            owner, first = (m.group(1), i) if m else (None, None)
+    close(end - 1)
+    return out
+
+
+def _narrative_span(plan: list[str], cid: str) -> tuple[int, int]:
+    hits = _narrative_sections(plan).get(cid, [])
+    if len(hits) != 1:
+        raise RowError(f"{cid}: {len(hits)} §7 narrative sections opened by '**`{cid}`' "
+                       f"(expected exactly 1)")
+    return hits[0]
+
+
+def _size_asserts(label: str, n_bytes: int, n_lines: int, below_bytes, below_lines) -> int:
+    """The scripted size assert (OPS-46 auditor caveat): strict '<', exit 3 on FAIL."""
+    rc = 0
+    for what, val, bound in (("bytes", n_bytes, below_bytes), ("lines", n_lines, below_lines)):
+        if bound is None:
+            continue
+        ok = val < bound
+        print(f"[size-assert] {label} {what} {val} < {bound}: {'PASS' if ok else 'FAIL'}")
+        rc = rc or (0 if ok else 3)
+    return rc
+
+
+def rotate_narratives(spec_path: Path, plan_path: Path, chunks_dir: Path, dry_run: bool,
+                      below_bytes=None, below_lines=None) -> int:
+    """Move narratives byte for byte into docs/planning/chunks/<ID>.md.
+
+    Spec: ``=== <ID>`` + exactly one pointer line, which must open with
+    ``**`<ID>``` (so the section stays attributable) and name
+    ``docs/planning/chunks/<ID>.md``. The narrative is appended to that
+    existing chunk file (the OPS-46 row history) under NARRATIVE_HEADER —
+    append-only, never truncated. If the header is already there the file is
+    compared, not re-appended. Before the plan is written every chunk file is
+    re-read and the tool refuses (exit 1, plan untouched) unless the text after
+    the header equals the extracted span plus one newline.
+    """
+    raw = plan_path.read_bytes()
+    plan = raw.decode("utf-8").split("\n")
+    todo = []
+    try:
+        for cid, pointer in _read_spec(spec_path):
+            m = _OPEN_RE.match(pointer)
+            if not m or m.group(1) != cid:
+                raise RowError(f"{cid}: pointer line must open with '**`{cid}`'")
+            if f"docs/planning/chunks/{cid}.md" not in pointer:
+                raise RowError(f"{cid}: pointer line does not name docs/planning/chunks/{cid}.md")
+            a, b = _narrative_span(plan, cid)
+            path = chunks_dir / f"{cid}.md"
+            span = "\n".join(plan[a:b + 1]).encode("utf-8")
+            ptr = pointer.encode("utf-8")
+            # A chunk whose row OPS-46 did not move (PORT-14, measured 2026-09-13) has no
+            # history file yet: it is created with a '# <ID>' title, never overwritten.
+            print(f"{cid:9} narrative lines {a + 1}-{b + 1} ({b - a + 1} lines)  span {len(span)} B"
+                  f" -> pointer {len(ptr)} B  (plan shrinks {len(span) - len(ptr)} B)"
+                  f"  chunk file {'exists' if path.is_file() else 'absent, will be created'}")
+            todo.append((cid, a, b, pointer, span, path))
+        spans = sorted(todo, key=lambda t: t[1])
+        for p, q in zip(spans, spans[1:]):
+            if q[1] <= p[2]:
+                raise RowError(f"overlapping narratives: {p[0]} and {q[0]}")
+    except RowError as e:
+        print(f"REFUSED: {e}")
+        return 1
+    work = list(plan)
+    for cid, a, b, pointer, span, path in sorted(todo, key=lambda t: -t[1]):
+        work[a:b + 1] = [pointer]
+    new_raw = "\n".join(work).encode("utf-8")
+    expect = sum(len(t[4]) - len(t[3].encode("utf-8")) for t in todo)
+    if len(raw) - len(new_raw) != expect:
+        print(f"REFUSED: shrink {len(raw) - len(new_raw)} B != sum(span - pointer) {expect} B")
+        return 1
+    print(f"{plan_path.name}: {len(raw)} -> {len(new_raw)} B, {len(plan)} -> {len(work)} lines"
+          f"{' (projected)' if dry_run else ''}")
+    if dry_run:
+        print("dry run: nothing written")
+        return _size_asserts("projected plan", len(new_raw), len(work), below_bytes, below_lines)
+    hdr = NARRATIVE_HEADER.encode("utf-8")
+    chunks_dir.mkdir(parents=True, exist_ok=True)
+    for cid, a, b, pointer, span, path in todo:
+        if not path.exists():
+            with path.open("xb") as fh:  # exclusive create: never overwrites
+                fh.write(f"# {cid}\n".encode("utf-8"))
+        existing = path.read_bytes()
+        if existing.count(hdr) == 0:
+            sep = b"" if existing.endswith(b"\n") else b"\n"
+            with path.open("ab") as fh:  # append-only: never truncates
+                fh.write(sep + b"\n" + hdr + b"\n\n" + span + b"\n")
+            if not path.read_bytes().startswith(existing):
+                print(f"REFUSED: {cid}: prior content of {path} changed; plan not written")
+                return 1
+        else:
+            print(f"{cid}: {path.name} already carries the narrative header — comparing, never re-appending")
+    # Byte-identity gate: re-read every chunk file before the plan moves.
+    for cid, a, b, pointer, span, path in todo:
+        on_disk = path.read_bytes()
+        if on_disk.count(hdr) != 1:
+            print(f"REFUSED: {cid}: {path} carries the narrative header {on_disk.count(hdr)} times; "
+                  f"plan not written")
+            return 1
+        body = on_disk[on_disk.index(hdr) + len(hdr) + 2:]
+        want = span + b"\n"
+        if on_disk[on_disk.index(hdr) + len(hdr):on_disk.index(hdr) + len(hdr) + 2] != b"\n\n" \
+                or body != want:
+            where = next((k for k, (x, y) in enumerate(zip(body, want)) if x != y),
+                         min(len(body), len(want)))
+            print(f"REFUSED: {cid}: {path} narrative differs from the extracted span "
+                  f"(first difference at narrative byte {where}; {len(body)} vs {len(want)} B); "
+                  f"plan not written")
+            return 1
+        print(f"{cid}: chunk-file narrative equals the extracted span ({len(span)} B)")
+    plan_path.write_bytes(new_raw)
+    print(f"{plan_path.name}: written, {len(raw) - len(new_raw)} B moved out")
+    return _size_asserts("plan", len(new_raw), len(work), below_bytes, below_lines)
+
+
+def census_narratives(plan_path: Path, min_lines: int, chunks_dir: Path) -> int:
+    plan = plan_path.read_bytes().decode("utf-8").split("\n")
+    tot_lines = tot_bytes = n = 0
+    for cid, secs in sorted(_narrative_sections(plan).items(),
+                            key=lambda kv: -sum(b - a + 1 for a, b in kv[1])):
+        for a, b in secs:
+            if b - a + 1 < min_lines:
+                continue
+            nb = len("\n".join(plan[a:b + 1]).encode("utf-8"))
+            flag = "" if len(secs) == 1 else f"  AMBIGUOUS ({len(secs)} sections)"
+            print(f"{cid:9} lines {a + 1:5d}-{b + 1:5d} ({b - a + 1:5d} lines, {nb:7d} B)  "
+                  f"chunk file {'yes' if (chunks_dir / f'{cid}.md').is_file() else 'no '}{flag}")
+            n += 1
+            tot_lines += b - a + 1
+            tot_bytes += nb
+    print(f"CENSUS narratives>={min_lines} lines: {n} sections, {tot_lines} lines, {tot_bytes} B; "
+          f"plan {len(plan)} lines, {plan_path.stat().st_size} B")
+    return 0
+
+
 def _chunks_main(argv: list[str]) -> int:
     import argparse
     ap = argparse.ArgumentParser(prog="rotate_plan_archive.py chunks")
     ap.add_argument("spec", nargs="?", type=Path)
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--census", action="store_true")
+    ap.add_argument("--narratives", action="store_true",
+                    help="OPS-47: move §7 narrative sections instead of table rows")
     ap.add_argument("--min-bytes", type=int, default=2048)
+    ap.add_argument("--min-lines", type=int, default=50)
     ap.add_argument("--plan", type=Path, default=PLAN)
     ap.add_argument("--chunks-dir", type=Path, default=CHUNKS_DIR)
+    ap.add_argument("--assert-below-bytes", type=int, default=None,
+                    help="exit 3 unless the (written, or projected under --dry-run with "
+                         "--narratives) plan is strictly under N bytes")
+    ap.add_argument("--assert-below-lines", type=int, default=None)
     a = ap.parse_args(argv)
     if a.census:
+        if a.narratives:
+            return census_narratives(a.plan, a.min_lines, a.chunks_dir)
         return census_chunks(a.plan, a.min_bytes)
     if a.spec is None:
         ap.error("a SPEC is required unless --census")
-    return rotate_chunks(a.spec, a.plan, a.chunks_dir, a.dry_run)
+    if a.narratives:
+        return rotate_narratives(a.spec, a.plan, a.chunks_dir, a.dry_run,
+                                 a.assert_below_bytes, a.assert_below_lines)
+    rc = rotate_chunks(a.spec, a.plan, a.chunks_dir, a.dry_run)
+    if rc == 0 and not a.dry_run:
+        text = a.plan.read_bytes()
+        rc = _size_asserts("plan", len(text), text.count(b"\n") + 1,
+                           a.assert_below_bytes, a.assert_below_lines)
+    return rc
 
 
 def main(argv: list[str]) -> None:

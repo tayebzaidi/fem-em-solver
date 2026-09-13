@@ -1,0 +1,110 @@
+# Test Run
+- Chunk: OPS-47-step1-moves
+- Commit: e774d2aa820e42e8fd77c40f72b60ccd6be78bb6
+- Time (UTC): 2026-09-13 20:08:01
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.5.1
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && timeout -k 30 30 bash scripts/probes/ops47_step1_anchors.sh moves'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 24
+drwxr-xr-x  3 taz5297 taz5297 4096 Sep  4 23:31 .
+drwxr-xr-x 16 taz5297 taz5297 4096 Sep 13 15:07 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  721 Sep  3 13:49 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 4264 Sep 10 12:01 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.5.1
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && timeout -k 30 30 bash scripts/probes/ops47_step1_anchors.sh moves'\'''
+7fc605aaced4bba9eff31f284c2b7cd35da0ce082699e5d652d9d031fdc08e0b  PROJECT_PLAN.md
+57359844a1fe9e15d748d5d2ae076832a6b2b0ad2b7b24d314c3b227892539ee  docs/planning/chunks/POST-6.md
+== (b) self-test on a copy: move POST-6's narrative
+POST-6    narrative lines 3400-3511 (112 lines)  span 8141 B -> pointer 94 B  (plan shrinks 8047 B)  chunk file exists
+plan.md: 836984 -> 828937 B, 9939 -> 9828 lines
+POST-6: chunk-file narrative equals the extracted span (8141 B)
+plan.md: written, 8047 B moved out
+[size-assert] plan bytes 828937 < 836984: PASS
+[anchor] b-tool-exit-and-size-assert: PASS (rc=0, expected 0)
+independent re-extraction: lines 3400-3511 (112 lines), 8141 B; history 8398 B preserved, appended tail 8210 B
+pointer: **`POST-6` narrative** — moved byte for byte to `docs/planning/chunks/POST-6.md` (`OPS-47`).
+[anchor] b-reextract-and-history-preserved: PASS (rc=0, expected 0)
+[anchor] b-cmp-chunkfile-span-vs-extracted: PASS (rc=0, expected 0)
+span 8141 B, pointer 94 B; copy 836984 -> 828937 B (shrink 8047 B, span - pointer 8047 B)
+[anchor] b-shrink-equals-span-minus-pointer: PASS (rc=0, expected 0)
+[anchor] b-git-diff-stat-plan-empty: PASS (rc=0, expected 0)
+== negative control (asserted): one byte altered in the extracted chunk file
+altered byte 16208 of 16608
+POST-6    narrative lines 3400-3511 (112 lines)  span 8141 B -> pointer 94 B  (plan shrinks 8047 B)  chunk file exists
+plan.neg.md: 836984 -> 828937 B, 9939 -> 9828 lines
+POST-6: POST-6.md already carries the narrative header — comparing, never re-appending
+REFUSED: POST-6: logs/ops47-step1/chunks/POST-6.md narrative differs from the extracted span (first difference at narrative byte 7742; 8142 vs 8142 B); plan not written
+[anchor] neg-refuses: PASS (rc=1, expected 1)
+[anchor] neg-plan-copy-unchanged: PASS (rc=0, expected 0)
+== negative control 2 (asserted): a spec naming a chunk with no narrative
+REFUSED: OPS-999: 0 §7 narrative sections opened by '**`OPS-999`' (expected exactly 1)
+[anchor] neg2-refuses-no-block: PASS (rc=1, expected 1)
+[anchor] neg2-plan-copy-unchanged: PASS (rc=0, expected 0)
+== rider: scripted size assert
+POST-6    narrative lines 3400-3511 (112 lines)  span 8141 B -> pointer 94 B  (plan shrinks 8047 B)  chunk file exists
+plan.size.md: 836984 -> 828937 B, 9939 -> 9828 lines (projected)
+dry run: nothing written
+[size-assert] projected plan bytes 828937 < 1: FAIL
+[anchor] rider-false-bound-fails-exit3: PASS (rc=3, expected 3)
+[anchor] rider-dry-run-writes-nothing: PASS (rc=0, expected 0)
+== (c) --dry-run over the four narratives on the REAL plan (writes nothing)
+WF-6      narrative lines 4533-6825 (2293 lines)  span 163066 B -> pointer 90 B  (plan shrinks 162976 B)  chunk file exists
+TH-15     narrative lines 1939-3179 (1241 lines)  span 88572 B -> pointer 92 B  (plan shrinks 88480 B)  chunk file exists
+PORT-14   narrative lines 3610-4372 (763 lines)  span 51951 B -> pointer 96 B  (plan shrinks 51855 B)  chunk file absent, will be created
+POST-6    narrative lines 3400-3511 (112 lines)  span 8141 B -> pointer 94 B  (plan shrinks 8047 B)  chunk file exists
+PROJECT_PLAN.md: 836984 -> 525626 B, 9939 -> 5534 lines (projected)
+dry run: nothing written
+[anchor] c-dry-run-exit: PASS (rc=0, expected 0)
+[anchor] c-measure-exit: PASS (rc=0, expected 0)
+== WF-6 status: ✅ 2026-09-13 (step 5) on the re-scoped subgoal-4 target: on the unloaded F-small birdcage 
+   row 4510-4510 (1 lines)
+   nar 4533-6826 (2294 lines)
+== TH-15 status: 🟡 Open: ✅ step 1 (the PEC sphere as a hole against its closed form), 2a and 2d (the two-to
+   row 1746-1746 (1 lines)
+   nar 1939-3180 (1242 lines)
+== PORT-14 status: 🟡 *(step 1 executed 2026-09-05, 21:00 slot — complex `Z_p` + `ports/circuit.py` land and s
+   row 3561-3561 (1 lines)
+   nar 3610-4373 (764 lines)
+== POST-6 status: ✅ 2026-09-13: the 32-port ccw quadrature drive on `PORT-13`'s 16-leg ring fixture, superpo
+   row 3355-3355 (1 lines)
+   nar 3356-3512 (157 lines)
+[reconcile] WF-6: PASS measured nar 4533-6826 (2294) = 0 leading lines before the opener + tool 4533-6825 (2293) + 1 trailing blank; literal count match: no
+[reconcile] TH-15: PASS measured nar 1939-3180 (1242) = 0 leading lines before the opener + tool 1939-3179 (1241) + 1 trailing blank; literal count match: no
+[reconcile] PORT-14: PASS measured nar 3610-4373 (764) = 0 leading lines before the opener + tool 3610-4372 (763) + 1 trailing blank; literal count match: no
+[reconcile] POST-6: PASS measured nar 3356-3512 (157) = 44 leading lines before the opener + tool 3400-3511 (112) + 1 trailing blank; literal count match: no; leading lines open ['POST-1'], first: ''
+four-narrative total: tool 4409 lines; measured nar 4457 lines
+[anchor] c-reconcile-tool-vs-measure: PASS (rc=0, expected 0)
+[anchor] c-census-exit: PASS (rc=0, expected 0)
+WF-6      lines  4533- 6825 ( 2293 lines,  163066 B)  chunk file yes
+TH-15     lines  1939- 3179 ( 1241 lines,   88572 B)  chunk file yes
+PORT-14   lines  3610- 4372 (  763 lines,   51951 B)  chunk file no 
+POST-6    lines  3400- 3511 (  112 lines,    8141 B)  chunk file yes
+CENSUS narratives>=100 lines: 4 sections, 4409 lines, 311730 B; plan 9939 lines, 836984 B
+PROJECT_PLAN.md: OK
+docs/planning/chunks/POST-6.md: OK
+[anchor] c-real-plan-and-chunk-file-unchanged: PASS (rc=0, expected 0)
+== summary: fail=0
+
+## Exit
+- Status: 0
+- Elapsed (s): 2
+- Filtered lines (gmsh optimisation chatter): 0

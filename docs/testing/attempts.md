@@ -12357,3 +12357,53 @@ The host `pre-commit` leak hook also passed on all three commits.
 **Stop.** Commit lands after minute 30 ⇒ no fourth item; item 6 (`OPS-47` step 1) is the next slot's.
 
 **Hypothesis, for the next reader.** The 09-16 weekly's XXL arithmetic should read ≈ 11 GiB / 37 s per degree-1 single drive at 0.6 M unknowns, `-n 8`. A degree-2 F-human solve is the case that needs pricing (ANS-4 2b: degree 2 ≈ 5.4× the unknowns and ≈ 17 GiB per drive on a 116 k-cell mesh), not degree 1. If the review wants the record-mesh anchor, rerun the probe with the transverse default or register 507 266 as the longitudinal record.
+
+## 2026-09-13T20:00Z (2026-09-13 15:00 CDT slot) — `OPS-47` step 1 — **complete (`chunks --narratives` landed; (a)/(b)/(c) and both negative controls green; `OPS-47` ⬜ → 🟡)**
+
+**Preflight.** Tree clean at 15:01 CDT, HEAD `e774d2a`; `fem-em-solver` Up 3 days. §9 item 6. Smoke tier throughout, no `mpiexec`, every script run in the container through the harness.
+
+**Measured before coding (this overrides the item's trap text).**
+- **Span.** None of the four narratives is a contiguous `>` block that opens on a `>` line naming the chunk. Each opens on a non-`>` paragraph line `**`ID` — …` (`TH-15` 1939, `POST-6` 3400, `PORT-14` 3610, `WF-6` 4533) and continues through prose and `>` quotes. The literal rule ("first `>` line naming the chunk to the last `>` line") therefore selects nothing. The tool uses the rule `measure_plan_sections.py` attributes by: from the opener to the line before the next §7 table row, `##`/`###` heading, or another ID's opener, with trailing blank lines trimmed.
+- **`POST-6` count.** The probe's `nar` block for `POST-6` (3356–3512, 157 lines) starts at the table row, so it takes in the 44-line `POST-1`/`POST-3` blockquote that sits between the `POST` table and `POST-6`'s opener. The tool moves only `POST-6`'s own 112 lines.
+- **`PORT-14.md` absent.** `OPS-46` never moved that row, so the tool creates the file (exclusive create, `# PORT-14` title) rather than refusing.
+
+**Change (tooling only).** `scripts/maintenance/rotate_plan_archive.py chunks`:
+- `--narratives` with a spec of `=== ID` plus one pointer line. The pointer must open with `**`ID`` and name `docs/planning/chunks/<ID>.md`.
+- The narrative is appended under `## Narrative — moved verbatim from PROJECT_PLAN.md §7 (OPS-47)`. The file is opened append-only, and the tool asserts the prior bytes are preserved.
+- If the header is already present, the file is compared and nothing is re-appended.
+- Before the plan is written, every chunk file is re-read. The tool refuses (exit 1, plan untouched) unless the text after the header equals span + `\n`.
+- It also refuses unless the plan shrinks by exactly Σ(span − pointer) B, or unless exactly one section exists per ID.
+- `--dry-run`; `--census --narratives [--min-lines]`.
+- **Rider:** `--assert-below-bytes N` / `--assert-below-lines N` apply to both modes and print `[size-assert] … PASS/FAIL`, exiting 3 on FAIL. Under `--dry-run --narratives` they check the projected plan.
+
+Driver: `scripts/probes/ops47_step1_anchors.sh [moves|leak]`, modelled on the `OPS-46` script. The planted value is generated at run time, because `OPS-46`'s plant is now in a tracked file and hook mode would subtract it as already published.
+
+**Windows.**
+- `20260913T200159Z_OPS-47-step1-measure-blocks.log`: probe re-measure, Status 0.
+- `20260913T200730Z_OPS-47-step1-leak.log`: (a), **Status 0, 14 s**.
+- `20260913T200801Z_OPS-47-step1-moves.log`: (b), controls, rider, (c), **Status 0, 2 s**.
+
+**Anchors (asserted).**
+- **(a)** The plant was staged into a scratch index under `logs/` and caught: rc 1, naming `docs/planning/chunks/_ops47_positive_control.md` (`leak:48–54`). After removal the tree exits 0 in hook mode and in `--audit` ("501 AED figures", `:56–58`); real index staged paths 0.
+- **(b)** `POST-6` was moved on a plan copy.
+  - An independent re-extraction gives lines 3400–3511, 8 141 B; the chunk-file span is `cmp`-equal to it, and the 8 398 B history is preserved.
+  - The copy went 836 984 → 828 937 B, shrinking **8 047 B = 8 141 − 94**. `git diff --stat PROJECT_PLAN.md` is empty (`moves:43–49`).
+  - The size assert passed with the pre-move size as its bound (`:41`).
+- **Negative control.** One byte was altered in the extracted chunk file. The tool refused, exit 1, first difference at narrative byte 7742, and the copy is `cmp` 0 against its pre-run copy (`:55–57`).
+- **Also exercised.** A spec naming `OPS-999` was refused ("0 §7 narrative sections", `:59–61`); this is item 7's own negative control. A false size bound gave rc 3 with nothing written (`:66–68`).
+- **(c)** Dry run on the real plan (`:70–73`):
+
+  | Chunk | Tool span (lines) | Span B | Probe `nar` block | Difference |
+  |---|---|---|---|---|
+  | `WF-6` | 4533–6825 (2 293) | 163 066 | 2 294 | one trailing blank line |
+  | `TH-15` | 1939–3179 (1 241) | 88 572 | 1 242 | one trailing blank line |
+  | `PORT-14` | 3610–4372 (763) | 51 951 | 764 | one trailing blank line |
+  | `POST-6` | 3400–3511 (112) | 8 141 | 157 | 44 leading `POST-1`/`POST-3` lines + one trailing blank |
+
+  Each row reconciles exactly to the probe block (`[reconcile] … PASS`, `:90–95`); **the literal counts differ in all four**. Totals: tool 4 409 lines, probe 4 457, weekly 4 431. The census finds exactly these 4 sections ≥ 100 lines (311 730 B; plan 9 939 lines, 836 984 B). The real plan and `POST-6.md` sha256 were unchanged (`:104`).
+
+**Same commit.** Tool, driver, three logs, test-results rows, §7 `OPS-47` ⬜ → 🟡, §9 item 6 DONE.
+
+**Status moved:** `OPS-47` ⬜ → 🟡.
+
+**Hypothesis / next step (item 7).** The four moves together should take the plan to **9 939 − 4 405 = 5 534 lines** and **836 984 − 311 358 = 525 626 B** (projected, not measured). The 4 000-line guide is therefore **not met**, as the item predicts. Item 7's (iii) is now a `--assert-below-lines 4000` that will FAIL, and that result should be recorded, not the guide widened. Spec pointers in the form `**`ID` narrative** — moved byte for byte to `docs/planning/chunks/<ID>.md` (`OPS-47`).` pass the tool's checks. Note that `WF-6` and `POST-6` are now ✅ rows, so "open chunks" no longer describes two of the four.

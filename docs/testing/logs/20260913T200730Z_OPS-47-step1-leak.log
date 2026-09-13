@@ -1,0 +1,65 @@
+# Test Run
+- Chunk: OPS-47-step1-leak
+- Commit: e774d2aa820e42e8fd77c40f72b60ccd6be78bb6
+- Time (UTC): 2026-09-13 20:07:30
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.5.1
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && timeout -k 30 30 bash scripts/probes/ops47_step1_anchors.sh leak'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 24
+drwxr-xr-x  3 taz5297 taz5297 4096 Sep  4 23:31 .
+drwxr-xr-x 16 taz5297 taz5297 4096 Sep 13 15:07 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  721 Sep  3 13:49 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 4264 Sep 10 12:01 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.5.1
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && timeout -k 30 30 bash scripts/probes/ops47_step1_anchors.sh leak'\'''
+7fc605aaced4bba9eff31f284c2b7cd35da0ce082699e5d652d9d031fdc08e0b  PROJECT_PLAN.md
+57359844a1fe9e15d748d5d2ae076832a6b2b0ad2b7b24d314c3b227892539ee  docs/planning/chunks/POST-6.md
+== (a) leak-check positive control under docs/planning/chunks/
+[anchor] a-stage-plant-in-scratch-index: PASS (rc=0, expected 0)
+staged in scratch index:
+docs/planning/chunks/_ops47_positive_control.md
+
+BLOCKED — Ansys benchmark figures found in staged changes.
+
+Licence terms restrict disclosure of these (operator directive
+2026-09-02). They belong only in the gitignored aed_results/,
+COMPARISON_private.md and docs/private/. Committing one puts it in
+git history, where the fix is a rewrite and not a revert.
+
+  docs/planning/chunks/_ops47_positive_control.md:1   7.5515033191500
+      planted synthetic value 7.5515033191500 (OPS-47 step 1 positive control)
+
+Write the qualitative verdict instead — agree / disagree /
+inconclusive, and what it decides. That is what §5.4 asks for.
+[anchor] a-positive-control-caught: PASS (rc=1, expected 1)
+[anchor] a-names-the-plant-file: PASS (rc=0, expected 0)
+[anchor] a-plant-removed: PASS (rc=0, expected 0)
+[anchor] a-hook-mode-clean-tree: PASS (rc=0, expected 0)
+clean: no tracked file carries any of the 501 AED figures (>= 8 digits, >= 5 distinct)
+[anchor] a-audit-clean-tree: PASS (rc=0, expected 0)
+real index staged paths: 0
+== summary: fail=0
+
+## Exit
+- Status: 0
+- Elapsed (s): 14
+- Filtered lines (gmsh optimisation chatter): 0
