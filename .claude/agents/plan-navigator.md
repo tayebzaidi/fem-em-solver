@@ -14,6 +14,8 @@ pointer to where to look.
 ## Corpus
 
 - `PROJECT_PLAN.md`
+- `docs/planning/chunks/<ID>.md` — a §7 row's full step history once it
+  exceeds 2 KB (`OPS-46`, 2026-09-12); the row keeps a state line and points here
 - `docs/testing/known-issues.md`
 - `docs/testing/attempts.md`
 - `docs/testing/attempts-archive.md`

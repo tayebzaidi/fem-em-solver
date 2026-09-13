@@ -17,3 +17,5 @@
 - **(iii)** is **operator-pending**: the `plan-navigator` corpus and `auditor` step 1 edits sit under `Edit(.claude/**)`, which a headless session cannot make. Until they land, read a chunk file directly.
 
 **For the narrative-block follow-up** (`--blocks`, same after-log): `TH-15` row 1 line plus a `nar` block of 1 242 lines (lines 1912–3153); `PORT-14` row 1 line plus a `nar` block of 735 lines (3945–4679). The top-45 after the moves is led by chunk spans that are now mostly narrative blocks: `WF-6` 158.4 kchars, `TH-15` 85.7, `PORT-14` 49.9, `MAT-4` 21.6, `POST-6` 10.9.
+
+**2026-09-13 (operator session):** the two `.claude/agents` edits anchor (iii) was pending on landed — `plan-navigator.md` corpus gains `docs/planning/chunks/<ID>.md`, `auditor.md` step 1 loads the chunk file beside the row. Anchor (iii) itself (a navigator answer cited from a chunk file) is the auditing review's to exercise.

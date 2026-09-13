@@ -23,7 +23,9 @@ gating and is never deleted by the sweep, so its absence is a finding.
 
 ## Load first
 
-1. The chunk's §7 entry in PROJECT_PLAN.md, in full.
+1. The chunk's §7 entry in PROJECT_PLAN.md, in full — and, where the row
+   points to `docs/planning/chunks/<ID>.md`, that file, which holds the step
+   history the row used to carry (`OPS-46`, 2026-09-12).
 2. §4 "Definition of done" (PROJECT_PLAN.md, section 4) — the five numbered
    requirements, the finiteness-only gate, and the never-loosen rule.
 3. `git show <closing-commit>` — the full diff and message.
