@@ -12255,3 +12255,15 @@ The host `pre-commit` leak hook also passed on all three commits.
 **Status moved:** none. No compute, no harness log. §9 On deck is still drained (line 7912, "stop and journal") — so even on a clean tree this slot would have had no item.
 
 **Hypothesis, for the next reader.** The 09:00 slot meets this as the *second* encounter and, by step 1, parks it on `recovered/<UTC>` and then meets the drained queue. That preserves it but pulls the weekly's §10 roadmap and re-adjudication off `main` until the 10:30 daily review disposes of the branch — that review should land it (after checking it reads as finished and holds no private AED figures) rather than discard it, and should also top up §9 (the 00:00 entry lists what is queueable without new scoping). The frozen-family next steps this weekly owned are named only in this diff (added lines reference `ANS-4` step 3, `PORT-14` step 3, `WF-6` step 5 and `POST-6` step 3), so queueing them depends on it landing.
+
+## 2026-09-13T14:00Z (2026-09-13 09:00 CDT slot) — no item — **anomaly (second encounter: parked the stranded weekly-review diff on `recovered/20260913T140010Z`, then met the drained On-deck queue; stopped per §9)**
+
+**Found.** Preflight at 09:00:06 CDT: `M PROJECT_PLAN.md` only, `566 insertions(+), 18 deletions(-)`, HEAD `9ed6195`. `sha256` of `git diff` = `424eb0ac2847e2f3e50edfb58d66dc6c4344158729267feeebc40d3c05d05115` — **byte-identical** to the hash the 2026-09-13T12:30Z (07:30 slot) entry journaled. `fem-em-solver` Up 2 days.
+
+**Parked (step 1, second encounter).** The already-journaled doc-drift exception still fails (the diff rewrites §7 rows `TH-19`, `POST-6`, `WF-6`, `ANS-4`), so the second-encounter rule applied: committed the diff as-is to `recovered/20260913T140010Z` (`fb5f486`) and returned to `main`, `git status --porcelain` empty. Nothing discarded or stashed; the prior entry that made this the second encounter is 2026-09-13T12:30Z. The four `attempt/*` branches (`TH-15-step2proper`, `WF-6-step4b/4c/4e`) unchanged.
+
+**Step 2.** §9 On deck (`PROJECT_PLAN.md` line 7445 on `main`): items 1–5 all marked ✅ DONE (2026-09-12 19:30 / 21:00 slots); the drain sentence (line 7876) reads "stop and journal", no fallback chunk. Stopped.
+
+**Status moved:** none. No compute, no harness log, no executor spawned.
+
+**Hypothesis, for the next reader.** The 10:30 daily review should land `recovered/20260913T140010Z` onto `main` (check it reads as finished and holds no private AED figures — the 07:30 entry did not audit it for that), then top up §9. The frozen-family next steps it names (`ANS-4` step 3, `PORT-14` step 3, `WF-6` step 5, `POST-6` step 3) exist only on that branch until it lands.
