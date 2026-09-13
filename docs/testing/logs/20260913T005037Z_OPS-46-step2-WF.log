@@ -1,0 +1,71 @@
+# Test Run
+- Chunk: OPS-46-step2-WF
+- Commit: ad1dd331cc85bd594666b0f6764109c61014b0e9
+- Time (UTC): 2026-09-13 00:50:37
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.5.1
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && timeout -k 10 120 bash scripts/probes/ops46_move_family.sh WF logs/ops46/spec-WF.md --negative-control'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 24
+drwxr-xr-x  3 taz5297 taz5297 4096 Sep  4 23:31 .
+drwxr-xr-x 16 taz5297 taz5297 4096 Sep 12 19:50 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  721 Sep  3 13:49 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 4264 Sep 10 12:01 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.5.1
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && timeout -k 10 120 bash scripts/probes/ops46_move_family.sh WF logs/ops46/spec-WF.md --negative-control'\'''
+family WF: 1 rows: WF-6
+[anchor] pre-plan-clean: PASS (rc=0, expected 0)
+ad1dd331cc85bd594666b0f6764109c61014b0e9
+== negative control (asserted): a spec naming a row that does not exist
+REFUSED: WF-999: 0 §7 table rows found (expected exactly 1)
+[anchor] neg-missing-row-refused: PASS (rc=1, expected 1)
+[anchor] neg-plan-unchanged: PASS (rc=0, expected 0)
+[anchor] neg-nothing-written: PASS (rc=0, expected 0)
+== move
+WF-6      🟡  span   45926 B -> replacement  452 B  (row shrinks 45474 B)
+WF-6: chunk-file body equals the extracted span (45926 B)
+PROJECT_PLAN.md: 1342548 -> 1297074 B (45474 B moved out)
+[anchor] tool-exit: PASS (rc=0, expected 0)
+== (i) re-extraction from git HEAD vs chunk-file body
+WF-6: HEAD row 46263 B -> new row 789 B; span 45926 B
+[anchor] i-WF-6-reextract: PASS (rc=0, expected 0)
+[anchor] i-WF-6-cmp: PASS (rc=0, expected 0)
+== (iii) diff shape
+1	1	PROJECT_PLAN.md
+[anchor] iii-one-line-per-row: PASS (rc=0, expected 0)
+ M PROJECT_PLAN.md
+?? docs/planning/chunks/WF-6.md
+?? docs/testing/logs/20260913T005037Z_OPS-46-step2-WF.log
+[anchor] iii-no-other-changes: PASS (rc=0, expected 0)
+[anchor] iii-one-new-file-per-row: PASS (rc=0, expected 0)
+== (ii) leak check on the staged move (scratch index)
+staged in scratch index: 2 paths
+[anchor] ii-git-sees-staged-move: PASS (rc=0, expected 0)
+[anchor] ii-leak-check: PASS (rc=0, expected 0)
+total 48
+-rw-r--r-- 1 1000 1000 45978 Sep 13 00:50 WF-6.md
+1297074 PROJECT_PLAN.md
+== summary: fail=0
+
+## Exit
+- Status: 0
+- Elapsed (s): 3
+- Filtered lines (gmsh optimisation chatter): 0
