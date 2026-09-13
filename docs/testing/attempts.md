@@ -12448,3 +12448,38 @@ In total 4 409 span lines and 311 730 B left the plan; it went from 9 951 to 5 5
 **Status moved:** `OPS-47` 🟡 → ✅ (§7 row), §9 item 7 DONE. Elapsed ≈ 17 min (15:00–15:17 CDT).
 
 **Hypothesis / next step.** At 5 546 lines, the guide's remaining ~1 550 lines must come from §9's DONE items and §10's dated roadmap prose, not §7 narratives (§7 is now 2 075 lines, largest owner 71). A census of §9/§10 by block would size a follow-on rotation.
+
+## 2026-09-13T20:19Z (2026-09-13 15:00 CDT slot, third item under take-next) — `TH-15` step 3 — **complete (the birdcage as a PEC hole passes `PORT-9`/`PORT-11`'s gates and the power identity at 10 / 64 / 128 MHz)**
+
+**What ran.** A new module, `tests/validation/test_th15_birdcage_pec_hole.py`. It needed no `src/` change and edits no gate module. There were five windows, all at `-n 2`:
+
+| Window | Frequency | Outcome | Elapsed |
+|---|---|---|---|
+| `20260913T202311Z_TH-15.log` | 10 MHz + solid control | Status 1: the power identity was registered on the terminal form, reading 7.700e-05 vs 6.376e-08 W (`:2775`). Every other test passed, including the control. | 97 s |
+| `202605Z` | 10 MHz | Status 0 | 63 s |
+| `202718Z` | 64 MHz | Status 0 | 62 s |
+| `202828Z` | 128 MHz | Status 0 | 61 s |
+| `202954Z` | 10 MHz + control | Status 0, 17 passed | 93 s |
+
+Orphan checks read 0 before and after the windows.
+
+**Readings (log:line).**
+- **Reciprocity:** 1.59e-14 / 1.47e-15 / 9.16e-16 (`202954Z:951`, `202718Z:951`, `202828Z:956`).
+- **σ_max:** 0.999994234 / 0.999813792 / 0.999502556.
+- **Worst class spread:** 0.0190 / 0.0497 / 0.0734 % against 0.5 %.
+- **Exact-form power identity:** 3.6e-10 / 2.2e-12 / 1.1e-12 against 1e-3.
+- **Solid control:** reproduces `LEG_D_S_MATRIX_10MHZ` to 1.158e-10 against 1e-6 (`202954Z:2768`).
+
+**Disclosures.**
+1. `pec_facet_tags` pins only the listed tags, and the birdcage mesh has no outer-box tag. The module therefore uses `None`, which pins every exterior facet, and asserts that all 19 826 tag-401 facets are exterior.
+2. For the same reason, the natural-cavity control (printed-only) was not constructible and was not run.
+3. The power comparand moved from the terminal sum to `P_src − ΣP_sheet,field` after the first window. The band did not move, and the terminal sums remain printed as records.
+4. `max|ΔS|` per class is hand-read at 10 MHz only.
+
+**Cost.** Far under prediction: sweeps took 5.3–5.5 s under `PORT-19` reuse, and the mesh 21 s.
+
+**Denials.** Two compound-command approvals (a `cd` plus relative-path grep, and a multi-operation grep), each re-issued as an absolute-path single command. Neither blocked the work.
+
+**Status moved.** `TH-15` step 3 ✅ in the §7 row; the row stays 🟡 on step 2. §9 item 8 is DONE.
+
+**Next.** `TH-14` step 1 can take the hole's facet tags. An outer-box facet group on `birdcage_port_domain` would make the natural-cavity control and a literal `pec_facet_tags=(outer, 401)` possible.
