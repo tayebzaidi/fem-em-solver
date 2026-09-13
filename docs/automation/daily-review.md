@@ -3,9 +3,12 @@
 *Model: `scripts/automation/review-model.env` (dated override, self-expiring —
 see CLAUDE.md § Scheduled automation). Medium effort.*
 
-Run by `scripts/automation/daily-review.sh` via cron **three times daily**
-(03:00, 10:30, 18:00 local), each followed by four implementer runs on a shared
-90-minute grid. "Daily" is historical; read it as "each review interval". One
+Run by `scripts/automation/daily-review.sh` via cron **once on each active
+day** (03:00 local, Sun/Mon/Wed/Fri/Sat — **Tuesday and Thursday are off**;
+wind-down schedule, operator directive 2026-09-13, canonical crontab
+`scripts/automation/crontab`), followed by four implementer runs at 04:30 /
+06:00 / 07:30 / 09:00. "Since the last review" therefore spans a day, or two
+across an off day; the restock floor is still one four-slot interval. One
 session, documentation work only — **no solves, no meshing**; reading harness
 logs is fine. You are maintaining the plan, not executing it.
 

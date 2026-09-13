@@ -3,11 +3,16 @@
 *Model: `scripts/automation/review-model.env` (dated override, self-expiring —
 see CLAUDE.md § Scheduled automation). High effort.*
 
-Run by `scripts/automation/weekly-review.sh` via cron **twice weekly**
-(Sunday and Wednesday 02:15 local — after the 02:00 usage-window reset, in
-the buffer slot before that day's 03:00 daily review; the
-shared flock prevents overlap). One session, documentation work only — **no
-solves, no meshing**; reading harness logs is fine.
+Run by `scripts/automation/weekly-review.sh` via cron **once weekly, Saturday
+21:00 local** (wind-down schedule, operator directive 2026-09-13; canonical
+crontab `scripts/automation/crontab`). It was Sunday and Wednesday 02:15
+until then: the Sunday session exhausted the account's 5-hour allowance in
+~20 min on both 09-06 and 09-13 and took the 03:00 review and two slots with
+it, so it now runs in its own window — Saturday's slots are long done, the
+Saturday XXL result is in the ledger, and it ends by 02:00 Sunday. The
+Wednesday run is dropped; what the plan calls "the 09-16 weekly" is the
+09-19 one. One session, documentation work only — **no solves, no meshing**;
+reading harness logs is fine.
 
 *(Wednesday added 2026-09-01 by operator directive. Reason: the daily review
 can only queue items whose anchors exist, and several anchors are

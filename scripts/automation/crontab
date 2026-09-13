@@ -1,48 +1,51 @@
 # fem-em-solver scheduled automation — see docs/automation/ in the repo.
-# 90-minute grid, 16 slots/day: 3 Fable plan reviews (45 min cap) at
-# 03:00 / 10:30 / 18:00, each followed by 4 Opus implementer runs (65 min
-# hard kill). 01:30–03:00 is left as buffer before the 03:00 review.
-# Sunday AND Wednesday 02:15 run the weekly planning review (Fable, high
-# effort, 60 min cap) in that buffer slot — twice weekly since 2026-09-01,
-# splitting the interval 3/4 days so the long-horizon queue is refilled
-# mid-week instead of only at the week boundary. 02:15 is the only buffer
-# wide enough for a 60-min session and sits just after the 02:00 usage
-# reset. Note: a weekly run that uses its full hour ends at 03:15 and the
-# shared flock will make that day's 03:00 daily review skip.
-# Sessions never overlap; all runs share one flock. Per-command compute
-# stays under the repo's 10-minute tier ceiling.
-0 3,18 * * * /home/taz5297/Development/fem-em-solver/scripts/automation/daily-review.sh
-30 10 * * * /home/taz5297/Development/fem-em-solver/scripts/automation/daily-review.sh
-30 4,7,13,16,19,22 * * * /home/taz5297/Development/fem-em-solver/scripts/automation/implementer-run.sh
-0 0,6,9,12,15,21 * * * /home/taz5297/Development/fem-em-solver/scripts/automation/implementer-run.sh
-15 2 * * 0,3 /home/taz5297/Development/fem-em-solver/scripts/automation/weekly-review.sh
-# Sunday 01:45: mechanical log-retention sweep (no Claude session; ~1 min),
-# in the buffer after the 00:00 implementer slot's 01:05 hard kill and before
-# the 02:15 weekly review. See docs/testing/retention-policy.md §4.
+#
+# WIND-DOWN SCHEDULE (operator directive 2026-09-13): the token budget is cut
+# by at least 4x and the project continues slowly rather than stopping.
+#   - One Fable daily review (45 min cap) at 03:00, followed by four Opus
+#     implementer runs (65 min hard kill) at 04:30 / 06:00 / 07:30 / 09:00 —
+#     one overnight block per active day, inside the quiet hours on the
+#     shared box. Under the take-next rule (implementer-run.md step 2) four
+#     slots landed eight items on 2026-09-13; the §9 restock floor of 240
+#     slot-minutes was defined for exactly this four-slot interval.
+#   - Tuesday and Thursday are OFF: no reviews, no implementer runs.
+#     Active days are Sun Mon Wed Fri Sat = 0,1,3,5,6. Every entry in the
+#     block sits on one calendar day, so the day-of-week field is exact.
+#   - One weekly planning review (Fable, 60 min cap), Saturday 21:00 —
+#     moved off Sunday 02:15 because on 09-06 and 09-13 that session
+#     exhausted the account's 5-hour allowance in ~20 min and took the 03:00
+#     review and the 04:30 / 06:00 slots with it. Saturday 21:00 is its own
+#     window (it ends by 02:00 Sunday), Saturday's slots are long done, and
+#     the Saturday XXL result (02:00–10:00) is in the ledger to be read.
+#     The Wednesday weekly is dropped; what the plan calls "the 09-16
+#     weekly" is the 09-19 one.
+#   - XL / XXL windows and housekeeping are UNCHANGED: cron scripts with no
+#     Claude session, zero tokens — the cheapest compute the project has.
+# Sessions never overlap; all Claude runs share one flock. Per-command compute
+# stays under the repo's tier ceilings. Previous 16-slot grid: git history.
+0 3 * * 0,1,3,5,6 /home/taz5297/Development/fem-em-solver/scripts/automation/daily-review.sh
+30 4 * * 0,1,3,5,6 /home/taz5297/Development/fem-em-solver/scripts/automation/implementer-run.sh
+0 6 * * 0,1,3,5,6 /home/taz5297/Development/fem-em-solver/scripts/automation/implementer-run.sh
+30 7 * * 0,1,3,5,6 /home/taz5297/Development/fem-em-solver/scripts/automation/implementer-run.sh
+0 9 * * 0,1,3,5,6 /home/taz5297/Development/fem-em-solver/scripts/automation/implementer-run.sh
+0 21 * * 6 /home/taz5297/Development/fem-em-solver/scripts/automation/weekly-review.sh
+# Sunday 01:45: mechanical log-retention sweep (no Claude session; ~1 min).
+# See docs/testing/retention-policy.md §4.
 45 1 * * 0 /home/taz5297/Development/fem-em-solver/scripts/automation/housekeeping.sh
-# 02:00 daily: the XL window, if one is queued in scripts/automation/xl-queue.env
-# (operator directive 2026-09-09). No Claude session — an XL window is one
-# deterministic command, and running it from an agent is what made it hard: a
-# foreground harness call is capped at 660 s and an implementer slot is killed
-# at 65 min, so no scheduled *session* can hold a 2 h window; a cron script has
-# neither limit. 02:00 is chosen because the box is shared with work this
-# sandbox cannot see (the Windows host is unreachable from it), and a quiet
-# hour is a better answer than detection that cannot work. It takes its own
-# lock, not the automation flock, so a 2 h window cannot starve the 02:15
-# weekly or the 03:00 review — both documentation-only. Worst case it ends at
-# 04:00, before the 04:30 implementer slot. Exits in a second when nothing is
-# queued, which is the normal state.
 # 02:00 Sun-Fri: the XL window (2 h, 512 GiB), if one is queued in
-# scripts/automation/xl-queue.env. Budget is three per trailing 7 days,
-# enforced by the guard against xl-ledger.md, so this entry can fire nightly
-# and simply does nothing once the budget is spent or the queue is empty.
+# scripts/automation/xl-queue.env (operator directive 2026-09-09). No Claude
+# session — a cron script has neither the 660 s foreground cap nor the 65-min
+# slot kill. 02:00 because the box is shared with work this sandbox cannot
+# see. Own lock, not the automation flock. Budget three per trailing 7 days,
+# enforced by the guard against xl-ledger.md; fires nightly and does nothing
+# once the budget is spent or the queue is empty. Worst case ends 04:00,
+# before the 04:30 slot.
 0 2 * * 0-5 /home/taz5297/Development/fem-em-solver/scripts/automation/xl-run.sh xl
 # 02:00 Saturday: the XXL window (8 h, 754 GiB, one per week), from
-# scripts/automation/xxl-queue.env. Saturday is its own day so the two tiers
-# cannot both start at 02:00 and contend for the box; 8 h from 02:00 ends at
-# 10:00, so it overlaps the 04:30-09:00 implementer slots -- those are 2-8 rank
-# jobs and the box is 36 cores, but a Saturday XXL window is the one time the
-# machine is deliberately oversubscribed. Operator directive 2026-09-10.
+# scripts/automation/xxl-queue.env. Its own day so the two tiers never both
+# start at 02:00; 8 h from 02:00 ends at 10:00 and overlaps the 04:30-09:00
+# slots (2-8 rank jobs on a 36-core box — the one deliberately oversubscribed
+# window). Operator directive 2026-09-10.
 0 2 * * 6 /home/taz5297/Development/fem-em-solver/scripts/automation/xl-run.sh xxl
 #
 # CANONICAL COPY. The live schedule lives in the user crontab spool; this file

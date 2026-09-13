@@ -1,11 +1,13 @@
 # Implementer run protocol (Opus, scheduled)
 
-Run by `scripts/automation/implementer-run.sh` via cron, twelve times daily on
-a 90-minute grid shared with the daily review (04:30, 06:00, 07:30, 09:00,
-12:00, 13:30, 15:00, 16:30, 19:30, 21:00, 22:30, 00:00 local — four runs after
-each of the three reviews at 03:00 / 10:30 / 18:00). One run = one attempt at
-the **top "On deck" item** in PROJECT_PLAN.md §9. Sessions never overlap: the
-grid spacing exceeds the 65-minute hard kill, and all runs share one `flock`.
+Run by `scripts/automation/implementer-run.sh` via cron, **four times on each
+active day** — 04:30, 06:00, 07:30, 09:00 local, after the single 03:00 daily
+review; **Tuesday and Thursday are off** (wind-down schedule, operator
+directive 2026-09-13; canonical crontab `scripts/automation/crontab`). One
+run = one attempt at the **top "On deck" item** in PROJECT_PLAN.md §9, then
+the next if it commits before minute 30 (step 2). Sessions never overlap:
+the grid spacing exceeds the 65-minute hard kill, and all runs share one
+`flock`.
 Since 2026-09-12 (operator directive, enacted by the 18:00 daily review) a
 run that finishes its item early takes the next one — see step 2.
 

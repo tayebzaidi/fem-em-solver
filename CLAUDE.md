@@ -116,31 +116,37 @@ review of returned diffs stay in the main (Fable) session.
 
 ## Scheduled automation
 
-System cron runs headless sessions via `scripts/automation/` on a 90-minute
-grid — 3 reviews and 12 implementer runs a day, four runs after each review,
-plus two weekly planning reviews:
+System cron runs headless sessions via `scripts/automation/` — **wind-down
+schedule since 2026-09-13** (operator directive: token budget cut ≥ 4×, the
+project continues slowly). One overnight block per active day — one review
+then four implementer runs — and **Tuesday and Thursday are off** (no reviews,
+no implementer runs). Canonical crontab: `scripts/automation/crontab`.
 
-- **Plan review** (medium effort, 03:00 / 10:30 / 18:00 local) — audits results
-  against §4, rescopes failed attempts, disposes of `recovered/*` branches,
-  tops the §9 "On deck" queue up to 5 items. Protocol:
+- **Plan review** (medium effort, 03:00 local, Sun/Mon/Wed/Fri/Sat) — audits
+  results against §4, rescopes failed attempts, disposes of `recovered/*`
+  branches, tops the §9 "On deck" queue to the slot-minutes floor. Protocol:
   docs/automation/daily-review.md.
-- **Weekly planning review** (high effort, Sunday **and Wednesday**
-  02:15 local) —
+- **Weekly planning review** (high effort, **Saturday 21:00 local**) —
   owns the long horizon with brutal realism: §6 phase map and §10 roadmap
   (phases → subgoals, dated pace-based assessments), examples/ health, and
   commissioning/adjudicating `examples/ansys_benchmarks/` cases the human
   operator replicates in Ansys Electronics Desktop (PROJECT_PLAN §5.4).
-  Never edits §9. Runs twice weekly since 2026-09-01, splitting the
-  interval 3/4 days; "this week" in that protocol means since the last
-  weekly-review commit, so pace arithmetic uses the measured elapsed time.
-  Protocol: docs/automation/weekly-review.md.
-- **Implementer runs** (Opus, 04:30 / 06:00 / 07:30 / 09:00 and the same
-  offsets after each later review) — each attempts the top On-deck item
-  inside a 1-hour timebox; incomplete work is parked on `attempt/*` branches
-  and journaled in docs/testing/attempts.md, never left on main. A dirty tree
-  stops the first run that meets it and is parked on `recovered/*` by the
-  second, so an outage costs two slots rather than the rest of the day.
-  Protocol: docs/automation/implementer-run.md.
+  Never edits §9. Once weekly since 2026-09-13 (the Wednesday run is
+  dropped — what the plan calls "the 09-16 weekly" is the 09-19 one; moved
+  off Sunday 02:15 because that session twice exhausted the account's
+  5-hour allowance and took the Sunday block with it); "this week" in that
+  protocol means since the last weekly-review commit, so pace arithmetic
+  uses the measured elapsed time. Protocol: docs/automation/weekly-review.md.
+- **Implementer runs** (Opus, 04:30 / 06:00 / 07:30 / 09:00 local on active
+  days) — each takes the top On-deck item inside a 1-hour timebox, and the
+  next one if it commits before minute 30 (take-next, 2026-09-12); incomplete
+  work is parked on `attempt/*` branches and journaled in
+  docs/testing/attempts.md, never left on main. A dirty tree stops the first
+  run that meets it and is parked on `recovered/*` by the second, so an
+  outage costs two slots rather than the rest of the day. Protocol:
+  docs/automation/implementer-run.md.
+- **XL / XXL windows** (02:00, cron scripts, no Claude session, zero tokens)
+  are unchanged — the cheapest compute the project has.
 
 The daily review also maintains a status dashboard for the human operator
 (`docs/status/dashboard.md`, republished as a Claude artifact — URL in
