@@ -1,0 +1,78 @@
+# Test Run
+- Chunk: OPS-47-step2-POST-6
+- Commit: 663a22381a5239dcb12349902d35493a57e7ce6d
+- Time (UTC): 2026-09-13 20:13:52
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.5.1
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && timeout -k 30 30 bash scripts/probes/ops47_step2_move.sh move POST-6'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 24
+drwxr-xr-x  3 taz5297 taz5297 4096 Sep  4 23:31 .
+drwxr-xr-x 16 taz5297 taz5297 4096 Sep 13 15:13 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  721 Sep  3 13:49 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 4264 Sep 10 12:01 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.5.1
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && timeout -k 30 30 bash scripts/probes/ops47_step2_move.sh move POST-6'\'''
+pre-commit revision HEAD 663a22381a5239dcb12349902d35493a57e7ce6d
+[anchor] pre-worktree-plan-equals-HEAD: PASS (rc=0, expected 0)
+chunk file at HEAD: 8398 B
+(iii) BEFORE: PROJECT_PLAN.md 9951 lines, 838503 B
+[anchor] iii-measure-before-exit: PASS (rc=0, expected 0)
+(iii) BEFORE measure_plan_sections.py: §7 lines 6480 chunks 219
+== dry run
+POST-6    narrative lines 3400-3511 (112 lines)  span 8141 B -> pointer 94 B  (plan shrinks 8047 B)  chunk file exists
+PROJECT_PLAN.md: 838503 -> 830456 B, 9951 -> 9840 lines (projected)
+dry run: nothing written
+[size-assert] projected plan bytes 830456 < 838503: PASS
+[size-assert] projected plan lines 9840 < 9951: PASS
+[anchor] dry-run-exit: PASS (rc=0, expected 0)
+[anchor] dry-run-wrote-nothing: PASS (rc=0, expected 0)
+== real move (rider: strict shrink asserted against the pre-move size)
+POST-6    narrative lines 3400-3511 (112 lines)  span 8141 B -> pointer 94 B  (plan shrinks 8047 B)  chunk file exists
+PROJECT_PLAN.md: 838503 -> 830456 B, 9951 -> 9840 lines
+POST-6: chunk-file narrative equals the extracted span (8141 B)
+PROJECT_PLAN.md: written, 8047 B moved out
+[size-assert] plan bytes 830456 < 838503: PASS
+[size-assert] plan lines 9840 < 9951: PASS
+[anchor] move-exit-and-size-assert: PASS (rc=0, expected 0)
+== (i) independent re-extraction from git HEAD vs the chunk-file span
+git-HEAD re-extraction: lines 3400-3511 (112 lines), 8141 B; 1 same-ID opener line(s) inside; pointer lines in plan 1; chunk file 8398 -> 16608 B
+history prefix preserved: True; single header: True; trailing newline: True
+[anchor] i-reextract-prefix-header-pointer: PASS (rc=0, expected 0)
+[anchor] i-cmp-git-HEAD-span-vs-chunkfile-span: PASS (rc=0, expected 0)
+[anchor] i-cmp-plan-equals-HEAD-with-span-replaced-by-pointer: PASS (rc=0, expected 0)
+(iii) AFTER: PROJECT_PLAN.md 9840 lines, 830456 B (was 9951 lines, 838503 B; -111 lines, -8047 B; span 8141 B - pointer 94 B = 8047 B)
+[anchor] iii-shrink-equals-span-minus-pointer: PASS (rc=0, expected 0)
+[anchor] iii-measure-after-exit: PASS (rc=0, expected 0)
+(iii) AFTER measure_plan_sections.py: §7 lines 6369 chunks 219
+== (ii) leak audit
+clean: no tracked file carries any of the 501 AED figures (>= 8 digits, >= 5 distinct)
+[anchor] ii-leak-audit: PASS (rc=0, expected 0)
+ PROJECT_PLAN.md                | 113 +---------------------------------------
+ docs/planning/chunks/POST-6.md | 115 +++++++++++++++++++++++++++++++++++++++++
+ docs/testing/test-results.md   |   1 +
+ 3 files changed, 117 insertions(+), 112 deletions(-)
+== summary: fail=0
+
+## Exit
+- Status: 0
+- Elapsed (s): 10
+- Filtered lines (gmsh optimisation chatter): 0
