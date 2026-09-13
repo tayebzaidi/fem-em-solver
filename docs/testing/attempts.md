@@ -12496,3 +12496,22 @@ The slot owner checked every executor report against the harness footers: all St
    - The solid control ran at 10 MHz only.
 
 **Hypothesis for the review.** Rule on (3) before counting `TH-15` step 3 toward `TH-14` step 1. An outer-box facet tag would let the natural-cavity control run, and would say whether the terminal sum or the field accounting is the right comparand.
+
+## 2026-09-13T21:42Z (2026-09-13 16:30 CDT slot) — §9 item 9, the 12-example census refresh (`th:1`–`8`, `ports:4`–`7`) — **complete (runs only; every imported assertion green; census `exit=0` before and after)**
+
+Items 1–8 were all done or blocked at slot start (item 2 🚫 `PORT-14` step 3), so item 9's "taken only when 1–8 are all done or blocked" condition held. Tree clean, `fem-em-solver` Up 3 days. Delegated to `example-runner`, foreground, with the harness rules stated in the spawn prompt. The slot owner checked each footer and each example's closing line against the logs.
+
+- **Census pre:** `20260913T213122Z_EX-refresh-census-pre.log:39` reads `RESULT: dead=0 guide=0 stale=0 stale_severity=report exit=0`, 1 s. The item had predicted `exit 2`, but the 14-day crossing is 2026-09-14, so nothing was stale yet. The refresh therefore *prevents* tomorrow's `exit 2`; it did not clear one. Status moved: none (the corpus stays `exit 0`).
+- **Legs, all Status 0, `-n 2`:**
+  - `20260913T213224Z_EX-refresh-leg-th-a.log`: `th:1`–`4`, 26 s, four "All assertions hold" lines at `:56, :81, :171, :195`.
+  - `20260913T213259Z_EX-refresh-leg-th-b.log`: `th:5`–`8`, 55 s, at `:66, :379, :511, :691`.
+  - `20260913T213404Z_EX-refresh-leg-ports-a.log`: `ports:4`–`5`, 144 s. `ports:4` "All gates hold" is at `:1936`. `ports:5` "All three gates hold on all three rungs" is at `:3978`, with its 64 / 128 MHz `PORT-11` record anchors at relative ≤ 1.075e-03 against the 1e-02 band (`:3904–3916`).
+  - `20260913T213640Z_EX-refresh-leg-ports-b.log`: `ports:6`–`7`, 105 s. The CG1 spread is 2.1870 % against the 5 % band (`:1856`). "All gates hold" is at `:1873` and "All identities hold" at `:3718`.
+- **Census post:** `20260913T213847Z_EX-refresh-census-post.log:39` reads `stale=0 exit=0`, 1 s.
+- **Deviation:** `./scripts/run_examples.sh --dry-run` emits one `docker compose exec` line per example rather than one batched command. The executor chained the emitted lines verbatim with `&&` into four legs, as the item allowed. No docker-socket denial occurred and no orphaned ranks were left (`pgrep -c python3` → 0).
+
+**Hypothesis for the next attempt.** None needed; this was a refresh. These twelve artifacts are next due around 2026-09-27.
+
+## 2026-09-13T21:43Z (2026-09-13 16:30 CDT slot, slot owner's close) — queue drained — **anchor: stopped at minute 13 per §9's drain rule; no fallback chunk exists**
+
+Every §9 On-deck item (1–9) is done or blocked after item 9's commit. The only blocked one is item 2, `PORT-14` step 3, which waits on a review re-registering anchor (i). §9 says "If the queue drains: **stop and journal.** There is no fallback chunk", so this slot stopped with a clean tree. The 19:30 slot will meet the same drained queue unless the 18:00 review restocks it. The restock shortfall was already stated at 48 min, and it is now the whole queue.

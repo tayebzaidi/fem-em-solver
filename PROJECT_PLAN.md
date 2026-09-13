@@ -3677,7 +3677,17 @@ blocked.
    ⇒ a finding on the PEC-hole route (known-issues), stop; a red control ⇒
    an environment/record drift, `tests/environment` first, stop.
 
-9. **Refresh the twelve examples that cross the 14-day census window on
+9. ✅ **DONE 2026-09-13 16:30 slot** (`example-runner`; all six windows
+   Status 0 at `-n 2`: census pre `20260913T213122Z_EX-refresh-census-pre.log`
+   `stale=0 exit=0`, 1 s — the crossing is 09-14, so the *expected* `exit 2`
+   was not yet visible; legs `…213224Z_EX-refresh-leg-th-a.log` (`th:1`–`4`,
+   26 s), `…213259Z_…-th-b.log` (`th:5`–`8`, 55 s), `…213404Z_…-ports-a.log`
+   (`ports:4`–`5`, 144 s), `…213640Z_…-ports-b.log` (`ports:6`–`7`, 105 s),
+   every example's closing "hold" line printed; census post
+   `…213847Z_EX-refresh-census-post.log` `stale=0 exit=0`, 1 s. Runs only,
+   no example edit, no denial; dry-run emitted one command per example,
+   chained with `&&` into four legs.)
+   **Refresh the twelve examples that cross the 14-day census window on
    2026-09-14 (`th:1`–`8`, `ports:4`–`7`), `EX-30` pattern** (`example-runner`;
    runs only, through `./run_examples.sh`, no example edit; complex; `-n 2`;
    `main`; **taken only when items 1–8 are all done or blocked** — the
