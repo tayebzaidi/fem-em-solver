@@ -14,8 +14,9 @@ imposed field (`TH-10` closed 2026-08-13: 3.643% / 1.826% at 64 / 128 MHz,
 power to 3.629%; the 128 MHz figure is 1.769% on the 0.11 image `main`
 boots — re-recorded with its mesh by `OPS-18`, 2026-08-22). Coil loading is gated only in the eddy-current regime —
 `MAT-6` closed 2026-07-31 with ΔR matching Dodd–Deeds to 1.58% at 10 MHz,
-σ = 100 S/m; the **coil-at-Larmor** case is still an extrapolation (`TH-11`
-is measuring it). SAR is gated against the lossy-sphere closed form to 3.5%
+σ = 100 S/m; the **coil-at-Larmor** case is measured flat in f across
+10–64 MHz on one XL window (`TH-11` step 5d, 2026-09-09) — a record, not a
+gate (2026-09-13 weekly). SAR is gated against the lossy-sphere closed form to 3.5%
 (`MAT-4` step 1, 2026-08-03) on an **imposed uniform field**, never on a
 coil. S-parameters are field-derived through the package (`PORT-1` closed
 2026-08-15; feed systematics named on the two-torus fixture), and the
