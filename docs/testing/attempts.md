@@ -17869,3 +17869,34 @@ All three reds were parser defects in the census dry run. The self-test, the neg
 **Status moved:** none — `PORT-19` stays ✅, and the regression record sits in its §7 row.
 
 **Hypothesis.** None needed for `PORT-19`. A future `EX-*`/`record-reconciler` pass should re-record `examples/ports/03_lumped_sheet_port_widths.md`'s cell count and reciprocity row from the 0.11 image.
+
+## 2026-09-13T00:53Z (2026-09-12 19:30 CDT slot, third item) — `OPS-46` step 2 — **complete (docs only): the WF, ANS and PORT families (12 rows) moved to `docs/planning/chunks/`, one commit per family, every anchor green; `OPS-46` stays 🟡**
+
+**Preflight.** Item 2 was committed as `b260450`. At 19:47 CDT (minute 17) the tree was clean, and item 3's dependency (item 1, `a962e78`) was on `main`, so item 3 was taken.
+
+**Tried.**
+- New tracked `scripts/probes/ops46_move_family.sh <FAM> <spec> [--negative-control]`, run in the container through the harness once per family. It covers:
+  - the missing-row negative control (first family only);
+  - the move itself;
+  - anchor (i): each span re-extracted from `git show HEAD:PROJECT_PLAN.md`, then `cmp` against the chunk body. This uses only the ID prefix and the unchanged trailing cells, not the tool's parser.
+  - anchor (iii): `git diff --numstat` shows N/N on the plan, one new file per row, and no other change;
+  - anchor (ii): `check_private_leak.py` in hook mode on the move staged into a scratch index, with safe.directory set and git asserted to see the staged paths (step 1's trap);
+  - a `chown 1000:1000` of the new files, so host-side appends are not blocked by root ownership.
+- Specs lived under gitignored `logs/ops46/`. The state lines were written from each row's tail, meaning its last ruling. ANS lines carry no numbers, and the tool refuses any digit run a row lacks.
+
+**Logs.**
+- `20260913T004941Z_OPS-46-step2-WF.log` — **Status 1.** Every move anchor passed, but `iii-no-other-changes` was red on the harness's in-flight log and the then-untracked script itself. This was a script defect. The check now ignores harness outputs; the move was undone (plan restored with `git checkout`, the generated chunk file removed); the script and this log were committed in `ad1dd33`; the move was re-run.
+- `20260913T005037Z_OPS-46-step2-WF.log` — Status 0, 3 s. The negative control held: `WF-999` refused, plan unchanged, nothing written. Anchors (i)/(ii)/(iii) green. Plan 1342548 → 1297074 B. Commit `2592c5b`.
+- `20260913T005108Z_OPS-46-step2-ANS.log` — Status 0, 3 s. All anchors green for `ANS-1`/`-2`/`-4`. Plan → 1246981 B. Commit `efb05ed`.
+- `20260913T005133Z_OPS-46-step2-PORT.log` — Status 0, 3 s. All anchors green for the eight PORT rows. Plan → 1165545 B. Commit `8404422`.
+
+The host `pre-commit` leak hook also passed on all three commits.
+
+**Checked by hand.**
+- Glyphs are carried over, not chosen: `WF-6` 🟡, `ANS-2` 🟡, `PORT-15` 🟡 (its status cell opens 🟡; the 🚫 inside is history), `PORT-18` 🧪, the rest ✅.
+- The `>`-blockquote narratives under the PORT table were not touched.
+- `PORT-19`'s span (19 505 B) includes the step 6 record this slot added first.
+
+**Status moved:** none (`OPS-46` stays 🟡).
+
+**Hypothesis.** Items 4 and 5 are the same script with no change: `bash scripts/probes/ops46_move_family.sh <FAM> <spec>`, one harness window and one commit per family. Their cost is reading row tails for honest state lines, about a minute a row. Item 4's 34 rows are more than a half-slot. Item 5's census reading: `GEO-17` and `ANS-5` are also over 2 048 B on the current plan and are in no list (step 1 entry). The review decides whether they move.
