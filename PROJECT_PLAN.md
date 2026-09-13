@@ -8309,13 +8309,11 @@ a `[capture] rc=` line only when it is the *last* output line. **Every
    the flagged digits go to the journal by *file and line only*, never
    quoted.
 
-4. **🟡 PARTLY DONE 2026-09-12 19:30 slot — MAG (`c96873e`) and GEO
-   (`ac1b22c`) moved, every anchor green; the OPS family (20 rows) is NOT
-   yet moved and is runnable as written (not blocked):** the next slot takes
-   this item for the OPS family only — one spec of 20 state lines under
-   `logs/ops46/`, then `bash scripts/probes/ops46_move_family.sh OPS <spec>`
-   through the harness and one commit. `OPS-46`'s own state line is then
-   "in progress, steps 1–3 landed". Journal in attempts.md.
+4. **✅ DONE 2026-09-12 21:00 slot — MAG (`c96873e`, 19:30 slot), GEO
+   (`ac1b22c`, 19:30 slot) and OPS (`b27e690`, 21:00 slot,
+   `20260913T020237Z_OPS-46-step3-OPS.log`, 47 PASS / 0 FAIL) moved, every
+   anchor green; plan → 927 309 B; `OPS-46` stays 🟡, its history now in
+   `docs/planning/chunks/OPS-46.md`; journal in attempts.md.**
    **`OPS-46` step 3 — move the OPS, GEO and MAG families (34 rows,
    ≈ 245 KB): `OPS-17`, `OPS-18`, `OPS-26`, `OPS-27`, `OPS-30`–`OPS-34`,
    `OPS-36`–`OPS-46`; `GEO-19`, `GEO-20`, `GEO-23`–`GEO-32`; `MAG-18`,

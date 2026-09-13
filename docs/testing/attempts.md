@@ -17914,3 +17914,18 @@ The host `pre-commit` leak hook also passed on all three commits.
 **Status moved:** none (`OPS-46` stays 🟡).
 
 **Hypothesis.** The OPS family is one slot's work with no tooling change. For each row, read the head of its status cell (where the ✅ note sits) plus its tail, write the spec, then do one harness window and one commit. `OPS-46`'s own line is "in progress, steps 1–3 landed". Item 5 (TH/MAT/POST/EX plus the size bound) is still independent of the OPS remainder for its moves. Its closure claim needs item 4 finished. The plan is now at 1 064 162 B, so the < 850 000 B bound looks reachable once all families are moved.
+
+## 2026-09-13T02:05Z (2026-09-12 21:00 CDT slot, first item) — `OPS-46` step 3 (OPS family remainder) — **complete: the OPS family (20 rows) moved with every anchor green; step 3 is done**
+
+**Preflight.** At 21:00:05 CDT the tree was clean and `fem-em-solver` was Up 2 days. The first open On-deck item was §9 item 4 (PARTLY DONE, remainder runnable). Its dependency, item 1 (`a962e78`), is on `main`.
+
+**Tried and landed.**
+- **Digest.** A read-only digest script (`logs/ops46/digest_ops.py`, gitignored, run in the container outside the harness because it is a lookup, not verification) printed each row's head, tail and status cell. My left-anchored cell split mangled `OPS-26`, `OPS-41` and `OPS-43`, whose cells contain unescaped `|` inside code spans. A right-anchored re-split read their glyphs as ✅ / ✅ / ✅.
+- **State lines.** They were written from each row's closing ruling or audit note. **Weakest line:** `OPS-26`'s row carries no locatable closing ruling (its status cell is a bare ✅), so its state line only restates the chunk's scope and points to the history file. A review may want to sharpen it.
+- **Dry run.** `rotate_plan_archive.py chunks logs/ops46/spec-OPS.md --dry-run` passed the tool's own state-line checks (≤ 2 sentences, no new digit runs, no unescaped `|`) and showed 19 ✅ plus 1 🟡 (`OPS-46`). Exit 0, nothing written.
+- **Move.** `scripts/testing/run_and_log.sh OPS-46-step3-OPS "docker compose exec -T fem-em-solver bash -lc 'cd /workspace && timeout -k 10 120 bash scripts/probes/ops46_move_family.sh OPS logs/ops46/spec-OPS.md'"` produced `20260913T020237Z_OPS-46-step3-OPS.log`, Status 0, 5 s, `summary: fail=0`, 47 PASS and 0 FAIL. Anchors: (i) 20/20 re-extractions from `git show HEAD:PROJECT_PLAN.md` `cmp`-equal their chunk bodies; (iii) numstat `20 20 PROJECT_PLAN.md`, 20 new chunk files, no other change; (ii) leak check exit 0 on the move staged in a scratch index (21 paths seen, so the pass is not vacuous). Plan 1 064 986 → 927 309 B (137 677 B out). Commit `b27e690`, the family's move by itself.
+- **History note.** A step-3 completion paragraph was appended to `docs/planning/chunks/OPS-46.md` after the byte-identical body, per implementer-run.md step 4. §9 item 4 is marked DONE.
+
+**Status moved:** none (`OPS-46` stays 🟡).
+
+**Hypothesis.** Item 5 is the same script over four families (TH 4, MAT 2, POST 2, EX 19), then anchor (iv). A plan at 927 309 B minus the roughly 130 KB item 5 predicts about 0.80 MB, which is inside < 850 000 B. The `GEO-17` / `ANS-5` question (over 2 048 B, in no list) is still the review's.
