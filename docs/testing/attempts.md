@@ -12580,3 +12580,26 @@ Every §9 On-deck item (1–9) is done or blocked after item 9's commit. The onl
 **Logs.** `20260914T010149Z_PORT-15.log` (measurement, records at :1902-1938), `20260914T010448Z_PORT-15.log` (closing).
 
 **Hypothesis / next.** Step 3 (item 5) can sweep field-free on `S_64MHZ_EPS0_RECORD`; its inductance read-off must de-embed the gap capacitance first (the port-side Im Z is capacitive at 10 MHz).
+
+## 2026-09-14T02:09Z (2026-09-13 21:00 CDT slot, first item) — PORT-15 step 3 — **complete; PORT-15 🟡 → ✅ (`3e6519a`)**
+
+**What was tried.** §9 item 5, delegated to `implementer` (foreground). Items 1–4 were DONE; item 4's records (`d65ee3d`) were on `main`, so the dependency held. Preflight: tree clean, `fem-em-solver` Up 3 days. Tests went into `tests/validation/test_port_circuit_layer_field.py`: `tuning_sweep`, `select_c_tuned`, and a multi-termination generalisation of `PORT-14`'s `_terminated_three_port`. Step 2's tests are unchanged. Also new: `scripts/probes/port15_step3_tuning_sweep.py`.
+- The sweep holds P1 at 50 Ω and puts the same C on P2..P4. It covers 2001 log points from 0.1 pF to 10 nF and finds exactly one Im Z_in sign change, a zero rather than a pole.
+- Bisection then gives C_tuned.
+- One in-model 64 MHz solve followed, with the κ-corrected capacitor sheets at C_tuned. It used the stored `STEP2D_C_OVER_TERMINAL_64MHZ_P1` and did not re-derive κ.
+
+**Measured.**
+- C_tuned = 1.556993028375804e-11 F.
+- (a) |Im Z_in|/|Z_in| = 2.113e-15 (asserted ≤ 1e-6). Z_in = 6.7726 Ω and |S11| = 0.761413 (closing log :1968).
+- (b) Circuit vs in-model, asserted against REDUCTION_BAND 1e-3: S11 residual 8.255812e-05 and 2×2 residual 6.123431e-05 (:3732, :3742).
+  - The in-model run built the mesh in 25.27 s and did 3 driven solves in 19.56 s (:3728).
+  - (b) holds at 15.6 pF, far below `PORT-14`'s 100 pF registration.
+- Negative control (predicted, printed): |S11| is 0.846072 at 0.5× and 0.785168 at 2×, both above 0.761413. Held (:1969–1970).
+- Printed: the ladder mode-1 frequency is 1.605949e+08 Hz (:1974). The inputs are L_leg ≈ 1.038e-08 H and L_ring ≈ 5.270e-08 H from a series-LC fit through the stored 10/64 MHz reactances, which removes the gap capacitance. This is indicative only: the fixture's capacitors sit in the legs, not the rings.
+- Closing window, module as committed (rule (i)): 7 passed in 173.59 s, Status 0, 176 s wall, `-n 2`, `timeout -k 30 590`, `-s`. The sweep printer took 4 s.
+
+**Logs.** `20260914T020419Z_PORT-15.log` (closing; :1966–1974, :3728–3742, Status :3759), `20260914T020404Z_PORT-15.log` (sweep printer).
+
+**Caveats for the review.** (1) "Tuned" here means Im Z_in = 0 only, a series resonance at R_in = 6.77 Ω. The coil is not matched to 50 Ω. The sweep's lowest |S11| (≈ 0.636 near 75 pF, probe log :61) has no Im Z zero. (2) §2 (~line 216) still calls `PORT-15` step 1 the latest step, and the §6 phase map (~line 873) still lists `PORT-15` at step 1. Both are review/weekly text and were not edited. (3) `PORT-15` ✅ is closed on gate (i) plus the tuned S11 on one F-small fixture at one frequency. Gate (ii), the 32-port mode spectrum, stays with `TH-17`.
+
+**Hypothesis / next.** §10 chain steps 1–3 are done, so `TH-17` step 1 is the weekly's to write. The ≈ 2.5× gap between the ladder's mode-1 frequency and 64 MHz is probably the leg-capacitor topology versus the closed form's ring-capacitor ladder, not a κ systematic, because (b) holds at C_tuned.
