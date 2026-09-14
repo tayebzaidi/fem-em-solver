@@ -12548,3 +12548,20 @@ Every §9 On-deck item (1–9) is done or blocked after item 9's commit. The onl
 **Logs.** `20260914T004807Z_TH-14.log`, 45 s, Status 0. `pgrep -c python3` read 0 before and after.
 
 **Hypothesis / next.** The third-kind term's sign and normalisation are right under e^{jωt}. §9 item 6 (the copper F-small birdcage, `TH-14` step 2 in the item's numbering) is unblocked.
+
+## 2026-09-14T00:56Z (2026-09-13 19:30 CDT slot, take-next third item) — TH-15 step 3c — **✅ green; excess attributed; known-issues entry retired**
+
+**What was tried.** This is §9 item 3, tests only. `_power_attribution` computes the per-port `½Re(V I*)`, `P_sheet,field`, `ports/shares.py`'s `terminal_form_deficit` (imported), the phantom loss and `P_(Ω∖phantom)`. It runs on the 10 MHz hole route and on the solid control, the latter becoming a module fixture with one P1 field solve. One window ran at `-n 2`, complex build, `-s`, durable capture. The module was not edited afterwards (rule (i)).
+
+**Measured.**
+- (a) The identity closes at 3.327e-15 (hole) and 7.898e-15 (solid). The hole's `P_(Ω∖phantom)` reads 0 W.
+- (b) The solid's P1 `C/terminal − 1` is 1.059204217e-02 against the 2d record, rel 1.490e-10.
+- (c) Hole: reciprocity 1.707e-14, σ_max 0.999994234, spreads 0.0190/0.0094/0.0059 %. The solid control reads 1.158e-10.
+- Printed:
+  - The hole's pooled `C/terminal − 1` is 1.058874954e-02 against the solid's 1.059204217e-02 (ratio 0.9997, below the 5× threshold).
+  - The hole's excess is 7.693701287e-05 W = 2.8955e-02 of `P_src`, equal to `C_total − terminal_total` = 7.693701287e-05 W to every digit. The solid's is 6.716202469e-05 W, again equal to `C − terminal`.
+- 21 passed, 102 s.
+
+**Logs.** `20260914T005452Z_TH-15-step3c.log`, Status 0. `pgrep -c python3` read 0 before and after.
+
+**Hypothesis / next.** The excess is the terminal sheet form's Cauchy–Schwarz deficit, not a hole-route readout systematic. The review re-registers the row's power sentence on `Σ½Re(VI*) = P_vol + (C − terminal)` (rule (h)). `TH-15` stays 🟡 on step 2.

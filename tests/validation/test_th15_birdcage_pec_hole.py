@@ -27,6 +27,23 @@ One frequency per window: ``TH15_STEP3_FREQ_MHZ`` ∈ {10, 64, 128}.
 ``TH15_STEP3_SOLID_CONTROL=1`` additionally runs the solid route through
 `PORT-11`'s own ``_four_port_rung`` at 10 MHz and asserts `PORT-11`'s
 ``LEG_D_S_MATRIX_10MHZ`` record at ``FREQUENCY_CONTROL_BAND``.
+
+**Step 3c (attribution of the hole's terminal-power excess).**  Both routes get
+the same P1 power attribution (:func:`_power_attribution`): per port
+``½Re(V I*)`` and the sheet's form-level dissipation ``P_sheet,field``,
+``C/terminal − 1`` from ``fem_em_solver.ports.shares`` (imported), the phantom
+loss and ``½∫_{Ω∖phantom} σ|E|²``.  Asserted: (a) ``P_src − ΣP_sheet,field =
+P_phantom + P_{Ω∖phantom}`` at `PORT-16`'s imported ``DISCRETE_IDENTITY_RTOL``
+on both routes — an identity of the discrete solve, true by construction — with
+the hole's ``P_{Ω∖phantom} ≤ 1e-12 W`` (a conductor-free mesh, also by
+construction); (b) the solid's P1 ``C/terminal − 1`` reproduces `PORT-14` step
+2d's 1.059204e-02 (``20260912T123429Z_PORT-14-step2d-10mhz.log:1938``) at rtol
+1e-3.  Printed, never asserted: the hole's ``C/terminal − 1`` beside the
+solid's, the per-sheet split, the excess / ``P_src`` and the 5× filing ratio.
+Because ``V = V_s − I Z_p`` per port, ``Σ½Re(V I*) = ½Re(V_s Ī₁) −
+Σ½|I|²Re Z_p`` exactly, so the excess over the volume loss is printed as its
+source part ``½Re(V_s Ī₁) − P_src`` plus its sheet part ``ΣP_sheet,field −
+Σ½|I|²Re Z_p``.
 """
 
 from __future__ import annotations
@@ -45,6 +62,7 @@ from fem_em_solver.core import HomogeneousMaterial, TimeHarmonicProblem
 from fem_em_solver.io.mesh import BIRDCAGE_CONDUCTOR_SURFACE_TAG
 from fem_em_solver.ports.definitions import PortDefinition
 from fem_em_solver.ports.lumped import LumpedSheetPortSpec, run_lumped_sheet_port_case
+from fem_em_solver.ports.shares import terminal_form_deficit
 from fem_em_solver.ports.sparameters import run_n_port_sparameter_sweep
 
 from tests.complex_mode import complex_only
@@ -58,6 +76,7 @@ from tests.mesh.test_birdcage_port_tags import LEG_COUNT
 from tests.mesh.test_two_torus_port_facets import _facet_group_area
 from tests.mesh.test_two_torus_port_sheet import _sheet_facet_count
 from tests.validation.test_birdcage_power_identity import (
+    DISCRETE_IDENTITY_RTOL,
     _sheet_field_dissipation_w,
     _source_power_w,
 )
@@ -98,6 +117,103 @@ DRIVEN = "P1"
 # Pre-registered in §9 item 8 (2026-09-13): the hole route's lossless power
 # identity, P1 drive, terminal form against the phantom volume loss.
 POWER_IDENTITY_BAND = 1.0e-3
+
+# Step 3c anchor (b): `PORT-14` step 2d's P1 pooled C/terminal − 1 on the solid
+# 10 MHz fixture (`20260912T123429Z_PORT-14-step2d-10mhz.log:1938`).
+SOLID_P1_C_OVER_TERMINAL_10MHZ = 1.059204217e-02
+SOLID_C_OVER_TERMINAL_RTOL = 1.0e-3
+# Step 3c anchor (a), hole: no lossy volume outside the phantom exists.
+HOLE_NON_PHANTOM_LOSS_MAX_W = 1.0e-12
+# *Predicted, printed only* (§9 item 3): excess / P_src ≈ 7.6937e-05 / 2.657e-03,
+# and the filing threshold hole/solid C/terminal − 1 ratio.
+PREDICTED_EXCESS_OVER_P_SRC = 7.6937e-05 / 2.657078677e-03
+PREDICTED_FILING_RATIO = 5.0
+
+
+def _power_attribution(msh, cell_tags, tags_f, specs, p1, fields, frequency_hz):
+    """The P1 drive's power terms on one route, every scalar MPI-reduced."""
+    comm = msh.comm
+    e = fields.e_complex
+    sigma = fields.sigma_field
+    assert sigma is not None, "solved fields carry no sigma_field"
+    omega = 2.0 * np.pi * float(frequency_hz)
+    acct = {"mesh": msh, "facet_tags": tags_f}
+    sheet_objs = {sp.port_id: sp.sheet(driven=(sp.port_id == DRIVEN)) for sp in specs}
+    p_sheets = {
+        pid: _sheet_field_dissipation_w(acct, sh, e, omega) for pid, sh in sheet_objs.items()
+    }
+    p_src = _source_power_w(acct, sheet_objs[DRIVEN], e, omega)
+    dx = ufl.Measure("dx", domain=msh, subdomain_data=cell_tags)
+
+    def _vol(measure):
+        form = fem.form(0.5 * sigma * ufl.inner(e, e) * measure)
+        return float(np.real(comm.allreduce(fem.assemble_scalar(form), op=MPI.SUM)))
+
+    p_total_vol = _vol(dx)
+    p_phantom = _vol(dx(PHANTOM_CELL_TAG))
+    terms = {
+        pid: 0.5 * complex(r.voltage_v) * np.conjugate(complex(r.current_a))
+        for pid, r in p1.responses.items()
+    }
+    currents = {pid: complex(r.current_a) for pid, r in p1.responses.items()}
+    deficit = terminal_form_deficit(msh, tags_f, list(sheet_objs.values()), e, comm)
+    v_s = complex(sheet_objs[DRIVEN].source_voltage_v)
+    p_src_terminal = float(np.real(0.5 * v_s * np.conjugate(currents[DRIVEN])))
+    terminal_sum = float(np.real(sum(terms.values())))
+    return {
+        "p_src": float(p_src),
+        "p_sheets": p_sheets,
+        "p_sheets_total": float(sum(p_sheets.values())),
+        "p_phantom": p_phantom,
+        # Whole-domain minus phantom: the conductor on the solid, 0 on the hole.
+        "p_non_phantom": float(p_total_vol - p_phantom),
+        "terms": terms,
+        "currents": currents,
+        "terminal_sum": terminal_sum,
+        "p_src_terminal": p_src_terminal,
+        "deficit": deficit,
+    }
+
+
+def _attribution_residual(a):
+    return abs(a["p_src"] - a["p_sheets_total"] - a["p_phantom"] - a["p_non_phantom"]) / abs(
+        a["p_src"]
+    )
+
+
+def _print_attribution(label, a):
+    if MPI.COMM_WORLD.rank != 0:
+        return
+    d = a["deficit"]
+    excess = a["terminal_sum"] - a["p_phantom"] - a["p_non_phantom"]
+    src_part = a["p_src_terminal"] - a["p_src"]
+    sheet_part = a["p_sheets_total"] - d["terminal_total"]
+    print(f"\n[TH-15 step3c] {label}: P1 drive power attribution", flush=True)
+    for pid in a["terms"]:
+        print(
+            f"    {pid}: 1/2 Re(V I*) {a['terms'][pid].real:+.9e} W   P_sheet,field "
+            f"{a['p_sheets'][pid]:.9e} W   1/2|I|^2 Re Z_p {d['terminal'][pid]:.9e} W   "
+            f"ceiling C {d['ceiling'][pid]:.9e} W   C/terminal - 1 "
+            f"{d['per_sheet'][pid]:+.9e} (per-sheet split, PRINTED)",
+            flush=True,
+        )
+    print(
+        f"    P_src {a['p_src']:.9e} W   sum P_sheet,field {a['p_sheets_total']:.9e} W   "
+        f"P_phantom {a['p_phantom']:.9e} W   P_(Omega\\phantom) {a['p_non_phantom']:.9e} W\n"
+        f"    (a) |P_src - sum P_sheet - P_phantom - P_nonphantom|/P_src = "
+        f"{_attribution_residual(a):.3e} (ASSERTED <= {DISCRETE_IDENTITY_RTOL:g}; "
+        "discrete identity, true by construction)\n"
+        f"    driven-port C/terminal - 1 (pooled) = {d['pooled']:.9e}\n"
+        f"    sum 1/2 Re(V I*) {a['terminal_sum']:.9e} W; excess over volume loss "
+        f"{excess:.9e} W = {excess / a['p_src']:.4e} of P_src (PRINTED; predicted "
+        f"{PREDICTED_EXCESS_OVER_P_SRC:.4e} on the hole)\n"
+        f"    split (exact algebra, V = V_s - I Z_p): source part 1/2 Re(V_s I1*) - P_src = "
+        f"{a['p_src_terminal']:.9e} - {a['p_src']:.9e} = {src_part:+.9e} W; sheet part "
+        f"sum P_sheet,field - sum 1/2|I|^2 Re Z_p = {sheet_part:+.9e} W; "
+        f"sum {src_part + sheet_part:+.9e} W; C_total - terminal_total "
+        f"{d['ceiling_total'] - d['terminal_total']:+.9e} W",
+        flush=True,
+    )
 
 
 def _frequency_key() -> str:
@@ -259,6 +375,7 @@ def _hole_rung(frequency_hz):
         "p_phantom": p_phantom,
         "p1_s_column": s[:, 0].copy(),
         "p1_currents": {pid: complex(r.current_a) for pid, r in p1.responses.items()},
+        "attr": _power_attribution(msh, cell_tags, tags_f, specs, p1, fields, frequency_hz),
     }
 
 
@@ -308,6 +425,25 @@ def hole():
         # Consistency of the extra P1 solve with the sweep's P1 column.
         print("    P1 currents (field solve): " + ", ".join(
             f"{pid} {c:+.9e}" for pid, c in rung["p1_currents"].items()), flush=True)
+    _print_attribution(f"hole f = {f_hz:.3e} Hz", rung["attr"])
+    return rung
+
+
+@pytest.fixture(scope="module")
+def solid():
+    """`PORT-11`'s own solid rung at 10 MHz plus one P1 field solve (step 3c)."""
+    if os.environ.get(CONTROL_ENV, "").strip() != "1":
+        pytest.skip(f"{CONTROL_ENV} != 1: solid control not requested in this window")
+    rung = _four_port_rung("TH-15 solid control 10 MHz", np.zeros(LEG_COUNT), FREQUENCY_HZ)
+    p1, fields = run_lumped_sheet_port_case(
+        rung["problem"], rung["port_defs"], rung["specs"], facet_tags=rung["facet_tags"],
+        driven_port_id=DRIVEN, verbose=False, return_fields=True,
+    )
+    rung["attr"] = _power_attribution(
+        rung["mesh"], rung["cell_tags"], rung["facet_tags"], rung["specs"], p1, fields,
+        FREQUENCY_HZ,
+    )
+    _print_attribution("solid control f = 1.000e+07 Hz", rung["attr"])
     return rung
 
 
@@ -356,12 +492,61 @@ def test_the_hole_power_identity(hole):
 
 
 @complex_only
-def test_the_solid_route_reproduces_port11_10mhz_record():
+def test_step3c_hole_discrete_identity_with_non_phantom_term(hole):
+    """(a) on the hole: exact by construction; no loss outside the phantom."""
+    a = hole["attr"]
+    assert _attribution_residual(a) <= DISCRETE_IDENTITY_RTOL, (
+        f"hole: P_src {a['p_src']:.9e} - sheets {a['p_sheets_total']:.9e} - phantom "
+        f"{a['p_phantom']:.9e} - non-phantom {a['p_non_phantom']:.9e}: rel "
+        f"{_attribution_residual(a):.3e} > {DISCRETE_IDENTITY_RTOL:g}"
+    )
+    assert abs(a["p_non_phantom"]) <= HOLE_NON_PHANTOM_LOSS_MAX_W, (
+        f"hole P_(Omega\\phantom) = {a['p_non_phantom']:.3e} W > "
+        f"{HOLE_NON_PHANTOM_LOSS_MAX_W:.0e} W on a conductor-free mesh"
+    )
+
+
+@complex_only
+def test_step3c_solid_discrete_identity_with_non_phantom_term(solid):
+    """(a) on the solid: the non-phantom term is the conductor loss."""
+    a = solid["attr"]
+    assert _attribution_residual(a) <= DISCRETE_IDENTITY_RTOL, (
+        f"solid: rel {_attribution_residual(a):.3e} > {DISCRETE_IDENTITY_RTOL:g}"
+    )
+
+
+@complex_only
+def test_step3c_solid_c_over_terminal_reproduces_the_2d_record(solid):
+    """(b) the control: the solid's P1 pooled C/terminal − 1 is `PORT-14` 2d's."""
+    pooled = solid["attr"]["deficit"]["pooled"]
+    rel = abs(pooled / SOLID_P1_C_OVER_TERMINAL_10MHZ - 1.0)
+    if MPI.COMM_WORLD.rank == 0:
+        print(f"[TH-15 step3c] solid P1 C/terminal - 1 = {pooled:.9e} vs record "
+              f"{SOLID_P1_C_OVER_TERMINAL_10MHZ:.9e}: rel {rel:.3e} "
+              f"(ASSERTED rtol {SOLID_C_OVER_TERMINAL_RTOL:g})", flush=True)
+    assert rel <= SOLID_C_OVER_TERMINAL_RTOL
+
+
+@complex_only
+def test_step3c_hole_beside_solid_is_printed(hole, solid):
+    """Printed only: the hole's readout systematic beside the solid's."""
+    h, s = hole["attr"], solid["attr"]
+    if MPI.COMM_WORLD.rank == 0:
+        ratio = h["deficit"]["pooled"] / s["deficit"]["pooled"]
+        print(
+            f"[TH-15 step3c] P1 C/terminal - 1: hole {h['deficit']['pooled']:.9e} "
+            f"(f = {hole['f_hz']:.3e} Hz)  solid {s['deficit']['pooled']:.9e} (10 MHz); "
+            f"hole/solid {ratio:.4f} (PRINTED; filing threshold "
+            f"{PREDICTED_FILING_RATIO:g}x predicted, {'above' if ratio > PREDICTED_FILING_RATIO else 'not above'})",
+            flush=True,
+        )
+
+
+@complex_only
+def test_the_solid_route_reproduces_port11_10mhz_record(solid):
     """Negative control: `PORT-11`'s own rung reproduces its 10 MHz 4x4 record."""
-    if os.environ.get(CONTROL_ENV, "").strip() != "1":
-        pytest.skip(f"{CONTROL_ENV} != 1: solid control not requested in this window")
     comm = MPI.COMM_WORLD
-    rung = _four_port_rung("TH-15 solid control 10 MHz", np.zeros(LEG_COUNT), FREQUENCY_HZ)
+    rung = solid
     s = np.asarray(rung["s"], dtype=np.complex128)
     dev = np.abs(s - LEG_D_S_MATRIX_10MHZ) / np.abs(LEG_D_S_MATRIX_10MHZ)
     if comm.rank == 0:

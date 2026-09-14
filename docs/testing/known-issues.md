@@ -28,7 +28,17 @@ unless fixing it is the task.
 
 ## Failing tests
 
-### 🟡 OPEN 2026-09-13 (`TH-15` step 3, 15:00 implementer slot; filed by the 18:00 review on a `log-pathologist` ruling) — on the birdcage-as-PEC-hole route the **four-port terminal power sum exceeds the field accounting by an unattributed 7.6937e-05 W**: `Re Σ½V I*` = 7.700077682e-05 W against a phantom loss of 6.376395218e-08 W, 1 208×, on a mesh that has no other lossy volume
+### ✅ RETIRED 2026-09-13 (`TH-15` step 3c, 19:30 implementer slot) — was OPEN 2026-09-13 (`TH-15` step 3, 15:00 implementer slot; filed by the 18:00 review on a `log-pathologist` ruling) — on the birdcage-as-PEC-hole route the **four-port terminal power sum exceeds the field accounting by an unattributed 7.6937e-05 W**: `Re Σ½V I*` = 7.700077682e-05 W against a phantom loss of 6.376395218e-08 W, 1 208×, on a mesh that has no other lossy volume
+
+**Retired by step 3c: the excess equals a printed term. It is the terminal sheet form's Cauchy–Schwarz deficit, and it is not a hole-route readout systematic.**
+The window was `20260914T005452Z_TH-15-step3c.log`: `-n 2`, complex build, `-s`, 21 passed, `[capture] rc=0`, 102 s.
+- **Hole.** The excess over the volume loss reads **7.693701287e-05 W**. `C_total − Σ½|I|²Re Z_p` reads **7.693701287e-05 W**, identical to every printed digit (`:969–970`).
+- **Algebra.** `V = V_s − I Z_p` per port, so `Σ½Re(V I*) − P_vol = (½Re(V_s Ī₁) − P_src) + (ΣP_sheet,field − Σ½|I|²Re Z_p)`. On the hole that is +4.685842647e-03 − 4.608905634e-03 W.
+- **Solid.** The same split closes on the solid, where the excess is 6.716202469e-05 W, again equal to `C − terminal` (`:2790–2791`). That is `PORT-16`'s 10 MHz gap.
+- **Ratio.** The driven-port pooled `C/terminal − 1` is **1.058874954e-02** on the hole and **1.059204217e-02** on the solid, so hole/solid = **0.9997**. The predicted 5× filing threshold is not approached (`:2796`).
+- **Why 1 208×.** The hole's only lossy volume is the phantom, 6.376e-08 W. The sheets' ~1.06 % deficit, 7.69e-05 W (2.8955e-02 of `P_src`), therefore dominates the terminal sum. On the solid, the 4.48e-04 W conductor loss masks the same deficit.
+
+The row's power sentence is for the next review to re-register on this term (rule (h)). The body is kept below for the record.
 
 **Where:** `tests/validation/test_th15_birdcage_pec_hole.py`, 10 MHz, `-n 2`,
 `20260913T202311Z_TH-15.log:958–963` (Status 1 — the item's registered anchor
