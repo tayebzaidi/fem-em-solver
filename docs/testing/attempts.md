@@ -12678,3 +12678,34 @@ The module was not edited after either window (rule (i)).
 **Status moved.** xl-pending entry 2's prerequisite is now on `main`. I added a note only; marking it READY and queueing the window is the next review's call. The ANS-4 history file has the step narrative.
 
 **Hypothesis / next.** The XL command at 64e6 on `RUNGSPEC="0.015:1 0.005:2"` should run as registered. The 0.015:1 rung builds with the C4 flag unset, so its record test compares against the 116 085 record, as w2 did. Take-next goes to item 2 (`TH-14` step 2).
+
+## 2026-09-14T09:50Z (2026-09-14 04:30 CDT slot, take-next second item) — TH-14 step 2 (the Dodd–Deeds copper floor) — **complete; TH-14 🟡 → ✅**
+
+**How it ran.** The item started at minute 7 from a clean tree after `7ffd78e`. It was delegated to `implementer` in the foreground; I checked the report against the log.
+
+**What was built.** A new module, `tests/validation/test_th14_dodd_deeds_copper_floor.py`, with no `src/` change. The slab is removed by `dolfinx.mesh.create_submesh` over MAT-6's own mesh. Every non-slab cell is kept and cell tags are carried across. `loop_over_half_space_domain` has no air-only switch, and the item forbade adding one.
+
+**Imports.**
+- From MAT-6: `_reaction_impedance`, `_solve_loop`, `_azimuthal_current_density`, `SLAB_TAG` / `WIRE_TAG` and the `FEM_*` constants.
+- From the birdcage copper module: `_leontovich_term` and `_surface_loss_w`. Both integrate tag 401, which is the floor tag here.
+- The mesher's literal keyword values (0.002 / 0.025 / 0.06 / 0.05 / 0.03) are restated from MAT-6's call.
+
+**Measured** (`20260914T094224Z_TH-14-step2.log`: 17 passed, Status 0, 340 s, `[capture] rc=0`; collect smoke `…094209Z_TH-14-step2-collect.log`, 3 s).
+- **Mesh** (:276): parent 418 888 cells, submesh 181 012. Wire volume is identical on both, asserted.
+- **Census** (:277): exterior 8110 = floor 6852 + others 1258, overlap 0. Floor area equals 4W² exactly.
+- **(a)** ΔR copper 9.395496689e-04 Ω against Dodd–Deeds 9.423673039e-04 Ω: −0.2990 % (band 2 %) (:281–283).
+- **(b)** Surface-loss identity 1.311e-08 (band 1e-6) (:285).
+- **(c)** ΔR ratio 9.990958635 (band 1 %) (:292).
+- **(d)** 1.000971778 against the closed form's +0.0947 % (band 2 %) (:284, :308).
+- **Control:** |ΔR_PEC|/|ΔX_PEC| = 0.000e+00 (:293).
+- **Printed** (:294–295): ΔX(copper)/(ω·ΔL_image) = 0.910189, δ/h = 8.359e-03. At 5.8e9, ΔR is −0.2938 % and (d) is −0.0887 %.
+- **Timings:** free solve 177.5 s, three air solves ≈ 37 s each.
+- `pgrep -c python3` read 0 before and after.
+
+**Caveats for the review.**
+1. **The negative control is weak.** Its ΔZ is Z_PEC(submesh) − Z_free(parent), a fourth solve the item did not name, and it costs 177 s of the 340. Re Z is exactly −0.0 on both solves because the σ = 0 operator is real, so the control passes by construction. It shows only that the term is the sole loss source.
+2. **The 5.8e9 identity residual is close to the band.** It reads 8.98e-7 against 1e-6 (:291). It is printed, not asserted; only copper's (b) is asserted, as the item said. It suggests the identity degrades as 1/Z_s grows, so it is worth watching if a σ-ladder ever asserts it.
+3. **The window was heavy-tier, not the item's "≈ 3–4 min"** — 340 s, inside its 590 s ceiling.
+4. **Rule (j):** the row's Done-when named the Dodd–Deeds slab step and the §2.1 line, which the 03:00 review wrote. Both now hold, so the row flips on its own text.
+
+**Hypothesis / next.** Item 3 (`EX-55`) is next if the clock allows. `ANS-6`'s SPEC can now cite this floor as the AED-checkable copper point.

@@ -1,0 +1,77 @@
+# Test Run
+- Chunk: TH-14-step2-collect
+- Commit: 7ffd78ee81d84b1c5f3a23c5bdffd2f0e9ee16af
+- Time (UTC): 2026-09-14 09:42:10
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.5.1
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && source /usr/local/bin/dolfinx-complex-mode && mkdir -p /workspace/logs && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 timeout -k 30 170 mpiexec -n 2 python3 -m pytest tests/validation/test_th14_dodd_deeds_copper_floor.py --collect-only -q -s > /workspace/logs/th14-step2-collect-raw.log 2>&1; rc=$?; echo "[capture] rc=$rc" >> /workspace/logs/th14-step2-collect-raw.log; cat /workspace/logs/th14-step2-collect-raw.log; exit $rc'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 24
+drwxr-xr-x  3 taz5297 taz5297 4096 Sep  4 23:31 .
+drwxr-xr-x 17 taz5297 taz5297 4096 Sep 14 04:42 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  721 Sep  3 13:49 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 4275 Sep 13 19:19 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.5.1
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && source /usr/local/bin/dolfinx-complex-mode && mkdir -p /workspace/logs && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 timeout -k 30 170 mpiexec -n 2 python3 -m pytest tests/validation/test_th14_dodd_deeds_copper_floor.py --collect-only -q -s > /workspace/logs/th14-step2-collect-raw.log 2>&1; rc=$?; echo "[capture] rc=$rc" >> /workspace/logs/th14-step2-collect-raw.log; cat /workspace/logs/th14-step2-collect-raw.log; exit $rc'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collected 6 items
+
+<Dir workspace>
+  <Dir tests>
+    <Dir validation>
+      <Module test_th14_dodd_deeds_copper_floor.py>
+        <Function test_floor_and_other_faces_are_disjoint_and_complete>
+        <Function test_copper_floor_resistance_matches_dodd_deeds>
+        <Function test_surface_loss_identity>
+        <Function test_thin_skin_resistance_scales_as_inverse_sqrt_sigma>
+        <Function test_thin_skin_reactance_departure_equals_resistance>
+        <Function test_pec_floor_control_is_lossless>
+
+========================== 6 tests collected in 1.32s ==========================
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collected 6 items
+
+<Dir workspace>
+  <Dir tests>
+    <Dir validation>
+      <Module test_th14_dodd_deeds_copper_floor.py>
+        <Function test_floor_and_other_faces_are_disjoint_and_complete>
+        <Function test_copper_floor_resistance_matches_dodd_deeds>
+        <Function test_surface_loss_identity>
+        <Function test_thin_skin_resistance_scales_as_inverse_sqrt_sigma>
+        <Function test_thin_skin_reactance_departure_equals_resistance>
+        <Function test_pec_floor_control_is_lossless>
+
+========================== 6 tests collected in 1.35s ==========================
+[capture] rc=0
+
+## Exit
+- Status: 0
+- Elapsed (s): 3
+- Filtered lines (gmsh optimisation chatter): 0
