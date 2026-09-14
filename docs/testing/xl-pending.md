@@ -90,7 +90,7 @@ landed that morning ⇒ the Wednesday 09-16 03:00 review queues it for
 
 ```
 XL_CHUNK="ANS-4-step3"
-XL_COMMAND="docker compose --profile xl exec -T fem-em-solver-xl bash -lc 'cd /workspace && source /usr/local/bin/dolfinx-complex-mode && mkdir -p /workspace/logs && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 FEM_EM_SOLVER_PROGRESS=2 FEM_EM_ANS4_FREQUENCY_HZ=64e6 FEM_EM_ANS4_STEP2_RUNGSPEC=\"0.015:1 0.005:2\" timeout -k 60 7200 mpiexec -n 16 python3 -m pytest tests/environment tests/validation/test_ans4_resolution_ladder.py -v -s --tb=short > /workspace/logs/ans4-step3-raw.log 2>&1; rc=\$?; echo \"[XL] memory.peak bytes:\" >> /workspace/logs/ans4-step3-raw.log; cat /sys/fs/cgroup/memory.peak >> /workspace/logs/ans4-step3-raw.log; echo \"[capture] rc=\$rc\" >> /workspace/logs/ans4-step3-raw.log; cat /workspace/logs/ans4-step3-raw.log; exit \$rc'"
+XL_COMMAND="docker compose --profile xl exec -T fem-em-solver-xl bash -lc 'cd /workspace && source /usr/local/bin/dolfinx-complex-mode && mkdir -p /workspace/logs && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 FEM_EM_SOLVER_PROGRESS=2 FEM_EM_ANS4_FREQUENCY_HZ=64e6 FEM_EM_ANS4_STEP2_RUNGSPEC=\"0.015:1 0.005:2\" timeout -k 60 14400 mpiexec -n 16 python3 -m pytest tests/environment tests/validation/test_ans4_resolution_ladder.py -v -s --tb=short > /workspace/logs/ans4-step3-raw.log 2>&1; rc=\$?; echo \"[XL] memory.peak bytes:\" >> /workspace/logs/ans4-step3-raw.log; cat /sys/fs/cgroup/memory.peak >> /workspace/logs/ans4-step3-raw.log; echo \"[capture] rc=\$rc\" >> /workspace/logs/ans4-step3-raw.log; cat /workspace/logs/ans4-step3-raw.log; exit \$rc'"
 ```
 
 **Price, measured:** step 2d ran this mesh and order at 128 MHz — 592 744

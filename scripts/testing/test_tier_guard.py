@@ -47,7 +47,8 @@ def main() -> int:
     print()
 
     cases = [
-        ("xl  at its 2 h ceiling",      xl["service"],  7200, 16),
+        ("xl  at its 4 h ceiling",      xl["service"], 14400, 16),
+        ("xl  asked for 5 h",           xl["service"], 18000, 16),
         ("xl  asked for 8 h",           xl["service"], 28800, 16),
         ("xl  asked for 17 ranks",      xl["service"],  7200, 17),
         ("xxl at its 8 h ceiling",     xxl["service"], 28800, 16),

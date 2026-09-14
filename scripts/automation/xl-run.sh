@@ -9,7 +9,7 @@
 # **No Claude session.** An XL window is one deterministic command, and running
 # it from an agent is what made it hard: a foreground harness call is capped at
 # 660 s and an implementer slot is killed at 65 min, so no scheduled *session*
-# can hold a 2 h window. A plain cron script has neither limit. That is the
+# can hold a 2 h (since 2026-09-13, 4 h) window. A plain cron script has neither limit. That is the
 # whole reason this file exists.
 #
 # What runs is one line in docs/testing/xl-queue.env, set by the weekly

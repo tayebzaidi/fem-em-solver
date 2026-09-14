@@ -32,14 +32,17 @@
 # Sunday 01:45: mechanical log-retention sweep (no Claude session; ~1 min).
 # See docs/testing/retention-policy.md §4.
 45 1 * * 0 /home/taz5297/Development/fem-em-solver/scripts/automation/housekeeping.sh
-# 02:00 Sun-Fri: the XL window (2 h, 512 GiB), if one is queued in
+# 02:00 Sun-Fri: the XL window (4 h, 512 GiB — 2026-09-13; was 2 h), if one is queued in
 # docs/testing/xl-queue.env (operator directive 2026-09-09). No Claude
 # session — a cron script has neither the 660 s foreground cap nor the 65-min
 # slot kill. 02:00 because the box is shared with work this sandbox cannot
 # see. Own lock, not the automation flock. Budget six per trailing 7 days (2026-09-13),
 # enforced by the guard against xl-ledger.md; fires nightly and does nothing
-# once the budget is spent or the queue is empty. Worst case ends 04:00,
-# before the 04:30 slot.
+# once the budget is spent or the queue is empty. Worst case ends 06:00, so a
+# full window overlaps the 04:30 implementer slot (and the 06:00 one at its
+# kill): 16 XL ranks plus a 2-8 rank slot job on the 36-core box, accepted by
+# the operator 2026-09-13 as the price of the longer window; the XL job holds
+# its own lock, not the automation flock, so neither waits for the other.
 0 2 * * 0-5 /home/taz5297/Development/fem-em-solver/scripts/automation/xl-run.sh xl
 # 02:00 Saturday: the XXL window (8 h, 754 GiB, one per week), from
 # docs/testing/xxl-queue.env. Its own day so the two tiers never both

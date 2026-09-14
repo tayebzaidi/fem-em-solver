@@ -52,7 +52,7 @@ that solves in the frequency domain needs the complex DolfinX build
   ceiling, never exceed 20 minutes for a single compute command.
   Overrun ⇒ kill and shrink the case; never just raise the timeout.
   **Two exceptions, mechanically gated** (PROJECT_PLAN §5.1): the **`xl`** tier —
-  six runs per trailing 7 days (nightly Sun–Fri, 2026-09-13) at ≤ 512 GiB / 16 ranks / 2 h against
+  six runs per trailing 7 days (nightly Sun–Fri, 2026-09-13) at ≤ 512 GiB / 16 ranks / 4 h against
   `fem-em-solver-xl`, 02:00 Sun–Fri — and the **`xxl`** tier — one run per
   trailing 7 days at ≤ 754 GiB / 16 ranks / 8 h against `fem-em-solver-xxl`,
   02:00 Saturday. Both are commissioned by the weekly planning review —

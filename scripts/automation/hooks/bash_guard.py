@@ -34,7 +34,7 @@ TIERS = {
     "xl": {
         "service": "fem-em-solver-xl",
         "ranks": 16,
-        "timeout_s": 7200,          # 2 h
+        "timeout_s": 14400,         # 4 h (operator directive 2026-09-13; was 2 h — ANS-4 step 2d ran 25 s past 7200 and finished only because the deadline was lifted by hand)
         "per_week": 6,              # trailing 7 days (operator directive 2026-09-13: nightly Sun-Fri; was 3 from 09-10, 1 from 09-05)
         "ledger": _DOCS / "xl-ledger.md",
     },

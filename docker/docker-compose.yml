@@ -45,7 +45,7 @@ services:
   #   docker compose -f docker/docker-compose.yml --profile xl stop fem-em-solver-xl
   # The bash guard (scripts/automation/hooks/bash_guard.py) allows -n 13..16
   # only against this service, only through run_and_log.sh, only with a
-  # timeout <= 7200 s, and only when the ledger shows no XL run in 7 days.
+  # timeout <= 14400 s (4 h since 2026-09-13), six per trailing 7 days on the ledger.
   fem-em-solver-xl:
     image: fem-em-solver:latest
     container_name: fem-em-solver-xl

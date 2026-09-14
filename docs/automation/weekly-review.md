@@ -82,7 +82,7 @@ mitigations.
    Keep the §6 phase-map states current.
 
 3b. **Spend the XL slot, or explicitly do not.** §5.1's `xl` tier (operator
-   directive 2026-09-05) is one run per 7 days at ≤ 512 GiB / 16 ranks / 2 h
+   directive 2026-09-05) is one run per 7 days at ≤ 512 GiB / 16 ranks / 2 h (since 2026-09-13: 4 h)
    against `fem-em-solver-xl` (since 2026-09-13: six per trailing 7 days — nightly —,
    02:00 Sun–Fri, plus the **`xxl`** tier — 754 GiB / 16 ranks / 8 h, one per
    trailing 7 days, 02:00 Saturday), and **this review is the only thing
