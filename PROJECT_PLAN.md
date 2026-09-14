@@ -3745,7 +3745,15 @@ not queued). All eight items are mutually independent; take them in order.
    template. **Status it can move:** `EX-58` ⬜ → ✅. **Negative result:** a
    red imported band ⇒ known-issues naming the example, stop.
 
-6. **`EX-59` — the copper birdcage: the surface loss density on the coil**
+6. 🟡 **Attempted 2026-09-14 06:00 slot (take-next, minute 26): stopped at minute 29, no
+   code written** (attempts.md). **Design note for the next taker:** `ports:14`
+   writes only the integer facet-tag grid (`14_birdcage_pec_hole_ports.py:270–279`).
+   No example, `io/` or `post/` module has a computed per-facet scalar or a
+   `create_submesh` precedent. Choose the route before the clock starts: a
+   tag-401 facet submesh with DG0, or DG0 on the adjacent cells, named as
+   such. Rule-(a) gate command: `20260914T021500Z_TH-14.log:12` verbatim
+   (32 passed, 211 s). Still runnable, not blocked.
+   **`EX-59` — the copper birdcage: the surface loss density on the coil**
    (`example-runner`; `examples/ports/18_birdcage_copper_leontovich.py` +
    guide; complex; `-n 2`; `main`; independent; **21 slot-min**:
    *predicted* ≈ 3 min + 15). The §7 row is the item: the 10 MHz copper
