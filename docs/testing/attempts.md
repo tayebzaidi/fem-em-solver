@@ -12833,3 +12833,36 @@ I fixed the form (`ufl.conj(v)`; v is real DG0) and ran the remaining windows my
 **Guide.** I corrected the runner's "How to run" section: it had wrapped the host runner inside `run_and_log.sh`. I also filled section 3 with the reading table.
 
 **Hypothesis / next.** Item 7 (`EX-60`) is next and take-next applies. For the review: the example-runner's pre-census discipline and its background return are both worth a line in its spawn template. This is the second slot in a row where the runner's clock or ordering needed repair.
+
+## 2026-09-14T12:51Z (2026-09-14 07:30 CDT slot, take-next second item) — EX-60 — **complete; EX-60 ⬜ → ✅**
+
+**How it ran.** The item started at minute 15 from a clean tree after `55a9902`. I executed it directly rather than through `example-runner`: the item is small, and this slot's runner had just broken the census ordering and the foreground rule. The census-before was logged before any file was written.
+
+**The one `src/` change (rule (c), disclosed).** `ImpedanceWallMode` returned no mesh or eigenvector, but the row asks for TE₁₀₁ `|E|` in XDMF. `core/cavity.py` gains three additive pieces:
+- `_solve_pencil_nonhermitian(return_vectors=False)`, with the same |λ − target| order (`values[order]` is the same expression as before);
+- `solve_impedance_wall_cavity_mode(return_mode=False)`;
+- `ImpedanceWallMode.mode_function` / `.mesh`, defaulting to `None`.
+
+This follows the `_solve_pencil` / `solve_pec_cavity_modes(return_modes)` pattern. The pre-existing gate was re-run green in this slot with `TH-14` step 1's command from `20260914T004807Z_TH-14.log:12`, verbatim: `20260914T124857Z_EX-60-gate-rerun.log`, **18 passed, Status 0, 40 s** (:182, :250–251). Its rung lines (:96–99) match the original gate log to every digit except the PEC control's round-off Im λ.
+
+**Measured.**
+- **Census before** `20260914T124532Z_EX-60-census-before.log`: docrefs `exit=0`; `examples=53 ok=5 missing=48 broken=0`. Predicted delta +1 / +1 / 48 / 0.
+- **Flagged run** `20260914T124948Z_EX-60.log` (`FEM_EM_SETUP_FIGURES=1`, `-n 2`, Status 0, **11 s**):
+  - Rung lines :39–42 equal `TH-14.log:96–99`: Q 8.017679e+02 / 8.013691e+03 / 6.102752e+04.
+  - PEC control `|Im λ|/Re λ` 4.798e-19 **asserted** ≤ `CONTROL_IM_RE_BOUND` 1e-10 (:51). This comparison on this fixture is backed by the gate's own log line.
+  - **(a)** `Q/Q_c − 1` +0.010 % **asserted** ≤ `Q_TOLERANCE` 5 %, and the Re f shift −0.0624 % **asserted** < 1 % (:52).
+  - **(b)** `Q(1e6)/Q(1e4)` 9.995026 against √100, **asserted** ≤ `SCALING_TOLERANCE` 5 % (:53).
+  - Im ω > 0 on both lossy rungs, asserted (:54–55).
+  - The exported mode's complex Rayleigh quotient against the solver's λ: rel 7.304e-14, **asserted** ≤ 1e-6 (:59).
+- **Printed, no band:** copper Q 6.102752e+04 against Pozar 6.105450e+04 (−0.044 %), with Im λ/Re λ 1.639e-05 (:57). Wall RMS `|n×E|` / volume RMS `|E|` is 1.322e-03, beside `|Z_s|/η₀` 1.273e-03 (:60).
+- **Setup figure:** 87 KiB. It is rendered on the σ = 1e4 rung's mesh after that solve, because the solver builds the mesh internally; this deviates from "right after the mesh is built" and the guide says so. `cell_tags=None` puts the whole box in region 0.
+- **Unflagged control** `20260914T125021Z_EX-60-control.log` (Status 0, **7 s**): the same digits at :40–52.
+- **Census after** `20260914T125028Z_EX-60-census-after.log`: docrefs `exit=0` (:39); `examples=54 ok=6 missing=48 broken=0` (:96), as predicted.
+- `pgrep -c python3` read 0 at 07:50.
+
+**Deviations.**
+1. The work was not delegated to `example-runner`; the reason is above.
+2. There was a `src/` change beyond the item's letter, handled per rule (c).
+3. The setup-figure timing, as noted above.
+
+**Hypothesis / next.** Item 8 (`EX-57`, `magnetostatics/01_straight_wire.py`) is next, if the clock allows take-next.

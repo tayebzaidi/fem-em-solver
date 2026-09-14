@@ -1,0 +1,64 @@
+# Test Run
+- Chunk: EX-60-control
+- Commit: 55a99020af3bc3cb3daed12a8d72d823f022998d
+- Time (UTC): 2026-09-14 12:50:21
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.5.1
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc "cd /workspace && source /usr/local/bin/dolfinx-complex-mode && PYTHONPATH=/workspace/src timeout -k 30 300 mpiexec -n 2 python3 examples/time_harmonic/10_lossy_wall_cavity_q.py"
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 24
+drwxr-xr-x  3 taz5297 taz5297 4096 Sep  4 23:31 .
+drwxr-xr-x 17 taz5297 taz5297 4096 Sep 14 07:50 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  721 Sep  3 13:49 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 4275 Sep 13 19:19 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.5.1
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc "cd /workspace && source /usr/local/bin/dolfinx-complex-mode && PYTHONPATH=/workspace/src timeout -k 30 300 mpiexec -n 2 python3 examples/time_harmonic/10_lossy_wall_cavity_q.py"'
+==============================================================================
+EX-60 -- the lossy-wall cavity: Q against sigma beside Pozar (TE101)
+==============================================================================
+
+[geometry] (1.0, 0.8, 0.6) m box, N1curl degree 2, divisions (9, 7, 6) (the TH-14 step 1 gate's fine rung)
+[pec     ] div=(9, 7, 6) sigma=None cells=2268 dofs=15998 nconv=7 n_bc_local=1758 Z_s=None lambda=3.7287039028e+01-1.7886092091e-17j f=291.353194-0.000000j MHz Q=2.084695e+18 (1.3s)
+[gate    ] div=(9, 7, 6) sigma=10000.0 cells=2268 dofs=15998 nconv=7 n_bc_local=0 Z_s=(0.33914414508185475+0.33914414508185475j) lambda=3.7240507333e+01+4.6448008907e-02j f=291.171399+0.181581j MHz Q=8.017679e+02 (1.3s)
+[scaling ] div=(9, 7, 6) sigma=1000000.0 cells=2268 dofs=15998 nconv=7 n_bc_local=0 Z_s=(0.03391441450818548+0.03391441450818548j) lambda=3.7282385854e+01+4.6523363387e-03j f=291.335014+0.018177j MHz Q=8.013691e+03 (1.3s)
+[copper  ] div=(9, 7, 6) sigma=58000000.0 cells=2268 dofs=15998 nconv=7 n_bc_local=0 Z_s=(0.004453180791595857+0.004453180791595857j) lambda=3.7286428037e+01+6.1097732296e-04j f=291.350807+0.002387j MHz Q=6.102752e+04 (1.3s)
+
+[control] PEC pencil |Im lambda|/Re lambda = 4.797e-19 (ASSERTED <= 1e-10)
+[a] sigma = 1e+04: Q = 8.017679e+02, Pozar Q_c = 8.016849e+02, miss +0.010% (ASSERTED |miss| <= 5%); Re f shift vs PEC -0.0624% (ASSERTED < 1%)
+[b] Q(1e+06)/Q(1e+04) = 9.995026 vs sqrt(sigma ratio) = 10: miss -0.050% (ASSERTED <= 5%)
+[c] gate: Im omega = +1.140906e+06 rad/s (ASSERTED > 0)
+[c] scaling: Im omega = +1.142115e+05 rad/s (ASSERTED > 0)
+
+[printed, no band] copper sigma = 5.8e+07: Q = 6.102752e+04, Pozar Q_c = 6.105450e+04 (miss -0.044%); Im lambda/Re lambda = 1.639e-05 vs the PEC control's 4.797e-19
+
+[mode] sigma = 1e+04 eigenfunction: Rayleigh quotient 3.7240507333e+01+4.6448008907e-02j vs solver lambda 3.7240507333e+01+4.6448008907e-02j: rel 7.289e-14 (ASSERTED <= 1e-06)
+[printed, no band] wall RMS |n x E| / volume RMS |E| = 1.322e-03 beside |Z_s|/eta_0 = 1.273e-03 (order-of-magnitude context: the wall is not pinned)
+
+[output] /workspace/examples/time_harmonic/paraview_output/time_harmonic_10_lossy_wall_cavity_q_combined.xdmf -- E_magnitude_normalised (DG0, TE101 at sigma = 1e+04, unit peak)
+
+[timing] total 5.3 s at -n 2
+
+All imported gates hold.
+
+## Exit
+- Status: 0
+- Elapsed (s): 7
+- Filtered lines (gmsh optimisation chatter): 0

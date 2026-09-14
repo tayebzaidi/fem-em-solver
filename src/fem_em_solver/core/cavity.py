@@ -335,11 +335,15 @@ def solve_pec_cavity_modes(
     )
 
 
-def _solve_pencil_nonhermitian(A, B, target: float, nev: int, comm) -> Tuple[np.ndarray, int]:
+def _solve_pencil_nonhermitian(
+    A, B, target: float, nev: int, comm, return_vectors: bool = False
+) -> Tuple[np.ndarray, int]:
     """Shift-and-invert GNHEP solve; complex eigenvalues ordered by |λ − target|.
 
     `TH-14`: a Hermitian problem type would silently drop Im λ, so the
     lossy-wall pencil (and its PEC control) goes through ``GNHEP``.
+    With ``return_vectors`` the eigenvectors follow as a third element, in the
+    same |λ − target| order (`EX-60`; additive, as in ``_solve_pencil``).
     """
 
     eps = SLEPc.EPS().create(comm)
@@ -362,8 +366,18 @@ def _solve_pencil_nonhermitian(A, B, target: float, nev: int, comm) -> Tuple[np.
     values = np.array(
         [complex(eps.getEigenvalue(i)) for i in range(n_converged)], dtype=complex
     )
+    order = np.argsort(np.abs(values - target))
+    vectors = None
+    if return_vectors:
+        vectors = []
+        for i in order:
+            vec = A.createVecRight()
+            eps.getEigenvector(int(i), vec)
+            vectors.append(vec)
     eps.destroy()
-    return values[np.argsort(np.abs(values - target))], n_converged
+    if return_vectors:
+        return values[order], n_converged, vectors
+    return values[order], n_converged
 
 
 def surface_resistance_ohm(omega_rad_s: float, sigma_s_per_m: float) -> float:
@@ -402,6 +416,8 @@ class ImpedanceWallMode:
     n_dofs: int
     n_constrained_dofs_local: int
     surface_impedance_ohm: complex = None
+    mode_function: object = None
+    mesh: object = None
 
 
 def solve_impedance_wall_cavity_mode(
@@ -413,6 +429,7 @@ def solve_impedance_wall_cavity_mode(
     mode_indices: Tuple[int, int, int] = (1, 0, 1),
     nev: int = 4,
     comm: MPI.Comm = None,
+    return_mode: bool = False,
 ) -> ImpedanceWallMode:
     """Complex eigenpair nearest the PEC ``k²`` of ``mode_indices`` (`TH-14`).
 
@@ -451,7 +468,13 @@ def solve_impedance_wall_cavity_mode(
             V, 0.0, surface_impedance_ohm=z_s, omega_rad_s=omega_lin
         )
 
-    values, n_converged = _solve_pencil_nonhermitian(A, B, k0_sq, nev=nev, comm=comm)
+    if return_mode:
+        # `EX-60`: additive — the eigenvalues are read exactly as without the flag.
+        values, n_converged, vectors = _solve_pencil_nonhermitian(
+            A, B, k0_sq, nev=nev, comm=comm, return_vectors=True
+        )
+    else:
+        values, n_converged = _solve_pencil_nonhermitian(A, B, k0_sq, nev=nev, comm=comm)
     A.destroy()
     B.destroy()
     if n_converged == 0:
@@ -460,7 +483,20 @@ def solve_impedance_wall_cavity_mode(
     omega = C_0 * np.sqrt(lam)
     q = float(omega.real / (2.0 * abs(omega.imag))) if omega.imag != 0 else float("inf")
 
+    mode_function = None
+    if return_mode:
+        # The eigenfunction of ``values[0]``; the owned block is filled and the
+        # ghosts by scatter_forward (the ``solve_pec_cavity_modes`` pattern).
+        mode_function = fem.Function(V, name="E_mode")
+        local = mode_function.x.index_map.size_local * mode_function.x.block_size
+        mode_function.x.array[:local] = vectors[0].getArray(readonly=True)
+        mode_function.x.scatter_forward()
+        for vec in vectors:
+            vec.destroy()
+
     return ImpedanceWallMode(
+        mode_function=mode_function,
+        mesh=msh if return_mode else None,
         eigenvalue=lam,
         omega_rad_s=complex(omega),
         q=q,
