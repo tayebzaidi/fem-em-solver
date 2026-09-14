@@ -12893,3 +12893,33 @@ This follows the `_solve_pencil` / `solve_pec_cavity_modes(return_modes)` patter
 - **Not fixed here.** It is outside this item's letter.
 
 **Hypothesis / next.** The queue is drained (items 1–8 done). The fallback is the next `EX-57` figure, if the clock allows. For the review: the `adios2` 2.12 API break in `mag:1`'s `EX-14` read-back check, and possibly in `mag:2`, which shares the pattern (known-issues:4612), is a small `src`-free fix (`adios2.bindings.ADIOS` or `adios2.FileReader`) worth queueing with the demonstration of a real read-back.
+
+## 2026-09-14T13:01Z (2026-09-14 07:30 CDT slot, take-next fourth item — drained-queue fallback) — EX-57 setup figure: `magnetostatics/02_circular_loop.py` — **complete; census `missing` 47 → 46; slot stops here**
+
+**How it ran.** The item started at minute 24 from a clean tree after `a125c94`. §9 items 1–8 were all done, so this is the §9 drain fallback, "take the next `EX-57` setup figure, then stop and journal". I executed it directly.
+- **Census before** `20260914T125448Z_EX-57-fallback-census-before.log`: logged on the clean tree before any file was written. `--next` prints `examples/magnetostatics/02_circular_loop.py` (:41); docrefs `exit=0` (:39); `examples=54 ok=7 missing=47 broken=0` (:42). Predicted: ok +1, missing −1, broken 0.
+- **Edit.** One `write_setup_figure` call right after `circular_loop_domain` builds the mesh:
+  - regions `{1: "wire (conductor)", 2: "air"}`, from the generator docstring "wire=1, air=2" (`io/mesh.py` `circular_loop_domain`);
+  - air hidden;
+  - slice normal to y through the origin, which cuts both wire cross-sections and contains the loop axis.
+
+  I also added the `FIGURE_DIR` constant and the import, and the guide's `## Setup figure` section.
+
+**Measured.**
+- **Flagged run** `20260914T125551Z_EX-57-circular-loop.log` (`FEM_EM_SETUP_FIGURES=1`, `-n 2`, `timeout -k 30 180`, Status 0, **137 s**):
+  - PNG **487 KiB** (≤ 600, :265).
+  - Mesh 409 596 cells (:264), relL2 6.2134 %, max rel 11.6541 % (:289–290), energy 2.466102e-08 J (:294). All equal the guide's un-asserted record table (`20260826T170305Z_EX-30-root2-run-mag2to4.log`) to every printed digit.
+- **Unflagged control** `20260914T125820Z_EX-57-circular-loop-control.log` (Status 0, **132 s**): identical records (:258, :269–274). The default path is unchanged.
+- **Census after** `20260914T130033Z_EX-57-circular-loop-census-after.log`: docrefs `exit=0` (:39); `examples=54 ok=8 missing=46 broken=0` (:96), as predicted.
+- **Known-issue scope confirmed.** Both runs print the same `adios2 … has no attribute 'ADIOS'` read-back line (flagged :305, control :285), so `mag:2`'s `EX-17` read-back check is also not exercised. I updated this slot's new known-issues entry from "scope to check" to "scope, observed".
+
+**Slot summary for the review (07:30 CDT).** Four commits, all with clean trees:
+- `55a9902` `EX-59` ✅
+- `8f5f656` `EX-60` ✅
+- `a125c94` `EX-57` `mag:1` figure
+- this commit, `EX-57` `mag:2` figure
+
+The census moved from 52/4/48/0 at slot start to 54/8/46/0. The drain rule ends the slot after one fallback figure, so no further item is taken. The On-deck queue is empty for the 09:00 slot unless the review restocks it; the 09:00 slot will take the next `EX-57` figure as its own fallback. Open items for the review:
+1. The `adios2` 2.12 read-back break (known-issues).
+2. `example-runner`'s two protocol slips in `EX-59`: pre-census after the file writes, and a background return.
+3. `EX-60`'s additive `core/cavity.py` keyword (rule (c), gate re-run green).

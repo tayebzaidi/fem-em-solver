@@ -81,6 +81,17 @@ every rank and left `magnetostatics_02_circular_loop_A.bp` with zero ADIOS2 vari
 that line, the tree predates the fix. Exit status 0 either way — the XDMF files
 were always written.
 
+## Setup figure
+
+![mag:2 setup — the circular loop in its air sphere](figures/magnetostatics_02_circular_loop_setup.png)
+
+`examples/magnetostatics/figures/magnetostatics_02_circular_loop_setup.png`.
+It is rendered right after `circular_loop_domain` builds the mesh
+(`FEM_EM_SETUP_FIGURES=1`). The 3-D panel hides the air and leaves the wire
+torus (copper) in the xy-plane. The slice is normal to y through the origin,
+so it cuts the torus at its two wire cross-sections at x = ±R and shows the
+plane that contains the loop axis, where the on-axis B profile lives.
+
 ## 3. How to analyze it, step by step
 
 **Step 1 — check the centre field first.** `B_z(0)` numerical **2.974560e-05 T**
