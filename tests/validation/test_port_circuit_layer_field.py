@@ -509,11 +509,18 @@ def test_step3_the_ladder_mode1_frequency_at_c_tuned_is_printed(step3_tuning):
         print(line, flush=True)
 
 
-def _terminated_kept_network(sweep, terminations):
+def _terminated_kept_network(sweep, terminations, return_fields=False):
     """In-model S of the kept ports, the ``terminations`` sheets carrying their Z.
 
     `PORT-14`'s ``_terminated_three_port`` generalised to several terminated
     sheets; every kept sheet stays at its 50 Ω spec and is driven once.
+
+    ``return_fields`` is an additive optional parameter (EX-58, §9 rule (a)):
+    ``False`` — every existing caller's value — is bit-for-bit the prior
+    behaviour. ``True`` also returns ``{port_id: fields}`` (the solver's
+    ``e_complex`` etc. for each driven solve, via
+    ``run_lumped_sheet_port_case``'s own ``return_fields``), for a consumer
+    that wants the field, not just the reduced S.
     """
     port_defs = sweep["port_defs"]
     specs = []
@@ -534,11 +541,16 @@ def _terminated_kept_network(sweep, terminations):
     kept = [p for i, p in enumerate(port_defs) if i not in terminations]
     z0 = float(REFERENCE_IMPEDANCE_OHM)
     s = np.zeros((len(kept), len(kept)), dtype=np.complex128)
+    fields_by_port = {}
     for col, driven in enumerate(kept):
-        result = run_lumped_sheet_port_case(
+        out = run_lumped_sheet_port_case(
             sweep["problem"], port_defs, specs, facet_tags=sweep["facet_tags"],
             driven_port_id=driven.port_id, verbose=False,
+            return_fields=return_fields,
         )
+        result, fields = out if return_fields else (out, None)
+        if return_fields:
+            fields_by_port[driven.port_id] = fields
         drive = result.responses[driven.port_id]
         a_drive, _ = _power_waves(drive.voltage_v, drive.current_a, z0)
         assert abs(a_drive) > 0.0, f"incident wave at '{driven.port_id}' vanished"
@@ -546,25 +558,32 @@ def _terminated_kept_network(sweep, terminations):
             response = result.responses[recv.port_id]
             _, b_recv = _power_waves(response.voltage_v, response.current_a, z0)
             s[row, col] = b_recv / a_drive
-    return s
+    return (s, fields_by_port) if return_fields else s
 
 
-@pytest.fixture(scope="module")
-def step3_in_model(step3_tuning):
-    tuned = step3_tuning["tuned"]
-    if tuned is None:
-        pytest.skip("no C_tuned (test (a) reports it)")
-    f = step3_tuning["frequency_hz"]
+# Public alias (EX-58, §9 rule (a)): the name stays module-private for every
+# existing caller in this module; the alias is additive only.
+terminated_kept_network = _terminated_kept_network
+
+
+def build_step3_in_model(tuned, frequency_hz):
+    """The in-model ``C_tuned`` network: build, then the 1x1 and 2x2 kept S.
+
+    Additive lift (EX-58, §9 rule (a)) of the ``step3_in_model`` fixture body
+    below, so an example (not pytest) can call it directly. The fixture now
+    only unwraps its own inputs and delegates here — no assertion or existing
+    test's behaviour changes.
+    """
     comm = MPI.COMM_WORLD
     comm.Barrier()
     t0 = time.perf_counter()
     built = build_four_port_sweep(
-        frequency_hz=f, build_only=True,
+        frequency_hz=frequency_hz, build_only=True,
         width_correction_kappa=float(STEP2D_C_OVER_TERMINAL_64MHZ_P1),
     )
     comm.Barrier()
     t_build = time.perf_counter() - t0
-    z_c = _capacitor_impedance(f, tuned["c_f"])
+    z_c = _capacitor_impedance(frequency_hz, tuned["c_f"])
     comm.Barrier()
     t1 = time.perf_counter()
     s1 = _terminated_kept_network(built, {k: z_c for k in TUNING_TERMINATED_INDICES})
@@ -575,7 +594,15 @@ def step3_in_model(step3_tuning):
         print(f"\n[PORT-15 step3] in-model at C_tuned = {tuned['c_f']:.15e} F (Z_C = {z_c:.9e} Ohm), "
               f"{int(built['cells'])} cells, -n {comm.size}: build {t_build:.2f} s; 1x1 + 2x2 "
               f"(3 driven solves) {t_solve:.2f} s", flush=True)
-    return {"cells": int(built["cells"]), "s1": s1, "s2": s2, "z_c": z_c}
+    return {"cells": int(built["cells"]), "s1": s1, "s2": s2, "z_c": z_c, "built": built}
+
+
+@pytest.fixture(scope="module")
+def step3_in_model(step3_tuning):
+    tuned = step3_tuning["tuned"]
+    if tuned is None:
+        pytest.skip("no C_tuned (test (a) reports it)")
+    return build_step3_in_model(tuned, step3_tuning["frequency_hz"])
 
 
 @complex_only

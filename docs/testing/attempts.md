@@ -12765,3 +12765,35 @@ The module was not edited after either window (rule (i)).
 4. After `after2` I edited one docstring filename (`x0.012` → `x0p012`), which changes no code. The census was re-run after it: `20260914T111237Z_EX-56-census-final.log` gave docrefs `exit=0` (:39) and `examples=51 ok=3 missing=48 broken=0` (:93).
 
 **Hypothesis / next.** Item 5 (`EX-58`) is next. The file stem needs no dot. Its imported `tuned_input` helper may be module-private, and if so rule (a) applies with the gate module re-run.
+
+## 2026-09-14T11:25Z (2026-09-14 06:00 CDT slot, take-next second item) — EX-58 — **complete; EX-58 ⬜ → ✅**
+
+**How it ran.** The item started at minute 13 from a clean tree after `55b67a5`. It was delegated to `example-runner` in the foreground with container `timeout -k 30 560`, not the row's `-t 600`. The runner skipped the unflagged control, so I ran it at minute 23. I also checked the test-module diff and wrote this journal.
+
+**Built.**
+- `examples/ports/17_birdcage_tuned_circuit.py` and its guide.
+- The setup figure `examples/ports/figures/ports_17_birdcage_tuned_circuit_setup.png`, about 260 KiB.
+- **Rule (a)** in `tests/validation/test_port_circuit_layer_field.py`, additive only; I read the diff:
+  - The `step3_in_model` fixture body is lifted into `build_step3_in_model(tuned, frequency_hz)`, and the fixture delegates to it. Its return dict gains a `built` key.
+  - `_terminated_kept_network` gains `return_fields=False`. The default path is unchanged.
+  - A public alias `terminated_kept_network` was added.
+  - No assertion changed.
+
+**Measured.**
+- **Census before** `20260914T111507Z_EX-58-census-before.log`: 51/3/48/0. The delta (+1 example, +1 ok) was predicted before any file was written.
+- **Rule-(a) gate re-run** `…111515Z_EX-58-rule-a-gate.log`: the `PORT-15` command from `20260914T020419Z_PORT-15.log:12` verbatim, `-n 2`, timeout 590 → 560. **7 passed, Status 0, 169 s** (:3753, :3759); the original ran 7 passed in 176 s.
+- **Flagged run** `…112025Z_EX-58.log` (`FEM_EM_SETUP_FIGURES=1`, `-n 2`, Status 0, **58 s**):
+  - Sweep zero `|Im Z_in|/|Z_in|` 2.113e-15 **asserted** ≤ `TUNING_IM_Z_RTOL` 1e-6 (:43), with `C_tuned` 1.556993028375804e-11 F.
+  - Tuned `S₁₁` residual 8.255812e-05 **asserted** ≤ `REDUCTION_BAND` 1e-3 (:1799). The 2×2 residual is 6.123431e-05 (:1800).
+  - These equal `PORT-15` step 3's digits.
+- **Unflagged control** `…112312Z_EX-58-control.log` (Status 0, **57 s**): the same digits at :43, :1799 and :1800.
+- **Census after** `…112213Z_EX-58-census-after.log`: docrefs `exit=0` (:39); `examples=52 ok=4 missing=48 broken=0` (:94), as predicted.
+- `pgrep -c python3` read 0 after the control, at 06:24.
+
+**Deviations, for the review.**
+1. **The combined XDMF was written with `dolfinx.io.XDMFFile` directly, not `write_xdmf_with_tags`.** That helper's `consolidate_xdmf_grids` collapses time collections. The runner verified two `Time Value` entries (0, 1) in the raw XDMF.
+2. **The setup-figure legend shows `=?` for some port-sheet tags.** This is cosmetic and disclosed in the guide.
+3. **pgrep was not bracketed around the runner's windows.** It read 0 once afterwards, and no window was killed.
+4. **The runner skipped the control** under the prompt's "if time is short" clause while time remained. I ran it myself.
+
+**Hypothesis / next.** Item 6 (`EX-59`) is next. Its `test_th14_birdcage_copper.py` helpers are module-private, so rule (a) and the gate re-run are owed again. The helper-level single-timestep limit of `write_xdmf_with_tags`, which EX-56 and EX-58 both hit, is worth a review note for examples that ask for time steps.
