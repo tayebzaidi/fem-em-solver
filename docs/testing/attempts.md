@@ -12603,3 +12603,25 @@ Every §9 On-deck item (1–9) is done or blocked after item 9's commit. The onl
 **Caveats for the review.** (1) "Tuned" here means Im Z_in = 0 only, a series resonance at R_in = 6.77 Ω. The coil is not matched to 50 Ω. The sweep's lowest |S11| (≈ 0.636 near 75 pF, probe log :61) has no Im Z zero. (2) §2 (~line 216) still calls `PORT-15` step 1 the latest step, and the §6 phase map (~line 873) still lists `PORT-15` at step 1. Both are review/weekly text and were not edited. (3) `PORT-15` ✅ is closed on gate (i) plus the tuned S11 on one F-small fixture at one frequency. Gate (ii), the 32-port mode spectrum, stays with `TH-17`.
 
 **Hypothesis / next.** §10 chain steps 1–3 are done, so `TH-17` step 1 is the weekly's to write. The ≈ 2.5× gap between the ladder's mode-1 frequency and 64 MHz is probably the leg-capacitor topology versus the closed form's ring-capacitor ladder, not a κ systematic, because (b) holds at C_tuned.
+
+## 2026-09-14T02:22Z (2026-09-13 21:00 CDT slot, take-next second item) — TH-14 step 2 — **complete per the §9 item; TH-14 🟡 → ✅ (`d5550dc`) — Done-when conflict flagged for the review**
+
+**What was tried.** §9 item 6, delegated to `implementer` (foreground), started at minute 10 on a clean tree after `13c5e75`. Its dependency, `TH-14` step 1, is gated in the row. New `tests/validation/test_th14_birdcage_copper.py`.
+- **Outer-box trap.** Solved without a mesh change, so there is no step 2a. The test builds a facet tag group, tag 499, holding the exterior facets minus tag 401, and passes `pec_facet_tags=(499,)`. Tag 401's N1curl DOFs stay free and carry `jωμ₀/Z_s ∫(n×E)·conj(n×W) ds`, with `Z_s = (1+j)R_s`. Census asserted after rank reduction: exterior 23 144 = outer 3 318 + cavity 19 826 (log :909).
+- **`src/` change (rule (c), disclosed).** An additive optional `extra_bilinear_terms=` keyword on `run_n_port_sparameter_sweep` (`ports/sparameters.py`) and `run_lumped_sheet_port_case` (`ports/lumped.py`), default `None` = unchanged. The pre-existing `TH-15` step-3 module ran green in the same window at 10 MHz with the solid control: `P_src` 2.657078677e-03 W (:2246), solid `C/terminal − 1` rel 1.5e-10 (:4086), `PORT-11` record 1.158e-10 (:4092).
+
+**Measured** (one window, `20260914T021500Z_TH-14.log`; 10 / 64 / 128 MHz, copper σ = 5.8e7).
+- (a) `‖S−Sᵀ‖/‖S‖` 1.853e-14 / 3.683e-15 / 1.163e-15. σ_max 0.999994231 / 0.999813505 / 0.999500814. Worst class spread 0.0190 / 0.0496 / 0.0734 % (band 0.5 %) (:1037 / :1183 / :1329).
+- (b) Surface-loss identity residual/`P_src` 1.575e-13 / 2.963e-13 / 7.024e-14 (asserted ≤ 1e-6) (:1054 / :1200 / :1346).
+- (c) 10 MHz bracket, copper vs solid σ = 800 max|ΔS| per class: self 2.360e-4 vs 9.769e-2, adjacent 6.117e-5 vs 2.484e-2, opposite 1.143e-4 vs 4.828e-2 (:1364). Ladder 5.8e7 → 5.8e9 → 5.8e11, 10 MHz self class: 2.360e-4 → 2.367e-5 → 2.368e-6 (:1038 / :1045 / :1052). Monotone at all three frequencies.
+- Predicted, printed: σ = 5.8e11 max|S − S_PEC| 2.37e-6 / 4.20e-6 / 3.19e-6 ≤ 1e-4, met (:1053 / :1199 / :1345).
+- Printed: copper `P_coil/P_in` 0.929 / 0.448 / 0.219 (:1055 / :1201 / :1347). The solid σ = 800 share at 10 MHz is ≈ 0.99987 (:4079).
+- 32 passed, `[capture] rc=0` (:4223), Status 0 (:4226), 211 s wall. `-n 2`, `timeout -k 30 590`, `-s`, durable capture. The fixture took 104.7 s (:1348).
+
+**Caveats for the review — rule on the ✅.**
+1. **Done-when conflict.** The §9 item says (a)–(c) move `TH-14` → ✅. The §7 entry's own Done-when (PROJECT_PLAN.md ~:2089–2092) also requires the Dodd–Deeds slab step and the §2.1 conductor-model line, and neither was executed. The executor flipped ✅ on the §9 text and disclosed the gap in the entry (~:2086–2087). Ratify, or demote to 🟡 pending those steps.
+2. The solid-record bracket is asserted at 10 MHz only, because no σ = 800 solid 4×4 is stored at 64/128 MHz. The σ ladder is asserted at all three frequencies.
+3. The bracket is loose (≈ 400×) and includes the solid-vs-hole mesh difference, not only conductor loss.
+4. The §9 identity (1e-6, `½∫Re(1/Z_s)|n×E|²`) supersedes the entry's older `½Re(Z_s)|H_t|²` form with its 1e-3 band.
+
+**Hypothesis / next.** `ANS-6`'s SPEC is now the weekly's to write, assuming the review keeps ✅. If it demotes, the Dodd–Deeds copper slab (`MAT-6`'s fixture at σ = 5.8e7 through the same hook) is a one-slot standard step.
