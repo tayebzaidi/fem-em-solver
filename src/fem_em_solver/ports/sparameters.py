@@ -274,6 +274,7 @@ def run_n_port_sparameter_sweep(
     degree: int = 1,
     keep_fields: bool = False,
     reuse_factorization: Optional[bool] = None,
+    extra_bilinear_terms: Optional[Sequence[Callable]] = None,
 ) -> SParameterSweepResult:
     """Run an N-port excitation sweep and assemble an NxN S-matrix.
 
@@ -358,6 +359,12 @@ def run_n_port_sparameter_sweep(
             "(`PORT-19` step 2): the gap-voltage and heuristic routes factorise per drive"
         )
     reuse = lumped_sheet_ports is not None and reuse_factorization is not False
+    # `TH-14` step 2: additive surface terms (a Leontovich wall), forwarded to
+    # every lumped-sheet solve; ``None`` leaves each call byte-identical.
+    if extra_bilinear_terms is not None and lumped_sheet_ports is None:
+        raise ValueError(
+            "extra_bilinear_terms is implemented on the lumped-sheet route only (`TH-14` step 2)"
+        )
 
     excitation_results: dict[str, SinglePortExcitationResult] = {}
     kept_fields: Optional[dict[str, object]] = {} if keep_fields else None
@@ -390,6 +397,7 @@ def run_n_port_sparameter_sweep(
                     degree=degree,
                     return_fields=keep_fields,
                     solver=shared_solver,
+                    extra_bilinear_terms=extra_bilinear_terms,
                 )
                 if keep_fields:
                     case, drive_fields = case

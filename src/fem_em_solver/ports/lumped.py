@@ -458,6 +458,7 @@ def run_lumped_sheet_port_case(
     verbose: bool = True,
     return_fields: bool = False,
     solver=None,
+    extra_bilinear_terms=None,
 ):
     """One lumped-sheet solve; per-port ``V`` and ``I`` off the solved field.
 
@@ -491,6 +492,12 @@ def run_lumped_sheet_port_case(
     That is correct only when every sheet's bilinear term equals the one the
     factor was built with — a matched-termination sweep over the same
     ``specs``, `PORT-19` step 1's measured premise.  Nothing checks it.
+
+    ``extra_bilinear_terms`` (`TH-14` step 2, additive and default ``None``)
+    are further ``f(trial, test) -> ufl form`` surface terms appended after the
+    sheets' own (L1) terms on a full solve — the Leontovich wall of a conductor
+    solved as a hole is one.  A re-used factor already carries them; they are
+    not re-assembled there.  ``None`` builds exactly the list it always has.
     """
     from ..core import TimeHarmonicSolver
     from ..core.solvers import DEFAULT_GAUGE_PENALTY
@@ -550,7 +557,8 @@ def run_lumped_sheet_port_case(
                     msh, facet_tags, _s, trial, test, omega_rad_per_s=omega
                 )
                 for pid in port_ids
-            ],
+            ]
+            + list(extra_bilinear_terms or []),
             extra_linear_terms=extra_linear_terms,
         )
     e = fields.e_complex

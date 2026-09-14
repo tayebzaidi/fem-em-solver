@@ -1761,7 +1761,7 @@ from `OPS-26` step 2's four sites. Full narrative and both step-2 rubrics archiv
 - (c) the three port gates re-ran green as committed: 1.707e-14, σ_max 0.999994234, worst spread 0.0190 %. `LEG_D_S_MATRIX_10MHZ` reproduces to 1.158e-10 (`:951–953, 2799`).
 
 This discharges the provenance caveat at 10 MHz. The known-issues entry is retired. The review re-registers the power sentence on the printed term (rule (h)). Row stays 🟡 on step 2. *State line refreshed 2026-09-13 10:30 review from the history — the `OPS-46` line was written from a ruling that predated 3a / 2d / 3b. History: `docs/planning/chunks/TH-15.md`.* | standard (step 3 heavy) |
-| `TH-14` | **Surface-impedance (Leontovich) boundary on conductor surfaces** — `n × E = Z_s n × (n × H)`, `Z_s = (1 + j)/(σδ)`, so copper (σ = 5.8e7 S/m) is affordable at any frequency; Jin §1.5.3 (1.54)–(1.56) and §5.8.3 (third-kind boundary term) (operator directive 2026-09-04; the second conductor-model route; **serial on `TH-15`** for the conductor-as-hole mesh and facet tags). **Step 1 gated 2026-09-13 19:30 slot** (lossy-wall `TH-9` cavity against Pozar's Q_c: σ = 1e4 miss +0.010 % ≤ 5 %, Q(1e6)/Q(1e4) = 9.995, PEC control \|Im λ\|/Re λ = 4.8e-19, `20260914T004807Z_TH-14.log`); the 2026-09-06 "no separating anchor" annotation is retired — the Q_c anchor separates | 🟡 | standard (step 3 heavy) |
+| `TH-14` | **Surface-impedance (Leontovich) boundary on conductor surfaces** — `n × E = Z_s n × (n × H)`, `Z_s = (1 + j)/(σδ)`, so copper (σ = 5.8e7 S/m) is affordable at any frequency; Jin §1.5.3 (1.54)–(1.56) and §5.8.3 (third-kind boundary term) (operator directive 2026-09-04; the second conductor-model route; **serial on `TH-15`** for the conductor-as-hole mesh and facet tags). **Step 1 gated 2026-09-13 19:30 slot** (lossy-wall `TH-9` cavity against Pozar's Q_c: σ = 1e4 miss +0.010 % ≤ 5 %, Q(1e6)/Q(1e4) = 9.995, PEC control \|Im λ\|/Re λ = 4.8e-19, `20260914T004807Z_TH-14.log`); the 2026-09-06 "no separating anchor" annotation is retired — the Q_c anchor separates. **Step 2 (§9 item 6, the entry's "step 3") gated 2026-09-13 21:00 CDT slot** — copper F-small birdcage as a Leontovich hole, `tests/validation/test_th14_birdcage_copper.py`, `-n 2`: (a) copper reciprocity ≤ 1.9e-14, σ_max 0.999994 / 0.999814 / 0.999501, worst class spread 0.0734 % at 10 / 64 / 128 MHz; (b) surface-loss identity residual 1.6e-13 / 3.0e-13 / 7.0e-14 (band 1e-6); (c) 10 MHz bracket per class copper ≤ 2.36e-4 vs solid-800 record ≥ 2.48e-2, σ-ladder max\|ΔS\| falls ≈ 10× per 100× σ at all three f; predicted PEC-limit control 2.4e-6 / 4.2e-6 / 3.2e-6 ≤ 1e-4 met (printed); `P_coil/P_in` 0.929 / 0.448 / 0.219 (printed); 32 passed, 211 s (`20260914T021500Z_TH-14.log`). Outer box pinned by an in-module facet group (exterior ∖ 401), no mesh change | ✅ | standard (step 3 heavy) |
 | `TH-16` | **Symmetry planes: per-face PEC / PMC on cut faces with port rescaling** — HFSS *Perfect E* / *Perfect H* symmetry; quarter the birdcage, the memory lever for the F-human *refinement* rungs — **feature ladder B2** (operator directive 2026-09-04). *(Re-dated 2026-09-06 weekly: the "62 GiB F-human wall" was `TH-12` step 2's degree-2 figure on the 138 k-cell F-small and the r³ extrapolation; `GEO-25` measured F-human at fixed sizing as **504 642 cells** (exponent 0.84, 112 s to mesh), and the two priced degree-1 solves — `TH-11` step 5's 0.99 M cells at 64 GiB and `PORT-13` step 1's 270 k cells at 5.7 GiB summed RSS — bracket a first F-human 64 MHz degree-1 solve at ≈ 11–33 GiB, inside the 128 GiB box either way. Symmetry planes buy the degree-2 and h-refined F-human rungs, not the first solve; that solve is priced, not gated, by `WF-7` step 0.)* | ⬜ | standard |
 | `TH-17` | **Birdcage eigenmodes** — the `TH-9` eigensolver on the loaded birdcage with a PEC coil (`TH-15`) and `PORT-14`'s capacitor sheets; mode frequencies vs the ladder-network closed form, Phase 6's named first target — **feature ladder B3** (operator directive 2026-09-04; serial on `TH-15`, `PORT-14`) | ⬜ | heavy |
 | `TH-18` | **Layered impedance boundary** — thin copper foil on a substrate (HFSS *Layered Impedance*), the construction of real coils; a refinement of `TH-14` — **feature ladder B4** (operator directive 2026-09-04; serial on `TH-14`) | ⬜ | standard |
@@ -1956,7 +1956,7 @@ condition of the `TH-12` production-order clause (§10). Logs:
 **`TH-15` narrative** — moved byte for byte to `docs/planning/chunks/TH-15.md` (`OPS-47`).
 
 **`TH-14` — surface-impedance (Leontovich) boundary on conductor
-surfaces** 🟡 *(step 1 gated 2026-09-13, see the step-1 result below)* *(commissioned 2026-09-04 by operator directive, interactive
+surfaces** ✅ *(step 1 gated 2026-09-13; the birdcage step — §9 item 6, "step 3" below — gated 2026-09-14, see its result below)* *(commissioned 2026-09-04 by operator directive, interactive
 session; the second conductor-model route; **serial on `TH-15`** — same
 hole mesh, same facet tags, one surface term added; `ANS-6` is serial on
 it.)* **Formulation.** On the conductor-surface facets Γ_c the field
@@ -2054,6 +2054,38 @@ boundary with Solve Inside off, which is what `ANS-6` replicates.
 >   Print the coil-loss share `P_coil/P_in` at each frequency beside the
 >   σ = 800 fixture's; that pair of numbers is the whole point of the
 >   directive.
+>   **Result, 2026-09-13 21:00 CDT slot (§9 item 6, executed as that item's
+>   letter, which supersedes the `Re(Z_s)|H_t|²` 1e-3 form above with the
+>   discrete identity at `DISCRETE_IDENTITY_RTOL`) — gated.** New
+>   `tests/validation/test_th14_birdcage_copper.py`; `src/` change (rule (c),
+>   disclosed): additive `extra_bilinear_terms=` keyword on
+>   `run_n_port_sparameter_sweep` and `run_lumped_sheet_port_case` (default
+>   `None` byte-identical), `TH-15` step 3's module re-run green in the same
+>   window (10 MHz + solid control, `P_src` 2.657078677e-03 W and solid
+>   `C/terminal − 1` 1.059204217e-02 reproduced). **The trap resolved without
+>   step 2a:** the test builds a separate facet `MeshTags` holding exterior ∖
+>   tag-401 (tag 499, asserted absent from the mesh; census exterior 23 144 =
+>   outer 3 318 + cavity 19 826, reduced) and passes it as
+>   `facet_tags` with `pec_facet_tags=(499,)`; the mesh is untouched, so no
+>   `GEO-18`/3a mesh identity re-run was needed. Term:
+>   `jωμ₀/Z_s ∫_401 (n×E)·conj(n×W) ds`, `Z_s = (1+j)R_s`. At 10 / 64 / 128
+>   MHz, copper: `‖S−Sᵀ‖/‖S‖` 1.85e-14 / 3.68e-15 / 1.16e-15, σ_max
+>   0.999994231 / 0.999813505 / 0.999500814, spreads ≤ 0.0190 % / 0.0496 % /
+>   0.0734 %; (b) residual 1.575e-13 / 2.963e-13 / 7.024e-14; (c) 10 MHz per
+>   class max|S − S_PEC| copper (self/adj/opp) 2.360e-4 / 6.12e-5 / 1.14e-4 vs
+>   the `LEG_D_S_MATRIX_10MHZ` solid-800 record 9.77e-2 / 2.48e-2 / 4.83e-2;
+>   ladder self-class 2.360e-4 → 2.367e-5 → 2.368e-6 (10 MHz), the 1/√σ
+>   scaling to 3 digits at every f. Predicted control (printed): σ = 5.8e11
+>   max entry 2.37e-6 / 4.20e-6 / 3.19e-6 ≤ 1e-4 — met, which also shows the
+>   outer box is pinned. Printed `P_coil/P_in` copper 0.929 / 0.448 / 0.219
+>   (phantom 0.071 / 0.552 / 0.781); the σ = 800 solid's 10 MHz share from the
+>   same window's step-3c attribution is 4.4822e-4 / 4.4828e-4 W ≈ 0.99987.
+>   **Caveats:** no stored σ = 800 4×4 at 64/128 MHz exists, so the bracket's
+>   solid side is asserted at 10 MHz only (ladder at all three); the solid
+>   record sits ~400× farther from PEC than copper, so the bracket is loose
+>   (it includes the solid/hole mesh difference). Step 2 (Dodd–Deeds slab) and
+>   the §2.1 conductor-model line are not executed by this slot. 32 passed,
+>   211 s, Status 0 (`20260914T021500Z_TH-14.log:1037–1347`, `:4079`).
 > * **Done-when (§4).** Steps 1–3 executed, Fresnel and Dodd–Deeds asserted,
 >   the power identity and the two-route bracket asserted, elapsed times
 >   recorded, §2.1's conductor-model line updated to "copper via Leontovich,
@@ -3743,7 +3775,11 @@ dependency has not landed: skip to the next independent item.**
    **Negative result:** (b) red at `C_tuned` ⇒ the sheet law's κ
    systematic is C-dependent — known-issues, row stays 🟡, stop.
 
-6. **`TH-14` step 2 — the copper F-small birdcage as a surface-impedance
+6. **DONE 2026-09-14 02:18Z** ((a) reciprocity ≤ 1.9e-14, σ_max ≤ 0.999994,
+   spreads ≤ 0.0734 %; (b) residual ≤ 3.0e-13; (c) 10 MHz bracket and σ
+   ladder monotone at all f; no step 2a needed — in-module outer-box facet
+   group; 32 passed, 211 s, `20260914T021500Z_TH-14.log`; `TH-14` ✅,
+   detail in §7). **`TH-14` step 2 — the copper F-small birdcage as a surface-impedance
    hole: the three port gates, the surface-loss power identity and the
    σ-ladder bracket to PEC** (implementer; `src/` hook use + tests, new
    `tests/validation/test_th14_birdcage_copper.py`; complex; heavy; `-n 2`;
