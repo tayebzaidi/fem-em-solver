@@ -23,10 +23,18 @@ degree 1, PEC outer boundary, same materials as `PORT-13`.
 Run (complex build, heavy, -n 8)::
 
     FEM_EM_REQUIRE_COMPLEX=1 mpiexec -n 8 python3 scripts/probes/wf7_step0_f_human_cost.py
+
+Step 0b (2026-09-13, the XXL window): ``FEM_EM_WF7_DEGREE=2`` runs the same
+single drive at degree 2 — the human-scale order-sensitivity reading. Unset
+or ``1`` is byte-identical to step 0. The prediction brackets printed beside
+the readings are per degree: degree 2 is bracketed from `ANS-4` step 2d's
+3.79 M-unknown / 290.2 GiB / ≈ 1 400 s-per-drive point scaled to ≈ 3.2 M
+unknowns (memory ∝ N^1.35, time ∝ N^1.8), widened both ways.
 """
 
 from __future__ import annotations
 
+import os
 import resource
 import sys
 import time
@@ -79,8 +87,11 @@ from tests.validation.test_port_gap_voltage_impedance import (  # noqa: E402
 )
 
 FREQUENCY_HZ = 64.0e6
-PREDICTED_SUMMED_RSS_GIB = (11.0, 33.0)
-PREDICTED_SOLVE_MIN = (3.0, 8.0)
+DEGREE = int(os.environ.get("FEM_EM_WF7_DEGREE", "1"))
+if DEGREE not in (1, 2):
+    raise ValueError(f"FEM_EM_WF7_DEGREE must be 1 or 2, got {DEGREE}")
+PREDICTED_SUMMED_RSS_GIB = {1: (11.0, 33.0), 2: (150.0, 350.0)}[DEGREE]
+PREDICTED_SOLVE_MIN = {1: (3.0, 8.0), 2: (10.0, 60.0)}[DEGREE]
 
 
 def _rss(comm, phase: str, t_window: float) -> None:
@@ -104,7 +115,7 @@ def main() -> int:
         if comm.rank == 0:
             print(f"[WF-7 step0] {msg}", flush=True)
 
-    say(f"start: -n {comm.size}, f = {FREQUENCY_HZ:.3e} Hz, degree 1, "
+    say(f"start: -n {comm.size}, f = {FREQUENCY_HZ:.3e} Hz, degree {DEGREE}, "
         f"ring_radius {F_HUMAN_RING_RADIUS} m, branch B (fixed sizing), longitudinal")
     _rss(comm, "phase 0 (imports)", t_window)
 
@@ -181,7 +192,7 @@ def main() -> int:
         "cell_tags": cell_tags,
         "omega": 2.0 * np.pi * FREQUENCY_HZ,
         "specs": specs,
-        "solver": TimeHarmonicSolver(problem, degree=1),
+        "solver": TimeHarmonicSolver(problem, degree=DEGREE),
     }
     _rss(comm, "phase 2 (sheets + solver built)", t_window)
 
@@ -209,7 +220,7 @@ def main() -> int:
         s = sum(per_rank)
         lo, hi = PREDICTED_SUMMED_RSS_GIB
         print(
-            f"[WF-7 step0] PRICE: cells {n_cells}  unknowns {unknowns}  ranks {comm.size}  "
+            f"[WF-7 step0] PRICE: degree {DEGREE}  cells {n_cells}  unknowns {unknowns}  ranks {comm.size}  "
             f"mesh build {build_s:.2f} s  solve {solve_s:.2f} s  "
             f"window {time.perf_counter() - t_window:.2f} s\n"
             f"[WF-7 step0] PRICE: ru_maxrss per rank GiB {[round(v, 3) for v in per_rank]}  "

@@ -83,17 +83,22 @@ mitigations.
 
 3b. **Spend the XL slot, or explicitly do not.** §5.1's `xl` tier (operator
    directive 2026-09-05) is one run per 7 days at ≤ 512 GiB / 16 ranks / 2 h
-   against `fem-em-solver-xl`, and **this review is the only thing that may
-   commission it.** Check `docs/testing/xl-ledger.md`: if the last row is
-   ≥ 7 days old, name the one chunk and step that gets the slot this week,
-   with a pre-registered readout (what number, what band, what each outcome
-   decides) and a cost estimate from a priced smaller rung, and put it on
-   deck as an item marked **`xl`** — the implementer brings the service up,
-   runs it through the harness (the ledger row is appended at start), and
-   stops the service. If nothing is ready, write "XL slot not spent" and
-   why. Never split the slot, never carry it over, never let a daily review
-   or an implementer commission it. The first slot is reserved for the
-   `ANS-4` 128 MHz refinement rung (§9 item 6).
+   against `fem-em-solver-xl` (since 2026-09-10: three per trailing 7 days,
+   02:00 Sun–Fri, plus the **`xxl`** tier — 754 GiB / 16 ranks / 8 h, one per
+   trailing 7 days, 02:00 Saturday), and **this review is the only thing
+   that decides what runs in them.** Since 2026-09-13 (operator directive)
+   the decision and the queueing are split: you **pre-register** every
+   window you commission in `docs/testing/xl-pending.md` — tier, chunk and
+   step, the exact `XL_COMMAND`, the *measured* price from a priced
+   smaller rung (no window without one, §5.1), the readout, and what each
+   outcome decides — and the daily review, as clerk (daily-review.md step
+   6b), copies the top `READY` entry into `docs/testing/<tier>-queue.env`
+   whenever that queue is empty and the ledger budget allows, so all three
+   XL windows and the XXL window can be used in a week you run once. Fill
+   the list to the budget: up to three `xl` entries and one `xxl` entry
+   ahead. Read both ledgers and mark run entries. If nothing is ready for
+   a tier, write "not spent" and why. Never split a window, never carry
+   one over, never let an implementer commission one.
 
 4. **Examples health.** `./run_examples.sh --list`; for each example, find
    its most recent verified run in `docs/testing/logs/` (or note there is

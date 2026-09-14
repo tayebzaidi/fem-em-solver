@@ -12,7 +12,7 @@
 # can hold a 2 h window. A plain cron script has neither limit. That is the
 # whole reason this file exists.
 #
-# What runs is one line in scripts/automation/xl-queue.env, set by the weekly
+# What runs is one line in docs/testing/xl-queue.env, set by the weekly
 # review or the operator. Empty or absent means nothing is queued and this
 # exits quietly — so the entry can sit in cron every night and cost nothing.
 set -uo pipefail
@@ -36,7 +36,7 @@ LOCK="${FEM_EM_XL_LOCK:-$HOME/.fem-em-$TIER.lock}"   # its own lock, NOT the aut
                                       # 02:15 weekly or the 03:00 review, both
                                       # of which are documentation-only.
 LOGDIR="$REPO/logs/automation"
-QUEUE="$REPO/scripts/automation/$TIER-queue.env"
+QUEUE="$REPO/docs/testing/$TIER-queue.env"   # moved from scripts/automation/ 2026-09-13: Edit(scripts/automation/**) is on the ask list, so a headless daily review (the XL clerk, daily-review.md step 6b) could not write it there
 export PATH="$HOME/.local/bin:/usr/local/bin:/usr/bin:/bin"
 
 mkdir -p "$LOGDIR"

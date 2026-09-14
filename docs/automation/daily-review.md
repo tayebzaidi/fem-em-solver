@@ -139,6 +139,23 @@ are yours.
    explicitly in the item ("depends on item 1 landing; if it did not, skip to
    item 3") rather than leaving the run to discover it.
 
+6b. **XL clerk (operator directive 2026-09-13).** Read
+   `docs/testing/xl-pending.md`. For each tier whose
+   `docs/testing/<tier>-queue.env` is empty: if the top `READY` entry's
+   prerequisite has landed on `main` and the tier's budget allows — `xl`:
+   fewer than three rows with non-zero `Elapsed` in the trailing 7 days of
+   `docs/testing/xl-ledger.md`; `xxl`: none in the trailing 7 days of
+   `xxl-ledger.md` — copy its `XL_CHUNK` / `XL_COMMAND` into the queue file
+   **verbatim** (the Write tool, not a shell redirect — the guard trips on
+   XL command text in a shell command), mark the entry `QUEUED <today> for
+   <run date>`, and say so in the review commit. You never write an entry,
+   never alter a command, never queue past the budget, never queue on a
+   dirty tree. When a ledger has gained a row since the last review, mark
+   the matching entry `RUN <log>`. The weekly still decides *what* runs;
+   this step is the clerk that keeps zero-token compute from idling
+   between weeklies. A `PENDING PREREQUISITE` entry's prerequisite is an
+   ordinary §9 item — queue it in step 6 like any other.
+
 7. **Refresh the status dashboard.** Rewrite `docs/status/dashboard.md` from
    what steps 1–6 established — Waiting-on-you first, then the §2 digest
    (only when §2 changed), recent activity, automation health, on-deck

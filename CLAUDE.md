@@ -55,9 +55,12 @@ that solves in the frequency domain needs the complex DolfinX build
   three runs per trailing 7 days at ≤ 512 GiB / 16 ranks / 2 h against
   `fem-em-solver-xl`, 02:00 Sun–Fri — and the **`xxl`** tier — one run per
   trailing 7 days at ≤ 754 GiB / 16 ranks / 8 h against `fem-em-solver-xxl`,
-  02:00 Saturday. Both are commissioned only by the weekly planning review,
-  queued in `scripts/automation/<tier>-queue.env`, run by cron with no Claude
-  session, and recorded in `docs/testing/<tier>-ledger.md`.
+  02:00 Saturday. Both are commissioned by the weekly planning review —
+  pre-registered in `docs/testing/xl-pending.md` with the exact command,
+  measured price and readout — queued into `docs/testing/<tier>-queue.env`
+  by the daily review acting as clerk when the budget allows (2026-09-13),
+  run by cron with no Claude session, and recorded in
+  `docs/testing/<tier>-ledger.md`. Implementers never commission one.
 - **All verification runs in Docker through the logging harness** (service must
   be Up — `docker compose -f docker/docker-compose.yml ps`):
 

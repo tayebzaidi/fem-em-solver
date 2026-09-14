@@ -28,9 +28,10 @@ things that will otherwise bite.
 2. **Twelve cores, and every compute command goes through the harness.**
    `scripts/testing/run_and_log.sh <CHUNK-ID> "docker compose exec -T
    fem-em-solver bash -lc '…'"`, with `timeout -k 30 <ceiling>` inside it.
-   `mpiexec -n 12` is the hard ceiling (16 only in the weekly XL slot, which
-   only the weekly review commissions). This is a shared machine and the
-   sandbox cannot see other users' load — see §5.1.
+   `mpiexec -n 12` is the hard ceiling (16 only in the XL / XXL windows,
+   which the weekly review commissions via `docs/testing/xl-pending.md` and
+   the daily review queues — never an implementer). This is a shared
+   machine and the sandbox cannot see other users' load — see §5.1.
 
 3. **Never loosen a failing assertion.** A missed band is evidence about the
    test as much as the code. If measurement shows the bound itself was wrong,
@@ -53,8 +54,10 @@ meshing**. Reading harness logs is expected. If you find yourself about to run
 compute, you are outside the role.
 
 Write access you need: `PROJECT_PLAN.md`, `docs/status/dashboard.md`,
-`docs/testing/known-issues.md`, `docs/testing/attempts.md`, `docs/private/`.
-Nothing else, and no `src/` or `tests/` edits from a review.
+`docs/testing/known-issues.md`, `docs/testing/attempts.md`, `docs/private/`,
+and — for the XL clerk role (2026-09-13) — `docs/testing/xl-pending.md` and
+`docs/testing/<tier>-queue.env` (copy a pre-registered entry verbatim; never
+compose one). Nothing else, and no `src/` or `tests/` edits from a review.
 
 ## How to read a result honestly here
 
