@@ -12736,3 +12736,32 @@ The module was not edited after either window (rule (i)).
 4. **Printed, not asserted:** cw mis-paired against ccw reads 98.99 %.
 
 **Hypothesis / next.** The slot stops here: this commit lands past minute 30. Item 4 (`EX-56`) is next. It predicts ≈ 6–7 min at `-n 2`, and its runner `-t 900` must likewise shrink to ≤ 560 for a foreground window.
+
+## 2026-09-14T11:15Z (2026-09-14 06:00 CDT slot, first item) — EX-56 — **complete; EX-56 ⬜ → ✅**
+
+**How it ran.** Preflight: the tree was clean at 06:00:05 and `fem-em-solver` was Up. §9 items 1–3 were already done, so this slot took item 4. It was delegated to `example-runner` in the foreground with container `timeout -k 30 560`, not the row's `-t 900`. I checked the logs, fixed one stale filename in the docstring, and wrote this journal and the commit.
+
+**Built.**
+- `examples/ports/16_birdcage_b1_resolution_ladder.py` and its guide.
+- The setup figure `examples/ports/figures/ports_16_birdcage_b1_resolution_ladder_setup.png` (x1 rung), 265 254 B.
+- Every import comes from the gate modules at module scope (`LADDER`, `STEP5_RECORDED_SPREADS`, `STEP5_SPREAD_RTOL` and the rung helpers). **No rule-(a) lift was needed and no test file changed**, so no gate re-run was owed.
+
+**Measured.**
+- **Census before** `20260914T110231Z_EX-56-census-before.log`: docrefs `exit=0` (:39); setup figures `examples=50 ok=2 missing=48 broken=0` (:92). The runner registered the predicted delta (examples +1, ok +1, missing unchanged, broken 0) before writing any file, which fixes EX-55's deviation 1.
+- **Flagged run** `…110437Z_EX-56.log` (`FEM_EM_SETUP_FIGURES=1`, `-n 2`, Status 0, **142 s**):
+  - x1: 5.2506 %, x0.012: 2.0719 % (:1840, :3615).
+  - Fall **asserted** (:3618).
+- **Unflagged control** `…110730Z_EX-56-control.log` (Status 0, **136 s**): the same digits at :1840, :3615 and :3618.
+- Records are printed, not asserted, because `-n 2` is not the record width `-n 4`. Relative differences are 5.709e-06 and 6.912e-06 against `STEP5_SPREAD_RTOL` 1e-3.
+- Interior CV, printed only: 8.1710 % / 6.6430 % against the filament's 3.5703 %.
+- **Census after** `…111056Z_EX-56-census-after2.log`: docrefs `exit=0` (:39); `examples=51 ok=3 missing=48 broken=0` (:93), as predicted.
+- `pgrep -c python3` read 0 before and after, per the runner.
+- The measured time came in well under the ≈ 6–7 min predicted at `-n 2`.
+
+**Deviations, for the review.**
+1. **Not one time-stepped XDMF.** The row's angle asked for "one combined XDMF with the rung as the time step". Instead there are two per-rung combined files (`…_x1_combined`, `…_x0p012_combined`). The rungs mesh differently (116 085 and 149 049 cells), and `write_xdmf_with_tags` writes one timestep only. This is disclosed in the docstring and guide. The row's Done-when (fall asserted, width disclosed, artifact named, census, elapsed) does not name the time-step form, so I flipped the row. The review may rule otherwise.
+2. **The x0.012 filename was truncated in the flagged run.** `Path.with_suffix` truncated the stem to `…_x0.xdmf`, which is gitignored output. The runner fixed this with a dot-free stem, and the control run is the corrected one. `write_xdmf_with_tags` will do the same to any dotted stem; this is a latent trap for other examples, not filed in known-issues.
+3. **First post-census red.** `…111025Z_EX-56-census-after.log` showed docrefs exit 1 and broken=1, caused by the guide's first draft (an ellipsis filename and a missing image link). This was fixed before `after2` and the log is kept as evidence.
+4. After `after2` I edited one docstring filename (`x0.012` → `x0p012`), which changes no code. The census was re-run after it: `20260914T111237Z_EX-56-census-final.log` gave docrefs `exit=0` (:39) and `examples=51 ok=3 missing=48 broken=0` (:93).
+
+**Hypothesis / next.** Item 5 (`EX-58`) is next. The file stem needs no dot. Its imported `tuned_input` helper may be module-private, and if so rule (a) applies with the gate module re-run.
