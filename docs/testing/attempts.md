@@ -12530,3 +12530,21 @@ Every §9 On-deck item (1–9) is done or blocked after item 9's commit. The onl
 **Logs.** `20260914T003252Z_PORT-14-step3-64mhz.log` (114 s), `20260914T003503Z_PORT-14-step3-10mhz.log` (196 s), `20260914T003827Z_PORT-14-step3-128mhz.log` (115 s), `20260914T004031Z_PORT-14-step3-port9-gate.log` (66 s); all Status 0. `pgrep -c python3` = 0 before and after.
 
 **Hypothesis / next.** The route holds out-of-sample at 128 MHz; a review rules on that reading, and `PORT-15` step 2 (§9 item 4) is unblocked.
+
+## 2026-09-14T00:48Z (2026-09-13 19:30 CDT slot, take-next item) — TH-14 step 1 — **✅ gated; TH-14 ⬜ → 🟡**
+
+**What was tried.** This is §9 item 2. `core/cavity.py` gains an opt-in `_cavity_forms(V, bc_diagonal, surface_impedance_ohm=None, omega_rad_s=None)`. With a complex Z_s it applies no Dirichlet pin and adds `jω₀μ₀/Z_s ∫_Γ (n×u)·(n×v) ds` to A, and it returns 0 constrained DOFs (nothing divides by or indexes that count). The file also gains a GNHEP shift-invert solve (`_solve_pencil_nonhermitian`), the Pozar TE₁₀ℓ `Q_c` and `solve_impedance_wall_cavity_mode`. The default path is untouched. The new module is `tests/validation/test_cavity_leontovich_q.py`. One window ran at `-n 2` in the complex build with `-s`: `tests/environment`, then `test_cavity_resonances.py` (rule (c)), then the new module. No edit followed the window (rule (i)).
+
+**Measured** (fine rung (9, 7, 6), degree 2, 2268 cells, target = TE₁₀₁ k² = 37.287):
+- (a) σ = 1e4: Q = 801.77 against Q_c = 801.68, a +0.010 % miss (band 5 %). The Re f shift is −0.0624 % (band 1 %), equal to −1/(2Q_c) to the printed digit.
+- (b) Q(1e6)/Q(1e4) = 9.995, a −0.050 % miss.
+- (c) Im ω > 0 on every lossy solve.
+- Control: the PEC pencil under GNHEP gives |Im λ|/Re λ = 4.8e-19 (bound 1e-10).
+- Printed only: the coarse (6, 5, 4) rung gives Q = 800.35 (−0.166 %). Copper gives Q = 6.1028e4 against Q_c = 6.1055e4 (−0.044 %). One fixed-point Z_s(Re ω) update moves Q by −3.0e-4.
+- TH-9 re-ran green at its 2026-07-30 record digits (0.0436 % / 0.0102 %, rate 3.85).
+- 18 passed; the eigen-solves took 9.2 s in total.
+- Note: TE₁₀₁ at 291.35 MHz is the box's second mode; (1,1,0) at 240 MHz is lower.
+
+**Logs.** `20260914T004807Z_TH-14.log`, 45 s, Status 0. `pgrep -c python3` read 0 before and after.
+
+**Hypothesis / next.** The third-kind term's sign and normalisation are right under e^{jωt}. §9 item 6 (the copper F-small birdcage, `TH-14` step 2 in the item's numbering) is unblocked.

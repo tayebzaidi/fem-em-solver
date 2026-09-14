@@ -1756,7 +1756,7 @@ from `OPS-26` step 2's four sites. Full narrative and both step-2 rubrics archiv
 | `TH-12` | Second-order elements (degree-2 N1curl): accuracy-per-DOF and cost, measured (operator directive 2026-08-18; decides the production element order for §10 Phase … | ✅ Closed at the 2026-09-02 weekly review, with the decision clause on production element order re-affirmed. Degree 2 buys accuracy per cell at a measured cost, and the coil rung meets the same memory wall. *History: `docs/planning/chunks/TH-12.md`.* | standard (step 2 heavy) |
 | `TH-13` | The degree-2 gradient-subspace injector: feed model or any `W_m ≫ W_e` fixture? — the discriminator `TH-12` step 3 named (commissioned 2026-08-23 weekly review; cheap fixtures only) | ✅ *(closed 2026-08-31 on step 2 — (A) holds at round-off, the injector is the degree-1-only `H¹₀`-only source projection; audited COMPLIANT 03:00 review. Follow-on **step 3a** — the matched projection, opt-in, loop fixture only — scoped 03:00 review, §9 item 1, **executed 2026-08-31 04:30 slot and 🟡**: both anchors met with 6–14 orders of margin (residue 1.298386e-02 / 1.045186e-01 → **8.109635e-17 / 1.790460e-16** vs ≤ 1e-8; gradient share of `W_e` 99.98% / 99.9997% → **4.6e-23 / 3.1e-21** vs ≤ 1e-6; `W_e` to 0.018% / 2.6e-4 % of record vs ≤ 2% / ≤ 1%), default path bit-identical on control (b) at **0.000e+00**, but one of the two owed regression re-runs — `test_coil_loading_degree2.py` — **could not be executed** (exit 124 at 571 s, twice — step 3a″ on 2026-08-31 measured the cost as the degree-2 pair alone, ≥ 524 s, mesh 4.3 s; known-issues entry), so the coil identity tests' 1e-9 reds are unverified on this commit — the degree-1 half of the owed claim was re-observed by 3a″ (+0.00039 pp of record), and **step 3a‴ (module split, one σ-half per window) closed that gap on 2026-09-01**: the two reds are now **observed** at 3.8990e-09 / 3.7235e-09 against the unloosened 1e-9, one per half, each window footered inside its 600 s ceiling — see the step-3a‴ bullet; the lumped-sheet coil drive is `project_source=False` and out of 3a's reach, see entry)* | standard |
 | `TH-15` | Internal perfect-electric-conductor bodies | 🟡 Open: ✅ step 1 (the PEC sphere as a hole against its closed form), 2a and 2d (the two-torus hole route; the gap-displacement port current on the open-circuit anchor, 2026-09-07), 3a (`birdcage_port_domain(as_hole=True)`, the 80 181-cell hole beside the 116 085-cell solid, 2026-09-06) and 3b (`gap_cell_tags`, default unflipped, 2026-09-09). Open: step 2's unitarity gate — eight sub-steps, 2f attributed the 2 % `Z` asymmetry to the point-sampled `_path_voltage`, 2h 🧪 2026-09-09, the `src/` replacement specified but unwritten — and the two-torus unitarity ruling above (weekly). **Step 3 ✅ 2026-09-13 15:00 slot** — the birdcage 4×4 as a PEC hole (80 181 cells, 19 826 tag-401 facets, 0 not exterior) passes `PORT-9`/`PORT-11`'s imported gates at 10 / 64 / 128 MHz: `‖S−Sᵀ‖/‖S‖` 1.59e-14 / 1.47e-15 / 9.16e-16, `σ_max` 0.999994234 / 0.999813792 / 0.999502556, worst class spread 0.0190 % / 0.0497 % / 0.0734 % (band 0.5 %); solid control reproduces `LEG_D_S_MATRIX_10MHZ` to 1.158e-10 (band 1e-6) in the same window (`20260913T202954Z_TH-15.log:951–954, 2768, 2833`; `…202718Z:951–954`; `…202828Z:956–959`). **The power anchor is a record, not a gate (ruled 2026-09-13 18:00 review, `log-pathologist` UNCOUNTABLE):** the item's registered comparand — the four-port terminal sum `Re Σ½V I*` against `½∫_phantom σ|E|²` — went red at **7.700077682e-05 W vs 6.376395218e-08 W** (`…202311Z:958`, 1 208×), and the in-slot substitute `P_src − ΣP_sheet,field = P_phantom` (3.634e-10 / 2.2e-12 / 1.1e-12) is `PORT-16`'s exact discrete identity on a mesh with **no conductor volume** (`…202954Z:80–81`: 10 fragment volumes, conductor solids removed) — it cannot test "all loss is in the phantom", which is the mesh's construction. The 7.6937e-05 W terminal excess is attributed by no printed term (the per-sheet split is computed and discarded, `test_th15_birdcage_pec_hole.py:298–307`); known-issues 🟡 2026-09-13, step 3c queued. The windows also carry `Commit: ca33df3` with the module's assert 23 lines above HEAD's — the committed module has not been run as committed (3c re-runs it). Row stays 🟡 on step 2. *State line refreshed 2026-09-13 10:30 review from the history — the `OPS-46` line was written from a ruling that predated 3a / 2d / 3b. History: `docs/planning/chunks/TH-15.md`.* | standard (step 3 heavy) |
-| `TH-14` | **Surface-impedance (Leontovich) boundary on conductor surfaces** — `n × E = Z_s n × (n × H)`, `Z_s = (1 + j)/(σδ)`, so copper (σ = 5.8e7 S/m) is affordable at any frequency; Jin §1.5.3 (1.54)–(1.56) and §5.8.3 (third-kind boundary term) (operator directive 2026-09-04; the second conductor-model route; **serial on `TH-15`** for the conductor-as-hole mesh and facet tags) | ⬜ | standard (step 3 heavy) |
+| `TH-14` | **Surface-impedance (Leontovich) boundary on conductor surfaces** — `n × E = Z_s n × (n × H)`, `Z_s = (1 + j)/(σδ)`, so copper (σ = 5.8e7 S/m) is affordable at any frequency; Jin §1.5.3 (1.54)–(1.56) and §5.8.3 (third-kind boundary term) (operator directive 2026-09-04; the second conductor-model route; **serial on `TH-15`** for the conductor-as-hole mesh and facet tags). **Step 1 gated 2026-09-13 19:30 slot** (lossy-wall `TH-9` cavity against Pozar's Q_c: σ = 1e4 miss +0.010 % ≤ 5 %, Q(1e6)/Q(1e4) = 9.995, PEC control \|Im λ\|/Re λ = 4.8e-19, `20260914T004807Z_TH-14.log`); the 2026-09-06 "no separating anchor" annotation is retired — the Q_c anchor separates | 🟡 | standard (step 3 heavy) |
 | `TH-16` | **Symmetry planes: per-face PEC / PMC on cut faces with port rescaling** — HFSS *Perfect E* / *Perfect H* symmetry; quarter the birdcage, the memory lever for the F-human *refinement* rungs — **feature ladder B2** (operator directive 2026-09-04). *(Re-dated 2026-09-06 weekly: the "62 GiB F-human wall" was `TH-12` step 2's degree-2 figure on the 138 k-cell F-small and the r³ extrapolation; `GEO-25` measured F-human at fixed sizing as **504 642 cells** (exponent 0.84, 112 s to mesh), and the two priced degree-1 solves — `TH-11` step 5's 0.99 M cells at 64 GiB and `PORT-13` step 1's 270 k cells at 5.7 GiB summed RSS — bracket a first F-human 64 MHz degree-1 solve at ≈ 11–33 GiB, inside the 128 GiB box either way. Symmetry planes buy the degree-2 and h-refined F-human rungs, not the first solve; that solve is priced, not gated, by `WF-7` step 0.)* | ⬜ | standard |
 | `TH-17` | **Birdcage eigenmodes** — the `TH-9` eigensolver on the loaded birdcage with a PEC coil (`TH-15`) and `PORT-14`'s capacitor sheets; mode frequencies vs the ladder-network closed form, Phase 6's named first target — **feature ladder B3** (operator directive 2026-09-04; serial on `TH-15`, `PORT-14`) | ⬜ | heavy |
 | `TH-18` | **Layered impedance boundary** — thin copper foil on a substrate (HFSS *Layered Impedance*), the construction of real coils; a refinement of `TH-14` — **feature ladder B4** (operator directive 2026-09-04; serial on `TH-14`) | ⬜ | standard |
@@ -1951,7 +1951,7 @@ condition of the `TH-12` production-order clause (§10). Logs:
 **`TH-15` narrative** — moved byte for byte to `docs/planning/chunks/TH-15.md` (`OPS-47`).
 
 **`TH-14` — surface-impedance (Leontovich) boundary on conductor
-surfaces** ⬜ *(commissioned 2026-09-04 by operator directive, interactive
+surfaces** 🟡 *(step 1 gated 2026-09-13, see the step-1 result below)* *(commissioned 2026-09-04 by operator directive, interactive
 session; the second conductor-model route; **serial on `TH-15`** — same
 hole mesh, same facet tags, one surface term added; `ANS-6` is serial on
 it.)* **Formulation.** On the conductor-surface facets Γ_c the field
@@ -2013,6 +2013,23 @@ boundary with Solve Inside off, which is what `ANS-6` replicates.
 >   09-06 annotation said was missing: a copper-scale surface loss with an
 >   exact reference, non-circular (an eigenproblem has no drive to pin).
 >   The Fresnel step above is retired as written, not deleted.
+>   **Step-1 result, 2026-09-13 19:30 slot — gated; the 09-06 annotation
+>   above is retired.** `core/cavity.py` gains the opt-in
+>   `_cavity_forms(..., surface_impedance_ohm=, omega_rad_s=)` (no pin, the
+>   §5.8.3 term on `ds`), a `GNHEP` shift-invert solve and
+>   `solve_impedance_wall_cavity_mode`; the default path is untouched (TH-9
+>   re-ran green in the same window with its 2026-07-30 record digits:
+>   0.0436 % / 0.0102 %, rate 3.85, null cluster 5.56e-14). On
+>   `tests/validation/test_cavity_leontovich_q.py`, fine rung (9, 7, 6),
+>   degree 2, `-n 2`: σ = 1e4 Q = 801.77 vs Pozar Q_c = 801.68 (**+0.010 %**,
+>   band 5 %), Re f shift −0.0624 % = −1/(2Q_c) to the printed digit (band
+>   1 %); Q(1e6)/Q(1e4) = **9.995** (−0.050 %); Im ω > 0 (lossy under
+>   e^{jωt}); PEC control |Im λ|/Re λ = **4.8e-19** (bound 1e-10). Printed:
+>   coarse (6, 5, 4) Q = 800.35 (−0.166 %); copper Q = 6.1028e4 vs Q_c
+>   6.1055e4 (−0.044 %); one fixed-point Z_s(Re ω) update moves Q by
+>   −3.0e-4. Note: TE₁₀₁ (291.35 MHz) is this box's *second* mode, the
+>   (1,1,0) at 240 MHz is lower; the target is TE₁₀₁'s k². 18 passed, 45 s
+>   (`20260914T004807Z_TH-14.log`).
 > * **Step 2 (closed form, coil loading — the copper Dodd–Deeds).** `MAT-6`'s
 >   loop-over-slab fixture with the slab as an impedance surface at **σ =
 >   5.8e7** and the loop itself still solved inside at its gated σ: ΔR and ΔX
@@ -3487,7 +3504,9 @@ dependency has not landed: skip to the next independent item.**
    κ differs from 2d's on the same fixture — a drift, known-issues, stop;
    (ii) red ⇒ known-issues, row stays 🟡, stop; never widen.
 
-2. **`TH-14` step 1 — the Leontovich wall on the `TH-9` cavity, gated on
+2. **DONE 2026-09-13 19:30 slot (the `TH-14` step-1 landing commit; `TH-14`
+   🟡, one window Status 0, 45 s, `20260914T004807Z_TH-14.log`; item 6
+   unblocked).** **`TH-14` step 1 — the Leontovich wall on the `TH-9` cavity, gated on
    Pozar's closed-form Q** (implementer; `src/fem_em_solver/core/cavity.py`
    opt-in + new `tests/validation/test_cavity_leontovich_q.py`; complex
    build; smoke/standard; `-n 2`; `main`; independent; **17 slot-min**:
