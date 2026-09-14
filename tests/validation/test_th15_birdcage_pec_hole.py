@@ -360,6 +360,20 @@ def _hole_rung(frequency_hz):
         "n_cavity": n_cavity,
         "n_cavity_interior": n_cavity_interior,
         "sheets": sheets,
+        # Additive (EX-54, `ANS-1`/rule (a)): the mesh, tags and solved P1
+        # field, so an example can render `|E|` and the cavity wall's
+        # `n x E` without re-solving or re-meshing. Nothing above was
+        # renamed or removed. Two distinct facet-tags objects exist in this
+        # function: `facet_tags` (from `_sheets_build`, carries tag 401, the
+        # cavity wall, and is what the problem itself was built with) and
+        # `tags_f` (the sheet-only tags, narrowed radially for the ports) --
+        # both are returned, under their own keys, so a caller cannot
+        # silently reach for the wrong one.
+        "mesh": msh,
+        "cell_tags": cell_tags,
+        "wall_facet_tags": facet_tags,
+        "sheet_facet_tags": tags_f,
+        "fields": fields,
         "z": z,
         "s": s,
         "spreads": {n: _class_spread(v) for n, v in classes.items()},

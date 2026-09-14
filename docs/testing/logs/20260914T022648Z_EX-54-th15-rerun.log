@@ -1,0 +1,88 @@
+# Test Run
+- Chunk: EX-54-th15-rerun
+- Commit: 1abd55fc685420458f122c91b459212987e9cc68
+- Time (UTC): 2026-09-14 02:26:48
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.5.1
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && PYTHONPATH=/workspace/src TH15_STEP3_FREQ_MHZ=10 timeout -k 30 300 mpiexec -n 2 python3 -m pytest tests/validation/test_th15_birdcage_pec_hole.py -v -s --tb=short'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 24
+drwxr-xr-x  3 taz5297 taz5297 4096 Sep  4 23:31 .
+drwxr-xr-x 17 taz5297 taz5297 4096 Sep 13 21:26 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  721 Sep  3 13:49 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 4275 Sep 13 19:19 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.5.1
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && PYTHONPATH=/workspace/src TH15_STEP3_FREQ_MHZ=10 timeout -k 30 300 mpiexec -n 2 python3 -m pytest tests/validation/test_th15_birdcage_pec_hole.py -v -s --tb=short'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... collected 10 items
+
+tests/validation/test_th15_birdcage_pec_hole.py::test_the_cavity_wall_is_pinned SKIPPED64); source /usr/local/bin/dolfinx-complex-mode)
+tests/validation/test_th15_birdcage_pec_hole.py::test_the_hole_birdcage_is_reciprocal SKIPPED64); source /usr/local/bin/dolfinx-complex-mode)
+tests/validation/test_th15_birdcage_pec_hole.py::test_the_hole_birdcage_is_passive SKIPPED64); source /usr/local/bin/dolfinx-complex-mode)
+tests/validation/test_th15_birdcage_pec_hole.py::test_the_hole_impedance_matrix_is_c4_circulant SKIPPED64); source /usr/local/bin/dolfinx-
+complex-mode)collected 10 items
+
+tests/validation/test_th15_birdcage_pec_hole.py::test_the_cavity_wall_is_pinned 
+tests/validation/test_th15_birdcage_pec_hole.py::test_the_hole_power_identity SKIPPED64); source /usr/local/bin/dolfinx-complex-mode)SKIPPED64); source /usr/local/bin/dolfinx-complex-mode)
+tests/validation/test_th15_birdcage_pec_hole.py::test_step3c_hole_discrete_identity_with_non_phantom_term 
+tests/validation/test_th15_birdcage_pec_hole.py::test_the_hole_birdcage_is_reciprocal SKIPPED64); source
+/usr/local/bin/dolfinx-complex-mode)SKIPPED64); source /usr/local/bin/dolfinx-complex-mode)
+tests/validation/test_th15_birdcage_pec_hole.py::test_step3c_solid_discrete_identity_with_non_phantom_term 
+tests/validation/test_th15_birdcage_pec_hole.py::test_the_hole_birdcage_is_passive SKIPPED64); source
+/usr/local/bin/dolfinx-complex-mode)SKIPPED64); source /usr/local/bin/dolfinx-complex-mode)
+tests/validation/test_th15_birdcage_pec_hole.py::test_step3c_solid_c_over_terminal_reproduces_the_2d_record 
+tests/validation/test_th15_birdcage_pec_hole.py::test_the_hole_impedance_matrix_is_c4_circulant SKIPPED64); source
+/usr/local/bin/dolfinx-complex-mode)SKIPPED64); source /usr/local/bin/dolfinx-
+complex-mode)
+tests/validation/test_th15_birdcage_pec_hole.py::test_step3c_hole_beside_solid_is_printed 
+tests/validation/test_th15_birdcage_pec_hole.py::test_the_hole_power_identity SKIPPED64); source /usr/local/bin/dolfinx-complex-mode)SKIPPED64); source /usr/local/bin/dolfinx-complex-mode)
+tests/validation/test_th15_birdcage_pec_hole.py::test_the_solid_route_reproduces_port11_10mhz_record 
+tests/validation/test_th15_birdcage_pec_hole.py::test_step3c_hole_discrete_identity_with_non_phantom_term SKIPPED64); source
+/usr/local/bin/dolfinx-complex-mode)SKIPPED64); source
+/usr/local/bin/dolfinx-complex-mode)
+tests/validation/test_th15_birdcage_pec_hole.py::test_step3c_solid_discrete_identity_with_non_phantom_term SKIPPED64); source
+/usr/local/bin/dolfinx-complex-mode)
+tests/validation/test_th15_birdcage_pec_hole.py::test_step3c_solid_c_over_terminal_reproduces_the_2d_record SKIPPED64); source
+/usr/local/bin/dolfinx-complex-mode)
+tests/validation/test_th15_birdcage_pec_hole.py::test_step3c_hole_beside_solid_is_printed SKIPPED64); source /usr/local/bin/dolfinx-complex-mode)
+tests/validation/test_th15_birdcage_pec_hole.py::test_the_solid_route_reproduces_port11_10mhz_record SKIPPED64); source
+/usr/local/bin/dolfinx-complex-mode)
+
+============================= 10 skipped in 1.24s ==============================
+
+
+============================= 10 skipped in 1.20s ==============================
+
+## Exit
+- Status: 0
+- Elapsed (s): 3
+- Filtered lines (gmsh optimisation chatter): 0
