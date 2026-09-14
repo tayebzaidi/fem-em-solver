@@ -12625,3 +12625,28 @@ Every §9 On-deck item (1–9) is done or blocked after item 9's commit. The onl
 4. The §9 identity (1e-6, `½∫Re(1/Z_s)|n×E|²`) supersedes the entry's older `½Re(Z_s)|H_t|²` form with its 1e-3 band.
 
 **Hypothesis / next.** `ANS-6`'s SPEC is now the weekly's to write, assuming the review keeps ✅. If it demotes, the Dodd–Deeds copper slab (`MAT-6`'s fixture at σ = 5.8e7 through the same hook) is a one-slot standard step.
+
+## 2026-09-14T02:35Z (2026-09-13 21:00 CDT slot, take-next third item) — EX-54 — **complete; EX-54 ⬜ → ✅ (`2cc9192`)**
+
+**What was tried.** §9 item 7, delegated to `example-runner` (foreground), started at minute 22 on a clean tree after `1abd55f`. New `examples/ports/14_birdcage_pec_hole_ports.py` and its same-stem guide. The command came from `run_examples.sh --dry-run` and ran through the harness.
+- **Rule (a).** Five additive return keys were added to `_hole_rung` in `tests/validation/test_th15_birdcage_pec_hole.py`: `mesh`, `cell_tags`, `wall_facet_tags`, `sheet_facet_tags`, `fields`. The diff is +14 / −0.
+- **Rule (a) re-run.** Green in the same slot: 6 passed and 4 skipped, 32.70 s (`…023104Z_EX-54-th15-rerun.log:961`, Status 0 :967). The 4 skipped tests are the `step3c` solid-control tests, which only run when `TH15_STEP3_SOLID_CONTROL` is set; they were not re-run in this window.
+- **Iterations kept in the commit.**
+  - `…022648Z`: a rerun that forgot to source complex mode.
+  - `…022709Z`: a superseded rerun.
+  - `…022823Z`: the example failed on a `float(complex)` in the |n×E| area reduction, fixed with `np.real`.
+  - `…022917Z`: a superseded example run.
+
+**Measured** (`20260914T023145Z_EX-54.log`).
+- Imported gates, all holding (:897):
+  - reciprocity 1.508e-14 (band 1e-3)
+  - σ_max 0.999994234 (band 1 + 1e-9)
+  - class spreads 0.0190 / 0.0094 / 0.0059 % (band 0.5 %)
+  - power rel dev 1.327e-10 (band 1e-3)
+- Printed without a band: cavity wall |n×E| RMS 2.989e-16 over 4.052772e-02 m² (:910), predicted ≈ 0. The hole vs solid σ = 800 max|ΔS| per class is printed at :912–916.
+- Example 34 s wall at `-n 2`, predicted 62 s. Status 0 (:919).
+- Census before `20260914T022309Z_EX-54.log` exit 0; after `20260914T023230Z_EX-54-census-post.log:39` `dead=0 guide=0 stale=0 exit=0`.
+
+**Caveats for the review.** The rule-(a) re-run skipped the solid-control legs. The hole-route gates that `_hole_rung` feeds passed, and the keys are purely additive.
+
+**Hypothesis / next.** Item 8 (`EX-55`) is next. It was not started because this slot passed minute 30 when `EX-54` committed. Its runner `-t 900` at `-n 2` is the unmeasured cost.
