@@ -1245,14 +1245,15 @@ def _ring_quadrature_slots(sheets):
     return az_ref, slots
 
 
-@pytest.fixture(scope="module")
-def ring_quadrature_case():
-    """One 32-drive field-keeping sweep on the ring rung; both senses; CG1 reads."""
-    if not _step3_on():
-        pytest.skip(
-            f"{STEP3_ENV} unset: the 32-port step-3 drive is a heavy -n 8 window "
-            "selected by environment only"
-        )
+def _build_ring_quadrature_case():
+    """One 32-drive field-keeping sweep on the ring rung; both senses; CG1 reads.
+
+    Lifted out of the ``ring_quadrature_case`` fixture below so a caller
+    outside pytest collection (an example script; the `ANS-1` rule) can build
+    the same case without pytest's fixture machinery. Additive only — the
+    fixture is now a thin wrapper that keeps its environment-gated skip and
+    calls this. No behaviour changed (`EX-55`, 2026-09-14).
+    """
     names = _step3_imports()
     SCALED_LEG_COUNT = names.SCALED_LEG_COUNT
     AZIMUTH_STEP_DEG = names.AZIMUTH_STEP_DEG
@@ -1428,7 +1429,27 @@ def ring_quadrature_case():
         "predicted_control": predicted_control,
         "identity_dev": float(identity_dev),
         "identity_rtol": float(step1.DISCRETE_IDENTITY_RTOL),
+        # Additive (`EX-55`): the mesh/tags/fields a caller needs to write a
+        # ParaView artifact or a setup figure — no existing key touched.
+        "mesh": ctx["msh"],
+        "cell_tags": ctx["cell_tags"],
+        "facet_tags": ctx["tags_f"],
+        "drives": drives,
+        "cg1": cg1,
+        "frequency_hz": float(result.frequency_hz),
+        "z0_ohm": float(drive.z0_ohm.real),
+        "sheets": built["sheets"],
     }
+
+
+@pytest.fixture(scope="module")
+def ring_quadrature_case():
+    if not _step3_on():
+        pytest.skip(
+            f"{STEP3_ENV} unset: the 32-port step-3 drive is a heavy -n 8 window "
+            "selected by environment only"
+        )
+    return _build_ring_quadrature_case()
 
 
 @complex_only

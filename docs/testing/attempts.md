@@ -12709,3 +12709,30 @@ The module was not edited after either window (rule (i)).
 4. **Rule (j):** the row's Done-when named the Dodd–Deeds slab step and the §2.1 line, which the 03:00 review wrote. Both now hold, so the row flips on its own text.
 
 **Hypothesis / next.** Item 3 (`EX-55`) is next if the clock allows. `ANS-6`'s SPEC can now cite this floor as the AED-checkable copper point.
+
+## 2026-09-14T10:07Z (2026-09-14 04:30 CDT slot, take-next third item) — EX-55 — **complete; EX-55 ⬜ → ✅**
+
+**How it ran.** The item started at minute 20 from a clean tree after `68ff988`. It was delegated to `example-runner` in the foreground; the gate re-run and this journal are mine.
+
+**Built.**
+- `examples/ports/15_birdcage_sixteen_leg_quadrature_b1.py` and its guide.
+- The setup figure `examples/ports/figures/ports_15_birdcage_sixteen_leg_quadrature_b1_setup.png`, 350 925 B.
+- Rule (a) in `tests/validation/test_port_drive_superposition.py`: the `ring_quadrature_case` fixture body is lifted into `_build_ring_quadrature_case()`. The fixture is now a wrapper that keeps its env skip. Eight return keys were added (mesh, tags, drives, cg1, frequency, z0, sheets). No existing key or test changed; the diff was checked.
+
+**Measured.**
+- **Flagged run** `20260914T095534Z_EX-55.log` (`FEM_EM_SETUP_FIGURES=1`, `-n 2`, Status 0, **168 s**):
+  - (i) C16 spread 0.8102 %, (ii) mirror 0.6769 %, both against the imported 5 %.
+  - (iii) exact identity 8.401e-16 against 1e-6 (:11641–11643).
+  - n_valid = 50 against `MIN_SAMPLE_POINTS` = 50 (:11647).
+- **Unflagged control** `…095938Z_EX-55-control.log` (Status 0, 149 s): the same (i)/(ii) digits, and (iii) at 9.6e-16.
+- **Census** `…095914Z_EX-55-census.log`: docrefs `dead=0 guide=0 stale=0 exit=0` (:39), setup figures `examples=50 ok=2 missing=48 broken=0` (:92).
+- **Rule-(a) gate re-run** `…100313Z_EX-55-rule-a-gate.log`: the POST-6 step-3 command verbatim, `-n 8`, **15 passed, Status 0, 148 s** (the 09-13 run took 191 s). (i)/(ii) digits are unchanged; (iii) 1.860e-15 (:11798–11800).
+- `pgrep -c python3` read 0 before and after every window.
+
+**Deviations, for the review.**
+1. **No census was logged before the change.** The runner wrote the files before any census ran. The before state (49 / 1 / 48 / 0) is taken from the 03:00 review's text, and the delta "examples +1, ok +1, missing unchanged" is a reconstruction, not a prediction registered beforehand.
+2. **Container timeout was 560 s, not the item's `-t 900`,** so the footer could return inside the 660 s foreground window. The run measured 168 s.
+3. **The runner skipped the rule-(a) gate re-run** for lack of time. I ran it myself at minute 33, before the commit.
+4. **Printed, not asserted:** cw mis-paired against ccw reads 98.99 %.
+
+**Hypothesis / next.** The slot stops here: this commit lands past minute 30. Item 4 (`EX-56`) is next. It predicts ≈ 6–7 min at `-n 2`, and its runner `-t 900` must likewise shrink to ≤ 560 for a foreground window.
