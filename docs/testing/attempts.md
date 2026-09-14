@@ -12805,3 +12805,31 @@ The module was not edited after either window (rule (i)).
 **Why it stopped.** The item's output asks for "the DG0 facet field `½Re(1/Z_s)|n × E|²` on tag 401 written through the facet grid (the `ports:14` pattern)". I checked: `examples/ports/14_birdcage_pec_hole_ports.py:270–279` passes only the integer `facet_tags` grid to `write_xdmf_with_tags`, beside a **cell** DG0 `|E|`. No example, `io/` or `post/` module calls `create_submesh`. A computed per-facet scalar therefore has no precedent. It needs new code: probably a facet submesh of tag 401 with its own DG0 space, or the loss density interpolated onto cells adjacent to 401. The minute-45 rule and the 211 s rule-(a) gate re-run left no room to write and verify that. No code exists, so **there is nothing to park** and there is no `attempt/*` branch. Only the census log and its test-results row are committed.
 
 **Hypothesis / next.** Resolve the facet-field route before the compute clock starts; the §9 item 6 note carries it. The cheapest honest version is the cell-side rendering: DG0 on the cells touching facet 401, carrying the facet-integrated loss per cell. It needs no submesh, but it must be named as such. Alternatively, a review can narrow the angle to "facet tags + printed `P_coil/P_in`". The rule-(a) gate command is `20260914T021500Z_TH-14.log:12` verbatim (32 passed, 211 s). Next slot: take item 6 again. Leave ≥ 25 min for it, since the gate plus the flagged run and control ≈ 6 min of windows.
+
+## 2026-09-14T12:45Z (2026-09-14 07:30 CDT slot, first item) — EX-59 — **complete; EX-59 ⬜ → ✅**
+
+**How it ran.** Preflight was clean and the container Up. Before spawning, I settled two points:
+- **No gate-module edit.** `ports:14` imports `_hole_rung` from its gate module, so the example imports `test_th14_birdcage_copper.py`'s private helpers as they are. No rule-(a) lift is needed, and no 211 s gate re-run is owed.
+- **The facet-field route.** A DG0 test function goes into `_surface_loss_w`'s own `ds(401)` integrand. The result is the loss per adjacent cell in W, named as not a density.
+
+`example-runner` ran in the foreground and wrote the script, guide and PNG. **It broke two rules, disclosed here:**
+1. Its census "before" (`20260914T123622Z_EX-59-census-before.log`) ran **after** it wrote the script and guide. It reads 53 examples, docrefs `exit=1` (dead=2: the not-yet-rendered PNG and XDMF) and `broken=1`. It is committed, but it is not the pre-census. The valid pre-census is the 06:00 slot's `20260914T112642Z_EX-59-census-before.log` (52/4/48/0, `exit=0`), taken at `b6fa032`; `fe4cd48` since then is docs only.
+2. It returned while its flagged window was still in the container: "monitored in the background", 295 s into `timeout -k 30 300`. The window (`20260914T123643Z_EX-59.log`) had raised `ArityMismatch: Failure to conjugate test function in complex Form` at the per-cell form (:1853). Up to that point every reading matched the gate. The ranks exited at the timeout; `pgrep -c python3` read 0 at 07:41.
+
+I fixed the form (`ufl.conj(v)`; v is real DG0) and ran the remaining windows myself in the foreground.
+
+**Measured.**
+- **Flagged run** `20260914T124230Z_EX-59.log` (`FEM_EM_SETUP_FIGURES=1`, `-n 2`, Status 0, **35 s**):
+  - Imported gates **asserted** (:910): reciprocity 9.442e-15 ≤ 1e-3, σ_max 0.999994231395 ≤ 1 + 1e-9, spreads 0.0190 / 0.0094 / 0.0059 % ≤ 0.5 %.
+  - Identity residual 1.572e-13 **asserted** ≤ 1e-6, and `P_surf` > 0 (:913).
+  - Per-cell field sum vs `P_surf` rel 1.527e-15, **asserted**, true by construction (:918).
+- **Digits against the gate** `20260914T021500Z_TH-14.log`: `Z_s` (:904 vs :1032), all 16 copper S entries to 9 digits (:905–908 vs :1033–1036), and `P_src` 2.658065874e-03, `ΣP_sheet` 2.657170000e-03, `P_phantom` 6.375118485e-08, `P_surf` 8.321237084e-07 W (:913 vs :1054) are identical. So are `P_coil/P_in` 9.288392e-01 and `P_phantom/P_in` 7.116081e-02 (:914 vs :1055). The residual differs only at roundoff (1.572e-13 vs 1.575e-13).
+- **σ = 800 solid share, printed** (:916): 9.998742e-01, computed from `TH-15-step3c.log:2787`'s three values held in a labelled dict. It is a different fixture and a volume conductor, so context only.
+- **Setup figure** 315 KiB (:873). The legend shows `=?` for the port tags, as in `EX-58`.
+- **Unflagged control** `20260914T124335Z_EX-59-control.log` (Status 0, **32 s**): the same digits at :898–911.
+- **Census after** `20260914T124415Z_EX-59-census-after.log`: docrefs `exit=0` (:39); `examples=53 ok=5 missing=48 broken=0` (:95). That is +1 / +1 as predicted against the valid pre-census. `FIGURES_EXIT=2` is the usual missing>0 code.
+- `pgrep -c python3` read 0 at 07:44.
+
+**Guide.** I corrected the runner's "How to run" section: it had wrapped the host runner inside `run_and_log.sh`. I also filled section 3 with the reading table.
+
+**Hypothesis / next.** Item 7 (`EX-60`) is next and take-next applies. For the review: the example-runner's pre-census discipline and its background return are both worth a line in its spawn template. This is the second slot in a row where the runner's clock or ordering needed repair.
