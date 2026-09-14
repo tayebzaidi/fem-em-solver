@@ -13,8 +13,9 @@ top READY entry of a tier into `docs/testing/<tier>-queue.env`
 verbatim when that queue is empty and the tier's budget allows). An
 interactive operator session may do either.
 
-**Budget, as the clerk reads it.** `xl`: fewer than three rows with a
+**Budget, as the clerk reads it.** `xl`: fewer than six rows with a
 non-zero `Elapsed` in the trailing 7 days of `docs/testing/xl-ledger.md`
+(nightly Sun–Fri, operator directive 2026-09-13)
 (killed and 0-second rows are uncharged, §5.1). `xxl`: no such row in the
 trailing 7 days of `docs/testing/xxl-ledger.md`. The next run date is the
 next 02:00 for the tier (xl Sun–Fri, xxl Saturday) after the budget opens.
@@ -79,10 +80,11 @@ absolute claim is made.
 proves it with the flag-off control — the `0.015:1` rung reproduces step
 2a″'s recorded digits — through the harness at `-n 2`. No band, no record.
 
-**Budget:** three charged rows in the trailing 7 days (09-09 ×2, 09-10) —
-the first open window is **Thursday 2026-09-17 02:00** (the 09-09 02:35 row
-ages out 09-16); the Wednesday 09-16 03:00 daily review is the clerk that
-queues it, if 3a has landed by then.
+**Budget:** open — three charged rows in the trailing 7 days (09-09 ×2,
+09-10) against six. The gate is 3a: the first daily review after 3a lands
+on `main` queues this for the next 02:00 (3a queued Monday 09-14 and
+landed that morning ⇒ the Wednesday 09-16 03:00 review queues it for
+**Thursday 2026-09-17 02:00**; Tuesday has no review).
 
 **Command (final once 3a lands; the knob name above is the contract):**
 

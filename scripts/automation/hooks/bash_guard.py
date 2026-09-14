@@ -35,7 +35,7 @@ TIERS = {
         "service": "fem-em-solver-xl",
         "ranks": 16,
         "timeout_s": 7200,          # 2 h
-        "per_week": 3,              # trailing 7 days
+        "per_week": 6,              # trailing 7 days (operator directive 2026-09-13: nightly Sun-Fri; was 3 from 09-10, 1 from 09-05)
         "ledger": _DOCS / "xl-ledger.md",
     },
     "xxl": {
@@ -96,7 +96,7 @@ def runs_in_trailing_week(ledger: Path) -> int:
     row when a window starts and fills the elapsed column when it ends, so a
     window that never started carries 0 — and on 2026-09-10 two of five rows
     were exactly that (docker unreachable, 0 s, no compute). Charging those
-    against a three-per-week budget would price an infrastructure failure like
+    against a six-per-week budget would price an infrastructure failure like
     a two-hour solve.
 
     This cannot be gamed the way "re-run until it works" could: you cannot

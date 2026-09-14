@@ -143,7 +143,7 @@ are yours.
    `docs/testing/xl-pending.md`. For each tier whose
    `docs/testing/<tier>-queue.env` is empty: if the top `READY` entry's
    prerequisite has landed on `main` and the tier's budget allows — `xl`:
-   fewer than three rows with non-zero `Elapsed` in the trailing 7 days of
+   fewer than six rows with non-zero `Elapsed` in the trailing 7 days of
    `docs/testing/xl-ledger.md`; `xxl`: none in the trailing 7 days of
    `xxl-ledger.md` — copy its `XL_CHUNK` / `XL_COMMAND` into the queue file
    **verbatim** (the Write tool, not a shell redirect — the guard trips on

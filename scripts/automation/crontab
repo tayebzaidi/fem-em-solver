@@ -36,7 +36,7 @@
 # docs/testing/xl-queue.env (operator directive 2026-09-09). No Claude
 # session — a cron script has neither the 660 s foreground cap nor the 65-min
 # slot kill. 02:00 because the box is shared with work this sandbox cannot
-# see. Own lock, not the automation flock. Budget three per trailing 7 days,
+# see. Own lock, not the automation flock. Budget six per trailing 7 days (2026-09-13),
 # enforced by the guard against xl-ledger.md; fires nightly and does nothing
 # once the budget is spent or the queue is empty. Worst case ends 04:00,
 # before the 04:30 slot.

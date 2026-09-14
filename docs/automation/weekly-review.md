@@ -83,7 +83,7 @@ mitigations.
 
 3b. **Spend the XL slot, or explicitly do not.** §5.1's `xl` tier (operator
    directive 2026-09-05) is one run per 7 days at ≤ 512 GiB / 16 ranks / 2 h
-   against `fem-em-solver-xl` (since 2026-09-10: three per trailing 7 days,
+   against `fem-em-solver-xl` (since 2026-09-13: six per trailing 7 days — nightly —,
    02:00 Sun–Fri, plus the **`xxl`** tier — 754 GiB / 16 ranks / 8 h, one per
    trailing 7 days, 02:00 Saturday), and **this review is the only thing
    that decides what runs in them.** Since 2026-09-13 (operator directive)
@@ -95,7 +95,7 @@ mitigations.
    6b), copies the top `READY` entry into `docs/testing/<tier>-queue.env`
    whenever that queue is empty and the ledger budget allows, so all three
    XL windows and the XXL window can be used in a week you run once. Fill
-   the list to the budget: up to three `xl` entries and one `xxl` entry
+   the list to the budget: up to six `xl` entries and one `xxl` entry
    ahead. Read both ledgers and mark run entries. If nothing is ready for
    a tier, write "not spent" and why. Never split a window, never carry
    one over, never let an implementer commission one.
