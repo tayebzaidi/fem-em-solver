@@ -201,6 +201,8 @@ def _terminated_three_port(sweep, z_termination):
                 drive_direction=spec.drive_direction,
                 drive_voltage_v=spec.drive_voltage_v,
                 interior=spec.interior,
+                # `PORT-14` step 3: carried through (None on every other route).
+                width_correction_kappa=spec.width_correction_kappa,
             )
         )
 
@@ -2159,4 +2161,368 @@ def test_step1d_the_zero_gamma_control_misses_on_configuration_d(
             f"the measured terminated 3x3 by only {miss:.3e}, under "
             f"{CONTROL_MISS_FACTOR:g}x the {REDUCTION_BAND:.0e} band, though the "
             f"4x4 predicts a coupling term Delta = {delta:.3e}"
+        )
+
+
+# =============================================================================
+# `PORT-14` step 3 — the kappa-derived width route (registered at 64 MHz,
+# out-of-sample at 128 MHz).
+#
+# `FEM_EM_PORT14_STEP3_FREQUENCY_HZ` in {1e7, 6.4e7, 1.28e8} (unset/`0`: the
+# fixture skips, `main`'s red set and CI time unchanged).  One window per
+# frequency, `-n 2` (the records' width), `-s`:
+#
+#   1. the 50 Ohm sweep on the 116 085-cell gate mesh (eps = 0, uncorrected);
+#   2. one P1 solve keeping its field; kappa = C/terminal - 1 pooled over the
+#      four sheets, through the **package** (`ports.shares.terminal_form_deficit`)
+#      — computed in-run, never fitted, never a literal;
+#   3. anchor (0): the lifted function against `PORT-16`'s test helper
+#      (`_exact_shares` + `_power_shares` + `_c_over_terminal_minus_one`) on that
+#      same solve, rtol 1e-12;
+#   4. the corrected sweep on the identical mesh (`reuse`) with every sheet's
+#      `width_correction_kappa = kappa` (the law's default-off opt-in), and the
+#      terminated C = 100 pF / L = 1 uH 3x3s through it.
+#
+# Sign: the law is told the width w/(1 + kappa), i.e. the told width is scaled
+# by 1/(1 + kappa) — step 2e's fitted x0.989446732 is 1/(1 + kappa), not
+# (1 + kappa) (the scoping text's sentence was sign-inverted; 2026-09-13 18:00
+# review, ruling 1).
+#
+# Asserted at 64 MHz only: (i) kappa(64) against step 2d's P1 C/terminal - 1
+# record 1.060762e-02 (rtol 1e-3; re-registered by the 2026-09-13 18:00 review
+# — the same quantity on the same fixture; step 2b's pooled fit 1.064081e-02 is
+# printed as a ratio only), (ii) both corrected lossless residuals <=
+# REDUCTION_BAND.  (iii) is the existing
+# `test_the_terminated_solve_matches_the_circuit_reduction` with every flag off.
+# The 10 and 128 MHz corrected pairs are *predicted* under 1e-3 and printed only.
+# =============================================================================
+STEP3_ENV = "FEM_EM_PORT14_STEP3_FREQUENCY_HZ"
+STEP3_FREQUENCIES_HZ = (10.0e6, 64.0e6, 128.0e6)
+STEP3_REGISTERED_FREQUENCY_HZ = 64.0e6
+
+# Anchor (0): the lift is the same arithmetic on the same forms.
+STEP3_LIFT_RTOL = 1.0e-12
+# Anchor (i): the registered rtol (unchanged) and its comparand — step 2d's own
+# C/terminal - 1 on the P1 drive at 64 MHz on this gate mesh
+# (`20260912T123236Z_PORT-14-step2d-64mhz.log:1942-1949`; P1 1.060762155e-02,
+# P2-P4 1.060916e-02 / 1.061032e-02 / 1.060766e-02).  Re-registered by the
+# 2026-09-13 18:00 review (ruling 1): the first comparand, step 2b's pooled fit
+# `test_birdcage_power_identity.STEP2B_KAPPA_64MHZ_POOLED` = 1.064081e-02, sits
+# at 0.99688-0.99714x this quantity on the 2d record, so rtol 1e-3 against it
+# was unreachable by construction (parked window: |ratio - 1| = 3.119e-03
+# against 2b, 1.457e-07 against 2d, `20260913T171434Z_PORT-14-step3-64mhz.log`).
+# Same quantity, same fixture, band not widened.  2b's fit is printed as a ratio.
+STEP3_KAPPA_RTOL = 1.0e-3
+STEP2D_C_OVER_TERMINAL_64MHZ_P1 = 1.060762e-02
+# Printed beside (i), never asserted: the ratio kappa / 2b's pooled fit
+# (predicted 0.9969-0.9971 from the 2d record), and step 2e's fitted width
+# factor (`20260912T183330Z_PORT-14-step2e.log:3816-3821`), which the item says
+# sits within 3e-4 of the derived one.
+STEP3_KAPPA_OVER_2B_POOLED_PREDICTED = (0.9969, 0.9971)
+STEP2E_FITTED_WIDTH_FACTOR = 0.989446732
+STEP3_FITTED_WIDTH_WINDOW = 3.0e-4
+
+_STEP3_PORT_IDS = ("P1", "P2", "P3", "P4")
+
+
+def _step3_frequency_hz():
+    raw = os.environ.get(STEP3_ENV, "")
+    if raw in ("", "0"):
+        return None
+    value = float(raw)
+    for f in STEP3_FREQUENCIES_HZ:
+        if abs(value - f) <= 1.0e-9 * f:
+            return f
+    raise ValueError(
+        f"{STEP3_ENV}={raw!r}: step 3 is pre-registered at {STEP3_FREQUENCIES_HZ} Hz only"
+    )
+
+
+def test_step3_the_width_opt_in_is_default_off_and_scales_the_law():
+    """No solve: the opt-in leaves (L2) bit-identical off and divides w by 1 + kappa on.
+
+    Asserted exactly (``==``) for the default path, and at rtol 1e-14 for the
+    ratio ``R(kappa)/R = 1/(1+kappa)``.
+    """
+    from fem_em_solver.ports.lumped import sheet_resistivity_ohm_per_square
+
+    z, h, w, kappa = 50.0 + 0.0j, 6.0e-3, 2.345678e-3, 1.064081e-02
+    base = sheet_resistivity_ohm_per_square(z, gap_height_m=h, sheet_width_m=w)
+    assert base == z * (w / h)
+    assert (
+        sheet_resistivity_ohm_per_square(
+            z, gap_height_m=h, sheet_width_m=w, width_correction_kappa=None
+        )
+        == base
+    )
+    spec = LumpedSheetPortSpec(
+        port_id="P1", facet_tag=1, port_impedance_ohm=z, gap_height_m=h, sheet_width_m=w
+    )
+    assert spec.width_correction_kappa is None
+    assert spec.sheet(driven=True).width_correction_kappa is None
+    assert spec.sheet(driven=False).sheet_resistivity == base
+    corrected = sheet_resistivity_ohm_per_square(
+        z, gap_height_m=h, sheet_width_m=w, width_correction_kappa=kappa
+    )
+    assert abs(corrected / base * (1.0 + kappa) - 1.0) <= 1.0e-14
+    with pytest.raises(ValueError):
+        sheet_resistivity_ohm_per_square(
+            z, gap_height_m=h, sheet_width_m=w, width_correction_kappa=-1.0
+        )
+
+
+def test_step3_negative_control_the_uncorrected_64mhz_record_misses_the_band():
+    """Negative control, by record: uncorrected, C = 100 pF misses 1e-3 at 64 MHz.
+
+    Step 2's eps = 0 reading 1.354202e-02 (`…step2.log:1891`), reproduced by
+    step 2e to 2.8e-07 (`…step2e.log:1886`).  L's 5.021261e-04 is printed (it
+    is under the band uncorrected; the control is the C element).
+    """
+    c = STEP2C_EPS0_RESIDUALS_64MHZ["C = 100 pF"]
+    lval = STEP2C_EPS0_RESIDUALS_64MHZ["L = 1 uH"]
+    if MPI.COMM_WORLD.rank == 0:
+        print(
+            f"\n[PORT-14 step3] negative control (by record, 64 MHz, uncorrected): "
+            f"C = 100 pF {c:.6e} ({c / REDUCTION_BAND:.3f}x band, ASSERTED over)   "
+            f"L = 1 uH {lval:.6e} ({lval / REDUCTION_BAND:.3f}x band, printed)",
+            flush=True,
+        )
+    assert c > REDUCTION_BAND
+
+
+@pytest.fixture(scope="module")
+def step3_case():
+    frequency_hz = _step3_frequency_hz()
+    if frequency_hz is None:
+        pytest.skip(f"{STEP3_ENV} unset — `PORT-14` step 3 runs only when a slot asks")
+    # Lazy: `test_birdcage_power_identity` imports this module at its top level.
+    from fem_em_solver.ports.shares import terminal_form_deficit
+    from tests.validation import test_birdcage_power_identity as port16
+    from tests.validation.test_birdcage_b1_plus_map import _power_shares, _solve_driven
+
+    comm = MPI.COMM_WORLD
+    comm.Barrier()
+    t0 = time.perf_counter()
+    base = build_four_port_sweep(frequency_hz=frequency_hz)
+    comm.Barrier()
+    t_base = time.perf_counter() - t0
+
+    # The eps = 0 P1 solve, its field kept; kappa through the package.
+    comm.Barrier()
+    t1 = time.perf_counter()
+    solved = _solve_driven(base, "P1")
+    sheets = [spec.sheet(driven=(spec.port_id == "P1")) for spec in base["specs"]]
+    deficit = terminal_form_deficit(
+        base["mesh"], base["facet_tags"], sheets, solved["fields"].e_complex, comm
+    )
+    kappa = float(deficit["pooled"])
+    # Anchor (0)'s comparand: the test helper on the identical solve.
+    helper_pooled, helper_per_sheet = port16._c_over_terminal_minus_one(
+        port16._exact_shares(base, solved), _power_shares(base, solved)
+    )
+    comm.Barrier()
+    t_kappa = time.perf_counter() - t1
+
+    reuse = {
+        "mesh": base["mesh"],
+        "cell_tags": base["cell_tags"],
+        "facet_tags": base["facet_tags"],
+        "sheets": base["sheets"],
+        "halves": base["halves"],
+        "cells": base["cells"],
+    }
+    comm.Barrier()
+    t2 = time.perf_counter()
+    corrected = build_four_port_sweep(
+        frequency_hz=frequency_hz, reuse=reuse, width_correction_kappa=kappa
+    )
+    comm.Barrier()
+    t_corr = time.perf_counter() - t2
+
+    cases = []
+    for label, element in STEP1B_TERMINATIONS:
+        z_term = series_rlc_impedance(frequency_hz, **element)
+        comm.Barrier()
+        t3 = time.perf_counter()
+        measured, _kept_ids, _results = _terminated_three_port(corrected, z_term)
+        comm.Barrier()
+        elapsed = time.perf_counter() - t3
+        predicted = reduce_terminated_ports(
+            corrected["s"], float(REFERENCE_IMPEDANCE_OHM), {TERMINATED_PORT_INDEX: z_term}
+        )
+        cases.append(
+            {
+                "label": label,
+                "z": z_term,
+                "residual": float(
+                    np.linalg.norm(measured - predicted) / np.linalg.norm(predicted)
+                ),
+                "seconds": float(elapsed),
+            }
+        )
+
+    if comm.rank == 0:
+        print(
+            f"\n[PORT-14 step3] f = {frequency_hz:.6e} Hz on the {int(base['cells'])}-cell "
+            f"gate mesh, -n {comm.size}: eps = 0 sweep {t_base:.2f} s; P1 solve + "
+            f"kappa {t_kappa:.2f} s; corrected sweep {t_corr:.2f} s",
+            flush=True,
+        )
+        print(
+            f"[PORT-14 step3] derived kappa = C/terminal - 1 (P1 drive, pooled, "
+            f"package) = {kappa:.9e}   per sheet "
+            + "   ".join(f"{p} {deficit['per_sheet'][p]:.9e}" for p in _STEP3_PORT_IDS)
+            + f"   told width factor 1/(1 + kappa) = {1.0 / (1.0 + kappa):.9f}",
+            flush=True,
+        )
+        print(
+            "[PORT-14 step3] sheet resistivity corrected vs uncorrected: "
+            + ", ".join(
+                f"{s0.port_id} {s1.sheet(driven=False).sheet_resistivity.real:.9e} vs "
+                f"{s0.sheet(driven=False).sheet_resistivity.real:.9e} Ohm/sq"
+                for s0, s1 in zip(base["specs"], corrected["specs"])
+            ),
+            flush=True,
+        )
+    return {
+        "frequency_hz": frequency_hz,
+        "base": base,
+        "corrected": corrected,
+        "kappa": kappa,
+        "deficit": deficit,
+        "helper_pooled": float(helper_pooled),
+        "helper_per_sheet": {p: float(v) for p, v in helper_per_sheet.items()},
+        "kappa_record": float(port16.STEP2B_KAPPA_64MHZ_POOLED),
+        "cases": cases,
+    }
+
+
+@complex_only
+def test_step3_anchor0_the_lifted_deficit_reproduces_the_test_helper(step3_case):
+    """(0) ``ports.shares.terminal_form_deficit`` == `PORT-16`'s helper, rtol 1e-12."""
+    case = step3_case
+    rows = [("pooled", case["kappa"], case["helper_pooled"])] + [
+        (p, case["deficit"]["per_sheet"][p], case["helper_per_sheet"][p])
+        for p in _STEP3_PORT_IDS
+    ]
+    if MPI.COMM_WORLD.rank == 0:
+        print(
+            f"\n[PORT-14 step3] (0) lifted C/terminal - 1 vs the test helper at "
+            f"f = {case['frequency_hz']:.3e} Hz (ASSERTED rtol {STEP3_LIFT_RTOL:.0e}):",
+            flush=True,
+        )
+        for name, lifted, helper in rows:
+            print(
+                f"    {name:<6s} lifted {lifted:.15e}   helper {helper:.15e}   "
+                f"|ratio - 1| = {abs(lifted / helper - 1.0):.3e}",
+                flush=True,
+            )
+    for name, lifted, helper in rows:
+        assert abs(lifted / helper - 1.0) <= STEP3_LIFT_RTOL, (
+            f"{name}: lifted {lifted:.15e} vs helper {helper:.15e}"
+        )
+
+
+@complex_only
+def test_step3_anchor_i_the_derived_kappa_reproduces_the_64mhz_record(step3_case):
+    """(i) kappa(64) against step 2d's P1 C/terminal - 1 1.060762e-02 at rtol 1e-3 (64 MHz only).
+
+    Re-registered 2026-09-13 18:00 review (ruling 1); step 2b's pooled fit is
+    printed as a ratio (predicted 0.9969-0.9971), never asserted.
+    """
+    case = step3_case
+    kappa, record = case["kappa"], STEP2D_C_OVER_TERMINAL_64MHZ_P1
+    pooled_fit = case["kappa_record"]
+    lo, hi = STEP3_KAPPA_OVER_2B_POOLED_PREDICTED
+    registered = case["frequency_hz"] == STEP3_REGISTERED_FREQUENCY_HZ
+    comm = MPI.COMM_WORLD
+    if comm.rank == 0:
+        factor = 1.0 / (1.0 + kappa)
+        ratio_2b = kappa / pooled_fit
+        print(
+            f"\n[PORT-14 step3] (i) f = {case['frequency_hz']:.3e} Hz: derived kappa "
+            f"{kappa:.9e}   step 2d P1 C/terminal - 1 (64 MHz) {record:.6e}   "
+            f"|ratio - 1| = {abs(kappa / record - 1.0):.3e} "
+            + (f"(ASSERTED rtol {STEP3_KAPPA_RTOL:.0e})" if registered else "(PRINTED)")
+            + f"   kappa / step 2b pooled fit {pooled_fit:.6e} = {ratio_2b:.6f} "
+            f"(PREDICTED {lo}-{hi}: {'held' if lo <= ratio_2b <= hi else 'MISSED'}, "
+            f"PRINTED)   width factor 1/(1+kappa) {factor:.9f} vs step 2e fitted "
+            f"{STEP2E_FITTED_WIDTH_FACTOR:.9f}: |diff| = "
+            f"{abs(factor - STEP2E_FITTED_WIDTH_FACTOR):.3e} (window "
+            f"{STEP3_FITTED_WIDTH_WINDOW:.0e}, PRINTED)",
+            flush=True,
+        )
+    if not registered:
+        pytest.skip("kappa is registered at 64 MHz only; printed above")
+    if comm.size != RECORD_RANK_WIDTH:
+        pytest.skip(f"record width is -n {RECORD_RANK_WIDTH}; this is -n {comm.size}")
+    assert abs(kappa / record - 1.0) <= STEP3_KAPPA_RTOL, (
+        f"derived kappa(64) {kappa:.9e} misses step 2d's P1 C/terminal - 1 record "
+        f"{record:.6e} by {abs(kappa / record - 1.0):.3e} > {STEP3_KAPPA_RTOL:.0e} — "
+        f"the item's negative result: a drift on the same fixture, known-issues, stop"
+    )
+
+
+@complex_only
+def test_step3_the_corrected_route_is_a_valid_four_port(step3_case):
+    """Anchor: the corrected 4x4 is on the gate mesh, reciprocal and passive."""
+    sweep = step3_case["corrected"]
+    reciprocity = float(sweep["reciprocity"])
+    sigma_max = float(np.max(sweep["sigma"]))
+    cells = int(sweep["cells"])
+    if MPI.COMM_WORLD.rank == 0:
+        print(
+            f"\n[PORT-14 step3] corrected 50 Ohm 4x4 at f = "
+            f"{step3_case['frequency_hz']:.3e} Hz: {cells} cells (record "
+            f"{STEP1_CELL_RECORD}); ||S - S^T||/||S|| = {reciprocity:.9e} (band "
+            f"{RECIPROCITY_BAND:.0e}); sigma_max = {sigma_max:.9f} (band 1 + "
+            f"{PASSIVITY_SIGMA_TOLERANCE:.0e})",
+            flush=True,
+        )
+    assert cells == STEP1_CELL_RECORD
+    assert reciprocity <= RECIPROCITY_BAND
+    assert sigma_max <= 1.0 + PASSIVITY_SIGMA_TOLERANCE
+
+
+@complex_only
+def test_step3_anchor_ii_the_corrected_lossless_residuals_are_under_the_band(step3_case):
+    """(ii) at 64 MHz both corrected residuals <= REDUCTION_BAND; 10/128 printed."""
+    case = step3_case
+    registered = case["frequency_hz"] == STEP3_REGISTERED_FREQUENCY_HZ
+    comm = MPI.COMM_WORLD
+    if comm.rank == 0:
+        print(
+            f"\n[PORT-14 step3] (ii) corrected reduction residuals at f = "
+            f"{case['frequency_hz']:.3e} Hz, kappa = {case['kappa']:.9e} "
+            + (
+                f"(ASSERTED <= {REDUCTION_BAND:.0e})"
+                if registered
+                else f"(PREDICTED <= {REDUCTION_BAND:.0e}, printed, never asserted)"
+            )
+            + ":",
+            flush=True,
+        )
+        for entry in case["cases"]:
+            ref = (
+                f"   uncorrected 64 MHz record "
+                f"{STEP2C_EPS0_RESIDUALS_64MHZ[entry['label']]:.6e}"
+                if registered
+                else ""
+            )
+            print(
+                f"    {entry['label']:<12s} residual = {entry['residual']:.6e}   "
+                f"ratio to band {entry['residual'] / REDUCTION_BAND:.6f} "
+                f"({'UNDER' if entry['residual'] <= REDUCTION_BAND else 'OVER'})"
+                f"{ref}   three drives in {entry['seconds']:.2f} s wall",
+                flush=True,
+            )
+    if not registered:
+        pytest.skip("the corrected route is registered at 64 MHz only; printed above")
+    if comm.size != RECORD_RANK_WIDTH:
+        pytest.skip(f"record width is -n {RECORD_RANK_WIDTH}; this is -n {comm.size}")
+    for entry in case["cases"]:
+        assert entry["residual"] <= REDUCTION_BAND, (
+            f"{entry['label']}: corrected residual {entry['residual']:.6e} > "
+            f"REDUCTION_BAND {REDUCTION_BAND:.0e} with the derived kappa "
+            f"{case['kappa']:.9e} — the item's negative result: stop, no fit"
         )

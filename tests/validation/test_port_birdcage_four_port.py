@@ -225,6 +225,7 @@ def build_four_port_sweep(
     resolution=None,
     build_only=False,
     c4_congruent_sheets=False,
+    width_correction_kappa=None,
 ):
     """One mesh; four driven lumped-sheet solves at 50 Ohm; the assembled 4x4.
 
@@ -289,6 +290,12 @@ def build_four_port_sweep(
     and the sheet geometry are taken from it rather than rebuilt, so a
     frequency ladder runs on **one** mesh.  Every caller in this repo's gates
     takes both defaults and is unchanged in behaviour.
+
+    ``width_correction_kappa`` is the ninth additive parameter (`PORT-14` step
+    3): ``None`` — every gate's value — builds the specs exactly as before.  A
+    float is forwarded to every ``LumpedSheetPortSpec`` and so to the sheet
+    law's default-off opt-in
+    (:func:`~fem_em_solver.ports.lumped.sheet_resistivity_ohm_per_square`).
     """
     comm = MPI.COMM_WORLD
     ports_idx = list(range(1, LEG_COUNT + 1))
@@ -416,6 +423,7 @@ def build_four_port_sweep(
                 drive_direction=(0.0, 0.0, 1.0),
                 drive_voltage_v=1.0 + 0.0j,
                 interior=True,
+                width_correction_kappa=width_correction_kappa,
             )
         )
 

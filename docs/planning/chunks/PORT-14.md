@@ -779,3 +779,72 @@ read 1.457e-07). The scoping text's "scale the told width by `(1 + κ)`" is
 sign-inverted — 2e's fitted ×0.989446732 is `1/(1 + κ)`, which the parked
 code implements; the §10 sentence is corrected, this history is not
 rewritten. No band moved. Re-queued as §9 item 1 of the 18:00 review.
+
+## Step 3 landed 2026-09-13 19:30 slot — ✅ on the re-registered anchor (i)
+
+Code from `attempt/PORT-14-step3-20260913T172330Z` (`86c93f6`) checked out
+by path only: `src/fem_em_solver/ports/lumped.py`, `ports/shares.py`,
+`tests/validation/test_port_lumped_rlc_termination.py`,
+`tests/validation/test_port_birdcage_four_port.py`. None of the four had
+changed on `main` since the branch point `8ad4548`. One edit in the step-3 block:
+anchor (i)'s comparand is the new constant
+`STEP2D_C_OVER_TERMINAL_64MHZ_P1 = 1.060762e-02`
+(`20260912T123236Z_PORT-14-step2d-64mhz.log:1942–1949`), replacing the
+parked module's printed-only `STEP2D_C_OVER_TERMINAL_P1_64MHZ`. The
+`STEP2B_KAPPA_64MHZ_POOLED` comparison is now a printed ratio against the
+predicted 0.9969–0.9971. `STEP3_KAPPA_RTOL` stays 1e-3. The block header gains
+the sign sentence `w/(1 + κ)`, i.e. the width scaled by `1/(1 + κ)`, and the
+assert message names 2d. Nothing was edited after the first window, so all
+four windows ran the module as committed (rule (i)).
+
+Windows, all `-n 2`, `timeout -k 30 590`, `-s`, complex build, no pipe;
+`pgrep -c python3` = 0 before and after:
+
+- `20260914T003252Z_PORT-14-step3-64mhz.log`: 17 passed, 112.57 s, Status 0, **114 s**.
+- `20260914T003503Z_PORT-14-step3-10mhz.log`: 17 passed / 2 skipped, 194.48 s, Status 0, **196 s**.
+- `20260914T003827Z_PORT-14-step3-128mhz.log`: 15 passed / 2 skipped, 113.75 s, Status 0, **115 s**.
+- `20260914T004031Z_PORT-14-step3-port9-gate.log` (rule (c), `PORT-9`'s gate
+  module after `build_four_port_sweep` gained the default-`None`
+  `width_correction_kappa` keyword, the 8-line additive diff): 16 passed,
+  63.61 s, Status 0, **66 s**.
+
+- **Anchors (asserted), green.**
+  - (0) The lifted `C/terminal − 1` equals the test helper: |ratio − 1| = 0.000e+00
+    on the pooled value and on P1–P4 at 64 MHz (`…64mhz.log:1943–1948`), 10 MHz
+    (`…10mhz.log:3775`) and 128 MHz.
+  - **(i)** The derived κ(64) = **1.060762155e-02** against 2d's 1.060762e-02:
+    |ratio − 1| = **1.457e-07** ≤ 1e-3 (`…64mhz.log:1937, :1951`).
+  - (ii) The corrected 64 MHz lossless residuals are **5.359129e-05 / 1.998404e-06**
+    ≤ `REDUCTION_BAND` 1e-3 (`:1958–1959`). The corrected 4×4 has 116 085 cells,
+    reciprocity 9.856306924e-16 and σ_max 0.999760402 (`:1954`).
+  - (iii) The uncorrected 10 MHz floor is unmoved: C / L / R 1.595580e-03 /
+    3.370512e-03 / 7.249519e-04, |ratio − 1| ≤ 2.380e-07 against the record
+    (`…10mhz.log:1888, :1895, :1902`).
+- **Negative control (asserted, by record), green:** the uncorrected 64 MHz
+  C = 100 pF miss is 1.354202e-02 (13.542× band); L is 5.021261e-04
+  (`…64mhz.log:84`).
+- **Printed, predicted under 1e-3, never asserted:**
+  - 10 MHz: in-run κ(10) 1.059204217e-02; corrected pair 1.099275e-06 /
+    1.396651e-06, **held** (`…10mhz.log:3768, :3789–3790`).
+  - 128 MHz: in-run κ(128) 1.064828193e-02; corrected pair 4.012884e-05 /
+    5.599266e-06, **held** (`…128mhz.log:1937, :1955–1956`). Reciprocity
+    1.325493719e-15, σ_max 0.999139628 (`:1951`). This is the out-of-sample
+    reading; a review decides on it.
+  - Width factor `1/(1 + κ)` at 64 MHz is 0.989503719, 5.699e-05 from 2e's fitted
+    0.989446732, inside the 3e-4 window.
+- **Printed prediction MISSED (predicted, not asserted; reported, not decided
+  in-slot, rule (e)):** κ(64) / 2b's pooled fit reads **0.996881** against the
+  item's predicted 0.9969–0.9971 (`…64mhz.log:1951`). The miss is 1.9e-05
+  below the lower edge. It is the same number as 2d's record 0.996881
+  (`20260912T123236Z_PORT-14-step2d-64mhz.log:1942`), whose 0.99688 the item
+  rounded to 0.9969, so it is a rounding miss in the prediction, not a drift.
+  The 10 MHz (0.995417) and 128 MHz (1.000702) prints of the same ratio compare
+  the in-run κ with the 64 MHz fit, and the window was never meant for them.
+
+**Reading.** The κ-derived, unfitted `1/(1 + κ)` told width takes both
+lossless reduction residuals under 1e-3 at 64 MHz on the gate mesh. The
+derived κ reproduces the 2d record to 1.5e-7, and the parked branch's digits
+reproduce exactly. **Status:** `PORT-14` 🟡 → ✅ on (0)–(iii), with κ carried as
+the sheet's named systematic and `TH-17` barred from gating a mode frequency
+tighter than it. `PORT-15` step 2 unblocks. No tuning, resonance or `TH-17`
+claim; 128 MHz stays printed. The attempt branch is deleted after this commit.

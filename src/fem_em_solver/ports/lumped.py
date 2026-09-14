@@ -93,13 +93,30 @@ __all__ = [
 
 
 def sheet_resistivity_ohm_per_square(
-    port_impedance_ohm: complex, *, gap_height_m: float, sheet_width_m: float
+    port_impedance_ohm: complex,
+    *,
+    gap_height_m: float,
+    sheet_width_m: float,
+    width_correction_kappa: Optional[float] = None,
 ) -> complex:
     """``R = Z_p · w / h`` — Jin §1.5.4's ohms-per-square from a terminal ``Z_p``.
 
     ``gap_height_m`` is the terminal-to-terminal distance *along* the sheet (the
     direction the port current flows); ``sheet_width_m`` is the transverse
     extent.  ``h/w`` squares sit in series between the terminals, hence (L2).
+
+    ``width_correction_kappa`` (`PORT-14` step 3, **default off**): ``None`` —
+    every existing caller — evaluates (L2) with exactly the arithmetic above.
+    A float ``κ`` tells the law the width ``w/(1 + κ)`` instead, i.e.
+    ``R = Z_p · (w/(1 + κ)) / h``.  ``κ`` is the sheet's terminal-form
+    Cauchy–Schwarz deficit ``C/terminal − 1``
+    (:func:`~fem_em_solver.ports.shares.terminal_form_deficit`), measured on
+    the uncorrected solve: the field deposits ``(1 + κ)`` times the
+    uniform-field terminal dissipation, so the sheet realises ``≈ (1 + κ) Z_p``
+    and the told width is scaled by ``(1 + κ)⁻¹`` to undo it.  The sign is the
+    one `PORT-14` steps 1d/2c/2e measured (the zero-crossing ``ε* ≈ −κ``, the
+    fitted 64 MHz factor ``0.989446732`` against ``1/(1 + κ) ≈ 0.98947``).
+    This is a named systematic of the lumped sheet, not a physical width.
     """
     if not np.isfinite(gap_height_m) or gap_height_m <= 0.0:
         raise ValueError(f"gap_height_m must be finite and positive, got {gap_height_m!r}")
@@ -108,7 +125,14 @@ def sheet_resistivity_ohm_per_square(
     z = complex(port_impedance_ohm)
     if z == 0.0:
         raise ValueError("port_impedance_ohm must be non-zero — R = Z_p·w/h is its sheet form")
-    return z * (sheet_width_m / gap_height_m)
+    if width_correction_kappa is None:
+        return z * (sheet_width_m / gap_height_m)
+    kappa = float(width_correction_kappa)
+    if not np.isfinite(kappa) or kappa <= -1.0:
+        raise ValueError(
+            f"width_correction_kappa must be finite and > -1, got {width_correction_kappa!r}"
+        )
+    return z * ((sheet_width_m / (1.0 + kappa)) / gap_height_m)
 
 
 def series_rlc_impedance(
@@ -197,6 +221,8 @@ class LumpedPortSheet:
     drive_direction: tuple[float, float, float] = (0.0, 1.0, 0.0)
     source_voltage_v: complex = 0.0 + 0.0j
     interior: bool = True
+    # `PORT-14` step 3 opt-in, default off: see sheet_resistivity_ohm_per_square.
+    width_correction_kappa: Optional[float] = None
 
     def validate(self) -> None:
         if not self.port_id or not self.port_id.strip():
@@ -205,6 +231,7 @@ class LumpedPortSheet:
             self.port_impedance_ohm,
             gap_height_m=self.gap_height_m,
             sheet_width_m=self.sheet_width_m,
+            width_correction_kappa=self.width_correction_kappa,
         )
         if float(np.linalg.norm(np.asarray(self.drive_direction, dtype=float))) <= 0.0:
             raise ValueError(f"port '{self.port_id}': drive_direction must be non-zero")
@@ -216,6 +243,7 @@ class LumpedPortSheet:
             self.port_impedance_ohm,
             gap_height_m=self.gap_height_m,
             sheet_width_m=self.sheet_width_m,
+            width_correction_kappa=self.width_correction_kappa,
         )
 
     def unit_drive(self) -> np.ndarray:
@@ -374,6 +402,8 @@ class LumpedSheetPortSpec:
     path_points: Optional[np.ndarray] = None
     path_tangents: Optional[np.ndarray] = None
     path_weights: Optional[np.ndarray] = None
+    # `PORT-14` step 3 opt-in, default off: see sheet_resistivity_ohm_per_square.
+    width_correction_kappa: Optional[float] = None
 
     def sheet(self, *, driven: bool) -> LumpedPortSheet:
         """The sheet this port contributes to one solve.
@@ -391,6 +421,11 @@ class LumpedSheetPortSpec:
             drive_direction=tuple(float(c) for c in self.drive_direction),
             source_voltage_v=complex(self.drive_voltage_v) if driven else 0.0 + 0.0j,
             interior=bool(self.interior),
+            width_correction_kappa=(
+                None
+                if self.width_correction_kappa is None
+                else float(self.width_correction_kappa)
+            ),
         )
 
     def validate(self) -> None:

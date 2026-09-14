@@ -12515,3 +12515,18 @@ Items 1–8 were all done or blocked at slot start (item 2 🚫 `PORT-14` step 3
 ## 2026-09-13T21:43Z (2026-09-13 16:30 CDT slot, slot owner's close) — queue drained — **anchor: stopped at minute 13 per §9's drain rule; no fallback chunk exists**
 
 Every §9 On-deck item (1–9) is done or blocked after item 9's commit. The only blocked one is item 2, `PORT-14` step 3, which waits on a review re-registering anchor (i). §9 says "If the queue drains: **stop and journal.** There is no fallback chunk", so this slot stopped with a clean tree. The 19:30 slot will meet the same drained queue unless the 18:00 review restocks it. The restock shortfall was already stated at 48 min, and it is now the whole queue.
+
+## 2026-09-14T00:30Z (2026-09-13 19:30 CDT slot) — PORT-14 step 3 — **✅ landed; PORT-14 🟡 → ✅**
+
+**What was tried.** §9 item 1 of the 18:00 review. The parked κ-derived width route was checked out by path only (`lumped.py`, `shares.py`, the RLC module, the `PORT-9` gate module; no record files). One edit then re-registered anchor (i)'s comparand as `STEP2D_C_OVER_TERMINAL_64MHZ_P1 = 1.060762e-02`, demoted the 2b pooled comparison to a printed ratio and added the `1/(1 + κ)` sign sentence. Four windows at `-n 2` ran the module as committed (no edit after the first window).
+
+**Measured.**
+- 64 MHz, all asserted: (0) 0.000e+00; (i) κ(64) 1.060762155e-02, |ratio − 1| 1.457e-07 ≤ 1e-3; (ii) 5.359129e-05 / 1.998404e-06 ≤ 1e-3; control 1.354202e-02 over.
+- 10 MHz: (iii) floor unmoved to ≤ 2.38e-07; corrected pair 1.099e-06 / 1.397e-06 (printed).
+- 128 MHz: κ 1.064828193e-02; corrected pair 4.013e-05 / 5.599e-06 (printed).
+- `PORT-9` gate module: 16 passed.
+- Printed prediction missed: κ(64) / 2b pooled = 0.996881 against the predicted 0.9969–0.9971. The item rounded 2d's 0.996881 record up to 0.9969, so this is not a drift. Reported, not decided (rule (e)).
+
+**Logs.** `20260914T003252Z_PORT-14-step3-64mhz.log` (114 s), `20260914T003503Z_PORT-14-step3-10mhz.log` (196 s), `20260914T003827Z_PORT-14-step3-128mhz.log` (115 s), `20260914T004031Z_PORT-14-step3-port9-gate.log` (66 s); all Status 0. `pgrep -c python3` = 0 before and after.
+
+**Hypothesis / next.** The route holds out-of-sample at 128 MHz; a review rules on that reading, and `PORT-15` step 2 (§9 item 4) is unblocked.
