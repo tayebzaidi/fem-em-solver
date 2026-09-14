@@ -3,6 +3,21 @@
 Guide for `examples/meshing/03_birdcage_graded_conductors.py` (`EX-21`).
 Written to be followed without the source open.
 
+## Setup figure
+
+![mesh:3 setup — four-leg birdcage with phantom and port boxes, 3-D view and z = 0 slice](figures/meshing_03_birdcage_graded_conductors_setup.png)
+
+*Left:* the graded rung's tagged regions with the air box hidden — copper
+conductors (tag 1: two end rings and four legs), the saline phantom cylinder
+(tag 3, translucent) and the four port boxes (tags 101–104, red) at the leg
+mid-planes. *Right:* the z = 0
+slice through every region including air (tag 2, grey), showing the
+Distance→Threshold refinement that follows the conductor surfaces — cells are
+`h_c = 1.6 mm` on the copper and coarsen to the global 8 mm size in the air.
+Rendered by `fem_em_solver.post.setup_figure.write_setup_figure` from the
+example's own mesh (`EX-57`); regenerate with `FEM_EM_SETUP_FIGURES=1` in the
+runner's environment.
+
 ## 1. What this demonstrates
 
 The **first birdcage example of any kind** in this repo, and the angle

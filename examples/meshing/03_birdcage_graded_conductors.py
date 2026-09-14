@@ -95,6 +95,7 @@ from fem_em_solver.io.paraview_utils import (  # noqa: E402
     adopt_host_ownership,
     write_xdmf_with_tags,
 )
+from fem_em_solver.post.setup_figure import write_setup_figure  # noqa: E402
 
 from tests.mesh.helpers import global_cell_tag_set  # noqa: E402
 from tests.mesh.test_birdcage_conductor_sizing import (  # noqa: E402
@@ -128,6 +129,7 @@ GRADED_H_C = CONDUCTOR_RUNGS[-1]
 CELL_TAG_NAMES = {1: "conductor", 2: "air", 3: "phantom"}
 
 OUTPUT_DIR = Path(__file__).resolve().parent / "paraview_output"
+FIGURE_DIR = Path(__file__).resolve().parent / "figures"  # committed, EX-57
 BASENAME = "meshing_03_birdcage_graded_conductors"
 
 # The example asserts the *inverted* control, so the separation it needs is
@@ -230,6 +232,30 @@ def main() -> None:
     # ---- rung 2: the graded rung that carries the gate --------------------
     graded = _rung(GRADED_H_C, comm)
     _check_geo9_identities(graded, comm)
+
+    # ---- the guide's setup figure (EX-57; opt-in, FEM_EM_SETUP_FIGURES=1) --
+    # Drawn from the graded rung so the conductor refinement is visible in the
+    # slice. A no-op unless the flag is set: renders are not bit-reproducible,
+    # so the committed PNG must not move on every corpus run.
+    write_setup_figure(
+        graded["mesh"],
+        graded["cell_tags"],
+        FIGURE_DIR / f"{BASENAME}_setup.png",
+        region_names={
+            1: "conductor",
+            2: "air",
+            3: "phantom",
+            **{tag: f"port P{tag - 100}" for tag in graded["port_tags"]},
+        },
+        hide_tags=(2,),
+        translucent_tags=(3,),
+        slice_normal=(0.0, 0.0, 1.0),
+        title=(
+            f"mesh:3 — {LEG_COUNT}-leg birdcage (R = {RING_RADIUS} m, L = {COIL_LENGTH} m), "
+            f"phantom r = {PHANTOM_RADIUS} m, graded h_c = {GRADED_H_C:.1e} m"
+        ),
+        comm=comm,
+    )
 
     cad_conductor = baseline["cad_mass"]["conductor"]
     baseline_ratio = baseline["v"][1] / cad_conductor

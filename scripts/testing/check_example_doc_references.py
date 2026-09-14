@@ -202,6 +202,12 @@ def candidate_dirs(sites: list[tuple[Path, int]], output_dir: Path) -> list[Path
         example_dir = doc.parent / OUTPUT_SUBDIR
         if example_dir not in dirs:
             dirs.append(example_dir)
+        # `EX-57` setup figures live beside the guide in `figures/` and are
+        # committed; searching the directory keeps a freshly rendered, not yet
+        # `git add`ed PNG from reading as dead in the in-slot post-census.
+        figure_dir = doc.parent / "figures"
+        if figure_dir not in dirs:
+            dirs.append(figure_dir)
     if output_dir not in dirs:
         dirs.append(output_dir)
     return dirs

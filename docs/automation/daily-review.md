@@ -119,6 +119,20 @@ are yours.
    that cannot yet state its anchor is not ready to queue, and writing that
    anchor is itself the better queue item.
 
+   **The setup-figure filler (operator directive 2026-09-13, `EX-57`).**
+   After the real items, **always append one `EX-57` item** — the recurring
+   background task the operator asked for — naming the script that
+   `python3 scripts/testing/check_example_setup_figures.py --next` prints
+   (run it; do not guess the order). Cost it at the example's recorded
+   window + 15 min (≈ 20 slot-min), tier the example's own, `example-runner`,
+   independent, "**Status it can move:** `EX-57` census `missing` − 1". Its
+   done-when is the §7 `EX-57` entry's per-item list; copy nothing else.
+   When the census prints nothing (`missing=0`), flip `EX-57` to ✅ in §7
+   and stop appending. This item counts toward the slot-minutes floor but
+   never displaces a physics item above it, and it is also the
+   drained-queue fallback in §9, so a slot that empties the queue draws the
+   next figure instead of stopping.
+
    **The family cap (operator directive 2026-09-12, four attempts).** A
    *step family* is a numbered step plus all of its lettered sub-steps
    (`4`, `4a`–`4k` are one family). Count the attempts since the last

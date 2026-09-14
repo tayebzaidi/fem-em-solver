@@ -1,0 +1,51 @@
+# Test Run
+- Chunk: EX-57-step0
+- Commit: 1abd55fc685420458f122c91b459212987e9cc68
+- Time (UTC): 2026-09-14 02:43:13
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.13.12
+- Docker Compose: Docker Compose version v5.5.1
+- Root Dir: /home/taz5297/Development/fem-em-solver/.worktrees/ex57
+- Working Dir: /home/taz5297/Development/fem-em-solver/.worktrees/ex57
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/.worktrees/ex57/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace/.worktrees/ex57 && FEM_EM_SETUP_FIGURES=1 PYTHONPATH=/workspace/.worktrees/ex57/src timeout -k 30 180 mpiexec -n 2 python3 examples/meshing/03_birdcage_graded_conductors.py'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver/.worktrees/ex57
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  2 taz5297 taz5297 4096 Sep 13 21:25 .
+drwxr-xr-x 10 taz5297 taz5297 4096 Sep 13 21:31 ..
+-rw-r--r--  1 taz5297 taz5297  721 Sep 13 21:25 Dockerfile
+-rw-r--r--  1 taz5297 taz5297 4275 Sep 13 21:25 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.5.1
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace/.worktrees/ex57 && FEM_EM_SETUP_FIGURES=1 PYTHONPATH=/workspace/.worktrees/ex57/src timeout -k 30 180 mpiexec -n 2 python3 examples/meshing/03_birdcage_graded_conductors.py'\'''
+Traceback (most recent call last):
+  File "/workspace/.worktrees/ex57/examples/meshing/03_birdcage_graded_conductors.py", line 98, in <module>
+    from fem_em_solver.post.setup_figure import write_setup_figure  # noqa: E402
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/.worktrees/ex57/src/fem_em_solver/post/setup_figure.py", line 262
+    for tag in ordered:
+IndentationError: unexpected indent
+Traceback (most recent call last):
+  File "/workspace/.worktrees/ex57/examples/meshing/03_birdcage_graded_conductors.py", line 98, in <module>
+    from fem_em_solver.post.setup_figure import write_setup_figure  # noqa: E402
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/.worktrees/ex57/src/fem_em_solver/post/setup_figure.py", line 262
+    for tag in ordered:
+IndentationError: unexpected indent
+
+## Exit
+- Status: 1
+- Elapsed (s): 1
+- Filtered lines (gmsh optimisation chatter): 0
