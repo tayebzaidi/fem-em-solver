@@ -73,6 +73,16 @@ mismatch raises rather than printing a warning. Before the fix the run printed
 `⚠ VTX output failed (ADIOS2 may not be available)` on every rank and wrote no
 `.bp` at all; if you see that line, the tree predates the fix.
 
+## Setup figure
+
+![mag:1 setup — the straight wire in its air cylinder](figures/magnetostatics_01_straight_wire_setup.png)
+
+`examples/magnetostatics/figures/magnetostatics_01_straight_wire_setup.png`.
+It is rendered right after `straight_wire_domain` builds the mesh
+(`FEM_EM_SETUP_FIGURES=1`). The 3-D panel hides the air (tag 2) and leaves the
+wire (tag 1, copper). The slice is the z = 0 mid-plane through the whole
+domain, the plane where the example evaluates the B profile along the x-axis.
+
 ## 3. How to analyze it, step by step
 
 **Step 1 — check the printed numbers against the record above.** In order of

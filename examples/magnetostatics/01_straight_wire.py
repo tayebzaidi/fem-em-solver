@@ -17,9 +17,12 @@ from fem_em_solver.utils.analytical import AnalyticalSolutions, ErrorMetrics
 from fem_em_solver.utils.constants import MU_0
 from fem_em_solver.post import evaluate_vector_field_parallel
 from fem_em_solver.io.paraview_utils import write_combined_paraview_output
+from fem_em_solver.post.setup_figure import write_setup_figure
 
 # Import dolfinx I/O for ParaView output
 from dolfinx import io, fem
+
+FIGURE_DIR = Path(__file__).resolve().parent / "figures"
 
 
 #: EX-14 anchor: the ADIOS2 round trip is exact, so the written artifact must
@@ -153,6 +156,21 @@ def main():
     num_cells = mesh.topology.index_map(3).size_global
     num_vertices = mesh.topology.index_map(0).size_global
     print(f"  Mesh created: {num_cells} cells, {num_vertices} vertices")
+
+    # EX-57 setup figure: air hidden, the wire (tag 1, copper colour), slice
+    # through z = 0 where the B profile is evaluated. No-op unless
+    # FEM_EM_SETUP_FIGURES=1.
+    write_setup_figure(
+        mesh,
+        cell_tags,
+        FIGURE_DIR / "magnetostatics_01_straight_wire_setup.png",
+        region_names={1: "wire (conductor)", 2: "air"},
+        hide_tags=(2,),
+        slice_normal=(0.0, 0.0, 1.0),
+        slice_origin=(0.0, 0.0, 0.0),
+        title="mag:1 -- straight wire, 1 A along z, air cylinder",
+        comm=comm,
+    )
 
     # Check cell tags
     if cell_tags is not None:

@@ -3788,7 +3788,9 @@ not queued). All eight items are mutually independent; take them in order.
    template. **Status it can move:** `EX-60` ⬜ → ✅. **Negative result:** a
    red imported band ⇒ known-issues, stop.
 
-8. **`EX-57` setup figure — `examples/magnetostatics/01_straight_wire.py`**
+8. ✅ **DONE 2026-09-14 07:30 slot (take-next)** (census `missing` 48 → 47, `broken=0`, docrefs
+   `exit=0`; flagged 7 s, control 6 s, same records; 192 KiB; attempts.md).
+   **`EX-57` setup figure — `examples/magnetostatics/01_straight_wire.py`**
    (`example-runner`; the example's own tier; independent; **20 slot-min**:
    the example's recorded window + the render (+2 s measured on `mesh:3`)
    + censuses + 15). The census's `--next` at review time

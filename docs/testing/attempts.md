@@ -12866,3 +12866,30 @@ This follows the `_solve_pencil` / `solve_pec_cavity_modes(return_modes)` patter
 3. The setup-figure timing, as noted above.
 
 **Hypothesis / next.** Item 8 (`EX-57`, `magnetostatics/01_straight_wire.py`) is next, if the clock allows take-next.
+
+## 2026-09-14T12:54Z (2026-09-14 07:30 CDT slot, take-next third item) — EX-57 setup figure: `magnetostatics/01_straight_wire.py` — **complete; census `missing` 48 → 47**
+
+**How it ran.** The item started at minute 21 from a clean tree after `8f5f656`. I executed it directly.
+- **Census before** `20260914T125148Z_EX-57-straight-wire-census-before.log`: logged before any file was written. `--next` names this example (:41); docrefs `exit=0` (:39); `examples=54 ok=6 missing=48 broken=0` (:42). Predicted delta: ok +1, missing −1, broken 0.
+- **Edit.** One `write_setup_figure` call right after `straight_wire_domain` builds the mesh:
+  - regions `{1: "wire (conductor)", 2: "air"}`, so the copper class colour applies (the §7 trap);
+  - air hidden;
+  - slice normal z through the origin, the plane where the B profile is evaluated.
+
+  I also added the `FIGURE_DIR` constant and the import, and the guide's `## Setup figure` section before `## 3.`.
+
+**Measured.**
+- **Flagged run** `20260914T125223Z_EX-57-straight-wire.log` (`FEM_EM_SETUP_FIGURES=1`, `-n 2`, `timeout -k 30 180`, Status 0, **7 s**):
+  - PNG 192 KiB (:187).
+  - Mesh 21 830 cells / 4 662 vertices (:186), relL2 51.9781 %, max rel 76.7331 % (:271–272). These match the guide's un-asserted record table; max rel and energy (:254 in the control, 2.630244e-08 J) differ from the table only in the last printed digit.
+- **Unflagged control** `20260914T125244Z_EX-57-straight-wire-control.log` (Status 0, **6 s**): identical records (:180, :251–254). The default path is unchanged.
+- **Census after** `20260914T125251Z_EX-57-straight-wire-census-after.log`: docrefs `exit=0` (:39); `examples=54 ok=7 missing=47 broken=0` (:96), as predicted.
+
+**Finding, filed in known-issues (not caused by this item).**
+- **What both runs print.** Both print `⚠ VTX round-trip read-back unavailable: AttributeError: module 'adios2' has no attribute 'ADIOS'` (flagged :285, control :265).
+- **The cause is the image.** The probe `20260914T125326Z_EX-57-adios2-probe.log:34` reads `adios2 2.12.1 has ADIOS: False`. The example's `EX-14` read-back check calls `adios2.ADIOS()`, the pre-2.10 top-level API, catches the error and returns without raising.
+- **Consequence.** On the current image the `EX-14` read-back check of the written `.bp` is **not exercised**. The `.bp` files are still written.
+- **Evidence it predates this item.** No committed log contains a successful read-back line in this format. The guide's citation `20260826T170155Z_EX-30-root2-run-mag1.log` is not in `docs/testing/logs/`. The edit touches neither the writer nor the reader, which the control confirms.
+- **Not fixed here.** It is outside this item's letter.
+
+**Hypothesis / next.** The queue is drained (items 1–8 done). The fallback is the next `EX-57` figure, if the clock allows. For the review: the `adios2` 2.12 API break in `mag:1`'s `EX-14` read-back check, and possibly in `mag:2`, which shares the pattern (known-issues:4612), is a small `src`-free fix (`adios2.bindings.ADIOS` or `adios2.FileReader`) worth queueing with the demonstration of a real read-back.
