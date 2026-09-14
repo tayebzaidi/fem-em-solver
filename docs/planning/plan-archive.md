@@ -30362,3 +30362,143 @@ and this review does not pad them.
 **Residual `main` reds at `-n 2`: 3 deliberate/known**, plus the padding
 module's red at `-n 4` (known-issues, 2026-09-09). The `WF-6` ×0.0095 red is
 opt-in only and is not counted.
+
+## §9 On-deck interval narrative (2026-09-13 18:00 review) — archived 2026-09-14 (03:00 daily review)
+
+Last reviewed **2026-09-13, 18:00 review**. *(The 2026-09-13 10:30 interval
+narrative is archived verbatim in `docs/planning/plan-archive.md`.)*
+
+**Interval (10:30 → 18:00): four slots fired, all four did chunk work, and
+the nine-item 10:30 queue is consumed — eight items landed, one parked.**
+The take-next rule carried three slots past their first item (12:00 took
+two, 13:30 three, 15:00 three), and the 16:30 slot took the drained-queue
+leg (item 9) and stopped at minute 13 with nothing left. Three chunks
+closed ✅, one opened 🧪, two gated steps landed under open rows.
+
+| Slot | Chunk | Outcome |
+|---|---|---|
+| 12:00 | `WF-6` step 5; `PORT-14` step 3 | `8ad4548` **`WF-6` 🟡 → ✅** (24 passed, 156 s at `-n 4`; spreads 5.250630 % / 2.071886 % reproduce 4g at ≤ 6.9e-06, both falls asserted); `dd465d4` `PORT-14` step 3 **parked** on `attempt/PORT-14-step3-20260913T172330Z` — (0), (ii) 5.359129e-05 / 1.998404e-06, (iii) and the control green, (i) red on a mis-registered comparand (ruled below) |
+| 13:30 | `TH-19` step 3; `POST-6` step 3; `WF-7` step 0 | `ecde8ed` degree-2 identities on the sheet drive green at 10 / 128 MHz ((a) 4.6e-15 / 8.9e-15, (b) 6.8e-11 / 1.8e-12; `W_e` *falls* 7 % — not the 3a expectation); `fa55a0f` **`POST-6` 🟡 → ✅** (C16 0.8102 %, mirror 0.6769 %, identity 3.961e-15; 191 s at `-n 8`); `e774d2a` **`WF-7` ⬜ → 🧪** — F-human degree-1 single drive 607 039 unknowns, 37 s solve, 10.93 GiB summed, *below* the 11–33 GiB / 3–8 min bracket |
+| 15:00 | `OPS-47` steps 1–2; `TH-15` step 3 | `663a223` tooling; `dc39b23` / `d0b8af6` / `0968eda` / `20689ba` the four narratives moved byte for byte, plan **9 951 → 5 546 lines**, 4 000-line guide **not met**, `ca33df3` **`OPS-47` ✅**; `6089d8e` `TH-15` step 3 — the birdcage as a PEC hole passes the three port gates at 10 / 64 / 128 MHz, the power anchor red then re-registered in-slot (ruled below) |
+| 16:30 | §9 item 9 | `801f7fd` the twelve examples crossing the 09-14 census window refreshed, every imported assertion green, census `exit 0` before *and* after (the crossing had not yet fired); queue drained, stopped at minute 13 |
+
+This review ran on `claude-fable-5-1`, no override
+(`logs/automation/20260913T230001Z_daily-review.log`).
+
+**Tree and branches (step 2).** Clean at review start; `fem-em-solver` Up
+3 days; no `recovered/*`. Five `attempt/*` branches: the four kept on the
+2026-09-09 18:00 ruling plus the new `PORT-14-step3-20260913T172330Z`
+(`86c93f6`), whose disposition is ruled in step 4 below and which is
+**kept** until item 1 lands it by path.
+
+**Audit (§4, step 3) — three closures, three `auditor` reports, re-cited.**
+- **`WF-6` ✅ (`8ad4548`) — PASS.** `20260913T170259Z_WF-6-step5.log:1987`
+  (×1 spread 5.250630 % vs record, rel 5.709e-06, asserted ≤ 1e-3), `:3831`
+  (×0.012 2.071886 %, rel 6.912e-06), `:3836` (5.2506 → 2.0719 %, covariance
+  3.6159 → 1.6815 %, both falls asserted), `:4102–4103` (Status 0, 156 s);
+  `git show 8ad4548 -- tests/validation/test_birdcage_b1_plus_closed_form.py`
+  purely additive, no band moved; known-issues absent from the commit's
+  file list (the ×0.0095 entry untouched). Caveat kept: 156 s would fit the
+  standard ceiling — "heavy" is the family's label, not this window's.
+- **`POST-6` ✅ (`fa55a0f`) — PASS.** `20260913T185043Z_POST-6-step3.log:11798`
+  (worst C16 spread 0.8102 % at R₆, asserted ≤ 5 %), `:11799` (mirror
+  0.6769 %), `:11800` (identity 3.961e-15 ≤ 1e-6), `:11801` (the 32-port cw
+  factor *predicted*, printed only), `:12347` (`[capture] rc=0`);
+  `…185405Z:1911–1913` (`RECORDED_CW_SPREAD` 95.1975 % reproduced, rel
+  5.248e-07); bands `C4_COVARIANCE_BAND` / `DISCRETE_IDENTITY_RTOL` imported
+  from `test_birdcage_b1_plus_map.py:120` / `test_birdcage_power_identity.py:227`,
+  neither file in the diff. Caveat in the row: the sample cylinder holds
+  exactly `MIN_SAMPLE_POINTS` = 50 (`:11780`), a zero-margin floor.
+- **`OPS-47` ✅ (`ca33df3`) — auditor DEMOTE(2), review keeps ✅ and corrects
+  the record.** The four done-when anchors hold on their logs: (i) per-chunk
+  `cmp`-equality of the re-extracted span and of the written plan
+  (`20260913T201352Z_OPS-47-step2-POST-6.log:35–68`, `…201427Z_…-PORT-14:34–69`,
+  `…201455Z_…-TH-15:34–68`, `…201524Z_…-WF-6:34–73`); (ii) leak audit rc 0
+  each; (iii) 9 951 → 5 546 lines with each shrink = span − pointer and the
+  guide miss recorded (`…-WF-6.log:50` FAIL rc 3, `…201542Z_…-final.log:50`);
+  (iv) 88 § references, 0 unresolved (`final.log:46–49`); negative control
+  refused rc 1 with the plan unchanged (`…201336Z_…-neg.log:37–42`); smoke
+  honest (≤ 11 s). The DEMOTE rests on one **false ancillary sentence**, not
+  an anchor: the closing commit and §9 item 7's DONE line said "no line cite
+  into the four spans found in §9 or known-issues", while §9 item 2 cited
+  `` (`:4208–4209`) `` — inside `PORT-14`'s pre-move span 3610–4372
+  (`neg.log:55`) — and the scan at `neg.log:54–56` printed only the span
+  bounds and `fail=0`. The slot's own close (`42a4de2`) had already reported
+  it. Corrected here: the cite is re-pointed to
+  `docs/planning/chunks/PORT-14.md:602–605` in item 1 below, and item 7's
+  DONE text is gone with the consumed queue. **Span definition ratified:**
+  the item's "first `>` line naming the chunk" rule selected nothing (none of
+  the four opens on a `>` line), the substitute is the plan's own
+  section-attribution rule, byte identity held on every move, and the
+  substitution is disclosed in `663a223` and the §7 row — the slot's
+  self-ratification was irregular in process (the review is the ratifying
+  actor) but right on the substance. No re-run, nothing loosened.
+- Not audited (no status change): `TH-19` step 3 (row records the outcome),
+  `TH-15` step 3 (a gated step under a 🟡 row — ruled in step 4), `WF-7`
+  step 0 (🧪 by the §3 rule), the example refresh.
+
+**Rulings (step 4).**
+1. **`PORT-14` step 3 — comparand mis-registered, route correct, branch
+   unblocked.** Anchor (i) named step 2b's pooled fit 1.064081e-02; the
+   row's own 2d reading records that fit at 0.99688–0.99714× the
+   `C/terminal − 1` the derived κ computes
+   (`docs/planning/chunks/PORT-14.md:602–605`), so (i) was unreachable at
+   rtol 1e-3 by construction. Re-registered as "the derived κ(64)
+   reproduces 2d's P1 `C/terminal − 1` 1.060762e-02 at rtol 1e-3"
+   (`20260912T123236Z_PORT-14-step2d-64mhz.log:1942–1949`; the parked window
+   read 1.457e-07) — same quantity, same fixture, no widened band. The
+   "scale by `(1 + κ)`" sentence was sign-inverted (2e's fitted
+   ×0.989446732 is `1/(1 + κ)`); §10's sentence is corrected and the chunk
+   file carries the ruling. Item 1 below lands the branch.
+2. **`TH-15` step 3 — the three port gates stand; the power anchor is a
+   record, not a gate** (`log-pathologist` UNCOUNTABLE for "all loss is in
+   the phantom"). The registered terminal-form comparand went red at
+   7.700077682e-05 W vs 6.376395218e-08 W (`20260913T202311Z_TH-15.log:958`);
+   the in-slot substitute `P_src − ΣP_sheet = P_phantom` (3.634e-10,
+   `…202954Z:954`) is `PORT-16`'s exact identity on a mesh whose conductor
+   solids are removed (`:80–81`) — true by construction. The 7.6937e-05 W
+   terminal excess is attributed by no printed term (the per-sheet split is
+   discarded, module `:298–307`); the three undriven terminal terms match
+   `½|I|²·50` to four figures so the excess sits at the driven port. Filed
+   🟡 in known-issues (2026-09-13); the row's step-3 sentence re-worded; item
+   3 below is the discriminator. Provenance caveat carried: the windows ran
+   at `ca33df3` on a dirty tree (assert at module `:329` vs HEAD `:352`), so
+   the committed module has not run as committed — item 3 re-runs it.
+3. **`TH-19` step 3** — row records the outcome; the degree-2 known-issues
+   table gains its row (the 3a "sheets' own divergence" expectation is not
+   borne out: `W_e` falls 7 %); the 09-16 weekly owns the decision.
+4. **`WF-7` step 0** — the reading is on the *longitudinal* variant
+   (507 266 cells, +0.52 % vs the transverse 504 642 record) — a
+   neighbouring mesh, inside the band, disclosed; §2.1's F-human bullet now
+   says the rung is priced, not unpriced.
+
+**§10 assessment (step 5).** No gap. The chain's steps 1, 4 and 6 are
+landed or ruled; steps 2, 3, 5, 7, 8 are the queue. Two §7 texts written
+here from §10 (the chain said "the next review writes it into §7"):
+`PORT-15` steps 2–3 and `TH-14` step 1 re-scoped as the lossy-wall cavity Q
+(the 09-06 "no separating anchor" annotation is answered by the weekly's
+rewrite, now in the row). **Example step (§5.4):** three quantitative gates
+closed this interval with no example demonstrating them — `EX-54` (the
+birdcage as a PEC hole with ports; `EX-50` shows the hole *mesh* only),
+`EX-55` (the 32-port ccw quadrature on the 16-leg fixture; `ports:13`
+superposes an asymmetric drive on the 4-leg), `EX-56` (the resolution
+ladder; `ports:8` ladders frequency) — opened in the §7 EX table, queued as
+items 7–9. `OPS-47` gates tooling; no example.
+
+**Restock (step 6).** Nine items. **Unblocked now: items 1, 2, 3, 7, 8, 9 =
+120 predicted slot-minutes; items 4, 5, 6 (61 min) unblock as items 1 and 2
+land; total 181 of the 240-minute floor — shortfall 59 min (120 min on the
+strict unblocked-now reading), stated, not filled.** What exists and is not
+queued, and why: `ANS-4` step 3 (`xl`, the 09-16 weekly's, budget frees
+Thursday 09-17 02:00); `TH-17` step 1 (serial on item 5 — three deep, not
+before the 09-16 weekly); `WF-6` 4l, `ANS-4` 2h, `PORT-14` 2f (families
+frozen); a second `TH-19` degree-2 observation (no status it can move — the
+weekly can ask for it); the `-n 2` MUMPS drift's third draw; `WF-7`'s
+transverse-record probe (a record, no status). Tier B (`TH-5`, `TH-16`)
+stays behind the conductor lineage by the ladder's own order.
+
+**Residual `main` reds at `-n 2`: 3 deliberate/known**, plus the padding
+module's red at `-n 4` (known-issues, 2026-09-09). The `WF-6` ×0.0095 red is
+opt-in only and is not counted. The new `TH-15` step-3 entry is a printed
+excess, not a red test (the module is green on the substitute comparand).
+
