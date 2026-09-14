@@ -82,6 +82,19 @@ magnitude comparison in the test suite, **0.728%** vs closed form (1.731%
 before `GEO-8`; PROJECT_PLAN.md §7, re-verified in
 `…050656Z_GEO-10-helmholtz-regression.log`). Do not conflate the two.
 
+## Setup figure
+
+![mag:4 setup — the Helmholtz pair on its finest rung](figures/magnetostatics_04_helmholtz_analytic_comparison_setup.png)
+
+`examples/magnetostatics/figures/magnetostatics_04_helmholtz_analytic_comparison_setup.png`.
+It is rendered right after `two_torus_domain` builds the mesh, and only for the
+exported (finest, `h = 0.0025 m`) rung (`FEM_EM_SETUP_FIGURES=1`). The 3-D panel
+hides the air (tag 3) and leaves the two wire tori (tags 1 and 2, copper)
+stacked on the z-axis, separated by `R`. The slice is normal to y through the
+origin. It contains the coil axis and cuts each torus at x = ±R, so it shows
+the four wire cross-sections and the graded refinement from the wire out to
+the `4R`-padded box.
+
 ## 2. How to run it
 
 ```

@@ -12923,3 +12923,26 @@ The census moved from 52/4/48/0 at slot start to 54/8/46/0. The drain rule ends 
 1. The `adios2` 2.12 read-back break (known-issues).
 2. `example-runner`'s two protocol slips in `EX-59`: pre-census after the file writes, and a background return.
 3. `EX-60`'s additive `core/cavity.py` keyword (rule (c), gate re-run green).
+
+## 2026-09-14T14:07Z (2026-09-14 09:00 CDT slot — drained-queue fallback) — EX-57 setup figure: `magnetostatics/04_helmholtz_analytic_comparison.py` — **complete; census `missing` 46 → 45; slot stops here**
+
+**How it ran.** Preflight: clean tree at `f9f5aef`, `fem-em-solver` Up. §9 On-deck items 1–8 are all marked DONE, so the slot took the §9 drain fallback ("take the next `EX-57` setup figure, then stop and journal"). I executed it directly, with no executor spawned.
+- **Census before** `20260914T140046Z_EX-57-helmholtz-census-before.log`, run on the clean tree before any edit: `--next` prints this example (:41); docrefs `exit=0` (:39–40); `examples=54 ok=8 missing=46 broken=0` (:42). Predicted delta: ok +1, missing −1, broken 0.
+- **Edit.** The example builds three meshes, one per rung, so per the §7 trap the figure goes on the gated/exported rung. That is the finest rung, `h = 0.0025 m`, the only one with `output_dir` set. There is one `write_setup_figure` call in `run_case` right after `two_torus_domain`, guarded by `output_dir is not None`:
+  - regions `{1, 2}` are the wire tori and 3 is air, from the example's own CellTags print;
+  - both tori are named as conductors (copper) and the air is hidden;
+  - the slice is normal to y through the origin, so it contains the axis and all four wire cross-sections.
+
+  I also added `from pathlib import Path`, `FIGURE_DIR` and the import. The PNG name is fixed and does not follow `--basename`. The guide's `## Setup figure` section sits before `## 2.`.
+
+**Measured.**
+- **Flagged run** `20260914T140147Z_EX-57-helmholtz.log` (`FEM_EM_SETUP_FIGURES=1`, the `run_examples.sh -e 4 -n 2 -t 180 --dry-run` command with `-T`, `-n 2`, `timeout -k 30 180`, Status 0, **84 s**):
+  - PNG **503 KiB** (≤ 600, :625), written once, on the finest rung only.
+  - All three rungs equal the guide's un-asserted record table (`20260826T170305Z_EX-30-root2-run-mag2to4.log`) to every printed digit: cells 69 918 / 103 950 / 160 677; centre `B_z` 3.563601 / 3.519075 / 3.483786e-09 T; centre rel err 0.92 / 0.34 / 1.34 %; mean/max 2.15/7.92, 1.03/4.64, 1.56/5.33 %; central CV 0.075 / 0.028 / 0.056 % (:248–250, :427–429, :626–628).
+  - The example carries no assert statements (the guide says so). The quantitative check is this bit-for-bit reproduction of the recorded table, plus the census delta.
+- **Unflagged control** `20260914T140331Z_EX-57-helmholtz-control.log` (Status 0, **82 s**): identical records (:248–250, :427–429, :619–621), with one exception. The finest centre `B_z` prints 3.483787e-09 against 3.483786e-09 flagged, a last-printed-digit difference (~3e-7 relative). This is the same round-off class the `mag:1` item noted. The render does not touch the mesh, and cells and every other reading are equal. The default path is unchanged.
+- **Census after** `20260914T140513Z_EX-57-helmholtz-census-after.log`: docrefs `exit=0` (:39–40); `examples=54 ok=9 missing=45 broken=0` (:42, :98), as predicted; this example reads `ok` (:45). `FIGURES_EXIT=2` is the checker's "owed, nothing broken" code.
+
+**Cosmetic note (not fixed).** The 3-D panel's legend merges same-class names into one line, which the renderer truncates ("wire 1 (conductor), wir…"). The geometry and colours are correct. A future item could give both tori one name (`"wire (conductor)"`) if the review cares.
+
+**Hypothesis / next.** The queue is still drained; the next taker's `--next` is whatever follows `mag:4` in the census order. Per the drain rule this slot stops after one fallback figure, at about minute 8.

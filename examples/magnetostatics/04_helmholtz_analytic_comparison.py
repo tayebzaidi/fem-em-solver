@@ -48,6 +48,7 @@ from __future__ import annotations
 
 import argparse
 import time
+from pathlib import Path
 
 import numpy as np
 import ufl
@@ -61,8 +62,11 @@ from fem_em_solver.io.paraview_utils import (
     write_combined_paraview_output,
 )
 from fem_em_solver.post.evaluation import evaluate_vector_field_parallel
+from fem_em_solver.post.setup_figure import write_setup_figure
 from fem_em_solver.utils.analytical import AnalyticalSolutions
 from fem_em_solver.utils.constants import MU_0
+
+FIGURE_DIR = Path(__file__).resolve().parent / "figures"
 
 
 def build_current_density(major_radius: float, minor_radius: float, separation: float):
@@ -114,6 +118,23 @@ def run_case(
     )
     t_mesh = time.time() - t0
     n_cells = mesh.topology.index_map(mesh.topology.dim).size_global
+
+    if output_dir is not None:
+        # EX-57 setup figure, drawn on the exported (finest) rung only: air
+        # hidden, both wire tori (tags 1/2, copper colour), slice normal to y
+        # through the origin (the loop axis and all four wire cross-sections).
+        # No-op unless FEM_EM_SETUP_FIGURES=1.
+        write_setup_figure(
+            mesh,
+            cell_tags,
+            FIGURE_DIR / "magnetostatics_04_helmholtz_analytic_comparison_setup.png",
+            region_names={1: "wire 1 (conductor)", 2: "wire 2 (conductor)", 3: "air"},
+            hide_tags=(3,),
+            slice_normal=(0.0, 1.0, 0.0),
+            slice_origin=(0.0, 0.0, 0.0),
+            title="mag:4 -- Helmholtz pair, finest rung, air box",
+            comm=comm,
+        )
 
     t0 = time.time()
     problem = MagnetostaticProblem(
