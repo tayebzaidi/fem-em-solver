@@ -12565,3 +12565,18 @@ Every §9 On-deck item (1–9) is done or blocked after item 9's commit. The onl
 **Logs.** `20260914T005452Z_TH-15-step3c.log`, Status 0. `pgrep -c python3` read 0 before and after.
 
 **Hypothesis / next.** The excess is the terminal sheet form's Cauchy–Schwarz deficit, not a hole-route readout systematic. The review re-registers the row's power sentence on `Σ½Re(VI*) = P_vol + (C − terminal)` (rule (h)). `TH-15` stays 🟡 on step 2.
+
+## 2026-09-14T01:07Z (2026-09-13 19:30 CDT slot, take-next fourth item) — PORT-15 step 2 — **green; gate (i) stored-record route landed**
+
+**What was tried.** §9 item 4, tests only: new `tests/validation/test_port_circuit_layer_field.py`. One mesh (116 085 cells), 10 MHz uncorrected 4x4 + C/L/R terminated 3x3s, then 64 MHz via `reuse` with `width_correction_kappa = STEP2D_C_OVER_TERMINAL_64MHZ_P1` (the registered kappa, not re-derived live), 4x4 + C/L 3x3s. Window 1 (records `None`) measured and printed full-precision literals; the records were pasted in; window 2 ran the edited module (rule (i)). Stored beyond the letter: the 10 MHz terminated 3x3s, needed for (c).
+
+**Measured.**
+- (a) 7 records reproduce at rel Frobenius 0 / 2.349e-14 / 1.538e-15 / 1.004e-13 / 1.302e-13 / 1.805e-13 / 7.066e-15 (rtol 1e-6).
+- (b) stored 64 MHz reduction residuals: C 5.358983e-05, L 1.998473e-06 (REDUCTION_BAND 1e-3). 2 x C control: 2.152113e-01 (predicted >> 1e-3, held, printed).
+- (c) REDUCTION_FLOOR_F_SMALL from stored 10 MHz records: |ratio - 1| 2.380e-07 (C), 1.065e-07 (L), 3.391e-08 (R).
+- Printed: Im Z/omega at 10 MHz is negative (self -2.984818e-05, adjacent -2.993421e-05, opposite -2.995059e-05 H): gap-capacitance dominated, so the printed L_leg/L_ring mapping is not usable.
+- Window 1: 133 s (4 skipped, measurement). Window 2: 126 s, 4 passed. pgrep -c python3 read 0 before and after both.
+
+**Logs.** `20260914T010149Z_PORT-15.log` (measurement, records at :1902-1938), `20260914T010448Z_PORT-15.log` (closing).
+
+**Hypothesis / next.** Step 3 (item 5) can sweep field-free on `S_64MHZ_EPS0_RECORD`; its inductance read-off must de-embed the gap capacitance first (the port-side Im Z is capacitive at 10 MHz).
