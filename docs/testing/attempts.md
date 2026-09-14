@@ -12650,3 +12650,31 @@ Every §9 On-deck item (1–9) is done or blocked after item 9's commit. The onl
 **Caveats for the review.** The rule-(a) re-run skipped the solid-control legs. The hole-route gates that `_hole_rung` feeds passed, and the keys are purely additive.
 
 **Hypothesis / next.** Item 8 (`EX-55`) is next. It was not started because this slot passed minute 30 when `EX-54` committed. Its runner `-t 900` at `-n 2` is the unmeasured cost.
+
+## 2026-09-14T09:37Z (2026-09-14 04:30 CDT slot, first item) — ANS-4 step 3a — **complete; §9 item 1 done, `ANS-4` row stays ✅**
+
+**Preflight.** The tree was clean and `fem-em-solver` Up. `pgrep -c python3` read 0 before and after each window.
+
+**Tried.** Tests only, no `src/`, in `tests/validation/test_ans4_resolution_ladder.py`:
+- `LADDER_FREQUENCY_HZ` comes from env `FEM_EM_ANS4_FREQUENCY_HZ`. Unset or empty means `FREQUENCY_128_HZ`, so unset is bit-identical. It is threaded through the four `_four_port_rung` sites and the ladder-built print; the item's "five sites" counted that print.
+- New test `test_the_frequency_knob_reaches_the_solve`:
+  - **128 MHz, flag on:** asserts 2a″ w1's ×1 driven column at rtol 1e-6, only at `-n 8`. That is `OPS-41`'s record width and supersedes xl-pending's "`-n 2`", as the item said.
+  - **Off 128 MHz:** asserts every class moves more than 1e-2 from that record.
+  - **At 64 MHz:** prints per-class max|ΔS| against `PORT-11` step 2's 4×4 as a *predicted* control.
+
+**Measured.**
+- **w1** `20260914T093325Z_ANS-4-step3a-w1.log`: `C4_CONGRUENT=1`, `RUNGS="1.0"`, `DEGREE2=0`, `-n 8`. **15 passed, 1 skipped** (the refinement control, one rung), Status 0, **62 s**.
+  - 116 118 cells.
+  - |ΔS|/|S| against 2a″ = 7.067e-11 / 8.171e-11 / 2.083e-13 (band 1e-6) (:2154–2156).
+  - Imported gates green (:2126).
+- **w2** `20260914T093444Z_ANS-4-step3a-w2.log`: `FEM_EM_ANS4_FREQUENCY_HZ=64e6`, C4 flag unset, `-n 2`. **15 passed, 1 skipped**, Status 0, **63 s**.
+  - f echoed 6.400000e+07 (:1881); 116 085 cells, ratio 1.000000.
+  - Gates green (:1887): σ_max 0.999721388281, spreads 0.0573 / 0.0599 / 0.0370 %.
+  - Class moves from the 128 MHz record: 0.4305 / 0.1523 / 0.1689 (floor 1e-2) (:1902–1904).
+  - Negative control against PORT-11's 64 MHz 4×4: 4.564e-11 / 6.076e-11 / 2.442e-11, predicted ≤ 1e-2 (:1905).
+
+The module was not edited after either window (rule (i)).
+
+**Status moved.** xl-pending entry 2's prerequisite is now on `main`. I added a note only; marking it READY and queueing the window is the next review's call. The ANS-4 history file has the step narrative.
+
+**Hypothesis / next.** The XL command at 64e6 on `RUNGSPEC="0.015:1 0.005:2"` should run as registered. The 0.015:1 rung builds with the C4 flag unset, so its record test compares against the 116 085 record, as w2 did. Take-next goes to item 2 (`TH-14` step 2).

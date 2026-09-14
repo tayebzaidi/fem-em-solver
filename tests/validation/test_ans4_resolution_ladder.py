@@ -53,6 +53,8 @@ value — runs the pre-registered four plus the degree-2 solve.
 ``FEM_EM_ANS4_STEP2_DEGREE2=0`` suppresses the degree-2 solve, which the rung
 list alone does not: step 2a runs the four degree-1 rungs in two ordinary
 windows with it off, step 2b runs the degree-2 solve in the XL slot.
+``FEM_EM_ANS4_FREQUENCY_HZ`` (step 3a) sets the drive frequency of every rung;
+unset is 128 MHz, bit for bit — `xl-pending.md` entry 2 runs it at 64e6.
 """
 
 from __future__ import annotations
@@ -68,7 +70,10 @@ from fem_em_solver.utils.instrumentation import report_peak_rss
 from tests.complex_mode import complex_only
 from tests.mesh.test_birdcage_leg_offset import CONDUCTOR_RESOLUTION, RESOLUTION
 from tests.mesh.test_birdcage_port_tags import LEG_COUNT
-from tests.validation.test_lossy_sphere_fullwave import FREQUENCY_128_HZ
+from tests.validation.test_lossy_sphere_fullwave import (
+    FREQUENCY_64_HZ,
+    FREQUENCY_128_HZ,
+)
 from tests.validation.test_port_birdcage_four_port import (
     PASSIVITY_SIGMA_TOLERANCE,
     _circulant_classes,
@@ -163,6 +168,72 @@ CONDUCTOR_FACTOR_ENV = "FEM_EM_ANS4_STEP2_CONDUCTOR_FACTOR"
 # report p with the extrapolant.  A fit outside this bracket is not an
 # asymptotic reading and is reported as such rather than as a number.
 RICHARDSON_P_BRACKET = (0.2, 6.0)
+
+# `ANS-4` step 3a: the drive frequency, the knob `docs/testing/xl-pending.md`
+# entry 2 (the 64 MHz order-matched rung, `xl`) names as its contract. Unset or
+# empty = `FREQUENCY_128_HZ`, which is every earlier window bit for bit; read
+# once at import so every rank and every rung sees the same value.
+FREQUENCY_ENV = "FEM_EM_ANS4_FREQUENCY_HZ"
+_FREQUENCY_RAW = os.environ.get(FREQUENCY_ENV)
+if _FREQUENCY_RAW is not None and not _FREQUENCY_RAW.strip():
+    _FREQUENCY_RAW = None
+LADDER_FREQUENCY_HZ = (
+    FREQUENCY_128_HZ if _FREQUENCY_RAW is None else float(_FREQUENCY_RAW.strip())
+)
+
+# Step 3a's control record: step 2a″ w1's x1 rung (`c4_congruent_sheets` on,
+# degree 1, 128 MHz, 116 118 cells) — the driven column's three C4 classes as
+# `20260911T093247Z_ANS-4-step2a-dprime-w1.log:4061-4063` printed them at
+# `-n 8`. Restated, not imported: 2a″ kept them in the log only. Version-tagged:
+# that commit's image and mesher. `OPS-41`: a digit record holds at its own
+# width, so it is asserted at -n 8 and printed elsewhere.
+STEP3A_RECORD_128MHZ_C4 = {
+    "self": +4.753519992e-01 + 5.808090882e-01j,
+    "adjacent": +2.276429111e-01 - 2.671465731e-01j,
+    "opposite": +5.269141324e-02 - 2.216384512e-01j,
+}
+STEP3A_RECORD_RANK_WIDTH = 8
+# A reproduction band on printed 10-digit values, pre-stated in §9 (2026-09-14).
+STEP3A_RECORD_RTOL = 1.0e-6
+# Anchor (b): with the knob set off 128 MHz each class must move from the record
+# by more than this. `PORT-11`'s 64 vs 128 MHz records differ by 0.15-0.43 per
+# class, so the floor is a mechanical "the knob reached the solve" check, not a
+# physics band (§9 item, 2026-09-14).
+STEP3A_KNOB_MOVE_FLOOR = 1.0e-2
+
+# Printed only (negative control, *predicted* <= 1e-2): `PORT-11` step 2's
+# 64 MHz 4x4 on the 116 085-cell record mesh (`c4_congruent_sheets` off),
+# `20260826T110434Z_PORT-11-step2.log.gz:9264-9267`. A different code path and
+# image from this module's, so never asserted (§9 standing rule (e)).
+PORT11_S_64MHZ_RECORD = np.array(
+    [
+        [
+            +4.488964206e-02 + 5.803022759e-01j,
+            +3.665309492e-01 - 2.047414920e-01j,
+            +2.179345683e-01 - 2.566177401e-01j,
+            +3.666851521e-01 - 2.046184160e-01j,
+        ],
+        [
+            +3.665309492e-01 - 2.047414920e-01j,
+            +4.502611557e-02 + 5.803272622e-01j,
+            +3.664836475e-01 - 2.046732440e-01j,
+            +2.180174288e-01 - 2.566226721e-01j,
+        ],
+        [
+            +2.179345683e-01 - 2.566177401e-01j,
+            +3.664836475e-01 - 2.046732440e-01j,
+            +4.521165287e-02 + 5.801842868e-01j,
+            +3.664555549e-01 - 2.046024681e-01j,
+        ],
+        [
+            +3.666851521e-01 - 2.046184160e-01j,
+            +2.180174288e-01 - 2.566226721e-01j,
+            +3.664555549e-01 - 2.046024681e-01j,
+            +4.482996690e-02 + 5.802149382e-01j,
+        ],
+    ],
+    dtype=np.complex128,
+)
 
 
 def _ladder_factors():
@@ -353,7 +424,7 @@ def ladder():
         rung = _four_port_rung(
             f"ANS-4 step2d h={res:g} degree {deg} {c4_tag}",
             zeros,
-            FREQUENCY_128_HZ,
+            LADDER_FREQUENCY_HZ,
             resolution=res,
             degree=deg,
             c4_congruent_sheets=c4,
@@ -397,7 +468,7 @@ def ladder():
         rung = _four_port_rung(
             f"ANS-4 step2c h={res:g}{cf_tag} degree 1 {c4_tag}",
             zeros,
-            FREQUENCY_128_HZ,
+            LADDER_FREQUENCY_HZ,
             resolution=res,
             conductor_resolution=h_c,
             c4_congruent_sheets=c4,
@@ -432,7 +503,7 @@ def ladder():
         rung = _four_port_rung(
             f"ANS-4 step2 x{factor:g} degree 1 {c4_tag}",
             zeros,
-            FREQUENCY_128_HZ,
+            LADDER_FREQUENCY_HZ,
             conductor_resolution=h_c,
             c4_congruent_sheets=c4,
         )
@@ -464,7 +535,7 @@ def ladder():
         degree2 = _four_port_rung(
             f"ANS-4 step2 x1 degree 2 {c4_tag}",
             zeros,
-            FREQUENCY_128_HZ,
+            LADDER_FREQUENCY_HZ,
             reuse=base,
             degree=2,
             c4_congruent_sheets=c4,
@@ -482,7 +553,8 @@ def ladder():
     if comm.rank == 0:
         print(
             f"[ANS-4 step2] ladder built in {time.perf_counter() - started:.1f} s "
-            f"wall at -n {comm.size}, f = {FREQUENCY_128_HZ:.6e} Hz",
+            f"wall at -n {comm.size}, f = {LADDER_FREQUENCY_HZ:.6e} Hz "
+            f"({FREQUENCY_ENV}={'unset' if _FREQUENCY_RAW is None else _FREQUENCY_RAW})",
             flush=True,
         )
     return {"rungs": rungs, "degree2": degree2}
@@ -683,3 +755,103 @@ def test_the_ladder_readout_is_printed(ladder):
             if abs(ref) > 0.0:
                 line += f"   move from control = {abs(s_inf - ref) / abs(ref) * 100:9.4f}%"
         print(line, flush=True)
+
+
+def _class_of(i, j, n=LEG_COUNT):
+    """C4 class of entry ``(i, j)``: 0 self, 1 adjacent, 2 opposite."""
+    d = (i - j) % n
+    return min(d, n - d)
+
+
+@complex_only
+def test_the_frequency_knob_reaches_the_solve(ladder):
+    """`ANS-4` step 3a: ``FEM_EM_ANS4_FREQUENCY_HZ`` — the flag-off control and the knob.
+
+    Unset (128 MHz) on the `c4_congruent_sheets` x1 degree-1 rung, the driven
+    column reproduces step 2a″'s record at ``STEP3A_RECORD_RTOL``, asserted at
+    the record's own width (`OPS-41`) — the knob's default is the old constant.
+    Set to any other frequency, every C4 class must move from that record by
+    more than ``STEP3A_KNOB_MOVE_FLOOR`` — a knob that never reached the solve
+    would reproduce the 128 MHz digits. At 64 MHz the rung's 4x4 is printed
+    beside `PORT-11` step 2's record as a *predicted* negative control.
+    """
+    comm = MPI.COMM_WORLD
+    control = next(
+        (
+            r
+            for r in ladder["rungs"]
+            if r is _control_rung([r])
+            and r["degree"] == 1
+            and r.get("conductor_factor") in (None, 1.0)
+        ),
+        None,
+    )
+    if control is None:
+        pytest.skip("no x1 degree-1 control rung in this ladder")
+    s = np.asarray(control["s"])
+    entries = {k: complex(v) for k, v in _class_entries(s).items()}
+    c4 = _c4_congruent_enabled()
+    is_default = LADDER_FREQUENCY_HZ == FREQUENCY_128_HZ
+    moves = {
+        k: abs(entries[k] - STEP3A_RECORD_128MHZ_C4[k]) for k in STEP3A_RECORD_128MHZ_C4
+    }
+    if comm.rank == 0:
+        print(
+            f"[ANS-4 step3a] f = {LADDER_FREQUENCY_HZ:.6e} Hz "
+            f"({FREQUENCY_ENV}={'unset' if _FREQUENCY_RAW is None else _FREQUENCY_RAW}), "
+            f"c4_congruent_sheets={'on' if c4 else 'off'}, {control['cells']} cells, "
+            f"-n {comm.size} (record width -n {STEP3A_RECORD_RANK_WIDTH})",
+            flush=True,
+        )
+        for k, label in (("self", "S11"), ("adjacent", "S21"), ("opposite", "S31")):
+            ref = STEP3A_RECORD_128MHZ_C4[k]
+            print(
+                f"    {label} = {entries[k].real:+.9e} {entries[k].imag:+.9e}j   "
+                f"2a″ record {ref.real:+.9e} {ref.imag:+.9e}j   |dS| = "
+                f"{moves[k]:.9e}   rel = {moves[k] / abs(ref):.3e}",
+                flush=True,
+            )
+
+    if is_default:
+        if not c4:
+            pytest.skip(
+                "the 2a″ record is the c4_congruent_sheets mesh; this flag-off "
+                "128 MHz rung is printed above, not compared"
+            )
+        if comm.size != STEP3A_RECORD_RANK_WIDTH:
+            pytest.skip(
+                f"2a″ digit record set at -n {STEP3A_RECORD_RANK_WIDTH}; this is "
+                f"-n {comm.size} (OPS-41) — readings printed above"
+            )
+        for k, ref in STEP3A_RECORD_128MHZ_C4.items():
+            rel = moves[k] / abs(ref)
+            assert rel <= STEP3A_RECORD_RTOL, (
+                f"flag-off control: {k} class moved {rel:.3e} from 2a″'s record "
+                f"(rtol {STEP3A_RECORD_RTOL:.0e}) — the x1 rung has drifted since "
+                "2026-09-11, or the knob's default is not the old constant"
+            )
+        return
+
+    if comm.rank == 0 and np.isclose(LADDER_FREQUENCY_HZ, FREQUENCY_64_HZ):
+        diff = np.abs(s - PORT11_S_64MHZ_RECORD)
+        per_class = {
+            name: max(
+                float(diff[i, j])
+                for i in range(LEG_COUNT)
+                for j in range(LEG_COUNT)
+                if _class_of(i, j) == c
+            )
+            for c, name in enumerate(("self", "adjacent", "opposite"))
+        }
+        print(
+            "[ANS-4 step3a] negative control (predicted <= 1e-2, printed only): "
+            "per-class max|dS| against PORT-11 step 2's 64 MHz 4x4 — "
+            + "  ".join(f"{k} {v:.3e}" for k, v in per_class.items()),
+            flush=True,
+        )
+    for k, move in moves.items():
+        assert move > STEP3A_KNOB_MOVE_FLOOR, (
+            f"{FREQUENCY_ENV}={_FREQUENCY_RAW}: the {k} class moved only "
+            f"{move:.3e} from the 128 MHz record (floor {STEP3A_KNOB_MOVE_FLOOR:.0e})"
+            " — the knob is not reaching the solve"
+        )

@@ -71,7 +71,10 @@ absolute claim is made.
 
 ### 2. `xl` — `ANS-4` step 3: the 64 MHz order-matched rung (weekly 2026-09-13, §10)
 
-**Status:** PENDING PREREQUISITE — `ANS-4` step 3a.
+**Status:** PENDING PREREQUISITE — `ANS-4` step 3a. *(3a landed on `main`
+2026-09-14, 04:30 slot. The knob reaches the solve, and the flag-off control
+reproduced 2a″ at its `-n 8` record width, not `-n 2` (`OPS-41`). Marking
+this entry READY is the next daily review's job.)*
 
 **Prerequisite (an ordinary §9 item, standard tier, tests only):**
 `tests/validation/test_ans4_resolution_ladder.py` is hard-wired to
