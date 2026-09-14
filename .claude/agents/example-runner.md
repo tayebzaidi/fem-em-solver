@@ -34,7 +34,20 @@ where they disagree.
    run through `run_and_log.sh`, and the pre-census runs **before any file
    is written** — a census in a bare shell is a reading with no log behind
    it (`EX-43` was demoted for exactly that, 2026-09-03).
-6. **Artifact naming**: group-and-number prefix
+6. **Setup figure (`EX-57`, 2026-09-13).** A new example ships its guide
+   with a `## Setup figure` section embedding
+   `figures/<basename>_setup.png`, rendered by
+   `fem_em_solver.post.setup_figure.write_setup_figure` right after the
+   mesh is built (air hidden, phantom translucent, the slice through the
+   plane that shows the physics). Render it **once through the harness**
+   with `FEM_EM_SETUP_FIGURES=1` in the container command, `git add` the
+   PNG (≤ 600 KiB), then run
+   `python3 scripts/testing/check_example_setup_figures.py` beside the
+   docrefs census — `broken=0` is part of the census gate. An `EX-57` item
+   that retrofits an *existing* example follows the §7 entry: flagged run,
+   PNG, section, both censuses, an **unflagged** re-run showing the printed
+   records unchanged, one commit.
+7. **Artifact naming**: group-and-number prefix
    (`ports_06_birdcage_b1_plus_map_*`). Never touch another example's
    `__import__` strings or artifact stems — the EX-37 regression broke two
    Ansys benchmark cases for two days via exactly that.
