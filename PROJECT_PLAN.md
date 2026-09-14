@@ -2262,7 +2262,7 @@ until that check returns.
 | `PORT-12` | The two-torus gap-route record drifts with rank width on an already-plumbed fixture: `tests/validation/test_port_lumped_two_torus.py` reads gap ratio 0.894141 … | ✅ Closed: step 1's gap-ratio record reproduces at both rank widths inside the unmoved band, and the 1e-8 assert was probed load-bearing. No band widened, no record rewritten, and no root-cause claim is made. *History: `docs/planning/chunks/PORT-12.md`.* | standard (complex, 84 s per width) |
 | `PORT-13` | Phase-6 ring-rung solve probe | ✅ Closed: steps 1, 2 and 3 are all closed and the full 32×32 on the 32-ring-port high-pass layout is reciprocal / passive / C16 per step 3. A step 4 is a review's to scope. *History: `docs/planning/chunks/PORT-13.md`.* | heavy (probe first) |
 | `PORT-14` | **Lumped RLC sheets** — HFSS *Lumped RLC* boundary: the `PORT-9` sheet law generalised from 50 Ω to `Z_p(ω) = R + jωL + 1/(jωC)`, so capacitors live in the model — **feature ladder A2** (operator directive 2026-09-04; serial on nothing) | ✅ **Closed 2026-09-13 19:30 slot (step 3): the κ-derived width route (told width `w/(1 + κ)`, κ = in-run `C/terminal − 1` through `ports/shares.py`) is registered at 64 MHz — (0) lift 0.000e+00, (i) κ(64) 1.060762155e-02 vs 2d's 1.060762e-02 at 1.457e-07, (ii) corrected residuals 5.359129e-05 / 1.998404e-06 ≤ 1e-3, (iii) and the by-record control green, 116 085 cells, `-n 2` (`20260914T003252Z_PORT-14-step3-64mhz.log:1937–1959`, 114 s; `…003503Z_…-10mhz.log:1888–1902`, 196 s; `PORT-9` gate module re-run green `…004031Z_…-port9-gate.log:1971`, 66 s). κ is carried as the sheet's named systematic and `TH-17` may not gate a mode frequency tighter than it; the 128 MHz pair (4.013e-05 / 5.599e-06, `…003827Z_…-128mhz.log:1955–1956`) stays a printed out-of-sample reading. *History: `docs/planning/chunks/PORT-14.md`.*** Prior state: 🟡 *(step 1 executed 2026-09-05, 21:00 slot — complex `Z_p` + `ports/circuit.py` land and solve; the reduction identity misses the pre-stated 1e-3 band at 1.596e-03 / 3.371e-03 / 7.250e-04 for C / L / R, band not widened, known-issues 🟡; 64 MHz is step 2. **Step 1b executed 2026-09-05, 09:00 slot: the residual is non-monotone in sheet resolution — 1.5956e-03/3.3705e-03 at ×1 (116 085 cells), 4.1880e-03/8.8755e-03 at ×0.75 (161 695), 1.4904e-03/3.1449e-03 at ×0.6 (209 604), reciprocity ≤ 2.4e-14 and σ_max ≤ 0.99999292 on both refined rungs — so the resolution hypothesis is refuted and `sheet_width_m` (the ×0.75 rung is the one whose four sheet widths break C4) is the step-1c suspect; band untouched. **Step 1c executed 2026-09-05, 21:30 slot on the fixed 116 085-cell gate mesh — reading (1): the width the law is told is the lever. Residual ×5.803881 / ×5.830276 at ε = +5%, ×3.748033 / ×3.724086 at −5%, ×5.634488 / ×5.679903 at alternating ±5.3% (C / L); all three perturbed 4×4s reciprocal to ≤ 1.891254889e-14 with σ_max ≤ 0.999997273, cells 116 085 bitwise, the Γ = 0 control asserted on all six terminations. Both directions *raise* the residual, so the zero-crossing lies inside ±5%: a three-point fit puts it at ε\* ≈ −0.0107 (C) / −0.0110 (L), common to the two elements, with fitted minimum ≈ 0. Step 1b's uniformity framing is superseded — configuration C is not distinguishable from A. Band untouched, the red gate test not re-run**)* **Step 3 ruled 2026-09-13 18:00 review — anchor (i) re-registered, parked branch unblocked.** The 12:00 slot's parked route (`attempt/PORT-14-step3-20260913T172330Z`, `86c93f6`) had (0), (ii) **5.359129e-05 / 1.998404e-06 ≤ 1e-3** at 64 MHz, (iii) and the by-record control green and (i) red only because its comparand was step 2b's *pooled fit* 1.064081e-02, which this row's own 2d reading puts at 0.99688–0.99714× the `C/terminal − 1` it is meant to reproduce (`docs/planning/chunks/PORT-14.md:602–605`). (i) is therefore **re-registered as: the in-run derived κ(64) reproduces 2d's P1 `C/terminal − 1` record 1.060762e-02 at rtol 1e-3** (`20260912T123236Z_PORT-14-step2d-64mhz.log:1942–1949`; the parked run read it to 1.457e-07) — the same quantity on the same fixture, not a widened band; and the sign sentence is corrected to `1/(1 + κ)` (2e's fitted ×0.989446732), which is what the parked code implements. Re-queued as §9 item 1: land the branch's `src/` + tests by path, edit the one constant, re-run all three windows plus the `PORT-9` gate module (rule (c): `build_four_port_sweep` gained a default-`None` keyword). | standard |
-| `PORT-15` | The circuit layer | 🟡 Open: step 1's ladder-network closed form and termination reduction hold as pure-numpy identities, with nothing claimed about the FEM coil. Step 2 reads the inductances from `PORT-13`'s 32×32 and compares the resonances; gate (i): discharged by `PORT-14` step 3, stored record here (`tests/validation/test_port_circuit_layer_field.py`, step 2 ✅ 2026-09-14 01:07Z — stored 64 MHz residuals C 5.36e-5 / L 2.0e-6 under 1e-3, records reproduced ≤ 1.8e-13, `20260914T010448Z_PORT-15.log`). *History: `docs/planning/chunks/PORT-15.md`.* | smoke (step 1, measured 4 s); standard for the field-side steps |
+| `PORT-15` | The circuit layer | ✅ 2026-09-14 02:07Z on gate (i) + the tuned `S₁₁` (one F-small 4-leg fixture, 64 MHz; gate (ii), the 32-port mode spectrum, is `TH-17`'s and not claimed). Step 1's ladder-network closed form and termination reduction hold as pure-numpy identities. Gate (i): discharged by `PORT-14` step 3, stored record here (`tests/validation/test_port_circuit_layer_field.py`, step 2 ✅ 2026-09-14 01:07Z — stored 64 MHz residuals C 5.36e-5 / L 2.0e-6 under 1e-3, records reproduced ≤ 1.8e-13, `20260914T010448Z_PORT-15.log`). Step 3 ✅: `C_tuned` = 15.570 pF (P2..P4, P1 driven) zeroes `Im Z_in` to 2.1e-15 relative; in-model vs circuit tuned `S₁₁` 8.26e-5, 2×2 6.12e-5 under 1e-3 (`20260914T020419Z_PORT-15.log`, 7 passed, 176 s). "Tuned" = series resonance, `R_in` 6.77 Ω, `|S₁₁|` 0.761 — not matched. *History: `docs/planning/chunks/PORT-15.md`.* | smoke (step 1, measured 4 s); standard for the field-side steps (step 3 window 176 s) |
 | `PORT-16` | The ~1 %-of-supplied accounting gap on the 4-leg fixture | ✅ Closed 2026-09-07: the exact discrete power identity closes on every single drive and on the superposed quadrature drive, and the accounting gap is attributed to the terminal form's Cauchy–Schwarz deficit. Step 3's gap h-rate is optional, unclaimed and the weekly's to commission. *History: `docs/planning/chunks/PORT-16.md`.* | standard (three windows ≤ 180 s at `-n 2`; the ×0.6 rung measured 136 s) |
 | `PORT-17` | Wave ports / coax feeds — HFSS *Wave Port*; low priority: MRI coils are fed at lumped points through matching networks — **feature ladder C2** (operator directive 2026-09-04; commission only if a benchmark demands it) *(**renumbered from `PORT-16` by the 2026-09-09 03:00 daily review**, on the 02:15 weekly's finding 1: §7 carried two `PORT-16` rows, which breaks the stable-ID contract. The closed, audited, log-bearing chunk above keeps the ID; this unopened ladder entry moves. `PORT-17` was unused repo-wide. The §9 item-5 ladder table moved with it; no other file referenced this row)* | ⬜ | standard |
 | `PORT-18` | Does the lumped-sheet port read its current off one side of a discontinuous component | 🧪 Measured 2026-09-10: the premise was false — the sheet normal is azimuthal — and the '+'-side mechanism is excluded for both the read-back and the source term. The printed lead is taken up by `GEO-32`; `ANS-4` step 2a and `WF-6` step 4f stay blocked. *History: `docs/planning/chunks/PORT-18.md`.* | standard (heavy by ceiling), `-n 2` + `-n 1`, no solve — **measured 154 s + 68 s** |
@@ -2312,7 +2312,9 @@ widen the envelope, stop.
 
 **`PORT-14` narrative** — moved byte for byte to `docs/planning/chunks/PORT-14.md` (`OPS-47`).
 
-**`PORT-15` — the circuit layer (HFSS + Circuit)** 🟡 *(**step 1 ✅
+**`PORT-15` — the circuit layer (HFSS + Circuit)** ✅ *(**step 3 ✅
+2026-09-14 02:07Z** closes the row on gate (i) + the tuned `S₁₁`; gate (ii)
+is `TH-17`'s. **step 1 ✅
 2026-09-05, 22:30 slot** — the algebra and its three identities; digits in
 the §7 table row. **feature ladder A3**, operator directive 2026-09-04;
 serial on `PORT-13` ✅ for the 32×32.)*
@@ -2376,6 +2378,32 @@ workflow. Standard tier; the field solves are already on disk.
 >   🟡 → ✅ on gate (i) + the tuned `S₁₁`; gate (ii) (mode frequencies of the
 >   32-port network) is `TH-17`'s and is *not* claimed here — a tuned
 >   4-leg F-small fixture at one frequency, no F-human, no AED claim.
+>   **Step 3 ✅ 2026-09-14 02:07Z (2026-09-13 21:00 slot).** Same module,
+>   `test_step3_*` + `scripts/probes/port15_step3_tuning_sweep.py` (sweep
+>   printer, `20260914T020404Z_PORT-15.log`, 4 s). Closing window: whole
+>   module as committed, `7 passed in 173.59s`, Status 0 / 176 s, `-n 2`,
+>   `timeout -k 30 590`, `-s` (`20260914T020419Z_PORT-15.log`). Root rule
+>   pre-registered in the module: bisect every `Im Z_in` sign change on a
+>   2001-point log grid 0.1 pF–10 nF, reject poles by (a)'s own tolerance,
+>   take the zero with least `|S₁₁|`; the grid has exactly one sign change.
+>   (a) `C_tuned` = 1.556993028375804e-11 F, `|Im Z_in|/|Z_in|` = 2.113e-15
+>   (`:1968`), `Z_in` = 6.7726 Ω. (b) in-model (P2..P4 capacitor sheets at
+>   `Z_C` = −j159.718 Ω, κ-corrected specs, 116 085 cells, 3 driven solves
+>   19.6 s + build 25.3 s, `:3728`) vs the stored record reduced: `S₁₁`
+>   residual 8.255812e-05, 2×2 (P1 + P2 kept, P3/P4 in `C_tuned`) 6.123431e-05,
+>   both under `REDUCTION_BAND` 1e-3 (`:3732`, `:3742`) — so at 15.6 pF
+>   (outside `PORT-14`'s 100 pF registration) the κ systematic is not visibly
+>   C-dependent. Control (*predicted*, printed): `|S₁₁|` 0.846072 at 0.5× and
+>   0.785168 at 2× vs 0.761413 at `C_tuned` — held (`:1969–1970`). Printed:
+>   de-embedded two-frequency series-LC fit of the stored 10/64 MHz self and
+>   adjacent reactances gives `L_leg` ≈ 1.038e-08 H, `L_ring` ≈ 5.270e-08 H,
+>   and the ring-capacitor ladder closed form at `C_tuned` puts mode 1 at
+>   1.606e+08 Hz (`:1973–1974`) — ≠ 64 MHz, indicative only (the fixture's
+>   capacitors are in the *legs*, the closed form's in the rings; the fit is a
+>   one-element model). **Caveats:** "tuned" means `Im Z_in = 0` (a series
+>   resonance, `R_in` 6.77 Ω, `|S₁₁|` 0.761), not a match; the sweep's
+>   deepest `|S₁₁|` (≈ 0.636 near 75 pF, probe `:61`) has no `Im Z` zero and
+>   is not the selected point; the circuit input is one −n 2 record.
 
 **`PORT-1` — Real port excitation from the solved field** ✅ *(closed by the 2026-08-15 18:00 review. Full
 plans, journals and adjudications for steps 1–4 and 3b(i–xviii) were archived on 2026-08-15; the 2026-08-15
@@ -3677,7 +3705,9 @@ dependency has not landed: skip to the next independent item.**
    **Negative result:** (a) red ⇒ a width or reproducibility drift — report,
    known-issues, stop; never re-record in-slot.
 
-5. **`PORT-15` step 3 — the tuning sweep and the HFSS + Circuit
+5. **DONE 2026-09-14 02:07Z** (`C_tuned` 15.570 pF, (a) 2.1e-15, (b) `S₁₁`
+   8.26e-5 / 2×2 6.12e-5; 7 passed, 176 s, `20260914T020419Z_PORT-15.log`;
+   `PORT-15` ✅, detail in §7). **`PORT-15` step 3 — the tuning sweep and the HFSS + Circuit
    self-consistency identity** (implementer; tests in the same module +
    a `scripts/probes/` sweep printer; complex; standard/heavy; `-n 2`;
    `main`; **depends on item 4 landing — if its records are not on `main`,

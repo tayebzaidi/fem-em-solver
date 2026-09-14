@@ -36,7 +36,12 @@ import pytest
 from mpi4py import MPI
 
 from fem_em_solver.ports.circuit import reduce_terminated_ports, s_to_z
-from fem_em_solver.ports.lumped import series_rlc_impedance
+from fem_em_solver.ports.lumped import (
+    LumpedSheetPortSpec,
+    run_lumped_sheet_port_case,
+    series_rlc_impedance,
+)
+from fem_em_solver.ports.sparameters import _power_waves
 
 from tests.complex_mode import complex_only
 from tests.validation.test_port_birdcage_four_port import build_four_port_sweep
@@ -307,6 +312,300 @@ def test_c_reduction_floor_reproduces_from_the_stored_10mhz_records():
                   flush=True)
     for label, r, rec in rows:
         assert abs(r / rec - 1.0) <= REDUCTION_FLOOR_RTOL, (label, r, rec)
+
+
+# ===========================================================================
+# `PORT-15` step 3 — the tuning sweep and the HFSS + Circuit identity
+# ===========================================================================
+#
+# Circuit side (pure numpy, on ``S_64MHZ_EPS0_RECORD``): P1 (index 0) is the
+# drive port at the 50 Ω reference; the other three gap sheets are terminated in
+# one capacitor ``C`` each, and the reduced 1×1 gives ``Z_in(64 MHz; C)``.  The
+# fixture's gaps are the gapped *legs* of `PORT-9`'s 4-leg birdcage (the
+# ``leg_gap_axial_plus_z`` sheets) — the plan calls them "ring-gap" terminations;
+# the algebra does not care which conductor carries the gap.
+#
+# Root selection (pre-registered here, before the sweep was read): every sign
+# change of ``Im Z_in`` on the log-C grid is bisected; a bracket whose bisected
+# point fails ``|Im Z|/|Z| ≤ TUNING_IM_Z_RTOL`` is a pole of ``Z_in`` (``S11 → 1``),
+# not a zero, and is discarded; among the zeros, ``C_tuned`` is the one with the
+# smallest ``|S11|``.
+#
+# In-model side: ONE terminated configuration family on the gate mesh with the
+# κ-corrected specs — (1) P2..P4 sheets at ``Z_C(C_tuned)``, P1 driven → the
+# in-model 1×1; (2) P3, P4 at ``Z_C(C_tuned)``, P1 and P2 kept at 50 Ω and each
+# driven → the in-model 2×2.  Three driven solves, no ε = 0 sweep (the record is
+# the circuit input).
+#
+# (a) *asserted*: ``|Im Z_in(C_tuned)| / |Z_in(C_tuned)| ≤ 1e-6``.
+# (b) *asserted*: circuit-predicted tuned ``S11`` and 2×2 vs in-model, relative
+#     residual ≤ the imported ``REDUCTION_BAND`` (1e-3, `PORT-14` step 3).
+# *Predicted, printed, never asserted*: ``|S11(C_tuned)|`` below ``|S11|`` at
+# 0.5 × and 2 × ``C_tuned``.
+# *Printed*: the ladder closed form's mode-1 frequency at ``C_tuned``.
+
+TUNING_DRIVE_INDEX = 0
+TUNING_TERMINATED_INDICES = (1, 2, 3)
+TUNING_2X2_TERMINATED_INDICES = (2, 3)  # P2 (index 1) kept beside the drive
+TUNING_IM_Z_RTOL = 1.0e-6
+TUNING_C_GRID_F = np.logspace(-13, -8, 2001)  # 0.1 pF .. 10 nF
+TUNING_CONTROL_FACTORS = (0.5, 2.0)
+
+
+def _capacitor_impedance(frequency_hz, c_f):
+    z_c = series_rlc_impedance(frequency_hz, c_f=float(c_f))
+    z0 = float(REFERENCE_IMPEDANCE_OHM)
+    # The bisection guard: `termination_reflection_coefficient` raises at Z = −z0.
+    # A pure reactance never reaches it; say so loudly if one ever does.
+    if abs(z_c + z0) <= 1.0e-12 * z0:
+        raise ValueError(f"C = {c_f!r} F gives Z = {z_c!r} = −z0: Γ singular")
+    return z_c
+
+
+def tuned_input(s4, frequency_hz, c_f, terminated=TUNING_TERMINATED_INDICES):
+    """``(Z_in, S_reduced)`` with ``terminated`` ports in ``C``, 50 Ω reference."""
+    z0 = float(REFERENCE_IMPEDANCE_OHM)
+    z_c = _capacitor_impedance(frequency_hz, c_f)
+    s_red = reduce_terminated_ports(
+        np.asarray(s4, dtype=np.complex128), z0, {k: z_c for k in terminated}
+    )
+    s11 = complex(s_red[0, 0])
+    if abs(1.0 - s11) <= 1.0e-14:
+        return complex(np.inf, np.inf), s_red
+    return z0 * (1.0 + s11) / (1.0 - s11), s_red
+
+
+def _im_z(s4, frequency_hz, c_f):
+    z, _ = tuned_input(s4, frequency_hz, c_f)
+    return z.imag
+
+
+def tuning_sweep(s4, frequency_hz, grid=TUNING_C_GRID_F, max_iter=200):
+    """Bisect every sign change of ``Im Z_in`` on ``grid``; classify zeros vs poles."""
+    values = np.array([_im_z(s4, frequency_hz, c) for c in grid])
+    roots = []
+    for i in range(len(grid) - 1):
+        if not (np.isfinite(values[i]) and np.isfinite(values[i + 1])):
+            continue
+        if np.sign(values[i]) == np.sign(values[i + 1]):
+            continue
+        lo, hi, f_lo = np.log(grid[i]), np.log(grid[i + 1]), values[i]
+        for _ in range(max_iter):
+            mid = 0.5 * (lo + hi)
+            f_mid = _im_z(s4, frequency_hz, np.exp(mid))
+            if f_mid == 0.0:
+                lo = hi = mid
+                break
+            if np.sign(f_mid) == np.sign(f_lo):
+                lo, f_lo = mid, f_mid
+            else:
+                hi = mid
+            if hi - lo <= 1.0e-15:
+                break
+        c = float(np.exp(0.5 * (lo + hi)))
+        z, s_red = tuned_input(s4, frequency_hz, c)
+        rel = abs(z.imag) / abs(z) if np.isfinite(abs(z)) else np.inf
+        roots.append(
+            {"c_f": c, "z": z, "s11": complex(s_red[0, 0]), "im_rel": float(rel),
+             "zero": bool(rel <= TUNING_IM_Z_RTOL)}
+        )
+    return grid, values, roots
+
+
+def select_c_tuned(roots):
+    zeros = [r for r in roots if r["zero"]]
+    if not zeros:
+        return None
+    return min(zeros, key=lambda r: abs(r["s11"]))
+
+
+def _series_lc_fit(x1, w1, x2, w2):
+    """``X(ω) = ωL − 1/(ωC)`` through two reactances: ``(L, 1/C)``."""
+    l_h = (x2 * w2 - x1 * w1) / (w2 ** 2 - w1 ** 2)
+    return l_h, w1 ** 2 * l_h - x1 * w1
+
+
+@pytest.fixture(scope="module")
+def step3_tuning():
+    f = STEP3_REGISTERED_FREQUENCY_HZ
+    _, _, roots = tuning_sweep(S_64MHZ_EPS0_RECORD, f)
+    return {"frequency_hz": f, "roots": roots, "tuned": select_c_tuned(roots)}
+
+
+@complex_only
+def test_step3_a_c_tuned_zeroes_im_z_in_on_the_stored_record(step3_tuning):
+    """(a) ``|Im Z_in(C_tuned)|/|Z_in| ≤ 1e-6`` (pure numpy); 0.5×/2× |S11| printed."""
+    f = step3_tuning["frequency_hz"]
+    tuned = step3_tuning["tuned"]
+    if MPI.COMM_WORLD.rank == 0:
+        print(f"\n[PORT-15 step3] tuning sweep on S_64MHZ_EPS0_RECORD at {f:.3e} Hz, P1 driven "
+              f"(50 Ohm), P2..P4 in C, grid {TUNING_C_GRID_F[0]:.1e}..{TUNING_C_GRID_F[-1]:.1e} F "
+              f"({TUNING_C_GRID_F.size} pts): {len(step3_tuning['roots'])} sign change(s)")
+        for r in step3_tuning["roots"]:
+            print(f"    C = {r['c_f']:.15e} F  Z_in = {r['z'].real:+.9e} {r['z'].imag:+.9e}j Ohm  "
+                  f"|S11| = {abs(r['s11']):.9f}  |Im Z|/|Z| = {r['im_rel']:.3e}  "
+                  f"{'ZERO' if r['zero'] else 'pole (rejected)'}", flush=True)
+    assert tuned is not None, "no zero of Im Z_in on the grid — report, never widen the grid in-slot"
+    rel = tuned["im_rel"]
+    s11_t = abs(tuned["s11"])
+    controls = []
+    for factor in TUNING_CONTROL_FACTORS:
+        _, s_red = tuned_input(S_64MHZ_EPS0_RECORD, f, factor * tuned["c_f"])
+        controls.append((factor, abs(complex(s_red[0, 0]))))
+    if MPI.COMM_WORLD.rank == 0:
+        print(f"[PORT-15 step3] (a) C_tuned = {tuned['c_f']:.15e} F: |Im Z_in|/|Z_in| = {rel:.3e} "
+              f"(ASSERTED <= {TUNING_IM_Z_RTOL:.0e}); Z_in = {tuned['z']:.9e} Ohm; "
+              f"S11 = {tuned['s11']:.9e}, |S11| = {s11_t:.9f}")
+        for factor, s in controls:
+            print(f"    control {factor:g} x C_tuned: |S11| = {s:.9f} (PREDICTED > |S11(C_tuned)| "
+                  f"{s11_t:.9f}: {'held' if s > s11_t else 'NOT held'}; printed, never asserted)",
+                  flush=True)
+    assert rel <= TUNING_IM_Z_RTOL, f"|Im Z|/|Z| = {rel:.3e} > {TUNING_IM_Z_RTOL:.0e}"
+
+
+@complex_only
+def test_step3_the_ladder_mode1_frequency_at_c_tuned_is_printed(step3_tuning):
+    """Printed only: ``birdcage_highpass_mode_frequencies`` at ``C_tuned``.
+
+    Step 2 found ``Im Z/ω`` of the 10 MHz 4×4 negative (gap-capacitance
+    dominated), so the inductances fed here are de-embedded by a two-frequency
+    series-LC fit ``X(ω) = ωL − 1/(ωC_gap)`` through the stored 10 MHz and
+    64 MHz records' self and adjacent-mutual reactances (the 10 MHz record is the
+    uncorrected width, the 64 MHz one corrected — a ≈1 % width difference,
+    printed-only).  The fixture's capacitors sit in the *legs*, the closed form's
+    in the *rings*: the number is indicative only; no closed form claims it.
+    """
+    from fem_em_solver.ports.circuit import birdcage_highpass_mode_frequencies
+
+    tuned = step3_tuning["tuned"]
+    if tuned is None:
+        pytest.skip("no C_tuned (test (a) reports it)")
+    z0 = float(REFERENCE_IMPEDANCE_OHM)
+    w1, w2 = 2.0 * np.pi * FREQUENCY_HZ, 2.0 * np.pi * STEP3_REGISTERED_FREQUENCY_HZ
+    z10 = s_to_z(np.asarray(S_10MHZ_EPS0_RECORD), z0)
+    z64 = s_to_z(np.asarray(S_64MHZ_EPS0_RECORD), z0)
+    n = z10.shape[0]
+
+    def _mean(z, offset):
+        return float(np.mean([z[i, (i + offset) % n].imag for i in range(n)]))
+
+    l_self, cinv_self = _series_lc_fit(_mean(z10, 0), w1, _mean(z64, 0), w2)
+    m_adj, cinv_adj = _series_lc_fit(_mean(z10, 1), w1, _mean(z64, 1), w2)
+    l_leg = -m_adj
+    l_ring = l_self - 2.0 * l_leg
+    line = (f"\n[PORT-15 step3] de-embedded series-LC fit (10 & 64 MHz records, PRINTED): self "
+            f"L = {l_self:.6e} H, 1/C_gap = {cinv_self:.6e} 1/F; adjacent M = {m_adj:+.6e} H, "
+            f"1/C = {cinv_adj:+.6e} 1/F -> L_leg ~ -M = {l_leg:.6e} H, L_ring ~ L_self - 2 L_leg "
+            f"= {l_ring:.6e} H")
+    try:
+        w = birdcage_highpass_mode_frequencies(n, l_leg, l_ring, tuned["c_f"])
+        line += (f"\n    ladder closed form at C_tuned = {tuned['c_f']:.6e} F: mode-1 f = "
+                 f"{w[1] / (2 * np.pi):.6e} Hz (k = 0..{n // 2}: "
+                 + ", ".join(f"{v / (2 * np.pi):.4e}" for v in w)
+                 + " Hz) — indicative only (leg-gap fixture, ring-capacitor ladder)")
+    except ValueError as exc:
+        line += f"\n    ladder closed form undefined on these read-offs: {exc}"
+    if MPI.COMM_WORLD.rank == 0:
+        print(line, flush=True)
+
+
+def _terminated_kept_network(sweep, terminations):
+    """In-model S of the kept ports, the ``terminations`` sheets carrying their Z.
+
+    `PORT-14`'s ``_terminated_three_port`` generalised to several terminated
+    sheets; every kept sheet stays at its 50 Ω spec and is driven once.
+    """
+    port_defs = sweep["port_defs"]
+    specs = []
+    for idx, spec in enumerate(sweep["specs"]):
+        specs.append(
+            LumpedSheetPortSpec(
+                port_id=spec.port_id,
+                facet_tag=spec.facet_tag,
+                port_impedance_ohm=terminations.get(idx, spec.port_impedance_ohm),
+                gap_height_m=spec.gap_height_m,
+                sheet_width_m=spec.sheet_width_m,
+                drive_direction=spec.drive_direction,
+                drive_voltage_v=spec.drive_voltage_v,
+                interior=spec.interior,
+                width_correction_kappa=spec.width_correction_kappa,
+            )
+        )
+    kept = [p for i, p in enumerate(port_defs) if i not in terminations]
+    z0 = float(REFERENCE_IMPEDANCE_OHM)
+    s = np.zeros((len(kept), len(kept)), dtype=np.complex128)
+    for col, driven in enumerate(kept):
+        result = run_lumped_sheet_port_case(
+            sweep["problem"], port_defs, specs, facet_tags=sweep["facet_tags"],
+            driven_port_id=driven.port_id, verbose=False,
+        )
+        drive = result.responses[driven.port_id]
+        a_drive, _ = _power_waves(drive.voltage_v, drive.current_a, z0)
+        assert abs(a_drive) > 0.0, f"incident wave at '{driven.port_id}' vanished"
+        for row, recv in enumerate(kept):
+            response = result.responses[recv.port_id]
+            _, b_recv = _power_waves(response.voltage_v, response.current_a, z0)
+            s[row, col] = b_recv / a_drive
+    return s
+
+
+@pytest.fixture(scope="module")
+def step3_in_model(step3_tuning):
+    tuned = step3_tuning["tuned"]
+    if tuned is None:
+        pytest.skip("no C_tuned (test (a) reports it)")
+    f = step3_tuning["frequency_hz"]
+    comm = MPI.COMM_WORLD
+    comm.Barrier()
+    t0 = time.perf_counter()
+    built = build_four_port_sweep(
+        frequency_hz=f, build_only=True,
+        width_correction_kappa=float(STEP2D_C_OVER_TERMINAL_64MHZ_P1),
+    )
+    comm.Barrier()
+    t_build = time.perf_counter() - t0
+    z_c = _capacitor_impedance(f, tuned["c_f"])
+    comm.Barrier()
+    t1 = time.perf_counter()
+    s1 = _terminated_kept_network(built, {k: z_c for k in TUNING_TERMINATED_INDICES})
+    s2 = _terminated_kept_network(built, {k: z_c for k in TUNING_2X2_TERMINATED_INDICES})
+    comm.Barrier()
+    t_solve = time.perf_counter() - t1
+    if comm.rank == 0:
+        print(f"\n[PORT-15 step3] in-model at C_tuned = {tuned['c_f']:.15e} F (Z_C = {z_c:.9e} Ohm), "
+              f"{int(built['cells'])} cells, -n {comm.size}: build {t_build:.2f} s; 1x1 + 2x2 "
+              f"(3 driven solves) {t_solve:.2f} s", flush=True)
+    return {"cells": int(built["cells"]), "s1": s1, "s2": s2, "z_c": z_c}
+
+
+@complex_only
+def test_step3_b_circuit_predicted_tuned_network_matches_in_model(step3_tuning, step3_in_model):
+    """(b) tuned S11 and 2×2 (P1 + P2 kept), circuit vs in-model, ≤ REDUCTION_BAND."""
+    f = step3_tuning["frequency_hz"]
+    c = step3_tuning["tuned"]["c_f"]
+    assert step3_in_model["cells"] == STEP1_CELL_RECORD
+    _, pred1 = tuned_input(S_64MHZ_EPS0_RECORD, f, c)
+    _, pred2 = tuned_input(S_64MHZ_EPS0_RECORD, f, c, terminated=TUNING_2X2_TERMINATED_INDICES)
+    meas1, meas2 = step3_in_model["s1"], step3_in_model["s2"]
+    r1, r2 = _residual(meas1, pred1), _residual(meas2, pred2)
+    comm = MPI.COMM_WORLD
+    if comm.rank == 0:
+        print(f"\n[PORT-15 step3] (b) circuit (stored 4x4 reduced) vs in-model at C_tuned "
+              f"(ASSERTED <= REDUCTION_BAND {REDUCTION_BAND:.0e}):")
+        print(f"    S11  predicted {complex(pred1[0, 0]):.12e}  in-model {complex(meas1[0, 0]):.12e}  "
+              f"|diff| {abs(meas1[0, 0] - pred1[0, 0]):.3e}  residual {r1:.6e}")
+        print(f"    2x2 predicted\n{_literal('    PRED_2X2', pred2)}\n{_literal('    MEAS_2X2', meas2)}")
+        print(f"    2x2 residual {r2:.6e}; in-model |S11| (1x1) = {abs(meas1[0, 0]):.9f}", flush=True)
+    if comm.size != RECORD_RANK_WIDTH:
+        pytest.skip(f"records are -n {RECORD_RANK_WIDTH}; this is -n {comm.size}")
+    assert r1 <= REDUCTION_BAND, (
+        f"tuned S11 residual {r1:.6e} > {REDUCTION_BAND:.0e} — the item's negative result "
+        "(κ systematic C-dependent?): known-issues, row stays 🟡, never re-band"
+    )
+    assert r2 <= REDUCTION_BAND, (
+        f"tuned 2x2 residual {r2:.6e} > {REDUCTION_BAND:.0e} — the item's negative result: "
+        "known-issues, row stays 🟡, never re-band"
+    )
 
 
 @complex_only

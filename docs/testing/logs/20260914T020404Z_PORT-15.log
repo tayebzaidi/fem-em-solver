@@ -1,0 +1,88 @@
+# Test Run
+- Chunk: PORT-15
+- Commit: d65ee3d7b21fb7f244a74d0265bd1fb63063da5d
+- Time (UTC): 2026-09-14 02:04:05
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.5.1
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && source /usr/local/bin/dolfinx-complex-mode && PYTHONPATH=/workspace/src:/workspace timeout -k 30 60 python3 scripts/probes/port15_step3_tuning_sweep.py'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 24
+drwxr-xr-x  3 taz5297 taz5297 4096 Sep  4 23:31 .
+drwxr-xr-x 16 taz5297 taz5297 4096 Sep 13 21:02 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  721 Sep  3 13:49 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 4275 Sep 13 19:19 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.5.1
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && source /usr/local/bin/dolfinx-complex-mode && PYTHONPATH=/workspace/src:/workspace timeout -k 30 60 python3 scripts/probes/port15_step3_tuning_sweep.py'\'''
+/workspace/tests/validation/test_port_birdcage_four_port.py:1: SyntaxWarning: invalid escape sequence '\*'
+  """`PORT-9` step 3 leg (d) — the 4x4 on the gapped birdcage at 50 Ohm.
+[PORT-15 step3 probe] f = 6.400000e+07 Hz, P1 driven at 50 Ohm, P2..P4 in C
+         C (F)          Re Z_in          Im Z_in        |S11|
+  1.000000e-13    +4.817218e+00    -2.537112e+02  0.992824323
+  1.333521e-13    +4.829813e+00    -2.503633e+02  0.992620122
+  1.778279e-13    +4.846655e+00    -2.460125e+02  0.992341788
+  2.371374e-13    +4.869156e+00    -2.404039e+02  0.991959813
+  3.162278e-13    +4.899154e+00    -2.332489e+02  0.991430995
+  4.216965e-13    +4.938985e+00    -2.242414e+02  0.990690712
+  5.623413e-13    +4.991496e+00    -2.130891e+02  0.989639931
+  7.498942e-13    +5.059945e+00    -1.995628e+02  0.988122869
+  1.000000e-12    +5.147688e+00    -1.835612e+02  0.985887761
+  1.333521e-12    +5.257593e+00    -1.651798e+02  0.982516977
+  1.778279e-12    +5.391202e+00    -1.447646e+02  0.977302422
+  2.371374e-12    +5.547842e+00    -1.229220e+02  0.969030048
+  3.162278e-12    +5.724072e+00    -1.004660e+02  0.955647611
+  4.216965e-12    +5.913879e+00    -7.830535e+01  0.933940073
+  5.623413e-12    +6.109782e+00    -5.730042e+01  0.900004856
+  7.498942e-12    +6.304599e+00    -3.813494e+01  0.852841225
+  1.000000e-11    +6.493429e+00    -2.124043e+01  0.802171452
+  1.333521e-11    +6.675591e+00    -6.784622e+00  0.768259359
+  1.778279e-11    +6.857079e+00    +5.290389e+00  0.761191597
+  2.371374e-11    +7.056127e+00    +1.520918e+01  0.771529077
+  3.162278e-11    +7.321816e+00    +2.331533e+01  0.785874888
+  4.216965e-11    +7.816727e+00    +3.007903e+01  0.794946173
+  5.623413e-11    +9.390502e+00    +3.623492e+01  0.782290767
+  7.498942e-11    +1.778341e+01    +3.709862e+01  0.635869944
+  1.000000e-10    +8.994419e+00    +3.343956e+01  0.780265740
+  1.333521e-10    +7.260155e+00    +3.792183e+01  0.831959744
+  1.778279e-10    +6.991972e+00    +4.048712e+01  0.844909047
+  2.371374e-10    +6.927985e+00    +4.217901e+01  0.850868489
+  3.162278e-10    +6.911643e+00    +4.337081e+01  0.854407378
+  4.216965e-10    +6.909188e+00    +4.423465e+01  0.856752405
+  5.623413e-10    +6.910968e+00    +4.486954e+01  0.858389175
+  7.498942e-10    +6.913808e+00    +4.533966e+01  0.859563041
+  1.000000e-09    +6.916614e+00    +4.568928e+01  0.860418013
+  1.333521e-09    +6.919041e+00    +4.594999e+01  0.861046588
+  1.778279e-09    +6.921022e+00    +4.614472e+01  0.861511498
+  2.371374e-09    +6.922589e+00    +4.629035e+01  0.861856732
+  3.162278e-09    +6.923808e+00    +4.639934e+01  0.862113801
+  4.216965e-09    +6.924746e+00    +4.648095e+01  0.862305587
+  5.623413e-09    +6.925461e+00    +4.654208e+01  0.862448865
+  7.498942e-09    +6.926004e+00    +4.658789e+01  0.862556011
+  1.000000e-08    +6.926415e+00    +4.662222e+01  0.862636193
+[PORT-15 step3 probe] 1 sign change(s) of Im Z_in:
+    C = 1.556993028375804e-11 F  Z_in = 6.772603623e+00+1.431356599e-14j  |S11| = 0.761412964  |Im Z|/|Z| = 2.113e-15  ZERO
+[PORT-15 step3 probe] C_tuned = 1.556993028375804e-11 F, |S11| = 0.761412964
+    0.5 x C_tuned: |S11| = 0.846071751
+    2 x C_tuned: |S11| = 0.785167868
+
+## Exit
+- Status: 0
+- Elapsed (s): 4
+- Filtered lines (gmsh optimisation chatter): 0
