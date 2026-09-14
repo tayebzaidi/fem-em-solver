@@ -20,6 +20,7 @@
 #     --full    print whole launcher-log final messages (default ~20 lines)
 #               and the full attempts.md entries (default: headings only).
 #     --mark    after printing, record now as the next default `--since`.
+#   Whatever --since resolves to, the window is widened to at least 12 h.
 #     --no-logs skip the launcher-log section.
 set -uo pipefail
 
@@ -55,6 +56,9 @@ else
   SINCE_EPOCH="$(date -d "$SINCE" +%s)" || { echo "cannot parse --since '$SINCE'" >&2; exit 2; }
   SINCE_SRC="--since '$SINCE'"
 fi
+# Floor: never show less than the last 12 h, whatever the marker says.
+FLOOR_EPOCH="$(date -d '12 hours ago' +%s)"
+if [ "$SINCE_EPOCH" -gt "$FLOOR_EPOCH" ]; then SINCE_EPOCH="$FLOOR_EPOCH"; SINCE_SRC="$SINCE_SRC → 12 h floor"; fi
 SINCE_ISO="$(date -d "@$SINCE_EPOCH" '+%Y-%m-%d %H:%M %Z')"
 SINCE_UTC="$(date -u -d "@$SINCE_EPOCH" '+%Y-%m-%dT%H:%MZ')"
 
