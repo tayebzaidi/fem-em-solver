@@ -591,7 +591,7 @@ cores.** Every verification command declares a tier and must not exceed it:
 | `standard` | 3 min | Coarse meshes, single small solves — the default |
 | `heavy` | 20 min | Convergence studies, sweeps — must be labeled `heavy` |
 | `xl` | **4 h, 512 GiB, 16 ranks — six runs per trailing 7 days, i.e. every night Sun–Fri** (4 h since 2026-09-13, was 2 h: step 2d's 7225 s window is the measured reason; a full window now ends 06:00 and overlaps the 04:30 slot, accepted) (operator directive 2026-09-13 — the windows cost no tokens and the box is quietest at 02:00; three from 2026-09-10; was one, raised because the measured constraint turned out to be wall-clock rather than memory) | The convergence rung the heavy tier cannot hold (operator directive 2026-09-05). Runs against the separate `fem-em-solver-xl` compose service (profile `xl`), **commissioned by the weekly planning review** — pre-registered in `docs/testing/xl-pending.md` with a named chunk and step, the exact command, a *measured* price and the readout — **and queued by the daily review as clerk** into `docs/testing/<tier>-queue.env` whenever the queue is empty and the ledger budget allows (operator directive 2026-09-13, daily-review.md step 6b; before that only the weekly could queue, so at most one of the three windows a week ever ran), and recorded in `docs/testing/xl-ledger.md`; the bash guard denies a second XL exec inside 7 days, any XL exec outside `run_and_log.sh`, any `timeout` above 7200 s, and `-n` above 16. First slot reserved for the `ANS-4` 128 MHz refinement rung |
-| `xxl` | **8 h, 754 GiB, 16 ranks — one run per trailing 7 days, Saturday 02:00** (operator directive 2026-09-10) | The window a 2 h `xl` slot cannot hold: the human-scale coil, or a many-drive sweep before the factorisation is reused. Runs against the separate `fem-em-solver-xxl` service (profile `xxl`), from `scripts/automation/xxl-queue.env` via `xl-run.sh xxl`, recorded in `docs/testing/xxl-ledger.md`. 754 GiB is this WSL VM's **whole** allocation — half the machine's 1.5 TB — so the kernel OOM killer reaches a runaway before the cgroup does; that is the operator's stated choice and is recorded in `docker-compose.yml` rather than silently softened. Saturday is its own cron day so the two tiers cannot both start at 02:00 |
+| `xxl` | **8 h, 754 GiB, 16 ranks — one run per trailing 7 days, Saturday 02:00** (operator directive 2026-09-10) | The window a 2 h `xl` slot cannot hold: the human-scale coil, or a many-drive sweep before the factorisation is reused. Runs against the separate `fem-em-solver-xxl` service (profile `xxl`), from `docs/testing/xxl-queue.d/` via `xl-run.sh xxl`, recorded in `docs/testing/xxl-ledger.md`. 754 GiB is this WSL VM's **whole** allocation — half the machine's 1.5 TB — so the kernel OOM killer reaches a runaway before the cgroup does; that is the operator's stated choice and is recorded in `docker-compose.yml` rather than silently softened. Saturday is its own cron day so the two tiers cannot both start at 02:00 |
 
 - Wrap commands in `timeout -k 30 <s>` at the tier ceiling — the `-k` is
   mandatory: a plain TERM does not reliably stop an `mpiexec` job, and an
@@ -625,9 +625,12 @@ cores.** Every verification command declares a tier and must not exceed it:
   2026-09-09) — and that is the whole answer to box contention.** The box is
   shared with work this sandbox cannot see, so scheduling a quiet hour beats
   detection that cannot work. `scripts/automation/xl-run.sh` at 02:00 daily
-  runs whatever single window is queued in `docs/testing/xl-queue.env` (moved from `scripts/automation/` 2026-09-13 so the daily review can write it)
-  and clears the queue afterwards; empty is the normal state and the entry then
-  costs a second. **No Claude session is involved**, which is also what makes
+  runs the first `*.env` file in `docs/testing/<tier>-queue.d/` (a FIFO
+  since 2026-09-15 — the one-slot `<tier>-queue.env` it replaces lost every
+  window after a review-less night, and is honoured only as a legacy
+  fallback), checks the ledger budget before taking it, and deletes the
+  file afterwards; an empty directory is the normal state and the entry
+  then costs a second. **No Claude session is involved**, which is also what makes
   it possible: a foreground harness call is capped at 660 s and an implementer
   slot is killed at 65 min, so no scheduled *session* can hold a 2 h window,
   while a cron script has neither limit. It takes its own lock rather than the
@@ -669,9 +672,15 @@ cores.** Every verification command declares a tier and must not exceed it:
   load is known to be ours and decaying, and never a way past somebody else's
   work. Verified across the threshold: at 36 cores and 16 ranks it allows at
   load 12, postpones at 16.1, and the same load allows an 8-rank window.
-- **The big-compute slots are a budget, not a loophole.** Three `xl` runs and
-  one `xxl` run per trailing 7 days, spent by the weekly review on the
-  measurements the heavy tier cannot hold; the
+- **The big-compute slots are a budget, not a loophole — and, since
+  2026-09-15, one that is meant to be spent every night.** Six `xl` runs and
+  one `xxl` run per trailing 7 days, commissioned by the weekly review on the
+  measurements the heavy tier cannot hold, with the daily review holding a
+  backlog floor of ≥ 4 `xl` and ≥ 1 `xxl` entries ahead in
+  `docs/testing/xl-pending.md` and a licence to fill a shortfall with
+  **priced-family variants** and **cost probes** only (daily-review.md step
+  6b; operator directive 2026-09-15, after four of five nightly windows
+  fired empty in the first wind-down week); the
   ledger row is appended by the harness *when the run starts*, so a killed
   run has still spent its slot **if it consumed box time**. The budget counts
   elapsed seconds, not attempts: a row whose elapsed column is 0 or empty
@@ -739,7 +748,11 @@ cores.** Every verification command declares a tier and must not exceed it:
   at `memory.max` = 64.00 GiB" was clipped at the limit, so it bounded demand
   from below and licensed no extrapolation at all. The honest price for a
   case that has only ever been killed is **unmeasured**, and the first XL
-  window on it is a cost probe whose readout says so.
+  window on it is a cost probe whose readout says so. A **priced-family
+  variant** (same script and mesh as a measured row; frequency, degree,
+  drive or port set, rank count or one env knob varied) inherits the
+  family's measured price with the scaling stated, and is the one class
+  the daily review may commission without a new measurement (2026-09-15).
 - Record real elapsed time in `docs/testing/test-results.md`.
 - **A tier is a measurement, not an intention.** A chunk whose runtime has never
   been measured is `unmeasured`. Cost-probe first: build the mesh, print the cell

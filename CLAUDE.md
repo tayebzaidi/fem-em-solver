@@ -57,10 +57,13 @@ that solves in the frequency domain needs the complex DolfinX build
   trailing 7 days at ≤ 754 GiB / 16 ranks / 8 h against `fem-em-solver-xxl`,
   02:00 Saturday. Both are commissioned by the weekly planning review —
   pre-registered in `docs/testing/xl-pending.md` with the exact command,
-  measured price and readout — queued into `docs/testing/<tier>-queue.env`
-  by the daily review acting as clerk when the budget allows (2026-09-13),
-  run by cron with no Claude session, and recorded in
-  `docs/testing/<tier>-ledger.md`. Implementers never commission one.
+  measured price and readout — queued into `docs/testing/<tier>-queue.d/`
+  (one file per window, drained in order by cron) by the daily review acting
+  as clerk when the budget allows (2026-09-13), run by cron with no Claude
+  session, and recorded in `docs/testing/<tier>-ledger.md`. Since
+  2026-09-15 the daily review also keeps a backlog floor (≥ 4 `xl`, ≥ 1
+  `xxl` ahead) and may fill it with priced-family variants and cost probes
+  (daily-review.md step 6b). Implementers never commission one.
 - **All verification runs in Docker through the logging harness** (service must
   be Up — `docker compose -f docker/docker-compose.yml ps`):
 
@@ -125,7 +128,7 @@ project continues slowly). One overnight block per active day — one review
 then four implementer runs — and **Tuesday and Thursday are off** (no reviews,
 no implementer runs). Canonical crontab: `scripts/automation/crontab`.
 
-- **Plan review** (medium effort, 03:00 local, Sun/Mon/Wed/Fri/Sat) — audits
+- **Plan review** (high effort since 2026-09-15, 03:00 local, Sun/Mon/Wed/Fri/Sat) — audits
   results against §4, rescopes failed attempts, disposes of `recovered/*`
   branches, tops the §9 "On deck" queue to the slot-minutes floor. Protocol:
   docs/automation/daily-review.md.

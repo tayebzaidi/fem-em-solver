@@ -92,11 +92,15 @@ mitigations.
    step, the exact `XL_COMMAND`, the *measured* price from a priced
    smaller rung (no window without one, §5.1), the readout, and what each
    outcome decides — and the daily review, as clerk (daily-review.md step
-   6b), copies the top `READY` entry into `docs/testing/<tier>-queue.env`
-   whenever that queue is empty and the ledger budget allows, so all three
-   XL windows and the XXL window can be used in a week you run once. Fill
-   the list to the budget: up to six `xl` entries and one `xxl` entry
-   ahead. Read both ledgers and mark run entries. If nothing is ready for
+   6b), copies every `READY` entry into `docs/testing/<tier>-queue.d/`
+   (a FIFO the launcher drains one file per night, 2026-09-15) as the
+   ledger budget allows, so all six XL windows and the XXL window can be
+   used in a week you run once. Fill the list to the budget: up to six
+   `xl` entries and one `xxl` entry ahead. Since 2026-09-15 the daily
+   review also holds a **backlog floor** (≥ 4 `xl` and ≥ 1 `xxl` ahead)
+   and a narrow licence to fill it with priced-family variants and cost
+   probes (daily-review.md step 6b.4); read what it wrote, keep or
+   supersede it, and own everything outside that licence. Read both ledgers and mark run entries. If nothing is ready for
    a tier, write "not spent" and why. Never split a window, never carry
    one over, never let an implementer commission one.
 

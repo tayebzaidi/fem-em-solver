@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Scheduled daily plan review (medium effort). Installed in crontab; see
+# Scheduled daily plan review (high effort since 2026-09-15, operator directive; was medium). Installed in crontab; see
 # docs/automation/daily-review.md for the protocol the session follows.
 set -euo pipefail
 
@@ -55,7 +55,7 @@ echo "$(date -u) model=${REVIEW_MODEL}" >> "$LOG"
 # not cores, and the 12-core compute budget is untouched.
 timeout --kill-after=120 2700 "$CLAUDE_BIN" \
   --model "$REVIEW_MODEL" \
-  --effort medium \
+  --effort high \
   --permission-mode acceptEdits \
   --disallowedTools WebFetch WebSearch \
   -p "Scheduled daily review session, started ${START}. Read docs/automation/daily-review.md and execute it exactly. Documentation work only: no solves, no meshing." \

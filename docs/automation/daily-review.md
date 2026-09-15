@@ -1,7 +1,8 @@
 # Daily review protocol (scheduled)
 
 *Model: `scripts/automation/review-model.env` (dated override, self-expiring —
-see CLAUDE.md § Scheduled automation). Medium effort.*
+see CLAUDE.md § Scheduled automation). High effort (operator directive
+2026-09-15; was medium).*
 
 Run by `scripts/automation/daily-review.sh` via cron **once on each active
 day** (03:00 local, Sun/Mon/Wed/Fri/Sat — **Tuesday and Thursday are off**;
@@ -153,22 +154,66 @@ are yours.
    explicitly in the item ("depends on item 1 landing; if it did not, skip to
    item 3") rather than leaving the run to discover it.
 
-6b. **XL clerk (operator directive 2026-09-13).** Read
-   `docs/testing/xl-pending.md`. For each tier whose
-   `docs/testing/<tier>-queue.env` is empty: if the top `READY` entry's
-   prerequisite has landed on `main` and the tier's budget allows — `xl`:
-   fewer than six rows with non-zero `Elapsed` in the trailing 7 days of
-   `docs/testing/xl-ledger.md`; `xxl`: none in the trailing 7 days of
-   `xxl-ledger.md` — copy its `XL_CHUNK` / `XL_COMMAND` into the queue file
-   **verbatim** (the Write tool, not a shell redirect — the guard trips on
-   XL command text in a shell command), mark the entry `QUEUED <today> for
-   <run date>`, and say so in the review commit. You never write an entry,
-   never alter a command, never queue past the budget, never queue on a
-   dirty tree. When a ledger has gained a row since the last review, mark
-   the matching entry `RUN <log>`. The weekly still decides *what* runs;
-   this step is the clerk that keeps zero-token compute from idling
-   between weeklies. A `PENDING PREREQUISITE` entry's prerequisite is an
-   ordinary §9 item — queue it in step 6 like any other.
+6b. **XL clerk and XL backlog floor (operator directives 2026-09-13 and
+   2026-09-15).** The XL / XXL windows are the cheapest compute the project
+   has — cron scripts, no tokens — and under the wind-down schedule they
+   are meant to run **every night**. This step keeps them fed. Read
+   `docs/testing/xl-pending.md` and both ledgers, then do all of the
+   following, in order.
+
+   1. **Mark runs.** When a ledger has gained a row since the last review,
+      mark the matching pending entry `RUN <log>` and remove nothing else.
+   2. **Queue every READY entry, not just the top one.** For each tier,
+      copy each `READY` entry whose prerequisite has landed on `main` into
+      its own file in `docs/testing/<tier>-queue.d/` — named
+      `<intended run date>-<chunk>.env`, `XL_CHUNK` / `XL_COMMAND` copied
+      **verbatim** (the Write tool, not a shell redirect — the guard trips
+      on XL command text in a shell command) — up to the tier's budget:
+      `xl` six charged rows per trailing 7 days of `xl-ledger.md`, one
+      window per night Sun–Fri; `xxl` one per trailing 7 days, Saturday.
+      Run dates are consecutive tier nights from the next 02:00. Mark each
+      entry `QUEUED <today> for <run date>`. The launcher runs the files
+      in lexical order, re-checks the budget itself and deletes each file
+      after its window, so queueing ahead over a Tuesday or Thursday is
+      exactly the point. Never alter a command, never queue on a dirty
+      tree. The legacy one-slot `<tier>-queue.env` stays empty.
+   3. **Check the floor.** After queueing, count the `xl` entries that are
+      `READY` or `QUEUED` for a future night, and the `xxl` ones. **Floor:
+      ≥ 4 `xl` and ≥ 1 `xxl` ahead** — enough to cover every window until
+      the next weekly. Write the count and any shortfall in the review
+      commit and in the dashboard's Automation-health section as *XL:
+      N of 6 windows used in the trailing 7 days, M entries ahead (floor
+      4)*, and when the floor is not met add a 🔴 Waiting-on-you item
+      that says so.
+   4. **Fill the shortfall under the daily licence.** When the floor is not
+      met you may **write new pending entries yourself**, in two classes
+      only, and must still write them in full (tier, chunk and step, exact
+      command, price, readout, decision rule — the same rubric as the
+      weekly's):
+      - **Priced-family variants:** the same script and mesh as an entry
+        or ledger row that already carries a *measured* price at this tier,
+        varying only frequency, polynomial degree, drive or port set, rank
+        count, or one named env knob. The measured price of the family
+        member is the price you cite, with the scaling stated (a degree or
+        rung change is a variant only when a measured point at the target
+        order or rung exists; otherwise it is a cost probe).
+      - **Cost probes:** the first window on an unpriced case, whose
+        readout *is* the price (§5.1: "the first XL window on it is a cost
+        probe whose readout says so"). Fixed brackets in the readout, no
+        gate, no band.
+      Prefer variants that answer a §10 question the weekly has already
+      posed (the ANS-4 degree-2 rung at the other Larmor frequency; the
+      F-human degree-1 solve at the full port set; resolution-ladder rungs
+      the heavy tier cannot hold; the `TH-16` symmetry-plane cost). New
+      physics questions, new fixtures and anything that moves a band stay
+      the weekly's to commission; say in the entry which licence class it
+      is under. An entry you write is `READY` or `PENDING PREREQUISITE`
+      like any other and is queued by rule 2 in the same review.
+   5. **Prerequisites.** A `PENDING PREREQUISITE` entry's prerequisite is an
+      ordinary §9 item — queue it in step 6 like any other, and write into
+      that item that the implementer landing it marks the pending entry
+      `READY` in the same commit (so a Tuesday landing does not wait for
+      Wednesday's review).
 
 7. **Refresh the status dashboard.** Rewrite `docs/status/dashboard.md` from
    what steps 1–6 established — Waiting-on-you first, then the §2 digest

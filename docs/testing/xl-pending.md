@@ -8,10 +8,20 @@ runs once a week. Left as it was, at most one of the three budgeted XL
 windows and, some weeks, no XXL window would run. This file splits the role:
 the **weekly decides** (it pre-registers entries here — tier, chunk and step,
 the exact command, the measured price, the readout and the decision rule)
-and the **daily review is the clerk** (daily-review.md step 6b: it copies the
-top READY entry of a tier into `docs/testing/<tier>-queue.env`
-verbatim when that queue is empty and the tier's budget allows). An
-interactive operator session may do either.
+and the **daily review is the clerk** (daily-review.md step 6b: it copies
+*every* READY entry of a tier into its own file in
+`docs/testing/<tier>-queue.d/` verbatim, up to the tier's budget — a FIFO
+the launcher drains one window per night, 2026-09-15). An interactive
+operator session may do either.
+
+**Backlog floor and daily licence (operator directive 2026-09-15).** The
+daily review keeps **≥ 4 `xl` and ≥ 1 `xxl` entries ahead** (READY or
+QUEUED for a future night), reports the count on the dashboard, and when
+short may write entries itself in two classes only — **priced-family
+variants** of an already-measured case (same script and mesh; frequency,
+degree, drive/port set, rank count or one env knob varied) and **cost
+probes** (first window on an unpriced case, readout = the price). Each such
+entry names its licence class. Everything else is the weekly's.
 
 **Budget, as the clerk reads it.** `xl`: fewer than six rows with a
 non-zero `Elapsed` in the trailing 7 days of `docs/testing/xl-ledger.md`
@@ -22,8 +32,8 @@ next 02:00 for the tier (xl Sun–Fri, xxl Saturday) after the budget opens.
 
 **Status words.** `READY` — prerequisite landed, command final. `PENDING
 PREREQUISITE` — names the item that must land first (an ordinary §9 item).
-`QUEUED <date> for <run date>` — copied into the queue file. `RUN <log>` —
-the launcher cleared the queue; the review that finds the ledger row marks
+`QUEUED <date> for <run date>` — copied into `<tier>-queue.d/`. `RUN <log>` —
+the launcher consumed the queue file; the review that finds the ledger row marks
 it and the weekly interprets it. Entries are never edited after `QUEUED`
 except to add the run status; a changed command is a new entry.
 
@@ -32,7 +42,8 @@ except to add the run status; a changed command is a new entry.
 ### 1. `xxl` — `WF-7` step 0b: the F-human rung at degree 2, one drive, 64 MHz
 
 **Status:** QUEUED 2026-09-13 (operator, interactive) for Saturday
-2026-09-19 02:00.
+2026-09-19 02:00 — moved to `docs/testing/xxl-queue.d/20260919-WF-7-step0b.env`
+2026-09-15 when the queue became a directory.
 
 **Prerequisite:** `scripts/probes/wf7_step0_f_human_cost.py` gained the
 `FEM_EM_WF7_DEGREE` knob (this commit; unset or `1` is byte-identical to
@@ -71,7 +82,9 @@ absolute claim is made.
 
 ### 2. `xl` — `ANS-4` step 3: the 64 MHz order-matched rung (weekly 2026-09-13, §10)
 
-**Status:** PENDING PREREQUISITE — `ANS-4` step 3a. *(3a landed on `main`
+**Status:** QUEUED 2026-09-15 (operator, interactive) for Wednesday
+2026-09-16 02:00 — `docs/testing/xl-queue.d/20260916-ANS-4-step3.env`.
+*(Was PENDING PREREQUISITE — `ANS-4` step 3a. 3a landed on `main`
 2026-09-14, 04:30 slot. The knob reaches the solve, and the flag-off control
 reproduced 2a″ at its `-n 8` record width, not `-n 2` (`OPS-41`). Marking
 this entry READY is the next daily review's job.)*

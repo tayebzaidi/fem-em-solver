@@ -12,9 +12,15 @@
 # can hold a 2 h (since 2026-09-13, 4 h) window. A plain cron script has neither limit. That is the
 # whole reason this file exists.
 #
-# What runs is one line in docs/testing/xl-queue.env, set by the weekly
-# review or the operator. Empty or absent means nothing is queued and this
-# exits quietly — so the entry can sit in cron every night and cost nothing.
+# What runs is the lexically first `*.env` file in docs/testing/<tier>-queue.d/
+# (operator directive 2026-09-15: a multi-entry FIFO, so the daily review can
+# queue every READY entry of docs/testing/xl-pending.md at once and the
+# Tuesday / Thursday windows — nights with no review to refill a one-slot
+# file — are no longer lost). The legacy one-slot docs/testing/<tier>-queue.env
+# is still honoured, first, when non-empty. Empty queue means nothing runs and
+# this exits quietly — so the entry can sit in cron every night and cost
+# nothing. The launcher checks the tier's ledger budget BEFORE taking an
+# entry, so a spent budget leaves the queue intact for the night it reopens.
 set -uo pipefail
 
 # Which tier this invocation runs. `xl` = 2 h / 512 GiB / 3 per week (Sun-Fri
@@ -36,7 +42,9 @@ LOCK="${FEM_EM_XL_LOCK:-$HOME/.fem-em-$TIER.lock}"   # its own lock, NOT the aut
                                       # 02:15 weekly or the 03:00 review, both
                                       # of which are documentation-only.
 LOGDIR="$REPO/logs/automation"
-QUEUE="$REPO/docs/testing/$TIER-queue.env"   # moved from scripts/automation/ 2026-09-13: Edit(scripts/automation/**) is on the ask list, so a headless daily review (the XL clerk, daily-review.md step 6b) could not write it there
+QUEUE="$REPO/docs/testing/$TIER-queue.env"   # legacy one-slot file; moved from scripts/automation/ 2026-09-13: Edit(scripts/automation/**) is on the ask list, so a headless daily review (the XL clerk, daily-review.md step 6b) could not write it there
+QUEUE_DIR="$REPO/docs/testing/$TIER-queue.d"  # FIFO: NN-<chunk>.env files, same XL_CHUNK / XL_COMMAND format (2026-09-15)
+GUARD_DIR="$REPO/scripts/automation/hooks"
 export PATH="$HOME/.local/bin:/usr/local/bin:/usr/bin:/bin"
 
 mkdir -p "$LOGDIR"
@@ -56,14 +64,48 @@ if ! flock -n 9; then
   exit 0
 fi
 
-[[ -f "$QUEUE" ]] || { echo "$(date -u) no queue file; nothing to run"; exit 0; }
-# shellcheck source=/dev/null
-source "$QUEUE" || true
+# Pick the entry: the legacy one-slot file if it is non-empty, else the first
+# file in the FIFO directory. ENTRY is what gets consumed afterwards.
+ENTRY=""
+XL_CHUNK=""; XL_COMMAND=""
+if [[ -f "$QUEUE" ]]; then
+  # shellcheck source=/dev/null
+  source "$QUEUE" || true
+  [[ -n "${XL_CHUNK:-}" && -n "${XL_COMMAND:-}" ]] && ENTRY="$QUEUE"
+fi
+if [[ -z "$ENTRY" && -d "$QUEUE_DIR" ]]; then
+  for f in "$QUEUE_DIR"/*.env; do
+    [[ -f "$f" ]] || continue
+    XL_CHUNK=""; XL_COMMAND=""
+    # shellcheck source=/dev/null
+    source "$f" || true
+    if [[ -n "${XL_CHUNK:-}" && -n "${XL_COMMAND:-}" ]]; then ENTRY="$f"; break; fi
+    echo "$(date -u) skipping malformed queue entry $(basename "$f") (XL_CHUNK/XL_COMMAND unset)"
+  done
+fi
 CHUNK="${XL_CHUNK:-}"
 CMD="${XL_COMMAND:-}"
-if [[ -z "$CHUNK" || -z "$CMD" ]]; then
-  echo "$(date -u) queue empty (XL_CHUNK/XL_COMMAND unset); nothing to run"
+if [[ -z "$ENTRY" ]]; then
+  echo "$(date -u) queue empty; nothing to run"
   exit 0
+fi
+QUEUED_AHEAD=$(( $(ls "$QUEUE_DIR"/*.env 2>/dev/null | wc -l) ))
+echo "$(date -u) queue entry $(basename "$ENTRY") -> chunk $CHUNK ($QUEUED_AHEAD file(s) in $(basename "$QUEUE_DIR"))"
+
+# Budget preflight (same arithmetic as bash_guard.py: charged rows in the
+# trailing 7 days of the tier's ledger). A spent budget must NOT consume the
+# entry — the guard inside run_and_log.sh would refuse the command anyway,
+# and clearing the queue on a refusal is how a window gets silently lost.
+USED="$(cd "$GUARD_DIR" && python3 -c "import bash_guard as g; t=g.TIERS['$TIER']; print(g.runs_in_trailing_week(t['ledger']), t['per_week'])" 2>/dev/null)"
+if [[ -n "$USED" ]]; then
+  set -- $USED
+  if [[ "$1" -ge "$2" ]]; then
+    echo "$(date -u) $TIER budget spent ($1 of $2 charged rows in the trailing 7 days); entry left in the queue for the night it reopens"
+    exit 0
+  fi
+  echo "$(date -u) $TIER budget: $1 of $2 used in the trailing 7 days"
+else
+  echo "$(date -u) WARNING: could not read the $TIER budget from bash_guard.py; relying on the harness guard"
 fi
 
 cd "$REPO" || exit 1
@@ -107,8 +149,14 @@ docker compose -f docker/docker-compose.yml --profile "$TIER" stop "$SERVICE"
 # Consume the queue entry either way: a failed XL window has still spent its
 # slot (§5.1), and re-running it unattended tomorrow is exactly what the
 # once-per-interval rule exists to prevent. Re-queue deliberately or not at all.
-: > "$QUEUE"
-echo "$(date -u) queue cleared"
+if [[ "$ENTRY" == "$QUEUE" ]]; then
+  : > "$QUEUE"
+  echo "$(date -u) legacy queue file cleared"
+else
+  git rm -q --cached "$ENTRY" 2>/dev/null || true
+  rm -f "$ENTRY"
+  echo "$(date -u) queue entry $(basename "$ENTRY") consumed; $(ls "$QUEUE_DIR"/*.env 2>/dev/null | wc -l) left"
+fi
 
 git add -A
 if git diff --cached --quiet; then
