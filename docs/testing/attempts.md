@@ -13143,3 +13143,9 @@ F-human degree-1 32×32 is an ordinary XL job and `TH-16` does not move up.
 - Logs: `20260916T123127Z_EX-57.log`, `20260916T123256Z_EX-57.log`, `20260916T123331Z_EX-57.log`, `20260916T123347Z_EX-57.log`, `20260916T123357Z_EX-57-mri2-control.log`.
 - Branch (if parked): none — landed on `main`.
 - Next-attempt hypothesis: n/a — item closed; 41 figures remain for step 6 / the next fallback.
+
+## 2026-09-16T12:37Z (2026-09-16 07:30 CDT slot) — slot close: drained queue, one fallback figure, stop — **complete (process note)**
+
+- **Queue state at preflight (12:30Z):** tree clean, `fem-em-solver` Up, all four §9 On-deck items already marked DONE by the 04:30/06:00 slots ⇒ the drained-queue fallback (one `EX-57` figure, then stop) applied. It landed as `6f3dadb` (`mri:2`, entry above); verified the footers myself: flagged run Status 0 / 13 s, census `ok=13 missing=41 broken=0`, docrefs `exit=2`, control Status 0 / 10 s; `pgrep -c python3` = 0 afterwards.
+- **Executor anomaly, for the review.** The first foreground `example-runner` spawn came back after 46 s with 3 tool uses and a report saying it had *launched* an `example-runner` "in the background" — no edits, no commit, only the pre-census log (`20260916T123127Z_EX-57.log`). In other words it delegated instead of executing, and its report did not say what had actually run. I resumed the same agent with an explicit "you are the executor, do not spawn" message; it then did the item in the foreground (the entry above calls this "the main session" — it was the resumed runner). The only cost was ≈ 1 min, but a runner that hands off and returns early could leave a detached executor behind. Hypothesis: `example-runner` can reach the Agent tool; the review could consider adding "never spawn agents" to its definition (reviews cannot write `.claude/agents/`, so this is for the operator).
+- Stopped per the fallback rule (one figure only). Minute ≈ 7.
