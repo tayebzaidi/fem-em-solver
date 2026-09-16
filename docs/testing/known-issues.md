@@ -5911,7 +5911,18 @@ log, and the two green re-runs, are recorded in the `EX-37` §7 entry.)*
 | **Cause** | Diagnosed as an API move. The check calls `adios2.ADIOS()`, `DeclareIO`, `Open(…, Mode.ReadRandomAccess)` and `BlocksInfo`, the pre-2.10 top-level bindings. In 2.10 and later the high-level API is `adios2.Stream` / `adios2.FileReader`, and the low-level classes live under `adios2.bindings`. When the image last moved (the 0.11 image, `OPS-18`), the example's warning path hid the break. No committed log shows a successful read-back in the current print format. The guide's citation `20260826T170155Z_EX-30-root2-run-mag1.log` is not present in `docs/testing/logs/`. |
 | **Not caused by** | The `EX-57` setup-figure edit: it touches neither writer nor reader, and the unflagged control prints the same line. |
 | **Scope, observed** | `mag:2` (`02_circular_loop.py`, the `EX-17` port of the same read-back) fails the same way. The same slot's `EX-57` circular-loop run prints the identical `AttributeError` line in `20260914T125551Z_EX-57-circular-loop.log:305`, and the unflagged control confirms it. `mag:1` and `mag:2` are both affected; other `.bp` read-backs were not surveyed. |
-| **Resolves with** | An unqueued chunk for the review: port the read-back to `adios2.bindings.ADIOS` (or `FileReader`), run `mag:1` / `mag:2` through the harness showing `relative difference` ≤ 1e-10, and delete this entry in that commit. Loosening is not an option: the tolerance stays `VTX_ROUNDTRIP_RTOL = 1e-10`. |
+| **Resolves with** | An unqueued chunk for the review: port the read-back to `adios2.bindings.ADIOS` (or `FileReader`), run `mag:1` / `mag:2` through the harness showing `relative difference` ≤ 1e-10, and delete this entry in that commit. Loosening is not an option: the tolerance stays `VTX_ROUNDTRIP_RTOL = 1e-10`. **Queued 2026-09-16 03:00 review as `OPS-48` (§9 item 2).** |
+
+### `write_xdmf_with_tags` cannot write a time series — `consolidate_xdmf_grids` collapses time collections (2026-09-16, 03:00 review; observed by `EX-56` and `EX-58`, 2026-09-14)
+
+| | |
+| --- | --- |
+| **Symptom** | An example that wants two states as ParaView time steps of one combined file cannot get them through the helper: `EX-56` (`examples/ports/16_birdcage_b1_resolution_ladder.py`) wrote two per-rung combined files instead of the one time-stepped file its §7 Angle asked for; `EX-58` (`examples/ports/17_birdcage_tuned_circuit.py`) bypassed the helper and wrote its two `Time Value`s with `dolfinx.io.XDMFFile` directly. Both are disclosed in the guides and in `docs/testing/attempts.md` (2026-09-14T11:15Z and 11:25Z entries). |
+| **Verified at** | `55b67a5` / `b6fa032`: the deviations are in the committed code and guides; `src/fem_em_solver/io/paraview_utils.py:71–72` states the limit ("Single-timestep files only: time collections are collapsed and `<Time>` elements dropped"). No log is red — the helper does what its docstring says. |
+| **Cause** | By design: `consolidate_xdmf_grids` lifts every `<Attribute>` of every function grid onto the single mesh grid so ParaView loads one `vtkUnstructuredGrid` (the Plot-Over-Line NaN fix), which necessarily discards the per-time uniform grids. |
+| **Not caused by** | The examples; `write_xdmf_with_tags` itself works for every single-state example in the census. |
+| **Scope** | Any example or chunk whose angle names "time steps" in one combined XDMF (`EX-56`, `EX-58` so far). A separate latent trap noted by `EX-56`: `Path.with_suffix` truncates a dotted stem (`…_x0.012` → `…_x0.xdmf`) — use dot-free stems. |
+| **Resolves with** | `OPS-49` (§9 item 3, 2026-09-16): an additive `write_xdmf_time_series` that keeps one temporal collection with `n` children each carrying every field and CellTags, gated on the count identity and an `h5py` round trip; this entry is deleted in that commit. The single-state helper stays byte-identical. |
 
 ## Recording a new entry
 

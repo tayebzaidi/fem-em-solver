@@ -172,7 +172,13 @@ What is validated, to what tolerance, and what must not be trusted.
   converges, successive change 1.19 → 0.62 % on `S₁₁`, and the residual
   against AED's converged column is in the class of AED's own two orders'
   mutual agreement) and **AGREE by mechanism at 64 MHz** (the rung ran at
-  128 MHz only; `ANS-4` step 3, `xl`, is the 64 MHz evidence). The 09-06
+  128 MHz only; `ANS-4` step 3, `xl`, is the 64 MHz evidence — **its window
+  ran 2026-09-16 02:00**: 16 passed, 1658 s, `memory.peak` 280.8 GiB, every
+  imported gate green on the 592 744-cell degree-2 rung, and the degree
+  1 → 2 move at 64 MHz on the driven column is 6.51 / 2.60 / 4.11 % by C4
+  class (`20260916T070008Z_ANS-4-step3.log:2427, 4596`); the private miss
+  against AED and the pre-registered decision rule are the 09-19 weekly's,
+  so this sentence does not move until then). The 09-06
   "not element order" inference was wrong — AED was order-insensitive
   because it had converged, ours moved 6.09 / 5.38 / 6.70 % because it had
   not. **What this means for every degree-1 S figure at 128 MHz: the gate
@@ -248,7 +254,7 @@ What is validated, to what tolerance, and what must not be trusted.
   `Σ½Re(V I*) = P_vol + (C − terminal)` (re-registered 2026-09-14 03:00
   review under rule (h); the 2026-09-13 known-issues entry is retired). The
   two-torus hole still carries no gated port current (step 2).
-  **Copper as a Leontovich surface (`TH-14`, 🟡):** the third-kind term
+  **Copper as a Leontovich surface (`TH-14`, ✅ 2026-09-14):** the third-kind term
   `jωμ₀/Z_s ∫_Γc (n × E)·(n × W) dS` is gated on the lossy-wall `TH-9`
   cavity's Q against Pozar's closed form (+0.010 % at σ = 1e4, `Q ∝ √σ` to
   0.05 %, the PEC pencil damping-free to 4.8e-19,
@@ -256,9 +262,15 @@ What is validated, to what tolerance, and what must not be trusted.
   hole — the three port identities at 10 / 64 / 128 MHz, the surface-loss
   identity to 3e-13, a σ-ladder 5.8e7 → 5.8e11 whose distance from the PEC
   4×4 falls 10× per 100× σ, coil-loss share 0.929 / 0.448 / 0.219 printed
-  (`20260914T021500Z_TH-14.log:1037–1364`). The Dodd–Deeds copper slab —
-  the closed form at copper σ — is open (§9 item 2), which is why the row
-  is 🟡 and not ✅; no absolute S on a copper coil (`ANS-6`).
+  (`20260914T021500Z_TH-14.log:1037–1364`), and — the closed form at
+  copper σ — on the **Dodd–Deeds copper slab as a Leontovich floor** under
+  `MAT-6`'s loop at 10 MHz: ΔR(5.8e7) −0.299 % from `coil_impedance_change`
+  (band 2 %), the surface-loss identity to 1.31e-8, ΔR(5.8e7)/ΔR(5.8e9) =
+  9.9910 (linear in `R_s`, band 1 %), the thin-skin identity (ΔX − ΔX_PEC)/ΔR
+  = 1.00097 vs the closed form's 1.00095 (band 2 %), PEC-floor control 0
+  (`20260914T094224Z_TH-14-step2.log:283–293`, 340 s; the slab is removed
+  by `create_submesh` so the floor is a true domain boundary). One loop,
+  one liftoff, one frequency; no absolute S on a copper coil (`ANS-6`).
 - **The F-human birdcage rung is a gated *mesh*** (`GEO-25` step 2,
   2026-09-05): the 16-leg, 32-ring-port coil at `ring_radius` 0.15 m
   meshes to **504 642 cells** at fixed absolute sizing with the volume
@@ -958,6 +970,8 @@ re-deriving a closed step's diagnosis. (The older per-chunk log,
 | `OPS-45` | The harness footer must not call a red durable-capture window green | ✅ Closed and audited PASS at the 2026-09-11 18:00 review: the harness footer no longer calls a red durable-capture window green. *History: `docs/planning/chunks/OPS-45.md`.* | smoke |
 | `OPS-46` | Move the heavy §7 chunk histories out of `PROJECT_PLAN.md` | ✅ Closed 2026-09-12 21:00 slot: all 73 listed rows are moved byte for byte with anchors (i), (ii) and (iv) green (plan 806 962 B, under 850 000 B); (iii) landed by the operator (`2a0ca4d`) and exercised by the 2026-09-13 10:30 review. **Audited PASS 2026-09-13 10:30** (log lines re-cited in the history file; two caveats: (iv) was a printed `wc -c`, not a scripted assert — an `OPS-47` step 1 rider — and "74 rows" was the census discrepancy, 73 were listed and moved). The narrative blocks are `OPS-47`. *History: `docs/planning/chunks/OPS-46.md`.* | smoke |
 | `OPS-47` | **Move the open chunks' blockquote narratives out of `PROJECT_PLAN.md`** — *opened 2026-09-13 weekly review (§10 plan hygiene; row written by the operator's interactive session, which landed that review after the scheduled session died on the account limit).* **The defect, measured 2026-09-13:** `OPS-46` moved the 73 heavy table *rows* (806 962 B, under its 850 000 B bound), but the `>`-blockquote narratives it declared out of scope are the line count — `WF-6` 2 295, `TH-15` 1 243, `PORT-14` 736, `POST-6` 157 lines, **4 431 lines = 48 % of the file** — all under **open** chunks, which the archive contract forbids summarising or compressing. It does not forbid moving them byte for byte. **Change:** extend `scripts/maintenance/rotate_plan_archive.py chunks` to a chunk's blockquote narrative: the contiguous `>` block(s) under a §7 family table that name one chunk move verbatim to `docs/planning/chunks/<ID>.md` (appended after the row history the `OPS-46` move put there), replaced in place by one pointer line; same byte-identity refusal (the re-read file body must equal the extracted span), never overwrite, `--dry-run` and `--census` as for rows. **Anchors (asserted):** (i) every moved block is byte-identical to its new file span — an empty diff per chunk; (ii) `check_private_leak.py --audit` exit 0 after the move, with a planted synthetic value under `docs/planning/chunks/` caught first (positive control); (iii) `PROJECT_PLAN.md` line count re-measured before/after with `scripts/probes/measure_plan_sections.py` and recorded — the 4 000-line guide (weekly-review.md step 6) is the target, and the row says plainly whether it is met; (iv) every § reference in CLAUDE.md and `docs/automation/*.md` still resolves. Docs/tooling only — no `src/`, no test, no band. One commit for the tool, one per chunk for the moves. | ✅ Closed 2026-09-13 15:00 slot (step 2): the four narratives are moved byte for byte, one commit each (`POST-6` `dc39b23`, `PORT-14` `d0b8af6` — file created, `TH-15` `0968eda`, `WF-6` `20689ba`). **Span definition** (the step-1 tool's, ratified for the slot): from the chunk's opener line `**`ID` …` to the line before the next §7 table row, `##`/`###` heading or another chunk's opener, trailing blanks dropped — so `POST-6`'s 44 leading `POST-1`/`POST-3` lines stay in the plan. Anchors per chunk: (i) an independent re-extraction from `git show HEAD:PROJECT_PLAN.md` at the pre-commit revision is `cmp`-equal to the chunk-file span, and the written plan is `cmp`-equal to HEAD with that span replaced by the pointer; (ii) `check_private_leak.py --audit` rc 0; (iii) plan 9 951 → 9 840 → 9 078 → 7 838 → **5 546 lines**, 838 503 → **527 145 B**, each shrink = span − pointer, rider `--assert-below-*` PASS (`20260913T201352Z_OPS-47-step2-POST-6.log:35–68`, `…201427Z_…-PORT-14.log:34–69`, `…201455Z_…-TH-15.log:34–68`, `…201524Z_…-WF-6.log:34–73`); negative control, a spec naming `OPS-46` (row, no narrative), refused rc 1 with the plan unchanged (`…201336Z_…-neg.log:37–42`); (iv) all 88 `§N`/`§N.M` references in CLAUDE.md and `docs/automation/*.md` resolve, 0 unresolved (`…201542Z_…-final.log:46–49`). **The 4 000-line guide is NOT met:** 5 546 lines (`--assert-below-lines 4000` FAIL rc 3, `WF-6.log:50`; `final.log:50`), a miss recorded with the guide not widened. **Step 1** landed 2026-09-13 15:00 slot: `chunks --narratives` moves a narrative (opener `**`ID`` to the next boundary, measured not to be a pure `>` block) byte for byte, with the byte-identity refusal, a scripted size assert, and anchors (a)/(b)/(c) plus both negative controls green (`20260913T200730Z_OPS-47-step1-leak.log:53–58`, `20260913T200801Z_OPS-47-step1-moves.log:46–104`). The dry run gives `WF-6` 2 293, `TH-15` 1 241, `PORT-14` 763 and `POST-6` 112 lines (4 409; the probe's 157 for `POST-6` includes 44 lines of the `POST-1`/`POST-3` blockquote); at step 1 nothing had moved on the real plan. *Narratives: `docs/planning/chunks/{POST-6,PORT-14,TH-15,WF-6}.md`.* | smoke |
+| `OPS-48` | **Restore the `EX-14` VTX read-back gate on the 0.11 image** — `mag:1` / `mag:2`'s `_check_vtx_roundtrip` calls the pre-2.10 `adios2.ADIOS()` API, catches the `AttributeError` and returns `False`, so the "written `.bp` reproduces the in-memory field" anchor has not executed since the image moved and the examples exit 0 regardless (known-issues 2026-09-14; found by the `EX-57` figure runs, `20260914T125223Z_EX-57-straight-wire.log:285`, `…125551Z_EX-57-circular-loop.log:305`; probe `…125326Z_EX-57-adios2-probe.log:34` reads `adios2 2.12.1 has ADIOS: False`). **Done-when (§4):** the reader ported to the 2.12 bindings (`adios2.bindings.ADIOS` or `FileReader`, the VTX local-block walk kept), both examples run through the harness at `-n 2` with `relative difference ≤ VTX_ROUNDTRIP_RTOL` (1e-10, unchanged) **asserted and executed** (the log shows the `✓ written .bp reproduces` line, not the `⚠ unavailable` line), a wrong-comparison control (read-back vs 0.5 × in-memory) printed at rel ≈ 1, the guides' read-back sections re-cited to the new logs, censuses `broken=0` / docrefs `exit != 1`, elapsed recorded, the known-issues entry retired in the same commit. Opened 2026-09-16 03:00 review (§9 item 2). | ⬜ | standard (`mag:1` 7 s, `mag:2` 137 s at `-n 2`) |
+| `OPS-49` | **A time-series XDMF writer beside `write_xdmf_with_tags`** — `consolidate_xdmf_grids` collapses time collections and drops `<Time>` ("single-timestep files only", `io/paraview_utils.py:71`), so an example that wants rungs or drive states as ParaView time steps cannot use the helper: `EX-56` wrote two per-rung files, `EX-58` bypassed the helper with `XDMFFile` (known-issues 2026-09-16). **Done-when (§4):** additive `write_xdmf_time_series(filename, mesh, cell_tags, steps, comm)` with `steps = [(t, {name: Function}), …]`, one temporal collection whose `n` children each carry every field and CellTags; unit test at `-n 2`: (a) the XDMF parses to exactly one collection with `n` `<Time>` values equal to the `t`s written and every attribute on every child (in = out), (b) each step's arrays read back through `h5py` equal the gathered function arrays at rel ≤ 1e-12, (c) negative control — the same steps through the existing `write_xdmf_with_tags` at the pre-change commit (pinned `<sha>^`) collapse to ≤ 1 time value; `write_xdmf_with_tags` / `consolidate_xdmf_grids` byte-identical; elapsed recorded; the known-issues entry retired in the same commit. `EX-56` / `EX-58` are not rewritten by this chunk. Opened 2026-09-16 03:00 review (§9 item 3). | ⬜ | smoke |
 | `OPS-1` | Executable verification environment (Docker) | ✅ | smoke |
 | `OPS-2` | CI runs the real test suite, not just `tests/unit` | ✅ | standard |
 | `OPS-3` | Deterministic test tolerance policy | ✅ | smoke |
@@ -2614,7 +2628,7 @@ review; commissioned 2026-08-23 weekly review as §10 subgoal 2b, serial on `POR
 | `WF-4` | Scenario presets (debug/dev/benchmark-lite) | 🧪 | standard |
 | `WF-5` | Loaded birdcage: frequency shift & Q degradation | ⬜ | heavy |
 | `WF-6` | B1+ field mapping and homogeneity (CV) | ✅ 2026-09-13 (step 5) on the re-scoped subgoal-4 target: on the unloaded F-small birdcage at 10 MHz, CG1, the worst-radius C4 four-copy spread of `\|B₁⁺\|` falls 5.2506 → 2.0719 % and the C4 covariance 3.6159 → 1.6815 % as resolution goes 0.015 → 0.012 m — both falls asserted, both spreads reproduced at rtol 1e-3 (`20260913T170259Z_WF-6-step5.log`, 24 passed, Status 0, 156 s at `-n 4`). A convergence statement only — no closed-form, homogeneity, absolute, C95.3 or Larmor claim; the flag-on ×0.0095 power residual stays banked OPEN in known-issues. *History: `docs/planning/chunks/WF-6.md`.* | heavy (step 1 standard, complex; steps 3h 194 s / 3f′ 117 s / 3i 96 s standard; step 4a 4 s smoke, `-n 1`, real; **step 4g 204 s at `-n 4`**; **step 5 156 s at `-n 4`**; **step 4h 199 s at `-n 4`** + 52 s flag-off control; **step 4i 198 s + 104 s at `-n 4`**; **step 4j 199 s + 101 s at `-n 4`**; step 4k 29 + 32 + 39 + 38 s smoke, `-n 1`, no solve) |
-| `WF-7` | SAR10g hotspot identification | 🧪 Step 0 (cost probe, 2026-09-13): one degree-1 single-drive lumped-sheet solve on the F-human rung (longitudinal ring sheets, 507 266 cells, +0.52 % vs `GEO-25`'s transverse record) at 64 MHz, `-n 8` — 607 039 unknowns, solve 37 s, mesh build 123 s, summed `ru_maxrss` 10.93 GiB (`20260913T190102Z_WF-7-step0.log:10419–10427`, 178 s); below the predicted 11–33 GiB / 3–8 min bracket. A measurement for the XXL commissioning, no physics claim. **Step 0b queued 2026-09-13 (operator, interactive) for the Saturday 2026-09-19 02:00 `xxl` window (`docs/testing/xl-pending.md` entry 1; `docs/testing/xxl-queue.env`):** the same probe with the new `FEM_EM_WF7_DEGREE=2` knob (unset is byte-identical), degree-1 control first in the same window at `-n 16`, against `fem-em-solver-xxl`. Readout, record only: `S_driven` at degree 1 and 2 on the same F-human mesh and `|S₂ − S₁|/|S₁|` — the human-scale order sensitivity — plus the degree-2 price (predicted ≈ 3.2 M unknowns, ≈ 235 GiB, ≈ 17 min from 2d's point; brackets 150–350 GiB / 10–60 min printed). Decision rule for the 09-19 weekly pre-registered in the pending file: same class as F-small's 64 MHz order move ⇒ degree 2 is the production order at human scale and this is its price; an order of magnitude smaller ⇒ degree 1 suffices for human-scale S; does not finish ⇒ the price is the finding and `TH-16` moves up. Nothing asserted beyond the imported cell band. | heavy; step 0b **`xxl`** |
+| `WF-7` | SAR10g hotspot identification | 🧪 Step 0 (cost probe, 2026-09-13): one degree-1 single-drive lumped-sheet solve on the F-human rung (longitudinal ring sheets, 507 266 cells, +0.52 % vs `GEO-25`'s transverse record) at 64 MHz, `-n 8` — 607 039 unknowns, solve 37 s, mesh build 123 s, summed `ru_maxrss` 10.93 GiB (`20260913T190102Z_WF-7-step0.log:10419–10427`, 178 s); below the predicted 11–33 GiB / 3–8 min bracket. A measurement for the XXL commissioning, no physics claim. **Step 0b queued 2026-09-13 (operator, interactive) for the Saturday 2026-09-19 02:00 `xxl` window (`docs/testing/xl-pending.md` entry 1; `docs/testing/xxl-queue.env`):** the same probe with the new `FEM_EM_WF7_DEGREE=2` knob (unset is byte-identical), degree-1 control first in the same window at `-n 16`, against `fem-em-solver-xxl`. Readout, record only: `S_driven` at degree 1 and 2 on the same F-human mesh and `|S₂ − S₁|/|S₁|` — the human-scale order sensitivity — plus the degree-2 price (predicted ≈ 3.2 M unknowns, ≈ 235 GiB, ≈ 17 min from 2d's point; brackets 150–350 GiB / 10–60 min printed). Decision rule for the 09-19 weekly pre-registered in the pending file: same class as F-small's 64 MHz order move ⇒ degree 2 is the production order at human scale and this is its price; an order of magnitude smaller ⇒ degree 1 suffices for human-scale S; does not finish ⇒ the price is the finding and `TH-16` moves up. Nothing asserted beyond the imported cell band. **Step 0c (opened 2026-09-16 review, §9 item 1 + `xl-pending.md` entry 6):** the probe gains `FEM_EM_WF7_PORTS` (unset = byte-identical; `k` or `all` = the first `k` / every ring port driven in turn, each column's fields dropped), proved at heavy tier by the flag-off control (`S_driven` = step 0's `0.407423+0.344417j`) and a two-drive reciprocity assert; then the XL cost probe — the full 32-port degree-1 set on the F-human mesh at `-n 16`, readout the price plus the 32×32's reciprocity / passivity / C16 spreads printed beside `PORT-13`'s bands, nothing asserted. | heavy; step 0b **`xxl`**; step 0c **`xl`** (cost probe) |
 | `WF-8` | Publication-quality visualization pipeline | ⬜ | standard |
 | `WF-9` | **Implant transfer-function excitation (ISO 10974 Tier 3)** — a local impressed source stepped along a lead path + the tangential-`E` path-integral post-processor; heating from `∫ TF(z)·E_tan(z) dz` gated against the direct lead-in-phantom solve — **feature ladder C1** (operator directive 2026-09-04; Phase 7; `WF-7` is to be scoped with this in mind) | ⬜ | heavy |
 
@@ -2708,7 +2722,7 @@ demonstrates a **gated** capability from an angle no existing example covers.
 | `EX-54` | **The birdcage as a PEC hole in ParaView — the 4×4 and the field on the conductor-free mesh** (`examples/ports/14_birdcage_pec_hole_ports.py` + same-stem guide; `example-runner`) | ✅ **DONE 2026-09-14 02:31Z.** `_hole_rung(FREQUENCY_HZ)` at 10 MHz, imported unmodified except five additive return keys (`mesh`, `cell_tags`, `wall_facet_tags`, `sheet_facet_tags`, `fields` — nothing renamed/removed; gate module re-run green in-slot, 6 passed / 4 skipped (solid control not requested), 32.70 s, `20260914T023104Z_EX-54-th15-rerun.log:961`). All three imported gates plus the power identity asserted and green in the example: reciprocity 1.508e-14 (band 1e-3), σ_max 0.999994234 (band 1 + 1e-9), class spreads self 0.0190 %/adjacent 0.0094 %/opposite 0.0059 % (band 0.5 %), power rel dev 1.327e-10 (band 1e-3) — `20260914T023145Z_EX-54.log:897`. Printed only (no pre-registered band): the hole's 4×4 beside `PORT-11`'s solid σ = 800 S/m 10 MHz record (`LEG_D_S_MATRIX_10MHZ`), `max\|ΔS\|` per C4 class self 9.769e-02 / adjacent 2.484e-02 / opposite 4.828e-02 (`:908`); the cavity wall's (tag 401) `\|n × E\|` reads 2.989e-16 over 4.052772e-02 m² — machine-zero, confirming the PEC enforcement (`:910`). 80 181 cells, 31.8 s total at `-n 2` (`:895,914`). Combined XDMF `examples/ports/paraview_output/ports_14_birdcage_pec_hole_ports_combined.xdmf` (`CellTags`, `E_magnitude` DG0, `facet_tags` grid with tag 401). Census: pre `dead=0 guide=0 stale=0 exit=0` (`20260914T022309Z_EX-54.log:39`), post `dead=0 guide=0 stale=0 exit=0` (`20260914T023230Z_EX-54-census-post.log:39`). No copper, Larmor-accuracy or `TH-14` claim. | standard (host-runner, measured 34 s example / 32.70 s gate rerun) |
 | `EX-55` | **The 32-port ccw quadrature drive on the 16-leg birdcage in ParaView** (`examples/ports/15_birdcage_sixteen_leg_quadrature_b1.py` + guide; `example-runner`) | ⬜ *Opened 2026-09-13 18:00 review (step 5) for the gate `POST-6` step 3 closed 2026-09-13: `ports:13` (`EX-49`) superposes an* asymmetric *drive on the 4-leg fixture; no example drives the 16-leg / 32-ring-port fixture in quadrature.* Angle: drive — `quadrature_phase_weights` at the 32 ring ports through `superpose_drives` at 10 MHz, `PORT-13`'s fixture imported from `tests/validation/test_port_birdcage_ring_matrix.py`, the CG1 `\|B₁⁺\|` map on the z = 0 sample cylinder written to combined XDMF, with the C16 rotation spread and the mirror identity asserted at the imported 5 % band (`test_birdcage_b1_plus_map.py:120`) and `PORT-16`'s exact power identity at the imported 1e-6. Trap: the gate's sample set holds exactly `MIN_SAMPLE_POINTS` = 50 (`20260913T185043Z_POST-6-step3.log:11780`) — the example prints the count and imports the constant. Done-when (§4): the three imported identities asserted, artifact named, census `exit != 1`, elapsed recorded. Predicted: the gate was 191 s at `-n 8` (build 82 s, 32 drives under reuse 30 s, identity 44 s); at the runner's `-n 2` *predicted* ≤ 8 min — pass the runner `-t 900` and record the measured window. No homogeneity, absolute or Larmor claim. **Closed ✅ 2026-09-14, 04:30 slot (take-next).** The flagged harness run `20260914T095534Z_EX-55.log` (`-n 2`, Status 0, 168 s) asserts (i) C16 spread 0.8102 % and (ii) mirror 0.6769 % (5 %), and (iii) the exact identity at 8.40e-16 (1e-6) (`:11641–11643`). The sample count is 50 against `MIN_SAMPLE_POINTS` = 50 (`:11647`). The unflagged control `…095938Z_EX-55-control.log` (149 s) reproduces them. Census `…095914Z_EX-55-census.log`: docrefs `exit=0` (`:39`), setup figures `examples=50 ok=2 missing=48 broken=0` (`:92`); the figure PNG is 343 KiB. Rule (a): the `ring_quadrature_case` body was lifted into `_build_ring_quadrature_case()` with 8 additive return keys. The gate was re-run green, `20260914T100313Z_EX-55-rule-a-gate.log` (`-n 8`, 15 passed, 148 s, (i)/(ii) digits unchanged). *Disclosed:* container timeout 560, not 900 (the foreground window). No census was logged before the change; the delta is reconstructed from the 09-14 census. | heavy (host-runner; measured 168 s at `-n 2`) |
 | `EX-56` | **`\|B₁⁺\|` spread against resolution — the two-rung ladder in ParaView** (`examples/ports/16_birdcage_b1_resolution_ladder.py` + guide; `example-runner`) | ✅ **2026-09-14 06:00 slot:** fall asserted 5.2506 % → 2.0719 % at `-n 2` (records printed, rel 5.7e-06 / 6.9e-06, width disclosed), flagged 142 s / unflagged 136 s (`20260914T110437Z_EX-56.log:3618,3636`, `…110730Z_EX-56-control.log:3618,3629`), census 51/3/48/0 as predicted; **deviation:** two per-rung combined XDMFs, not one time-stepped file (the rungs' meshes differ). ~~⬜~~ *Opened 2026-09-13 18:00 review (step 5) for the gate `WF-6` step 5 closed 2026-09-13: `ports:8` (`EX-40`) ladders* frequency*; no example ladders resolution.* Angle: output quantity — the worst-radius C4 four-copy spread of CG1 `\|B₁⁺\|` on the unloaded F-small birdcage at 10 MHz at global sizing ×1 and ×0.012, imported from `tests/validation/test_birdcage_b1_plus_closed_form.py` (`LADDER`, `STEP5_RECORDED_SPREADS` 5.2506 % / 2.0719 % at `STEP5_SPREAD_RTOL` 1e-3 — imported records, asserted only as the module asserts them; the monotone-fall identity asserted), both rungs' `\|B₁⁺\|` written to one combined XDMF with the rung as a time step so ParaView steps through resolution, and the interior CV printed beside step 4a's filament closed-form CV (printed only). Trap: the ×0.0095 rung stays off (its power residual is a banked known-issues negative); `-n 4` is the record width and the runner's `-n 2` carries the 1e-4-class MUMPS drift (known-issues 09-09) — the example asserts the records at the module's rtol 1e-3 *only if* it runs at `-n 4`; at `-n 2` it prints them and asserts the fall. Done-when (§4): the fall asserted, records reproduced or their width disclosed, artifact named, census `exit != 1`, elapsed recorded. Predicted 204 s at `-n 4` (`20260909T200431Z_WF-6.log`); `-n 2` *predicted* ≈ 6–7 min, runner `-t 900`. A convergence statement only — no closed-form, homogeneity or Larmor claim. | heavy (host-runner) |
-| `EX-57` | **One setup figure per example guide — standing, recurring** (operator directive 2026-09-13; `write_setup_figure` + `check_example_setup_figures.py` + exemplar `mesh:3`; one guide per item, the daily review queues the census's `--next` every active day and the drained-queue fallback draws the next one; closes when the census exits 0 on `main`) | 🟡 step 0 ✅ 2026-09-13 | the example's own |
+| `EX-57` | **One setup figure per example guide — standing, recurring** (operator directive 2026-09-13; `write_setup_figure` + `check_example_setup_figures.py` + exemplar `mesh:3`; one guide per item, the daily review queues the census's `--next` every active day and the drained-queue fallback draws the next one; closes when the census exits 0 on `main`) | 🟡 step 0 ✅ 2026-09-13; census 2026-09-16: 54 examples, 9 ok, **45 missing**, 0 broken (`mesh:3`, `ports:14–18`, `th:10`, `mag:1`, `mag:2`, `mag:4` done) | the example's own |
 | `EX-58` | **The tuned birdcage — sweep, `C_tuned`, the in-model field** (`examples/ports/17_birdcage_tuned_circuit.py` + guide; `example-runner`) | ✅ **2026-09-14 06:00 slot (take-next):** `|Im Z_in|/|Z_in|` 2.113e-15 ≤ `TUNING_IM_Z_RTOL`, tuned `S₁₁` residual 8.255812e-05 ≤ `REDUCTION_BAND` (`20260914T112025Z_EX-58.log:43,1799`, flagged 58 s; control `…112312Z_EX-58-control.log:43,1799`, 57 s, same digits); rule (a) lift in `test_port_circuit_layer_field.py` (additive), gate re-run 7 passed 169 s (`…111515Z_EX-58-rule-a-gate.log:3753`); census 52/4/48/0; XDMF has two time steps, written with `XDMFFile` directly. ~~⬜~~ *Opened 2026-09-14 03:00 review (step 5) for the gates `PORT-15` steps 2–3 (closed 2026-09-14) and `PORT-14` step 3 (closed 2026-09-13): `ports:3` (`EX-24`) shows lumped* sheets *and nothing in the corpus terminates a port in a capacitor or tunes.* Angle: drive — `S_64MHZ_EPS0_RECORD`, `tuning_sweep`, `select_c_tuned`, `tuned_input` imported from `tests/validation/test_port_circuit_layer_field.py` (never copied); the `Im Z_in(C)` sweep printed, its zero asserted at the imported `TUNING_IM_Z_RTOL`; one in-model 64 MHz solve with `PORT-14`'s κ-corrected capacitor sheets at `C_tuned` (the module's terminated-network helper made importable additively under §9 rule (a), gate module re-run green in the same slot), the tuned `S₁₁` residual asserted at the imported `REDUCTION_BAND`; `\|E\|` on the phantom at `C_tuned` beside the 50 Ω baseline as two time steps of one combined XDMF. Done-when (§4): the two imported assertions green, artifact named, census `exit != 1`, setup figure per `EX-57`, elapsed recorded. Predicted ≈ 90 s at `-n 2` (`20260914T020419Z_PORT-15.log:3728`); runner `-t 600`. A series resonance on one fixture — no match, no mode frequency, no Larmor-accuracy claim. | standard (host-runner) |
 | `EX-59` | **The copper birdcage — the surface loss density on the coil** (`examples/ports/18_birdcage_copper_leontovich.py` + guide; `example-runner`) | ✅ **Done 2026-09-14 07:30 slot** — imported port gates and the surface-loss identity asserted green, and the gate's 10 MHz copper digits reproduced (`20260914T124230Z_EX-59.log:904–918` against `20260914T021500Z_TH-14.log:1032–1055`; flagged 35 s, control 32 s). The facet field is **DG0 per adjacent cell, in W, not a density**; its owned sum equals `P_surf` to 1.5e-15, asserted and true by construction. The helpers are imported as they are, with no gate edit. Census 52/4/48/0 → 53/5/48/0, docrefs `exit=0`. ⬜ *Opened 2026-09-14 03:00 review (step 5) for the gated `TH-14` birdcage step (2026-09-14; the row is 🟡 on its slab step, the birdcage identities themselves are gated): `ports:14` (`EX-54`) is the PEC hole; no example carries a surface impedance.* Angle: output quantity — the 10 MHz copper configuration of `tests/validation/test_th14_birdcage_copper.py` (helpers module-private, §9 rule (a)); the three imported port gates and the surface-loss identity at `DISCRETE_IDENTITY_RTOL` asserted; the DG0 facet field `½Re(1/Z_s)\|n × E\|²` on tag 401 written through the facet grid (the `ports:14` pattern) beside `\|E\|` on the phantom; `P_coil/P_in` printed beside the σ = 800 solid's share. Done-when (§4): the imported assertions green, artifact named, census `exit != 1`, setup figure per `EX-57`, elapsed recorded. Predicted ≈ 60 s at `-n 2` (the gate fixture: 104.7 s for 3 f × 3 σ under reuse, `20260914T021500Z_TH-14.log:1348`); runner `-t 600`. No absolute copper-coil claim (`ANS-6`). | standard (host-runner) |
 | `EX-60` | **The lossy-wall cavity — Q against σ beside Pozar** (`examples/time_harmonic/10_lossy_wall_cavity_q.py` + guide; `example-runner`) | ✅ **Done 2026-09-14 07:30 slot (take-next)** — both imported assertions green: `Q/Q_c − 1` +0.010 % ≤ 5 % and `Q(1e6)/Q(1e4)` 9.995026 ≤ 5 % from 10. The PEC control `|Im λ|/Re λ` 4.798e-19 and the exported mode's Rayleigh quotient (rel 7.3e-14) are also asserted, and the rung lines match `20260914T004807Z_TH-14.log:96–99` (`20260914T124948Z_EX-60.log:39–59`; flagged 11 s, control 7 s). `src/`: additive `return_mode` / `return_vectors` in `core/cavity.py`, with the gate re-run green (18 passed, 40 s). Census 53/5/48/0 → 54/6/48/0, docrefs `exit=0`. ⬜ *Opened 2026-09-14 03:00 review (step 5) for the gate `TH-14` step 1 (closed 2026-09-13): `th:2` (`EX-5`) is the PEC box; no example solves a lossy-wall eigenmode.* Angle: boundary model — `solve_impedance_wall_cavity_mode` (`core/cavity.py`) on the `TH-9` box at σ ∈ {1e4, 1e6, 5.8e7}, Pozar's `Q_c` imported from `tests/validation/test_cavity_leontovich_q.py` (never restated), the 1e4 rung asserted at the imported 5 % band and the `√σ` scaling identity asserted, copper printed as the PEC-limit reading; the TE₁₀₁ `\|E\|` to XDMF. Done-when (§4): the two imported assertions green, artifact named, census `exit != 1`, setup figure per `EX-57`, elapsed recorded. Predicted ≈ 1 min at `-n 2` (9.2 s of eigen-solves in a 45 s window, `20260914T004807Z_TH-14.log`); runner `-t 300`. One box, one mode; no coil. | standard (host-runner) |
@@ -3109,7 +3123,7 @@ next weekly review adjudicates the returned numbers.
 | `ANS-1` | Loop over a lossy slab at 10 MHz: runnable half of the first AED benchmark | ✅ Closed: no disagreement with the independent solver to diagnose, ΔX stays reported and never gated, and the numeric ruling lives only in the gitignored docs/private adjudication. Any `ans:` case that commits its own `metrics.json` pins that path in the same commit. *History: `docs/planning/chunks/ANS-1.md`.* | standard |
 | `ANS-2` | Coil-driven SAR in the loaded four-leg birdcage at 10 MHz: pointwise SAR, whole-phantom power, mass-averaged SAR | 🟡 Open: step 1's runnable half is green with its control asserted as a floor, and nothing absolute is licensed. Step 2 (SPEC rows 4–6) and step 3 (the operator's AED replication) remain open. *History: `docs/planning/chunks/ANS-2.md`.* | heavy |
 | `ANS-3` | Two coaxial gapped loops at 10 MHz: runnable half of the second AED benchmark (2-port Z/S; `ANS-2` reserved by §10 for the future B1+/SAR case) | ✅ *(example path restored 2026-08-31 by `EX-37` and re-run green, 128 s; the 08-16 / 08-26 records stand)* | heavy |
-| `ANS-4` | Gapped four-leg birdcage, phantom-loaded, four lumped ports: 4×4 S-matrix at 10 / 64 / 128 MHz | ✅ The step-2 family is frozen under the four-attempt rule: no degree-1 ladder on this fixture is in a proven asymptotic range, so a degree-1 extrapolant is not an h → 0 reference. **Larmor verdict banked 2026-09-13 (weekly): AGREE at 128 MHz on step 2d's order-matched rung, AGREE by mechanism at 64 MHz; step 3 (the 64 MHz degree-2 rung, `xl`, priced by 2d) is pre-registered in §10 for the 09-16 review's window; numbers private.** **Step 3 is pre-registered as `docs/testing/xl-pending.md` entry 2 (2026-09-13, operator session) behind step 3a — a tests-only §9 item that gives `test_ans4_resolution_ladder.py` a `FEM_EM_ANS4_FREQUENCY_HZ` knob (default 128e6, unset bit-identical; control: the `0.015:1` rung reproduces 2a″'s digits at `-n 2`); the Wednesday 09-16 daily review queues the window for Thursday 09-17 02:00 once 3a lands.** **Step 3a landed 2026-09-14 (04:30 slot):** the knob threads every rung. The flag-off control reproduces 2a″'s ×1 digits to 8.2e-11 at `-n 8` (rtol 1e-6), and at `64e6` every class moves ≥ 0.15 from the 128 MHz record (floor 1e-2) while the printed control matches `PORT-11`'s 64 MHz 4×4 to 6.1e-11 (`20260914T093325Z_ANS-4-step3a-w1.log`, 62 s; `…093444Z_…-w2.log`, 63 s). *History: `docs/planning/chunks/ANS-4.md`.* | heavy (≈ 160 s at `-n 2`, one command; measured 125 / 128 s); step 2 **`xl`** |
+| `ANS-4` | Gapped four-leg birdcage, phantom-loaded, four lumped ports: 4×4 S-matrix at 10 / 64 / 128 MHz | ✅ The step-2 family is frozen under the four-attempt rule: no degree-1 ladder on this fixture is in a proven asymptotic range, so a degree-1 extrapolant is not an h → 0 reference. **Larmor verdict banked 2026-09-13 (weekly): AGREE at 128 MHz on step 2d's order-matched rung, AGREE by mechanism at 64 MHz; step 3 (the 64 MHz degree-2 rung, `xl`, priced by 2d) is pre-registered in §10 for the 09-16 review's window; numbers private.** **Step 3 is pre-registered as `docs/testing/xl-pending.md` entry 2 (2026-09-13, operator session) behind step 3a — a tests-only §9 item that gives `test_ans4_resolution_ladder.py` a `FEM_EM_ANS4_FREQUENCY_HZ` knob (default 128e6, unset bit-identical; control: the `0.015:1` rung reproduces 2a″'s digits at `-n 2`); the Wednesday 09-16 daily review queues the window for Thursday 09-17 02:00 once 3a lands.** **Step 3a landed 2026-09-14 (04:30 slot):** the knob threads every rung. The flag-off control reproduces 2a″'s ×1 digits to 8.2e-11 at `-n 8` (rtol 1e-6), and at `64e6` every class moves ≥ 0.15 from the 128 MHz record (floor 1e-2) while the printed control matches `PORT-11`'s 64 MHz 4×4 to 6.1e-11 (`20260914T093325Z_ANS-4-step3a-w1.log`, 62 s; `…093444Z_…-w2.log`, 63 s). **Step 3's XL window ran 2026-09-16 02:00** (`20260916T070008Z_ANS-4-step3.log`, the FIFO's first file): `RUNGSPEC="0.015:1 0.005:2"` at 64 MHz, `-n 16`, **16 passed, Status 0, 1658 s**; the degree-2 rung 592 744 cells / 3.79 M unknowns, four drives 1476.9 s, summed `ru_maxrss` 282.3 GiB, `memory.peak` 280.8 GiB (service recreated before the window); every imported `PORT-11` gate green (reciprocity 1.6e-14, σ_max 0.999758, spreads 0.1985 / 0.1715 / 0.1946 %). Public readout: the degree 1 → 2 move on the driven column at 64 MHz is **6.51 / 2.60 / 4.11 %** (self / adjacent / opposite; 128 MHz read 6.09 / 5.38 / 6.70 %). **Recorded, not adjudicated** — the private AED miss and the decision rule are the 09-19 weekly's. **Steps 3b–3d queued by the 09-16 review as priced-family variants** (`xl-pending.md` entries 3–5: 128 MHz degree 2 on the C4-congruent cut, 10 MHz degree 2, 64 MHz degree 2 on the congruent cut; 09-17 / 09-18 / 09-20 02:00). *History: `docs/planning/chunks/ANS-4.md`.* | heavy (≈ 160 s at `-n 2`, one command; measured 125 / 128 s); step 2 **`xl`** |
 | `ANS-5` | **Pin the element-order correspondence in every ANS `SPEC.md`/`COMPARISON.md`** — our production `degree 1` is what HFSS calls **Zero Order**, not its default **First Order**; the specs do not say so, and a default-settings replication is a different discretization (operator observation, interactive session 2026-08-28) | ✅ **RULED 2026-08-30 02:15 weekly review** — (a) AED runs at **Zero Order** (matched, the adjudication column) **and** at its default **First Order** (an order-sensitivity column); **Mixed Order forbidden**; our side stays at one order (none of options 1–3 as framed — option 1 for the adjudication column plus a second AED column, our side unchanged, step 3 **not** taken). (b) `ANS-1` **is in scope** for the spec line (state the Maxwell 3D formulation and order AED used). Already-returned numbers at an unrecorded order stand as an "order-unknown" column. Steps 1–2 are documentary and queueable; `ANS-4`'s spec already carries the wording. **Steps 1–2 executed 2026-08-31 00:00 slot — 🟡:** README correspondence table + a *Basis / element order* paragraph in all three SPECs (four `*.md` files, +71/−3, no band or figure moved); the `ANS-1`/`ANS-3` `COMPARISON.md` rows need a **generator `.py`** edit the item's scope forbids — carried as a finding, **priced as step 1b by the 03:00 review (§9 item 2)**. **Step 1b executed 2026-08-31 06:00 slot — chunk ✅** (steps 1, 1b, 2; step 3 ruled not taken): both generators' `_write_comparison` now emit `AED (Zero Order)` / `AED (First Order)` and a `Basis order` row, both cases re-run green on their own asserts (ΔR **1.5838%** vs 2%; `PORT-1` step-4 reproduction **2.98e-05 / 2.92e-05 / 1.71e-06 / 3.33e-10** inside 1%, reciprocity 4.7586e-05 < 1e-3, ‖S‖₂ 0.864809 ≤ 1), census at the standing `dead=53 guide=0 stale=10`. The pre-registered ≤ 1e-8 `metrics.json` negative control **is not a valid discriminator for `ANS-3`** — measured below | smoke (no compute; step 1b ≈ 200 s, measured 61 + 133 s + 125 s control + 1 s census) |
 | `ANS-6` | **Copper birdcage, phantom-loaded, four lumped ports: the `ANS-4` fixture with a σ = 5.8e7 S/m coil — the first AED case on a realistic conductor** (operator directive 2026-09-04, interactive session; **serial on `TH-15` ✅ and `TH-14` ✅**; AED side: HFSS *Finite Conductivity* boundary on the coil with Solve Inside off, plus a PEC-coil column) | ⬜ | heavy |
 
@@ -3355,135 +3369,161 @@ since 2a″), `PORT-14` step 2 (2, 2b–2e; no gate landed) — each carries its
 ruling in §7.
 
 
-Last reviewed **2026-09-14, 03:00 review** — the first under the wind-down
-schedule (one review + four slots per active day, `9c987b0`). *(The
-2026-09-13 18:00 interval narrative is archived verbatim in
-`docs/planning/plan-archive.md`.)*
+Last reviewed **2026-09-16, 03:00 review** (Wednesday; Tuesday was an off
+day, so the interval is two days). *(The 2026-09-14 03:00 interval
+narrative is archived verbatim in `docs/planning/plan-archive.md`.)*
 
-**Interval (09-13 18:00 → 09-14 03:00): two slots fired — the last two of
-the old schedule — both did chunk work, and seven of the nine-item 18:00
-queue landed; items 8–9 (`EX-55`, `EX-56`) carry over.** Take-next carried
-the 19:30 slot through four items and the 21:00 slot through three (it
-stopped at minute 34 with `EX-55` next). Three chunks closed ✅ and one
-opened 🟡 → gated on two steps; the interactive operator session that
-followed rewired the schedule, opened `EX-57` and queued the XXL window.
+**Interval (09-14 03:00 → 09-16 03:00): four slots fired on Monday, all
+four did chunk work, and the eight-item queue was consumed by the 07:30
+slot — two physics steps, five examples and three setup figures landed,
+nothing parked; the 09:00 slot ran the drained-queue fallback. The first
+scheduled XL window ran this morning and passed.** Take-next carried the
+04:30 slot through three items, 06:00 through two and a timebox stop,
+07:30 through four (two of them fallback figures).
 
 | Slot | Chunk | Outcome |
 |---|---|---|
-| 19:30 | `PORT-14` step 3; `TH-14` step 1; `TH-15` step 3c; `PORT-15` step 2 | `b82975a` **`PORT-14` 🟡 → ✅** (κ(64) 1.060762155e-02 vs the 2d record at 1.457e-07; residuals 5.359129e-05 / 1.998404e-06; four windows 114 / 196 / 115 / 66 s, attempt branch deleted); `244b038` **`TH-14` ⬜ → 🟡** (Q = 801.77 vs Pozar 801.68, +0.010 %; `Q(1e6)/Q(1e4)` 9.995; PEC control 4.8e-19; 45 s); `9f93db6` the hole route's terminal excess **attributed** — equals `C − terminal` to every digit, hole/solid `C/terminal − 1` 0.9997, known-issues entry retired (102 s); `d65ee3d` the 64 MHz records stored, gate (i) from the circuit side (133 + 126 s) |
-| 21:00 | `PORT-15` step 3; `TH-14` step 2 (the entry's "step 3"); `EX-54` | `3e6519a` **`PORT-15` 🟡 → ✅** (`C_tuned` 15.570 pF, `Im Z_in` 2.1e-15, in-model vs circuit `S₁₁` 8.26e-5 / 2×2 6.12e-5; 176 s); `d5550dc` the copper F-small birdcage as a Leontovich hole — three port gates at 10 / 64 / 128 MHz, surface-loss identity ≤ 3.0e-13, σ-ladder monotone, 32 passed, 211 s — **closed `TH-14` ✅ on the §9 item's letter and flagged the row's Done-when; demoted below**; `2cc9192` **`EX-54` ⬜ → ✅** (imported gates green, cavity-wall `\|n × E\|` 2.989e-16, 34 s) |
-| operator (19:00–21:50) | ops; `EX-57` step 0 | `9c987b0` … `957bfed` the wind-down crontab, XL six-per-week nightly at 4 h, the XL clerk role, `xl-pending.md`, the 09-19 XXL window queued (`WF-7` step 0b); `40ec08b` / `960e0f2` `write_setup_figure`, the census (49 examples, 1 ok, 48 missing), the `mesh:3` exemplar, the runner template's item 6 |
+| 04:30 | `ANS-4` step 3a; `TH-14` step 2; `EX-55` | `7ffd78e` the frequency knob: flag-off control reproduces 2a″ to 8.2e-11 at `-n 8`, 64 MHz moves every class ≥ 0.15 (62 + 63 s); `68ff988` **`TH-14` 🟡 → ✅** (ΔR copper −0.299 % vs Dodd–Deeds, identity 1.31e-8, ratio 9.9910, thin-skin 1.00097; 340 s); `25e634a` **`EX-55` ⬜ → ✅** (C16 spread 0.8102 %, mirror 0.6769 %, identity 8.4e-16; 168 s) |
+| 06:00 | `EX-56`; `EX-58`; `EX-59` (stop) | `55b67a5` **`EX-56` ⬜ → ✅** (spread 5.2506 % → 2.0719 %, fall asserted; 142 s); `b6fa032` **`EX-58` ⬜ → ✅** (`Im Z_in` zero 2.1e-15, tuned `S₁₁` residual 8.26e-5; 58 s); `fe4cd48` `EX-59` timebox stop at minute 29 before any code — the facet-field route was unresolved |
+| 07:30 | `EX-59`; `EX-60`; `EX-57` ×2 | `55a9902` **`EX-59` ⬜ → ✅** (identity 1.57e-13, digits equal the gate's; 35 s); `8f5f656` **`EX-60` ⬜ → ✅** (Q/Q_c +0.010 %, √σ ratio 9.995; 11 s; additive `core/cavity.py` keywords, gate re-run 18 passed); `a125c94` / `f9f5aef` figures for `mag:1` / `mag:2` (census 48 → 46) |
+| 09:00 | `EX-57` (fallback) | `3d5ee5f` figure for `mag:4` (census 46 → 45) |
+| operator (09-14 → 09-15) | ops | `130a40a` / `4d0f8c4` `checkin.sh`; `cff1600` the XL queue becomes a nightly FIFO (`<tier>-queue.d/`), the daily review keeps an XL backlog floor and runs at high effort; `e3818e3` `GEO-33` (32-leg F-human rung, future work) |
+| XL 02:00 (09-16) | `ANS-4` step 3 | `1fcb2a8` **the 64 MHz order-matched rung ran: 16 passed, Status 0, 1658 s at `-n 16`, `memory.peak` 280.8 GiB** (`20260916T070008Z_ANS-4-step3.log`) — readout below, adjudication the 09-19 weekly's |
 
 This review ran on `claude-fable-5-1`, no override
-(`logs/automation/20260914T080001Z_daily-review.log`). The new crontab is
-installed: the 02:00 XL entry fired on schedule and exited empty
-(`20260914T070001Z_xl-run.log`).
+(`logs/automation/20260916T080001Z_daily-review.log`). The 09-15 XL entry
+fired empty as expected (Tuesday, nothing queued); the 09-16 entry took
+the FIFO's one file, ran it, consumed the file and committed
+(`20260916T070001Z_xl-run.log`).
 
 **Tree and branches (step 2).** Clean at review start; `fem-em-solver` Up;
-no `recovered/*`. Four `attempt/*` branches remain (`TH-15-step2proper`,
-`WF-6-step4b/4c/4e`, kept on the 2026-09-09 18:00 ruling);
-`PORT-14-step3-20260913T172330Z` was deleted by its landing commit after
-the digits reproduced. Nothing to clear.
+no `recovered/*`. The same four `attempt/*` branches remain
+(`TH-15-step2proper`, `WF-6-step4b/4c/4e`, kept on the 2026-09-09 18:00
+ruling). Nothing to clear.
 
-**Audit (§4, step 3) — four closures, four `auditor` reports, re-cited.**
-- **`PORT-14` ✅ (`b82975a`) — PASS.** `20260914T003252Z_PORT-14-step3-64mhz.log:1937,1951`
-  (κ(64) 1.060762155e-02, `|ratio − 1|` 1.457e-07 asserted ≤ 1e-3), `:1958–1959`
-  (5.359129e-05 / 1.998404e-06 ≤ `REDUCTION_BAND`, the uncorrected control
-  1.354202e-02 beside them), `:2093–2096` (Status 0, 114 s);
-  `…003503Z_…-10mhz.log:1888–1902` (floor unmoved, 196 s);
-  `…003827Z_…-128mhz.log:1955–1956` (4.012884e-05 / 5.599266e-06, printed);
-  `…004031Z_…-port9-gate.log:1971` (16 passed). Bands imported, `STEP3_KAPPA_RTOL`
-  new and motivated, no loosening. Caveat acted on: the row's tier cell read
-  "standard" while every step-3 window ran at the heavy ceiling — the cell
-  now says which steps are which.
-- **`PORT-15` ✅ (`3e6519a`) — PASS.** `20260914T020419Z_PORT-15.log:1967–1968`
-  (`C_tuned` 1.556993028375804e-11 F, `|Im Z|/|Z|` 2.113e-15 ≤ 1e-6), `:3728`
-  (the in-model run: mesh 25.27 s, three drives 19.56 s), `:3732`, `:3742`
-  (`S₁₁` residual 8.255812e-05, 2×2 6.123431e-05 ≤ 1e-3, live asserts);
-  `…010149Z:1902–1937` (the stored records' source) and `…010448Z` (4
-  passed, 126 s). The headline identity rests on a fresh in-model solve, not
-  on the stored records; "tuned" = series resonance, disclosed in the row.
-- **`EX-54` ✅ (`2cc9192`) — PASS.** `20260914T023145Z_EX-54.log:897` (the
-  four imported gates asserted), `:908` (per-class `max|ΔS|` printed, no
-  band), `:910` (`|n × E|` 2.989e-16 over 4.052772e-02 m²), `:918–920`
-  (Status 0, 34 s); `…023104Z_EX-54-th15-rerun.log:961` (gate module re-run,
-  6 passed / 4 skipped); censuses `…022309Z:39` / `…023230Z-post:39` exit 0.
-  Timing note: the runner template's setup-figure item postdates this
-  closure by 16 minutes, so `ports:14` owes its figure to `EX-57` like the
-  other 47.
-- **`TH-14` ✅ (`d5550dc`) — auditor DEMOTE, review demotes: ✅ → 🟡.** Every
-  numerical claim traces (`20260914T021500Z_TH-14.log:1037/1183/1329` the
-  three port gates, `:1054/1200/1346` the identity ≤ 2.963e-13, `:1364` the
-  10 MHz bracket, `:1038/1045/1052` the ladder, `:4223–4226` rc 0 / Status
-  0 / 211 s; `20260914T004807Z_TH-14.log` step 1) and nothing was loosened —
-  but the row's own Done-when (§7, "Steps 1–3 executed, Fresnel and
-  Dodd–Deeds asserted, … §2.1's conductor-model line updated") is not met:
-  the Dodd–Deeds copper-slab step was never run and §2.1 was untouched. The
-  executor closed on §9 item 6's "(a)–(c) move `TH-14` → ✅" and flagged the
-  conflict (`docs/testing/attempts.md`, 02:22Z entry, caveat 1). **The item
-  was wrong, not the executor:** the 18:00 review wrote a "status it can
-  move" line without reading the row's Done-when. Ruling: 🟡; the slab step
-  is item 2 below; the §2.1 line is written by this review; the Fresnel
-  clause is discharged by the 09-13 re-scope (step 1 is the cavity Q). One
-  digit the auditor could not trace — "4.4828e-4 W" — is arithmetic on
-  `:4079` (`P_src − ΣP_sheet`), now said so in the row. Rule (j) below.
-- Not audited (no status change): `TH-15` step 3c (a gated step under a 🟡
-  row — its attribution is ruled in step 4), `PORT-15` step 2 (subsumed by
-  the closure audit), `EX-57` step 0 (operator-executed, 🟡 by construction
-  of a recurring chunk).
+**Audit (§4, step 3) — six closures, six `auditor` reports, all PASS,
+re-cited.**
+- **`TH-14` ✅ (`68ff988`) — PASS.** `20260914T094224Z_TH-14-step2.log:283`
+  (ΔR −0.2990 % vs `coil_impedance_change`, band 2 %), `:285` (identity
+  1.311e-08 ≤ 1e-6), `:292` (ratio 9.990958635, band 1 %), `:284` (thin-skin
+  1.00097 vs 1.00095, band 2 %), `:293` (PEC control 0), `:277` (census
+  6852 + 1258 = 8110), `:443–446` (Status 0, 340 s); all five in `assert`
+  statements (`test_th14_dodd_deeds_copper_floor.py:361–391`); no `src/`
+  change, no existing band touched. Caveats banked in the row: the PEC
+  control holds by construction (σ = 0 operator is real), and the 5.8e9
+  identity residual 8.98e-7 (`:291`) sits near its 1e-6 band, printed only.
+- **`EX-55` ✅ (`25e634a`) — PASS.** `20260914T095534Z_EX-55.log:11649,
+  11651, 11653` (0.8102 % / 0.6769 % ≤ 5 %, identity 8.401e-16 ≤ 1e-6),
+  `:11647` (n_valid 50 = `MIN_SAMPLE_POINTS`), `:11669–11672` (168 s);
+  control `…095938Z:11662–11665`; census `…095914Z:39, 92`; rule-(a)
+  re-run `…100313Z:12351` (15 passed, 148 s). The test-file diff is a pure
+  lift-and-wrap with eight additive keys.
+- **`EX-56` ✅ (`55b67a5`) — PASS.** `20260914T110437Z_EX-56.log:1840,
+  3615, 3618` (5.2506 % / 2.0719 %, fall asserted), `:3637` (142 s);
+  control `…110730Z:3630`; censuses `…110231Z:92` / `…111237Z:93`; no
+  `tests/` file touched. **Ruling on the disclosed deviation:** the row's
+  Done-when never named the time-step form ("one XDMF with the rung as the
+  time step" was the Angle), so the flip stands on the letter; the two
+  per-rung files are a real shortfall against the commissioned angle, and
+  its cause — `write_xdmf_with_tags` collapses time collections — is now a
+  known-issues entry and `OPS-49` (item 3 below). `EX-58` hit the same
+  limit and wrote its two time steps with `XDMFFile` directly.
+- **`EX-58` ✅ (`b6fa032`) — PASS.** `20260914T112025Z_EX-58.log:43`
+  (`|Im Z_in|/|Z_in|` 2.113e-15 ≤ 1e-6), `:1799` (`S₁₁` residual
+  8.255812e-05 ≤ 1e-3), `:1815–1818` (58 s); control `…112312Z:43, 1799`;
+  rule-(a) gate `…111515Z:3753–3759` (7 passed, 169 s); censuses
+  `…111507Z:93` / `…112213Z:94`. Additive test-module changes only.
+- **`EX-59` ✅ (`55a9902`) — PASS.** `20260914T124230Z_EX-59.log:910`
+  (imported gates asserted), `:913` (identity 1.572e-13 ≤ 1e-6, `P_surf`
+  > 0), `:918` (per-cell sum vs `P_surf` 1.527e-15), `:904–914` equal
+  `20260914T021500Z_TH-14.log:1032–1055` to every digit; control
+  `…124335Z:898–911`; valid pre-census `…112642Z:94` (52/4/48/0), post
+  `…124415Z:95` (53/5/48/0). Two runner protocol slips disclosed in the
+  journal (post-write "before" census, background return) — process note
+  below, not a finding against the closure.
+- **`EX-60` ✅ (`8f5f656`) — PASS.** `20260914T124948Z_EX-60.log:51–59`
+  (PEC control 4.798e-19 ≤ 1e-10, Q/Q_c +0.010 % ≤ 5 %, Δf −0.0624 % < 1 %,
+  `Q(1e6)/Q(1e4)` 9.995026 vs 10 ≤ 5 %, Rayleigh 7.304e-14 ≤ 1e-6),
+  `:39–42` equal `20260914T004807Z_TH-14.log:96–99`, `:68–71` (11 s);
+  control `…125021Z:44–52`; the additive `core/cavity.py` change (rule (c))
+  covered by the gate re-run `…124857Z:182` (18 passed, 40 s); censuses
+  `…124532Z:95` / `…125028Z:96`.
+- Not audited (no status change): `ANS-4` step 3a (a step under a ✅ row;
+  its two windows are cited in the row), the three `EX-57` figures
+  (per-item done-whens, census deltas read in the journal: 48 → 47 → 46 →
+  45, `broken=0` throughout).
 
 **Rulings (step 4).**
-1. **`TH-15` step 3's power sentence is re-registered (rule (h), as the
-   18:00 review said it would be on a printed term).** Step 3c's window
-   (`20260914T005452Z_TH-15-step3c.log:969–970`, solid `:2790–2791`) shows
-   the hole's 7.693701287e-05 W excess of `Σ½Re(V I*)` over the volume loss
-   equal to `C_total − Σ½|I|²Re Z_p` to every digit, and the same on the
-   solid (6.716202469e-05 W); the hole's driven-port `C/terminal − 1`
-   1.058874954e-02 sits at 0.9997× the solid's. The registered sentence is
-   `Σ½Re(V I*) = P_vol + (C − terminal)` — the sheets' Cauchy–Schwarz
-   deficit `PORT-16` named at 10 MHz, not a hole-route readout systematic.
-   Same physics, same fixture; the 2026-09-13 known-issues entry retired
-   with `9f93db6`. §2.1 carries it. `TH-15` stays 🟡 on step 2 (family
-   frozen at 2e–2h since 2d — the weekly's re-scope, not a queue item).
-2. **`PORT-15` step 3's printed ladder mode-1 frequency (1.606e8 Hz at
-   `C_tuned`, ≈ 2.5× 64 MHz)** is a record of a topology mismatch — the
-   fixture's capacitors sit in the legs, the closed form's in the rings —
-   not a κ systematic (identity (b) holds at `C_tuned`). It is input to
-   `TH-17` step 1's scoping (the weekly's) and moves nothing here.
-3. **No attempt branches or parked work this interval** — nothing to
-   rescope.
+1. **`ANS-4` step 3's window is banked as a record, not adjudicated.**
+   `20260916T070008Z_ANS-4-step3.log`: `RUNGSPEC="0.015:1 0.005:2"` at
+   64 MHz, `-n 16`, 16 passed, Status 0, 1658 s; the degree-2 rung
+   592 744 cells / 3.79 M unknowns, mesh 105.7 s, four drives 1476.9 s
+   (`:4605`), summed `ru_maxrss` 282.3 GiB (`:4604`), `memory.peak`
+   280.8 GiB (`:5735`, service recreated before the window). Every imported
+   `PORT-11` gate passes on the rung: reciprocity 1.6e-14, σ_max 0.999758,
+   class spreads 0.1985 / 0.1715 / 0.1946 % (band 0.5 %, `:4600–4603`).
+   **Public readout — the degree 1 → 2 move at 64 MHz on the driven
+   column** (`:2427` vs `:4596`): self 6.51 %, adjacent 2.60 %, opposite
+   4.11 % (128 MHz, step 2d: 6.09 / 5.38 / 6.70 %). The private miss
+   against the AED First Order column and the decision rule are the 09-19
+   weekly's (§10, `xl-pending.md` entry 2 → `RUN`). No band moved, no
+   AED number here. The 2000–3000 s prediction was beaten (1658 s): the
+   `PORT-19` reuse is in the module since 09-11.
+2. **`EX-59`'s two runner slips** (the "before" census logged after the
+   files were written; the runner returned with a window still running,
+   which then failed with `ArityMismatch` and was fixed by the slot) are a
+   spawn-template matter for an interactive session (`.claude/agents/` is
+   not writable from a scheduled review) — listed on the dashboard, not a
+   rule here. The slot's own repair was correct.
+3. **The `adios2` 2.12 read-back break** (`mag:1` / `mag:2`, known-issues
+   2026-09-14) is a silently disabled gate — the `EX-14` anchor has not
+   run on the 0.11 image and nobody noticed until the figure task re-ran
+   those examples. Chunk `OPS-48` (item 2 below) restores it; loosening is
+   not on the table (`VTX_ROUNDTRIP_RTOL` stays 1e-10).
+4. **No attempt branches or parked work this interval** — nothing to
+   rescope. `EX-59`'s first stop left no branch by its own account (no code
+   written) and was completed by the next slot.
 
-**§10 assessment (step 5).** No gap. §10 chain steps 1–3 (`PORT-14` step 3,
-`PORT-15` steps 2–3) are done; step 7 (`TH-14` step 1) done; step 8 (the
-copper birdcage) gated; `TH-17` step 1 is the next physics step and, by the
-chain's own text, the weekly's to write (Saturday 09-19 21:00). The one §7
-text this review writes from the audit is `TH-14` step 2's route (below).
-**Example step (§5.4):** three quantitative gates closed this interval with
-no example demonstrating them — `EX-58` (the tuned birdcage: `PORT-15`'s
-sweep + in-model field; `ports:3` shows lumped *sheets*, nothing tunes),
-`EX-59` (the copper birdcage's surface loss density; `ports:14` is the PEC
-hole), `EX-60` (the lossy-wall cavity Q; `th:2` is the PEC box) — opened in
-the §7 EX table and queued as items 5–7. `PORT-14`'s capacitor sheets are
-covered by `EX-58`'s in-model solve (the capability from the tuning angle).
+**§10 assessment (step 5).** No gap. Phase 6's chain steps 1–3, 7 and 8
+are done; `TH-17` step 1 and `ANS-6`'s SPEC (now unblocked by `TH-14` ✅)
+are the weekly's to write on 09-19; the `WF-7` step 0b XXL window is
+queued for 09-19 02:00. Two maintenance chunks are opened from defects
+found this interval (`OPS-48`, `OPS-49` — both carry a known-issues
+entry, and entries leave only with the commit that fixes them), and one
+prerequisite item for the XL backlog (`WF-7` step 0c's knob, step 6b.5).
+**Example step (§5.4):** the only physics gate that closed this interval
+is `TH-14` step 2 (the copper Dodd–Deeds floor); `EX-59` (the copper
+birdcage, landed the same day) demonstrates the Leontovich capability
+from the coil angle, and `mag:6` / `ans:1` already show `MAT-6`'s loop —
+no new example chunk.
 
-**Restock (step 6).** Eight items, **all independent, 164 predicted
-slot-minutes against the 240 floor — shortfall 76 min, stated, not
-filled.** What exists and is not queued, and why: `TH-17` step 1 (the
-weekly's, §10 chain), `ANS-6`'s SPEC (the weekly's, serial on item 2),
-Tier B `TH-5` step 1 (behind the conductor lineage by the ladder's order,
-and its anchor — the band from Jin's first-order-ABC reflection curve — is
-unwritten; the 09-19 weekly decides whether to open Tier B while `ANS-6`
-waits on the operator's AED queue), `ANS-4` step 3 (`xl`, the clerk's once
-item 1 lands), frozen families (`WF-6` 4l, `ANS-4` 2h, `PORT-14` 2f,
-`TH-15` 2i), a second `TH-19` degree-2 observation (no status). The
-drained-queue fallback (`EX-57`) absorbs the shortfall by design: every
-slot that empties the list draws the next setup figure.
+**Restock (step 6).** Four items, **all independent, 80 predicted
+slot-minutes against the 240 floor — shortfall 160 min and one item
+(4 of ≥ 5), stated, not filled.** What exists and is not queued, and why:
+`TH-17` step 1 and `ANS-6`'s SPEC (the weekly's, §10 chain), Tier B `TH-5`
+step 1 (anchor unwritten; the 09-19 weekly decides whether Tier B opens),
+`GEO-33` step 1 (sequenced after the 09-19 XXL readout by its own row),
+frozen families (`WF-6` 4l, `ANS-4` 2h, `PORT-14` 2f, `TH-15` 2i), a
+second `TH-19` degree-2 observation (no status). The drained-queue
+fallback (`EX-57`, 45 figures owed) absorbs the shortfall by design.
 
-**XL clerk (step 6b).** `xl-queue.env` empty; budget open (three charged
-rows in the trailing 7 days — 09-09 ×2, 09-10 — against six); the only
-`xl` entry (`ANS-4` step 3) is `PENDING PREREQUISITE` on item 1, so nothing
-is queued. `xxl-queue.env` carries the 09-19 window (`WF-7` step 0b, QUEUED
-by the operator). Neither ledger gained a row. Nothing written.
+**XL clerk (step 6b).** Ledger gained one row (09-16, 1658 s) — entry 2
+marked `RUN`, the row's columns filled from the footer. **Budget:** the
+launcher read 1 of 6 used before the window; charged rows in the trailing
+7 days now 2 (09-10 7225 s, 09-16 1658 s). **Queued** under the daily
+licence as priced-family variants of the `ANS-4-step3` / `step2d` rows
+(same module, same `RUNGSPEC`, one knob varied each; price 1658 s /
+281 GiB at `-n 16` measured 09-16): **entry 3** `ANS-4` step 3b — 128 MHz
+degree 2 with `c4_congruent_sheets` on (the order-matched rung on the
+same cut as the 2a″ degree-1 record — apples to apples for the 128 MHz
+AGREE) → `xl-queue.d/20260917-ANS-4-step3b.env`; **entry 4** step 3c —
+10 MHz degree 2 (is the order sensitivity frequency-dependent the way the
+AED miss was?) → `20260918-ANS-4-step3c.env`; **entry 5** step 3d —
+64 MHz degree 2 with the congruent cut → `20260920-ANS-4-step3d.env`.
+**Written `PENDING PREREQUISITE`** as a cost probe: **entry 6** `WF-7`
+step 0c — the F-human degree-1 solve at the full 32-port set (the §10
+question the weekly posed), behind item 1 below. **Floor: 4 `xl` entries
+ahead (3 queued + 1 pending) — met; 1 `xxl` ahead (09-19) — met.**
 
 **Residual `main` reds at `-n 2`: 3 deliberate/known**, plus the padding
 module's red at `-n 4` (known-issues, 2026-09-09). The `WF-6` ×0.0095 red is
@@ -3575,242 +3615,192 @@ a `[capture] rc=` line only when it is the *last* output line. **Every pytest
 window runs with `-s`** (rule (g)). **Every window runs inside the container
 through `run_and_log.sh`** — host `python3` is denied.
 
-*(The 18:00 queue's nine items are done or carried: `PORT-14` step 3
-(`b82975a`), `TH-14` step 1 (`244b038`), `TH-15` step 3c (`9f93db6`),
-`PORT-15` step 2 (`d65ee3d`), `PORT-15` step 3 (`3e6519a`), `TH-14` step 2
-(`d5550dc`, ruled above), `EX-54` (`2cc9192`); `EX-55` and `EX-56` carried
-as items 3–4 below with their texts unchanged. The consumed item texts are
-in `git show dbf3b00` and `docs/testing/attempts.md`.)*
+*(The 09-14 queue's eight items are all done: `ANS-4` step 3a (`7ffd78e`),
+`TH-14` step 2 (`68ff988`), `EX-55` (`25e634a`), `EX-56` (`55b67a5`),
+`EX-58` (`b6fa032`), `EX-59` (`55a9902`), `EX-60` (`8f5f656`), the `mag:1`
+figure (`a125c94`); the item texts are in `git show b549e5b` and
+`docs/testing/attempts.md`.)*
 
 **Predicted slot-minutes (rubric element 3 + 15 min fixed), running total:**
-item 1 → 18 · item 2 → 40 · item 3 → 63 · item 4 → 85 · item 5 → 105 ·
-item 6 → 126 · item 7 → 144 · item 8 → **164**. Floor 240: **shortfall
-76 min**, stated, not filled (step 6 above says what exists and why it is
-not queued). All eight items are mutually independent; take them in order.
+item 1 → 22 · item 2 → 42 · item 3 → 60 · item 4 → **80**. Floor 240 and
+≥ 5 items: **shortfall 160 min and one item**, stated, not filled (step 6
+above says what exists and why it is not queued). All four items are
+mutually independent; take them in order.
 
-1. ✅ **DONE 2026-09-14 04:30 slot** (both anchors green, 62 + 63 s; §7 row,
-   `docs/testing/attempts.md`). **`ANS-4` step 3a — the frequency knob the XL command needs, proved by
-   the flag-off control** (implementer; tests only in
-   `tests/validation/test_ans4_resolution_ladder.py`; complex; standard;
-   two windows — `-n 8` for the control (the record width), `-n 2` for the
-   flag-on print; `main`; independent; **18 slot-min**: ≈ 70 + 70 s + 15).
-   **Why:** `docs/testing/xl-pending.md` entry 2 (the 64 MHz order-matched
-   rung, `xl`) is `PENDING PREREQUISITE` on exactly this; the XL command's
-   contract is the knob name **`FEM_EM_ANS4_FREQUENCY_HZ`**. The XL budget
-   is open now, so every day this is not on `main` is a zero-token window
-   not run.
-   **The change:** the module hard-wires `FREQUENCY_128_HZ` (imported from
-   `test_lossy_sphere_fullwave`) at five sites (`:356, :400, :435, :467,
-   :485`); thread one module-level `LADDER_FREQUENCY_HZ = float(os.environ
-   .get("FEM_EM_ANS4_FREQUENCY_HZ", FREQUENCY_128_HZ))` through them —
-   unset is bit-identical — and add one test that asserts the `0.015:1`
-   (×1) rung's driven column against a module record.
-   **Anchors (asserted):** (a) **the flag-off control** — window 1 is
-   2a″'s w1 command verbatim with the ladder trimmed to one rung
-   (`FEM_EM_ANS4_STEP2_DEGREE2=0 FEM_EM_ANS4_STEP2_C4_CONGRUENT=1
-   FEM_EM_ANS4_STEP2_RUNGS="1.0"`, `-n 8`, complex): the ×1 rung
-   reproduces 2a″'s digits `S11 = +4.753519992e-01 +5.808090882e-01j`,
-   `S21 = +2.276429111e-01 −2.671465731e-01j`,
-   `S31 = +5.269141324e-02 −2.216384512e-01j`
-   (`20260911T093247Z_ANS-4-step2a-dprime-w1.log:4061–4063`, the `-n 8`
-   record — `OPS-41`'s width rule supersedes the pending file's "-n 2";
-   say so in the journal) at rtol 1e-6, plus every imported `PORT-11` gate
-   on the rung (the module's existing test); (b) **the knob does
-   something** — window 2 sets `FEM_EM_ANS4_FREQUENCY_HZ=64e6` on the same
-   rung (`-n 2`, `C4_CONGRUENT` unset — the record mesh) and the per-class
-   `max|ΔS|` between its 4×4 and window 1's exceeds 1e-2 (asserted; the
-   `PORT-11` 64 vs 128 MHz records differ by O(0.1) in every class, so the
-   ceiling is far above the bar).
-   **Negative control (*predicted*, printed):** window 2's 64 MHz 4×4
-   beside `PORT-11` step 2's 64 MHz record, per-class `max|ΔS|` — predicted
-   ≤ 1e-2 (`ANS-4` run1 measured 1.075e-03 on the *example's* route,
-   `20260830T213415Z_ANS-4-run1.log`; a different code path, so printed,
-   never asserted).
-   **Tier / ranks / cost:** w1's two-rung window was 141 s at `-n 8`; one
-   rung ≈ 70 s; `timeout -k 30 300` per window, `-s`, no pipe, durable
-   capture with the trailing `; exit $rc`.
-   **Traps:** `FEM_EM_ANS4_STEP2_DEGREE2=0` in **both** windows — the
-   degree-2 solve is built unconditionally whenever ×1 is in the ladder and
-   blows an ordinary window (module `:139–143`); do not edit
-   `test_lossy_sphere_fullwave` (the import source); the record is a
-   `C4_CONGRUENT=1` mesh — window 1 must set it, window 2 must not; `-s`;
+1. **`WF-7` step 0c — the port-set knob the XL cost probe needs, proved by
+   the flag-off control** (implementer; `scripts/probes/wf7_step0_f_human_cost.py`
+   only, no `src/`, no test module; complex; heavy by ceiling; `-n 8` (the
+   step-0 record width); `main`; independent; **22 slot-min**: ≈ 3 + 3.5 min
+   of windows + 15).
+   **Why:** `docs/testing/xl-pending.md` entry 6 (`WF-7` step 0c, the
+   F-human degree-1 solve at the full 32-port set, `xl`, cost probe) is
+   `PENDING PREREQUISITE` on exactly this; the XL command's contract is the
+   knob name **`FEM_EM_WF7_PORTS`**. The weekly posed the question (§10,
+   daily-review.md step 6b.4); every night it is not on `main` is a
+   zero-token window not run.
+   **The change:** the probe drives `f"P{min(ring_ports)}"` once (`:200`).
+   Add `FEM_EM_WF7_PORTS` — unset or `1` = the first ring ordinal only,
+   byte-identical to step 0; an integer `k` = the first `k` ring ordinals
+   in `_ring_ports()` order; `all` = every ring port. Loop
+   `_solve_one_drive(ctx, driven)` over the chosen ports (`reuse_factorization`
+   stays at its default **off** for the first drive; turning it on for the
+   rest is allowed — the `PORT-19` path — and the probe prints which), **pop
+   and drop each column's `fields` before the next solve** (32 columns of
+   fields on the F-human mesh is the memory trap), assemble the `k × k` `S`
+   from the columns' `s_column`, and print per drive the `PRICE` line the
+   probe already prints plus the cumulative wall clock, so a killed window
+   still prices how far it got. With `k ≥ 2` print `_reciprocity_ratio`,
+   `σ_max(S)` and the class spreads with the helpers and bands `PORT-13`'s
+   module (`test_port_birdcage_ring_column.py`: `_reciprocity_ratio`,
+   `RECIPROCITY_BAND` imported from `test_port_lumped_sheet_sweep`,
+   `COLUMN_PASSIVITY_CEILING`, `OPPOSITE_SPREAD_BAND`) already has — import,
+   never restate — **printed**, and assert only what (b) says.
+   **Anchors (asserted):** (a) **the flag-off control** — the env unset,
+   `-n 8`, the probe's `S_driven` reproduces step 0's
+   `0.407423+0.344417j` (`20260913T190102Z_WF-7-step0.log:10423`) at
+   rtol 1e-6 (a printed-6-digit record, so the assert compares the printed
+   string's digits — read the log line into the probe as the restated
+   record, version-tagged, `OPS-41`: at `-n 8` only, printed elsewhere),
+   with the imported cell band still green; (b) **the knob does
+   something** — `FEM_EM_WF7_PORTS=2`, `-n 8`: two drives, the 2×2's
+   `_reciprocity_ratio` asserted ≤ `RECIPROCITY_BAND` (1e-3, `PORT-9`'s,
+   imported — the identity every lumped-port `S` on this package has met),
+   and the second drive's `S_driven` differs from the first's by more than
+   1e-6 (the loop reached a different port).
+   **Negative control (*predicted*, printed):** the 2×2's `σ_max` beside
+   `COLUMN_PASSIVITY_CEILING` — predicted ≤ 1 (the 32×32 on F-small16 met
+   it, a different mesh, so printed, never asserted).
+   **Tier / ranks / cost:** step 0 measured 123 s mesh + 37 s solve, 178 s
+   window at `-n 8` (`20260913T190102Z_WF-7-step0.log`); window (a) ≈ 3 min,
+   window (b) ≈ 123 + 2 × 37 ≈ 3.5 min; `timeout -k 30 590` each, durable
+   capture with `[orphans-before]`/`[orphans-after]` and the trailing
+   `; exit $rc` (the probe's step-0 command shape, `…step0.log:12`).
+   **Traps:** the probe is `python3 scripts/probes/…`, not pytest — no `-s`
+   needed, but the harness routing rule still applies (through
+   `run_and_log.sh`, inside the container); `_solve_one_drive` returns the
+   fields — drop them; `min(ring_ports)` is `P17` on this layout, keep that
+   as the default so unset stays byte-identical; do not touch
+   `FEM_EM_WF7_DEGREE`'s code path (the 09-19 XXL window runs it verbatim);
    `pgrep -c python3` = 0 before and after.
-   **Scope:** a knob and its control; no 64 MHz accuracy claim, no XL run,
-   no AED number.
-   **Status it can move:** `xl-pending.md` entry 2 `PENDING PREREQUISITE` →
-   `READY` (the next review marks it and, budget allowing, queues the
-   window for the following 02:00 — Wednesday 09-16 03:00 review ⇒
-   Thursday 09-17 02:00); the `ANS-4` row's step-3a sentence.
-   **Negative result:** (a) red ⇒ the ladder module's ×1 rung has drifted
-   since 09-11 (the knob is not the suspect — it is unset) — report the
-   digits, known-issues, stop; (b) red ⇒ the knob is not reaching the
-   solve — report, park, stop.
+   **Scope:** a knob and its control on two drives at heavy tier; no
+   32×32 here (that is the XL window), no F-human S claim, no band moved.
+   **Status it can move:** `xl-pending.md` entry 6 `PENDING PREREQUISITE`
+   → `READY` — **the implementer landing this marks the entry `READY` in
+   the same commit** (step 6b.5; the Wednesday landing must not wait for
+   Friday's review) — and the `WF-7` row's step-0c sentence.
+   **Negative result:** (a) red ⇒ the F-human probe has drifted since
+   09-13 (the knob is unset) — report the digits, known-issues, stop;
+   (b) reciprocity red ⇒ a drive-indexing defect in the loop — park on
+   `attempt/*`, stop; never widen.
 
-2. ✅ **DONE 2026-09-14 04:30 slot (take-next)** ((a)–(d) and the control
-   green, 340 s; `TH-14` ✅; §7 row, `docs/testing/attempts.md`). **`TH-14` step 2 — the copper Dodd–Deeds slab as a Leontovich floor
-   under `MAT-6`'s loop** (implementer; new
-   `tests/validation/test_th14_dodd_deeds_copper_floor.py`, no `src/`
-   change expected; complex; heavy by ceiling; `-n 2`; `main`;
-   independent; **22 slot-min**: ≈ 7 min of windows + 15).
-   **Why:** the row's own Done-when (auditor DEMOTE, ruled above) — the
-   closed form at copper σ that the birdcage identities cannot supply; also
-   `ANS-1`'s geometry, so an AED-checkable point.
-   **The change:** `MAT-6`'s fixture (`test_dodd_deeds_impedance.py`: loop
-   radius 0.04 m, liftoff 0.020 m, wire 2.5 mm, 10 MHz, 1 A, box half-width
-   0.15 m, `project_source=False` — the gated drive, kept) with the **slab
-   volume removed**: the domain is the air box above `z = 0` and its bottom
-   face is Γ_c. Locate the floor facets by `locate_entities_boundary(z ≈ 0)`
-   into a facet `MeshTags` (floor 401, the other five faces 499 — asserted
-   disjoint and complete against the rank-reduced exterior count, the
-   `TH-14` birdcage step's census pattern), pass `facet_tags` and
-   `pec_facet_tags=(499,)` to `TimeHarmonicProblem` (`core/time_harmonic.py:111,118`)
-   and the term `jωμ₀/Z_s ∫_401 (n × E)·conj(n × W) ds`, `Z_s = (1 + j)R_s`,
-   through `TimeHarmonicSolver.solve(extra_bilinear_terms=[…])` (`:400`);
-   ΔZ by `MAT-6`'s `_reaction_impedance` (import it) against the **same
-   box with the floor pinned** (`pec_facet_tags=None`, the PEC control).
-   **Anchors (asserted):** (a) **ΔR at σ = 5.8e7** against the Dodd–Deeds
-   function `MAT-6`'s `test_fem_resistance_change_matches_dodd_deeds` uses
-   (`utils/dodd_deeds.py`: `coil_impedance_change` / the finite-wire form,
-   whichever that test calls — import, never restate) within the row's
-   pre-stated **2 %**; (b) the surface-loss identity `Re ΔZ · ½|I|² =
-   ½∫_401 Re(1/Z_s)|n × E|²` at `DISCRETE_IDENTITY_RTOL` 1e-6 (imported);
-   (c) the thin-skin scaling `ΔR(5.8e7)/ΔR(5.8e9) = 10` within 1 % (the term
-   is linear in `R_s` at fixed field — this tests the term, not the mesh);
-   (d) the thin-skin identity `ΔX(σ) − ΔX_PEC = ΔR(σ)` within 2 % — the
-   FEM's own ΔX difference against its own PEC-floor control on the same
-   mesh, so the box-truncation systematic `MAT-6`'s reactance chunks named
-   cancels; the closed form asserts the same identity in
-   `test_thin_skin_departure_from_perfect_conductor_is_equal_parts`.
-   **Negative control (asserted):** the PEC-floor control's `|ΔR| ≤ 1e-6 ·
-   |ΔX|` — no loss without the term. Separation from (a) is unbounded.
-   **Printed, never asserted:** ΔX(copper) beside `image_limit_inductance_change`
-   × ω (the box systematic, `MAT-6`'s reactance chunks); δ = 21 µm beside
-   the near-loop `h` = 2.5 mm (the Leontovich validity ratio).
-   **Tier / ranks / cost:** `MAT-6`'s module windows read 262–273 s at
-   `-n 2` for ≈ 5 solves (`20260906T170116Z_MAT-6.log`, `…170548Z`), so
-   ≈ 50 s per solve; this module makes three (copper, 5.8e9, PEC control)
-   on an air-only box ≈ 3–4 min; one window, `timeout -k 30 590`, `-s`,
-   durable capture.
-   **Traps:** the floor must be a **domain boundary** — do not keep the
-   slab volume at σ = 0 (the field would penetrate it and Γ_c would be
-   interior; `test_zero_conductivity_slab_is_invisible` is the wrong
-   template); `pec_facet_tags` raises without `problem.facet_tags`;
-   `locate_entities_boundary` returns owned facets — reduce the census;
-   `_reaction_impedance` integrates over the wire only (unchanged);
-   `SpatialCoordinate`-free facet form (constant `Z_s`), no quadrature
-   trap; `-n 2`; no pipe; if `MeshGenerator` cannot mesh the air-only box
-   with the wire, that is the slot's finding — park, do not add a mesher
-   feature.
-   **Scope:** one loop, one liftoff, 10 MHz; no absolute ΔX claim; no coil.
-   **Status it can move:** `TH-14` 🟡 → **✅** on (a)–(d) green — the row's
-   Done-when is then met (steps 1–3 executed, Dodd–Deeds asserted, identity
-   and bracket asserted, elapsed recorded, §2.1 written 2026-09-14);
-   `ANS-6`'s SPEC becomes the weekly's.
-   **Negative result:** (a) red beyond 2 % with (b)–(d) green ⇒ the floor's
-   `|n × E|²` discretisation is the suspect — report the miss, known-issues,
-   row stays 🟡, stop; (c) or (d) red ⇒ a formulation defect in the term as
-   applied on a domain boundary — park on `attempt/*`, stop; never widen.
+2. **`OPS-48` — restore the `EX-14` VTX read-back gate on the 0.11 image
+   (`adios2` 2.12)** (implementer; `examples/magnetostatics/01_straight_wire.py`
+   `_check_vtx_roundtrip` (`:42–108`) and its `02_circular_loop.py` port;
+   no `src/`; real build (magnetostatics — do **not** source complex mode);
+   standard; `-n 2` (the examples' recorded width); `main`; independent;
+   **20 slot-min**: 7 + 137 s of example windows + controls + 15).
+   **Why:** known-issues 2026-09-14 — the check calls the pre-2.10
+   top-level `adios2.ADIOS()` API, catches the `AttributeError` and returns
+   `False`, so the "written `.bp` reproduces the in-memory field" anchor has
+   not executed on the current image; the example exits 0 regardless. A
+   silently disabled gate is a test-trust defect.
+   **The change:** port the reader to the 2.12 bindings — either
+   `adios2.bindings.ADIOS()` (the same low-level classes, moved) or the
+   high-level `adios2.FileReader(str(bp_path))` with `inquire_variable` /
+   `read` per block — keeping the block walk (VTX writes a *local* array,
+   one block per writer rank, no global shape). **Do not let the failure
+   path stay silent:** a read-back failure must print `⚠` **and exit
+   non-zero** in the flagged path the example already has for a mismatch,
+   or the guide must say why not. Same edit in `02_circular_loop.py`.
+   **Anchors (asserted):** `relative difference ≤ VTX_ROUNDTRIP_RTOL`
+   (1e-10, unchanged) on `mag:1` and on `mag:2` — the read-back `max|B|`
+   against the in-memory `max|B|`, printed with 12 digits as the function
+   already does.
+   **Negative control (asserted):** a deliberately wrong comparison — the
+   read-back against `0.5 × in-memory` — reads rel ≈ 1 and would fail the
+   band (print it, labelled *control*, in the same run); separation
+   ≥ 1e9×, the ceiling is the band itself.
+   **Tier / ranks / cost:** `mag:1` 7 s, `mag:2` 137 s at `-n 2`
+   (`20260914T125223Z_EX-57-straight-wire.log`,
+   `…125551Z_EX-57-circular-loop.log`); run each once through the harness
+   (`./run_examples.sh -e 1 -n 2 -t 180 --dry-run` gives the container
+   command); `timeout -k 30 180`; then the setup-figure census (`broken=0`)
+   and docrefs (`exit != 1`) since the guides' read-back sections change.
+   **Traps:** the probe `20260914T125326Z_EX-57-adios2-probe.log:34` reads
+   `adios2 2.12.1 has ADIOS: False` — verify the replacement name against
+   the installed module (`python3 -c "import adios2; print(dir(adios2),
+   dir(adios2.bindings))"` inside the container, through the harness)
+   before editing; the `.bp` is BP4 (`SetEngine("BP4")`); rank 0 reads and
+   broadcasts the verdict — keep that, or `-n 2` hangs; the guides' cited
+   record log for the read-back (`20260826T170155Z_EX-30-root2-run-mag1.log`)
+   is not in `docs/testing/logs/` — cite the new run instead.
+   **Scope:** the two examples' read-back check; other `.bp` read-backs
+   were not surveyed (say so in the known-issues retirement).
+   **Status it can move:** the 2026-09-14 known-issues entry → **retired**
+   in the same commit; `OPS-48` ⬜ → ✅ (its §7 Done-when is this item).
+   **Negative result:** the 2.12 API cannot read the VTX local blocks ⇒
+   report which call fails, keep the entry with the finding, `OPS-48` 🟡,
+   stop — never downgrade the check to "file exists".
 
-3. ✅ **DONE 2026-09-14 04:30 slot (take-next)** (three identities green,
-   168 s at `-n 2`; rule-(a) gate re-run green; §7 row, attempts.md). **`EX-55` — the 32-port ccw quadrature drive on the 16-leg birdcage in
-   ParaView** (`example-runner`; `examples/ports/15_birdcage_sixteen_leg_quadrature_b1.py`
-   + guide; complex; `-n 2`; `main`; independent; **23 slot-min**:
-   *predicted* ≤ 8 min at `-n 2` + 15). The §7 row is the item: fixture and
-   weights imported from `test_port_birdcage_ring_matrix.py` /
-   `test_port_drive_superposition.py`, the three identities at the imported
-   bands, `MIN_SAMPLE_POINTS` imported and the count printed. Runner
-   `-t 900`; the gate was 191 s at `-n 8` — if the `-n 2` window is killed,
-   check for orphans first, then halve the sample and journal the cost as
-   the finding. Add the `## Setup figure` per the runner template's item 6
-   (`EX-57`) in the same slot. **Status it can move:** `EX-55` ⬜ → ✅.
-   **Negative result:** a red imported identity ⇒ known-issues, stop.
+3. **`OPS-49` — a time-series writer beside `write_xdmf_with_tags`**
+   (implementer; `src/fem_em_solver/io/paraview_utils.py` + a new
+   `tests/io/test_xdmf_time_series.py`; real build; smoke tier, `-n 2`;
+   `main`; independent; **18 slot-min**: ≈ 1 min of windows + 15).
+   **Why:** known-issues 2026-09-16 — `consolidate_xdmf_grids` collapses
+   time collections ("single-timestep files only", `paraview_utils.py:71`),
+   so an example that wants two rungs or two drive states as ParaView time
+   steps cannot use the helper: `EX-56` wrote two files, `EX-58` bypassed
+   the helper. Two examples in one day paid for it.
+   **The change (additive):** `write_xdmf_time_series(filename, mesh,
+   cell_tags, steps, comm)` with `steps = [(t, {name: Function}), …]` on
+   one mesh: write the mesh once, `write_function(f, t)` per step per
+   field (CellTags once at every `t` so thresholding works at each step),
+   then a consolidation that lifts every field's per-`t` `<Grid>` into
+   **one** temporal collection whose `n` uniform children each carry all
+   attributes and its `<Time>` — do not call `consolidate_xdmf_grids`
+   (which drops `<Time>`); leave that function and `write_xdmf_with_tags`
+   byte-identical.
+   **Anchors (asserted):** on a `create_box` mesh with two DG0/CG1 fields
+   over `n = 3` steps: (a) the XDMF parses to exactly one temporal
+   collection with **3** `<Time>` values equal to the `t`s written and
+   every child grid carrying every attribute (count identity, in = out);
+   (b) **round trip:** each step's arrays read back through `h5py` equal
+   the functions' gathered arrays at rel ≤ 1e-12 (the same identity
+   `EX-14` asserts on `.bp`).
+   **Negative control (asserted):** the same three steps written through
+   the *existing* `write_xdmf_with_tags` (three calls or one call with
+   `t`) parse to **one** time value or none — the collapse the entry
+   describes — at `HEAD^` of this change pinned by commit, not `HEAD:`
+   (the `test_orphan_guard.sh` trap).
+   **Tier / ranks / cost:** a box mesh and XML parsing — seconds;
+   `timeout -k 30 60`, `-n 2` (the writer is collective; a rank-local bug
+   shows only there), `-s`.
+   **Traps:** `XDMFFile.write_function(f, t)` names the grid by the
+   function's `name` — two fields with the same name collide; `ET.indent`
+   is rank 0 only, barrier after; facet tags (a separate topology grid)
+   are out of scope — reject `facet_tags` in this writer with a clear
+   error rather than half-supporting them.
+   **Scope:** the writer and its unit test; `EX-56` / `EX-58` are **not**
+   rewritten here (a later `EX-*` item may adopt it).
+   **Status it can move:** the 2026-09-16 known-issues entry → retired in
+   the same commit; `OPS-49` ⬜ → ✅.
+   **Negative result:** ParaView's Xdmf3 reader will not open the
+   collection (cannot be checked headless — say so; the XML identity is
+   the gate) or dolfinx will not write the same function at two times ⇒
+   report, keep the entry, `OPS-49` 🟡, stop.
 
-4. ✅ **DONE 2026-09-14 06:00 slot** (fall asserted, 142 + 136 s at `-n 2`;
-   one-XDMF deviation disclosed; §7 row, attempts.md). **`EX-56` — `|B₁⁺|` spread against resolution, the two-rung ladder in
-   ParaView** (`example-runner`; `examples/ports/16_birdcage_b1_resolution_ladder.py`
-   + guide; complex; `-n 2`; `main`; independent; **22 slot-min**:
-   *predicted* ≈ 6–7 min at `-n 2` + 15). The §7 row is the item: `LADDER`
-   and the step-5 records imported from
-   `test_birdcage_b1_plus_closed_form.py`; the fall asserted; the records
-   asserted at rtol 1e-3 only at `-n 4` (the record width) and printed at
-   `-n 2` with the width disclosed; both rungs in one XDMF as time steps;
-   the ×0.0095 rung off. Runner `-t 900`. Setup figure per item 6 of the
-   runner template. **Status it can move:** `EX-56` ⬜ → ✅. **Negative
-   result:** the fall not observed ⇒ known-issues, stop.
-
-5. ✅ **DONE 2026-09-14 06:00 slot (take-next)** (both imported assertions
-   green, 58 + 57 s; rule-(a) gate 7 passed; §7 row, attempts.md).
-   **`EX-58` — the tuned birdcage: sweep, `C_tuned`, the in-model field**
-   (`example-runner`; `examples/ports/17_birdcage_tuned_circuit.py` +
-   guide; complex; `-n 2`; `main`; independent; **20 slot-min**:
-   *predicted* ≈ 2 min + census + 15). The §7 row is the item:
-   `S_64MHZ_EPS0_RECORD`, `tuning_sweep`, `select_c_tuned`, `tuned_input`
-   imported from `tests/validation/test_port_circuit_layer_field.py`
-   (never copied); the sweep's `Im Z_in(C)` printed and its zero asserted at
-   the imported `TUNING_IM_Z_RTOL`; then **one** in-model 64 MHz solve with
-   `PORT-14`'s κ-corrected capacitor sheets at `C_tuned` through the
-   module's terminated-network helper (module-private — rule (a) allows
-   making it importable, additively, with the gate module re-run green in
-   the same slot) and the tuned `S₁₁` residual asserted at the imported
-   `REDUCTION_BAND`; `|E|` on the phantom at `C_tuned` beside the 50 Ω
-   baseline as two time steps of one combined XDMF. Cost from
-   `20260914T020419Z_PORT-15.log:3728` (mesh 25 s + three drives 20 s) plus
-   the 4-drive baseline ≈ 90 s. Runner `-t 600`. Setup figure per the
-   template. **Status it can move:** `EX-58` ⬜ → ✅. **Negative result:** a
-   red imported band ⇒ known-issues naming the example, stop.
-
-6. ✅ **DONE 2026-09-14 07:30 slot** (imported gates and identity green, digits
-   reproduced, 35 + 32 s; DG0 per-adjacent-cell route; §7 row, attempts.md).
-   *Earlier:* 🟡 **Attempted 2026-09-14 06:00 slot (take-next, minute 26): stopped at minute 29, no
-   code written** (attempts.md). **Design note for the next taker:** `ports:14`
-   writes only the integer facet-tag grid (`14_birdcage_pec_hole_ports.py:270–279`).
-   No example, `io/` or `post/` module has a computed per-facet scalar or a
-   `create_submesh` precedent. Choose the route before the clock starts: a
-   tag-401 facet submesh with DG0, or DG0 on the adjacent cells, named as
-   such. Rule-(a) gate command: `20260914T021500Z_TH-14.log:12` verbatim
-   (32 passed, 211 s). Still runnable, not blocked.
-   **`EX-59` — the copper birdcage: the surface loss density on the coil**
-   (`example-runner`; `examples/ports/18_birdcage_copper_leontovich.py` +
-   guide; complex; `-n 2`; `main`; independent; **21 slot-min**:
-   *predicted* ≈ 3 min + 15). The §7 row is the item: the 10 MHz copper
-   configuration of `tests/validation/test_th14_birdcage_copper.py`
-   (its port builder, problem, Leontovich term and surface-loss helpers are
-   module-private — rule (a)); the three imported port gates and the
-   surface-loss identity at `DISCRETE_IDENTITY_RTOL` asserted; the DG0
-   facet field `½Re(1/Z_s)|n × E|²` on tag 401 written through the facet
-   grid (the `ports:14` pattern) beside `|E|` on the phantom;
-   `P_coil/P_in` printed beside the σ = 800 solid's share. Cost: the gate
-   fixture took 104.7 s for 3 f × 3 σ under reuse
-   (`20260914T021500Z_TH-14.log:1348`); one f, one σ ≈ 60 s predicted.
-   Runner `-t 600`. Setup figure per the template. **Status it can move:**
-   `EX-59` ⬜ → ✅. **Negative result:** a red imported gate ⇒ known-issues,
-   stop. No absolute copper-coil claim (`ANS-6`).
-
-7. ✅ **DONE 2026-09-14 07:30 slot (take-next)** (both imported assertions green, 11 + 7 s;
-   additive `src/` keyword, gate re-run 18 passed; §7 row, attempts.md).
-   **`EX-60` — the lossy-wall cavity: Q against σ beside Pozar**
-   (`example-runner`; `examples/time_harmonic/10_lossy_wall_cavity_q.py` +
-   guide; complex; `-n 2`; `main`; independent; **18 slot-min**:
-   *predicted* ≈ 1 min + 15). The §7 row is the item:
-   `solve_impedance_wall_cavity_mode` (`core/cavity.py`) on the `TH-9` box
-   at σ ∈ {1e4, 1e6, 5.8e7}; the Pozar `Q_c` closed form imported from
-   `tests/validation/test_cavity_leontovich_q.py` (never restated), the
-   1e4 rung asserted at the imported 5 % band and the `√σ` scaling identity
-   asserted, copper printed as the PEC-limit reading; the TE₁₀₁ `|E|` to
-   XDMF. Cost: 9.2 s of eigen-solves in a 45 s window
-   (`20260914T004807Z_TH-14.log`). Runner `-t 300`. Setup figure per the
-   template. **Status it can move:** `EX-60` ⬜ → ✅. **Negative result:** a
-   red imported band ⇒ known-issues, stop.
-
-8. ✅ **DONE 2026-09-14 07:30 slot (take-next)** (census `missing` 48 → 47, `broken=0`, docrefs
-   `exit=0`; flagged 7 s, control 6 s, same records; 192 KiB; attempts.md).
-   **`EX-57` setup figure — `examples/magnetostatics/01_straight_wire.py`**
-   (`example-runner`; the example's own tier; independent; **20 slot-min**:
-   the example's recorded window + the render (+2 s measured on `mesh:3`)
+4. **`EX-57` setup figure — `examples/magnetostatics/05_gauge_cross_check.py`**
+   (`example-runner`; the example's own tier — standard, `./run_examples.sh
+   -e 5 -n 2 -t 180`, real build, 5 s in the example / 8 s of harness wall
+   on record; independent; **20 slot-min**: the recorded window + the render
    + censuses + 15). The census's `--next` at review time
-   (`check_example_setup_figures.py`: 49 examples, 1 ok, 48 missing). Done-when
-   is the §7 `EX-57` entry's per-item list. **Status it can move:** `EX-57`
-   census `missing` 48 → 47.
+   (`check_example_setup_figures.py`: 54 examples, 9 ok, 45 missing,
+   0 broken). The fixture is imported from `tests/solver/test_gauge_lagrange.py`
+   (`straight_wire_domain` — one mesh, two gauges, one figure: name the
+   wire region so the copper colour applies (the §7 trap), hide the air,
+   slice normal to the wire axis through the sample points' plane).
+   Done-when is the §7 `EX-57` entry's per-item list. **Status it can
+   move:** `EX-57` census `missing` 45 → 44.
 
 *(The per-review journal — slot recap, completion audits, plan-work notes,
 §10 assessment — lives in the review commits and

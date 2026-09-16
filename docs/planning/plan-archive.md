@@ -30502,3 +30502,139 @@ module's red at `-n 4` (known-issues, 2026-09-09). The `WF-6` ×0.0095 red is
 opt-in only and is not counted. The new `TH-15` step-3 entry is a printed
 excess, not a red test (the module is green on the substitute comparand).
 
+
+## §9 On-deck interval narrative (2026-09-14 03:00 review) — archived 2026-09-16 (03:00 daily review)
+
+Last reviewed **2026-09-14, 03:00 review** — the first under the wind-down
+schedule (one review + four slots per active day, `9c987b0`). *(The
+2026-09-13 18:00 interval narrative is archived verbatim in
+`docs/planning/plan-archive.md`.)*
+
+**Interval (09-13 18:00 → 09-14 03:00): two slots fired — the last two of
+the old schedule — both did chunk work, and seven of the nine-item 18:00
+queue landed; items 8–9 (`EX-55`, `EX-56`) carry over.** Take-next carried
+the 19:30 slot through four items and the 21:00 slot through three (it
+stopped at minute 34 with `EX-55` next). Three chunks closed ✅ and one
+opened 🟡 → gated on two steps; the interactive operator session that
+followed rewired the schedule, opened `EX-57` and queued the XXL window.
+
+| Slot | Chunk | Outcome |
+|---|---|---|
+| 19:30 | `PORT-14` step 3; `TH-14` step 1; `TH-15` step 3c; `PORT-15` step 2 | `b82975a` **`PORT-14` 🟡 → ✅** (κ(64) 1.060762155e-02 vs the 2d record at 1.457e-07; residuals 5.359129e-05 / 1.998404e-06; four windows 114 / 196 / 115 / 66 s, attempt branch deleted); `244b038` **`TH-14` ⬜ → 🟡** (Q = 801.77 vs Pozar 801.68, +0.010 %; `Q(1e6)/Q(1e4)` 9.995; PEC control 4.8e-19; 45 s); `9f93db6` the hole route's terminal excess **attributed** — equals `C − terminal` to every digit, hole/solid `C/terminal − 1` 0.9997, known-issues entry retired (102 s); `d65ee3d` the 64 MHz records stored, gate (i) from the circuit side (133 + 126 s) |
+| 21:00 | `PORT-15` step 3; `TH-14` step 2 (the entry's "step 3"); `EX-54` | `3e6519a` **`PORT-15` 🟡 → ✅** (`C_tuned` 15.570 pF, `Im Z_in` 2.1e-15, in-model vs circuit `S₁₁` 8.26e-5 / 2×2 6.12e-5; 176 s); `d5550dc` the copper F-small birdcage as a Leontovich hole — three port gates at 10 / 64 / 128 MHz, surface-loss identity ≤ 3.0e-13, σ-ladder monotone, 32 passed, 211 s — **closed `TH-14` ✅ on the §9 item's letter and flagged the row's Done-when; demoted below**; `2cc9192` **`EX-54` ⬜ → ✅** (imported gates green, cavity-wall `\|n × E\|` 2.989e-16, 34 s) |
+| operator (19:00–21:50) | ops; `EX-57` step 0 | `9c987b0` … `957bfed` the wind-down crontab, XL six-per-week nightly at 4 h, the XL clerk role, `xl-pending.md`, the 09-19 XXL window queued (`WF-7` step 0b); `40ec08b` / `960e0f2` `write_setup_figure`, the census (49 examples, 1 ok, 48 missing), the `mesh:3` exemplar, the runner template's item 6 |
+
+This review ran on `claude-fable-5-1`, no override
+(`logs/automation/20260914T080001Z_daily-review.log`). The new crontab is
+installed: the 02:00 XL entry fired on schedule and exited empty
+(`20260914T070001Z_xl-run.log`).
+
+**Tree and branches (step 2).** Clean at review start; `fem-em-solver` Up;
+no `recovered/*`. Four `attempt/*` branches remain (`TH-15-step2proper`,
+`WF-6-step4b/4c/4e`, kept on the 2026-09-09 18:00 ruling);
+`PORT-14-step3-20260913T172330Z` was deleted by its landing commit after
+the digits reproduced. Nothing to clear.
+
+**Audit (§4, step 3) — four closures, four `auditor` reports, re-cited.**
+- **`PORT-14` ✅ (`b82975a`) — PASS.** `20260914T003252Z_PORT-14-step3-64mhz.log:1937,1951`
+  (κ(64) 1.060762155e-02, `|ratio − 1|` 1.457e-07 asserted ≤ 1e-3), `:1958–1959`
+  (5.359129e-05 / 1.998404e-06 ≤ `REDUCTION_BAND`, the uncorrected control
+  1.354202e-02 beside them), `:2093–2096` (Status 0, 114 s);
+  `…003503Z_…-10mhz.log:1888–1902` (floor unmoved, 196 s);
+  `…003827Z_…-128mhz.log:1955–1956` (4.012884e-05 / 5.599266e-06, printed);
+  `…004031Z_…-port9-gate.log:1971` (16 passed). Bands imported, `STEP3_KAPPA_RTOL`
+  new and motivated, no loosening. Caveat acted on: the row's tier cell read
+  "standard" while every step-3 window ran at the heavy ceiling — the cell
+  now says which steps are which.
+- **`PORT-15` ✅ (`3e6519a`) — PASS.** `20260914T020419Z_PORT-15.log:1967–1968`
+  (`C_tuned` 1.556993028375804e-11 F, `|Im Z|/|Z|` 2.113e-15 ≤ 1e-6), `:3728`
+  (the in-model run: mesh 25.27 s, three drives 19.56 s), `:3732`, `:3742`
+  (`S₁₁` residual 8.255812e-05, 2×2 6.123431e-05 ≤ 1e-3, live asserts);
+  `…010149Z:1902–1937` (the stored records' source) and `…010448Z` (4
+  passed, 126 s). The headline identity rests on a fresh in-model solve, not
+  on the stored records; "tuned" = series resonance, disclosed in the row.
+- **`EX-54` ✅ (`2cc9192`) — PASS.** `20260914T023145Z_EX-54.log:897` (the
+  four imported gates asserted), `:908` (per-class `max|ΔS|` printed, no
+  band), `:910` (`|n × E|` 2.989e-16 over 4.052772e-02 m²), `:918–920`
+  (Status 0, 34 s); `…023104Z_EX-54-th15-rerun.log:961` (gate module re-run,
+  6 passed / 4 skipped); censuses `…022309Z:39` / `…023230Z-post:39` exit 0.
+  Timing note: the runner template's setup-figure item postdates this
+  closure by 16 minutes, so `ports:14` owes its figure to `EX-57` like the
+  other 47.
+- **`TH-14` ✅ (`d5550dc`) — auditor DEMOTE, review demotes: ✅ → 🟡.** Every
+  numerical claim traces (`20260914T021500Z_TH-14.log:1037/1183/1329` the
+  three port gates, `:1054/1200/1346` the identity ≤ 2.963e-13, `:1364` the
+  10 MHz bracket, `:1038/1045/1052` the ladder, `:4223–4226` rc 0 / Status
+  0 / 211 s; `20260914T004807Z_TH-14.log` step 1) and nothing was loosened —
+  but the row's own Done-when (§7, "Steps 1–3 executed, Fresnel and
+  Dodd–Deeds asserted, … §2.1's conductor-model line updated") is not met:
+  the Dodd–Deeds copper-slab step was never run and §2.1 was untouched. The
+  executor closed on §9 item 6's "(a)–(c) move `TH-14` → ✅" and flagged the
+  conflict (`docs/testing/attempts.md`, 02:22Z entry, caveat 1). **The item
+  was wrong, not the executor:** the 18:00 review wrote a "status it can
+  move" line without reading the row's Done-when. Ruling: 🟡; the slab step
+  is item 2 below; the §2.1 line is written by this review; the Fresnel
+  clause is discharged by the 09-13 re-scope (step 1 is the cavity Q). One
+  digit the auditor could not trace — "4.4828e-4 W" — is arithmetic on
+  `:4079` (`P_src − ΣP_sheet`), now said so in the row. Rule (j) below.
+- Not audited (no status change): `TH-15` step 3c (a gated step under a 🟡
+  row — its attribution is ruled in step 4), `PORT-15` step 2 (subsumed by
+  the closure audit), `EX-57` step 0 (operator-executed, 🟡 by construction
+  of a recurring chunk).
+
+**Rulings (step 4).**
+1. **`TH-15` step 3's power sentence is re-registered (rule (h), as the
+   18:00 review said it would be on a printed term).** Step 3c's window
+   (`20260914T005452Z_TH-15-step3c.log:969–970`, solid `:2790–2791`) shows
+   the hole's 7.693701287e-05 W excess of `Σ½Re(V I*)` over the volume loss
+   equal to `C_total − Σ½|I|²Re Z_p` to every digit, and the same on the
+   solid (6.716202469e-05 W); the hole's driven-port `C/terminal − 1`
+   1.058874954e-02 sits at 0.9997× the solid's. The registered sentence is
+   `Σ½Re(V I*) = P_vol + (C − terminal)` — the sheets' Cauchy–Schwarz
+   deficit `PORT-16` named at 10 MHz, not a hole-route readout systematic.
+   Same physics, same fixture; the 2026-09-13 known-issues entry retired
+   with `9f93db6`. §2.1 carries it. `TH-15` stays 🟡 on step 2 (family
+   frozen at 2e–2h since 2d — the weekly's re-scope, not a queue item).
+2. **`PORT-15` step 3's printed ladder mode-1 frequency (1.606e8 Hz at
+   `C_tuned`, ≈ 2.5× 64 MHz)** is a record of a topology mismatch — the
+   fixture's capacitors sit in the legs, the closed form's in the rings —
+   not a κ systematic (identity (b) holds at `C_tuned`). It is input to
+   `TH-17` step 1's scoping (the weekly's) and moves nothing here.
+3. **No attempt branches or parked work this interval** — nothing to
+   rescope.
+
+**§10 assessment (step 5).** No gap. §10 chain steps 1–3 (`PORT-14` step 3,
+`PORT-15` steps 2–3) are done; step 7 (`TH-14` step 1) done; step 8 (the
+copper birdcage) gated; `TH-17` step 1 is the next physics step and, by the
+chain's own text, the weekly's to write (Saturday 09-19 21:00). The one §7
+text this review writes from the audit is `TH-14` step 2's route (below).
+**Example step (§5.4):** three quantitative gates closed this interval with
+no example demonstrating them — `EX-58` (the tuned birdcage: `PORT-15`'s
+sweep + in-model field; `ports:3` shows lumped *sheets*, nothing tunes),
+`EX-59` (the copper birdcage's surface loss density; `ports:14` is the PEC
+hole), `EX-60` (the lossy-wall cavity Q; `th:2` is the PEC box) — opened in
+the §7 EX table and queued as items 5–7. `PORT-14`'s capacitor sheets are
+covered by `EX-58`'s in-model solve (the capability from the tuning angle).
+
+**Restock (step 6).** Eight items, **all independent, 164 predicted
+slot-minutes against the 240 floor — shortfall 76 min, stated, not
+filled.** What exists and is not queued, and why: `TH-17` step 1 (the
+weekly's, §10 chain), `ANS-6`'s SPEC (the weekly's, serial on item 2),
+Tier B `TH-5` step 1 (behind the conductor lineage by the ladder's order,
+and its anchor — the band from Jin's first-order-ABC reflection curve — is
+unwritten; the 09-19 weekly decides whether to open Tier B while `ANS-6`
+waits on the operator's AED queue), `ANS-4` step 3 (`xl`, the clerk's once
+item 1 lands), frozen families (`WF-6` 4l, `ANS-4` 2h, `PORT-14` 2f,
+`TH-15` 2i), a second `TH-19` degree-2 observation (no status). The
+drained-queue fallback (`EX-57`) absorbs the shortfall by design: every
+slot that empties the list draws the next setup figure.
+
+**XL clerk (step 6b).** `xl-queue.env` empty; budget open (three charged
+rows in the trailing 7 days — 09-09 ×2, 09-10 — against six); the only
+`xl` entry (`ANS-4` step 3) is `PENDING PREREQUISITE` on item 1, so nothing
+is queued. `xxl-queue.env` carries the 09-19 window (`WF-7` step 0b, QUEUED
+by the operator). Neither ledger gained a row. Nothing written.
+
+**Residual `main` reds at `-n 2`: 3 deliberate/known**, plus the padding
+module's red at `-n 4` (known-issues, 2026-09-09). The `WF-6` ×0.0095 red is
+opt-in only and is not counted.
