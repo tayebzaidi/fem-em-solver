@@ -13110,3 +13110,19 @@ F-human degree-1 32×32 is an ordinary XL job and `TH-16` does not move up.
 - Logs: `20260916T095625Z_EX-57-precheck.log`, `20260916T095736Z_EX-57-list.log`, `20260916T095753Z_EX-57-mag6-flagged.log`, `20260916T100028Z_EX-57-mag6-control.log`, `20260916T100329Z_EX-57-postcensus-fig.log`, `20260916T100330Z_EX-57-postcensus-docrefs.log`.
 - Branch (if parked): none — landed on `main`.
 - Next-attempt hypothesis: n/a — item closed. The daily review's step 6 (or the next drained-queue fallback) should queue the next `check_example_setup_figures.py --next` item (43 remain).
+
+## 2026-09-16T11:05Z (2026-09-16 06:00 CDT slot) — EX-57 setup figure: `mri/01_coil_phantom_fields.py` — **complete; census `missing` 43 → 42; drained-queue fallback**
+
+**How it ran.** §9 On-deck items 1–4 were all marked done at slot start (landed by the 04:30 slot), so this is the standing drained-queue fallback (PROJECT_PLAN §9, operator directive 2026-09-13). Executed by `example-runner` in the foreground; commit and review of the diff by the slot.
+- **Census before** `20260916T110038Z_EX-57.log` (before any edit): `--next` printed `examples/mri/01_coil_phantom_fields.py`, `examples=54 ok=11 missing=43 broken=0`. Predicted `missing` 43 → 42, `broken=0`.
+- **Edit.** `write_setup_figure` right after the mesh/tag summary: tags 1/2 named `coil_1 (conductor)` / `coil_2 (conductor)` (copper colour), phantom (3) translucent, air (4) hidden, slice normal to x through the origin (a plane containing the shared z axis — cuts each ring twice and the phantom lengthwise). Guide `## Setup figure` section added before "2. How to run it".
+
+**Measured.**
+- **Flagged run** `20260916T110133Z_EX-57.log` (`FEM_EM_SETUP_FIGURES=1`, `-n 2`, complex, `timeout -k 30 180`, Status 0, 8 s): `[setup-figure]` line `:397`, PNG 248 KiB on disk (≤ 600). `mri:1` is the ungated demo — no imported assertion exists; printed records match the guide's (`|E|` mean 1.979842e+02, `|B|` mean 1.294602e-06, cell tags 391/349/493/8058, KSP converged).
+- **Unflagged control** `20260916T110157Z_EX-57.log` (Status 0, 3 s): same `|E|` digits, `|B|` min/max move in the 7th digit (the `|B|` leg's solve noise the guide already documents under `POST-4`), no `[setup-figure]` line.
+- **Census after** `20260916T110222Z_EX-57.log`: `examples=54 ok=12 missing=42 broken=0` — matches prediction. Docrefs `20260916T110232Z_EX-57.log`: `dead=0 guide=0 stale=17 exit=2` (≠ 1).
+- **Slot correction + rule (i) re-run.** On review the slot found the runner's code comment and caption described the x = 0 slice as "normal to the z axis" (the plane contains it); both were reworded (comment/prose only), and the module as committed was re-run unflagged: `20260916T110331Z_EX-57-mri1-control.log`, Status 0, 5 s, `|E|` mean 1.979842e+02, `|B|` mean 1.294602e-06.
+
+**Outcome:** committed on `main`, clean tree; no `src/`, no gate touched. §7 `EX-57` census line updated.
+- Branch (if parked): none.
+- Next-attempt hypothesis: n/a — item closed; 42 figures remain for step 6 / the fallback.

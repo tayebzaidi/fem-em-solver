@@ -84,7 +84,10 @@ from fem_em_solver.post import (
     format_phantom_quicklook_report,
     write_phantom_quicklook_report,
 )
+from fem_em_solver.post.setup_figure import write_setup_figure
 from fem_em_solver.utils.constants import MU_0
+
+FIGURE_DIR = Path(__file__).resolve().parent / "figures"
 
 
 def _print_tag_summary(cell_tags, comm: MPI.Intracomm) -> None:
@@ -321,6 +324,26 @@ def main(argv: list[str] | None = None):
     if comm.rank == 0:
         print(f"  Mesh created: {num_cells} cells, {num_vertices} vertices")
     _print_tag_summary(cell_tags, comm)
+
+    # EX-57 setup figure: both coils (tags 1/2) named so the copper colour
+    # applies (the §7 trap for wire-source magnetostatics examples), the
+    # phantom (tag 3) translucent so the coils remain visible through it, air
+    # (tag 4) hidden. Sliced through x = 0 -- a plane containing the coils'/
+    # phantom's shared z axis -- so the panel shows the Helmholtz-like stacking
+    # along the centerline the diagnostics (§3 step 5) sample. No-op unless
+    # FEM_EM_SETUP_FIGURES=1.
+    write_setup_figure(
+        mesh,
+        cell_tags,
+        FIGURE_DIR / "mri_01_coil_phantom_fields_setup.png",
+        region_names={1: "coil_1 (conductor)", 2: "coil_2 (conductor)", 3: "phantom", 4: "air"},
+        hide_tags=(4,),
+        translucent_tags=(3,),
+        slice_normal=(1.0, 0.0, 0.0),
+        slice_origin=(0.0, 0.0, 0.0),
+        title="mri:1 -- coil + gelled saline phantom (ungated end-to-end demo)",
+        comm=comm,
+    )
 
     # Shared current source for both coil tags.
     coil_cross_section = np.pi * (0.01 ** 2)

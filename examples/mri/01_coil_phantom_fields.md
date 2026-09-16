@@ -128,6 +128,21 @@ carried forward with that provenance, not re-measured:
 
 The `WARN` status is the expected output, not a failure.
 
+## Setup figure
+
+![mri:1 setup — the two-coil + gelled saline phantom domain](figures/mri_01_coil_phantom_fields_setup.png)
+
+`examples/mri/figures/mri_01_coil_phantom_fields_setup.png`. Rendered right
+after the mesh is built (`FEM_EM_SETUP_FIGURES=1`). Both coil regions (tags 1
+and 2, `coil_1`/`coil_2`) are named so the copper colour applies; the phantom
+(tag 3) is translucent so the coils stay visible through it; air (tag 4) is
+hidden. The slice is normal to `x` through the origin — a plane containing
+the coils' and phantom's shared `z` axis, so it cuts each coil ring twice
+(the four copper squares) and the phantom lengthwise — so the panel shows
+the Helmholtz-like stacking along the centerline the diagnostics (§3 step 5)
+sample. It is a picture of the geometry only;
+nothing in it is a claim about the fields.
+
 ## 2. How to run it
 
 ```
