@@ -47,6 +47,18 @@ def _check_vtx_roundtrip(bp_path, B_lag, V_lag, comm):
     The writer is collective; the read-back is done on rank 0 only (the BP file
     holds the *global* array) and the verdict is broadcast, so every rank
     raises or none does.
+
+    OPS-48 (2026-09-16): ported to the adios2 2.12 bindings, same as the EX-14
+    original in ``01_straight_wire.py``.  The pre-2.10 top-level
+    ``adios2.ADIOS()`` was removed when the image moved to dolfinx 0.11 /
+    adios2 2.12.1; the identical low-level classes now live under
+    ``adios2.bindings`` (measured: ``adios2.__version__ == '2.12.1'``,
+    ``hasattr(adios2.bindings, 'ADIOS') is True``, log
+    ``docs/testing/logs/20260916T094031Z_OPS-48.log``).  The old call raised
+    AttributeError, which this function used to swallow with ``return False``,
+    so the anchor had not executed on any run since the image moved
+    (known-issues 2026-09-14).  A read-back failure now raises, i.e. the
+    example exits non-zero instead of printing a warning and exiting 0.
     """
     in_memory = _global_max_magnitude(B_lag, V_lag, comm)
     comm.Barrier()
@@ -55,12 +67,12 @@ def _check_vtx_roundtrip(bp_path, B_lag, V_lag, comm):
     failure = None
     if comm.rank == 0:
         try:
-            import adios2
+            from adios2 import bindings as adios2b
 
-            adios = adios2.ADIOS()
+            adios = adios2b.ADIOS()
             reader_io = adios.DeclareIO("ex17_vtx_readback")
             reader_io.SetEngine("BP4")
-            engine = reader_io.Open(str(bp_path), adios2.Mode.ReadRandomAccess)
+            engine = reader_io.Open(str(bp_path), adios2b.Mode.ReadRandomAccess)
             try:
                 available = reader_io.AvailableVariables()
                 if "B" not in available:
@@ -79,7 +91,7 @@ def _check_vtx_roundtrip(bp_path, B_lag, V_lag, comm):
                     count = [int(n) for n in block["Count"].split(",")]
                     var.SetBlockSelection(block_id)
                     data = np.zeros(count, dtype=np.float64)
-                    engine.Get(var, data, adios2.Mode.Sync)
+                    engine.Get(var, data, adios2b.Mode.Sync)
                     readback = max(
                         readback, float(np.max(np.linalg.norm(data, axis=1)))
                     )
@@ -91,22 +103,46 @@ def _check_vtx_roundtrip(bp_path, B_lag, V_lag, comm):
     readback, failure = comm.bcast((readback, failure), root=0)
 
     if failure is not None:
-        print(f"    ⚠ VTX round-trip read-back unavailable: {failure}")
-        return False
+        # OPS-48: a read-back failure is a failure of the EX-17 anchor, not a
+        # missing optional feature -- raise so the example exits non-zero.
+        if comm.rank == 0:
+            print(f"    ⚠ VTX round-trip read-back unavailable: {failure}")
+        raise RuntimeError(f"VTX round-trip read-back unavailable: {failure}")
 
     rel = abs(readback - in_memory) / in_memory if in_memory else abs(readback)
+    # Negative control (OPS-48): the same comparison against a deliberately
+    # wrong reference (half the in-memory value) must land far outside the
+    # band, so a rel of ~0 is evidence the file matches and not evidence that
+    # the comparison is inert.  Separation required: control >= 1e9 x band.
+    wrong_reference = 0.5 * in_memory
+    rel_control = (
+        abs(readback - wrong_reference) / wrong_reference
+        if wrong_reference
+        else abs(readback)
+    )
     if comm.rank == 0:
         print("\n  VTX round-trip check (EX-17 anchor):")
         print(f"    in-memory  max|B| = {in_memory:.12e} T")
         print(f"    read-back  max|B| = {readback:.12e} T")
         print(f"    relative difference = {rel:.3e}  (tol {VTX_ROUNDTRIP_RTOL:.0e})")
+        print(
+            f"    control (read-back vs 0.5 x in-memory) = {rel_control:.3e}"
+            f"  -- must exceed the band"
+        )
     if rel > VTX_ROUNDTRIP_RTOL:
         raise RuntimeError(
             f"VTX round-trip mismatch: in-memory max|B| = {in_memory:.12e} vs "
             f"read-back {readback:.12e} (relative {rel:.3e} > {VTX_ROUNDTRIP_RTOL:.0e})"
         )
+    if rel_control <= 1e9 * VTX_ROUNDTRIP_RTOL:
+        raise RuntimeError(
+            f"VTX round-trip negative control did not separate: wrong-reference "
+            f"relative {rel_control:.3e} <= {1e9 * VTX_ROUNDTRIP_RTOL:.0e} "
+            f"(the check cannot distinguish a matching file from a wrong one)"
+        )
     if comm.rank == 0:
         print("    ✓ written .bp reproduces the in-memory field")
+        print("    ✓ control separated: wrong reference reads rel ~ 1")
     return True
 
 

@@ -1,0 +1,41 @@
+# Test Run
+- Chunk: OPS-48
+- Commit: a267c5a418d168c0c574bc881ad874ad9d4cf700
+- Time (UTC): 2026-09-16 09:41:02
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.5.1
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && timeout -k 30 60 python3 -c "from adios2 import bindings as b; print(b.Mode.ReadRandomAccess, b.Mode.Sync); a=b.ADIOS(); io_=a.DeclareIO(chr(120)); print(type(io_)); print(hasattr(io_,chr(83)+chr(101)+chr(116)+chr(69)+chr(110)+chr(103)+chr(105)+chr(110)+chr(101)), hasattr(io_,chr(65)+chr(118)+chr(97)+chr(105)+chr(108)+chr(97)+chr(98)+chr(108)+chr(101)+chr(86)+chr(97)+chr(114)+chr(105)+chr(97)+chr(98)+chr(108)+chr(101)+chr(115)))"'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 24
+drwxr-xr-x  3 taz5297 taz5297 4096 Sep  4 23:31 .
+drwxr-xr-x 17 taz5297 taz5297 4096 Sep 16 04:40 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  721 Sep  3 13:49 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 4275 Sep 13 19:19 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.5.1
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && timeout -k 30 60 python3 -c "from adios2 import bindings as b; print(b.Mode.ReadRandomAccess, b.Mode.Sync); a=b.ADIOS(); io_=a.DeclareIO(chr(120)); print(type(io_)); print(hasattr(io_,chr(83)+chr(101)+chr(116)+chr(69)+chr(110)+chr(103)+chr(105)+chr(110)+chr(101)), hasattr(io_,chr(65)+chr(118)+chr(97)+chr(105)+chr(108)+chr(97)+chr(98)+chr(108)+chr(101)+chr(86)+chr(97)+chr(114)+chr(105)+chr(97)+chr(98)+chr(108)+chr(101)+chr(115)))"'\'''
+Mode.ReadRandomAccess Mode.Sync
+<class 'adios2.bindings.adios2_bindings.IO'>
+True True
+
+## Exit
+- Status: 0
+- Elapsed (s): 1
+- Filtered lines (gmsh optimisation chatter): 0

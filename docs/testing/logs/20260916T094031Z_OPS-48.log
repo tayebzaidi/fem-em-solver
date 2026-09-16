@@ -1,0 +1,43 @@
+# Test Run
+- Chunk: OPS-48
+- Commit: a267c5a418d168c0c574bc881ad874ad9d4cf700
+- Time (UTC): 2026-09-16 09:40:32
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.5.1
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && timeout -k 30 60 python3 -c "import adios2; print(adios2.__version__); print([n for n in dir(adios2) if not n.startswith(chr(95))]); import adios2.bindings as b; print([n for n in dir(b) if not n.startswith(chr(95))]); print(\"ADIOS in bindings:\", hasattr(b,chr(65)+chr(68)+chr(73)+chr(79)+chr(83))); print(b.ADIOS.__doc__)"'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 24
+drwxr-xr-x  3 taz5297 taz5297 4096 Sep  4 23:31 .
+drwxr-xr-x 17 taz5297 taz5297 4096 Sep 16 04:40 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  721 Sep  3 13:49 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 4275 Sep 13 19:19 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.5.1
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && timeout -k 30 60 python3 -c "import adios2; print(adios2.__version__); print([n for n in dir(adios2) if not n.startswith(chr(95))]); import adios2.bindings as b; print([n for n in dir(b) if not n.startswith(chr(95))]); print(\"ADIOS in bindings:\", hasattr(b,chr(65)+chr(68)+chr(73)+chr(79)+chr(83))); print(b.ADIOS.__doc__)"'\'''
+2.12.1
+['ADIOS2_HAS_CUPY', 'ADIOS2_HAS_TORCH', 'Accuracy', 'Adios', 'Attribute', 'DerivedVarType', 'DerivedVariable', 'Engine', 'FileReader', 'IO', 'JoinedDim', 'LocalValueDim', 'Mode', 'Operator', 'Optional', 'ShapeID', 'StepMode', 'StepStatus', 'Stream', 'Variable', 'adios', 'adios2', 'attribute', 'bindings', 'derived_variable', 'engine', 'file_reader', 'io', 'is_built_with_mpi', 'maxsize', 'np', 'operator', 'singledispatchmethod', 'stream', 'string_to_mode', 'type_adios_to_numpy', 'variable']
+['ADIOS', 'Accuracy', 'Append', 'Attribute', 'ConstantDims', 'Deferred', 'DerivedVarType', 'EndOfStream', 'Engine', 'ExpressionString', 'GlobalArray', 'GlobalValue', 'IO', 'L2_norm', 'Linf_norm', 'LocalArray', 'LocalValue', 'LocalValueDim', 'Mode', 'NotReady', 'OK', 'Operator', 'OtherError', 'Query', 'Read', 'ReadRandomAccess', 'ShapeID', 'StatsOnly', 'StepMode', 'StepStatus', 'StoreData', 'Sync', 'Unknown', 'Update', 'Variable', 'VariableDerived', 'VariableDims', 'Write', 'adios2_bindings', 'is_built_with_mpi']
+ADIOS in bindings: True
+None
+
+## Exit
+- Status: 0
+- Elapsed (s): 0
+- Filtered lines (gmsh optimisation chatter): 0

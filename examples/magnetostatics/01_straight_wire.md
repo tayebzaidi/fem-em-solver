@@ -62,16 +62,34 @@ on rank 0,
 
 ```
   VTX round-trip check (EX-14 anchor):
-    in-memory  max|B| = 4.463805898300e-05 T
-    read-back  max|B| = 4.463805898300e-05 T
+    in-memory  max|B| = 4.972891321210e-05 T
+    read-back  max|B| = 4.972891321210e-05 T
     relative difference = 0.000e+00  (tol 1e-10)
+    control (read-back vs 0.5 x in-memory) = 1.000e+00  -- must exceed the band
+    ✓ written .bp reproduces the in-memory field
+    ✓ control separated: wrong reference reads rel ~ 1
 ```
 
 — the written `magnetostatics_01_straight_wire_B.bp` read back through ADIOS2 and compared with
-the field still in memory (`20260810T140337Z_EX-14-gate-mag1-v2.log`). A
-mismatch raises rather than printing a warning. Before the fix the run printed
+the field still in memory (`20260916T094210Z_OPS-48-mag1.log`, Status 0, 7 s,
+real build, `-n 2`). A mismatch raises rather than printing a warning, and so
+does a read-back that cannot run at all. The `control` line is the negative
+control: the same comparison against a deliberately wrong reference (half the
+in-memory value) reads `1.000e+00`, i.e. 1e10× the 1e-10 band, so `0.000e+00`
+on the real comparison is evidence the file matches and not evidence that the
+comparison is inert.
+
+`OPS-48` (2026-09-16) restored this check. Between the move to the dolfinx 0.11
+image and that date the reader called the pre-2.10 top-level `adios2.ADIOS()`,
+which `adios2` 2.12.1 no longer has; `_check_vtx_roundtrip` caught the
+`AttributeError`, printed `⚠ VTX round-trip read-back unavailable: …` and
+returned `False`, and the example still exited 0 — so the anchor did not
+execute on any run in that interval. The reader now uses `adios2.bindings`
+(the same low-level classes, moved) and the failure path raises. If you see the
+`⚠ unavailable` line in an older log, that run did not exercise this anchor.
+Older still, before the 2026-08-10 `EX-14` repair, the run printed
 `⚠ VTX output failed (ADIOS2 may not be available)` on every rank and wrote no
-`.bp` at all; if you see that line, the tree predates the fix.
+`.bp` at all.
 
 ## Setup figure
 

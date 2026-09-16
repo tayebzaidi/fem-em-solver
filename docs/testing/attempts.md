@@ -12987,3 +12987,44 @@ step-0c sentence; §9 item 1 marked DONE.
 5–45 min / 10–40 GiB brackets, which stay as written because the XL window runs
 at `-n 16` where neither is measured. If the 32-column window lands there, the
 F-human degree-1 32×32 is an ordinary XL job and `TH-16` does not move up.
+
+## 2026-09-16T09:50Z — OPS-48 — complete
+- Tried: restored the `EX-14` / `EX-17` VTX read-back gate on the 0.11 image
+  (`adios2` 2.12.1). Probed the installed module through the harness first:
+  the pre-2.10 top-level `adios2.ADIOS` is gone, but the identical low-level
+  classes survive under `adios2.bindings` (`ADIOS`, `Mode.ReadRandomAccess`,
+  `Mode.Sync`, `IO.SetEngine`, `IO.AvailableVariables` all present). The port
+  is therefore `from adios2 import bindings as adios2b` plus the two `Mode`
+  references — the BP4 local-block walk (`BlocksInfo` → `SetBlockSelection` →
+  `Get`, one block per writer rank, no global shape) and the rank-0-reads /
+  broadcast-verdict structure are unchanged, as is `VTX_ROUNDTRIP_RTOL = 1e-10`.
+  Two behaviour changes: the `⚠ read-back unavailable` path now **raises**
+  (the example exits non-zero instead of printing a warning and exiting 0),
+  and a pre-registered negative control was added — the same comparison against
+  a deliberately wrong reference (0.5 × in-memory), asserted to exceed 1e9 × the
+  band. Same edit in both `01_straight_wire.py` and `02_circular_loop.py`. No
+  `src/` change; no tolerance moved.
+- Result / measured: both anchors **execute and pass**, real build, `-n 2`.
+  `mag:1`: in-memory = read-back = `4.972891321210e-05 T`, `relative
+  difference = 0.000e+00` (tol 1e-10); control = `1.000e+00`, i.e. 1e10× the
+  band. Status 0, **7 s**. `mag:2`: in-memory = read-back =
+  `7.861367746496e-05 T`, `relative difference = 0.000e+00`; control =
+  `1.000e+00`. Status 0, **136 s**. Both logs print `✓ written .bp reproduces
+  the in-memory field`, not the `⚠ unavailable` line. Censuses: setup figures
+  `SUMMARY: examples=54 ok=9 missing=45 broken=0`; docrefs `dead=0 guide=0
+  stale=28 stale_severity=report exit=2` (≠ 1; the 28 stale entries are
+  unrelated regenerable ParaView artifacts and predate this slot).
+  Known-issues 2026-09-14 retired in the same commit — noting explicitly that
+  **other `.bp` read-backs were not surveyed**, only `mag:1` and `mag:2`.
+  Both guides' read-back sections re-cited to the new logs (the old citation
+  `20260826T170155Z_EX-30-root2-run-mag1.log` is not in `docs/testing/logs/`).
+- Logs: `20260916T094031Z_OPS-48.log` (module probe),
+  `20260916T094102Z_OPS-48.log` (`Mode` / `IO` probe),
+  `20260916T094210Z_OPS-48-mag1.log`, `20260916T094228Z_OPS-48-mag2.log`,
+  `20260916T094524Z_OPS-48-census.log`.
+- Branch (if parked): none — landed on `main`.
+- Next-attempt hypothesis: n/a for `OPS-48`. Open follow-up for whoever wants
+  it: the `.bp` read-back survey this chunk did **not** do — grep for other
+  `adios2` readers (and for the high-level `adios2.Stream` / `FileReader` path,
+  which was not needed here) to check none of them is warning-and-continuing
+  the same way a disabled gate did here.
