@@ -73,6 +73,7 @@ from fem_em_solver.io.paraview_utils import (  # noqa: E402
     write_combined_paraview_output,
 )
 from fem_em_solver.post.evaluation import evaluate_vector_field_parallel  # noqa: E402
+from fem_em_solver.post.setup_figure import write_setup_figure  # noqa: E402
 from fem_em_solver.utils.analytical import ErrorMetrics  # noqa: E402
 from fem_em_solver.utils.constants import MU_0  # noqa: E402
 from tests.solver.test_gauge_lagrange import (  # noqa: E402
@@ -100,6 +101,7 @@ VOLUME_AGREEMENT_RTOL = 0.05
 
 OUTPUT_DIR = "paraview_output"
 BASENAME = "magnetostatics_05_gauge_cross_check"
+FIGURE_DIR = Path(__file__).resolve().parent / "figures"
 
 
 def solve_with(gauge, mesh, cell_tags, current_density, comm):
@@ -167,6 +169,22 @@ def main() -> None:
 
     if rank0:
         print(f"mesh: {n_cells} cells in {t_mesh:.1f} s", flush=True)
+
+    # EX-57 setup figure: air (tag 2) hidden, the wire (tag 1) named so the
+    # copper colour applies (the §7 trap for magnetostatics wire-source
+    # examples), sliced through z = 0 -- the plane the eight sample points
+    # sit in. No-op unless FEM_EM_SETUP_FIGURES=1.
+    write_setup_figure(
+        mesh,
+        cell_tags,
+        FIGURE_DIR / "magnetostatics_05_gauge_cross_check_setup.png",
+        region_names={1: "wire (conductor)", 2: "air"},
+        hide_tags=(2,),
+        slice_normal=(0.0, 0.0, 1.0),
+        slice_origin=(0.0, 0.0, 0.0),
+        title="mag:5 -- gauge cross-check, straight wire, penalty vs Lagrange",
+        comm=comm,
+    )
 
     results = {}
     for gauge in (GaugeMethod.PENALTY, GaugeMethod.LAGRANGE):

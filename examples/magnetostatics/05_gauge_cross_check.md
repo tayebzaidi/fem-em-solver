@@ -63,6 +63,18 @@ frequency domain, so do **not** source the complex mode for it. Tier:
 harness wall on the 2026-08-10 record. Exit status 0 and every assertion holds,
 or the run fails loudly; it never merely renders.
 
+## Setup figure
+
+![mag:5 setup — the straight wire, penalty vs Lagrange gauge, on the shared fixture](figures/magnetostatics_05_gauge_cross_check_setup.png)
+
+`examples/magnetostatics/figures/magnetostatics_05_gauge_cross_check_setup.png`.
+It is rendered right after `straight_wire_domain` builds the mesh
+(`FEM_EM_SETUP_FIGURES=1`). The 3-D panel hides the air (tag 2) and leaves the
+wire (tag 1, copper) — the same fixture as `-e 1`, imported here rather than
+rebuilt, and the one mesh both gauges below are solved on. The slice is the
+z = 0 mid-plane through the whole domain, the plane the eight `MAG-15` sample
+points sit in.
+
 ## 3. How to analyze it, step by step
 
 **Step 1 — read the two `max|A|` lines first, before any agreement number.**

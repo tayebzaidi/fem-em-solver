@@ -13076,3 +13076,20 @@ F-human degree-1 32×32 is an ordinary XL job and `TH-16` does not move up.
   delete their two work-arounds; watch the `EX-56` latent trap
   (`Path.with_suffix` truncates a dotted stem) — the new writer applies
   `.xdmf` the same way, so dot-free stems are still required.
+
+## 2026-09-16T09:54Z (2026-09-16 04:30 CDT slot) — EX-57 setup figure: `magnetostatics/05_gauge_cross_check.py` — **complete; census `missing` 45 → 44; §9 item 4 of 4**
+
+**How it ran.** §9 item 4 of the 2026-09-16 03:00 review, named directly (not a drain fallback). Fixture: `tests/solver/test_gauge_lagrange.py::straight_wire_domain` — one mesh, two gauges (penalty vs Lagrange), one figure.
+- **Census before** `20260916T095358Z_EX-57-precensus.log` / `20260916T095406Z_EX-57-precensus-docrefs.log`, run before any file was written: `examples=54 ok=9 missing=45 broken=0`; docrefs `dead=0 guide=0 exit=2`. Predicted: `missing` 45 → 44, `broken=0`.
+- **Edit.** `write_setup_figure` call added right after `MeshGenerator.straight_wire_domain` builds the mesh in `examples/magnetostatics/05_gauge_cross_check.py`: `region_names={1: "wire (conductor)", 2: "air"}` (the docstring's own "1 = wire, 2 = air"), wire named so the copper colour applies (the §7 trap for wire-source examples), air hidden, `slice_normal=(0,0,1)` at `slice_origin=(0,0,0)` — the z = 0 plane the eight `MAG-15` sample points sit in. Also added the `FIGURE_DIR` constant, the import, and the guide's `## Setup figure` section between "How to run it" and "How to analyze it".
+
+**Measured.**
+- **Flagged run** `20260916T095415Z_EX-57-mag5-flagged.log` (`FEM_EM_SETUP_FIGURES=1`, `-n 2`, `timeout -k 30 180`, Status 0, 5.4 s example / 7 s harness): PNG 172 KiB (≤ 600). All three imported/gate assertions green: probe vector L2 rel diff 0.0003% (ceiling 5%, `MAG-15` gate), volume L2 rel diff 0.0040% (ceiling 5%), max|A| ratio 2.773e-11 (ceiling 1e-6, `MAG-15` gate). Penalty multiplier spread `nan` asserted, Lagrange `2.083e+02` finite asserted.
+- **Unflagged control** `20260916T095433Z_EX-57-mag5-control.log` (Status 0, 2.8 s): identical printed digits (0.0003%, 0.0040%, 2.773e-11), no `[setup-figure]` line — default path unchanged.
+- **Census after** `20260916T095442Z_EX-57-postcensus-fig.log`: `examples=54 ok=10 missing=44 broken=0` — matches prediction exactly. `20260916T095443Z_EX-57-postcensus-docrefs.log`: `dead=0 guide=0 exit=2` (≠ 1; unrelated pre-existing stale-artifact count moved 28 → 27).
+- PROJECT_PLAN.md §7 `EX-57` census line and §9 item 4 both updated in the same commit.
+
+**Outcome:** committed on `main`, clean tree. No `src/` change beyond the additive example edit; no gate touched.
+- Logs: `20260916T095358Z_EX-57-precensus.log`, `20260916T095406Z_EX-57-precensus-docrefs.log`, `20260916T095415Z_EX-57-mag5-flagged.log`, `20260916T095433Z_EX-57-mag5-control.log`, `20260916T095442Z_EX-57-postcensus-fig.log`, `20260916T095443Z_EX-57-postcensus-docrefs.log`.
+- Branch (if parked): none — landed on `main`.
+- Next-attempt hypothesis: n/a — item closed. The daily review's step 6 should queue the next `check_example_setup_figures.py --next` item (44 remain).
