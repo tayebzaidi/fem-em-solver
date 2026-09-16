@@ -1,5 +1,6 @@
 """ParaView output utilities for FEM-EM solver."""
 
+import copy
 import os
 import xml.etree.ElementTree as ET
 from pathlib import Path
@@ -187,6 +188,191 @@ def write_xdmf_with_tags(
     # One grid per file, or ParaView loads a multiblock and Plot Over Line
     # returns NaN for every array outside the first block.
     consolidate_xdmf_grids(xdmf_file, comm=comm)
+
+    if comm.rank == 0:
+        return xdmf_file, h5_file
+    return None, None
+
+
+def _consolidate_xdmf_time_series(xdmf_path, times, comm=MPI.COMM_WORLD):
+    """Merge dolfinx's per-field temporal collections into **one** collection.
+
+    ``XDMFFile.write_function(f, t)`` emits one top-level ``<Grid
+    CollectionType="Temporal">`` *per function*, each holding one uniform
+    child per ``t``. ParaView loads the siblings as a multiblock (the same
+    Plot-Over-Line NaN trap :func:`consolidate_xdmf_grids` fixes) while
+    :func:`consolidate_xdmf_grids` itself would flatten the time axis away
+    ("single-timestep files only", above).
+
+    This rewrite keeps the time axis: the children of the *first* collection
+    become the hosts, every other collection's attributes are moved onto the
+    host with the matching ``<Time Value>``, the mesh grid's Topology and
+    Geometry are copied into each host (so the xi:include targets can go
+    away with the mesh grid) and the single surviving collection is the only
+    top-level grid left in the Domain.
+
+    ``times`` is the write order; the output children follow it. Rank 0 does
+    the rewrite, collective barrier at the end.
+    """
+    if comm.rank == 0:
+        xdmf_path = Path(xdmf_path)
+        tree = ET.parse(xdmf_path)
+        domain = tree.getroot().find("Domain")
+
+        grids = domain.findall("Grid")
+        mesh_grid = next(
+            g for g in grids
+            if g.get("GridType", "Uniform") == "Uniform"
+            and g.find("Topology") is not None
+        )
+        collections = [
+            g for g in grids
+            if g is not mesh_grid and g.get("CollectionType") == "Temporal"
+        ]
+        if not collections:
+            raise ValueError(f"{xdmf_path}: no temporal collection to consolidate")
+
+        def _time_key(uniform):
+            time = uniform.find("Time")
+            if time is None:
+                raise ValueError(f"{xdmf_path}: a child grid carries no <Time>")
+            return f"{float(time.get('Value')):.12g}"
+
+        keys = [f"{float(t):.12g}" for t in times]
+
+        hosts = {}
+        for uniform in collections[0].findall("Grid"):
+            hosts[_time_key(uniform)] = uniform
+        missing = [k for k in keys if k not in hosts]
+        if missing:
+            raise ValueError(f"{xdmf_path}: no grid written at t in {missing}")
+
+        for collection in collections[1:]:
+            for uniform in collection.findall("Grid"):
+                host = hosts[_time_key(uniform)]
+                for attr in uniform.findall("Attribute"):
+                    host.append(attr)
+
+        # The hosts reference the mesh grid through xi:include xpointers;
+        # inline Topology/Geometry so the mesh grid can be dropped and the
+        # collection is the Domain's only child (one vtkUnstructuredGrid
+        # per time step rather than a multiblock).
+        topology = mesh_grid.find("Topology")
+        geometry = mesh_grid.find("Geometry")
+        include = "{http://www.w3.org/2001/XInclude}include"
+        for key in keys:
+            host = hosts[key]
+            for inc in host.findall(include):
+                host.remove(inc)
+            host.insert(0, copy.deepcopy(geometry))
+            host.insert(0, copy.deepcopy(topology))
+
+        series = ET.Element(
+            "Grid",
+            {
+                "Name": "TimeSeries",
+                "GridType": "Collection",
+                "CollectionType": "Temporal",
+            },
+        )
+        for key in keys:
+            series.append(hosts[key])
+
+        for grid in grids:
+            domain.remove(grid)
+        domain.append(series)
+
+        ET.indent(tree)
+        tree.write(xdmf_path, xml_declaration=True, encoding="utf-8")
+    comm.barrier()
+
+
+def write_xdmf_time_series(
+    filename, mesh, cell_tags, steps, comm=MPI.COMM_WORLD, facet_tags=None
+):
+    """Write one XDMF file whose steps are ParaView time steps (``OPS-49``).
+
+    :func:`write_xdmf_with_tags` is single-state: its
+    :func:`consolidate_xdmf_grids` pass drops ``<Time>``, so an example with
+    two rungs or two drive states had to write two files or bypass the
+    helper (known-issues 2026-09-16). This writer is the additive
+    alternative and leaves both of those functions untouched.
+
+    Parameters
+    ----------
+    filename : str or Path
+        Output base path (".xdmf" is applied automatically). Avoid dotted
+        stems: ``Path.with_suffix`` truncates them.
+    mesh : dolfinx.mesh.Mesh
+        The one mesh every step is written on.
+    cell_tags : dolfinx.mesh.MeshTags | None
+        Written as the DG0 array "CellTags" at *every* step, so ParaView's
+        Threshold filter works at each time.
+    steps : sequence[tuple[float, dict[str, dolfinx.fem.Function]]]
+        ``[(t, {name: Function}), ...]``. Every step must carry the same
+        field names and the times must be distinct. ``write_function`` names
+        the grid after the function's own ``name``, so each key must equal
+        its function's ``name`` -- otherwise two fields silently collide.
+    comm : MPI.Comm
+        MPI communicator (the write is collective).
+    facet_tags : None
+        Rejected: facet tags are a separate topology grid and cannot be
+        carried on the cell grid's time steps. Out of scope for this writer.
+
+    Returns
+    -------
+    tuple[Path, Path] | tuple[None, None]
+        ``(xdmf_path, h5_path)`` on rank 0, ``(None, None)`` elsewhere.
+    """
+    from dolfinx import io
+
+    if facet_tags is not None:
+        raise ValueError(
+            "write_xdmf_time_series does not support facet_tags: facet tags "
+            "own their own topology grid, which has no per-step counterpart. "
+            "Write them to a separate file with write_xdmf_with_tags."
+        )
+
+    steps = list(steps)
+    if not steps:
+        raise ValueError("write_xdmf_time_series needs at least one step")
+
+    times = [float(t) for t, _ in steps]
+    if len(set(f"{t:.12g}" for t in times)) != len(times):
+        raise ValueError(f"write_xdmf_time_series needs distinct times, got {times}")
+
+    field_names = list(steps[0][1])
+    for t, fields in steps:
+        if list(fields) != field_names:
+            raise ValueError(
+                "every step must carry the same field names in the same order: "
+                f"t={t} has {list(fields)}, expected {field_names}"
+            )
+        for name, func in fields.items():
+            if func.name != name:
+                raise ValueError(
+                    f"field key {name!r} does not match its function's name "
+                    f"{func.name!r}; XDMFFile.write_function names the grid "
+                    "after the function, so mismatched keys collide"
+                )
+
+    filename = Path(filename)
+    xdmf_file = filename.with_suffix(".xdmf")
+    h5_file = filename.with_suffix(".h5")
+
+    tag_func = cell_tags_to_function(mesh, cell_tags) if cell_tags is not None else None
+    if tag_func is not None and tag_func.name in field_names:
+        raise ValueError(f"field name {tag_func.name!r} is reserved for cell tags")
+
+    with io.XDMFFile(comm, xdmf_file, "w") as xdmf:
+        xdmf.write_mesh(mesh)
+        for (t, fields), t_float in zip(steps, times):
+            if tag_func is not None:
+                xdmf.write_function(tag_func, t_float)
+            for func in fields.values():
+                xdmf.write_function(func, t_float)
+
+    _consolidate_xdmf_time_series(xdmf_file, times, comm=comm)
 
     if comm.rank == 0:
         return xdmf_file, h5_file

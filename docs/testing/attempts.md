@@ -13028,3 +13028,51 @@ F-human degree-1 32×32 is an ordinary XL job and `TH-16` does not move up.
   `adios2` readers (and for the high-level `adios2.Stream` / `FileReader` path,
   which was not needed here) to check none of them is warning-and-continuing
   the same way a disabled gate did here.
+
+## 2026-09-16T09:55Z — OPS-49 — complete
+
+- Chunk: `OPS-49` (§9 item 3 of the 2026-09-16 03:00 review) — a time-series
+  XDMF writer beside `write_xdmf_with_tags`. Third item of the 04:30
+  implementer slot (take-next).
+- What was tried: an **additive** `write_xdmf_time_series(filename, mesh,
+  cell_tags, steps, comm, facet_tags=None)` in
+  `src/fem_em_solver/io/paraview_utils.py` with a private
+  `_consolidate_xdmf_time_series`. dolfinx emits one temporal collection
+  *per function*; the consolidation adopts the first collection's per-`t`
+  children as hosts, moves every other collection's `<Attribute>` onto the
+  host with the matching `<Time Value>`, inlines copies of the mesh grid's
+  `Topology` / `Geometry` into each host (so the `xi:include` xpointer
+  targets can be dropped with the mesh grid) and leaves the single
+  collection as the Domain's only grid. CellTags are written at *every* `t`
+  so Threshold works at each step. `facet_tags` is rejected with a
+  `ValueError` (own topology grid, no per-step counterpart), as is a
+  `{name: Function}` key that does not equal `func.name` (the named trap:
+  `write_function` names the grid after the function, so mismatched keys
+  collide silently). `consolidate_xdmf_grids` and `write_xdmf_with_tags`
+  untouched — `git diff fff1673 -- src/fem_em_solver/io/paraview_utils.py`
+  is **186 insertions, 0 deletions**.
+- Result / measured: new `tests/io/test_xdmf_time_series.py`, real build,
+  `-n 2`, **3 passed in 0.83 s**, harness elapsed **2 s**. (a) count
+  identity: `collections=1 children=3 times=[0.0, 0.5, 1.25]
+  attrs/child=['CellTags', 'phi', 'sigma']`, and every child carries its own
+  `Topology` and `Geometry`. (b) `h5py` round trip: worst relative error
+  **0.000e+00** over 6 arrays (3 steps × {CG1 `phi`, DG0 `sigma`}), bound
+  1e-12 — read via each `<Attribute>`'s own `DataItem` path, compared
+  against the globally gathered *owned* dofs, sorted (so no dof-ordering
+  assumption enters). (c) asserted negative control at the pinned
+  pre-change commit `fff1673`: the same three states through
+  `write_xdmf_with_tags` give `<Time>` elements per file `[0, 0, 0]` — the
+  collapse the known-issues entry describes. Regression: whole `tests/io`
+  **13 passed**, elapsed 3 s. Known-issues 2026-09-16 retired in the same
+  commit. `EX-56` / `EX-58` deliberately **not** rewritten (out of scope).
+  Not checked, and stated as the limit: ParaView's own Xdmf3 reader cannot
+  be exercised headless here, so the XML identity + `h5py` round trip is
+  the gate, not a rendering claim.
+- Logs: `20260916T095021Z_OPS-49.log` (the three anchors),
+  `20260916T095045Z_OPS-49.log` (`tests/io` regression).
+- Branch (if parked): none — landed on `main`.
+- Next-attempt hypothesis: n/a for `OPS-49`. Follow-up for a later `EX-*`:
+  adopt the writer in `EX-56` (two rungs) and `EX-58` (two drive states) and
+  delete their two work-arounds; watch the `EX-56` latent trap
+  (`Path.with_suffix` truncates a dotted stem) — the new writer applies
+  `.xdmf` the same way, so dot-free stems are still required.

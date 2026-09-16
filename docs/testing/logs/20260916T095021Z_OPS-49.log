@@ -1,0 +1,67 @@
+# Test Run
+- Chunk: OPS-49
+- Commit: fff1673e46f818eb2839d32062710c4e972c83b6
+- Time (UTC): 2026-09-16 09:50:21
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.5.1
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 60 mpiexec -n 2 python3 -m pytest tests/io/test_xdmf_time_series.py -v --tb=short -s'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 24
+drwxr-xr-x  3 taz5297 taz5297 4096 Sep  4 23:31 .
+drwxr-xr-x 17 taz5297 taz5297 4096 Sep 16 04:47 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  721 Sep  3 13:49 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 4275 Sep 13 19:19 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.5.1
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 60 mpiexec -n 2 python3 -m pytest tests/io/test_xdmf_time_series.py -v --tb=short -s'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... collected 3 items
+
+tests/io/test_xdmf_time_series.py::test_time_series_keeps_one_collection_with_every_attribute collected 3 items
+
+tests/io/test_xdmf_time_series.py::test_time_series_keeps_one_collection_with_every_attribute PASSEDOPS-49 (a) collections=1 children=3 times=[0.0, 0.5, 1.25] attrs/child=['CellTags', 'phi', 'sigma']
+OPS-49 (b) worst relative round-trip error = 0.000e+00 over 6 arrays (bound 1e-12)
+PASSED
+tests/io/test_xdmf_time_series.py::test_existing_single_state_writer_collapses_the_time_axis 
+tests/io/test_xdmf_time_series.py::test_existing_single_state_writer_collapses_the_time_axis OPS-49 (c) <Time> elements per single-state file = [0, 0, 0]
+PASSEDPASSED
+tests/io/test_xdmf_time_series.py::test_facet_tags_are_rejected 
+tests/io/test_xdmf_time_series.py::test_facet_tags_are_rejected PASSEDPASSED
+
+============================== 3 passed in 0.83s ===============================
+
+
+============================== 3 passed in 0.83s ===============================
+
+## Exit
+- Status: 0
+- Elapsed (s): 2
+- Filtered lines (gmsh optimisation chatter): 0
