@@ -50,6 +50,19 @@ example closes nothing; it is Phase-1 §5.4 backfill. N1curl degree 1 predicts
 ~1.0 for this quantity, and the measured 1.1009 reproduces the record to four
 digits.
 
+## Setup figure
+
+![mag:6 setup — the straight wire, finest rung of the h-refinement sequence](figures/magnetostatics_06_h_convergence_rate_setup.png)
+
+`examples/magnetostatics/figures/magnetostatics_06_h_convergence_rate_setup.png`.
+It is rendered right after the finest resolution's solve
+(`FEM_EM_SETUP_FIGURES=1`), because three meshes are built across the
+sequence and only the finest — h = 0.0018 m, the rung the export and its
+assertion actually use — survives past its own loop iteration. The 3-D panel
+hides the air (tag 2) and leaves the wire (tag 1, copper); the slice is the
+z = 0 mid-plane, the plane the ten sample points sit in. It is not a picture
+of the whole sequence — see the table above for that.
+
 ## 2. How to run it
 
 ```

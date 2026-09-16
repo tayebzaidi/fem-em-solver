@@ -76,6 +76,7 @@ from fem_em_solver.io.paraview_utils import (  # noqa: E402
     write_combined_paraview_output,
 )
 from fem_em_solver.post.evaluation import evaluate_vector_field_parallel  # noqa: E402
+from fem_em_solver.post.setup_figure import write_setup_figure  # noqa: E402
 from fem_em_solver.utils.analytical import (  # noqa: E402
     AnalyticalSolutions,
     ErrorMetrics,
@@ -119,6 +120,7 @@ EXPORT_ERROR_REFERENCE = "coarsest solved resolution"
 
 OUTPUT_DIR = "paraview_output"
 BASENAME = "magnetostatics_06_h_convergence_rate"
+FIGURE_DIR = Path(__file__).resolve().parent / "figures"
 
 
 def main() -> None:
@@ -166,6 +168,27 @@ def main() -> None:
     # colourful region is the one the measurement deliberately excludes. The
     # gate samples at r >= 2a for the same reason.
     mesh = finest["mesh"]
+
+    # EX-57 setup figure: three meshes are built across the sequence (one per
+    # resolution, imported from solve_h_refinement), but only the finest --
+    # the rung the export and its assertion below actually use -- is kept
+    # past its own loop iteration, so it is the rung this figure draws (the
+    # §7 trap for multi-mesh examples). Air (tag 2) hidden, the wire (tag 1)
+    # named so the copper colour applies (the §7 trap for wire-source
+    # magnetostatics examples), sliced through z = 0 -- the plane the ten
+    # sample points sit in. No-op unless FEM_EM_SETUP_FIGURES=1.
+    write_setup_figure(
+        mesh,
+        finest["cell_tags"],
+        FIGURE_DIR / "magnetostatics_06_h_convergence_rate_setup.png",
+        region_names={1: "wire (conductor)", 2: "air"},
+        hide_tags=(2,),
+        slice_normal=(0.0, 0.0, 1.0),
+        slice_origin=(0.0, 0.0, 0.0),
+        title="mag:6 -- h-convergence rate, finest rung (h = %.4f m)" % RESOLUTIONS[-1],
+        comm=comm,
+    )
+
     v_cg = fem.functionspace(mesh, ("Lagrange", 1, (3,)))
     b_num_cg = fem.Function(v_cg, name="B_numeric")
     b_num_cg.interpolate(finest["b_field"])

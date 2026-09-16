@@ -13093,3 +13093,20 @@ F-human degree-1 32×32 is an ordinary XL job and `TH-16` does not move up.
 - Logs: `20260916T095358Z_EX-57-precensus.log`, `20260916T095406Z_EX-57-precensus-docrefs.log`, `20260916T095415Z_EX-57-mag5-flagged.log`, `20260916T095433Z_EX-57-mag5-control.log`, `20260916T095442Z_EX-57-postcensus-fig.log`, `20260916T095443Z_EX-57-postcensus-docrefs.log`.
 - Branch (if parked): none — landed on `main`.
 - Next-attempt hypothesis: n/a — item closed. The daily review's step 6 should queue the next `check_example_setup_figures.py --next` item (44 remain).
+
+## 2026-09-16T10:03Z (2026-09-16 04:30 CDT slot) — EX-57 setup figure: `magnetostatics/06_h_convergence_rate.py` — **complete; census `missing` 44 → 43; drained-queue fallback**
+
+**How it ran.** §9 On-deck items 1–4 all landed this slot (`a267c5a`, `fff1673`, `788cc2c`, `9b35280`); this is the standing drained-queue fallback (PROJECT_PLAN §9, operator directive 2026-09-13) — the next `EX-57` item, named by `check_example_setup_figures.py --next`. Fixture: `tests/validation/test_convergence.py::solve_h_refinement` (`MAG-13`), imported — three meshes across the h-refinement sequence, only the finest (h = 0.0018 m) kept past its loop iteration.
+- **Census before** `20260916T095625Z_EX-57-precheck.log`, run before any file was written: `--next` printed `examples/magnetostatics/06_h_convergence_rate.py`, `examples=54 ok=10 missing=44 broken=0`. Recorded window checked first (`20260810T124317Z_EX-9-run-final.log`, 131 s harness wall at `-n 2`) — well inside the slot's runway. Predicted: `missing` 44 → 43, `broken=0`.
+- **Edit.** `write_setup_figure` call added right after `mesh = finest["mesh"]` in `examples/magnetostatics/06_h_convergence_rate.py` — the point the example already treats the finest rung as decided (used immediately after for the CG1 export). This is the §7 trap for multi-mesh examples: draw the *gated* rung, not an arbitrary one — here the finest, which is the only mesh the export assertion and the written XDMF actually use. `region_names={1: "wire (conductor)", 2: "air"}` (the §7 trap for wire-source magnetostatics examples), air hidden, `slice_normal=(0,0,1)` at `slice_origin=(0,0,0)` — the z = 0 plane the ten sample points sit in. Also added the `FIGURE_DIR` constant, the import, and the guide's `## Setup figure` section between "1. What this demonstrates" and "2. How to run it".
+
+**Measured.**
+- **Flagged run** `20260916T095753Z_EX-57-mag6-flagged.log` (`FEM_EM_SETUP_FIGURES=1`, `-n 2`, `timeout -k 30 300`, Status 0, 145.7 s example / 149 s harness): PNG 368 KiB (≤ 600). Both imported/gate assertions green: export-error bound 16.8915% < coarsest-resolution 21.8417%, and the three errors decay monotonically 21.8417% → 15.3848% → 4.4605% (negative control, solved not cited). Fitted rate 1.9038 printed (report-only since `MAG-19`).
+- **Unflagged control** `20260916T100028Z_EX-57-mag6-control.log` (Status 0, 141 s harness): identical printed digits (21.8417% / 15.3848% / 4.4605%, rate 1.9038, exported fld 16.8915%), no `[setup-figure]` line — default path unchanged.
+- **Census after** `20260916T100329Z_EX-57-postcensus-fig.log`: `examples=54 ok=11 missing=43 broken=0` — matches prediction exactly. `20260916T100330Z_EX-57-postcensus-docrefs.log`: `dead=0 guide=0 stale=26 stale_severity=report exit=2` (≠ 1; unrelated pre-existing stale-artifact count moved 28 → 26).
+- PROJECT_PLAN.md §7 `EX-57` census line updated in the same commit.
+
+**Outcome:** committed on `main`, clean tree. No `src/` change beyond the additive example edit; no gate touched.
+- Logs: `20260916T095625Z_EX-57-precheck.log`, `20260916T095736Z_EX-57-list.log`, `20260916T095753Z_EX-57-mag6-flagged.log`, `20260916T100028Z_EX-57-mag6-control.log`, `20260916T100329Z_EX-57-postcensus-fig.log`, `20260916T100330Z_EX-57-postcensus-docrefs.log`.
+- Branch (if parked): none — landed on `main`.
+- Next-attempt hypothesis: n/a — item closed. The daily review's step 6 (or the next drained-queue fallback) should queue the next `check_example_setup_figures.py --next` item (43 remain).
