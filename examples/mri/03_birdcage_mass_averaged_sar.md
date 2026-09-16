@@ -45,6 +45,27 @@ SAR claim, no C95.3 compliance or limit claim, no homogeneity claim, no
 Larmor, no convergence claim, no quadrature drive. `MAT-4` stays 🟡; nothing
 here changes that.
 
+## Setup figure
+
+![mri:3 setup — 4-leg birdcage, phantom, four 10 g averaging-ball sites](figures/mri_03_birdcage_mass_averaged_sar_setup.png)
+
+`examples/mri/figures/mri_03_birdcage_mass_averaged_sar_setup.png`. Rendered
+right after `_build_mass_averaged` returns (`FEM_EM_SETUP_FIGURES=1`) — the
+gate's own mesh and cell tags, not a re-derivation. The conductor (tag 1,
+legs + end rings) draws copper by the class-colour rule, the surrounding air
+(tag 2) is hidden, and the saline phantom (tag 3) is translucent. Tags
+`100+i` / `200+i` are the lower / upper halves of port `Pi`'s split
+lumped-sheet box, filling the gap in leg `i` at mid-height. The slice is
+normal to `z` through the origin: it cuts the phantom's equator and the four
+port boxes at the coil radius (the four small squares at the cardinal
+azimuths — the conductor itself is not cut, because z = 0 falls in the leg
+gaps). The same plane holds the four 10 g ball centres, which lie inside the
+phantom at `r0 = CENTRE_RADIUS_M` (15 mm) on the leg azimuths (the gate
+builds them at `(r0 cos(azimuth), r0 sin(azimuth), 0.0)`); the balls are not
+mesh regions, so they are not drawn. It is a picture of the geometry only;
+the field is solved but not rendered here (that is the `SAR` field in the
+ParaView output of step 6).
+
 ## 2. How to run it
 
 ```

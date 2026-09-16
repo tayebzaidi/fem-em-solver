@@ -97,6 +97,7 @@ from fem_em_solver.io.paraview_utils import (  # noqa: E402
     adopt_host_ownership,
     write_xdmf_with_tags,
 )
+from fem_em_solver.post.setup_figure import write_setup_figure  # noqa: E402
 
 from tests.validation.test_birdcage_b1_plus_map import (  # noqa: E402
     C4_COVARIANCE_BAND,
@@ -119,6 +120,7 @@ from tests.validation.test_birdcage_sar_mass_averaged import (  # noqa: E402
 from tests.mesh.test_birdcage_port_tags import PHANTOM_RADIUS  # noqa: E402
 
 OUTPUT_DIR = Path(__file__).resolve().parent / "paraview_output"
+FIGURE_DIR = Path(__file__).resolve().parent / "figures"
 BASENAME = "mri_03_birdcage_mass_averaged_sar"
 
 
@@ -204,6 +206,30 @@ def main() -> None:
             f"in {solve_seconds:.1f} s",
             flush=True,
         )
+
+    # EX-57 setup figure: tag 1 is the birdcage conductor (legs + end rings,
+    # copper by class-colour), tag 2 the surrounding air (hidden), tag 3 the
+    # saline phantom (translucent), 100+i / 200+i the lower / upper halves of
+    # port i's split lumped-sheet box in leg i's gap (the generator's
+    # encoding, `tests/mesh/test_birdcage_port_sheets.py` PORT_LOWER /
+    # PORT_UPPER). Sliced through z = 0 -- the plane the four leg gaps (and
+    # so the port sheets) and `CENTRE_RADIUS_M`'s four 10 g ball centres all
+    # sit in (the gate builds them at `(r0 cos, r0 sin, 0.0)`). No-op unless
+    # FEM_EM_SETUP_FIGURES=1.
+    port_names = {100 + i: f"port P{i} box (lower)" for i in range(1, 5)}
+    port_names.update({200 + i: f"port P{i} box (upper)" for i in range(1, 5)})
+    write_setup_figure(
+        result["mesh"],
+        result["cell_tags"],
+        FIGURE_DIR / f"{BASENAME}_setup.png",
+        region_names={1: "conductor", 2: "air", 3: "phantom (saline)", **port_names},
+        hide_tags=(2,),
+        translucent_tags=(3,),
+        slice_normal=(0.0, 0.0, 1.0),
+        slice_origin=(0.0, 0.0, 0.0),
+        title="mri:3 -- mass-averaged 10 g SAR on the coil-driven field (MAT-4 step 4)",
+        comm=comm,
+    )
 
     # ---- anchor (iii): the mesh is step 3f0's mesh, exactly -----------------
     assert (result["cells"], result["phantom_cells"]) == (
