@@ -12946,3 +12946,44 @@ The census moved from 52/4/48/0 at slot start to 54/8/46/0. The drain rule ends 
 **Cosmetic note (not fixed).** The 3-D panel's legend merges same-class names into one line, which the renderer truncates ("wire 1 (conductor), wir…"). The geometry and colours are correct. A future item could give both tori one name (`"wire (conductor)"`) if the review cares.
 
 **Hypothesis / next.** The queue is still drained; the next taker's `--next` is whatever follows `mag:4` in the census order. Per the drain rule this slot stops after one fallback figure, at about minute 8.
+
+## 2026-09-16T09:38Z (2026-09-16 04:30 CDT slot) — `WF-7` step 0c: the `FEM_EM_WF7_PORTS` knob — **complete; committed on `main`**
+
+**Outcome:** complete. §9 item 1 executed exactly as written — probe-only
+change (`scripts/probes/wf7_step0_f_human_cost.py`), no `src/`, no test module,
+no band moved.
+
+**What was tried.** Added `FEM_EM_WF7_PORTS` (unset/`1` = the first ring
+ordinal only and byte-identical to step 0, integer `k` = the first `k` ordinals
+in `_ring_ports()` order, `all` = every ring port); the drive loop pops and
+drops each column's `fields` before the next solve, prints a per-drive `PRICE`
+line with the cumulative wall clock, factorises on drive 1 and reuses the held
+MUMPS factor afterwards (`PORT-19` step 3, `solve_kind` printed); with `k ≥ 2`
+the `k × k` `S` is assembled and `_reciprocity_ratio` / `σ_max` / class spreads
+are printed with `PORT-13`'s imported helpers and bands.
+
+**Measured (heavy tier, `-n 8`, complex build, `pgrep -c python3` = 0 before
+and after both windows).**
+- (a) flag-off control, knob unset — `20260916T093301Z_WF-7-step0c.log`, rc=0,
+  **158 s**: cells 507 266 (+5.200e-03 vs the `GEO-25` record, inside the
+  imported band), unknowns 607 039, mesh build 120.60 s, solve 31.71 s, summed
+  `ru_maxrss` 10.930 GiB; `S_driven(P17)` printed `0.407423+0.344417j`,
+  **equal to step 0's record digits** (`:10425–10430`).
+- (b) `FEM_EM_WF7_PORTS=2` — `20260916T093548Z_WF-7-step0c.log`, rc=0,
+  **155 s**: drive 1 P17 27.71 s (`solve`), drive 2 P18 **0.59 s** (`held`),
+  `S_driven(P18)` 0.407959+0.343115j; 2×2 reciprocity **9.767e-16** ≤ the
+  imported `RECIPROCITY_BAND` 1e-3, |ΔS_driven| 1.407e-03 > 1e-6; summed
+  `ru_maxrss` 10.892 → 11.082 GiB across the second column (`:10431–10438`).
+- Negative control (*predicted*, printed, never asserted): 2×2 `σ_max`
+  **0.709401** ≤ `COLUMN_PASSIVITY_CEILING` 1 — as predicted. Class spreads
+  printed: |S_jj| spread 8.0579e-04, full-column Σ|S_ij|² 0.895804 / 0.895395.
+
+**Status moved in the same commit:** `docs/testing/xl-pending.md` entry 6
+(`WF-7` step 0c) `PENDING PREREQUISITE` → `READY`; the `WF-7` §7 row gains its
+step-0c sentence; §9 item 1 marked DONE.
+
+**Hypothesis for the XL window.** From the held-factor price, 32 drives at
+`-n 8` extrapolate to ≈ 3.5 min and ≈ 17 GiB — an order below the entry's
+5–45 min / 10–40 GiB brackets, which stay as written because the XL window runs
+at `-n 16` where neither is measured. If the 32-column window lands there, the
+F-human degree-1 32×32 is an ordinary XL job and `TH-16` does not move up.

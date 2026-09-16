@@ -251,11 +251,22 @@ First Order column beside step 3's. No band moves.
 
 ### 6. `xl` — `WF-7` step 0c: the F-human degree-1 solve at the full 32-port set (daily licence: cost probe, 2026-09-16 review)
 
-**Status:** PENDING PREREQUISITE — §9 item 1 (2026-09-16 review): the
-probe's `FEM_EM_WF7_PORTS` knob, proved at heavy tier by the flag-off
-control and a two-drive reciprocity assert. **The implementer landing that
-item marks this entry `READY` in the same commit** (daily-review.md step
-6b.5); the next review queues it for the following `xl` night.
+**Status:** READY — 2026-09-16 09:38Z, §9 item 1 landed on `main`: the
+probe's `FEM_EM_WF7_PORTS` knob is in (`scripts/probes/wf7_step0_f_human_cost.py`),
+proved at heavy tier by the flag-off control (knob unset reproduces step 0's
+printed `S_driven` `0.407423+0.344417j`, `20260916T093301Z_WF-7-step0c.log:10428`)
+and the two-drive reciprocity assert (2×2 ratio 9.767e-16 ≤ the imported 1e-3,
+drive 2 differs by 1.407e-03, `20260916T093548Z_WF-7-step0c.log:10433,10438`).
+The command below is unchanged and runs as written. The next review queues it
+for the following `xl` night.
+
+**Price refinement from the two-drive window (2026-09-16, `-n 8`):** drive 1
+factorises in 27.71 s, drive 2 back-substitutes the held factor in **0.59 s**
+(`solve_kind` `held`), and summed `ru_maxrss` moved 10.892 → 11.082 GiB over
+the second column. Extrapolated to 32 drives at `-n 8`: ≈ 2 min mesh + 28 s +
+31 × 0.6 s ≈ 3.5 min and ≈ 17 GiB — well inside the 5–45 min / 10–40 GiB
+brackets below, which stand unchanged (the XL window runs at `-n 16`, where
+neither has been measured).
 
 **Licence class:** cost probe — the first XL window on an unpriced case
 (§5.1: "the first XL window on it is a cost probe whose readout says so").
