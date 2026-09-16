@@ -97,6 +97,7 @@ from fem_em_solver.post.sar import (  # noqa: E402
     mass_averaged_sar,
     point_sar,
 )
+from fem_em_solver.post.setup_figure import write_setup_figure  # noqa: E402
 
 from tests.validation.test_lossy_sphere_sar import (  # noqa: E402
     EPSILON_R_SPHERE,
@@ -129,6 +130,7 @@ SEPARATION_FLOOR = 1.5
 CEILING_RTOL = 0.05
 
 OUTPUT_DIR = Path(__file__).resolve().parent / "paraview_output"
+FIGURE_DIR = Path(__file__).resolve().parent / "figures"
 BASENAME = "mri_02_mass_averaged_sar"
 
 MASSES = (("1 g", ONE_GRAM_KG), ("10 g", TEN_GRAM_KG))
@@ -281,6 +283,25 @@ def main() -> None:
     mesh_seconds = time.perf_counter() - mesh_started
 
     msh = fixture["mesh"]
+
+    # EX-57 setup figure: tag 1 is the lossy saline sphere the whole example
+    # averages over (translucent so its uniform interior field is legible),
+    # tag 2 is the surrounding air box, hidden. Sliced through z = 0 -- the
+    # equatorial plane containing the origin-centred ball and the (0,0,R)
+    # surface-placement negative control -- so both averaging-ball placements
+    # in step 4 lie in the cut plane. No-op unless FEM_EM_SETUP_FIGURES=1.
+    write_setup_figure(
+        msh,
+        fixture["cell_tags"],
+        FIGURE_DIR / f"{BASENAME}_setup.png",
+        region_names={1: "phantom (lossy sphere)", 2: "air"},
+        hide_tags=(2,),
+        translucent_tags=(1,),
+        slice_normal=(0.0, 0.0, 1.0),
+        slice_origin=(0.0, 0.0, 0.0),
+        title="mri:2 -- mass-averaged SAR on an imposed uniform field (MAT-4 step 3)",
+        comm=comm,
+    )
     n_cells = comm.allreduce(
         msh.topology.index_map(msh.topology.dim).size_local, op=MPI.SUM
     )

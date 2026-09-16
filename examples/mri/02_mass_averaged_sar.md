@@ -58,6 +58,20 @@ byte-matching the `MAT-4` step-3 gate record):
 The gate is `MAT-4` step 3. Both budgets — 0.5% on the identity, 0.1% on kernel
 mass — are the gate's own, never tightened, never loosened.
 
+## Setup figure
+
+![mri:2 setup — imposed uniform field on the lossy saline sphere](figures/mri_02_mass_averaged_sar_setup.png)
+
+`examples/mri/figures/mri_02_mass_averaged_sar_setup.png`. Rendered right
+after the mesh is built (`FEM_EM_SETUP_FIGURES=1`). The sphere (tag 1,
+`phantom (lossy sphere)`) is translucent so its uniform interior field stays
+legible; the surrounding air box (tag 2) is hidden. The slice is normal to
+`z` through the origin — the equatorial plane containing both averaging-ball
+placements in step 4 (the origin-centred ball and the `(0, 0, R)`
+surface-placement negative control). It is a picture of the geometry only;
+the field is imposed, not solved, and nothing in the figure is a claim about
+SAR.
+
 ## 2. How to run it
 
 ```

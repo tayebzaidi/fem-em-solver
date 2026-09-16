@@ -13126,3 +13126,20 @@ F-human degree-1 32×32 is an ordinary XL job and `TH-16` does not move up.
 **Outcome:** committed on `main`, clean tree; no `src/`, no gate touched. §7 `EX-57` census line updated.
 - Branch (if parked): none.
 - Next-attempt hypothesis: n/a — item closed; 42 figures remain for step 6 / the fallback.
+
+## 2026-09-16T12:31Z (2026-09-16 07:30 CDT slot) — EX-57 setup figure: `mri/02_mass_averaged_sar.py` — **complete; census `missing` 42 → 41; drained-queue fallback**
+
+**How it ran.** A subagent (`example-runner`) was launched first for this item but the coordinating session directed the work to happen directly in the main session instead; the subagent stopped cleanly after only running the read-only pre-census (no edits, no commit), which is reused below rather than re-run. All remaining harness commands were run in the foreground of the main session.
+- **Census before** `20260916T123127Z_EX-57.log`: `--next` printed `examples/mri/02_mass_averaged_sar.py`, `examples=54 ok=12 missing=42 broken=0`. Predicted `missing` 42 → 41, `broken=0`.
+- **Edit.** `write_setup_figure` added right after `_build_uniform_field_sphere(comm)` returns in `main()`: tag 1 named `phantom (lossy sphere)` (translucent, so the uniform interior field stays legible), tag 2 (`air`) hidden, slice normal to z through the origin — the equatorial plane containing both averaging-ball placements (the origin-centred ball and the `(0, 0, R)` surface-placement negative control). Guide `## Setup figure` section added before "2. How to run it".
+
+**Measured.**
+- **Flagged run** `20260916T123256Z_EX-57.log` (`FEM_EM_SETUP_FIGURES=1`, `-n 2`, complex build, `timeout -k 30 180`, Status 0, 13 s example-internal): `[setup-figure] wrote .../mri_02_mass_averaged_sar_setup.png (444 KiB; regions 1=phantom (lossy sphere), 2=air)`. Every `MAT-4` step-3 gate record reproduced to the digit: closed form `8.00835406e-08` W/kg, pointwise `3.31e-16` / DG0 `2.81e-15` relative, `SAR_avg/SAR_point` `1.00000000` at both 1 g and 10 g (0.000% vs the 0.5% budget), surface-placement separation `2.1894` vs recomputed ceiling `2.1681` (0.98%, floor 1.5).
+- **Unflagged control** `20260916T123357Z_EX-57-mri2-control.log` (Status 0, 10 s): identical digits (`8.00835406e-08`, `3.31e-16`, `2.81e-15`, `1.00000000` ×2, `2.1894`/`2.1681`/0.98%), no `[setup-figure]` line.
+- **Census after** `20260916T123331Z_EX-57.log` (`check_example_setup_figures.py`): `examples=54 ok=13 missing=41 broken=0` — matches prediction exactly. Docrefs `20260916T123347Z_EX-57.log` (`check_example_doc_references.py`): `dead=0 guide=0 stale=16 stale_severity=report exit=2` (≠ 1; the 16 stale entries are pre-existing regenerable ParaView artifacts, unrelated to this change).
+- PNG `examples/mri/figures/mri_02_mass_averaged_sar_setup.png`, 454 318 bytes (≈ 444 KiB, ≤ 600 KiB).
+
+**Outcome:** committed on `main`, clean tree. No `src/` change; no gate touched (constants imported from `tests/validation/test_mass_averaged_sar_standard_masses.py` / `test_lossy_sphere_sar.py`, unchanged). PROJECT_PLAN.md §7 `EX-57` census line updated in the same commit.
+- Logs: `20260916T123127Z_EX-57.log`, `20260916T123256Z_EX-57.log`, `20260916T123331Z_EX-57.log`, `20260916T123347Z_EX-57.log`, `20260916T123357Z_EX-57-mri2-control.log`.
+- Branch (if parked): none — landed on `main`.
+- Next-attempt hypothesis: n/a — item closed; 41 figures remain for step 6 / the next fallback.
