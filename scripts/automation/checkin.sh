@@ -154,10 +154,10 @@ awk '/^### On deck/{on=1} /^## 10\./{on=0} !on{next}
 hr "schedule"
 echo "active days Sun Mon Wed Fri Sat: review 03:00, slots 04:30/06:00/07:30/09:00; weekly Sat 21:00; XL 02:00 Sun–Fri, XXL 02:00 Sat"
 for q in xl xxl; do
-  f="docs/testing/${q}-queue.env"
-  [ -f "$f" ] || continue
-  c="$(grep -o '^XL_CHUNK="[^"]*"' "$f" | cut -d'"' -f2)"
-  echo "$q queue: ${c:-empty}"
+  f="docs/testing/${q}-queue.env"; d="docs/testing/${q}-queue.d"
+  c="$(grep -o '^XL_CHUNK="[^"]*"' "$f" 2>/dev/null | cut -d'"' -f2)"
+  files="$(ls "$d"/*.env 2>/dev/null | xargs -n1 basename 2>/dev/null | sed 's/\.env$//' | tr '\n' ' ')"
+  echo "$q queue: ${c:+legacy=$c }${files:-empty}"
 done
 LEDGER_LAST="$(grep -E '^\| *20[0-9]{2}-' docs/testing/xl-ledger.md 2>/dev/null | tail -1 | cut -c1-160)"
 [ -n "$LEDGER_LAST" ] && echo "xl ledger last row: $LEDGER_LAST"
