@@ -404,7 +404,8 @@ def _four_port_rung(
             f"{STEP2_CELL_COUNT}, ratio {ncells / STEP2_CELL_COUNT:.6f}), mesh "
             f"{diag['mesh_wall_time_s']:.2f} s, rung {t_mesh:.2f} s; f = "
             f"{frequency_hz:.6e} Hz; four driven "
-            f"solves in {t_sweep:.2f} s wall at -n 2; analytic sheet dx*g = "
+            f"solves in {t_sweep:.2f} s wall at -n {comm.size}; analytic sheet "
+            f"dx*g = "
             f"{sheet_analytic:.9e} m^2",
             flush=True,
         )

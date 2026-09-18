@@ -694,7 +694,8 @@ def test_the_ladder_readout_is_printed(ladder):
 
     base_entries = _class_entries(np.asarray(base["s"])) if base is not None else None
     print(
-        "\n[ANS-4 step2] === the readout: three C4 classes of S at 128 MHz ===",
+        f"\n[ANS-4 step2] === the readout: three C4 classes of S at "
+        f"{LADDER_FREQUENCY_HZ / 1e6:g} MHz ===",
         flush=True,
     )
     for rung in rungs + ([ladder["degree2"]] if ladder["degree2"] else []):

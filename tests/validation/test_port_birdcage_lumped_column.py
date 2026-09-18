@@ -393,6 +393,9 @@ def birdcage_column():
         "cells": ncells,
         "mesh_time": float(t_mesh),
         "solve_time": float(t_solve),
+        # `OPS-51`: the width the solve actually ran at, so the PRICE label
+        # below states it instead of a hardcoded "-n 2".
+        "comm_size": int(msh.comm.size),
         "port_ids": [p.port_id for p in port_defs],
     }
 
@@ -500,6 +503,7 @@ def test_adjacent_ports_of_the_driven_leg_agree_and_the_opposite_one_does_not(
     adjacent_mean = 0.5 * (abs(z21) + abs(z41))
     opposite_deviation = abs(abs(z31) - adjacent_mean) / adjacent_mean
     price = birdcage_column["solve_time"]
+    width = birdcage_column["comm_size"]
 
     if MPI.COMM_WORLD.rank == 0:
         print(
@@ -516,7 +520,7 @@ def test_adjacent_ports_of_the_driven_leg_agree_and_the_opposite_one_does_not(
             f"{opposite_deviation / spread:.4f}x)\n"
             f"    Z11 = {z11:+.9e} Ohm  (Re Z11 = {z11.real:+.9e} Ohm, reported, "
             f"not gated)\n"
-            f"[PORT-9 step3c] PRICE: one solve {price:.2f} s wall at -n 2 "
+            f"[PORT-9 step3c] PRICE: one solve {price:.2f} s wall at -n {width} "
             f"(control ceiling {CONTROL_SOLVE_PRICE_CEILING_S:.0f} s — the "
             f"open-limit second solve is "
             f"{'affordable' if price < CONTROL_SOLVE_PRICE_CEILING_S else 'NOT run'}"

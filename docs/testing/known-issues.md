@@ -28,17 +28,6 @@ unless fixing it is the task.
 
 ## Failing tests
 
-### Six validation-module prints carry a hardcoded rank width or frequency — a log line says "at -n 2" on a `-n 16` run and "at 128 MHz" over 10 MHz data (2026-09-18, 03:00 review, on a `log-pathologist` reading of the `ANS-4` step 3b / 3c XL windows)
-
-| | |
-| --- | --- |
-| **Symptom** | `20260918T070008Z_ANS-4-step3c.log:4638` prints `[ANS-4 step2] === the readout: three C4 classes of S at 128 MHz ===` over a 10 MHz readout (`f = 1.000000e+07 Hz`, `:4585`), and `:2416` / `:4585` print `four driven solves in … s wall at -n 2` on a `-n 16` window (the adjacent `[ANS-4 step2d]` line, which formats `comm.size`, correctly says `-n 16`). The same in `20260917T070008Z_ANS-4-step3b.log:2530, :4805`. |
-| **Verified at** | `8e3b32c`, by reading the source: the literals are `tests/validation/test_ans4_resolution_ladder.py:697` ("at 128 MHz ===") and "wall at -n 2" in five f-strings — `test_port_birdcage_leg_offset_sweep.py:407` (the one the ladder imports), `test_port_birdcage_four_port.py:478`, `test_port_birdcage_larmor_probe.py:384`, `test_port_birdcage_lumped_column.py:519`, `test_port_birdcage_termination_probe.py:365`. |
-| **Cause** | The strings were written when each module had one frequency and one record width; the `FEM_EM_ANS4_FREQUENCY_HZ` knob (step 3a) and the XL windows at `-n 16` made them false without touching them. |
-| **Not caused by** | The solves: every asserted quantity and every printed digit in those windows is right; only the labels are wrong. No test is red. |
-| **Scope** | Anyone pricing a run from a `PRICE` / rung-header line, or quoting the readout heading, reads the wrong width (a factor 8 in core-seconds on the XL windows) or the wrong frequency. The ledger rows of 2026-09-17 / 09-18 were filled from the lines that format the real values. Prints only — no gate depends on them. |
-| **Resolves with** | `OPS-51` (§9 item 2, 2026-09-18): the six literals replaced by `comm.size` / the rung's actual frequency, a `tests/unit` guard asserting the literal count in `tests/validation` is 0 (6 at the pinned pre-change commit), the ladder's `-n 8` flag-off control re-run with the label reading `-n 8`; this entry deleted in that commit. |
-
 ### `post4_step5_probe.py` runs again on the 0.11 image but its step-4 fixture pins have drifted — `PROBE_RESULT FAIL` on a mesh that is 9 291 cells against a 9 261-cell record (2026-09-18, narrowed by `OPS-50`; was "the VTX gate is skipped when the `B` writer fails, and the probe calls the removed `adios2.ADIOS()`", 03:00 review)
 
 **Part (a) of this entry — the `mag:1` / `mag:2` writer-side hole — is fixed and retired by `OPS-50`**: a `B` writer failure now raises in both examples, and the gate is called unconditionally. Measured separation, same wrapper, same rank width: the post-change `mag:1` under a monkeypatched `dolfinx.io.VTXWriter` exits **1** with `⚠ VTX output of B failed` and no "XDMF files were still created" line (`20260918T093606Z_OPS-50-control-raises.log:283,287,411`), where the file pinned at `a33be1d` exits **0** and prints `Note: XDMF files were still created and can be used instead` (`20260918T093622Z_OPS-50-control-prechange.log:266–267,445`). Unpatched, both examples still pass the `EX-14` / `EX-17` anchor at `-n 2` (`…093320Z_OPS-50-mag1.log:404–407`, `…093336Z_OPS-50-mag2.log:340–343`). What remains open is part (b), below.

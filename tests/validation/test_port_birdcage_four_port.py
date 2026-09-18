@@ -475,7 +475,7 @@ def build_four_port_sweep(
             f"mesh {diag['mesh_wall_time_s']:.2f} s, rung {t_mesh:.2f} s; "
             f"f = {frequency_hz:.3e} Hz, f_width = {GATED_WIDTH_FRACTION}; "
             f"four driven solves through the lumped-sheet sweep in "
-            f"{t_sweep:.2f} s wall at -n 2\n"
+            f"{t_sweep:.2f} s wall at -n {comm.size}\n"
             f"    Z_p (lumped sheet, leg (d0)'s termination) = "
             f"{TERMINATED_PORT_IMPEDANCE_OHM:.6e} Ohm;  z0_ohm (S-matrix "
             f"reference) = {REFERENCE_IMPEDANCE_OHM:.6e} Ohm  — the same number "

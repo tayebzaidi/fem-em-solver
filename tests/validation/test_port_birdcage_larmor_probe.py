@@ -381,7 +381,7 @@ def larmor_probe():
             ph, air = sv["media"]["phantom"], sv["media"]["air"]
             print(
                 f"\n[PORT-11 step1] {name}: f = {sv['frequency_hz']:.6e} Hz, solve "
-                f"{sv['solve_time']:.2f} s wall at -n 2\n"
+                f"{sv['solve_time']:.2f} s wall at -n {comm.size}\n"
                 f"    phantom (saline eps_r = {SALINE_EPSILON_R}, sigma = "
                 f"{SALINE_SIGMA} S/m): loss tangent {ph['loss_tangent']:.4f}, "
                 f"delta = {ph['delta']:.6e} m, lambda = {ph['lambda']:.6e} m\n"

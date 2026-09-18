@@ -1,0 +1,82 @@
+# Test Run
+- Chunk: OPS-51
+- Commit: e091c0cbbea9146b64472e72d3215732a7431497
+- Time (UTC): 2026-09-18 09:43:47
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.5.1
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 120 mpiexec -n 2 python3 -m pytest tests/unit/test_log_label_literals.py -v -s --tb=short'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 24
+drwxr-xr-x  3 taz5297 taz5297 4096 Sep  4 23:31 .
+drwxr-xr-x 17 taz5297 taz5297 4096 Sep 18 04:43 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  721 Sep  3 13:49 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 4275 Sep 13 19:19 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.5.1
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 120 mpiexec -n 2 python3 -m pytest tests/unit/test_log_label_literals.py -v -s --tb=short'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... collected 2 items
+
+tests/unit/test_log_label_literals.py::test_no_validation_print_hardcodes_a_rank_width_or_frequency collected 2 items
+
+tests/unit/test_log_label_literals.py::test_no_validation_print_hardcodes_a_rank_width_or_frequency 
+[OPS-51] scanned 93 modules under tests/validation; literal patterns ('wall at -n 2', 'at 128 MHz ==='); count = 0 (required 0)
+PASSED
+tests/unit/test_log_label_literals.py::test_the_same_count_at_the_pinned_pre_change_commit_is_six 
+[OPS-51] scanned 93 modules under tests/validation; literal patterns ('wall at -n 2', 'at 128 MHz ==='); count = 0 (required 0)
+PASSED
+tests/unit/test_log_label_literals.py::test_the_same_count_at_the_pinned_pre_change_commit_is_six 
+[OPS-51] negative control at e091c0c: scanned 93 modules; count = 6 (expected 6)
+    PRE-CHANGE HIT test_ans4_resolution_ladder.py:697: 'at 128 MHz ==='
+    PRE-CHANGE HIT test_port_birdcage_four_port.py:478: 'wall at -n 2'
+    PRE-CHANGE HIT test_port_birdcage_larmor_probe.py:384: 'wall at -n 2'
+    PRE-CHANGE HIT test_port_birdcage_leg_offset_sweep.py:407: 'wall at -n 2'
+    PRE-CHANGE HIT test_port_birdcage_lumped_column.py:519: 'wall at -n 2'
+    PRE-CHANGE HIT test_port_birdcage_termination_probe.py:365: 'wall at -n 2'
+PASSED
+
+============================== 2 passed in 0.55s ===============================
+
+[OPS-51] negative control at e091c0c: scanned 93 modules; count = 6 (expected 6)
+    PRE-CHANGE HIT test_ans4_resolution_ladder.py:697: 'at 128 MHz ==='
+    PRE-CHANGE HIT test_port_birdcage_four_port.py:478: 'wall at -n 2'
+    PRE-CHANGE HIT test_port_birdcage_larmor_probe.py:384: 'wall at -n 2'
+    PRE-CHANGE HIT test_port_birdcage_leg_offset_sweep.py:407: 'wall at -n 2'
+    PRE-CHANGE HIT test_port_birdcage_lumped_column.py:519: 'wall at -n 2'
+    PRE-CHANGE HIT test_port_birdcage_termination_probe.py:365: 'wall at -n 2'
+PASSED
+
+============================== 2 passed in 0.61s ===============================
+
+## Exit
+- Status: 0
+- Elapsed (s): 2
+- Filtered lines (gmsh optimisation chatter): 0

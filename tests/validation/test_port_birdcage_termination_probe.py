@@ -362,7 +362,7 @@ def termination_probe():
         for name, sv in solves.items():
             print(
                 f"[PORT-9 step3d0] {name} (Z_p = {sv['z_p']:.6e} Ohm), solve "
-                f"{sv['solve_time']:.2f} s wall at -n 2: "
+                f"{sv['solve_time']:.2f} s wall at -n {comm.size}: "
                 f"I_1 = {sv['i_driven']:+.9e} A  |I_1| = {abs(sv['i_driven']):.9e} A",
                 flush=True,
             )
