@@ -128,8 +128,14 @@ re-opens as a known-issues entry and a `PORT` systematics chunk.
 
 ### 3. `xl` — `ANS-4` step 3b: the 128 MHz degree-2 rung on the C4-congruent cut (daily licence: priced-family variant, 2026-09-16 review)
 
-**Status:** QUEUED 2026-09-16 for Thursday 2026-09-17 02:00 —
-`docs/testing/xl-queue.d/20260917-ANS-4-step3b.env`.
+**Status:** RUN `20260917T070008Z_ANS-4-step3b.log` — 15 passed / 1
+skipped (the `-n 16` record-width skip this entry predicted), Status 0,
+1539 s, `memory.peak` 273.1 GiB, 592 550 cells at h = 0.005 under the cut
+(ledger row 2026-09-17; marked by the 2026-09-18 03:00 review; the weekly
+of 2026-09-19 interprets it against the decision rule below). *(Was QUEUED
+2026-09-16 for Thursday 2026-09-17 02:00 —
+`docs/testing/xl-queue.d/20260917-ANS-4-step3b.env`, consumed by the
+launcher.)*
 
 **Licence class:** priced-family variant of the `ANS-4-step3` (2026-09-16)
 and `ANS-4-step2d` (2026-09-10) ledger rows — the same module, the same
@@ -180,8 +186,13 @@ is skipped at `-n 16` by design (`OPS-41`) — the ×1 digits are printed.
 
 ### 4. `xl` — `ANS-4` step 3c: the 10 MHz degree-2 rung (daily licence: priced-family variant, 2026-09-16 review)
 
-**Status:** QUEUED 2026-09-16 for Friday 2026-09-18 02:00 —
-`docs/testing/xl-queue.d/20260918-ANS-4-step3c.env`.
+**Status:** RUN `20260918T070008Z_ANS-4-step3c.log` — 16 passed, Status 0,
+1603 s, `memory.peak` 284.8 GiB (ledger row 2026-09-18; marked by the
+2026-09-18 03:00 review; the weekly interprets it against the decision
+rule below — and reads the self-class spread, 0.4451 % against the 0.5 %
+band, with entry 8). *(Was QUEUED 2026-09-16 for Friday 2026-09-18 02:00 —
+`docs/testing/xl-queue.d/20260918-ANS-4-step3c.env`, consumed by the
+launcher.)*
 
 **Licence class:** priced-family variant of `ANS-4-step3` — same module,
 same `RUNGSPEC`, same mesh (cut off, the `GEO-19` record mesh), **frequency
@@ -251,7 +262,10 @@ First Order column beside step 3's. No band moves.
 
 ### 6. `xl` — `WF-7` step 0c: the F-human degree-1 solve at the full 32-port set (daily licence: cost probe, 2026-09-16 review)
 
-**Status:** READY — 2026-09-16 09:38Z, §9 item 1 landed on `main`: the
+**Status:** QUEUED 2026-09-18 for Monday 2026-09-21 02:00 —
+`docs/testing/xl-queue.d/20260921-WF-7-step0c.env` (the first `xl` night
+after entry 5's 09-20; Saturday 09-19 is the `xxl` night). *(Was READY —
+2026-09-16 09:38Z, §9 item 1 landed on `main` as `a267c5a`.)* The
 probe's `FEM_EM_WF7_PORTS` knob is in (`scripts/probes/wf7_step0_f_human_cost.py`),
 proved at heavy tier by the flag-off control (knob unset reproduces step 0's
 printed `S_driven` `0.407423+0.344417j`, `20260916T093301Z_WF-7-step0c.log:10428`)
@@ -308,3 +322,105 @@ in §10 (a full set inside one `xl` window ⇒ the F-human degree-1 32×32 is
 an ordinary XL job; outside ⇒ `TH-16` symmetry planes move up); a
 reciprocity or passivity miss on the human-scale mesh is a finding for a
 `PORT` chunk, not a band change.
+
+### 7. `xl` — `ANS-4` step 3e: the 64 MHz degree-2 *h*-ladder (daily licence: priced-family variant, 2026-09-18 review)
+
+**Status:** QUEUED 2026-09-18 for Tuesday 2026-09-22 02:00 —
+`docs/testing/xl-queue.d/20260922-ANS-4-step3e.env`.
+
+**Licence class:** priced-family variant of the `ANS-4-step2d` ledger row
+(2026-09-10) — the same module, the same generator, **the same
+`RUNGSPEC="0.015:1 0.015:2 0.0075:2 0.005:2"` as step 2d, frequency varied
+only**: `FEM_EM_ANS4_FREQUENCY_HZ=64e6` (the knob `ANS-4-step3` /
+`step3c` already ran green at `-n 16`). Every rung has a measured point at
+this tier (step 2d: 116 085 / 116 085 / 281 728 / 592 744 cells, 0.14 /
+0.74 / 1.80 / 3.79 M unknowns), so this is a variant, not a cost probe.
+
+**Why (the §10 question it answers):** step 2d showed the 128 MHz degree-2
+sequence *converging in h* (successive change 1.19 % → 0.62 %, ratio 1.90),
+which is what lets the 128 MHz order-matched rung be read as a value rather
+than a point. At 64 MHz only the two end rungs exist (`ANS-4-step3`:
+`0.015:1` and `0.005:2`), so the 64 MHz order-matched figure the 09-19
+weekly adjudicates has no *h*-convergence statement under it. This window
+supplies the two missing degree-2 rungs at 64 MHz and the same successive-
+change readout.
+
+**Command:**
+
+```
+XL_CHUNK="ANS-4-step3e"
+XL_COMMAND="docker compose --profile xl exec -T fem-em-solver-xl bash -lc 'cd /workspace && source /usr/local/bin/dolfinx-complex-mode && mkdir -p /workspace/logs && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 FEM_EM_SOLVER_PROGRESS=2 FEM_EM_ANS4_FREQUENCY_HZ=64e6 FEM_EM_ANS4_STEP2_RUNGSPEC=\"0.015:1 0.015:2 0.0075:2 0.005:2\" timeout -k 60 14400 mpiexec -n 16 python3 -m pytest tests/environment tests/validation/test_ans4_resolution_ladder.py -v -s --tb=short > /workspace/logs/ans4-step3e-raw.log 2>&1; rc=\$?; echo \"[XL] memory.peak bytes:\" >> /workspace/logs/ans4-step3e-raw.log; cat /sys/fs/cgroup/memory.peak >> /workspace/logs/ans4-step3e-raw.log; echo \"[capture] rc=\$rc\" >> /workspace/logs/ans4-step3e-raw.log; cat /workspace/logs/ans4-step3e-raw.log; exit \$rc'"
+```
+
+**Price, inherited from the family (scaling stated):** step 2d ran this
+exact `RUNGSPEC` at `-n 16` in **7225 s, 290.2 GiB peak** *before* factor
+reuse (four-drive times 12.0 / 169.0 / 1119.2 / 5653.5 s). With `PORT-19`
+reuse in the module since 09-11 the finest rung's four drives measured
+**1476.9 s** (`ANS-4-step3`), a factor 3.8; applying the same factor to the
+two middle rungs gives ≈ 12 + 45 + 295 + 1480 s of solves plus four mesh
+builds — **predicted 2 000–3 500 s**, memory set by the finest rung,
+**270–295 GiB**. Timeout 14 400 s inside the 4 h window; 512 GiB limit.
+Frequency does not change the factorisation's size.
+
+**Readout (record, nothing asserted beyond the module's imported gates and
+its own ladder controls):** public — the three C4 classes of `S` at 64 MHz
+on the three degree-2 rungs, the successive changes and their ratio beside
+step 2d's 128 MHz 1.19 % → 0.62 % (1.90), every imported `PORT-11` gate per
+rung; private (`docs/private/`) — nothing new is needed: the AED column is
+the one step 3 is read against. **Decision rule for the weekly:** successive
+degree-2 changes falling with ratio ≳ 1.5 and the last one below the
+64 MHz two-rung move's smallest class (step 3, 2.60 %) ⇒ step 3's `0.005:2`
+figure is an *h*-converged value at the stated successive change and the
+adjudication may quote it as such; a non-monotone or non-falling sequence
+⇒ the 64 MHz order-matched figure is a point, not a value, and the row
+says so. No band moves. The module's 128 MHz record assert is skipped at
+`-n 16` by design (`OPS-41`). **Trap already paid for:** step 2d's single
+failure was the ladder's refinement control comparing two rungs that share
+one mesh (`0.015:1` vs `0.015:2`), fixed 2026-09-10; this spec has run
+green in that module only at 128 MHz, so a red on a ladder-control test at
+64 MHz is a module finding for a §9 item, not a physics reading.
+
+### 8. `xl` — `ANS-4` step 3f: the 10 MHz degree-2 rung on the C4-congruent cut (daily licence: priced-family variant, 2026-09-18 review)
+
+**Status:** QUEUED 2026-09-18 for Wednesday 2026-09-23 02:00 —
+`docs/testing/xl-queue.d/20260923-ANS-4-step3f.env`.
+
+**Licence class:** priced-family variant of `ANS-4-step3c` (2026-09-18,
+1603 s / 284.8 GiB) and `ANS-4-step3b` (2026-09-17, 1539 s / 273.1 GiB) —
+same module, same `RUNGSPEC`, same frequency as 3c (10 MHz); **one named
+env knob varied**: `FEM_EM_ANS4_STEP2_C4_CONGRUENT=1`, the knob 3b already
+ran green at this rung (592 550 cells, 3 827 268 dofs).
+
+**Why (the status it can move):** step 3c's degree-2 rung passed every
+imported `PORT-11` gate, but its **self-class C4 spread read 0.4451 %
+against the 0.5 % band** (`20260918T070008Z_ANS-4-step3c.log:4624`) — 89 %
+of the band, where the identical mesh at 64 MHz read 0.1985 % and the
+congruent-cut rung at 128 MHz read 0.0056 %. One frequency pair cannot say
+whether that is the cut-off mesh's asymmetry growing as f falls or a
+low-frequency property of the degree-2 solve. This window changes the one
+variable 3b changed.
+
+**Command:**
+
+```
+XL_CHUNK="ANS-4-step3f"
+XL_COMMAND="docker compose --profile xl exec -T fem-em-solver-xl bash -lc 'cd /workspace && source /usr/local/bin/dolfinx-complex-mode && mkdir -p /workspace/logs && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 FEM_EM_SOLVER_PROGRESS=2 FEM_EM_ANS4_FREQUENCY_HZ=10e6 FEM_EM_ANS4_STEP2_C4_CONGRUENT=1 FEM_EM_ANS4_STEP2_RUNGSPEC=\"0.015:1 0.005:2\" timeout -k 60 14400 mpiexec -n 16 python3 -m pytest tests/environment tests/validation/test_ans4_resolution_ladder.py -v -s --tb=short > /workspace/logs/ans4-step3f-raw.log 2>&1; rc=\$?; echo \"[XL] memory.peak bytes:\" >> /workspace/logs/ans4-step3f-raw.log; cat /sys/fs/cgroup/memory.peak >> /workspace/logs/ans4-step3f-raw.log; echo \"[capture] rc=\$rc\" >> /workspace/logs/ans4-step3f-raw.log; cat /workspace/logs/ans4-step3f-raw.log; exit \$rc'"
+```
+
+**Price, inherited:** three measured windows on this `RUNGSPEC` at `-n 16`
+— 1658 / 1539 / 1603 s, 280.8 / 273.1 / 284.8 GiB (all with a warm FFCx
+cache; the named cache volume survives the pre-window recreate). Prediction
+**1 500–1 800 s, 270–290 GiB**. Timeout 14 400 s; 512 GiB limit.
+
+**Readout (record; the imported gates are the module's own and stay
+unmoved):** the degree-2 rung's three class spreads at 10 MHz with the cut
+on, beside 3c's 0.4451 / 0.2199 / 0.2186 % (cut off); the two-rung move on
+the driven column beside 3c's 4.41 / 1.35 / 1.08 %. **Decision rule for the
+weekly:** self spread collapsing by an order (as 128 MHz did, to the 1e-2 %
+class) ⇒ the 0.4451 % is the cut-off port-sheet asymmetry, `GEO-32`'s row
+gains the degree-2 10 MHz reading and the congruent cut is the rung to
+quote at low frequency; self spread staying in the 0.4 % class ⇒ a
+frequency trend in the degree-2 C4 identity that would breach the band
+below 10 MHz — a known-issues entry and a `PORT` systematics item, **never
+a band change**. A red `PORT-11` gate in this window (spread > 0.5 %) is
+the same finding, stronger, and is reported as measured.

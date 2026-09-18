@@ -970,8 +970,10 @@ re-deriving a closed step's diagnosis. (The older per-chunk log,
 | `OPS-45` | The harness footer must not call a red durable-capture window green | ✅ Closed and audited PASS at the 2026-09-11 18:00 review: the harness footer no longer calls a red durable-capture window green. *History: `docs/planning/chunks/OPS-45.md`.* | smoke |
 | `OPS-46` | Move the heavy §7 chunk histories out of `PROJECT_PLAN.md` | ✅ Closed 2026-09-12 21:00 slot: all 73 listed rows are moved byte for byte with anchors (i), (ii) and (iv) green (plan 806 962 B, under 850 000 B); (iii) landed by the operator (`2a0ca4d`) and exercised by the 2026-09-13 10:30 review. **Audited PASS 2026-09-13 10:30** (log lines re-cited in the history file; two caveats: (iv) was a printed `wc -c`, not a scripted assert — an `OPS-47` step 1 rider — and "74 rows" was the census discrepancy, 73 were listed and moved). The narrative blocks are `OPS-47`. *History: `docs/planning/chunks/OPS-46.md`.* | smoke |
 | `OPS-47` | **Move the open chunks' blockquote narratives out of `PROJECT_PLAN.md`** — *opened 2026-09-13 weekly review (§10 plan hygiene; row written by the operator's interactive session, which landed that review after the scheduled session died on the account limit).* **The defect, measured 2026-09-13:** `OPS-46` moved the 73 heavy table *rows* (806 962 B, under its 850 000 B bound), but the `>`-blockquote narratives it declared out of scope are the line count — `WF-6` 2 295, `TH-15` 1 243, `PORT-14` 736, `POST-6` 157 lines, **4 431 lines = 48 % of the file** — all under **open** chunks, which the archive contract forbids summarising or compressing. It does not forbid moving them byte for byte. **Change:** extend `scripts/maintenance/rotate_plan_archive.py chunks` to a chunk's blockquote narrative: the contiguous `>` block(s) under a §7 family table that name one chunk move verbatim to `docs/planning/chunks/<ID>.md` (appended after the row history the `OPS-46` move put there), replaced in place by one pointer line; same byte-identity refusal (the re-read file body must equal the extracted span), never overwrite, `--dry-run` and `--census` as for rows. **Anchors (asserted):** (i) every moved block is byte-identical to its new file span — an empty diff per chunk; (ii) `check_private_leak.py --audit` exit 0 after the move, with a planted synthetic value under `docs/planning/chunks/` caught first (positive control); (iii) `PROJECT_PLAN.md` line count re-measured before/after with `scripts/probes/measure_plan_sections.py` and recorded — the 4 000-line guide (weekly-review.md step 6) is the target, and the row says plainly whether it is met; (iv) every § reference in CLAUDE.md and `docs/automation/*.md` still resolves. Docs/tooling only — no `src/`, no test, no band. One commit for the tool, one per chunk for the moves. | ✅ Closed 2026-09-13 15:00 slot (step 2): the four narratives are moved byte for byte, one commit each (`POST-6` `dc39b23`, `PORT-14` `d0b8af6` — file created, `TH-15` `0968eda`, `WF-6` `20689ba`). **Span definition** (the step-1 tool's, ratified for the slot): from the chunk's opener line `**`ID` …` to the line before the next §7 table row, `##`/`###` heading or another chunk's opener, trailing blanks dropped — so `POST-6`'s 44 leading `POST-1`/`POST-3` lines stay in the plan. Anchors per chunk: (i) an independent re-extraction from `git show HEAD:PROJECT_PLAN.md` at the pre-commit revision is `cmp`-equal to the chunk-file span, and the written plan is `cmp`-equal to HEAD with that span replaced by the pointer; (ii) `check_private_leak.py --audit` rc 0; (iii) plan 9 951 → 9 840 → 9 078 → 7 838 → **5 546 lines**, 838 503 → **527 145 B**, each shrink = span − pointer, rider `--assert-below-*` PASS (`20260913T201352Z_OPS-47-step2-POST-6.log:35–68`, `…201427Z_…-PORT-14.log:34–69`, `…201455Z_…-TH-15.log:34–68`, `…201524Z_…-WF-6.log:34–73`); negative control, a spec naming `OPS-46` (row, no narrative), refused rc 1 with the plan unchanged (`…201336Z_…-neg.log:37–42`); (iv) all 88 `§N`/`§N.M` references in CLAUDE.md and `docs/automation/*.md` resolve, 0 unresolved (`…201542Z_…-final.log:46–49`). **The 4 000-line guide is NOT met:** 5 546 lines (`--assert-below-lines 4000` FAIL rc 3, `WF-6.log:50`; `final.log:50`), a miss recorded with the guide not widened. **Step 1** landed 2026-09-13 15:00 slot: `chunks --narratives` moves a narrative (opener `**`ID`` to the next boundary, measured not to be a pure `>` block) byte for byte, with the byte-identity refusal, a scripted size assert, and anchors (a)/(b)/(c) plus both negative controls green (`20260913T200730Z_OPS-47-step1-leak.log:53–58`, `20260913T200801Z_OPS-47-step1-moves.log:46–104`). The dry run gives `WF-6` 2 293, `TH-15` 1 241, `PORT-14` 763 and `POST-6` 112 lines (4 409; the probe's 157 for `POST-6` includes 44 lines of the `POST-1`/`POST-3` blockquote); at step 1 nothing had moved on the real plan. *Narratives: `docs/planning/chunks/{POST-6,PORT-14,TH-15,WF-6}.md`.* | smoke |
-| `OPS-48` | **Restore the `EX-14` VTX read-back gate on the 0.11 image** — `mag:1` / `mag:2`'s `_check_vtx_roundtrip` calls the pre-2.10 `adios2.ADIOS()` API, catches the `AttributeError` and returns `False`, so the "written `.bp` reproduces the in-memory field" anchor has not executed since the image moved and the examples exit 0 regardless (known-issues 2026-09-14; found by the `EX-57` figure runs, `20260914T125223Z_EX-57-straight-wire.log:285`, `…125551Z_EX-57-circular-loop.log:305`; probe `…125326Z_EX-57-adios2-probe.log:34` reads `adios2 2.12.1 has ADIOS: False`). **Done-when (§4):** the reader ported to the 2.12 bindings (`adios2.bindings.ADIOS` or `FileReader`, the VTX local-block walk kept), both examples run through the harness at `-n 2` with `relative difference ≤ VTX_ROUNDTRIP_RTOL` (1e-10, unchanged) **asserted and executed** (the log shows the `✓ written .bp reproduces` line, not the `⚠ unavailable` line), a wrong-comparison control (read-back vs 0.5 × in-memory) printed at rel ≈ 1, the guides' read-back sections re-cited to the new logs, censuses `broken=0` / docrefs `exit != 1`, elapsed recorded, the known-issues entry retired in the same commit. Opened 2026-09-16 03:00 review (§9 item 2). **Closed 2026-09-16 (04:30 implementer slot).** The 2.12 bindings keep the identical low-level classes under `adios2.bindings` — measured `adios2.__version__ == '2.12.1'`, `hasattr(adios2.bindings, 'ADIOS') is True`, `Mode.ReadRandomAccess` / `Mode.Sync` present, `IO.SetEngine` / `IO.AvailableVariables` present (`20260916T094031Z_OPS-48.log`, `20260916T094102Z_OPS-48.log`) — so the port is a one-line import change plus the two `Mode` references; the BP4 local-block walk (`BlocksInfo` → `SetBlockSelection` → `Get`) is unchanged. The `⚠ unavailable` path now **raises** instead of returning `False`. **Executed, real build, `-n 2`:** `mag:1` `relative difference = 0.000e+00` (tol 1e-10) on in-memory = read-back = `4.972891321210e-05 T`, control (read-back vs 0.5 × in-memory) = `1.000e+00`, i.e. 1e10× the band — `20260916T094210Z_OPS-48-mag1.log:400–407`, Status 0, **7 s**; `mag:2` `relative difference = 0.000e+00` on `7.861367746496e-05 T`, control `1.000e+00` — `20260916T094228Z_OPS-48-mag2.log:337–343`, Status 0, **136 s**. Censuses `20260916T094524Z_OPS-48-census.log`: setup figures `broken=0` (`SUMMARY: examples=54 ok=9 missing=45 broken=0`), docrefs `dead=0 guide=0 stale=28 stale_severity=report exit=2` (≠ 1; the 28 stale entries are unrelated regenerable ParaView artifacts, pre-existing). Both guides re-cited to the new logs; the known-issues 2026-09-14 entry retired in the same commit (other `.bp` read-backs still not surveyed). No `src/` change. | ✅ | standard (`mag:1` 7 s, `mag:2` 136 s at `-n 2`, measured) |
-| `OPS-49` | **A time-series XDMF writer beside `write_xdmf_with_tags`** — `consolidate_xdmf_grids` collapses time collections and drops `<Time>` ("single-timestep files only", `io/paraview_utils.py:71`), so an example that wants rungs or drive states as ParaView time steps cannot use the helper: `EX-56` wrote two per-rung files, `EX-58` bypassed the helper with `XDMFFile` (known-issues 2026-09-16). **Done-when (§4):** additive `write_xdmf_time_series(filename, mesh, cell_tags, steps, comm)` with `steps = [(t, {name: Function}), …]`, one temporal collection whose `n` children each carry every field and CellTags; unit test at `-n 2`: (a) the XDMF parses to exactly one collection with `n` `<Time>` values equal to the `t`s written and every attribute on every child (in = out), (b) each step's arrays read back through `h5py` equal the gathered function arrays at rel ≤ 1e-12, (c) negative control — the same steps through the existing `write_xdmf_with_tags` at the pre-change commit (pinned `<sha>^`) collapse to ≤ 1 time value; `write_xdmf_with_tags` / `consolidate_xdmf_grids` byte-identical; elapsed recorded; the known-issues entry retired in the same commit. `EX-56` / `EX-58` are not rewritten by this chunk. Opened 2026-09-16 03:00 review (§9 item 3). **Closed 2026-09-16 (04:30 implementer slot).** `write_xdmf_time_series(filename, mesh, cell_tags, steps, comm, facet_tags=None)` plus a private `_consolidate_xdmf_time_series` that keeps the time axis: dolfinx's per-field temporal collections are merged onto the first collection's per-`t` children, the mesh grid's Topology/Geometry are inlined into each child (the xi:include targets go away with the mesh grid) and the single collection is the Domain's only grid. `facet_tags` is **rejected** with a `ValueError` (separate topology grid, out of scope); mismatched `{name: Function}` keys are rejected too (`write_function` names the grid after the function, so they would silently collide). Diff vs `fff1673`: **186 insertions, 0 deletions** — `write_xdmf_with_tags` and `consolidate_xdmf_grids` are byte-identical. **Executed, real build, `-n 2`, `20260916T095021Z_OPS-49.log`:** (a) count identity — `collections=1 children=3 times=[0.0, 0.5, 1.25] attrs/child=['CellTags', 'phi', 'sigma']`, every child also carrying its own Topology and Geometry; (b) `h5py` round trip — worst relative error **0.000e+00** over 6 arrays (3 steps × {CG1 `phi`, DG0 `sigma`}, globally gathered owned dofs, sorted), bound 1e-12; (c) asserted negative control at the pinned pre-change commit `fff1673` — the same three states through `write_xdmf_with_tags` give `<Time>` elements per file `[0, 0, 0]`, the collapse the known-issues entry describes. 3 passed in 0.83 s, elapsed **2 s**; `tests/io` regression 13 passed, elapsed 3 s (`20260916T095045Z_OPS-49.log`). Known-issues 2026-09-16 retired in the same commit. `EX-56` / `EX-58` not rewritten; ParaView's Xdmf3 reader itself cannot be exercised headless, so the XML identity is the gate. | ✅ | smoke (2 s at `-n 2`, measured) |
+| `OPS-48` | **Restore the `EX-14` VTX read-back gate on the 0.11 image** — `mag:1` / `mag:2`'s `_check_vtx_roundtrip` calls the pre-2.10 `adios2.ADIOS()` API, catches the `AttributeError` and returns `False`, so the "written `.bp` reproduces the in-memory field" anchor has not executed since the image moved and the examples exit 0 regardless (known-issues 2026-09-14; found by the `EX-57` figure runs, `20260914T125223Z_EX-57-straight-wire.log:285`, `…125551Z_EX-57-circular-loop.log:305`; probe `…125326Z_EX-57-adios2-probe.log:34` reads `adios2 2.12.1 has ADIOS: False`). **Done-when (§4):** the reader ported to the 2.12 bindings (`adios2.bindings.ADIOS` or `FileReader`, the VTX local-block walk kept), both examples run through the harness at `-n 2` with `relative difference ≤ VTX_ROUNDTRIP_RTOL` (1e-10, unchanged) **asserted and executed** (the log shows the `✓ written .bp reproduces` line, not the `⚠ unavailable` line), a wrong-comparison control (read-back vs 0.5 × in-memory) printed at rel ≈ 1, the guides' read-back sections re-cited to the new logs, censuses `broken=0` / docrefs `exit != 1`, elapsed recorded, the known-issues entry retired in the same commit. Opened 2026-09-16 03:00 review (§9 item 2). **Closed 2026-09-16 (04:30 implementer slot).** The 2.12 bindings keep the identical low-level classes under `adios2.bindings` — measured `adios2.__version__ == '2.12.1'`, `hasattr(adios2.bindings, 'ADIOS') is True`, `Mode.ReadRandomAccess` / `Mode.Sync` present, `IO.SetEngine` / `IO.AvailableVariables` present (`20260916T094031Z_OPS-48.log`, `20260916T094102Z_OPS-48.log`) — so the port is a one-line import change plus the two `Mode` references; the BP4 local-block walk (`BlocksInfo` → `SetBlockSelection` → `Get`) is unchanged. The `⚠ unavailable` path now **raises** instead of returning `False`. **Executed, real build, `-n 2`:** `mag:1` `relative difference = 0.000e+00` (tol 1e-10) on in-memory = read-back = `4.972891321210e-05 T`, control (read-back vs 0.5 × in-memory) = `1.000e+00`, i.e. 1e10× the band — `20260916T094210Z_OPS-48-mag1.log:400–407`, Status 0, **7 s**; `mag:2` `relative difference = 0.000e+00` on `7.861367746496e-05 T`, control `1.000e+00` — `20260916T094228Z_OPS-48-mag2.log:337–343`, Status 0, **136 s**. Censuses `20260916T094524Z_OPS-48-census.log`: setup figures `broken=0` (`SUMMARY: examples=54 ok=9 missing=45 broken=0`), docrefs `dead=0 guide=0 stale=28 stale_severity=report exit=2` (≠ 1; the 28 stale entries are unrelated regenerable ParaView artifacts, pre-existing). Both guides re-cited to the new logs; the known-issues 2026-09-14 entry retired in the same commit (other `.bp` read-backs still not surveyed). No `src/` change. *Audited PASS 2026-09-18 03:00 review (`…094210Z_OPS-48-mag1.log:401–407`, `…094228Z_OPS-48-mag2.log:337–343`; the anchor and the control are executed `raise`s at `01_straight_wire.py:129–138`). The survey was then done by that review: one more dead-API reader and a writer-side short-circuit of this same gate — `OPS-50`.* | ✅ | standard (`mag:1` 7 s, `mag:2` 136 s at `-n 2`, measured) |
+| `OPS-49` | **A time-series XDMF writer beside `write_xdmf_with_tags`** — `consolidate_xdmf_grids` collapses time collections and drops `<Time>` ("single-timestep files only", `io/paraview_utils.py:71`), so an example that wants rungs or drive states as ParaView time steps cannot use the helper: `EX-56` wrote two per-rung files, `EX-58` bypassed the helper with `XDMFFile` (known-issues 2026-09-16). **Done-when (§4):** additive `write_xdmf_time_series(filename, mesh, cell_tags, steps, comm)` with `steps = [(t, {name: Function}), …]`, one temporal collection whose `n` children each carry every field and CellTags; unit test at `-n 2`: (a) the XDMF parses to exactly one collection with `n` `<Time>` values equal to the `t`s written and every attribute on every child (in = out), (b) each step's arrays read back through `h5py` equal the gathered function arrays at rel ≤ 1e-12, (c) negative control — the same steps through the existing `write_xdmf_with_tags` at the pre-change commit (pinned `<sha>^`) collapse to ≤ 1 time value; `write_xdmf_with_tags` / `consolidate_xdmf_grids` byte-identical; elapsed recorded; the known-issues entry retired in the same commit. `EX-56` / `EX-58` are not rewritten by this chunk. Opened 2026-09-16 03:00 review (§9 item 3). **Closed 2026-09-16 (04:30 implementer slot).** `write_xdmf_time_series(filename, mesh, cell_tags, steps, comm, facet_tags=None)` plus a private `_consolidate_xdmf_time_series` that keeps the time axis: dolfinx's per-field temporal collections are merged onto the first collection's per-`t` children, the mesh grid's Topology/Geometry are inlined into each child (the xi:include targets go away with the mesh grid) and the single collection is the Domain's only grid. `facet_tags` is **rejected** with a `ValueError` (separate topology grid, out of scope); mismatched `{name: Function}` keys are rejected too (`write_function` names the grid after the function, so they would silently collide). Diff vs `fff1673`: **186 insertions, 0 deletions** — `write_xdmf_with_tags` and `consolidate_xdmf_grids` are byte-identical. **Executed, real build, `-n 2`, `20260916T095021Z_OPS-49.log`:** (a) count identity — `collections=1 children=3 times=[0.0, 0.5, 1.25] attrs/child=['CellTags', 'phi', 'sigma']`, every child also carrying its own Topology and Geometry; (b) `h5py` round trip — worst relative error **0.000e+00** over 6 arrays (3 steps × {CG1 `phi`, DG0 `sigma`}, globally gathered owned dofs, sorted), bound 1e-12; (c) asserted negative control at the pinned pre-change commit `fff1673` — the same three states through `write_xdmf_with_tags` give `<Time>` elements per file `[0, 0, 0]`, the collapse the known-issues entry describes. 3 passed in 0.83 s, elapsed **2 s**; `tests/io` regression 13 passed, elapsed 3 s (`20260916T095045Z_OPS-49.log`). Known-issues 2026-09-16 retired in the same commit. `EX-56` / `EX-58` not rewritten; ParaView's Xdmf3 reader itself cannot be exercised headless, so the XML identity is the gate. *Audited PASS 2026-09-18 03:00 review (`…095021Z_OPS-49.log:50–51,54,59,64–66`; asserts at `tests/io/test_xdmf_time_series.py:170–180,217–218`); caveat banked: control (c) runs today's `write_xdmf_with_tags`, argued byte-identical to `fff1673` by the 0-deletion diff, not a checkout of that commit. `EX-56` cannot adopt the writer (its two rungs are two meshes; the writer takes one) — the journal's follow-up applies to `EX-58` only and moves no status, so it is not queued.* | ✅ | smoke (2 s at `-n 2`, measured) |
+| `OPS-50` | **Close the writer-side hole in the `EX-14` VTX read-back gate, and port the last dead-API `adios2` reader** — the survey `OPS-48` left open, done by the 2026-09-18 03:00 review (read-only sweep; exactly three files in the repo touch `adios2`). **(a)** `mag:1` / `mag:2` wrap each `io.VTXWriter` in `try/except Exception` that only prints `⚠ VTX output of B failed`, and the gate is then called as `if not (vtx_B_written and _check_vtx_roundtrip(…))` (`01_straight_wire.py:412–432`, `02_circular_loop.py:357–377`) — a writer failure short-circuits the read-back away and the example prints "XDMF files were still created" and **exits 0**: the same silently-disabled-gate mode `OPS-48` fixed on the reader side, reached through the writer. **(b)** `scripts/probes/post4_step5_probe.py:215–232` (`read_vtx_block`) still calls the pre-2.10 top-level `adios2.ADIOS()` / `adios2.Mode.*`; on the 0.11 image (`adios2` 2.12.1) it dies with an `AttributeError` — loud, not silent, but it is the probe the dashboard names as the regenerator for the operator's "does ParaView open a DG1 `.bp`" check, and it has not run since 2026-08-12 (`20260812T200532Z_POST-4-step5-n2.log`, v0.7.2 image). Known-issues 2026-09-18. **Done-when (§4):** (a) a `B` writer failure **raises** in both examples (the `A` writer may stay tolerant — no gate reads it); asserted control: a harness window that runs `mag:1` with `dolfinx.io.VTXWriter` monkeypatched to raise exits **non-zero**, and the same wrapper on the example file taken from the pinned pre-change commit exits **0** (the defect); the unpatched `mag:1` and `mag:2` reproduce `OPS-48`'s printed digits (`relative difference = 0.000e+00`, control `1.000e+00`) at `-n 2`; `PARAVIEW_GUIDE.md:166–170` reworded (both failure paths now exit non-zero). (b) the probe ported to `adios2.bindings` (the `OPS-48` edit, verbatim) and run at `-n 2` on the complex build printing `PROBE_RESULT PASS` with its own round-trip anchor and `PIN_REPRO_RTOL` unchanged — or, if the fixture pin has moved on the 0.11 image, the printed drift reported and (b) held 🟡 (a version-tagged record is `record-reconciler`'s, not this chunk's). Censuses `broken=0` / docrefs `exit != 1`, elapsed recorded, the known-issues entry retired in the same commit. Opened 2026-09-18 03:00 review (§9 item 1). | ⬜ | standard (`mag:1` 7 s, `mag:2` 136 s, probe ≈ 10 s at `-n 2`) |
+| `OPS-51` | **Log labels that state the run's real rank width and frequency** — six prints in `tests/validation` hardcode `at -n 2` (five f-strings: `test_port_birdcage_leg_offset_sweep.py:407`, `…four_port.py:478`, `…larmor_probe.py:384`, `…lumped_column.py:519`, `…termination_probe.py:365`) or `at 128 MHz ===` (`test_ans4_resolution_ladder.py:697`), so the 2026-09-17 / 09-18 XL logs say "-n 2" on `-n 16` windows and "128 MHz" over 10 MHz data (known-issues 2026-09-18; found by the `log-pathologist` reading of `20260918T070008Z_ANS-4-step3c.log:2416,4585,4638`). Prints only; no gate reads them. **Done-when (§4):** the six literals replaced by the communicator's size and the rung's actual frequency; a `tests/unit` guard (real build, `-n 2`) asserting the count of the two literal patterns in `tests/validation/*.py` is **0**, with the asserted control that the same count on the files at the pinned pre-change commit is **6** (count identity, in = out); the ladder's step-3a flag-off control re-run at `-n 8` (its record width — `20260914T093325Z_ANS-4-step3a-w1.log`'s command verbatim) green with the 2a″ record assert **executed** at `STEP3A_RECORD_RTOL` (1e-6, unchanged) and the rung header reading `-n 8`; `pytest --collect-only` over the other four edited modules green (an f-string edit that does not import is the failure this catches); no band, record or assertion touched; elapsed recorded; the known-issues entry retired in the same commit. Opened 2026-09-18 03:00 review (§9 item 2). | ⬜ | standard (62 s at `-n 8`, `20260914T093325Z_ANS-4-step3a-w1.log`) |
 | `OPS-1` | Executable verification environment (Docker) | ✅ | smoke |
 | `OPS-2` | CI runs the real test suite, not just `tests/unit` | ✅ | standard |
 | `OPS-3` | Deterministic test tolerance policy | ✅ | smoke |
@@ -2628,7 +2630,7 @@ review; commissioned 2026-08-23 weekly review as §10 subgoal 2b, serial on `POR
 | `WF-4` | Scenario presets (debug/dev/benchmark-lite) | 🧪 | standard |
 | `WF-5` | Loaded birdcage: frequency shift & Q degradation | ⬜ | heavy |
 | `WF-6` | B1+ field mapping and homogeneity (CV) | ✅ 2026-09-13 (step 5) on the re-scoped subgoal-4 target: on the unloaded F-small birdcage at 10 MHz, CG1, the worst-radius C4 four-copy spread of `\|B₁⁺\|` falls 5.2506 → 2.0719 % and the C4 covariance 3.6159 → 1.6815 % as resolution goes 0.015 → 0.012 m — both falls asserted, both spreads reproduced at rtol 1e-3 (`20260913T170259Z_WF-6-step5.log`, 24 passed, Status 0, 156 s at `-n 4`). A convergence statement only — no closed-form, homogeneity, absolute, C95.3 or Larmor claim; the flag-on ×0.0095 power residual stays banked OPEN in known-issues. *History: `docs/planning/chunks/WF-6.md`.* | heavy (step 1 standard, complex; steps 3h 194 s / 3f′ 117 s / 3i 96 s standard; step 4a 4 s smoke, `-n 1`, real; **step 4g 204 s at `-n 4`**; **step 5 156 s at `-n 4`**; **step 4h 199 s at `-n 4`** + 52 s flag-off control; **step 4i 198 s + 104 s at `-n 4`**; **step 4j 199 s + 101 s at `-n 4`**; step 4k 29 + 32 + 39 + 38 s smoke, `-n 1`, no solve) |
-| `WF-7` | SAR10g hotspot identification | 🧪 Step 0 (cost probe, 2026-09-13): one degree-1 single-drive lumped-sheet solve on the F-human rung (longitudinal ring sheets, 507 266 cells, +0.52 % vs `GEO-25`'s transverse record) at 64 MHz, `-n 8` — 607 039 unknowns, solve 37 s, mesh build 123 s, summed `ru_maxrss` 10.93 GiB (`20260913T190102Z_WF-7-step0.log:10419–10427`, 178 s); below the predicted 11–33 GiB / 3–8 min bracket. A measurement for the XXL commissioning, no physics claim. **Step 0b queued 2026-09-13 (operator, interactive) for the Saturday 2026-09-19 02:00 `xxl` window (`docs/testing/xl-pending.md` entry 1; `docs/testing/xxl-queue.env`):** the same probe with the new `FEM_EM_WF7_DEGREE=2` knob (unset is byte-identical), degree-1 control first in the same window at `-n 16`, against `fem-em-solver-xxl`. Readout, record only: `S_driven` at degree 1 and 2 on the same F-human mesh and `|S₂ − S₁|/|S₁|` — the human-scale order sensitivity — plus the degree-2 price (predicted ≈ 3.2 M unknowns, ≈ 235 GiB, ≈ 17 min from 2d's point; brackets 150–350 GiB / 10–60 min printed). Decision rule for the 09-19 weekly pre-registered in the pending file: same class as F-small's 64 MHz order move ⇒ degree 2 is the production order at human scale and this is its price; an order of magnitude smaller ⇒ degree 1 suffices for human-scale S; does not finish ⇒ the price is the finding and `TH-16` moves up. Nothing asserted beyond the imported cell band. **Step 0c (opened 2026-09-16 review, §9 item 1 + `xl-pending.md` entry 6):** the probe gains `FEM_EM_WF7_PORTS` (unset = byte-identical; `k` or `all` = the first `k` / every ring port driven in turn, each column's fields dropped), proved at heavy tier by the flag-off control (`S_driven` = step 0's `0.407423+0.344417j`) and a two-drive reciprocity assert; then the XL cost probe — the full 32-port degree-1 set on the F-human mesh at `-n 16`, readout the price plus the 32×32's reciprocity / passivity / C16 spreads printed beside `PORT-13`'s bands, nothing asserted. **The knob landed 2026-09-16 (heavy, `-n 8`, two windows): (a) flag-off control — the knob unset, the probe reproduces step 0's printed `S_driven` digits `0.407423+0.344417j` exactly, cells 507 266 (+0.52 %, inside the imported band), solve 31.71 s, summed `ru_maxrss` 10.93 GiB, 158 s window (`20260916T093301Z_WF-7-step0c.log:10425–10430`); (b) `FEM_EM_WF7_PORTS=2` — two drives P17, P18, the 2×2's reciprocity ratio **9.767e-16** against the imported `RECIPROCITY_BAND` 1e-3 and drive 2's `S_driven` 0.407959+0.343115j differing from drive 1's by 1.407e-03 > 1e-6, 155 s window (`20260916T093548Z_WF-7-step0c.log:10431–10438`). Priced for the XL window: the first drive factorises (27.71 s), the second back-substitutes the held MUMPS factor (`solve_kind` `held`, **0.59 s**, `PORT-19` step 3), so 32 drives extrapolate to ≈ 2 min mesh + 28 s + 31 × 0.6 s ≈ 3.5 min at `-n 8`; summed `ru_maxrss` moved 10.892 → 11.082 GiB over the second drive (+0.19 GiB per retained column). Negative control (*predicted*, printed, never asserted): the 2×2's `σ_max` 0.709401 ≤ `COLUMN_PASSIVITY_CEILING` 1 — as predicted; class spreads printed (|S_jj| spread 8.0579e-04, full-column Σ|S_ij|² 0.895804 / 0.895395). No F-human `S` claim, no band moved.** | heavy; step 0b **`xxl`**; step 0c **`xl`** (cost probe) |
+| `WF-7` | SAR10g hotspot identification | 🧪 Step 0 (cost probe, 2026-09-13): one degree-1 single-drive lumped-sheet solve on the F-human rung (longitudinal ring sheets, 507 266 cells, +0.52 % vs `GEO-25`'s transverse record) at 64 MHz, `-n 8` — 607 039 unknowns, solve 37 s, mesh build 123 s, summed `ru_maxrss` 10.93 GiB (`20260913T190102Z_WF-7-step0.log:10419–10427`, 178 s); below the predicted 11–33 GiB / 3–8 min bracket. A measurement for the XXL commissioning, no physics claim. **Step 0b queued 2026-09-13 (operator, interactive) for the Saturday 2026-09-19 02:00 `xxl` window (`docs/testing/xl-pending.md` entry 1; `docs/testing/xxl-queue.env`):** the same probe with the new `FEM_EM_WF7_DEGREE=2` knob (unset is byte-identical), degree-1 control first in the same window at `-n 16`, against `fem-em-solver-xxl`. Readout, record only: `S_driven` at degree 1 and 2 on the same F-human mesh and `|S₂ − S₁|/|S₁|` — the human-scale order sensitivity — plus the degree-2 price (predicted ≈ 3.2 M unknowns, ≈ 235 GiB, ≈ 17 min from 2d's point; brackets 150–350 GiB / 10–60 min printed). Decision rule for the 09-19 weekly pre-registered in the pending file: same class as F-small's 64 MHz order move ⇒ degree 2 is the production order at human scale and this is its price; an order of magnitude smaller ⇒ degree 1 suffices for human-scale S; does not finish ⇒ the price is the finding and `TH-16` moves up. Nothing asserted beyond the imported cell band. **Step 0c (opened 2026-09-16 review, §9 item 1 + `xl-pending.md` entry 6):** the probe gains `FEM_EM_WF7_PORTS` (unset = byte-identical; `k` or `all` = the first `k` / every ring port driven in turn, each column's fields dropped), proved at heavy tier by the flag-off control (`S_driven` = step 0's `0.407423+0.344417j`) and a two-drive reciprocity assert; then the XL cost probe — the full 32-port degree-1 set on the F-human mesh at `-n 16`, readout the price plus the 32×32's reciprocity / passivity / C16 spreads printed beside `PORT-13`'s bands, nothing asserted. **The knob landed 2026-09-16 (heavy, `-n 8`, two windows): (a) flag-off control — the knob unset, the probe reproduces step 0's printed `S_driven` digits `0.407423+0.344417j` exactly, cells 507 266 (+0.52 %, inside the imported band), solve 31.71 s, summed `ru_maxrss` 10.93 GiB, 158 s window (`20260916T093301Z_WF-7-step0c.log:10425–10430`); (b) `FEM_EM_WF7_PORTS=2` — two drives P17, P18, the 2×2's reciprocity ratio **9.767e-16** against the imported `RECIPROCITY_BAND` 1e-3 and drive 2's `S_driven` 0.407959+0.343115j differing from drive 1's by 1.407e-03 > 1e-6, 155 s window (`20260916T093548Z_WF-7-step0c.log:10431–10438`). Priced for the XL window: the first drive factorises (27.71 s), the second back-substitutes the held MUMPS factor (`solve_kind` `held`, **0.59 s**, `PORT-19` step 3), so 32 drives extrapolate to ≈ 2 min mesh + 28 s + 31 × 0.6 s ≈ 3.5 min at `-n 8`; summed `ru_maxrss` moved 10.892 → 11.082 GiB over the second drive (+0.19 GiB per retained column). Negative control (*predicted*, printed, never asserted): the 2×2's `σ_max` 0.709401 ≤ `COLUMN_PASSIVITY_CEILING` 1 — as predicted; class spreads printed (|S_jj| spread 8.0579e-04, full-column Σ|S_ij|² 0.895804 / 0.895395). No F-human `S` claim, no band moved.** *The 32-port XL cost probe was queued by the 2026-09-18 03:00 review for Monday 2026-09-21 02:00 (`docs/testing/xl-queue.d/20260921-WF-7-step0c.env`, `xl-pending.md` entry 6).* | heavy; step 0b **`xxl`**; step 0c **`xl`** (cost probe) |
 | `WF-8` | Publication-quality visualization pipeline | ⬜ | standard |
 | `WF-9` | **Implant transfer-function excitation (ISO 10974 Tier 3)** — a local impressed source stepped along a lead path + the tangential-`E` path-integral post-processor; heating from `∫ TF(z)·E_tan(z) dz` gated against the direct lead-in-phantom solve — **feature ladder C1** (operator directive 2026-09-04; Phase 7; `WF-7` is to be scoped with this in mind) | ⬜ | heavy |
 
@@ -2722,7 +2724,7 @@ demonstrates a **gated** capability from an angle no existing example covers.
 | `EX-54` | **The birdcage as a PEC hole in ParaView — the 4×4 and the field on the conductor-free mesh** (`examples/ports/14_birdcage_pec_hole_ports.py` + same-stem guide; `example-runner`) | ✅ **DONE 2026-09-14 02:31Z.** `_hole_rung(FREQUENCY_HZ)` at 10 MHz, imported unmodified except five additive return keys (`mesh`, `cell_tags`, `wall_facet_tags`, `sheet_facet_tags`, `fields` — nothing renamed/removed; gate module re-run green in-slot, 6 passed / 4 skipped (solid control not requested), 32.70 s, `20260914T023104Z_EX-54-th15-rerun.log:961`). All three imported gates plus the power identity asserted and green in the example: reciprocity 1.508e-14 (band 1e-3), σ_max 0.999994234 (band 1 + 1e-9), class spreads self 0.0190 %/adjacent 0.0094 %/opposite 0.0059 % (band 0.5 %), power rel dev 1.327e-10 (band 1e-3) — `20260914T023145Z_EX-54.log:897`. Printed only (no pre-registered band): the hole's 4×4 beside `PORT-11`'s solid σ = 800 S/m 10 MHz record (`LEG_D_S_MATRIX_10MHZ`), `max\|ΔS\|` per C4 class self 9.769e-02 / adjacent 2.484e-02 / opposite 4.828e-02 (`:908`); the cavity wall's (tag 401) `\|n × E\|` reads 2.989e-16 over 4.052772e-02 m² — machine-zero, confirming the PEC enforcement (`:910`). 80 181 cells, 31.8 s total at `-n 2` (`:895,914`). Combined XDMF `examples/ports/paraview_output/ports_14_birdcage_pec_hole_ports_combined.xdmf` (`CellTags`, `E_magnitude` DG0, `facet_tags` grid with tag 401). Census: pre `dead=0 guide=0 stale=0 exit=0` (`20260914T022309Z_EX-54.log:39`), post `dead=0 guide=0 stale=0 exit=0` (`20260914T023230Z_EX-54-census-post.log:39`). No copper, Larmor-accuracy or `TH-14` claim. | standard (host-runner, measured 34 s example / 32.70 s gate rerun) |
 | `EX-55` | **The 32-port ccw quadrature drive on the 16-leg birdcage in ParaView** (`examples/ports/15_birdcage_sixteen_leg_quadrature_b1.py` + guide; `example-runner`) | ⬜ *Opened 2026-09-13 18:00 review (step 5) for the gate `POST-6` step 3 closed 2026-09-13: `ports:13` (`EX-49`) superposes an* asymmetric *drive on the 4-leg fixture; no example drives the 16-leg / 32-ring-port fixture in quadrature.* Angle: drive — `quadrature_phase_weights` at the 32 ring ports through `superpose_drives` at 10 MHz, `PORT-13`'s fixture imported from `tests/validation/test_port_birdcage_ring_matrix.py`, the CG1 `\|B₁⁺\|` map on the z = 0 sample cylinder written to combined XDMF, with the C16 rotation spread and the mirror identity asserted at the imported 5 % band (`test_birdcage_b1_plus_map.py:120`) and `PORT-16`'s exact power identity at the imported 1e-6. Trap: the gate's sample set holds exactly `MIN_SAMPLE_POINTS` = 50 (`20260913T185043Z_POST-6-step3.log:11780`) — the example prints the count and imports the constant. Done-when (§4): the three imported identities asserted, artifact named, census `exit != 1`, elapsed recorded. Predicted: the gate was 191 s at `-n 8` (build 82 s, 32 drives under reuse 30 s, identity 44 s); at the runner's `-n 2` *predicted* ≤ 8 min — pass the runner `-t 900` and record the measured window. No homogeneity, absolute or Larmor claim. **Closed ✅ 2026-09-14, 04:30 slot (take-next).** The flagged harness run `20260914T095534Z_EX-55.log` (`-n 2`, Status 0, 168 s) asserts (i) C16 spread 0.8102 % and (ii) mirror 0.6769 % (5 %), and (iii) the exact identity at 8.40e-16 (1e-6) (`:11641–11643`). The sample count is 50 against `MIN_SAMPLE_POINTS` = 50 (`:11647`). The unflagged control `…095938Z_EX-55-control.log` (149 s) reproduces them. Census `…095914Z_EX-55-census.log`: docrefs `exit=0` (`:39`), setup figures `examples=50 ok=2 missing=48 broken=0` (`:92`); the figure PNG is 343 KiB. Rule (a): the `ring_quadrature_case` body was lifted into `_build_ring_quadrature_case()` with 8 additive return keys. The gate was re-run green, `20260914T100313Z_EX-55-rule-a-gate.log` (`-n 8`, 15 passed, 148 s, (i)/(ii) digits unchanged). *Disclosed:* container timeout 560, not 900 (the foreground window). No census was logged before the change; the delta is reconstructed from the 09-14 census. | heavy (host-runner; measured 168 s at `-n 2`) |
 | `EX-56` | **`\|B₁⁺\|` spread against resolution — the two-rung ladder in ParaView** (`examples/ports/16_birdcage_b1_resolution_ladder.py` + guide; `example-runner`) | ✅ **2026-09-14 06:00 slot:** fall asserted 5.2506 % → 2.0719 % at `-n 2` (records printed, rel 5.7e-06 / 6.9e-06, width disclosed), flagged 142 s / unflagged 136 s (`20260914T110437Z_EX-56.log:3618,3636`, `…110730Z_EX-56-control.log:3618,3629`), census 51/3/48/0 as predicted; **deviation:** two per-rung combined XDMFs, not one time-stepped file (the rungs' meshes differ). ~~⬜~~ *Opened 2026-09-13 18:00 review (step 5) for the gate `WF-6` step 5 closed 2026-09-13: `ports:8` (`EX-40`) ladders* frequency*; no example ladders resolution.* Angle: output quantity — the worst-radius C4 four-copy spread of CG1 `\|B₁⁺\|` on the unloaded F-small birdcage at 10 MHz at global sizing ×1 and ×0.012, imported from `tests/validation/test_birdcage_b1_plus_closed_form.py` (`LADDER`, `STEP5_RECORDED_SPREADS` 5.2506 % / 2.0719 % at `STEP5_SPREAD_RTOL` 1e-3 — imported records, asserted only as the module asserts them; the monotone-fall identity asserted), both rungs' `\|B₁⁺\|` written to one combined XDMF with the rung as a time step so ParaView steps through resolution, and the interior CV printed beside step 4a's filament closed-form CV (printed only). Trap: the ×0.0095 rung stays off (its power residual is a banked known-issues negative); `-n 4` is the record width and the runner's `-n 2` carries the 1e-4-class MUMPS drift (known-issues 09-09) — the example asserts the records at the module's rtol 1e-3 *only if* it runs at `-n 4`; at `-n 2` it prints them and asserts the fall. Done-when (§4): the fall asserted, records reproduced or their width disclosed, artifact named, census `exit != 1`, elapsed recorded. Predicted 204 s at `-n 4` (`20260909T200431Z_WF-6.log`); `-n 2` *predicted* ≈ 6–7 min, runner `-t 900`. A convergence statement only — no closed-form, homogeneity or Larmor claim. | heavy (host-runner) |
-| `EX-57` | **One setup figure per example guide — standing, recurring** (operator directive 2026-09-13; `write_setup_figure` + `check_example_setup_figures.py` + exemplar `mesh:3`; one guide per item, the daily review queues the census's `--next` every active day and the drained-queue fallback draws the next one; closes when the census exits 0 on `main`) | 🟡 step 0 ✅ 2026-09-13; census 2026-09-16 (09:00 slot, drained-queue fallback, `mri:3`): 54 examples, 14 ok, **40 missing**, 0 broken (`mesh:3`, `ports:14–18`, `th:10`, `mag:1`, `mag:2`, `mag:4`, `mag:5`, `mag:6`, `mri:1`, `mri:2`, `mri:3` done) | the example's own |
+| `EX-57` | **One setup figure per example guide — standing, recurring** (operator directive 2026-09-13; `write_setup_figure` + `check_example_setup_figures.py` + exemplar `mesh:3`; one guide per item, the daily review queues the census's `--next` every active day and the drained-queue fallback draws the next one; closes when the census exits 0 on `main`) | 🟡 step 0 ✅ 2026-09-13; census 2026-09-16 (09:00 slot, drained-queue fallback, `mri:3`): 54 examples, 14 ok, **40 missing**, 0 broken (`mesh:3`, `ports:15–18`, `th:10`, `mag:1`, `mag:2`, `mag:4`, `mag:5`, `mag:6`, `mri:1`, `mri:2`, `mri:3` done — *the list read `ports:14–18` until the 2026-09-18 review; the census has `ports:14` missing, 14 = 1 + 4 + 1 + 5 + 3*) | the example's own |
 | `EX-58` | **The tuned birdcage — sweep, `C_tuned`, the in-model field** (`examples/ports/17_birdcage_tuned_circuit.py` + guide; `example-runner`) | ✅ **2026-09-14 06:00 slot (take-next):** `|Im Z_in|/|Z_in|` 2.113e-15 ≤ `TUNING_IM_Z_RTOL`, tuned `S₁₁` residual 8.255812e-05 ≤ `REDUCTION_BAND` (`20260914T112025Z_EX-58.log:43,1799`, flagged 58 s; control `…112312Z_EX-58-control.log:43,1799`, 57 s, same digits); rule (a) lift in `test_port_circuit_layer_field.py` (additive), gate re-run 7 passed 169 s (`…111515Z_EX-58-rule-a-gate.log:3753`); census 52/4/48/0; XDMF has two time steps, written with `XDMFFile` directly. ~~⬜~~ *Opened 2026-09-14 03:00 review (step 5) for the gates `PORT-15` steps 2–3 (closed 2026-09-14) and `PORT-14` step 3 (closed 2026-09-13): `ports:3` (`EX-24`) shows lumped* sheets *and nothing in the corpus terminates a port in a capacitor or tunes.* Angle: drive — `S_64MHZ_EPS0_RECORD`, `tuning_sweep`, `select_c_tuned`, `tuned_input` imported from `tests/validation/test_port_circuit_layer_field.py` (never copied); the `Im Z_in(C)` sweep printed, its zero asserted at the imported `TUNING_IM_Z_RTOL`; one in-model 64 MHz solve with `PORT-14`'s κ-corrected capacitor sheets at `C_tuned` (the module's terminated-network helper made importable additively under §9 rule (a), gate module re-run green in the same slot), the tuned `S₁₁` residual asserted at the imported `REDUCTION_BAND`; `\|E\|` on the phantom at `C_tuned` beside the 50 Ω baseline as two time steps of one combined XDMF. Done-when (§4): the two imported assertions green, artifact named, census `exit != 1`, setup figure per `EX-57`, elapsed recorded. Predicted ≈ 90 s at `-n 2` (`20260914T020419Z_PORT-15.log:3728`); runner `-t 600`. A series resonance on one fixture — no match, no mode frequency, no Larmor-accuracy claim. | standard (host-runner) |
 | `EX-59` | **The copper birdcage — the surface loss density on the coil** (`examples/ports/18_birdcage_copper_leontovich.py` + guide; `example-runner`) | ✅ **Done 2026-09-14 07:30 slot** — imported port gates and the surface-loss identity asserted green, and the gate's 10 MHz copper digits reproduced (`20260914T124230Z_EX-59.log:904–918` against `20260914T021500Z_TH-14.log:1032–1055`; flagged 35 s, control 32 s). The facet field is **DG0 per adjacent cell, in W, not a density**; its owned sum equals `P_surf` to 1.5e-15, asserted and true by construction. The helpers are imported as they are, with no gate edit. Census 52/4/48/0 → 53/5/48/0, docrefs `exit=0`. ⬜ *Opened 2026-09-14 03:00 review (step 5) for the gated `TH-14` birdcage step (2026-09-14; the row is 🟡 on its slab step, the birdcage identities themselves are gated): `ports:14` (`EX-54`) is the PEC hole; no example carries a surface impedance.* Angle: output quantity — the 10 MHz copper configuration of `tests/validation/test_th14_birdcage_copper.py` (helpers module-private, §9 rule (a)); the three imported port gates and the surface-loss identity at `DISCRETE_IDENTITY_RTOL` asserted; the DG0 facet field `½Re(1/Z_s)\|n × E\|²` on tag 401 written through the facet grid (the `ports:14` pattern) beside `\|E\|` on the phantom; `P_coil/P_in` printed beside the σ = 800 solid's share. Done-when (§4): the imported assertions green, artifact named, census `exit != 1`, setup figure per `EX-57`, elapsed recorded. Predicted ≈ 60 s at `-n 2` (the gate fixture: 104.7 s for 3 f × 3 σ under reuse, `20260914T021500Z_TH-14.log:1348`); runner `-t 600`. No absolute copper-coil claim (`ANS-6`). | standard (host-runner) |
 | `EX-60` | **The lossy-wall cavity — Q against σ beside Pozar** (`examples/time_harmonic/10_lossy_wall_cavity_q.py` + guide; `example-runner`) | ✅ **Done 2026-09-14 07:30 slot (take-next)** — both imported assertions green: `Q/Q_c − 1` +0.010 % ≤ 5 % and `Q(1e6)/Q(1e4)` 9.995026 ≤ 5 % from 10. The PEC control `|Im λ|/Re λ` 4.798e-19 and the exported mode's Rayleigh quotient (rel 7.3e-14) are also asserted, and the rung lines match `20260914T004807Z_TH-14.log:96–99` (`20260914T124948Z_EX-60.log:39–59`; flagged 11 s, control 7 s). `src/`: additive `return_mode` / `return_vectors` in `core/cavity.py`, with the gate re-run green (18 passed, 40 s). Census 53/5/48/0 → 54/6/48/0, docrefs `exit=0`. ⬜ *Opened 2026-09-14 03:00 review (step 5) for the gate `TH-14` step 1 (closed 2026-09-13): `th:2` (`EX-5`) is the PEC box; no example solves a lossy-wall eigenmode.* Angle: boundary model — `solve_impedance_wall_cavity_mode` (`core/cavity.py`) on the `TH-9` box at σ ∈ {1e4, 1e6, 5.8e7}, Pozar's `Q_c` imported from `tests/validation/test_cavity_leontovich_q.py` (never restated), the 1e4 rung asserted at the imported 5 % band and the `√σ` scaling identity asserted, copper printed as the PEC-limit reading; the TE₁₀₁ `\|E\|` to XDMF. Done-when (§4): the two imported assertions green, artifact named, census `exit != 1`, setup figure per `EX-57`, elapsed recorded. Predicted ≈ 1 min at `-n 2` (9.2 s of eigen-solves in a 45 s window, `20260914T004807Z_TH-14.log`); runner `-t 300`. One box, one mode; no coil. | standard (host-runner) |
@@ -3369,161 +3371,171 @@ since 2a″), `PORT-14` step 2 (2, 2b–2e; no gate landed) — each carries its
 ruling in §7.
 
 
-Last reviewed **2026-09-16, 03:00 review** (Wednesday; Tuesday was an off
-day, so the interval is two days). *(The 2026-09-14 03:00 interval
-narrative is archived verbatim in `docs/planning/plan-archive.md`.)*
+Last reviewed **2026-09-18, 03:00 review** (Friday; Thursday was an off
+day, so the interval is two days). *(The 2026-09-16 03:00 interval
+narrative and its four closed items are archived verbatim in
+`docs/planning/plan-archive.md`.)*
 
-**Interval (09-14 03:00 → 09-16 03:00): four slots fired on Monday, all
-four did chunk work, and the eight-item queue was consumed by the 07:30
-slot — two physics steps, five examples and three setup figures landed,
-nothing parked; the 09:00 slot ran the drained-queue fallback. The first
-scheduled XL window ran this morning and passed.** Take-next carried the
-04:30 slot through three items, 06:00 through two and a timebox stop,
-07:30 through four (two of them fallback figures).
+**Interval (09-16 03:00 → 09-18 03:00): four slots fired on Wednesday, all
+four did chunk work, and the four-item queue was consumed by the 04:30 slot
+alone — take-next carried it through all four plus a fallback figure; the
+other three slots each drew one fallback figure and stopped. Two XL windows
+ran unattended (09-17, 09-18) and both passed. Nothing parked.**
 
 | Slot | Chunk | Outcome |
 |---|---|---|
-| 04:30 | `ANS-4` step 3a; `TH-14` step 2; `EX-55` | `7ffd78e` the frequency knob: flag-off control reproduces 2a″ to 8.2e-11 at `-n 8`, 64 MHz moves every class ≥ 0.15 (62 + 63 s); `68ff988` **`TH-14` 🟡 → ✅** (ΔR copper −0.299 % vs Dodd–Deeds, identity 1.31e-8, ratio 9.9910, thin-skin 1.00097; 340 s); `25e634a` **`EX-55` ⬜ → ✅** (C16 spread 0.8102 %, mirror 0.6769 %, identity 8.4e-16; 168 s) |
-| 06:00 | `EX-56`; `EX-58`; `EX-59` (stop) | `55b67a5` **`EX-56` ⬜ → ✅** (spread 5.2506 % → 2.0719 %, fall asserted; 142 s); `b6fa032` **`EX-58` ⬜ → ✅** (`Im Z_in` zero 2.1e-15, tuned `S₁₁` residual 8.26e-5; 58 s); `fe4cd48` `EX-59` timebox stop at minute 29 before any code — the facet-field route was unresolved |
-| 07:30 | `EX-59`; `EX-60`; `EX-57` ×2 | `55a9902` **`EX-59` ⬜ → ✅** (identity 1.57e-13, digits equal the gate's; 35 s); `8f5f656` **`EX-60` ⬜ → ✅** (Q/Q_c +0.010 %, √σ ratio 9.995; 11 s; additive `core/cavity.py` keywords, gate re-run 18 passed); `a125c94` / `f9f5aef` figures for `mag:1` / `mag:2` (census 48 → 46) |
-| 09:00 | `EX-57` (fallback) | `3d5ee5f` figure for `mag:4` (census 46 → 45) |
-| operator (09-14 → 09-15) | ops | `130a40a` / `4d0f8c4` `checkin.sh`; `cff1600` the XL queue becomes a nightly FIFO (`<tier>-queue.d/`), the daily review keeps an XL backlog floor and runs at high effort; `e3818e3` `GEO-33` (32-leg F-human rung, future work) |
-| XL 02:00 (09-16) | `ANS-4` step 3 | `1fcb2a8` **the 64 MHz order-matched rung ran: 16 passed, Status 0, 1658 s at `-n 16`, `memory.peak` 280.8 GiB** (`20260916T070008Z_ANS-4-step3.log`) — readout below, adjudication the 09-19 weekly's |
+| 04:30 | `WF-7` step 0c; `OPS-48`; `OPS-49`; `EX-57` ×2 | `a267c5a` the `FEM_EM_WF7_PORTS` knob: flag-off control reproduces step 0's `S_driven` digits, 2×2 reciprocity 9.8e-16, second drive 0.59 s on the held factor (158 + 155 s, `-n 8`) — `xl-pending.md` entry 6 → `READY` in the same commit; `fff1673` **`OPS-48` ⬜ → ✅** (read-back rel 0.000e+00 on `mag:1` / `mag:2`, control 1.000e+00; 7 + 136 s); `788cc2c` **`OPS-49` ⬜ → ✅** (count identity 1 / 3 / 3, `h5py` round trip 0.000e+00, control `[0, 0, 0]`; 2 s); `9b35280` / `ea87507` figures for `mag:5` / `mag:6` (census 45 → 43) |
+| 06:00 | `EX-57` (fallback) | `f7bcc49` figure for `mri:1` (→ 42); the slot corrected the runner's caption (the x = 0 slice *contains* the z axis) and re-ran |
+| 07:30 | `EX-57` (fallback) | `6f3dadb` figure for `mri:2` (→ 41); **executor anomaly** — the first `example-runner` spawn *delegated* to a background runner and returned in 46 s; resumed with "you are the executor, do not spawn" and completed (`dd2b35b`) |
+| 09:00 | `EX-57` (fallback) | `042c337` figure for `mri:3` (→ 40); the slot **viewed the PNG** and found a false caption, a truncated legend and eight unnamed port tags in a pass the runner had reported as "no deviations"; fixed and re-ran both windows |
+| operator (09-16) | ops | `729cdcd` `checkin.sh` lists the `<tier>-queue.d` FIFO |
+| XL 02:00 (09-17) | `ANS-4` step 3b | `d2e38d9` 128 MHz degree 2 on the C4-congruent cut: **15 passed / 1 skipped (by design at `-n 16`), Status 0, 1539 s, `memory.peak` 273.1 GiB** |
+| XL 02:00 (09-18) | `ANS-4` step 3c | `8e3b32c` 10 MHz degree 2: **16 passed, Status 0, 1603 s, `memory.peak` 284.8 GiB** |
 
-This review ran on `claude-fable-5-1`, no override
-(`logs/automation/20260916T080001Z_daily-review.log`). The 09-15 XL entry
-fired empty as expected (Tuesday, nothing queued); the 09-16 entry took
-the FIFO's one file, ran it, consumed the file and committed
-(`20260916T070001Z_xl-run.log`).
+This review ran on `claude-fable-5-1`, no override. Shell `grep` on log
+files is denied to this session's sandbox, so both XL readings came through
+`log-pathologist` (which has its own Grep) — evidence re-cited below.
 
-**Tree and branches (step 2).** Clean at review start; `fem-em-solver` Up;
-no `recovered/*`. The same four `attempt/*` branches remain
+**Tree and branches (step 2).** Clean at review start; `fem-em-solver` Up
+(7 days); no `recovered/*`. The same four `attempt/*` branches remain
 (`TH-15-step2proper`, `WF-6-step4b/4c/4e`, kept on the 2026-09-09 18:00
 ruling). Nothing to clear.
 
-**Audit (§4, step 3) — six closures, six `auditor` reports, all PASS,
+**Audit (§4, step 3) — two closures, two `auditor` reports, both PASS,
 re-cited.**
-- **`TH-14` ✅ (`68ff988`) — PASS.** `20260914T094224Z_TH-14-step2.log:283`
-  (ΔR −0.2990 % vs `coil_impedance_change`, band 2 %), `:285` (identity
-  1.311e-08 ≤ 1e-6), `:292` (ratio 9.990958635, band 1 %), `:284` (thin-skin
-  1.00097 vs 1.00095, band 2 %), `:293` (PEC control 0), `:277` (census
-  6852 + 1258 = 8110), `:443–446` (Status 0, 340 s); all five in `assert`
-  statements (`test_th14_dodd_deeds_copper_floor.py:361–391`); no `src/`
-  change, no existing band touched. Caveats banked in the row: the PEC
-  control holds by construction (σ = 0 operator is real), and the 5.8e9
-  identity residual 8.98e-7 (`:291`) sits near its 1e-6 band, printed only.
-- **`EX-55` ✅ (`25e634a`) — PASS.** `20260914T095534Z_EX-55.log:11649,
-  11651, 11653` (0.8102 % / 0.6769 % ≤ 5 %, identity 8.401e-16 ≤ 1e-6),
-  `:11647` (n_valid 50 = `MIN_SAMPLE_POINTS`), `:11669–11672` (168 s);
-  control `…095938Z:11662–11665`; census `…095914Z:39, 92`; rule-(a)
-  re-run `…100313Z:12351` (15 passed, 148 s). The test-file diff is a pure
-  lift-and-wrap with eight additive keys.
-- **`EX-56` ✅ (`55b67a5`) — PASS.** `20260914T110437Z_EX-56.log:1840,
-  3615, 3618` (5.2506 % / 2.0719 %, fall asserted), `:3637` (142 s);
-  control `…110730Z:3630`; censuses `…110231Z:92` / `…111237Z:93`; no
-  `tests/` file touched. **Ruling on the disclosed deviation:** the row's
-  Done-when never named the time-step form ("one XDMF with the rung as the
-  time step" was the Angle), so the flip stands on the letter; the two
-  per-rung files are a real shortfall against the commissioned angle, and
-  its cause — `write_xdmf_with_tags` collapses time collections — is now a
-  known-issues entry and `OPS-49` (item 3 below). `EX-58` hit the same
-  limit and wrote its two time steps with `XDMFFile` directly.
-- **`EX-58` ✅ (`b6fa032`) — PASS.** `20260914T112025Z_EX-58.log:43`
-  (`|Im Z_in|/|Z_in|` 2.113e-15 ≤ 1e-6), `:1799` (`S₁₁` residual
-  8.255812e-05 ≤ 1e-3), `:1815–1818` (58 s); control `…112312Z:43, 1799`;
-  rule-(a) gate `…111515Z:3753–3759` (7 passed, 169 s); censuses
-  `…111507Z:93` / `…112213Z:94`. Additive test-module changes only.
-- **`EX-59` ✅ (`55a9902`) — PASS.** `20260914T124230Z_EX-59.log:910`
-  (imported gates asserted), `:913` (identity 1.572e-13 ≤ 1e-6, `P_surf`
-  > 0), `:918` (per-cell sum vs `P_surf` 1.527e-15), `:904–914` equal
-  `20260914T021500Z_TH-14.log:1032–1055` to every digit; control
-  `…124335Z:898–911`; valid pre-census `…112642Z:94` (52/4/48/0), post
-  `…124415Z:95` (53/5/48/0). Two runner protocol slips disclosed in the
-  journal (post-write "before" census, background return) — process note
-  below, not a finding against the closure.
-- **`EX-60` ✅ (`8f5f656`) — PASS.** `20260914T124948Z_EX-60.log:51–59`
-  (PEC control 4.798e-19 ≤ 1e-10, Q/Q_c +0.010 % ≤ 5 %, Δf −0.0624 % < 1 %,
-  `Q(1e6)/Q(1e4)` 9.995026 vs 10 ≤ 5 %, Rayleigh 7.304e-14 ≤ 1e-6),
-  `:39–42` equal `20260914T004807Z_TH-14.log:96–99`, `:68–71` (11 s);
-  control `…125021Z:44–52`; the additive `core/cavity.py` change (rule (c))
-  covered by the gate re-run `…124857Z:182` (18 passed, 40 s); censuses
-  `…124532Z:95` / `…125028Z:96`.
-- Not audited (no status change): `ANS-4` step 3a (a step under a ✅ row;
-  its two windows are cited in the row), the three `EX-57` figures
-  (per-item done-whens, census deltas read in the journal: 48 → 47 → 46 →
-  45, `broken=0` throughout).
+- **`OPS-48` ✅ (`fff1673`) — PASS.** `20260916T094031Z_OPS-48.log:34–37`
+  (`adios2` 2.12.1, `bindings.ADIOS` present), `…094102Z_OPS-48.log:34,36`
+  (`Mode.*`, `SetEngine`, `AvailableVariables`),
+  `…094210Z_OPS-48-mag1.log:401–407` (rel 0.000e+00, control 1.000e+00;
+  Status 0, 7 s), `…094228Z_OPS-48-mag2.log:337–343` (same; 136 s),
+  `…094524Z_OPS-48-census.log:89,124` (`broken=0`; docrefs `exit=2`). The
+  anchor and the control are executed `raise`s
+  (`01_straight_wire.py:129–138`, identically in `02_circular_loop.py`);
+  `VTX_ROUNDTRIP_RTOL` unchanged; no `src/` or `tests/` file touched. One
+  citation in the row is off by a line (`:400–407` for `:401–407`).
+- **`OPS-49` ✅ (`788cc2c`) — PASS.** `20260916T095021Z_OPS-49.log:50–51`
+  (count identity; worst rel 0.000e+00 vs 1e-12), `:54` (control
+  `[0, 0, 0]`), `:59, :64–66` (3 passed, 2 s); `…095045Z_OPS-49.log:76,
+  81–83` (`tests/io` 13 passed, 3 s); the three anchors are `assert`s
+  (`tests/io/test_xdmf_time_series.py:170–180, 217–218`);
+  `git diff fff1673 788cc2c -- src/fem_em_solver/io/paraview_utils.py` is
+  186 insertions, 0 deletions. Caveat banked in the row: control (c) runs
+  today's `write_xdmf_with_tags`, argued byte-identical to the pinned commit
+  by that diff rather than checked out from it — disclosed in the test's
+  docstring, accepted.
+- Not audited (no status change): `WF-7` step 0c (a probe knob under a 🧪
+  row; both windows cited in the row), the five `EX-57` figures (census
+  45 → 40, `broken=0` throughout, read in the journal).
 
 **Rulings (step 4).**
-1. **`ANS-4` step 3's window is banked as a record, not adjudicated.**
-   `20260916T070008Z_ANS-4-step3.log`: `RUNGSPEC="0.015:1 0.005:2"` at
-   64 MHz, `-n 16`, 16 passed, Status 0, 1658 s; the degree-2 rung
-   592 744 cells / 3.79 M unknowns, mesh 105.7 s, four drives 1476.9 s
-   (`:4605`), summed `ru_maxrss` 282.3 GiB (`:4604`), `memory.peak`
-   280.8 GiB (`:5735`, service recreated before the window). Every imported
-   `PORT-11` gate passes on the rung: reciprocity 1.6e-14, σ_max 0.999758,
-   class spreads 0.1985 / 0.1715 / 0.1946 % (band 0.5 %, `:4600–4603`).
-   **Public readout — the degree 1 → 2 move at 64 MHz on the driven
-   column** (`:2427` vs `:4596`): self 6.51 %, adjacent 2.60 %, opposite
-   4.11 % (128 MHz, step 2d: 6.09 / 5.38 / 6.70 %). The private miss
-   against the AED First Order column and the decision rule are the 09-19
-   weekly's (§10, `xl-pending.md` entry 2 → `RUN`). No band moved, no
-   AED number here. The 2000–3000 s prediction was beaten (1658 s): the
-   `PORT-19` reuse is in the module since 09-11.
-2. **`EX-59`'s two runner slips** (the "before" census logged after the
-   files were written; the runner returned with a window still running,
-   which then failed with `ArityMismatch` and was fixed by the slot) are a
-   spawn-template matter for an interactive session (`.claude/agents/` is
-   not writable from a scheduled review) — listed on the dashboard, not a
-   rule here. The slot's own repair was correct.
-3. **The `adios2` 2.12 read-back break** (`mag:1` / `mag:2`, known-issues
-   2026-09-14) is a silently disabled gate — the `EX-14` anchor has not
-   run on the 0.11 image and nobody noticed until the figure task re-ran
-   those examples. Chunk `OPS-48` (item 2 below) restores it; loosening is
-   not on the table (`VTX_ROUNDTRIP_RTOL` stays 1e-10).
-4. **No attempt branches or parked work this interval** — nothing to
-   rescope. `EX-59`'s first stop left no branch by its own account (no code
-   written) and was completed by the next slot.
+1. **`ANS-4` step 3b's window is banked as a record, not adjudicated**
+   (`log-pathologist`: CONFIRMED countable).
+   `20260917T070008Z_ANS-4-step3b.log`: 128 MHz, `RUNGSPEC="0.015:1
+   0.005:2"`, `c4_congruent_sheets=on`, `-n 16`; 15 passed / 1 skipped
+   (`:4977`), `[capture] rc=0`, Status 0, 1539 s (`:5955–5959`);
+   `memory.peak` 273.1 GiB (`:5953–5954`). The degree-2 rung is 592 550
+   cells and **3 827 268 dofs** (`:4485`); four drives 1361.4 s (`:4825`).
+   Imported `PORT-11` gates on the rung (`:4849`): reciprocity 6.3e-15,
+   σ_max 0.999036, **class spreads 0.0056 / 0.0088 / 0.0070 %** (band 0.5 %)
+   — against 0.0739 / 0.0822 / 0.0506 % on the ×1 rung of the same window
+   and 0.1985 / 0.1715 / 0.1946 % on step 3's cut-off degree-2 rung at
+   64 MHz. **Public readout:** the two-rung move on the driven column
+   **5.71 / 4.52 / 6.73 %** (`:4874–4877`). Two scope notes from the
+   ruling: the move changes *h* and the order together — step 2b's
+   6.09 / 5.38 / 6.70 % was a degree-only move on one cut-off mesh, a
+   different comparison, and the 09-16 review's "degree 1 → 2 move" for
+   step 3 was this two-rung move too; the ledger rows now say so — and the
+   ×1 rung's agreement with the 2a″ record (rel ≤ 8.2e-11, `:4896–4899`) is
+   **printed, not asserted** at `-n 16` — the skip is `OPS-41`'s record-width
+   rule, predicted in the pending entry. Decision rule and private reading:
+   the 09-19 weekly's (`xl-pending.md` entry 3 → `RUN`).
+2. **`ANS-4` step 3c's window is banked as a record — with one reading the
+   weekly should not miss** (`log-pathologist`: CONFIRMED countable).
+   `20260918T070008Z_ANS-4-step3c.log`: 10 MHz, same `RUNGSPEC`, cut off;
+   16 passed, 0 skipped (`:4757`), rc 0, Status 0, 1603 s (`:5735–5739`);
+   `memory.peak` 284.8 GiB (`:5733–5734`); degree-2 rung 592 744 cells,
+   **3 828 494 dofs** (`:4265`), four drives 1419.4 s (`:4605`). **Public
+   readout:** the two-rung move at 10 MHz is **4.41 / 1.35 / 1.08 %**
+   (`:4652–4654`) — the same move read 6.51 / 2.60 / 4.11 % at 64 MHz
+   (step 3) and 5.71 / 4.52 / 6.73 % at 128 MHz on the cut (step 3b):
+   smaller on the coupling classes, *not* an order of magnitude
+   smaller on any class, which is the quantity entry 4's decision rule
+   reads. **The reading:** every imported gate passes (`:4624`), but the
+   degree-2 **self-class spread is 0.4451 % against the 0.5 % band** — 89 %
+   of it, where the identical mesh read 0.1985 % at 64 MHz. No band moves
+   and nothing is red; one frequency pair cannot attribute it (cut-off
+   sheet asymmetry growing as f falls, or the degree-2 solve at low
+   frequency). The discriminating window is queued under the daily licence:
+   entry 8, the same rung with the congruent cut on (09-23).
+3. **Two label defects in those logs → `OPS-51`.** The readout heading says
+   "at 128 MHz" over 10 MHz data and the rung headers say "at -n 2" on
+   `-n 16` windows — six hardcoded strings in `tests/validation` (verified
+   in source by this review; known-issues 2026-09-18). The ledger rows were
+   filled from the lines that format real values. Also recorded: the
+   readout's `~unknowns` is a 6.4 × cells estimate, 0.9 % under the solver's
+   dof count at degree 2 — rows now quote dofs.
+4. **The `.bp` read-back survey `OPS-48` left open was done here**
+   (`Explore`, read-only; lines re-read by this review). Exactly three files
+   touch `adios2`. Two findings, one known-issues entry, one chunk
+   (`OPS-50`): the gate `OPS-48` restored is still bypassed when the *writer*
+   fails (`if not (vtx_B_written and _check_vtx_roundtrip(…))` after a
+   swallowing `except`, exit 0), and `scripts/probes/post4_step5_probe.py`
+   is the last caller of the removed `adios2.ADIOS()`. Neither is live-red
+   today: the writers succeed on 0.11 and the probe fails loudly.
+5. **`OPS-49`'s journal follow-up is narrowed, not queued.** `EX-56` cannot
+   adopt `write_xdmf_time_series` — its two rungs are two meshes and the
+   writer takes one; `EX-58` could, but the change would move no status
+   (its row is ✅ with the deviation disclosed and the known-issues entry is
+   retired), so rubric element 7 declines it.
+6. **The 07:30 executor anomaly** (a runner that spawns a runner and
+   returns) and the 09:00 finding (a runner's "no deviations" over a false
+   caption) are both answered in-queue — the `EX-57` item below carries "do
+   not spawn" and "Read the PNG before committing" — and the agent-definition
+   change (`example-runner` should not be able to reach the Agent tool) is
+   the operator's: `.claude/agents/` is not writable from a scheduled
+   review. Dashboard item.
+7. **No attempt branches or parked work this interval** — nothing to
+   rescope. No step family moved toward its cap (the only physics-row step,
+   `WF-7` 0c, landed its asserted control on the first attempt).
 
-**§10 assessment (step 5).** No gap. Phase 6's chain steps 1–3, 7 and 8
-are done; `TH-17` step 1 and `ANS-6`'s SPEC (now unblocked by `TH-14` ✅)
-are the weekly's to write on 09-19; the `WF-7` step 0b XXL window is
-queued for 09-19 02:00. Two maintenance chunks are opened from defects
-found this interval (`OPS-48`, `OPS-49` — both carry a known-issues
-entry, and entries leave only with the commit that fixes them), and one
-prerequisite item for the XL backlog (`WF-7` step 0c's knob, step 6b.5).
-**Example step (§5.4):** the only physics gate that closed this interval
-is `TH-14` step 2 (the copper Dodd–Deeds floor); `EX-59` (the copper
-birdcage, landed the same day) demonstrates the Leontovich capability
-from the coil angle, and `mag:6` / `ans:1` already show `MAT-6`'s loop —
-no new example chunk.
+**§10 assessment (step 5).** No gap the daily may fill. The 09-19 weekly
+owns: the adjudication of `ANS-4` steps 3 / 3b / 3c against the private
+columns, `TH-17` step 1, `ANS-6`'s SPEC, whether Tier B opens, and the
+reading of tonight's `WF-7` step 0b XXL window. Two maintenance chunks are
+opened from defects found by this review's own reading (`OPS-50`, `OPS-51`
+— each with a known-issues entry). **Example step (§5.4):** no chunk newly
+closed a *physics* gate this interval (`OPS-48` restores an existing
+example's anchor; `OPS-49` is a writer, and the two examples that wanted it
+are ruled on above) — no new example chunk.
 
-**Restock (step 6).** Four items, **all independent, 80 predicted
-slot-minutes against the 240 floor — shortfall 160 min and one item
-(4 of ≥ 5), stated, not filled.** What exists and is not queued, and why:
-`TH-17` step 1 and `ANS-6`'s SPEC (the weekly's, §10 chain), Tier B `TH-5`
-step 1 (anchor unwritten; the 09-19 weekly decides whether Tier B opens),
-`GEO-33` step 1 (sequenced after the 09-19 XXL readout by its own row),
-frozen families (`WF-6` 4l, `ANS-4` 2h, `PORT-14` 2f, `TH-15` 2i), a
-second `TH-19` degree-2 observation (no status). The drained-queue
-fallback (`EX-57`, 45 figures owed) absorbs the shortfall by design.
+**Restock (step 6).** Three items, **all independent, 62 predicted
+slot-minutes against the 240 floor — shortfall 178 min and two items (3 of
+≥ 5), stated, not filled.** What exists and is not queued, and why: `TH-17`
+step 1, `ANS-6`'s SPEC and the Tier B decision (the weekly's, tomorrow
+night), `GEO-33` step 1 (sequenced after the 09-19 XXL readout by its own
+row), the frozen families (`WF-6` 4l, `ANS-4` 2h, `PORT-14` 2f, `TH-15`
+2i), `EX-58`'s writer adoption (no status, ruling 5). The drained-queue
+fallback (`EX-57`, 40 figures owed) absorbs the shortfall by design — it
+did on 09-16, three slots of four. The §7 `EX-57` row's done-list said
+`ports:14–18`; the census has `ports:14` missing — corrected to `ports:15–18`.
 
-**XL clerk (step 6b).** Ledger gained one row (09-16, 1658 s) — entry 2
-marked `RUN`, the row's columns filled from the footer. **Budget:** the
-launcher read 1 of 6 used before the window; charged rows in the trailing
-7 days now 2 (09-10 7225 s, 09-16 1658 s). **Queued** under the daily
-licence as priced-family variants of the `ANS-4-step3` / `step2d` rows
-(same module, same `RUNGSPEC`, one knob varied each; price 1658 s /
-281 GiB at `-n 16` measured 09-16): **entry 3** `ANS-4` step 3b — 128 MHz
-degree 2 with `c4_congruent_sheets` on (the order-matched rung on the
-same cut as the 2a″ degree-1 record — apples to apples for the 128 MHz
-AGREE) → `xl-queue.d/20260917-ANS-4-step3b.env`; **entry 4** step 3c —
-10 MHz degree 2 (is the order sensitivity frequency-dependent the way the
-AED miss was?) → `20260918-ANS-4-step3c.env`; **entry 5** step 3d —
-64 MHz degree 2 with the congruent cut → `20260920-ANS-4-step3d.env`.
-**Written `PENDING PREREQUISITE`** as a cost probe: **entry 6** `WF-7`
-step 0c — the F-human degree-1 solve at the full 32-port set (the §10
-question the weekly posed), behind item 1 below. **Floor: 4 `xl` entries
-ahead (3 queued + 1 pending) — met; 1 `xxl` ahead (09-19) — met.**
+**XL clerk (step 6b).** Ledger gained two rows (09-17 1539 s, 09-18
+1603 s) — entries 3 and 4 marked `RUN`, the rows' columns filled.
+**Budget:** charged rows in the trailing 7 days: 3 of 6 (09-16, 09-17,
+09-18; the 09-10 row has aged out). **Queued:** entry 6 `WF-7` step 0c (the
+F-human 32-port cost probe, `READY` since `a267c5a`) →
+`xl-queue.d/20260921-WF-7-step0c.env`. That left 2 ahead against the floor
+of 4, so two entries were written under the daily licence, both
+priced-family variants of measured `ANS-4` rows (one knob each), and queued:
+**entry 7** step 3e — 64 MHz on step 2d's four-rung `RUNGSPEC`, the
+*h*-convergence statement the 64 MHz order-matched rung lacks (predicted
+2 000–3 500 s) → `20260922-ANS-4-step3e.env`; **entry 8** step 3f — 10 MHz
+degree 2 on the congruent cut, the discriminator for ruling 2 (predicted
+1 500–1 800 s) → `20260923-ANS-4-step3f.env`. With entry 5 (09-20) that is
+**4 `xl` entries ahead — floor met; 1 `xxl` ahead (tonight's 09-19
+window) — met, and 0 after it runs**: the weekly commissions the next XXL.
+The weekly may reorder the FIFO by renaming files; nothing here depends on
+the order.
 
 **Residual `main` reds at `-n 2`: 3 deliberate/known**, plus the padding
 module's red at `-n 4` (known-issues, 2026-09-09). The `WF-6` ×0.0095 red is
@@ -3615,229 +3627,167 @@ a `[capture] rc=` line only when it is the *last* output line. **Every pytest
 window runs with `-s`** (rule (g)). **Every window runs inside the container
 through `run_and_log.sh`** — host `python3` is denied.
 
-*(The 09-14 queue's eight items are all done: `ANS-4` step 3a (`7ffd78e`),
-`TH-14` step 2 (`68ff988`), `EX-55` (`25e634a`), `EX-56` (`55b67a5`),
-`EX-58` (`b6fa032`), `EX-59` (`55a9902`), `EX-60` (`8f5f656`), the `mag:1`
-figure (`a125c94`); the item texts are in `git show b549e5b` and
-`docs/testing/attempts.md`.)*
+*(The 09-16 queue's four items are all done: `WF-7` step 0c (`a267c5a`),
+`OPS-48` (`fff1673`), `OPS-49` (`788cc2c`), the `mag:5` figure (`9b35280`);
+the item texts are archived verbatim in `docs/planning/plan-archive.md`
+(2026-09-18) and journaled in `docs/testing/attempts.md`.)*
 
 **Predicted slot-minutes (rubric element 3 + 15 min fixed), running total:**
-item 1 → 22 · item 2 → 42 · item 3 → 60 · item 4 → **80**. Floor 240 and
-≥ 5 items: **shortfall 160 min and one item**, stated, not filled (step 6
-above says what exists and why it is not queued). All four items are
-mutually independent; take them in order.
+item 1 → 22 · item 2 → 42 · item 3 → **62**. Floor 240 and ≥ 5 items:
+**shortfall 178 min and two items**, stated, not filled (the restock
+paragraph above says what exists and why it is not queued). The three items
+are mutually independent; take them in order. A slot that finds all three
+done draws the drained-queue fallback below — one figure, then stop.
 
-1. **DONE 2026-09-16 09:38Z** — **`WF-7` step 0c — the port-set knob the XL cost probe needs, proved by
-   the flag-off control** (implementer; `scripts/probes/wf7_step0_f_human_cost.py`
-   only, no `src/`, no test module; complex; heavy by ceiling; `-n 8` (the
-   step-0 record width); `main`; independent; **22 slot-min**: ≈ 3 + 3.5 min
-   of windows + 15).
-   **Why:** `docs/testing/xl-pending.md` entry 6 (`WF-7` step 0c, the
-   F-human degree-1 solve at the full 32-port set, `xl`, cost probe) is
-   `PENDING PREREQUISITE` on exactly this; the XL command's contract is the
-   knob name **`FEM_EM_WF7_PORTS`**. The weekly posed the question (§10,
-   daily-review.md step 6b.4); every night it is not on `main` is a
-   zero-token window not run.
-   **The change:** the probe drives `f"P{min(ring_ports)}"` once (`:200`).
-   Add `FEM_EM_WF7_PORTS` — unset or `1` = the first ring ordinal only,
-   byte-identical to step 0; an integer `k` = the first `k` ring ordinals
-   in `_ring_ports()` order; `all` = every ring port. Loop
-   `_solve_one_drive(ctx, driven)` over the chosen ports (`reuse_factorization`
-   stays at its default **off** for the first drive; turning it on for the
-   rest is allowed — the `PORT-19` path — and the probe prints which), **pop
-   and drop each column's `fields` before the next solve** (32 columns of
-   fields on the F-human mesh is the memory trap), assemble the `k × k` `S`
-   from the columns' `s_column`, and print per drive the `PRICE` line the
-   probe already prints plus the cumulative wall clock, so a killed window
-   still prices how far it got. With `k ≥ 2` print `_reciprocity_ratio`,
-   `σ_max(S)` and the class spreads with the helpers and bands `PORT-13`'s
-   module (`test_port_birdcage_ring_column.py`: `_reciprocity_ratio`,
-   `RECIPROCITY_BAND` imported from `test_port_lumped_sheet_sweep`,
-   `COLUMN_PASSIVITY_CEILING`, `OPPOSITE_SPREAD_BAND`) already has — import,
-   never restate — **printed**, and assert only what (b) says.
-   **Anchors (asserted):** (a) **the flag-off control** — the env unset,
-   `-n 8`, the probe's `S_driven` reproduces step 0's
-   `0.407423+0.344417j` (`20260913T190102Z_WF-7-step0.log:10423`) at
-   rtol 1e-6 (a printed-6-digit record, so the assert compares the printed
-   string's digits — read the log line into the probe as the restated
-   record, version-tagged, `OPS-41`: at `-n 8` only, printed elsewhere),
-   with the imported cell band still green; (b) **the knob does
-   something** — `FEM_EM_WF7_PORTS=2`, `-n 8`: two drives, the 2×2's
-   `_reciprocity_ratio` asserted ≤ `RECIPROCITY_BAND` (1e-3, `PORT-9`'s,
-   imported — the identity every lumped-port `S` on this package has met),
-   and the second drive's `S_driven` differs from the first's by more than
-   1e-6 (the loop reached a different port).
-   **Negative control (*predicted*, printed):** the 2×2's `σ_max` beside
-   `COLUMN_PASSIVITY_CEILING` — predicted ≤ 1 (the 32×32 on F-small16 met
-   it, a different mesh, so printed, never asserted).
-   **Tier / ranks / cost:** step 0 measured 123 s mesh + 37 s solve, 178 s
-   window at `-n 8` (`20260913T190102Z_WF-7-step0.log`); window (a) ≈ 3 min,
-   window (b) ≈ 123 + 2 × 37 ≈ 3.5 min; `timeout -k 30 590` each, durable
-   capture with `[orphans-before]`/`[orphans-after]` and the trailing
-   `; exit $rc` (the probe's step-0 command shape, `…step0.log:12`).
-   **Traps:** the probe is `python3 scripts/probes/…`, not pytest — no `-s`
-   needed, but the harness routing rule still applies (through
-   `run_and_log.sh`, inside the container); `_solve_one_drive` returns the
-   fields — drop them; `min(ring_ports)` is `P17` on this layout, keep that
-   as the default so unset stays byte-identical; do not touch
-   `FEM_EM_WF7_DEGREE`'s code path (the 09-19 XXL window runs it verbatim);
-   `pgrep -c python3` = 0 before and after.
-   **Scope:** a knob and its control on two drives at heavy tier; no
-   32×32 here (that is the XL window), no F-human S claim, no band moved.
-   **Status it can move:** `xl-pending.md` entry 6 `PENDING PREREQUISITE`
-   → `READY` — **the implementer landing this marks the entry `READY` in
-   the same commit** (step 6b.5; the Wednesday landing must not wait for
-   Friday's review) — and the `WF-7` row's step-0c sentence.
-   **Negative result:** (a) red ⇒ the F-human probe has drifted since
-   09-13 (the knob is unset) — report the digits, known-issues, stop;
-   (b) reciprocity red ⇒ a drive-indexing defect in the loop — park on
-   `attempt/*`, stop; never widen.
+1. **`OPS-50` — close the writer-side hole in the `EX-14` VTX read-back gate,
+   and port the last dead-API `adios2` reader** (implementer;
+   `examples/magnetostatics/01_straight_wire.py`, `02_circular_loop.py`,
+   `examples/magnetostatics/PARAVIEW_GUIDE.md`,
+   `scripts/probes/post4_step5_probe.py`; no `src/`, no `tests/`; standard;
+   `-n 2`; `main`; independent; **22 slot-min**: ≈ 7 min of windows + 15).
+   **Why:** known-issues 2026-09-18 — `OPS-48` made the read-back *reader*
+   raise, but the gate is still called as `if not (vtx_B_written and
+   _check_vtx_roundtrip(…))` behind a `try/except` that swallows a `B`
+   writer failure (`01_straight_wire.py:412–432`, `02_circular_loop.py:357–377`),
+   so a writer failure skips the gate and exits 0 — the same
+   silently-disabled-gate mode through the other door. And
+   `post4_step5_probe.py:215–232` is the one remaining caller of the removed
+   top-level `adios2.ADIOS()`.
+   **The change:** (a) in both examples a failure of the **`B`** writer
+   raises `RuntimeError` after printing the `⚠` line (the `A` writer may stay
+   tolerant — nothing reads it back; say so in a comment), and the gate is
+   called unconditionally once `B` is written; reword
+   `PARAVIEW_GUIDE.md:166–170` — neither failure path is a tolerated state
+   any more. (b) the probe: `from adios2 import bindings as adios2b` and the
+   two `Mode` references — `OPS-48`'s edit verbatim (`fff1673`), the
+   `BlocksInfo` → `SetBlockSelection` → `Get` walk unchanged.
+   **Anchors (asserted):** (a) unpatched `mag:1` and `mag:2` at `-n 2`, real
+   build, reproduce `OPS-48`'s printed lines — `relative difference =
+   0.000e+00` (tol `VTX_ROUNDTRIP_RTOL` 1e-10, unchanged) and control
+   `1.000e+00` (`20260916T094210Z_OPS-48-mag1.log:401–407`,
+   `…094228Z_OPS-48-mag2.log:337–343`), Status 0. (b) the probe at `-n 2`,
+   **complex** build, prints `PROBE_RESULT PASS` — its own VTX round-trip
+   anchor and `PIN_REPRO_RTOL` (0.02) unchanged.
+   **Negative control (asserted):** a harness window running `mag:1` through
+   a short `python3 -c` wrapper that sets `dolfinx.io.VTXWriter` to a callable
+   that raises, then `runpy.run_path`s the example as `__main__` — must exit
+   **non-zero** with the `VTX output of B failed` line in the log; the same
+   wrapper pointed at the pre-change file (`git show <pre-change sha>:examples/magnetostatics/01_straight_wire.py`
+   written to a scratch path under the gitignored `/logs/` — pin the sha, not
+   `HEAD:`, the `test_orphan_guard.sh` trap) exits **0** and prints `XDMF
+   files were still created`. Separation is binary (exit status); there is no
+   ceiling to compute. *Asserted*, not predicted: the pre-change exit-0 path
+   is the recorded behaviour of known-issues 2026-09-14
+   (`20260914T125223Z_EX-57-straight-wire.log:285`, Status 0 with the gate
+   unexecuted).
+   **Tier / ranks / cost:** `mag:1` 7 s, `mag:2` 136 s
+   (`OPS-48`'s windows), two control windows ≈ 7 s each, the probe ≈ 5–10 s
+   (`20260812T200532Z_POST-4-step5-n2.log`, 5 s, v0.7.2 image — unmeasured on
+   0.11); `timeout -k 30 180` each; then both censuses (`broken=0`, docrefs
+   `exit != 1`).
+   **Traps:** magnetostatics examples run on the **real** build (do not
+   source complex mode), the probe on the **complex** one — two different
+   command prefixes in one item; the harness footer records the *wrapper's*
+   exit status, so the non-zero control window is **expected red in
+   `test-results.md`** — name it `OPS-50-control-raises` and say so in the
+   journal, and do not pipe it through anything that would mask the status;
+   the monkeypatch must replace the attribute the example actually resolves
+   (`from dolfinx import io` then `io.VTXWriter` — patch `dolfinx.io.VTXWriter`
+   before `run_path`); rank 0 reads and broadcasts the verdict — a raise on
+   one rank only hangs `-n 2`, so raise on every rank (the writer is
+   collective; the `except` fires on all ranks); `/logs/` scratch, never `/tmp`.
+   **Scope:** the two examples' writer path, one guide paragraph, one probe.
+   Not a survey — that is done (three files, known-issues 2026-09-18). Not a
+   re-registration of any probe pin: if the probe's fixture pin has drifted
+   on the 0.11 image beyond `PIN_REPRO_RTOL`, that is a version-tagged record
+   for `record-reconciler`, not this item's to move.
+   **Status it can move:** the 2026-09-18 known-issues entry → **retired** in
+   the same commit; `OPS-50` ⬜ → ✅ (the row's Done-when is this item — read
+   it first, rule (j)); dashboard Waiting-on-you "does ParaView open a DG1
+   `.bp`" regains a working regenerator.
+   **Negative result:** the probe goes past the import and fails its own pin
+   or round trip on 0.11 ⇒ report the printed drift, land (a) alone, hold
+   `OPS-50` 🟡 with (b)'s reading in the row and the known-issues entry
+   narrowed to the probe; the control does not separate (both exit 0) ⇒ the
+   raise is not reached — park on `attempt/*`, stop. Never downgrade the
+   read-back to "file exists".
 
-2. **`OPS-48` — restore the `EX-14` VTX read-back gate on the 0.11 image
-   (`adios2` 2.12)** — **DONE 2026-09-16 (04:30 implementer slot).** Ported to
-   `adios2.bindings`; `mag:1` and `mag:2` both print `relative difference =
-   0.000e+00` (tol 1e-10) with the control at `1.000e+00`
-   (`20260916T094210Z_OPS-48-mag1.log`, Status 0, 7 s;
-   `20260916T094228Z_OPS-48-mag2.log`, Status 0, 136 s). The failure path now
-   raises. Known-issues 2026-09-14 retired in the same commit. §7 row ⬜ → ✅.
-   *(original item text below, kept for the record)*
-   (implementer; `examples/magnetostatics/01_straight_wire.py`
-   `_check_vtx_roundtrip` (`:42–108`) and its `02_circular_loop.py` port;
-   no `src/`; real build (magnetostatics — do **not** source complex mode);
-   standard; `-n 2` (the examples' recorded width); `main`; independent;
-   **20 slot-min**: 7 + 137 s of example windows + controls + 15).
-   **Why:** known-issues 2026-09-14 — the check calls the pre-2.10
-   top-level `adios2.ADIOS()` API, catches the `AttributeError` and returns
-   `False`, so the "written `.bp` reproduces the in-memory field" anchor has
-   not executed on the current image; the example exits 0 regardless. A
-   silently disabled gate is a test-trust defect.
-   **The change:** port the reader to the 2.12 bindings — either
-   `adios2.bindings.ADIOS()` (the same low-level classes, moved) or the
-   high-level `adios2.FileReader(str(bp_path))` with `inquire_variable` /
-   `read` per block — keeping the block walk (VTX writes a *local* array,
-   one block per writer rank, no global shape). **Do not let the failure
-   path stay silent:** a read-back failure must print `⚠` **and exit
-   non-zero** in the flagged path the example already has for a mismatch,
-   or the guide must say why not. Same edit in `02_circular_loop.py`.
-   **Anchors (asserted):** `relative difference ≤ VTX_ROUNDTRIP_RTOL`
-   (1e-10, unchanged) on `mag:1` and on `mag:2` — the read-back `max|B|`
-   against the in-memory `max|B|`, printed with 12 digits as the function
-   already does.
-   **Negative control (asserted):** a deliberately wrong comparison — the
-   read-back against `0.5 × in-memory` — reads rel ≈ 1 and would fail the
-   band (print it, labelled *control*, in the same run); separation
-   ≥ 1e9×, the ceiling is the band itself.
-   **Tier / ranks / cost:** `mag:1` 7 s, `mag:2` 137 s at `-n 2`
-   (`20260914T125223Z_EX-57-straight-wire.log`,
-   `…125551Z_EX-57-circular-loop.log`); run each once through the harness
-   (`./run_examples.sh -e 1 -n 2 -t 180 --dry-run` gives the container
-   command); `timeout -k 30 180`; then the setup-figure census (`broken=0`)
-   and docrefs (`exit != 1`) since the guides' read-back sections change.
-   **Traps:** the probe `20260914T125326Z_EX-57-adios2-probe.log:34` reads
-   `adios2 2.12.1 has ADIOS: False` — verify the replacement name against
-   the installed module (`python3 -c "import adios2; print(dir(adios2),
-   dir(adios2.bindings))"` inside the container, through the harness)
-   before editing; the `.bp` is BP4 (`SetEngine("BP4")`); rank 0 reads and
-   broadcasts the verdict — keep that, or `-n 2` hangs; the guides' cited
-   record log for the read-back (`20260826T170155Z_EX-30-root2-run-mag1.log`)
-   is not in `docs/testing/logs/` — cite the new run instead.
-   **Scope:** the two examples' read-back check; other `.bp` read-backs
-   were not surveyed (say so in the known-issues retirement).
-   **Status it can move:** the 2026-09-14 known-issues entry → **retired**
-   in the same commit; `OPS-48` ⬜ → ✅ (its §7 Done-when is this item).
-   **Negative result:** the 2.12 API cannot read the VTX local blocks ⇒
-   report which call fails, keep the entry with the finding, `OPS-48` 🟡,
-   stop — never downgrade the check to "file exists".
+2. **`OPS-51` — log labels that state the run's real rank width and
+   frequency** (implementer; six print sites in `tests/validation` + one new
+   `tests/unit` guard; no `src/`; complex build for the ladder window, real
+   for the guard; standard; `main`; independent of item 1; **20 slot-min**:
+   ≈ 62 s + seconds + 15).
+   **Why:** known-issues 2026-09-18 — the 09-17 / 09-18 XL logs print
+   `wall at -n 2` on `-n 16` windows and `at 128 MHz ===` over 10 MHz data;
+   a reader pricing from those lines is off by 8× in core-seconds. Four more
+   XL windows on this module are queued (09-20, 09-22, 09-23 and the weekly's
+   own), each of which will carry the false labels until this lands.
+   **The change:** replace the literal `-n 2` in the five f-strings
+   (`test_port_birdcage_leg_offset_sweep.py:407`, `…four_port.py:478`,
+   `…larmor_probe.py:384`, `…lumped_column.py:519`,
+   `…termination_probe.py:365`) with the communicator's size (each site has
+   the mesh / comm in scope — use the one the solve used, not
+   `MPI.COMM_WORLD` by reflex), and the literal `128 MHz` at
+   `test_ans4_resolution_ladder.py:697` with the ladder's actual frequency
+   (the value `FREQUENCY_ENV` resolved to, printed in MHz with `:g`).
+   Strings only — no assertion, band, record or control edited.
+   **Anchors (asserted):** (a) a new `tests/unit/test_log_label_literals.py`:
+   the count of regex matches for `wall at -n 2` and `at 128 MHz ===` over
+   `tests/validation/*.py` is **0**; (b) the ladder's step-3a flag-off control
+   at `-n 8` — the command of `20260914T093325Z_ANS-4-step3a-w1.log:12`
+   verbatim — green, with `test_the_frequency_knob_reaches_the_solve`
+   **executed, not skipped** (its 2a″ record assert at `STEP3A_RECORD_RTOL`
+   1e-6 fires only at `-n 8`; the window read rel 8.2e-11), and the
+   `[PORT-9 step3d1]` rung header in the log reading `-n 8`.
+   **Negative control (asserted):** the same count over the six files as
+   they stand at the pinned pre-change commit (`git show <sha>:<path>`, sha
+   pinned in the test as a constant — not `HEAD:`) is **6**; if `git` is not
+   callable inside the container, embed the pre-change count as a
+   version-tagged record with the sha beside it and say so. Ceiling: the
+   count is an integer identity, 6 → 0; nothing to scale.
+   **Tier / ranks / cost:** window (b) 62 s at `-n 8`
+   (`20260914T093325Z_ANS-4-step3a-w1.log`), `timeout -k 30 300`, durable
+   capture with the trailing `; exit $rc`; the unit guard seconds at `-n 2`,
+   `-s`; `python3 -m pytest --collect-only` on the four modules window (b)
+   does not import, one harness command, seconds.
+   **Traps:** `-k a or b` splits inside the quoted container command — run
+   the unit guard by path; the guard's own source contains the two patterns
+   as regex strings, so scan `tests/validation` only, never `tests/`; keep
+   `FEM_EM_ANS4_STEP2_DEGREE2=0 FEM_EM_ANS4_STEP2_C4_CONGRUENT=1
+   FEM_EM_ANS4_STEP2_RUNGS="1.0"` exactly as the step-3a command has them —
+   the 2a″ record is a congruent-cut, `-n 8` record (`OPS-41`); rule (i): the
+   window runs the module as committed.
+   **Scope:** six labels and a guard. The `~unknowns` estimate the ladder
+   prints (6.4 × cells, 0.9 % under the solver's dof count at degree 2) is
+   labelled an estimate already and is **not** touched; no other print audit.
+   **Status it can move:** the 2026-09-18 label known-issues entry →
+   **retired** in the same commit; `OPS-51` ⬜ → ✅ (Done-when = this item).
+   **Negative result:** (b) red at `-n 8` with strings-only edits ⇒ the
+   fixture has drifted since 09-14 — report the digits, keep the entry, a
+   second known-issues entry for the drift, `OPS-51` 🟡, stop; never touch
+   `STEP3A_RECORD_RTOL`.
 
-3. **`OPS-49` — a time-series writer beside `write_xdmf_with_tags`**
-   — **DONE 2026-09-16 (04:30 implementer slot).** Additive
-   `write_xdmf_time_series` + `_consolidate_xdmf_time_series` (186 inserted
-   lines, **0 deleted** — `write_xdmf_with_tags` / `consolidate_xdmf_grids`
-   byte-identical to `fff1673`). Measured at `-n 2`, real build,
-   `20260916T095021Z_OPS-49.log`: (a) `collections=1 children=3
-   times=[0.0, 0.5, 1.25] attrs/child=['CellTags', 'phi', 'sigma']`;
-   (b) worst relative `h5py` round-trip error **0.000e+00** over 6 arrays
-   (bound 1e-12); (c) negative control at the pinned `fff1673`
-   `write_xdmf_with_tags` — `<Time>` elements per single-state file
-   `[0, 0, 0]`. 3 passed in 0.83 s, elapsed 2 s; `tests/io` regression
-   13 passed, elapsed 3 s (`20260916T095045Z_OPS-49.log`). Known-issues
-   2026-09-16 retired in the same commit; §7 row ⬜ → ✅.
-   (implementer; `src/fem_em_solver/io/paraview_utils.py` + a new
-   `tests/io/test_xdmf_time_series.py`; real build; smoke tier, `-n 2`;
-   `main`; independent; **18 slot-min**: ≈ 1 min of windows + 15).
-   **Why:** known-issues 2026-09-16 — `consolidate_xdmf_grids` collapses
-   time collections ("single-timestep files only", `paraview_utils.py:71`),
-   so an example that wants two rungs or two drive states as ParaView time
-   steps cannot use the helper: `EX-56` wrote two files, `EX-58` bypassed
-   the helper. Two examples in one day paid for it.
-   **The change (additive):** `write_xdmf_time_series(filename, mesh,
-   cell_tags, steps, comm)` with `steps = [(t, {name: Function}), …]` on
-   one mesh: write the mesh once, `write_function(f, t)` per step per
-   field (CellTags once at every `t` so thresholding works at each step),
-   then a consolidation that lifts every field's per-`t` `<Grid>` into
-   **one** temporal collection whose `n` uniform children each carry all
-   attributes and its `<Time>` — do not call `consolidate_xdmf_grids`
-   (which drops `<Time>`); leave that function and `write_xdmf_with_tags`
-   byte-identical.
-   **Anchors (asserted):** on a `create_box` mesh with two DG0/CG1 fields
-   over `n = 3` steps: (a) the XDMF parses to exactly one temporal
-   collection with **3** `<Time>` values equal to the `t`s written and
-   every child grid carrying every attribute (count identity, in = out);
-   (b) **round trip:** each step's arrays read back through `h5py` equal
-   the functions' gathered arrays at rel ≤ 1e-12 (the same identity
-   `EX-14` asserts on `.bp`).
-   **Negative control (asserted):** the same three steps written through
-   the *existing* `write_xdmf_with_tags` (three calls or one call with
-   `t`) parse to **one** time value or none — the collapse the entry
-   describes — at `HEAD^` of this change pinned by commit, not `HEAD:`
-   (the `test_orphan_guard.sh` trap).
-   **Tier / ranks / cost:** a box mesh and XML parsing — seconds;
-   `timeout -k 30 60`, `-n 2` (the writer is collective; a rank-local bug
-   shows only there), `-s`.
-   **Traps:** `XDMFFile.write_function(f, t)` names the grid by the
-   function's `name` — two fields with the same name collide; `ET.indent`
-   is rank 0 only, barrier after; facet tags (a separate topology grid)
-   are out of scope — reject `facet_tags` in this writer with a clear
-   error rather than half-supporting them.
-   **Scope:** the writer and its unit test; `EX-56` / `EX-58` are **not**
-   rewritten here (a later `EX-*` item may adopt it).
-   **Status it can move:** the 2026-09-16 known-issues entry → retired in
-   the same commit; `OPS-49` ⬜ → ✅.
-   **Negative result:** ParaView's Xdmf3 reader will not open the
-   collection (cannot be checked headless — say so; the XML identity is
-   the gate) or dolfinx will not write the same function at two times ⇒
-   report, keep the entry, `OPS-49` 🟡, stop.
-
-4. ~~`EX-57` setup figure — `examples/magnetostatics/05_gauge_cross_check.py`~~
-   **Done 2026-09-16 (04:30 slot).** `write_setup_figure` added right after
-   `straight_wire_domain` builds the mesh (region names from the fixture's
-   own tag map: 1 = wire (conductor), 2 = air; wire named so the copper
-   colour applies; air hidden; sliced normal to the wire axis at z = 0,
-   the plane the eight `MAG-15` sample points sit in). Flagged run
-   (`FEM_EM_SETUP_FIGURES=1`, `-n 2`, real build): all imported assertions
-   green — probe rel diff 0.0003% (ceiling 5%), volume rel diff 0.0040%
-   (ceiling 5%), max|A| ratio 2.773e-11 (ceiling 1e-6) —
-   `20260916T095415Z_EX-57-mag5-flagged.log`, Status 0, 5.4 s example /
-   7 s harness. PNG 172 KiB (≤ 600 KiB),
-   `examples/magnetostatics/figures/magnetostatics_05_gauge_cross_check_setup.png`.
-   Unflagged control `20260916T095433Z_EX-57-mag5-control.log`, Status 0,
-   2.8 s — same printed digits, no `[setup-figure]` line. Censuses:
-   predicted `missing` 45 → 44, `broken=0`; measured
-   `20260916T095442Z_EX-57-postcensus-fig.log` `ok=10 missing=44 broken=0`
-   (match), `20260916T095443Z_EX-57-postcensus-docrefs.log`
-   `dead=0 guide=0 exit=2` (≠ 1). Guide's `## Setup figure` section added
-   between §2 and §3. §7 `EX-57` census line updated.
-   (`example-runner`; the example's own tier — standard, `./run_examples.sh
-   -e 5 -n 2 -t 180`, real build, 5 s in the example / 8 s of harness wall
-   on record; independent; **20 slot-min**: the recorded window + the render
-   + censuses + 15). The census's `--next` at review time
-   (`check_example_setup_figures.py`: 54 examples, 9 ok, 45 missing,
-   0 broken). The fixture is imported from `tests/solver/test_gauge_lagrange.py`
-   (`straight_wire_domain` — one mesh, two gauges, one figure: name the
-   wire region so the copper colour applies (the §7 trap), hide the air,
-   slice normal to the wire axis through the sample points' plane).
-   Done-when is the §7 `EX-57` entry's per-item list. **Status it can
-   move:** `EX-57` census `missing` 45 → 44.
+3. **`EX-57` setup figure — `examples/meshing/01_two_torus_ports.py`**
+   (`example-runner`, spawned **foreground** with "you are the executor, do
+   not spawn agents, never return with a window running" in the prompt — the
+   2026-09-16 07:30 anomaly; the example's own tier — standard,
+   `./run_examples.sh -e mesh:1 -n 2 -t 180`, real build, 14.2 s on record at
+   `-n 2` on the 0.11 image (`20260826T033431Z_GEO-16-rerecord-mesh1.log`);
+   independent; **20 slot-min**: the recorded window ×2 + the render +
+   censuses + 15). The census's `--next` at review time
+   (`check_example_setup_figures.py`: 54 examples, 14 ok, 40 missing,
+   0 broken). The example's own identities (box-wall area ratio, volume
+   ratio, facet tags `1` / `201` / `202`) are the imported assertions and
+   must stay green and digit-identical flagged vs unflagged. Name the two
+   tori so the copper colour applies, name the gap port boxes (tags
+   `201` / `202` are *facet* tags — if the figure helper draws cell regions
+   only, caption the gaps rather than inventing a region), hide the air,
+   slice through the plane containing both torus axes. **Read the PNG before
+   committing** (2026-09-16 09:00: the runner reported "no deviations" over a
+   caption that made a false geometric claim, a truncated legend and unnamed
+   tags — only viewing the image caught it). Done-when is the §7 `EX-57`
+   entry's per-item list. **Status it can move:** `EX-57` census `missing`
+   40 → 39.
 
 *(The per-review journal — slot recap, completion audits, plan-work notes,
 §10 assessment — lives in the review commits and

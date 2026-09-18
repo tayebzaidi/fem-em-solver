@@ -28,6 +28,28 @@ unless fixing it is the task.
 
 ## Failing tests
 
+### Six validation-module prints carry a hardcoded rank width or frequency — a log line says "at -n 2" on a `-n 16` run and "at 128 MHz" over 10 MHz data (2026-09-18, 03:00 review, on a `log-pathologist` reading of the `ANS-4` step 3b / 3c XL windows)
+
+| | |
+| --- | --- |
+| **Symptom** | `20260918T070008Z_ANS-4-step3c.log:4638` prints `[ANS-4 step2] === the readout: three C4 classes of S at 128 MHz ===` over a 10 MHz readout (`f = 1.000000e+07 Hz`, `:4585`), and `:2416` / `:4585` print `four driven solves in … s wall at -n 2` on a `-n 16` window (the adjacent `[ANS-4 step2d]` line, which formats `comm.size`, correctly says `-n 16`). The same in `20260917T070008Z_ANS-4-step3b.log:2530, :4805`. |
+| **Verified at** | `8e3b32c`, by reading the source: the literals are `tests/validation/test_ans4_resolution_ladder.py:697` ("at 128 MHz ===") and "wall at -n 2" in five f-strings — `test_port_birdcage_leg_offset_sweep.py:407` (the one the ladder imports), `test_port_birdcage_four_port.py:478`, `test_port_birdcage_larmor_probe.py:384`, `test_port_birdcage_lumped_column.py:519`, `test_port_birdcage_termination_probe.py:365`. |
+| **Cause** | The strings were written when each module had one frequency and one record width; the `FEM_EM_ANS4_FREQUENCY_HZ` knob (step 3a) and the XL windows at `-n 16` made them false without touching them. |
+| **Not caused by** | The solves: every asserted quantity and every printed digit in those windows is right; only the labels are wrong. No test is red. |
+| **Scope** | Anyone pricing a run from a `PRICE` / rung-header line, or quoting the readout heading, reads the wrong width (a factor 8 in core-seconds on the XL windows) or the wrong frequency. The ledger rows of 2026-09-17 / 09-18 were filled from the lines that format the real values. Prints only — no gate depends on them. |
+| **Resolves with** | `OPS-51` (§9 item 2, 2026-09-18): the six literals replaced by `comm.size` / the rung's actual frequency, a `tests/unit` guard asserting the literal count in `tests/validation` is 0 (6 at the pinned pre-change commit), the ladder's `-n 8` flag-off control re-run with the label reading `-n 8`; this entry deleted in that commit. |
+
+### `mag:1` / `mag:2`'s VTX read-back gate is skipped — exit 0 — when the `B` *writer* fails, and `post4_step5_probe.py` still calls the removed `adios2.ADIOS()` (2026-09-18, 03:00 review; the survey `OPS-48` left open)
+
+| | |
+| --- | --- |
+| **Symptom** | (a) In `examples/magnetostatics/01_straight_wire.py:412–432` and `02_circular_loop.py:357–377` each `io.VTXWriter` sits in a `try/except Exception` that prints `⚠ VTX output of B failed: …` and continues; the gate is called as `if not (vtx_B_written and _check_vtx_roundtrip(…))`, so a writer failure short-circuits the read-back, the example prints `Note: XDMF files were still created …` and exits 0. (b) `scripts/probes/post4_step5_probe.py:215–232` (`read_vtx_block`) calls `adios2.ADIOS()` and `adios2.Mode.ReadRandomAccess` / `Mode.Sync`, which `adios2` 2.12.1 (the 0.11 image) does not have at top level. |
+| **Verified at** | `8e3b32c`, by reading the source (no run — a review does not solve): the cited lines, confirmed by this review after an `Explore` sweep found exactly three files in `src/`, `tests/`, `scripts/`, `examples/` that touch `adios2` (the two examples and the probe; `tests/` and `src/` have none). The API absence is measured: `20260916T094031Z_OPS-48.log:34–37` (`adios2 2.12.1`, no top-level `ADIOS`, `bindings.ADIOS` present). The probe's last window is `20260812T200532Z_POST-4-step5-n2.log` (v0.7.2 image). |
+| **Cause** | (a) `EX-14` made the writers tolerant so a missing ADIOS2 build would not stop the XDMF route, and the read-back was added later behind the same flag. `OPS-48` made the *reader* path raise but left the writer path as it was. (b) The probe was never re-run after the image moved. |
+| **Not caused by** | `OPS-48` — it fixed the path it named and said in its retirement that other read-backs were not surveyed. Today the writers succeed on the 0.11 image (`20260916T094210Z_OPS-48-mag1.log:401–407` prints the `✓` line), so **no gate is currently disabled**; (a) is a latent hole, not a live red. (b) fails loudly (no `except` around the call), so it cannot pass silently. |
+| **Scope** | The two examples and the one probe — the survey found no other `adios2` reader. The probe is the regenerator the dashboard names for the operator's "does ParaView open a DG1 `.bp`" check, so that item cannot be regenerated on the current image until (b) lands. `examples/magnetostatics/PARAVIEW_GUIDE.md:166–170` still describes `read-back unavailable` as a tolerated state; since `fff1673` it exits non-zero. |
+| **Resolves with** | `OPS-50` (§9 item 1, 2026-09-18): a `B` writer failure raises, proved by a monkeypatched-writer control that exits non-zero where the pinned pre-change file exits 0; the probe ported to `adios2.bindings` and run to `PROBE_RESULT PASS`; this entry deleted in that commit. |
+
 ### ✅ RETIRED 2026-09-13 (`TH-15` step 3c, 19:30 implementer slot) — was OPEN 2026-09-13 (`TH-15` step 3, 15:00 implementer slot; filed by the 18:00 review on a `log-pathologist` ruling) — on the birdcage-as-PEC-hole route the **four-port terminal power sum exceeds the field accounting by an unattributed 7.6937e-05 W**: `Re Σ½V I*` = 7.700077682e-05 W against a phantom loss of 6.376395218e-08 W, 1 208×, on a mesh that has no other lossy volume
 
 **Retired by step 3c: the excess equals a printed term. It is the terminal sheet form's Cauchy–Schwarz deficit, and it is not a hole-route readout systematic.**
