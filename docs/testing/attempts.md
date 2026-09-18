@@ -13333,3 +13333,108 @@ says "one figure, then stop and journal" — so no take-next, even though the
 commit lands before minute 30. No parked branches, no denied commands. Queue
 state at close: §9 On-deck still drained (items 1–3 DONE); the 03:00 review's
 recorded shortfall of 178 min / two items against the floor stands.
+
+---
+
+### 2026-09-18T12:30Z — `EX-57` (drained-queue fallback) — **complete**
+
+**Slot:** 2026-09-18 07:30 CDT implementer run. Preflight clean, container Up
+(7 days). §9 On deck items 1–3 all marked DONE by the 04:30 slot, so the
+standing fallback applied: `check_example_setup_figures.py --next` printed
+`examples/meshing/04_two_torus_port_sheet.py` (`mesh:4`, `EX-23`) —
+`20260918T123039Z_EX-57-next.log:34–35`, pre-census 54 / 16 ok / 38 missing /
+0 broken.
+
+**What was tried.** Delegated to `example-runner` (foreground, prompt carrying
+"you are the executor, do not spawn", "never return with a window running",
+"name the census script", "Read the PNG before committing"). The runner added
+the `write_setup_figure` call, the `## Setup figure` guide section and the PNG,
+and ran flagged / unflagged / census windows. It did **not** spawn, and it did
+report — unprompted and correctly — that the gap-box split is not visible in
+the render. But three defects survived its self-report, all caught by this slot
+reading the diff and **viewing the PNG**:
+
+1. **A false claim in the PNG title and in the source comment.** Title read
+   "each gap box split by its mid-plane port sheet"; the comment read "the
+   split itself visible as the seam between the two cell groups in the 3-D
+   panel and the slice". Both are false of the image — `101`/`111` and
+   `102`/`112` are both named with the `port` keyword, so they take the same
+   red colour class and each gap box renders as one solid block. The runner's
+   own guide caption stated this correctly, so the artefact contradicted its
+   own documentation. Retitled to the tag-level statement the image does
+   support ("gap boxes split into 101/111 and 102/112 by the mid-plane sheet
+   (facet tags 211/212, not drawn)") and the comment rewritten to say plainly
+   that the split is not visible and that seeing it is a ParaView `CellTags`
+   threshold (guide step 3).
+2. **The figure call was placed above `mesh_seconds = perf_counter() -
+   started`**, folding the ~3 s render into the example's printed mesh time:
+   flagged 17.7 s vs unflagged 14.9 s on the same mesh. Moved below the timer;
+   the final pair reads 14.8 s flagged vs 15.1 s unflagged — the flagged run
+   now the faster of the two, i.e. run-to-run variance only.
+3. **The corrected title clipped at the canvas edge**, losing the final letter
+   of "drawn" ("not drawr") at ~150 characters. `write_setup_figure` draws the
+   title with a plain `add_text`, no wrap and no length guard. Shortened to
+   126 characters and a ~145-character ceiling commented at the call site.
+
+**Measured numbers (final pair, real build, `-n 2`, `timeout -k 30 180`).**
+Flagged `20260918T123908Z_EX-57.log`, Status 0, **32 s**; unflagged control
+`20260918T123949Z_EX-57.log`, Status 0, **32 s**. Imported `GEO-16` assertions
+green in the flagged run (`:857–861`): CAD mid-plane area
+`9.573030358733e-05 m^2`, sheets `211` and `212` each 82 facets at
+`meshed/CAD = 1.000000000000` against `AREA_IDENTITY_BAND` 1e-9, out-of-plane
+spread `3.469e-18 m`, `w/h = 1.504225878`, port `201`/`202` areas
+`1.563786481e-04 m^2` unmoved. Inverted negative control green (`:1341–1343`):
+`emit_port_sheet=False` gives 79 070 cells (= `NCELLS_UNGATED_RECORD`), cell
+tags `[1, 2, 3, 101, 102]`, facet tags `[1, 201, 202]`, sheet tags present
+`[]`. **Digit-identity flagged vs unflagged:** every printed record identical
+(cell counts, tag sets, areas, ratios, extents, port areas); the only
+differences are wall-clock timings and the one extra `[setup-figure]` line.
+
+**Census delta — predicted before, read after.** Predicted `missing` 38 → 37,
+`broken=0`. Measured `20260918T124034Z_EX-57.log:89` `SUMMARY: examples=54
+ok=17 missing=37 broken=0`; docrefs `:117` `dead=0 guide=0 stale=21
+stale_severity=report exit=2` (≠ 1). PNG 449 463 bytes (439 KiB) ≤ 600 KiB.
+
+**Logs.** `…123039Z_EX-57-next.log` (the `--next` pre-census, Status 2 by the
+docrefs contract); runner's superseded pass `…123231Z` (flagged, false title),
+`…123314Z` (unflagged), `…123352Z` / `…123510Z` (censuses); slot's
+`…123728Z` (flagged, comment+placement fixed, title still 150 chars — the
+clipped render), `…123804Z` (its unflagged control), `…123908Z` (**final**
+flagged), `…123949Z` (**final** unflagged control), `…124034Z` (**final** both
+censuses). All `_EX-57.log`.
+
+**Files.** `examples/meshing/04_two_torus_port_sheet.py`,
+`04_two_torus_port_sheet.md` (new `## Setup figure` section),
+`examples/meshing/figures/meshing_04_two_torus_port_sheet_setup.png` (new),
+`docs/testing/test-results.md`, `PROJECT_PLAN.md` (§7 `EX-57` census line +
+`mesh:4` in the done-list with all three defects recorded). No `src/`, no
+`tests/`.
+
+**Branch (if parked):** none — landed on `main`.
+
+**Next-attempt hypothesis:** n/a — figure landed, **37 remain**. Three things
+for the review, all `src/`-side and none of them this item's to fix:
+(1) `write_setup_figure` has **no title-length guard** — a title past ~145
+characters is silently truncated at the canvas edge, which is a false-artefact
+mode no census can see and which every future figure item can hit; a wrap or a
+measured-width assert belongs in the helper. (2) The legend elision (`>2`
+same-colour labels collapse to `first … last`) left `gap 1 upper (port)` and
+`gap 2 lower (port)` unnamed in the image; that is deliberate corpus behaviour
+and the caption names all four, but it is the same *reader-facing* gap the
+2026-09-16 09:00 slot hit with eight port tags, and it recurs on every fixture
+with more than two same-class regions. (3) The one-colour-per-region-class
+convention means an example whose **subject is the split between two regions of
+the same class** cannot show its subject; `mesh:4` is the first such case and
+will not be the last — a per-tag shade variation within a class would fix the
+whole family. Two slots running (06:00, 07:30) an `example-runner` self-report
+of "no deviations" / "complete" has not survived the PNG being viewed; the
+"Read the PNG before committing" instruction is load-bearing and should stay in
+every `EX-57` item.
+
+### Slot close — 2026-09-18 07:30 CDT
+
+One item (the standing fallback), one outcome commit, clean tree. The fallback
+says "one figure, then stop and journal" — so no take-next. No parked branches,
+no denied commands. Queue state at close: §9 On-deck still drained (items 1–3
+DONE); the 03:00 review's recorded shortfall of 178 min / two items against the
+floor stands.

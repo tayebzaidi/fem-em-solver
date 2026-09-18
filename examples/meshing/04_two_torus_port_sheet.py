@@ -84,6 +84,7 @@ from fem_em_solver.io.paraview_utils import (  # noqa: E402
     adopt_host_ownership,
     write_xdmf_with_tags,
 )
+from fem_em_solver.post.setup_figure import write_setup_figure  # noqa: E402
 
 from tests.mesh.test_two_torus_port_facets import (  # noqa: E402
     AIR_PADDING,
@@ -133,6 +134,7 @@ FACET_TAG_NAMES = {
 SHEET_SYMMETRY_BAND = 1.0e-12
 
 OUTPUT_DIR = Path(__file__).resolve().parent / "paraview_output"
+FIGURE_DIR = Path(__file__).resolve().parent / "figures"  # committed, EX-57
 BASENAME = "meshing_04_two_torus_port_sheet"
 
 
@@ -190,6 +192,55 @@ def main() -> None:
     assert cell_tags is not None, "model_to_mesh returned no cell tags"
     assert facet_tags is not None, "model_to_mesh returned no facet tags"
     mesh_seconds = time.perf_counter() - started
+
+    # ---- the guide's setup figure (EX-57; opt-in, FEM_EM_SETUP_FIGURES=1) --
+    # Placed *after* `mesh_seconds` is taken: the render is ~3 s, and folding
+    # it into the printed mesh time would make the flagged run's records
+    # differ from the unflagged control's for no reason.
+    # This is the gated *sheet* mesh (`emit_port_sheet=True`), not the
+    # kwarg-off control. Air (tag 3) hidden; the two tori named so the "wire"
+    # keyword picks the copper colour class; each gap box's two halves
+    # (101/111, 102/112) are both named "port" so they share the port colour
+    # class, the `EX-57` one-colour-per-region-class convention. A
+    # consequence, stated here because the title and the guide's caption must
+    # not claim otherwise: **the mid-plane split is not visible in this
+    # render** — same colour either side, so each gap box reads as one solid
+    # block. The figure's job is the setup (what is where, at which tag);
+    # seeing the split itself is a `CellTags` threshold in ParaView, which
+    # the guide's step 3 gives. The port-sheet facet tags (211/212, the
+    # interior surface this example exists to show) and the port-cut facet
+    # tags (201/202) are facet groups one topological dimension below what
+    # this figure draws — not drawn here either; the caption names them. The
+    # slice is the x-z plane (normal (0, 1, 0)): both tori's axis is the
+    # shared z-axis (they are only offset in z), and the gap opening is
+    # centred on the +x axis (`two_torus_domain` docstring), so this plane
+    # contains both torus axes and cuts through both gap boxes.
+    write_setup_figure(
+        msh,
+        cell_tags,
+        FIGURE_DIR / f"{BASENAME}_setup.png",
+        region_names={
+            1: "wire 1 (z<0)",
+            2: "wire 2 (z>0)",
+            3: "air",
+            101: "gap 1 lower (port)",
+            111: "gap 1 upper (port)",
+            102: "gap 2 lower (port)",
+            112: "gap 2 upper (port)",
+        },
+        hide_tags=(3,),
+        slice_normal=(0.0, 1.0, 0.0),
+        # Keep this under ~145 characters: `write_setup_figure` draws the
+        # title as plain `add_text` with no wrap and no length guard, so a
+        # longer one runs off the canvas and loses its last word silently
+        # (measured on this fixture, 2026-09-18: a 150-char title lost the
+        # final letter of "drawn").
+        title=(
+            "mesh:4 — two-torus port sheet: gap boxes split into 101/111 and "
+            "102/112 by the mid-plane sheet (facet tags 211/212, not drawn)"
+        ),
+        comm=comm,
+    )
 
     tdim = msh.topology.dim
     msh.topology.create_connectivity(tdim - 1, tdim)

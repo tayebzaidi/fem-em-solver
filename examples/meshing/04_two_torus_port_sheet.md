@@ -67,6 +67,41 @@ restated, so this example cannot drift from the gate it demonstrates.
 **Mesh only — no port, no solve, no `Z` claim.** `PORT-9` is 🟡
 (PROJECT_PLAN.md §2).
 
+## Setup figure
+
+![mesh:4 setup — two-torus port sheet, 3-D view and x-z slice through both gaps](figures/meshing_04_two_torus_port_sheet_setup.png)
+
+*Left:* the tagged regions of the **gated sheet mesh**
+(`emit_port_sheet=True`, not the kwarg-off control) with the air box (tag `3`)
+hidden — the two copper tori (cell tags `1`/`2`, "wire 1 (z<0)" / "wire 2
+(z>0)") each interrupted by a red gap box. Each gap box is actually **two**
+cell groups meeting at the mid-plane sheet — `101`/`111` for the wire-1 gap,
+`102`/`112` for the wire-2 gap — but both halves are named with the "port"
+keyword so they share the same red colour class (per the `EX-57` convention:
+one colour per region class), so **the split is not visible by colour in this
+render**; the two halves appear as one solid red block. To see the split
+itself, follow guide step 3 and threshold `CellTags` to `101` and `111`
+separately in
+`examples/meshing/paraview_output/meshing_04_two_torus_port_sheet_combined.xdmf`.
+The legend's third row is truncated to `gap 1 lower (port) … gap 2 upper
+(port)` — the render groups all four same-coloured labels into one row and,
+past two labels, prints only the first and last (`write_setup_figure`'s
+existing behaviour); `gap 1 upper (port)` and `gap 2 lower (port)` share that
+row without being printed. The port-sheet facet tags `211`/`212` (the
+interior surface this example exists to show) and the port-cut facet tags
+`201`/`202` are facet groups one topological dimension below what this figure
+draws — **neither is drawn here**; open
+`examples/meshing/paraview_output/meshing_04_two_torus_port_sheet_facets.xdmf`
+and threshold `mesh_tags` to see them (guide step 3). *Right:* the `y = 0`
+slice (normal `(0, 1, 0)`, the x-z plane) — the plane containing both tori's
+shared z-axis and the gap opening, which `two_torus_domain` centres on `+x`:
+the two red squares are the gap boxes' cross-sections at `+x` (one per
+torus), the two orange discs are the tori's wire cross-sections on the far
+(`-x`) side of the ring, and the grey background is air. Rendered by
+`fem_em_solver.post.setup_figure.write_setup_figure` from the example's own
+mesh (`EX-57`); regenerate with `FEM_EM_SETUP_FIGURES=1` in the runner's
+environment.
+
 ## 2. How to run it
 
 ```
