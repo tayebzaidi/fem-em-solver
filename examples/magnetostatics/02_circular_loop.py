@@ -353,7 +353,6 @@ def main():
     # original single block meant a failure on `A` silently skipped `B` as well.
     print("\n  Writing VTX files...")
     b_bp_path = output_dir / "magnetostatics_02_circular_loop_B.bp"
-    vtx_B_written = False
     try:
         # VTXWriter for the vector potential A (Lagrange interpolant of N1curl A)
         vtx_A = io.VTXWriter(comm, output_dir / "magnetostatics_02_circular_loop_A.bp", [A_lag], engine="BP4")
@@ -361,6 +360,9 @@ def main():
         vtx_A.close()
         print("    ✓ Vector potential A saved to magnetostatics_02_circular_loop_A.bp/")
     except Exception as e:
+        # OPS-50: the `A` writer stays tolerant on purpose -- nothing reads
+        # `A.bp` back, so no gate is disabled when it fails.  `B` below is the
+        # file the EX-14 read-back anchor is computed from, and it raises.
         print(f"    ⚠ VTX output of A failed: {e}")
 
     try:
@@ -368,13 +370,23 @@ def main():
         vtx_B = io.VTXWriter(comm, b_bp_path, [B_lag], engine="BP4")
         vtx_B.write(0.0)
         vtx_B.close()
-        vtx_B_written = True
         print("    ✓ Magnetic field B saved to magnetostatics_02_circular_loop_B.bp/")
     except Exception as e:
+        # OPS-50 (2026-09-18): a `B` writer failure used to be swallowed here,
+        # and the gate was then called as `if not (vtx_B_written and
+        # _check_vtx_roundtrip(...))` -- a writer failure short-circuited the
+        # EX-14 read-back away, printed "XDMF files were still created" and
+        # exited 0.  That is the silently-disabled-gate mode OPS-48 fixed on
+        # the reader side, reached through the writer (known-issues 2026-09-18).
+        # The writer is collective, so this `except` fires on every rank and a
+        # raise here cannot hang the other ranks.
         print(f"    ⚠ VTX output of B failed: {e}")
+        raise RuntimeError(f"VTX output of B failed: {e}") from e
 
-    if not (vtx_B_written and _check_vtx_roundtrip(b_bp_path, B_lag, V_lag, comm)):
-        print("    Note: XDMF files were still created and can be used instead")
+    # OPS-50: called unconditionally.  Once `B` is written the EX-14 read-back
+    # gate runs, and it raises on any failure (OPS-48) -- there is no tolerated
+    # skip path left on either the writer or the reader side.
+    _check_vtx_roundtrip(b_bp_path, B_lag, V_lag, comm)
 
     print("\n  ✓ ParaView files saved to paraview_output/")
     print("    Open magnetostatics_02_circular_loop_combined.xdmf in ParaView: it carries the")

@@ -211,13 +211,22 @@ def read_vtx_block(bp_path, name, block_id, comm):
     (measured 2026-08-12, ``20260812T200439Z_POST-4-step5-n2.log``).  They are
     read separately and recombined here, so the route's fidelity is judged on
     the complex field the solver actually produced, not on its real part.
-    """
-    import adios2
 
-    adios = adios2.ADIOS()
+    OPS-50 (2026-09-18): ported to the adios2 2.12 bindings, the ``OPS-48``
+    edit verbatim.  The pre-2.10 top-level ``adios2.ADIOS()`` /
+    ``adios2.Mode.*`` were removed when the image moved to dolfinx 0.11 /
+    adios2 2.12.1; the identical low-level classes live under
+    ``adios2.bindings`` (measured ``adios2.__version__ == '2.12.1'``,
+    ``hasattr(adios2.bindings, 'ADIOS') is True``, log
+    ``docs/testing/logs/20260916T094031Z_OPS-48.log``).  The
+    ``BlocksInfo`` -> ``SetBlockSelection`` -> ``Get`` walk is unchanged.
+    """
+    from adios2 import bindings as adios2b
+
+    adios = adios2b.ADIOS()
     reader_io = adios.DeclareIO(f"post4_step5_read_{name}_{comm.rank}")
     reader_io.SetEngine("BP4")
-    engine = reader_io.Open(str(bp_path), adios2.Mode.ReadRandomAccess)
+    engine = reader_io.Open(str(bp_path), adios2b.Mode.ReadRandomAccess)
 
     def _one(var_name):
         var = reader_io.InquireVariable(var_name)
@@ -229,7 +238,7 @@ def read_vtx_block(bp_path, name, block_id, comm):
             )
         var.SetBlockSelection(block_id)
         buf = np.zeros(shp[block_id], dtype=np.float64)
-        engine.Get(var, buf, adios2.Mode.Sync)
+        engine.Get(var, buf, adios2b.Mode.Sync)
         return buf, shp
 
     try:

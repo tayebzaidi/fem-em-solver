@@ -165,11 +165,20 @@ If you just want to see the mesh structure:
 - For the straight wire, expect cylindrical symmetry
 
 ### "VTX files not created"
-- A run prints `⚠ VTX output of A failed` / `... of B failed` if a writer
-  raised; each writer is independent, so one can succeed alone
-- If the round-trip check prints `read-back unavailable`, the ADIOS2 Python
-  bindings are missing from the container — the `.bp` may still be fine
-- Use the XDMF files meanwhile; they carry every field this example writes
+- Neither VTX failure path is a tolerated state any more (`OPS-48`,
+  `OPS-50`): the example **exits non-zero** if the `B` route fails at either
+  end, so a run that finishes green really did write and re-read the `B`
+  VTX directory
+- A run prints `⚠ VTX output of B failed` and then raises if the `B` writer
+  raised; `⚠ VTX round-trip read-back unavailable` and then raises if the
+  read-back could not be done (e.g. the ADIOS2 Python bindings missing from
+  the container). Either way the example fails — it does not fall back
+- `⚠ VTX output of A failed` is the one warning that is still tolerated: the
+  two writers are independent and nothing reads the `A` VTX directory back,
+  so a failure there disables no gate and the run continues
+- The XDMF files are written regardless and carry every field this example
+  writes, but they are not a substitute for a failed `B` VTX write — fix the
+  failure rather than routing around it
 
 ### "ParaView crashes when opening file"
 - Try opening a single-field file first: `magnetostatics_01_straight_wire_B.xdmf`

@@ -1,0 +1,370 @@
+# Test Run
+- Chunk: OPS-50-mag2
+- Commit: a33be1d0896bcb45bae7e5f448d7fd3e4e69842e
+- Time (UTC): 2026-09-18 09:33:37
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.5.1
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 180 mpiexec -n 2 python3 examples/magnetostatics/02_circular_loop.py'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 24
+drwxr-xr-x  3 taz5297 taz5297 4096 Sep  4 23:31 .
+drwxr-xr-x 17 taz5297 taz5297 4096 Sep 18 04:33 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  721 Sep  3 13:49 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 4275 Sep 13 19:19 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.5.1
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 180 mpiexec -n 2 python3 examples/magnetostatics/02_circular_loop.py'\'''
+Info    : Meshing 1D...
+Info    : [  0%] Meshing curve 1 (Circle)
+Info    : [ 30%] Meshing curve 2 (Circle)
+Info    : [ 70%] Meshing curve 4 (Circle)
+Info    : Done meshing 1D (Wall 0.0003781s, CPU 0.000316s)
+Info    : Meshing 2D...
+Info    : [  0%] Meshing surface 1 (Torus, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 2 (Sphere, Frontal-Delaunay)
+Info    : Done meshing 2D (Wall 1.04887s, CPU 1.03735s)
+Info    : Meshing 3D...
+Info    : 3D Meshing 2 volumes with 1 connected component
+Info    : Tetrahedrizing 14484 nodes...
+Info    : Done tetrahedrizing 14492 nodes (Wall 0.16758s, CPU 0.15964s)
+Info    : Reconstructing mesh...
+Info    :  - Creating surface mesh
+Info    :  - Identifying boundary edges
+Info    :  - Recovering boundary
+Info    : Done reconstructing mesh (Wall 0.542886s, CPU 0.494599s)
+Info    : Found volume 2
+Info    : Found volume 1
+Info    : It. 0 - 0 nodes created - worst tet radius 15.6996 (nodes removed 0 0)
+Info    : It. 500 - 500 nodes created - worst tet radius 4.634 (nodes removed 0 0)
+Info    : It. 1000 - 1000 nodes created - worst tet radius 3.73713 (nodes removed 0 0)
+Info    : It. 1500 - 1500 nodes created - worst tet radius 3.34208 (nodes removed 0 0)
+Info    : It. 2000 - 2000 nodes created - worst tet radius 3.06061 (nodes removed 0 0)
+Info    : It. 2500 - 2500 nodes created - worst tet radius 2.84328 (nodes removed 0 0)
+Info    : It. 3000 - 3000 nodes created - worst tet radius 2.68567 (nodes removed 0 0)
+Info    : It. 3500 - 3500 nodes created - worst tet radius 2.56135 (nodes removed 0 0)
+Info    : It. 4000 - 4000 nodes created - worst tet radius 2.4538 (nodes removed 0 0)
+Info    : It. 4500 - 4500 nodes created - worst tet radius 2.37167 (nodes removed 0 0)
+Info    : It. 5000 - 5000 nodes created - worst tet radius 2.29793 (nodes removed 0 0)
+Info    : It. 5500 - 5500 nodes created - worst tet radius 2.22844 (nodes removed 0 0)
+Info    : It. 6000 - 6000 nodes created - worst tet radius 2.16663 (nodes removed 0 0)
+Info    : It. 6500 - 6500 nodes created - worst tet radius 2.11373 (nodes removed 0 0)
+Info    : It. 7000 - 7000 nodes created - worst tet radius 2.06708 (nodes removed 0 0)
+Info    : It. 7500 - 7500 nodes created - worst tet radius 2.02072 (nodes removed 0 0)
+Info    : It. 8000 - 8000 nodes created - worst tet radius 1.98112 (nodes removed 0 0)
+Info    : It. 8500 - 8500 nodes created - worst tet radius 1.94161 (nodes removed 0 0)
+Info    : It. 9000 - 9000 nodes created - worst tet radius 1.90729 (nodes removed 0 0)
+Info    : It. 9500 - 9500 nodes created - worst tet radius 1.87456 (nodes removed 0 0)
+Info    : It. 10000 - 10000 nodes created - worst tet radius 1.84417 (nodes removed 0 0)
+Info    : It. 10500 - 10500 nodes created - worst tet radius 1.81487 (nodes removed 0 0)
+Info    : It. 11000 - 11000 nodes created - worst tet radius 1.7896 (nodes removed 0 0)
+Info    : It. 11500 - 11500 nodes created - worst tet radius 1.76526 (nodes removed 0 0)
+Info    : It. 12000 - 12000 nodes created - worst tet radius 1.74221 (nodes removed 0 0)
+Info    : It. 12500 - 12500 nodes created - worst tet radius 1.72105 (nodes removed 0 0)
+Info    : It. 13000 - 13000 nodes created - worst tet radius 1.69948 (nodes removed 0 0)
+Info    : It. 13500 - 13500 nodes created - worst tet radius 1.67917 (nodes removed 0 0)
+Info    : It. 14000 - 14000 nodes created - worst tet radius 1.65941 (nodes removed 0 0)
+Info    : It. 14500 - 14500 nodes created - worst tet radius 1.64151 (nodes removed 0 0)
+Info    : It. 15000 - 15000 nodes created - worst tet radius 1.62365 (nodes removed 0 0)
+Info    : It. 15500 - 15500 nodes created - worst tet radius 1.60632 (nodes removed 0 0)
+Info    : It. 16000 - 16000 nodes created - worst tet radius 1.58908 (nodes removed 0 0)
+Info    : It. 16500 - 16500 nodes created - worst tet radius 1.57397 (nodes removed 0 0)
+Info    : It. 17000 - 17000 nodes created - worst tet radius 1.55943 (nodes removed 0 0)
+Info    : It. 17500 - 17500 nodes created - worst tet radius 1.54582 (nodes removed 0 0)
+Info    : It. 18000 - 18000 nodes created - worst tet radius 1.53227 (nodes removed 0 0)
+Info    : It. 18500 - 18500 nodes created - worst tet radius 1.51801 (nodes removed 0 0)
+Info    : It. 19000 - 19000 nodes created - worst tet radius 1.50556 (nodes removed 0 0)
+Info    : It. 19500 - 19500 nodes created - worst tet radius 1.49343 (nodes removed 0 0)
+Info    : It. 20000 - 20000 nodes created - worst tet radius 1.48149 (nodes removed 0 0)
+Info    : It. 20500 - 20500 nodes created - worst tet radius 1.47021 (nodes removed 0 0)
+Info    : It. 21000 - 21000 nodes created - worst tet radius 1.45893 (nodes removed 0 0)
+Info    : It. 21500 - 21500 nodes created - worst tet radius 1.44751 (nodes removed 0 0)
+Info    : It. 22000 - 22000 nodes created - worst tet radius 1.43633 (nodes removed 0 0)
+Info    : It. 22500 - 22500 nodes created - worst tet radius 1.42547 (nodes removed 0 0)
+Info    : It. 23000 - 23000 nodes created - worst tet radius 1.4147 (nodes removed 0 0)
+Info    : It. 23500 - 23500 nodes created - worst tet radius 1.40476 (nodes removed 0 0)
+Info    : It. 24000 - 24000 nodes created - worst tet radius 1.39543 (nodes removed 0 0)
+Info    : It. 24500 - 24500 nodes created - worst tet radius 1.38586 (nodes removed 0 0)
+Info    : It. 25000 - 25000 nodes created - worst tet radius 1.3776 (nodes removed 0 0)
+Info    : It. 25500 - 25500 nodes created - worst tet radius 1.36881 (nodes removed 0 0)
+Info    : It. 26000 - 26000 nodes created - worst tet radius 1.3607 (nodes removed 0 0)
+Info    : It. 26500 - 26500 nodes created - worst tet radius 1.35229 (nodes removed 0 0)
+Info    : It. 27000 - 27000 nodes created - worst tet radius 1.34407 (nodes removed 0 0)
+Info    : It. 27500 - 27500 nodes created - worst tet radius 1.33567 (nodes removed 0 0)
+Info    : It. 28000 - 28000 nodes created - worst tet radius 1.32769 (nodes removed 0 0)
+Info    : It. 28500 - 28500 nodes created - worst tet radius 1.32026 (nodes removed 0 0)
+Info    : It. 29000 - 29000 nodes created - worst tet radius 1.31317 (nodes removed 0 0)
+Info    : It. 29500 - 29500 nodes created - worst tet radius 1.30578 (nodes removed 0 0)
+Info    : It. 30000 - 29999 nodes created - worst tet radius 1.29919 (nodes removed 0 1)
+Info    : It. 30500 - 30499 nodes created - worst tet radius 1.29287 (nodes removed 0 1)
+Info    : It. 31000 - 30999 nodes created - worst tet radius 1.28608 (nodes removed 0 1)
+Info    : It. 31500 - 31499 nodes created - worst tet radius 1.27967 (nodes removed 0 1)
+Info    : It. 32000 - 31999 nodes created - worst tet radius 1.27308 (nodes removed 0 1)
+Info    : It. 32500 - 32499 nodes created - worst tet radius 1.26672 (nodes removed 0 1)
+Info    : It. 33000 - 32999 nodes created - worst tet radius 1.26066 (nodes removed 0 1)
+Info    : It. 33500 - 33499 nodes created - worst tet radius 1.25424 (nodes removed 0 1)
+Info    : It. 34000 - 33999 nodes created - worst tet radius 1.24862 (nodes removed 0 1)
+Info    : It. 34500 - 34499 nodes created - worst tet radius 1.24279 (nodes removed 0 1)
+Info    : It. 35000 - 34999 nodes created - worst tet radius 1.23709 (nodes removed 0 1)
+Info    : It. 35500 - 35499 nodes created - worst tet radius 1.23194 (nodes removed 0 1)
+Info    : It. 36000 - 35999 nodes created - worst tet radius 1.22612 (nodes removed 0 1)
+Info    : It. 36500 - 36499 nodes created - worst tet radius 1.22056 (nodes removed 0 1)
+Info    : It. 37000 - 36999 nodes created - worst tet radius 1.21535 (nodes removed 0 1)
+Info    : It. 37500 - 37499 nodes created - worst tet radius 1.21019 (nodes removed 0 1)
+Info    : It. 38000 - 37999 nodes created - worst tet radius 1.20504 (nodes removed 0 1)
+Info    : It. 38500 - 38499 nodes created - worst tet radius 1.20011 (nodes removed 0 1)
+Info    : It. 39000 - 38999 nodes created - worst tet radius 1.19523 (nodes removed 0 1)
+Info    : It. 39500 - 39499 nodes created - worst tet radius 1.19023 (nodes removed 0 1)
+Info    : It. 40000 - 39999 nodes created - worst tet radius 1.18563 (nodes removed 0 1)
+Info    : It. 40500 - 40499 nodes created - worst tet radius 1.18078 (nodes removed 0 1)
+Info    : It. 41000 - 40999 nodes created - worst tet radius 1.17634 (nodes removed 0 1)
+Info    : It. 41500 - 41499 nodes created - worst tet radius 1.17177 (nodes removed 0 1)
+Info    : It. 42000 - 41999 nodes created - worst tet radius 1.16724 (nodes removed 0 1)
+Info    : It. 42500 - 42499 nodes created - worst tet radius 1.16245 (nodes removed 0 1)
+Info    : It. 43000 - 42999 nodes created - worst tet radius 1.1578 (nodes removed 0 1)
+Info    : It. 43500 - 43499 nodes created - worst tet radius 1.15365 (nodes removed 0 1)
+Info    : It. 44000 - 43999 nodes created - worst tet radius 1.1491 (nodes removed 0 1)
+Info    : It. 44500 - 44499 nodes created - worst tet radius 1.14496 (nodes removed 0 1)
+Info    : It. 45000 - 44999 nodes created - worst tet radius 1.14081 (nodes removed 0 1)
+Info    : It. 45500 - 45499 nodes created - worst tet radius 1.13677 (nodes removed 0 1)
+Info    : It. 46000 - 45997 nodes created - worst tet radius 1.13267 (nodes removed 0 3)
+Info    : It. 46500 - 46497 nodes created - worst tet radius 1.12868 (nodes removed 0 3)
+Info    : It. 47000 - 46997 nodes created - worst tet radius 1.1247 (nodes removed 0 3)
+Info    : It. 47500 - 47497 nodes created - worst tet radius 1.12063 (nodes removed 0 3)
+Info    : It. 48000 - 47997 nodes created - worst tet radius 1.11657 (nodes removed 0 3)
+Info    : It. 48500 - 48497 nodes created - worst tet radius 1.11276 (nodes removed 0 3)
+Info    : It. 49000 - 48997 nodes created - worst tet radius 1.10941 (nodes removed 0 3)
+Info    : It. 49500 - 49497 nodes created - worst tet radius 1.10582 (nodes removed 0 3)
+Info    : It. 50000 - 49997 nodes created - worst tet radius 1.10247 (nodes removed 0 3)
+Info    : It. 50500 - 50497 nodes created - worst tet radius 1.09905 (nodes removed 0 3)
+Info    : It. 51000 - 50997 nodes created - worst tet radius 1.09563 (nodes removed 0 3)
+Info    : It. 51500 - 51497 nodes created - worst tet radius 1.09218 (nodes removed 0 3)
+Info    : It. 52000 - 51997 nodes created - worst tet radius 1.08875 (nodes removed 0 3)
+Info    : It. 52500 - 52497 nodes created - worst tet radius 1.08523 (nodes removed 0 3)
+Info    : It. 53000 - 52997 nodes created - worst tet radius 1.08189 (nodes removed 0 3)
+Info    : It. 53500 - 53497 nodes created - worst tet radius 1.07849 (nodes removed 0 3)
+Info    : It. 54000 - 53997 nodes created - worst tet radius 1.07503 (nodes removed 0 3)
+Info    : It. 54500 - 54497 nodes created - worst tet radius 1.07212 (nodes removed 0 3)
+Info    : It. 55000 - 54997 nodes created - worst tet radius 1.06891 (nodes removed 0 3)
+Info    : It. 55500 - 55497 nodes created - worst tet radius 1.06594 (nodes removed 0 3)
+Info    : It. 56000 - 55997 nodes created - worst tet radius 1.0627 (nodes removed 0 3)
+Info    : It. 56500 - 56497 nodes created - worst tet radius 1.05948 (nodes removed 0 3)
+Info    : It. 57000 - 56997 nodes created - worst tet radius 1.05643 (nodes removed 0 3)
+Info    : It. 57500 - 57497 nodes created - worst tet radius 1.05363 (nodes removed 0 3)
+Info    : It. 58000 - 57997 nodes created - worst tet radius 1.05046 (nodes removed 0 3)
+Info    : It. 58500 - 58497 nodes created - worst tet radius 1.04752 (nodes removed 0 3)
+Info    : It. 59000 - 58997 nodes created - worst tet radius 1.04469 (nodes removed 0 3)
+Info    : It. 59500 - 59497 nodes created - worst tet radius 1.04185 (nodes removed 0 3)
+Info    : It. 60000 - 59997 nodes created - worst tet radius 1.03907 (nodes removed 0 3)
+Info    : It. 60500 - 60497 nodes created - worst tet radius 1.0363 (nodes removed 0 3)
+Info    : It. 61000 - 60997 nodes created - worst tet radius 1.03354 (nodes removed 0 3)
+Info    : It. 61500 - 61497 nodes created - worst tet radius 1.03098 (nodes removed 0 3)
+Info    : It. 62000 - 61997 nodes created - worst tet radius 1.02829 (nodes removed 0 3)
+Info    : It. 62500 - 62497 nodes created - worst tet radius 1.02576 (nodes removed 0 3)
+Info    : It. 63000 - 62997 nodes created - worst tet radius 1.02336 (nodes removed 0 3)
+Info    : It. 63500 - 63497 nodes created - worst tet radius 1.02079 (nodes removed 0 3)
+Info    : It. 64000 - 63997 nodes created - worst tet radius 1.01803 (nodes removed 0 3)
+Info    : It. 64500 - 64497 nodes created - worst tet radius 1.0155 (nodes removed 0 3)
+Info    : It. 65000 - 64997 nodes created - worst tet radius 1.01307 (nodes removed 0 3)
+Info    : It. 65500 - 65497 nodes created - worst tet radius 1.01048 (nodes removed 0 3)
+Info    : It. 66000 - 65997 nodes created - worst tet radius 1.00792 (nodes removed 0 3)
+Info    : It. 66500 - 66497 nodes created - worst tet radius 1.00546 (nodes removed 0 3)
+Info    : It. 67000 - 66997 nodes created - worst tet radius 1.00304 (nodes removed 0 3)
+Info    : It. 67500 - 67497 nodes created - worst tet radius 1.00069 (nodes removed 0 3)
+Info    : 3D refinement terminated (82125 nodes total):
+Info    :  - 3 Delaunay cavities modified for star shapeness
+Info    :  - 3 nodes could not be inserted
+Info    :  - 479313 tetrahedra created in 6.93973 sec. (69067 tets/s)
+Info    : 2 node relocations
+Info    : Done meshing 3D (Wall 9.88325s, CPU 9.76111s)
+[harness] 13 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 30 edge swaps, 0 node relocations (volume = 3.36266e-06): worst = 0.301185 / average = 0.754213 (Wall 0.0010761s, CPU 0.001077s)
+Info    : No ill-shaped tets in the mesh :-)
+[harness] 22 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 8891 edge swaps, 245 node relocations (volume = 0.000901052): worst = 0.14789 / average = 0.796579 (Wall 0.452664s, CPU 0.452654s)
+Info    : 8945 edge swaps, 248 node relocations (volume = 0.000901052): worst = 0.175415 / average = 0.796648 (Wall 0.604637s, CPU 0.604577s)
+Info    : No ill-shaped tets in the mesh :-)
+[harness] 10 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : Done optimizing mesh (Wall 2.04354s, CPU 1.92627s)
+Info    : 82125 nodes 500412 elements
+[harness] 2 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : CalcLocalH: 798 Points 2160 Elements 1464 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 36 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 15.7628 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 16 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 11.2589 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 0 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 7.06666 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 0 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 5.87454 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : CalcLocalH: 82059 Points 469107 Elements 28964 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 5074 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 19.261 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 1016 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 16.8112 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 277 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 15.7513 
+[harness] 11 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : Done optimizing mesh (Wall 47.3465s, CPU 47.1937s)
+============================================================
+Example: Magnetic field of circular current loop
+============================================================
+
+Parameters:
+  Current: 1.0 A
+  Loop radius: 0.02 m (2.0 cm)
+  Wire radius: 0.003 m (3.0 mm)
+  Domain radius: 0.06 m
+  Mesh resolution: 0.002 m
+
+Generating mesh...
+  Mesh created: 409596 cells
+
+Solving magnetostatic problem...
+  Solution computed!
+
+Computing B-field...
+
+Results:
+  B_z at center (numerical): 2.976768e-05 T
+  B_z at center (analytical): 3.141593e-05 T
+  Max B_z (analytical): 3.141593e-05 T
+  Relative L2 error: 6.2134%
+  Max relative error: 11.6541%
+
+  Expected B_z(0) = μ₀I/(2a) = 3.141593e-05 T
+
+  Magnetic energy: 2.466102e-08 J
+
+============================================================
+Saving results for ParaView visualization...
+============================================================
+
+  Writing XDMF files (traditional + combined)...
+
+  Writing VTX files...
+    ✓ Vector potential A saved to magnetostatics_02_circular_loop_A.bp/
+    ✓ Magnetic field B saved to magnetostatics_02_circular_loop_B.bp/
+
+  ✓ ParaView files saved to paraview_output/
+    Open magnetostatics_02_circular_loop_combined.xdmf in ParaView: it carries the
+    'CellTags' cell array plus A, B, and B_analytical on one grid,
+    so Threshold on CellTags and Calculator mag(B - B_analytical)
+    both work directly.
+
+============================================================
+Example completed successfully!
+============================================================
+============================================================
+Example: Magnetic field of circular current loop
+============================================================
+
+Parameters:
+  Current: 1.0 A
+  Loop radius: 0.02 m (2.0 cm)
+  Wire radius: 0.003 m (3.0 mm)
+  Domain radius: 0.06 m
+  Mesh resolution: 0.002 m
+
+Generating mesh...
+  Mesh created: 409596 cells
+
+Solving magnetostatic problem...
+  Solution computed!
+
+Computing B-field...
+
+Results:
+  B_z at center (numerical): 2.976768e-05 T
+  B_z at center (analytical): 3.141593e-05 T
+  Max B_z (analytical): 3.141593e-05 T
+  Relative L2 error: 6.2134%
+  Max relative error: 11.6541%
+
+  Expected B_z(0) = μ₀I/(2a) = 3.141593e-05 T
+
+  Magnetic energy: 2.466102e-08 J
+
+============================================================
+Saving results for ParaView visualization...
+============================================================
+
+  Writing XDMF files (traditional + combined)...
+    ✓ Standardized XDMF export complete
+    ✓ Combined file saved to magnetostatics_02_circular_loop_combined.xdmf
+
+  Writing VTX files...
+    ✓ Vector potential A saved to magnetostatics_02_circular_loop_A.bp/
+    ✓ Magnetic field B saved to magnetostatics_02_circular_loop_B.bp/
+
+  VTX round-trip check (EX-17 anchor):
+    in-memory  max|B| = 7.861367746496e-05 T
+    read-back  max|B| = 7.861367746496e-05 T
+    relative difference = 0.000e+00  (tol 1e-10)
+    control (read-back vs 0.5 x in-memory) = 1.000e+00  -- must exceed the band
+    ✓ written .bp reproduces the in-memory field
+    ✓ control separated: wrong reference reads rel ~ 1
+
+  ✓ ParaView files saved to paraview_output/
+    Open magnetostatics_02_circular_loop_combined.xdmf in ParaView: it carries the
+    'CellTags' cell array plus A, B, and B_analytical on one grid,
+    so Threshold on CellTags and Calculator mag(B - B_analytical)
+    both work directly.
+
+  Saving results...
+  Results saved to: magnetostatics_02_circular_loop_results.txt
+
+  Sample values:
+    z [m]        B_z num [T]     B_z ana [T]     Error     
+    ----------------------------------------------------
+    -0.0240      8.047692e-06    8.242617e-06    2.36      %
+    -0.0120      1.894462e-05    1.980804e-05    4.36      %
+    0.0000       2.976768e-05    3.141593e-05    5.25      %
+    0.0120       1.843777e-05    1.980804e-05    6.92      %
+    0.0240       7.728198e-06    8.242617e-06    6.24      %
+
+============================================================
+Example completed successfully!
+============================================================
+
+## Exit
+- Status: 0
+- Elapsed (s): 141
+- Filtered lines (gmsh optimisation chatter): 150
