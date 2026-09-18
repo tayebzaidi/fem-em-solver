@@ -109,6 +109,7 @@ from fem_em_solver.io.paraview_utils import (  # noqa: E402
     adopt_host_ownership,
     write_xdmf_with_tags,
 )
+from fem_em_solver.post.setup_figure import write_setup_figure  # noqa: E402
 
 from tests.mesh.helpers import (  # noqa: E402
     REQUIRED_COIL_PHANTOM_TAGS,
@@ -125,6 +126,7 @@ from tests.mesh.test_mesh_tag_integrity import (  # noqa: E402
 )
 
 OUTPUT_DIR = Path(__file__).resolve().parent / "paraview_output"
+FIGURE_DIR = Path(__file__).resolve().parent / "figures"  # committed, EX-57
 BASENAME = "meshing_05_region_resolution_policy"
 
 # The two coil tags, the regions the policy refines *and* whose CAD volume is a
@@ -261,6 +263,59 @@ def main() -> None:
 
     # ---- sizing 2: the policy that carries the gate -----------------------
     policy = _build("policy", comm, **POLICY_RESOLUTIONS)
+
+    # ---- the guide's setup figure (EX-57; opt-in, FEM_EM_SETUP_FIGURES=1) --
+    # Placed *after* `_build("policy", ...)` returns, never inside `_build`:
+    # `_build` times its own mesh with `time.perf_counter()` and stores it as
+    # `mesh_wall_time_s`, a printed record, and folding the ~seconds-long
+    # render into that window would move the printed mesh time between the
+    # flagged and unflagged runs for no physics reason (the `mesh:4` defect,
+    # 2026-09-18). This draws the **gated** rung — `policy`, the mesh that
+    # carries `POLICY_MIN_CAD_RECOVERY` — not `clamps_only` or
+    # `coarse_control`. Region names come straight from
+    # `REQUIRED_COIL_PHANTOM_TAGS` with the two coil tags relabelled to carry
+    # the "coil" keyword so `write_setup_figure`'s copper colour class picks
+    # them up (it already does via the tag map's own "coil_1"/"coil_2"
+    # names); air (tag 4) is hidden, the phantom (tag 3) translucent. Note
+    # what the translucency does and does not do on *this* fixture: the tori
+    # sit at coil_major_radius 0.08 m and the phantom's radius is 0.04 m, so
+    # the coils **encircle** the phantom rather than sitting inside it —
+    # nothing is hidden behind it, and the translucency's job here is only to
+    # keep the far (-x) half of each torus readable through the cylinder.
+    # Neither the title nor the guide caption may claim otherwise.
+    # `coil_phantom_domain` builds both
+    # coils as tori centred at (0, 0, ±coil_separation/2) — torus axis = the
+    # z-axis — and the phantom as a cylinder at `phantom_offset_xy` (this
+    # fixture's `GEOMETRY` omits it, so it defaults to the "centered" preset,
+    # (0, 0)) extruded along z — cylinder axis = the z-axis too. The coil
+    # pair's axis and the phantom's axis therefore coincide on the z-axis, so
+    # any vertical plane contains both; the x-z plane (normal (0, 1, 0)) is
+    # chosen to match the sibling two-torus figures (`mesh:1`/`mesh:4`) and
+    # cuts through both tori's wire cross-sections and the phantom's full
+    # height.
+    write_setup_figure(
+        policy["mesh"],
+        policy["cell_tags"],
+        FIGURE_DIR / f"{BASENAME}_setup.png",
+        region_names={
+            1: "coil_1 (wire)",
+            2: "coil_2 (wire)",
+            3: "phantom",
+            4: "air",
+        },
+        hide_tags=(4,),
+        translucent_tags=(3,),
+        slice_normal=(0.0, 1.0, 0.0),
+        # Keep this under ~145 characters: `write_setup_figure` draws the
+        # title as a plain `add_text` with no wrap and no length guard, so a
+        # longer title silently loses its last word (`mesh:4` precedent,
+        # 2026-09-18).
+        title=(
+            "mesh:5 (GEO-17) — coil+phantom mesh at the gated per-region "
+            "policy sizing (coil 0.012 m, phantom 0.010 m, air 0.020 m)"
+        ),
+        comm=comm,
+    )
 
     # ---- sizing 3: the inverted control, coarser and asserted to FAIL ------
     control_geometry = dict(GEOMETRY)

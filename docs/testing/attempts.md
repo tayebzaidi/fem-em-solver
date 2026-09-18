@@ -13438,3 +13438,96 @@ says "one figure, then stop and journal" — so no take-next. No parked branches
 no denied commands. Queue state at close: §9 On-deck still drained (items 1–3
 DONE); the 03:00 review's recorded shortfall of 178 min / two items against the
 floor stands.
+
+## 2026-09-18T14:10Z — `EX-57` (drained-queue fallback, `mesh:5`) — complete
+
+**Slot:** 2026-09-18 09:00 CDT implementer run. **Tree at preflight:** clean;
+`fem-em-solver` Up (7 days). **Item:** §9 On-deck items 1–3 are all marked
+DONE by the 04:30 slot, so the standing drained-queue fallback applied —
+`check_example_setup_figures.py --next` named
+`examples/meshing/05_region_resolution_policy.py` (`mesh:5`, `EX-27`/`GEO-17`)
+with the census at `examples=54 ok=17 missing=37 broken=0`
+(`20260918T140030Z_EX-57-census.log:34–35`).
+
+**What was done.** `write_setup_figure` call added to the example after
+`policy = _build("policy", …)` returns — the **gated** rung of the three
+meshes it builds, and outside `_build`'s own `perf_counter` window so the
+render cannot fold into the printed `mesh_wall_time_s` (the `mesh:4` defect of
+the 07:30 slot). Air (tag 4) hidden, phantom (tag 3) translucent, region names
+from the fixture's own `REQUIRED_COIL_PHANTOM_TAGS`, slice normal
+`(0, 1, 0)` — the x-z plane, which contains both the coil pair's axis and the
+phantom cylinder's (both are the z-axis). Guide `## Setup figure` section
+written with the caption. Executed by `example-runner`, spawned foreground with
+"you are the executor, do not spawn" (the 2026-09-16 07:30 anomaly).
+
+**Measured, flagged run `20260918T140647Z_EX-57.log`, `-n 2`, real build,
+Status 0, harness 12 s (in-script 10.0 s):** cells 19 618 / 20 745 / 12 471
+(`:948–950`); `GEO-17` meshed/CAD recovery `:959–961` — coil_1 clamps
+0.755006 → policy **0.833417** (separation +0.078411) against the imported
+`POLICY_MIN_CAD_RECOVERY` 0.755, coil_2 0.750454 → **0.835563** (+0.085109),
+phantom 0.983531 → 0.992751; the inverted control at h = 0.018 m misses the
+floor by **+0.105188 / +0.106569** (`:963`) against the pre-stated
+`CONTROL_SEPARATION` 0.05; "All identities hold" (`:973`). **Unflagged control
+`20260918T140703Z_EX-57.log`, Status 0, 10 s:** every one of those digits
+identical (`:941–943, :952–954, :956`); only wall clocks differ (per-mesh
+2.61/2.75/1.62 s flagged vs 2.78/3.02/1.58 s — jitter, not gated; totals 10.0
+vs 7.6 s, the render's ~2.4 s). **Censuses:** setup figures
+`examples=54 ok=18 missing=36 broken=0` (`20260918T140725Z_EX-57.log:89`) —
+`missing` down by exactly one, as predicted; docrefs
+`dead=0 guide=0 stale=19 stale_severity=report exit=2`
+(`20260918T140740Z_EX-57.log:58`), `exit != 1`. **PNG** 321 469 B = 314 KiB
+≤ 600 KiB.
+
+**What the PNG check caught.** The runner's report said "the render is correct
+on the first pass" and it was — the image itself is right, and this is the
+first figure rendered since the 07:30 slot's legend fix, with the legend
+reading whole (viewed, not inferred). But two *claims about* the image were
+false: both the source comment and the guide caption said the phantom is drawn
+translucent "so the two tori inside it stay visible", when
+`coil_major_radius` = 0.08 m against the phantom's 0.04 m radius means the
+coils **encircle** the phantom — nothing sits inside it and nothing is hidden
+behind it. Rewritten in both places to what the translucency actually buys
+(the far `-x` half of each torus readable through the cylinder); the caption's
+"blue square" likewise became the rectangle the slice shows (0.10 m along z ×
+0.08 m across x, the cylinder's height by its diameter), and a sentence was
+added naming the one sizing effect this single-mesh render *does* show (tets
+inside the phantom at 0.010 m visibly finer than the air's 0.020 m). Because
+the `.py` comment changed after the runner's green window, **rule (i)** was
+honoured: both windows above are re-runs of the module **as committed**
+(the runner's earlier pair, `…140252Z` / `…140353Z`, carried the same digits
+and is superseded).
+
+**Earlier logs also committed:** `20260918T140030Z_EX-57-census.log` (the
+`--next` call), `…140252Z` / `…140353Z_EX-57.log` (the runner's superseded
+pair), `…140418Z` / `…140431Z_EX-57.log` (its censuses), and
+`…140730Z_EX-57.log` — a **failed** docrefs invocation, `Status 2` with
+`can't open file … check_doc_references.py`: the script is
+`check_example_doc_references.py`. Recorded so the next slot does not spend
+the minute; the real docrefs run is `…140740Z`.
+
+**Files:** `examples/meshing/05_region_resolution_policy.py` (+`.md`),
+`examples/meshing/figures/meshing_05_region_resolution_policy_setup.png`
+(new), `docs/testing/test-results.md`, `PROJECT_PLAN.md` (§7 `EX-57` census
+line + `mesh:5` in the done-list). No `src/`, no `tests/`.
+
+**Branch (if parked):** none — landed on `main`.
+
+**Next-attempt hypothesis:** n/a — figure landed, **36 remain**. The 07:30
+slot's three `src/`-side findings for the review all stand unchanged (title
+length guard, legend elision past two same-class labels, one-colour-per-class
+hiding a same-class split); this item hit none of them — the title is 118
+characters and the fixture has three visible classes. Standing observation,
+now four slots running: the `example-runner`'s self-report of "correct on the
+first pass" is reliable about the *render* and not about the *prose around
+it* — every `EX-57` slot so far has found a false claim in a caption or
+comment that the runner did not, so "Read the PNG before committing" should
+stay in every item, and it should be read as "check every caption sentence
+against the geometry", not only "look at the picture".
+
+### Slot close — 2026-09-18 09:00 CDT
+
+One item (the standing fallback), one outcome commit, clean tree. The fallback
+says "one figure, then stop and journal" — no take-next. No parked branches, no
+denied commands (one self-inflicted wrong-filename window, journaled above).
+Queue state at close: §9 On-deck still drained (items 1–3 DONE); the 03:00
+review's shortfall of 178 min / two items against the floor stands.

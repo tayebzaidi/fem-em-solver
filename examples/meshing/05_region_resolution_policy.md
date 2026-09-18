@@ -84,6 +84,41 @@ precedent.
 **Mesh only — no solve, no SAR claim.** This is the mesh capability `MAT-4`'s
 SAR-on-a-coil route runs through, and nothing downstream of it.
 
+## Setup figure
+
+![mesh:5 setup — coil+phantom mesh at the gated per-region policy sizing, 3-D view and x-z slice](figures/meshing_05_region_resolution_policy_setup.png)
+
+*Left:* the tagged regions of the **gated `policy` mesh** — the per-region
+sizing (coil 0.012 m, phantom 0.010 m, air 0.020 m) that carries
+`POLICY_MIN_CAD_RECOVERY`, not the `clamps_only` or `coarse_control` builds —
+with the air (tag `4`) hidden. The two copper tori (cell tags `1`/`2`, named
+`coil_1 (wire)` / `coil_2 (wire)` so the "coil"/"wire" keyword picks the same
+copper colour class in every figure in the tree) share one legend row because
+they are the same colour; the blue cylinder is the phantom (tag `3`),
+rendered translucent. The coils **encircle** the phantom and are not inside
+it — `coil_major_radius` is 0.08 m against the phantom's 0.04 m radius — so
+the translucency hides nothing behind the cylinder; it keeps the far (`-x`)
+half of each torus readable through it. The two axes do coincide on `z`
+(this fixture's `GEOMETRY` omits `phantom_offset_xy`, so the phantom takes
+the default "centered" placement), but no axis is drawn. **This is a
+single mesh, not a comparison**: the point of `EX-27`/`GEO-17` is that the
+*policy* mesh recovers more of each torus's CAD volume than `clamps_only`
+(faceted vs rounder tori, a coarser air) — a difference this one-mesh render
+cannot show; see guide step 5 for the ParaView side-by-side that does. *Right:*
+the `y = 0` slice (normal `(0, 1, 0)`, the x-z plane) through the mesh centre
+— the plane containing both the coil pair's shared z-axis and the phantom
+cylinder's axis, so it cuts through both tori's wire cross-sections (the four
+orange octagons, two per torus, at `z = ±0.04 m`) and the phantom's full
+cross-section (the blue rectangle, `0.10 m` along `z` by `0.08 m` across
+`x` — the cylinder's height by its diameter) with mesh edges shown; the grey
+background is air. The slice is where the sizing policy is legible at all:
+the tets inside the phantom (0.010 m) are visibly finer than those out in
+the air (0.020 m). Rendered by
+`fem_em_solver.post.setup_figure.write_setup_figure` from the example's own
+`policy` mesh, placed after that build so the render never folds into the
+printed `mesh_wall_time_s` record (`EX-57`); regenerate with
+`FEM_EM_SETUP_FIGURES=1` in the runner's environment.
+
 ## 2. How to run it
 
 ```
