@@ -13234,3 +13234,102 @@ Standing rule (c) on the `src/` change: `setup_figure.py` has **no test module**
 ### Slot close — 2026-09-18 04:30 CDT
 
 Three items, three outcome commits, clean tree throughout; take-next fired twice (after `e091c0c` at minute ~9 and `ad18656` at minute ~19). No parked branches, no anomalies, no denied commands. Queue state at close: §9 On-deck items 1–3 all marked DONE — **the queue is drained**, and the restock paragraph already recorded a shortfall of 178 min and two items against the floor. `pgrep -c python3` in the container = 0 after the last window.
+
+---
+
+### 2026-09-18T11:06Z — `EX-57` (drained-queue fallback) — complete
+
+**Slot** 2026-09-18 06:00 CDT implementer run. §9 On-deck items 1–3 were all
+marked DONE by the 04:30 slot, so the queue was drained and the standing
+fallback applied: `check_example_setup_figures.py --next` printed
+`examples/meshing/02_cylindrical_phantom.py` (`mesh:2`, `EX-2`), census before
+`examples=54 ok=15 missing=39 broken=0`. Preflight clean, container Up (7 d).
+Executed by a foreground `example-runner` spawn (no nested spawn, no window
+left running), then corrected and re-run twice by the slot itself.
+
+**Predicted census delta** `missing` 39 → 38, `ok` 15 → 16, `broken` 0
+unchanged. **Measured** `examples=54 ok=16 missing=38 broken=0`
+(`20260918T110546Z_EX-57.log:89`) — exact match. Docrefs
+`dead=0 guide=0 stale=23 stale_severity=report exit=2` (`:119`), `≠ 1`.
+
+**Code** (`examples/meshing/02_cylindrical_phantom.py`): `write_setup_figure`
+called right after `MeshGenerator.cylindrical_domain(...)`, opt-in through the
+helper's own `FEM_EM_SETUP_FIGURES` gate; `region_names=CELL_TAG_NAMES`,
+`translucent_tags=(OUTER_TAG,)`, `slice_normal=(0, 1, 0)`. No assertion, band,
+record or printed line touched; no `src/`, no `tests/`.
+
+**Imported identities, flagged vs unflagged, digit-identical** (flagged
+`20260918T110431Z_EX-57.log`, Status 0, 6 s; unflagged control
+`…110502Z_EX-57.log`, Status 0, 2 s; record 5 717 cells / 0.7 s at `-n 2`,
+reproduced in both): `GEO-13` 3/6 accepted, `wall_ratio=1.111111e-04`
+(ceiling 0.1), `interior_ratio=9.999989e+01` (floor 10.0); partition
+`(V_inner + V_outer)/V_mesh = 1.000000000000000`; the heptagon cap ratio
+`0.8710264` at `1.11e-16` relative. The control prints no `[setup-figure]`
+line — the default path is unchanged. Flagged window per rule (i): it ran the
+module **as committed** (the `110431Z` render is post-edit; the earlier
+`110212Z` render is superseded and its figure was replaced).
+
+**Two defects the slot found after the runner reported "no deviations" — both
+caught by acting on the item's own instructions, not by the census.**
+1. *The figure said nothing.* The runner set `hide_tags=(OUTER_TAG,)`,
+   following the generic "air hidden" convention. But in `mesh:2` the outer
+   region **is** the subject — the curved wall the `GEO-13` classifier accepts
+   — so hiding it left a bare 1:10 sliver showing neither the wall nor the
+   scale ratio the example's closed forms are about. Re-rendered with the
+   outer domain translucent and the phantom solid inside it
+   (`20260918T110431Z`), and the slot **viewed both PNGs** (Read tool) to
+   confirm: nesting visible, 10:1 radius ratio legible, legend complete and
+   unclipped (post-`c9cc369`), both tags named, the slice band ≈ a tenth of
+   the panel height as the geometry requires.
+2. *A dead doc reference.* The runner's caption wrote a bare `_facets.xdmf`;
+   the docrefs census parses that as a filename and read
+   `dead=1 … exit=1` (`20260918T110525Z_EX-57.log:35`) — a **red** against
+   the item's `exit != 1` gate. Standing rule (b) is the fix: full filename,
+   `meshing_02_cylindrical_phantom_facets.xdmf`. Green on re-run.
+   This is rule (b) earning its place; the first census window
+   (`…110507Z`) had also aimed at a non-existent
+   `scripts/testing/check_doc_references.py` and exited 2 on
+   *file-not-found*, which looks identical to a pass at the exit code — the
+   real script is `check_example_doc_references.py`.
+
+**Caption** names both cell regions and their tags, the slice plane and why it
+is that plane, the 10:1 scale ratio as the thing to notice, and states plainly
+that the *facet* groups (`1 = outer_boundary`, `2 = inner_boundary`) are one
+topological dimension below what the figure draws and are not shown.
+
+**PNG** `examples/meshing/figures/meshing_02_cylindrical_phantom_setup.png`,
+240 KiB (≤ 600).
+
+- Files: `examples/meshing/02_cylindrical_phantom.py`,
+  `02_cylindrical_phantom.md` (new `## Setup figure` section),
+  `examples/meshing/figures/meshing_02_cylindrical_phantom_setup.png` (new),
+  `docs/testing/test-results.md`, `PROJECT_PLAN.md` (§7 `EX-57` census line +
+  `mesh:2` in the done-list with both defects noted).
+- Logs (all `_EX-57.log`): runner's first pass `20260918T110212Z` (flagged,
+  superseded render), `…110301Z` (census, wrong docrefs path),
+  `…110315Z` (unflagged control of the superseded module); slot's
+  `…110431Z` (final flagged, Status 0, 6 s), `…110502Z` (final unflagged
+  control, Status 0, 2 s), `…110507Z` (census, docrefs path not found),
+  `…110525Z` (docrefs `dead=1`, the caught red), `…110546Z` (both censuses
+  final, green).
+- Branch (if parked): none — landed on `main`.
+- Next-attempt hypothesis: n/a — figure landed, **38 remain**. For the review,
+  three things: (1) the "air hidden" convention in the `EX-57` item template
+  is wrong for fixtures whose *outer* region is the subject — say "hide the
+  region that is not the subject", or the next runner repeats defect 1;
+  (2) an `example-runner` self-report of "no deviations" did not survive
+  either the PNG being viewed or the census being run with the right script
+  name — the "Read the PNG before committing" instruction should be joined by
+  "name the census script, do not let the executor guess it"; (3) the
+  re-render sweep the 04:30 slot asked for is still unqueued, and `mesh:2` is
+  *not* part of it (rendered post-fix).
+
+---
+
+### Slot close — 2026-09-18 06:00 CDT
+
+One item (the standing fallback), one outcome commit, clean tree. The fallback
+says "one figure, then stop and journal" — so no take-next, even though the
+commit lands before minute 30. No parked branches, no denied commands. Queue
+state at close: §9 On-deck still drained (items 1–3 DONE); the 03:00 review's
+recorded shortfall of 178 min / two items against the floor stands.

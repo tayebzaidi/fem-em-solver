@@ -1,0 +1,206 @@
+# Test Run
+- Chunk: EX-57
+- Commit: c9cc3692f418a5a6ca456a2edee00f5e6d895612
+- Time (UTC): 2026-09-18 11:05:02
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.5.1
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc "cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 180 mpiexec -n 2 python3 examples/meshing/02_cylindrical_phantom.py"
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 24
+drwxr-xr-x  3 taz5297 taz5297 4096 Sep  4 23:31 .
+drwxr-xr-x 17 taz5297 taz5297 4096 Sep 18 06:04 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  721 Sep  3 13:49 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 4275 Sep 13 19:19 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.5.1
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc "cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 180 mpiexec -n 2 python3 examples/meshing/02_cylindrical_phantom.py"'
+========================================================================
+EX-2 — cylindrical phantom domain: mesh, cell tags, wall classification
+========================================================================
+
+[geometry] inner_radius=0.01 m  outer_radius=0.1 m  length=0.2 m
+[mesh] resolution=0.02 m (= 2 x the inner radius — see below)
+
+[GEO-13] tol = 0.01 x (outer-inner) = 9.000000e-04 m (never `resolution` — that was the defect)
+[GEO-13]   surf   1 residual=8.999990e-02 ratio=9.999989e+01 accepted=False
+[GEO-13]   surf   2 residual=8.999990e-02 ratio=9.999989e+01 accepted=False
+[GEO-13]   surf   3 residual=8.999990e-02 ratio=9.999989e+01 accepted=False
+[GEO-13]   surf   4 residual=1.000000e-07 ratio=1.111111e-04 accepted=True
+[GEO-13]   surf   5 residual=1.000000e-07 ratio=1.111111e-04 accepted=True
+[GEO-13]   surf   6 residual=1.000000e-07 ratio=1.111111e-04 accepted=True
+[GEO-13] 3/6 accepted   wall_ratio=1.111111e-04 (ceiling 0.1)   interior_ratio=9.999989e+01 (floor 10.0)
+[GEO-13] the pre-`GEO-13` predicate accepted 6/6 at resolution=0.09 — the phantom swept into outer_boundary (known-issues 13, retired)
+Info    : Meshing 1D...
+Info    : [  0%] Meshing curve 1 (Circle)
+Info    : [ 20%] Meshing curve 2 (Line)
+Info    : [ 40%] Meshing curve 3 (Circle)
+Info    : [ 60%] Meshing curve 4 (Circle)
+Info    : [ 70%] Meshing curve 5 (Line)
+Info    : [ 90%] Meshing curve 6 (Circle)
+Info    : Done meshing 1D (Wall 0.000603496s, CPU 0.000481s)
+Info    : Meshing 2D...
+Info    : [  0%] Meshing surface 1 (Cylinder, Frontal-Delaunay)
+Info    : [ 20%] Meshing surface 2 (Plane, Frontal-Delaunay)
+Info    : [ 40%] Meshing surface 3 (Plane, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 4 (Cylinder, Frontal-Delaunay)
+Info    : [ 70%] Meshing surface 5 (Plane, Frontal-Delaunay)
+Info    : [ 90%] Meshing surface 6 (Plane, Frontal-Delaunay)
+Info    : Done meshing 2D (Wall 0.035454s, CPU 0.035452s)
+Info    : Meshing 3D...
+Info    : 3D Meshing 2 volumes with 1 connected component
+Info    : Tetrahedrizing 814 nodes...
+Info    : Done tetrahedrizing 822 nodes (Wall 0.00906904s, CPU 0.008861s)
+Info    : Reconstructing mesh...
+Info    :  - Creating surface mesh
+Info    :  - Identifying boundary edges
+Info    :  - Recovering boundary
+Info    : Done reconstructing mesh (Wall 0.0189765s, CPU 0.018484s)
+Info    : Found volume 2
+Info    : Found volume 1
+Info    : It. 0 - 0 nodes created - worst tet radius 3.41147 (nodes removed 0 0)
+Info    : 3D refinement terminated (1304 nodes total):
+Info    :  - 0 Delaunay cavities modified for star shapeness
+Info    :  - 0 nodes could not be inserted
+Info    :  - 5769 tetrahedra created in 0.0274056 sec. (210504 tets/s)
+Info    : 0 node relocations
+Info    : Done meshing 3D (Wall 0.0633229s, CPU 0.06279s)
+[harness] 13 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 10 edge swaps, 0 node relocations (volume = 4.51239e-05): worst = 0.100526 / average = 0.644593 (Wall 0.000144299s, CPU 0.000119s)
+Info    : 15 edge swaps, 0 node relocations (volume = 4.51239e-05): worst = 0.307643 / average = 0.658106 (Wall 0.000220099s, CPU 0.000181s)
+Info    : No ill-shaped tets in the mesh :-)
+[harness] 22 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 140 edge swaps, 7 node relocations (volume = 0.00620828): worst = 0.269962 / average = 0.76195 (Wall 0.00252108s, CPU 0.002521s)
+Info    : 141 edge swaps, 9 node relocations (volume = 0.00620828): worst = 0.286932 / average = 0.762093 (Wall 0.00290238s, CPU 0.002904s)
+Info    : No ill-shaped tets in the mesh :-)
+[harness] 10 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : Done optimizing mesh (Wall 0.00980403s, CPU 0.009724s)
+Info    : 1304 nodes 7381 elements
+[harness] 2 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : CalcLocalH: 91 Points 172 Elements 178 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 151 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 17.7919 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 121 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 14.7938 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 94 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 552.112 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 55 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 552.112 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 31 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 552.112 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 14 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 552.112 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 4 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 552.112 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 23 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 22.2629 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 2 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 17.8836 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 3 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 4.51978 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : CalcLocalH: 1302 Points 5469 Elements 1624 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 244 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 19.4507 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 127 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 69.6027 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 27 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 69.6027 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 40 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 33.7131 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 6 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 12.3389 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 3 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 6.70255 
+[harness] 11 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : Done optimizing mesh (Wall 0.485757s, CPU 0.481688s)
+
+[mesh] 5717 cells built in 0.7 s
+[tags] cell groups:
+    1  inner (phantom)      295 cells
+    2  outer (domain)      5422 cells
+[tags] facet groups:
+    1  outer_boundary      1460 facets
+    2  inner_boundary       178 facets
+
+[partition] (V_inner + V_outer)/V_mesh = 1.000000000000000   (exact: linear tets partition)
+
+[volume] V_mesh  =6.253404252e-03  analytic cylinder=6.283185307e-03  ratio=0.995260198  deficit=0.474%
+[volume] V_outer =6.208280328e-03  analytic annulus =6.220353454e-03  ratio=0.998059093  deficit=0.194%
+[volume] V_inner =4.512392426e-05  analytic cylinder=6.283185307e-05  ratio=0.718169560  deficit=28.183%
+
+[area]   A_outer_boundary=1.873970594e-01  analytic (lateral + 2 caps)=1.884955592e-01  ratio=0.994172277
+[area]   A_inner_boundary=5.472820377e-04  analytic end caps=6.283185307e-04  ratio=0.871026416
+[area]   (the inner lateral face is an INTERIOR interface, so an exterior-facet measure sees the caps only)
+
+[coarse] resolution/inner_radius = 2: the inner circle falls back to gmsh's 7-node minimum, so the phantom is a heptagonal prism.
+[coarse] inscribed heptagon/circle = 0.8710264; the measured cap ratio is 0.8710264 (1.11e-16 relative).
+[coarse] the inner VOLUME falls further (0.718170) — the lateral triangulation cuts inside that prism; bracket (0.636620, 0.871026).
+
+[paraview] wrote:
+  cell tags   /workspace/examples/meshing/paraview_output/meshing_02_cylindrical_phantom_combined.xdmf
+  facet tags  /workspace/examples/meshing/paraview_output/meshing_02_cylindrical_phantom_facets.xdmf
+
+[paraview] threshold `CellTags` in the _combined file (1 = inner phantom, 2 = surrounding domain);
+           open the _facets file for `mesh_tags` (1 = outer_boundary, 2 = inner_boundary).
+
+All identities hold. Total elapsed 0.8 s.
+
+## Exit
+- Status: 0
+- Elapsed (s): 2
+- Filtered lines (gmsh optimisation chatter): 204

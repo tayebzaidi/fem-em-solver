@@ -83,6 +83,7 @@ from fem_em_solver.io.paraview_utils import (
     adopt_host_ownership,
     write_xdmf_with_tags,
 )
+from fem_em_solver.post.setup_figure import write_setup_figure  # noqa: E402
 
 # Geometry — ``cylindrical_domain``'s own signature defaults, which are the
 # argument set `GEO-13` swept and the margins test replicates.
@@ -135,6 +136,7 @@ CAP_RTOL = 1e-12
 SQUARE_RATIO = 2.0 / np.pi
 
 OUTPUT_DIR = Path(__file__).resolve().parent / "paraview_output"
+FIGURE_DIR = Path(__file__).resolve().parent / "figures"  # committed, EX-57
 BASENAME = "meshing_02_cylindrical_phantom"
 
 
@@ -349,6 +351,29 @@ def main() -> None:
     mesh_seconds = time.perf_counter() - mesh_started
     assert cell_tags is not None, "model_to_mesh returned no cell tags"
     assert facet_tags is not None, "model_to_mesh returned no facet tags"
+
+    # ---- the guide's setup figure (EX-57; opt-in, FEM_EM_SETUP_FIGURES=1) --
+    # The slice plane is (0, 1, 0)-normal — the x-z plane, which *contains*
+    # the cylinder's z axis — so both the inner (phantom) cylinder and the
+    # outer-domain annulus around it appear in cross-section along the full
+    # length. Nothing is hidden: this example's subject is the *nesting* (a
+    # small phantom inside a large curved-walled domain, and which wall the
+    # classifier accepts), so the outer domain is drawn translucent and the
+    # phantom solid inside it — hiding the outer domain leaves a bare sliver
+    # that shows neither the wall nor the scale ratio.
+    write_setup_figure(
+        msh,
+        cell_tags,
+        FIGURE_DIR / f"{BASENAME}_setup.png",
+        region_names=CELL_TAG_NAMES,
+        translucent_tags=(OUTER_TAG,),
+        slice_normal=(0.0, 1.0, 0.0),
+        title=(
+            f"mesh:2 — cylindrical phantom (r_inner={INNER_RADIUS} m, "
+            f"r_outer={OUTER_RADIUS} m, L={LENGTH} m), resolution={RESOLUTION} m"
+        ),
+        comm=comm,
+    )
 
     n_cells = comm.allreduce(msh.topology.index_map(msh.topology.dim).size_local, MPI.SUM)
 

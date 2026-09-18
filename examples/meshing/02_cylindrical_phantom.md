@@ -3,6 +3,29 @@
 Guide for `examples/meshing/02_cylindrical_phantom.py` (`EX-2`). Written to be
 followed without the source open.
 
+## Setup figure
+
+![mesh:2 setup — cylindrical phantom, 3-D view and x-z slice](figures/meshing_02_cylindrical_phantom_setup.png)
+
+*Left:* the two tagged cell groups in 3-D — the outer domain (tag 2,
+`outer (domain)`, `r_outer = 0.1 m`, `L = 0.2 m`) drawn translucent so the
+inner phantom cylinder (tag 1, `inner (phantom)`, `r_inner = 0.01 m`) is
+visible solid inside it. The point to notice is the **scale ratio**: the
+phantom is a tenth of the outer radius, and at `resolution = 0.02 m` — twice
+`r_inner` — it is the under-resolved region the example's closed forms are
+about, while the curved outer wall is the resolved one the `GEO-13`
+classifier accepts. *Right:* a slice with normal `(0, 1, 0)` through the
+origin — the x-z plane, which contains the cylinder's z axis — showing both
+regions across the full length with mesh edges: outer domain (green) above
+and below, phantom (blue) as the band across the middle, roughly a tenth of
+the height. The figure draws **cell** tags only; the facet groups this
+example also tags (`1 = outer_boundary`, `2 = inner_boundary`) are surfaces,
+not regions, and are not shown here — open
+`meshing_02_cylindrical_phantom_facets.xdmf` for those.
+Rendered by `fem_em_solver.post.setup_figure.write_setup_figure` from the
+example's own mesh (`EX-57`); regenerate with `FEM_EM_SETUP_FIGURES=1` in
+the runner's environment.
+
 ## 1. What this demonstrates
 
 The **cylindrical** geometry the birdcage path runs through: a curved outer
