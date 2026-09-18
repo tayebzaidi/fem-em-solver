@@ -40,6 +40,26 @@ one `[201, 202]` (known-issues 10). **Both defects render perfectly.** Only the
 identities above catch them — which is the reason this example asserts rather
 than merely exports.
 
+## Setup figure
+
+![mesh:1 setup — two-torus port fixture, 3-D view and x-z slice through the gap](figures/meshing_01_two_torus_ports_setup.png)
+
+*Left:* the tagged regions with the air box hidden — the two copper tori
+(tags `1`/`2`, "wire 1 (z<0)" / "wire 2 (z>0)") each interrupted by its red
+gap box (cell tags `101`/`102`, "gap 1 (port)" / "gap 2 (port)"). The facet
+tags that actually carry the port cuts (`201`/`202`) live on the gap boxes'
+faces, one topological dimension down from what this figure draws, and are
+not separately coloured here — see guide step 3 and
+`examples/meshing/paraview_output/meshing_01_two_torus_ports_facets.xdmf` for
+those. *Right:* the `y = 0` slice (normal `(0, 1, 0)`) — the plane containing
+both tori's shared z-axis and the gap opening, which `two_torus_domain`
+centres on `+x`: the two red squares are the gap boxes' cross-sections at
+`+x`, the two orange discs are the tori's wire cross-sections on the far
+(`-x`) side of the ring, and the grey background is air. Rendered by
+`fem_em_solver.post.setup_figure.write_setup_figure` from the example's own
+mesh (`EX-57`); regenerate with `FEM_EM_SETUP_FIGURES=1` in the runner's
+environment.
+
 ## 2. How to run it
 
 ```

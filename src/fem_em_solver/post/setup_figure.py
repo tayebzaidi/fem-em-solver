@@ -296,7 +296,28 @@ def _render(
             text = f"{labels[0]} … {labels[-1]}"
         grouped.append((text, colour))
     if grouped:
-        plotter.add_legend(grouped, bcolor="white", face=None, size=(0.24, 0.035 * len(grouped) + 0.02), loc="upper right")
+        # PyVista 0.48.4's `map_loc_to_pos` (pyvista/plotting/renderer.py)
+        # computes the legend's *x* anchor from ``size[1]`` (the height) for
+        # any ``'right'`` location — `x = 1 - size[1] -
+        # border` for 'right' — instead of ``size[0]`` (the width). With
+        # ``loc="upper right"`` and a box wider than it is tall (true for
+        # every setup figure: 2-3 short rows, several named tags each), the
+        # box's right edge lands past the subplot's own viewport edge and
+        # every row is clipped there — independent of label length or font
+        # size, which is why widening ``size[0]`` alone (tried first, `EX-57`
+        # this fixture, 2026-09-18) made it worse, not better. ``'left'``
+        # locations take the bug-free branch (`x = border`, no width
+        # dependency), so anchoring here instead keeps the whole box on
+        # screen for any width. "upper left" collides with the title text
+        # added below and "lower left" collides with the axes orientation
+        # widget, so "center left" (still bug-free — the `'left' in loc`
+        # branch matches) is the seam that hits neither.
+        max_chars = max((len(text) for text, _ in grouped), default=0)
+        legend_width = min(0.6, max(0.24, 0.05 + 0.011 * max_chars))
+        plotter.add_legend(
+            grouped, bcolor="white", face=None,
+            size=(legend_width, 0.035 * len(grouped) + 0.02), loc="center left",
+        )
     plotter.add_text(title or path.stem, position="upper_left", font_size=11, color="black")
     plotter.add_text(
         "3-D: tagged regions" + (", half-space clipped" if clip_normal is not None and tdim == 3 else ""),

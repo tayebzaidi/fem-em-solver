@@ -73,6 +73,7 @@ from fem_em_solver.io.paraview_utils import (
     adopt_host_ownership,
     write_xdmf_with_tags,
 )
+from fem_em_solver.post.setup_figure import write_setup_figure
 
 # Geometry — the parameter set the `GEO-8`/`GEO-10`/`PORT-1` step-3b gates use
 # (tests/mesh/test_two_torus_gapped.py, test_two_torus_outer_boundary.py), not
@@ -103,6 +104,7 @@ VOLUME_RTOL = 1e-9
 AREA_RTOL = 1e-9
 
 OUTPUT_DIR = Path(__file__).resolve().parent / "paraview_output"
+FIGURE_DIR = Path(__file__).resolve().parent / "figures"  # committed, EX-57
 BASENAME = "meshing_01_two_torus_ports"
 
 
@@ -250,6 +252,36 @@ def main() -> None:
     msh, cell_tags, facet_tags = _build_mesh(comm)
     assert cell_tags is not None, "model_to_mesh returned no cell tags"
     assert facet_tags is not None, "model_to_mesh returned no facet tags"
+
+    # ---- the guide's setup figure (EX-57; opt-in, FEM_EM_SETUP_FIGURES=1) --
+    # Air (tag 3) hidden; the two tori named so the "wire" keyword picks the
+    # copper colour class, the two gap boxes named so the "port" keyword
+    # picks the port colour class (`write_setup_figure` groups same-colour
+    # tags into one legend row). The port *cuts* (facet tags 201/202) are
+    # not cell regions and are not drawn here — the guide's caption names
+    # them instead. The slice is the x-z plane (normal (0, 1, 0)): both
+    # tori's axis is the shared z-axis (they are only offset in z), and the
+    # gap opening is centred on the +x axis (`two_torus_domain` docstring),
+    # so this plane contains both torus axes and cuts through the gap.
+    write_setup_figure(
+        msh,
+        cell_tags,
+        FIGURE_DIR / f"{BASENAME}_setup.png",
+        region_names={
+            1: "wire 1 (z<0)",
+            2: "wire 2 (z>0)",
+            3: "air",
+            101: "gap 1 (port)",
+            102: "gap 2 (port)",
+        },
+        hide_tags=(3,),
+        slice_normal=(0.0, 1.0, 0.0),
+        title=(
+            f"mesh:1 — two-torus port fixture (R={MAJOR_RADIUS} m, "
+            f"r={MINOR_RADIUS} m, separation={SEPARATION} m), gapped for lumped ports"
+        ),
+        comm=comm,
+    )
 
     n_cells = comm.allreduce(msh.topology.index_map(msh.topology.dim).size_local, MPI.SUM)
     mesh_seconds = time.perf_counter() - started
