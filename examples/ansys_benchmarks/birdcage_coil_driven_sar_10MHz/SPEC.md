@@ -100,8 +100,14 @@ must not create one.
 ### comparison meaningless without failing any check
 
 Our side drives the excited port with a source amplitude `V_src = 1 V`
-behind a 50 Ω source impedance (`V = V_src − I·Z_p`). The equivalent
-incident-wave power is `V_src²/(4Z₀) = 1/200 =` **5.0000000e-03 W**.
+behind a 50 Ω source impedance (`V = V_src − I·Z_p`). The solver's phasors
+are **peak** amplitudes (`ports/superposition.py`), so the available
+incident-wave power is `|V_src|²/(8Z₀) = 1/400 =` **2.5000000e-03 W**.
+*(Corrected 2026-09-18: this clause said `V²/(4Z₀) = 5.0e-03 W`, the RMS
+form, a factor of two high — the exact "silent normalisation mismatch" the
+next paragraph warns about, caught by the first AED comparison because our
+reported accepted power matched `1 − |S₁₁|²` only of the halved figure.
+The ratio to HFSS's 1 W is therefore 400, not 200.)*
 
 **You do not have to reproduce that.** Export at whatever excitation HFSS
 uses — its default is 1 W incident per port — and **report the incident

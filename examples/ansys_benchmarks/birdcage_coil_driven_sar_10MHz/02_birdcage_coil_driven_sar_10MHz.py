@@ -55,7 +55,11 @@ separation of ≈ 17×.  Asserted here only as *at least* ``CONTROL_SEPARATION``
 would fail this script.
 
 **Normalisation — read this twice.**  Our drive is ``V_src`` = 1 V behind
-50 Ω, i.e. ``V_src²/(4Z₀)`` = 5.0e-03 W incident; HFSS's default is 1 W.  SAR
+50 Ω, i.e. ``|V_src|²/(8Z₀)`` = 2.5e-03 W incident — the solver's phasors are
+**peak** amplitudes (``ports/superposition.py``: available power ``½|a|²``),
+so the RMS form ``V²/(4Z₀)`` = 5.0e-03 W this file quoted until 2026-09-18 was
+a factor of two high (found by the first AED comparison: the reported accepted
+power matched ``1 − |S₁₁|²`` only of the halved figure); HFSS's default is 1 W.  SAR
 is linear in incident power.  The incident, supplied and accepted powers are
 *printed explicitly* here and in `COMPARISON.md`; HFSS's normalisation is
 **not** matched and nothing is rescaled silently.  That is the one error mode
@@ -186,14 +190,18 @@ PHANTOM_VOLUME_CLOSED_FORM_M3 = float(np.pi * PHANTOM_RADIUS**2 * PHANTOM_HEIGHT
 
 
 def _incident_power_w(source_voltage_v: complex) -> float:
-    """``V_src²/(4Z₀)`` — the equivalent incident-wave power of our drive.
+    """``|V_src|²/(8Z₀)`` — the available (incident-wave) power of our drive.
 
-    The SPEC's normalisation clause: a 1 V source behind 50 Ω delivers
-    5.0000000e-03 W of incident power, against HFSS's default 1 W.  Computed
-    from the sheet's own source voltage and the imported reference impedance so
-    it cannot drift from the drive actually applied.
+    Peak-phasor convention, the package's (``ports/superposition.py``: the
+    incident amplitude is ``a = V_src/(2√z₀)`` and the available power
+    ``½|a|²``): a 1 V source behind 50 Ω delivers 2.5000000e-03 W, against
+    HFSS's default 1 W.  Until 2026-09-18 this read ``/(4Z₀)`` — the RMS form,
+    a factor of two high and inconsistent with this file's own ``½·Re(V·I*)``
+    power bookkeeping; the first AED comparison exposed it.  Computed from the
+    sheet's own source voltage and the imported reference impedance so it
+    cannot drift from the drive actually applied.
     """
-    return float(abs(source_voltage_v) ** 2 / (4.0 * float(REFERENCE_IMPEDANCE_OHM)))
+    return float(abs(source_voltage_v) ** 2 / (8.0 * float(REFERENCE_IMPEDANCE_OHM)))
 
 
 def _excitation(solved) -> dict:
@@ -393,7 +401,7 @@ SPEC forbids reading a rows-4–6 miss as a finding until rows 1–3 have agreed
 | Item | Ours (FEM) | AED (Zero Order) | AED (First Order) |
 |---|---|---|---|
 | Drive | `V_src` = {m["excitation"]["0"]["source_voltage_v"]["re"]:.4f} V behind {REFERENCE_IMPEDANCE_OHM:.1f} Ω, one port at a time, the other three terminated in {TERMINATED_PORT_IMPEDANCE_OHM:.1f} Ω |{a("zero_order", "drive")}|{a("first_order", "drive")}|
-| Incident power `V_src²/(4Z₀)` | **{m["excitation"]["0"]["incident_power_w"]:.7e} W** (HFSS's default is 1 W) |{a("zero_order", "incident_power")}|{a("first_order", "incident_power")}|
+| Incident power `\|V_src\|²/(8Z₀)` (peak phasors) | **{m["excitation"]["0"]["incident_power_w"]:.7e} W** (HFSS's default is 1 W; this read `V²/(4Z₀)` = 5.0e-03 W until 2026-09-18, a factor of two high) |{a("zero_order", "incident_power")}|{a("first_order", "incident_power")}|
 
 SAR is quadratic in the field and therefore **linear in incident power**. The
 ratio is carried explicitly and applied by the adjudicating review; **nothing is

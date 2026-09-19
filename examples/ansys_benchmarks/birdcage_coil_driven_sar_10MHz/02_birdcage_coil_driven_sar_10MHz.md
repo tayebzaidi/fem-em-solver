@@ -37,7 +37,7 @@ adjudicating rows first is the whole point of the split.
 
 ## Normalisation — read this twice
 
-Our drive is `V_src` = 1 V behind 50 Ω, i.e. `V_src²/(4Z₀)` = **5.0e-03 W**
+Our drive is `V_src` = 1 V behind 50 Ω, i.e. `|V_src|²/(8Z₀)` = **2.5e-03 W** (peak phasors; the `V²/(4Z₀)` = 5.0e-03 W this guide quoted until 2026-09-18 was the RMS form, a factor of two high — caught by the first AED comparison)
 incident. HFSS's default is **1 W**. SAR is quadratic in the field and
 therefore *linear* in incident power.
 
