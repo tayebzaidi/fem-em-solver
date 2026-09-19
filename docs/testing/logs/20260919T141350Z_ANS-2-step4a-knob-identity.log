@@ -1,0 +1,43 @@
+# Test Run
+- Chunk: ANS-2-step4a-knob-identity
+- Commit: 7eac27324719f2c1e91564900e0bfd6472960ca6
+- Time (UTC): 2026-09-19 14:13:51
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.5.1
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && source /usr/local/bin/dolfinx-complex-mode && D=examples/ansys_benchmarks/birdcage_coil_driven_sar_10MHz && python3 /workspace/logs/ans2_step4a_cmp.py /workspace/logs/ans2_metrics_baseline.json /workspace/logs/ans2_metrics_unset.json unset-vs-tracked && PYTHONPATH=/workspace/src FEM_EM_ANS2_PHANTOM_RESOLUTION=0.0025 timeout -k 30 600 mpiexec -n 4 python3 $D/02_birdcage_coil_driven_sar_10MHz.py && python3 /workspace/logs/ans2_step4a_cmp.py /workspace/logs/ans2_metrics_unset.json $D/metrics_h0.0025.json set0.0025-vs-unset && ls -1 $D/metrics*.json $D/paraview_output/ && git -C /workspace status --porcelain $D'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 24
+drwxr-xr-x  3 taz5297 taz5297 4096 Sep  4 23:31 .
+drwxr-xr-x 17 taz5297 taz5297 4096 Sep 19 09:13 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  721 Sep  3 13:49 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 4275 Sep 13 19:19 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.5.1
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && source /usr/local/bin/dolfinx-complex-mode && D=examples/ansys_benchmarks/birdcage_coil_driven_sar_10MHz && python3 /workspace/logs/ans2_step4a_cmp.py /workspace/logs/ans2_metrics_baseline.json /workspace/logs/ans2_metrics_unset.json unset-vs-tracked && PYTHONPATH=/workspace/src FEM_EM_ANS2_PHANTOM_RESOLUTION=0.0025 timeout -k 30 600 mpiexec -n 4 python3 $D/02_birdcage_coil_driven_sar_10MHz.py && python3 /workspace/logs/ans2_step4a_cmp.py /workspace/logs/ans2_metrics_unset.json $D/metrics_h0.0025.json set0.0025-vs-unset && ls -1 $D/metrics*.json $D/paraview_output/ && git -C /workspace status --porcelain $D'\'''
+[cmp unset-vs-tracked] residual .coverage.power_miss: 8.926193e-14 vs 6.716849e-14 — both ASSERTED <= 1e-10: PASS
+[cmp unset-vs-tracked] residual .coverage.mass_miss: 5.284662e-14 vs 5.284662e-14 — both ASSERTED <= 1e-10: PASS
+[cmp unset-vs-tracked] leaves compared: 145
+[cmp unset-vs-tracked] worst relative deviation 2.158623e-08 at .ten_pairs.1 (ASSERTED <= 1e-10)
+[cmp unset-vs-tracked] FAIL
+
+## Exit
+- Status: 1
+- Elapsed (s): 0
+- Filtered lines (gmsh optimisation chatter): 0

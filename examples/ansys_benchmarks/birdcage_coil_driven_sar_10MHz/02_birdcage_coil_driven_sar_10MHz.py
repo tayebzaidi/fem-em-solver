@@ -70,6 +70,18 @@ C95.3-compliance, homogeneity, B₁⁺, Larmor or quadrature claim from our side
 The C4 identities are self-consistency statements on one fixture — which is
 precisely why AED's opinion is being asked for.
 
+**The phantom-resolution knob (`ANS-2` step 4a).**  ``FEM_EM_ANS2_PHANTOM_RESOLUTION``
+overrides the rung this script meshes on, so the XL window pre-registered as
+`xl-pending.md` entry 10 can run *this example* at the halved rung without a
+second copy of it.  **Unset ⇒ byte-identical behaviour to the 0.0025 m rung**
+(the `GEO-27` / `MAT-4` step 5b rung, the only rung with mesh records).  When
+set: the two version-tagged mesh-record assertions are **skipped with a printed
+line** (the halved rung has no record yet) while every other imported band stays
+asserted; ``metrics.json`` and the XDMF take resolution-tagged names
+(``metrics_h0.00125.json``, …); ``COMPARISON.md`` / ``COMPARISON_private.md``
+are **not** rewritten — the tracked comparison stays the 0.0025 rung's, which is
+also the reference the ``[ANS-2 step 4]`` readout lines print beside.
+
 Run it through the example runner (the ``ans:`` group sources the complex
 build automatically)::
 
@@ -80,6 +92,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import os
 import sys
 import time
 from datetime import datetime, timezone
@@ -147,6 +160,29 @@ from tests.validation.test_port_package_sparameters import (  # noqa: E402
 CASE_DIR = Path(__file__).resolve().parent
 OUTPUT_DIR = CASE_DIR / "paraview_output"
 BASENAME = "ans2_birdcage_coil_driven_sar_10mhz_combined"
+
+#: `ANS-2` step 4a — the phantom-resolution knob the XL window's command names
+#: (`xl-pending.md` entry 10; the cost probe
+#: ``tests/validation/probe_ans2_phantom_h_halving.py`` reads the same variable,
+#: so the knob name is one contract, not two).  Unset is the *only* configuration
+#: that writes the tracked ``metrics.json`` / ``COMPARISON.md`` and the only one
+#: with mesh records to assert against.
+PHANTOM_RESOLUTION_ENV = "FEM_EM_ANS2_PHANTOM_RESOLUTION"
+_RESOLUTION_OVERRIDE = os.environ.get(PHANTOM_RESOLUTION_ENV)
+RESOLUTION_OVERRIDDEN = _RESOLUTION_OVERRIDE is not None
+PHANTOM_RESOLUTION_M = (
+    float(_RESOLUTION_OVERRIDE) if RESOLUTION_OVERRIDDEN else PHANTOM_RESOLUTION_1G_RUNG
+)
+
+#: Output-name suffix.  Empty when the knob is unset — that is what makes the
+#: unset run byte-identical to this file's behaviour before step 4a.
+RESOLUTION_TAG = f"_h{PHANTOM_RESOLUTION_M:g}" if RESOLUTION_OVERRIDDEN else ""
+
+#: The same tag with the decimal point written ``p``, for the XDMF basename only:
+#: ``write_xdmf_with_tags`` treats everything after the last dot as a suffix and
+#: replaces it, so ``..._h0.004`` was silently written as ``..._h0.xdmf`` — every
+#: rung colliding on one filename (measured, 2026-09-19, `ANS-2` step 4a).
+RESOLUTION_TAG_PATHSAFE = RESOLUTION_TAG.replace(".", "p")
 
 
 def _load_example(path: Path, module_name: str):
@@ -321,7 +357,7 @@ def _write_paraview(built, comm):
     OUTPUT_DIR.mkdir(exist_ok=True)
     solved = built["solves"]["P1"]
     written, _ = write_xdmf_with_tags(
-        OUTPUT_DIR / BASENAME,
+        OUTPUT_DIR / (BASENAME + RESOLUTION_TAG_PATHSAFE),
         built["mesh"],
         built["cell_tags"],
         _paraview_fields(built["mesh"], solved["fields"].e_complex, solved["omega"]),
@@ -331,10 +367,34 @@ def _write_paraview(built, comm):
     return written
 
 
+#: The 0.0025 m rung's own ``metrics.json`` — tracked, and left untouched by any
+#: overridden run, so it is the reference the step-4 readout prints beside.
+REFERENCE_METRICS_PATH = CASE_DIR / "metrics.json"
+
+
 def _write_metrics(payload) -> Path:
-    path = CASE_DIR / "metrics.json"
+    path = CASE_DIR / f"metrics{RESOLUTION_TAG}.json"
     path.write_text(json.dumps(payload, indent=2) + "\n")
     return path
+
+
+def _load_reference_metrics():
+    """The tracked 0.0025-rung metrics, or ``None`` if this clone has none."""
+    if not REFERENCE_METRICS_PATH.exists():
+        return None
+    return json.loads(REFERENCE_METRICS_PATH.read_text())
+
+
+def _spread(values):
+    """``(max − min)/min`` — the arithmetic behind the adjudication's 15.7 %.
+
+    Applied to the four *driven-point* samples (drive ``Pk`` read at the k-th
+    named point), which C4 symmetry makes equal in the exact problem, this
+    reproduces the 2026-09-18 `ANS-2` adjudication's quoted point-sampling
+    scatter on the tracked 0.0025-rung ``metrics.json`` against HFSS's 0.02 %.
+    Whether it collapses under h-halving is the whole question of step 4.
+    """
+    return (max(values) - min(values)) / min(values)
 
 
 #: The operator's AED half, if it has ever run on this box.  Gitignored since
@@ -514,6 +574,70 @@ claim at all.
     return path
 
 
+def _print_step4_readout(m) -> None:
+    """The `ANS-2` step 4 readout: the XL window's whole reason to exist.
+
+    Prints the four driven-point SAR samples, their C4 sampling spread and the
+    four whole-phantom powers **beside the 0.0025 rung's own tracked
+    ``metrics.json``** — which an overridden run never overwrites, so the
+    reference is the committed record and not a number restated here.  Printed
+    only; the pre-registered decision rule
+    (`docs/private/ans2-adjudication-2026-09-18.md`, §7 `ANS-2` step 4) is
+    applied by the review that reads the ledger row, and **no band moves in the
+    window**.
+    """
+    ref = _load_reference_metrics()
+    ref_points = (
+        [float(ref["pointwise"][str(k)]["sar_w_per_kg"][k]) for k in range(4)]
+        if ref
+        else None
+    )
+    mine = [float(m["pointwise"][str(k)]["sar_w_per_kg"][k]) for k in range(4)]
+    powers = [float(m["phantom_power"][str(k)]["dissipated_power_w"]) for k in range(4)]
+    print(
+        f"\n[ANS-2 step 4] READOUT at phantom_resolution = "
+        f"{m['phantom_resolution_m']} m ({m['n_cells']} cells / "
+        f"{m['n_phantom_cells']} phantom), against the tracked "
+        f"{PHANTOM_RESOLUTION_1G_RUNG} m rung "
+        f"({'metrics.json' if ref else 'NO reference metrics.json in this clone'}):",
+        flush=True,
+    )
+    print(
+        "[ANS-2 step 4] driven-point SAR sigma|E|^2/(2 rho) [W/kg] — drive Pk "
+        "read at the k-th named point, the four samples C4 symmetry makes equal:",
+        flush=True,
+    )
+    for k in range(4):
+        line = f"        drive P{k + 1} @ point {k}   {mine[k]:.9e}"
+        if ref_points:
+            r = ref_points[k]
+            line += f"   (0.0025 rung {r:.9e}, change {(mine[k] / r - 1.0) * 100:+.3f}%)"
+        print(line, flush=True)
+    print(
+        f"[ANS-2 step 4] C4 SAMPLING SPREAD (max-min)/min = "
+        f"{_spread(mine) * 100:.3f}%"
+        + (f"   (0.0025 rung {_spread(ref_points) * 100:.3f}%)" if ref_points else "")
+        + "   — HFSS reads 0.02% on its own mesh; PRINTED, NEVER GATED",
+        flush=True,
+    )
+    print(
+        "[ANS-2 step 4] whole-phantom dissipated power [W] — one volume "
+        "integral, no sampling, the cleanest number in the case:",
+        flush=True,
+    )
+    for k in range(4):
+        line = f"        drive P{k + 1}   {powers[k]:.12e}"
+        if ref:
+            r = float(ref["phantom_power"][str(k)]["dissipated_power_w"])
+            line += f"   (0.0025 rung {r:.12e}, change {(powers[k] / r - 1.0) * 100:+.4f}%)"
+        print(line, flush=True)
+    print(
+        "[ANS-2 step 4] the decision rule is the review's, not this run's: "
+        "nothing above is asserted and no band is moved here.",
+        flush=True,
+    )
+
+
 def main() -> None:
     comm = MPI.COMM_WORLD
     started = time.perf_counter()
@@ -536,7 +660,7 @@ def main() -> None:
         print(
             f"[ANS-2] fixture `GEO-18` gapped + sheeted birdcage, phantom loaded "
             f"(conductor tag {CONDUCTOR_CELL_TAG}, phantom tag {PHANTOM_CELL_TAG}) "
-            f"on `GEO-27`'s phantom_resolution = {PHANTOM_RESOLUTION_1G_RUNG} m rung\n"
+            f"on `GEO-27`'s phantom_resolution = {PHANTOM_RESOLUTION_M} m rung\n"
             f"[ANS-2] basis: {BASIS_ORDER}, {BASIS_UNKNOWNS_PER_TET} unknowns/tet "
             f"= {AED_ORDER_CORRESPONDENCE}\n"
             f"[ANS-2] scope: rows 1-3, 7, 8.  Rows 4-6 held for step 2 (the "
@@ -545,9 +669,21 @@ def main() -> None:
             "claim from our side.",
             flush=True,
         )
+        if RESOLUTION_OVERRIDDEN:
+            print(
+                f"[ANS-2 step 4] {PHANTOM_RESOLUTION_ENV}="
+                f"{_RESOLUTION_OVERRIDE} — running at phantom_resolution = "
+                f"{PHANTOM_RESOLUTION_M} m instead of the "
+                f"{PHANTOM_RESOLUTION_1G_RUNG} m record rung.  Outputs are "
+                f"resolution-tagged (metrics{RESOLUTION_TAG}.json, "
+                f"{BASENAME}{RESOLUTION_TAG_PATHSAFE}.xdmf) and COMPARISON.md / "
+                "COMPARISON_private.md are NOT rewritten — the tracked "
+                "comparison stays the 0.0025 rung's.",
+                flush=True,
+            )
 
     # -- the fixture: `MAT-4` step 4's own construction on step 5b's rung -----
-    built = _build_mass_averaged(phantom_resolution=PHANTOM_RESOLUTION_1G_RUNG)
+    built = _build_mass_averaged(phantom_resolution=PHANTOM_RESOLUTION_M)
     _add_one_gram_control(built)
 
     named_points = np.array(
@@ -597,7 +733,7 @@ def main() -> None:
         "basis_order": BASIS_ORDER,
         "basis_unknowns_per_tet": BASIS_UNKNOWNS_PER_TET,
         "aed_order_correspondence": AED_ORDER_CORRESPONDENCE,
-        "phantom_resolution_m": float(PHANTOM_RESOLUTION_1G_RUNG),
+        "phantom_resolution_m": float(PHANTOM_RESOLUTION_M),
         "phantom_sigma_s_per_m": float(SALINE_SIGMA),
         "phantom_rho_kg_per_m3": float(PHANTOM_RHO_KG_PER_M3),
         "phantom_volume_closed_form_m3": PHANTOM_VOLUME_CLOSED_FORM_M3,
@@ -692,14 +828,33 @@ def main() -> None:
             )
         print(
             f"        coverage identity: power {coverage['power_miss']:.6e}, mass "
-            f"{coverage['mass_miss']:.6e}, ASSERTED <= {EXACT_IDENTITY_RTOL:.0e}\n"
-            f"        mesh: {built['cells']} vs record {ONE_GRAM_RUNG_CELL_RECORD} "
-            f"(ratio {payload['cell_ratio']:.6f}), phantom "
-            f"{built['phantom_cells']} vs {ONE_GRAM_RUNG_PHANTOM_CELL_RECORD} "
-            f"(ratio {payload['phantom_cell_ratio']:.6f}), ASSERTED inside "
-            f"{CELL_COUNT_BAND * 100:.0f}%",
+            f"{coverage['mass_miss']:.6e}, ASSERTED <= {EXACT_IDENTITY_RTOL:.0e}",
             flush=True,
         )
+        if RESOLUTION_OVERRIDDEN:
+            print(
+                f"[ANS-2 step 4] MESH-RECORD ASSERTIONS SKIPPED — "
+                f"phantom_resolution = {PHANTOM_RESOLUTION_M} m is not the "
+                f"{PHANTOM_RESOLUTION_1G_RUNG} m rung the `MAT-4` step 5b records "
+                f"({ONE_GRAM_RUNG_CELL_RECORD} / "
+                f"{ONE_GRAM_RUNG_PHANTOM_CELL_RECORD} cells at the imported "
+                f"{CELL_COUNT_BAND * 100:.0f}% CELL_COUNT_BAND) were measured on, "
+                f"and this rung has no record yet.  Measured here: "
+                f"{built['cells']} cells / {built['phantom_cells']} phantom "
+                "(tag-3) cells — a CANDIDATE record for a review, asserted "
+                "against nothing.  Every other band above stays asserted.",
+                flush=True,
+            )
+        else:
+            print(
+                f"        mesh: {built['cells']} vs record "
+                f"{ONE_GRAM_RUNG_CELL_RECORD} "
+                f"(ratio {payload['cell_ratio']:.6f}), phantom "
+                f"{built['phantom_cells']} vs {ONE_GRAM_RUNG_PHANTOM_CELL_RECORD} "
+                f"(ratio {payload['phantom_cell_ratio']:.6f}), ASSERTED inside "
+                f"{CELL_COUNT_BAND * 100:.0f}%",
+                flush=True,
+            )
 
     # -- the assertions.  Every band imported; none is restated or moved. -----
     for k in range(4):
@@ -736,32 +891,46 @@ def main() -> None:
         f"the enclosing-ball mass misses rho*V_phantom by "
         f"{coverage['mass_miss']:.6e} > {EXACT_IDENTITY_RTOL:.0e}"
     )
-    assert abs(payload["cell_ratio"] - 1.0) < CELL_COUNT_BAND, (
-        f"the rung meshes to {built['cells']} cells against the `MAT-4` step 5b "
-        f"record {ONE_GRAM_RUNG_CELL_RECORD} (ratio "
-        f"{payload['cell_ratio']:.6f}) — outside the imported "
-        f"{CELL_COUNT_BAND * 100:.0f}% CELL_COUNT_BAND"
-    )
-    assert abs(payload["phantom_cell_ratio"] - 1.0) < CELL_COUNT_BAND, (
-        f"the phantom (tag 3) carries {built['phantom_cells']} cells against the "
-        f"record {ONE_GRAM_RUNG_PHANTOM_CELL_RECORD} (ratio "
-        f"{payload['phantom_cell_ratio']:.6f}) — outside the imported "
-        f"{CELL_COUNT_BAND * 100:.0f}% CELL_COUNT_BAND"
-    )
+    # The two version-tagged mesh records belong to the 0.0025 m rung alone;
+    # `ANS-2` step 4a skips them — and only them — when the knob moves the rung
+    # (the skip is printed above, never silent).
+    if not RESOLUTION_OVERRIDDEN:
+        assert abs(payload["cell_ratio"] - 1.0) < CELL_COUNT_BAND, (
+            f"the rung meshes to {built['cells']} cells against the `MAT-4` step 5b "
+            f"record {ONE_GRAM_RUNG_CELL_RECORD} (ratio "
+            f"{payload['cell_ratio']:.6f}) — outside the imported "
+            f"{CELL_COUNT_BAND * 100:.0f}% CELL_COUNT_BAND"
+        )
+        assert abs(payload["phantom_cell_ratio"] - 1.0) < CELL_COUNT_BAND, (
+            f"the phantom (tag 3) carries {built['phantom_cells']} cells against the "
+            f"record {ONE_GRAM_RUNG_PHANTOM_CELL_RECORD} (ratio "
+            f"{payload['phantom_cell_ratio']:.6f}) — outside the imported "
+            f"{CELL_COUNT_BAND * 100:.0f}% CELL_COUNT_BAND"
+        )
+
+    if comm.rank == 0 and RESOLUTION_OVERRIDDEN:
+        _print_step4_readout(payload)
 
     if comm.rank == 0:
         metrics_path = _write_metrics(payload)
-        comparison_path = _write_comparison(payload)
         private_note = ""
-        if AED_RESULTS_PATH.exists():
-            _write_comparison(payload, private=True)
-            private_note = (
-                "\n[ANS-2] AED results found — COMPARISON_private.md rewritten "
-                "(gitignored; nothing from it may reach a tracked file)"
+        if RESOLUTION_OVERRIDDEN:
+            comparison_note = (
+                "COMPARISON.md NOT rewritten (`ANS-2` step 4a: the tracked "
+                "comparison stays the 0.0025 rung's)"
             )
+        else:
+            comparison_path = _write_comparison(payload)
+            comparison_note = f"{comparison_path.name} (AED columns verbatim blank)"
+            if AED_RESULTS_PATH.exists():
+                _write_comparison(payload, private=True)
+                private_note = (
+                    "\n[ANS-2] AED results found — COMPARISON_private.md rewritten "
+                    "(gitignored; nothing from it may reach a tracked file)"
+                )
         print(
-            f"\n[ANS-2] wrote {metrics_path.name}, {comparison_path.name} (AED "
-            f"columns verbatim blank) and {Path(written).name}{private_note}\n"
+            f"\n[ANS-2] wrote {metrics_path.name}, {comparison_note} and "
+            f"{Path(written).name}{private_note}\n"
             "[ANS-2] ALL ANCHORS GREEN.  This closes the RUNNABLE HALF only: "
             "`ANS-2` stays amber pending SPEC rows 4-6 (step 2) and the "
             "operator's AED replication (step 3).  No absolute-SAR or "

@@ -493,12 +493,21 @@ suspect, a `POST` item — **never a band change**.
 
 ### 10. `xl` — `ANS-2` step 4: the phantom h-halving, four drives (operator session 2026-09-19; daily-licence class: cost probe, price measured by the step's own probe)
 
-**Status:** PENDING PREREQUISITE — `ANS-2` step 4a (§9 item 9, standard,
-≈ 20 slot-min): the example gains the `FEM_EM_ANS2_PHANTOM_RESOLUTION`
-knob with resolution-tagged outputs and **no `COMPARISON.md` rewrite** when
-set. *The implementer that lands 4a marks this entry READY in the same
-commit (daily-review.md step 6b.5); the next review queues it for the first
-free `xl` night (Thu 2026-09-24 02:00 as of writing).*
+**Status:** READY — `ANS-2` step 4a landed 2026-09-19 (§9 item 9): the example
+reads `FEM_EM_ANS2_PHANTOM_RESOLUTION`, tags `metrics_h<res>.json` and the
+XDMF, skips the two 0.0025-rung mesh-record assertions **with a printed
+`[ANS-2 step 4] MESH-RECORD ASSERTIONS SKIPPED` line** while every other
+imported band stays asserted, leaves `COMPARISON.md` /
+`COMPARISON_private.md` alone, and prints the `[ANS-2 step 4]` readout
+(driven-point SAR, C4 spread, phantom powers, each beside the tracked 0.0025
+rung's own `metrics.json`). Anchors measured green — unset vs the tracked
+`metrics.json` and knob-`0.0025` vs unset both digit-identical at
+`EXACT_IDENTITY_RTOL` on every primary leaf (worst 8.19e-11 / 8.17e-11),
+negative control at 0.004 m prints the skip line and exits 0
+(`20260919T141006Z_ANS-2-step4a-unset-control.log`,
+`20260919T142050Z_ANS-2-step4a-knob-identity.log`). *The next review only
+queues this entry — the first free `xl` night (Thu 2026-09-24 02:00 as of
+writing).*
 
 **Why `xl`:** the step's pre-registered cost probe fired its own STOP rule
 (`32f4eae`, `20260919T093241Z_ANS-2.log`): at `phantom_resolution` =
@@ -510,7 +519,13 @@ this mesh, at this width.
 
 **What runs:** the `ANS-2` example at the halved rung, all four single-port
 drives, `-n 8` (the measured width; 16 ranks is unmeasured on this mesh and
-not needed), durable capture per §5.1.
+not needed), durable capture per §5.1. **Outputs to commit:**
+`metrics_h0.00125.json` and
+`paraview_output/ans2_birdcage_coil_driven_sar_10mhz_combined_h0p00125.xdmf`
+(the XDMF tag writes the decimal point as `p` — `write_xdmf_with_tags` strips
+everything after the last dot as a suffix, which silently collapsed every
+rung onto one filename until step 4a measured it); `metrics.json` and
+`COMPARISON.md` are untouched by an overridden run.
 
 **Command (final once 4a lands; the knob name is the contract):**
 
@@ -519,9 +534,11 @@ XL_CHUNK="ANS-2-step4"
 XL_COMMAND="docker compose --profile xl exec -T fem-em-solver-xl bash -lc 'cd /workspace && source /usr/local/bin/dolfinx-complex-mode && mkdir -p /workspace/logs && R=/workspace/logs/ans2-step4-raw.log && { echo [orphans-before]; pgrep -c python3; true; } > \$R 2>&1; PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 FEM_EM_ANS2_PHANTOM_RESOLUTION=0.00125 timeout -k 60 7200 mpiexec -n 8 python3 examples/ansys_benchmarks/birdcage_coil_driven_sar_10MHz/02_birdcage_coil_driven_sar_10MHz.py >> \$R 2>&1; rc=\$?; { echo [orphans-after]; pgrep -c python3; true; } >> \$R 2>&1; echo \"[XL] memory.peak bytes:\" >> \$R; cat /sys/fs/cgroup/memory.peak >> \$R; echo \"[capture] rc=\$rc\" >> \$R; cat \$R; exit \$rc'"
 ```
 
-**Price, measured (the probe):** mesh 360 s once + 4 × 188 s ≈ **1 115 s
-if the example meshes once; ≈ 2 200 s if it re-meshes per drive** (4a says
-which); ≈ 41 GiB summed at `-n 8` (the probe's figure; four drives hold one
+**Price, measured (the probe):** mesh 360 s once + 4 × 188 s ≈ **1 115 s** —
+step 4a settles the open branch: **the example meshes once** for all four
+drives (0.0025 rung, `-n 4`: 184.8 s wall of which 74.4 s is the four solves,
+so a single mesh build precedes them; `20260919T142050Z_ANS-2-step4a-knob-identity.log`),
+so the ≈ 2 200 s re-meshing arm is dead; ≈ 41 GiB summed at `-n 8` (the probe's figure; four drives hold one
 field at a time). Timeout 7 200 s inside the 4 h window; 512 GiB limit.
 
 **Readout (record — the imported bands asserted, the mesh-record bands
