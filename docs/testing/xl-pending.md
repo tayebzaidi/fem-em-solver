@@ -41,9 +41,16 @@ except to add the run status; a changed command is a new entry.
 
 ### 1. `xxl` — `WF-7` step 0b: the F-human rung at degree 2, one drive, 64 MHz
 
-**Status:** QUEUED 2026-09-13 (operator, interactive) for Saturday
-2026-09-19 02:00 — moved to `docs/testing/xxl-queue.d/20260919-WF-7-step0b.env`
-2026-09-15 when the queue became a directory.
+**Status:** RUN `20260919T070008Z_WF-7-step0b.log` — both legs rc 0,
+Status 0, 673 s, `memory.peak` 106.1 GiB; degree 2 is 3 256 418 unknowns,
+347.56 s, 107.9 GiB summed; `|S₂ − S₁| / |S₁|` = 5.50 % from the two printed
+`S_driven` values (ledger row 2026-09-19; marked by the 2026-09-19 03:00
+review; the weekly of 2026-09-19 reads it against the decision rule below —
+branch (c) is excluded, and the F-small 64 MHz moves it is compared with are
+6.51 / 2.60 / 4.11 %, entry 4's "Why"). *(Was QUEUED 2026-09-13 (operator,
+interactive) for Saturday 2026-09-19 02:00 — moved to
+`docs/testing/xxl-queue.d/20260919-WF-7-step0b.env` 2026-09-15 when the queue
+became a directory; consumed by the launcher.)*
 
 **Prerequisite:** `scripts/probes/wf7_step0_f_human_cost.py` gained the
 `FEM_EM_WF7_DEGREE` knob (this commit; unset or `1` is byte-identical to
@@ -424,3 +431,62 @@ frequency trend in the degree-2 C4 identity that would breach the band
 below 10 MHz — a known-issues entry and a `PORT` systematics item, **never
 a band change**. A red `PORT-11` gate in this window (spread > 0.5 %) is
 the same finding, stronger, and is reported as measured.
+
+### 9. `xxl` — `WF-7` step 0d: the F-human degree-2 solve at the full 32-port set (daily licence: priced-family variant, 2026-09-19 review)
+
+**Status:** QUEUED 2026-09-19 for Saturday 2026-09-26 02:00 —
+`docs/testing/xxl-queue.d/20260926-WF-7-step0d.env`.
+
+**Licence class:** priced-family variant of the `WF-7-step0b` `xxl` ledger
+row (2026-09-19) — the same probe, the same mesh (507 266 cells), the same
+order (degree 2, measured at this tier: 3 256 418 unknowns, 347.56 s,
+107.9 GiB summed, `memory.peak` 106.1 GiB), the same 64 MHz; **port set
+varied only**: `FEM_EM_WF7_PORTS=all`, the knob `a267c5a` landed and entry 6
+runs at degree 1 on 09-21. The two knobs are independent in the probe
+(`wf7_step0_f_human_cost.py:117`, `:123`) but **have never run together** —
+a red at the knob interaction is a probe finding for a §9 item, not a
+physics reading. The weekly may replace or reorder this entry by renaming
+or deleting the queue file; nothing depends on it.
+
+**Why (the §10 question it answers):** step 0b priced *one* degree-2 column
+at human scale and read a 5.50 % order move on it. If the weekly's branch
+(a) holds (degree 2 is the production order at human scale), the quantity
+§10 needs is the price of the **whole** degree-2 32×32 — one factorisation
+plus 31 back-substitutions — and whether the human-scale degree-2 matrix
+keeps `PORT-13`'s identities. It also answers, for free, whether step 0b's
+degree-2 power-accounting residual (1.104e-02, 2.6× the degree-1 one) is a
+property of port P17 or of every column.
+
+**Command:**
+
+```
+XL_CHUNK="WF-7-step0d"
+XL_COMMAND="docker compose --profile xxl exec -T fem-em-solver-xxl bash -lc 'cd /workspace && source /usr/local/bin/dolfinx-complex-mode && mkdir -p /workspace/logs && R=/workspace/logs/wf7-step0d-raw.log && { echo [orphans-before]; pgrep -c python3; true; } > \$R 2>&1; PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 FEM_EM_SOLVER_PROGRESS=2 FEM_EM_WF7_DEGREE=2 FEM_EM_WF7_PORTS=all timeout -k 60 14400 mpiexec -n 16 python3 scripts/probes/wf7_step0_f_human_cost.py >> \$R 2>&1; rc=\$?; { echo [orphans-after]; pgrep -c python3; true; } >> \$R 2>&1; echo \"[XL] memory.peak bytes:\" >> \$R; cat /sys/fs/cgroup/memory.peak >> \$R; echo \"[capture] rc=\$rc\" >> \$R; cat \$R; exit \$rc'"
+```
+
+**Price, inherited from the family (scaling stated):** step 0b's degree-2
+leg — 133 s mesh, 347.56 s first drive (factorisation 242.5 s), MUMPS
+forward/backward solve driver **1.846 s** on the held factor
+(`20260919T070008Z_WF-7-step0b.log:21167`). Thirty-one further columns at a
+few seconds each (the degree-1 two-drive window read 0.59 s per held
+column against a 0.20 s solve driver, a factor ≈ 3 of overhead) ⇒
+**predicted 10–20 min, 105–130 GiB** (the factor is held once; column fields
+are dropped after each `S` column is read). Timeout 14 400 s inside the 8 h
+window; 754 GiB limit. The probe's own degree-2 brackets (150–350 GiB,
+10–60 min *per drive*) are step 0b's stale prediction and, unless `OPS-52`
+has re-dated them by then, will print OUTSIDE — a label, not a finding
+(known-issues 2026-09-19).
+
+**Readout (record — nothing asserted beyond the imported cell band):**
+unknowns, first-drive and per-held-column solve times, cumulative wall
+clock, `ru_maxrss` per rank / summed, `memory.peak`; the degree-2 32×32's
+`_reciprocity_ratio`, `σ_max` and class spreads **printed** beside
+`RECIPROCITY_BAND` / `COLUMN_PASSIVITY_CEILING` / `OPPOSITE_SPREAD_BAND`,
+next to entry 6's degree-1 values; the per-column power-accounting
+residual. **Decision rule for the weekly:** a full degree-2 set inside one
+window at this price ⇒ the human-scale degree-2 S sweep is an ordinary
+`xl`-sized job (106 GiB fits the 512 GiB service) and §10 dates it as such;
+a reciprocity or passivity miss at degree 2 that entry 6 does not show at
+degree 1 ⇒ a finding for a `PORT` chunk; residuals near 1e-2 on every
+column ⇒ the accounting's degree-2 quadrature or the sheet term is the
+suspect, a `POST` item — **never a band change**.
