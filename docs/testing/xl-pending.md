@@ -490,3 +490,50 @@ a reciprocity or passivity miss at degree 2 that entry 6 does not show at
 degree 1 ⇒ a finding for a `PORT` chunk; residuals near 1e-2 on every
 column ⇒ the accounting's degree-2 quadrature or the sheet term is the
 suspect, a `POST` item — **never a band change**.
+
+### 10. `xl` — `ANS-2` step 4: the phantom h-halving, four drives (operator session 2026-09-19; daily-licence class: cost probe, price measured by the step's own probe)
+
+**Status:** PENDING PREREQUISITE — `ANS-2` step 4a (§9 item 9, standard,
+≈ 20 slot-min): the example gains the `FEM_EM_ANS2_PHANTOM_RESOLUTION`
+knob with resolution-tagged outputs and **no `COMPARISON.md` rewrite** when
+set. *The implementer that lands 4a marks this entry READY in the same
+commit (daily-review.md step 6b.5); the next review queues it for the first
+free `xl` night (Thu 2026-09-24 02:00 as of writing).*
+
+**Why `xl`:** the step's pre-registered cost probe fired its own STOP rule
+(`32f4eae`, `20260919T093241Z_ANS-2.log`): at `phantom_resolution` =
+0.00125 m the fixture meshes to **719 769 cells (452 228 phantom) / 845 188
+unknowns**, mesh **359.8 s**, one drive **188.4 s**, `ru_maxrss` **40.89 GiB
+summed** at `-n 8` — past the item's 15 min / 40 GiB stop and past §5.1's
+20-min cap for four drives. §5.1's rule is met: the price is *measured*, on
+this mesh, at this width.
+
+**What runs:** the `ANS-2` example at the halved rung, all four single-port
+drives, `-n 8` (the measured width; 16 ranks is unmeasured on this mesh and
+not needed), durable capture per §5.1.
+
+**Command (final once 4a lands; the knob name is the contract):**
+
+```
+XL_CHUNK="ANS-2-step4"
+XL_COMMAND="docker compose --profile xl exec -T fem-em-solver-xl bash -lc 'cd /workspace && source /usr/local/bin/dolfinx-complex-mode && mkdir -p /workspace/logs && R=/workspace/logs/ans2-step4-raw.log && { echo [orphans-before]; pgrep -c python3; true; } > \$R 2>&1; PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 FEM_EM_ANS2_PHANTOM_RESOLUTION=0.00125 timeout -k 60 7200 mpiexec -n 8 python3 examples/ansys_benchmarks/birdcage_coil_driven_sar_10MHz/02_birdcage_coil_driven_sar_10MHz.py >> \$R 2>&1; rc=\$?; { echo [orphans-after]; pgrep -c python3; true; } >> \$R 2>&1; echo \"[XL] memory.peak bytes:\" >> \$R; cat /sys/fs/cgroup/memory.peak >> \$R; echo \"[capture] rc=\$rc\" >> \$R; cat \$R; exit \$rc'"
+```
+
+**Price, measured (the probe):** mesh 360 s once + 4 × 188 s ≈ **1 115 s
+if the example meshes once; ≈ 2 200 s if it re-meshes per drive** (4a says
+which); ≈ 41 GiB summed at `-n 8` (the probe's figure; four drives hold one
+field at a time). Timeout 7 200 s inside the 4 h window; 512 GiB limit.
+
+**Readout (record — the imported bands asserted, the mesh-record bands
+skipped with a printed line per 4a):** the four driven-point SAR values and
+their C4 spread beside the 0.0025 rung's (15.7 %); the four phantom powers
+beside the 0.0025 rung's and their relative change; the mass-averaged C4
+pairs at the imported 5 % band; the halved rung's cell counts as a
+candidate record. **Decision rule (pre-registered in
+`docs/private/ans2-adjudication-2026-09-18.md` and §7 `ANS-2` step 4):**
+(a) spread < 5 % and phantom power moves < 2 % ⇒ the residual against
+HFSS is the feed; the verdict's pointwise band tightens to the measured
+spread. (b) phantom power moves ≥ 2 % toward AED ⇒ mesh convergence is part
+of the residual; a third rung is priced by a review. (c) spread does not
+fall ⇒ not `h` — a point-evaluation defect, known-issues + `POST` chunk.
+No band moves in the window; the review that finds the ledger row rules.
