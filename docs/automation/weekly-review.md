@@ -79,7 +79,12 @@ mitigations.
    implant → safety quantities; bioheat long-term)? Rescope or kill any
    subgoal that has not moved in a month. Add subgoals only where a phase
    lacks a next step concrete enough for the daily review to break down.
-   Keep the §6 phase-map states current.
+   Keep the §6 phase-map states current. **Keep every active §10 chain
+   enumerated at least three open numbered steps ahead** (operator directive
+   2026-09-18): the daily review executes chain steps under §9 rule (4), so
+   a chain with no open numbered step is a week of slots draining into
+   figures. Each chain step names its validation target and its serial
+   prerequisites; the daily supplies the rest.
 
 3b. **Spend the XL slot, or explicitly do not.** §5.1's `xl` tier (operator
    directive 2026-09-05) is one run per 7 days at ≤ 512 GiB / 16 ranks / 2 h (since 2026-09-13: 4 h)

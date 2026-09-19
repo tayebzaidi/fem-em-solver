@@ -1814,7 +1814,7 @@ from `OPS-26` step 2's four sites. Full narrative and both step-2 rubrics archiv
 | `TH-15` | Internal perfect-electric-conductor bodies | 🟡 Open: ✅ step 1 (the PEC sphere as a hole against its closed form), 2a and 2d (the two-torus hole route; the gap-displacement port current on the open-circuit anchor, 2026-09-07), 3a (`birdcage_port_domain(as_hole=True)`, the 80 181-cell hole beside the 116 085-cell solid, 2026-09-06) and 3b (`gap_cell_tags`, default unflipped, 2026-09-09). Open: step 2's unitarity gate — eight sub-steps, 2f attributed the 2 % `Z` asymmetry to the point-sampled `_path_voltage`, 2h 🧪 2026-09-09, the `src/` replacement specified but unwritten — and the two-torus unitarity ruling above (weekly). **Step 3 ✅ 2026-09-13 15:00 slot** — the birdcage 4×4 as a PEC hole (80 181 cells, 19 826 tag-401 facets, 0 not exterior) passes `PORT-9`/`PORT-11`'s imported gates at 10 / 64 / 128 MHz: `‖S−Sᵀ‖/‖S‖` 1.59e-14 / 1.47e-15 / 9.16e-16, `σ_max` 0.999994234 / 0.999813792 / 0.999502556, worst class spread 0.0190 % / 0.0497 % / 0.0734 % (band 0.5 %); solid control reproduces `LEG_D_S_MATRIX_10MHZ` to 1.158e-10 (band 1e-6) in the same window (`20260913T202954Z_TH-15.log:951–954, 2768, 2833`; `…202718Z:951–954`; `…202828Z:956–959`). **The power anchor is a record, not a gate (ruled 2026-09-13 18:00 review, `log-pathologist` UNCOUNTABLE):** the item's registered comparand — the four-port terminal sum `Re Σ½V I*` against `½∫_phantom σ|E|²` — went red at **7.700077682e-05 W vs 6.376395218e-08 W** (`…202311Z:958`, 1 208×), and the in-slot substitute `P_src − ΣP_sheet,field = P_phantom` (3.634e-10 / 2.2e-12 / 1.1e-12) is `PORT-16`'s exact discrete identity on a mesh with **no conductor volume** (`…202954Z:80–81`: 10 fragment volumes, conductor solids removed) — it cannot test "all loss is in the phantom", which is the mesh's construction. **Step 3c ✅ 2026-09-13 19:30 slot — the excess is attributed.** The hole's 7.693701287e-05 W terminal excess equals the printed Cauchy–Schwarz deficit `C_total − Σ½|I|²Re Z_p` to every digit. The hole's driven-port `C/terminal − 1` is 1.058874954e-02 against the solid's 1.059204217e-02 (hole/solid 0.9997), so this is the sheets' terminal-form deficit, not a hole readout systematic. Anchors in `20260914T005452Z_TH-15-step3c.log` (21 passed, 102 s, `-n 2`): (a) the discrete identity with the non-phantom term closes at 3.327e-15 (hole) and 7.898e-15 (solid), the hole's `P_(Ω∖phantom)` reads 0 — both true by construction (`:966–967, 2787–2788`); (b) the solid's P1 `C/terminal − 1` reproduces 2d's 1.059204217e-02 at rel 1.490e-10 (`:2794`); (c) the three port gates re-ran green as committed: 1.707e-14, σ_max 0.999994234, worst spread 0.0190 %, `LEG_D_S_MATRIX_10MHZ` to 1.158e-10 (`:951–953, 2799`). This discharges the provenance caveat at 10 MHz. The known-issues entry is retired. **Power sentence re-registered by the 2026-09-14 03:00 review (rule (h)): `Σ½Re(V I*) = P_vol + (C − terminal)` — the hole's 7.693701287e-05 W excess equals `C_total − Σ½\|I\|²Re Z_p` to every digit (`:969–970`), as does the solid's 6.716202469e-05 W (`:2790–2791`); hole/solid `C/terminal − 1` = 0.9997, so it is the sheets' Cauchy–Schwarz deficit (`PORT-16`'s 10 MHz record), not a hole-route readout systematic.** Row stays 🟡 on step 2 (family frozen at 2e–2h since 2d; the weekly re-scopes). *State line refreshed 2026-09-13 10:30 review from the history — the `OPS-46` line was written from a ruling that predated 3a / 2d / 3b. History: `docs/planning/chunks/TH-15.md`.* | standard (step 3 heavy) |
 | `TH-14` | **Surface-impedance (Leontovich) boundary on conductor surfaces** — `n × E = Z_s n × (n × H)`, `Z_s = (1 + j)/(σδ)`, so copper (σ = 5.8e7 S/m) is affordable at any frequency; Jin §1.5.3 (1.54)–(1.56) and §5.8.3 (third-kind boundary term) (operator directive 2026-09-04; the second conductor-model route; **serial on `TH-15`** for the conductor-as-hole mesh and facet tags). **Step 1 gated 2026-09-13 19:30 slot** (lossy-wall `TH-9` cavity against Pozar's Q_c: σ = 1e4 miss +0.010 % ≤ 5 %, Q(1e6)/Q(1e4) = 9.995, PEC control \|Im λ\|/Re λ = 4.8e-19, `20260914T004807Z_TH-14.log`); the 2026-09-06 "no separating anchor" annotation is retired — the Q_c anchor separates. **Step 2 (§9 item 6, the entry's "step 3") gated 2026-09-13 21:00 CDT slot** — copper F-small birdcage as a Leontovich hole, `tests/validation/test_th14_birdcage_copper.py`, `-n 2`: (a) copper reciprocity ≤ 1.9e-14, σ_max 0.999994 / 0.999814 / 0.999501, worst class spread 0.0734 % at 10 / 64 / 128 MHz; (b) surface-loss identity residual 1.6e-13 / 3.0e-13 / 7.0e-14 (band 1e-6); (c) 10 MHz bracket per class copper ≤ 2.36e-4 vs solid-800 record ≥ 2.48e-2, σ-ladder max\|ΔS\| falls ≈ 10× per 100× σ at all three f; predicted PEC-limit control 2.4e-6 / 4.2e-6 / 3.2e-6 ≤ 1e-4 met (printed); `P_coil/P_in` 0.929 / 0.448 / 0.219 (printed); 32 passed, 211 s (`20260914T021500Z_TH-14.log`). Outer box pinned by an in-module facet group (exterior ∖ 401), no mesh change. **Demoted ✅ → 🟡 by the 2026-09-14 03:00 review (auditor DEMOTE):** the row's own Done-when requires the Dodd–Deeds copper-slab step (the entry's "step 2") and the §2.1 conductor-model line; the slot closed on the §9 item's letter and flagged the conflict itself. The §2.1 line is written; the slab step is §9 item 2 (the Leontovich floor under `MAT-6`'s loop). **Slab step gated 2026-09-14 04:30 slot, 🟡 → ✅** (`tests/validation/test_th14_dodd_deeds_copper_floor.py`, `-n 2`, 17 passed, 340 s, `20260914T094224Z_TH-14-step2.log`). The floor is a real domain boundary: `create_submesh` on `MAT-6`'s own mesh minus the slab cells, with no mesher change. (a) ΔR(5.8e7) is −0.299 % from `coil_impedance_change` (2 %, `:283`). (b) The surface-loss identity holds to 1.31e-8 (1e-6, `:285`). (c) ΔR(5.8e7)/ΔR(5.8e9) = 9.9910 (1 %, `:292`). (d) (ΔX − ΔX_PEC)/ΔR = 1.00097 against the closed form's 1.00095 (2 %, `:284`). Census: floor 6852 + others 1258 = exterior 8110, overlap 0. The PEC-floor control's \|ΔR\|/\|ΔX\| = 0 (`:293`); it holds by construction, since the σ = 0 operator is real. Printed: ΔX(copper)/(ω·ΔL_image) = 0.910 (the box systematic), δ/h = 8.4e-3, and the 5.8e9 identity 8.98e-7, printed only. | ✅ | standard (step 3 heavy; slab step heavy, 340 s) |
 | `TH-16` | **Symmetry planes: per-face PEC / PMC on cut faces with port rescaling** — HFSS *Perfect E* / *Perfect H* symmetry; quarter the birdcage, the memory lever for the F-human *refinement* rungs — **feature ladder B2** (operator directive 2026-09-04). *(Re-dated 2026-09-06 weekly: the "62 GiB F-human wall" was `TH-12` step 2's degree-2 figure on the 138 k-cell F-small and the r³ extrapolation; `GEO-25` measured F-human at fixed sizing as **504 642 cells** (exponent 0.84, 112 s to mesh), and the two priced degree-1 solves — `TH-11` step 5's 0.99 M cells at 64 GiB and `PORT-13` step 1's 270 k cells at 5.7 GiB summed RSS — bracket a first F-human 64 MHz degree-1 solve at ≈ 11–33 GiB, inside the 128 GiB box either way. Symmetry planes buy the degree-2 and h-refined F-human rungs, not the first solve; that solve is priced, not gated, by `WF-7` step 0.)* | ⬜ | standard |
-| `TH-17` | **Birdcage eigenmodes** — the `TH-9` eigensolver on the loaded birdcage with a PEC coil (`TH-15`) and `PORT-14`'s capacitor sheets; mode frequencies vs the ladder-network closed form, Phase 6's named first target — **feature ladder B3** (operator directive 2026-09-04; serial on `TH-15`, `PORT-14`) | ⬜ | heavy |
+| `TH-17` | **Birdcage eigenmodes** — the `TH-9` eigensolver on the loaded birdcage with a PEC coil (`TH-15`) and `PORT-14`'s capacitor sheets; mode frequencies vs the ladder-network closed form, Phase 6's named first target — **feature ladder B3** (operator directive 2026-09-04; serial on `TH-15`, `PORT-14`) | ⬜ **Step 1 written 2026-09-18** (interactive operator session under the enumerated-chain licence, §9 rule (4); it is §10 chain step 5 — *the internal "tuned birdcage" milestone*; queued as §9 item 5). **Fixture:** `TH-15` step 3's hole mesh (`birdcage_port_domain(…, as_hole=True)`, the coil PEC by the exterior default, `test_th15_birdcage_pec_hole.py`) with the phantom (σ 0.5 S/m, εᵣ 78) and `PORT-14`'s four gap sheets as **capacitor sheets at `PORT-15` step 3's `C_tuned`** (imported from `test_port_circuit_layer_field.step3_tuning` — `tuned["c_f"]` — never restated); no source, no termination. **Formulation:** the lumped-sheet bilinear term (L1, `ports/lumped.py`) with `Z_p = 1/(jωC)` is `−ω²μ₀(w/h)C ∫(n×u)·(n×v)` — a surface *mass* term — and the phantom's conduction is linearised as a complex permittivity at `ω_lin` exactly as `TH-14` step 1 linearised the Leontovich wall (`core/cavity.py: solve_impedance_wall_cavity_mode`, one fixed-point re-solve at `Re ω`), so the whole problem is one non-Hermitian generalised pencil `A x = λ (B + B_sheet(C)) x`, shift-invert at `k₀² = (2π·64 MHz/c)²` (`_solve_pencil_nonhermitian`), `nev ≥ 6`. Additive `src/`: a general-mesh pencil builder beside `_cavity_forms` (the box path byte-identical; `TH-9` and `TH-14` step 1 gate modules re-run green). **Readout:** the complex eigenfrequencies nearest 64 MHz — the `k = 1` degenerate pair (mode 1), the `k = 0` end-ring mode above it and the `k = 2` mode below (high-pass ordering, `ports/circuit.py: birdcage_highpass_mode_frequencies` (C5)), each with `Q = Re ω/(2|Im ω|)`. **Gates (asserted):** (a) mode-1 `Re f` at 64 MHz within `PORT-14`'s named κ systematic (≈ 1 %; the constant imported from the `PORT-14` step 3 module, named in the §9 item) — `C_tuned` put the driven port's reduced network at series resonance there, so this is the circuit-layer ↔ eigen-layer consistency identity; (b) the pair degenerate to the imported `PORT-11` C4 spread band (0.5 %); (c) **closed-form structure:** `f_0 > f_1 > f_2` fit (C5) `ω_k⁻² = C(L_r + 2L_l sin²(πk/4))` with **positive** `L_r`, `L_l` (two unknowns, three equations; the third residual asserted ≤ a band the cost probe sets and the §9 item pre-registers before the gated run) — this replaces the chain's "step-2 inductances", which `PORT-15` step 2 read off *negative* (gap capacitance dominating); (d) **negative control:** at `2·C_tuned` mode 1 moves by the (C5) factor `1/√2` on `Re f` to the same band; (e) **PEC-phantom control** (σ → 0, Hermitian pencil): `Im ω` at machine zero, the `Re f` shift printed. **Done-when:** (a)–(e) through the harness at `-n 4`, the fixed-point shift recorded (< 0.1 % or the band re-read), elapsed recorded ⇒ **`TH-17` → ✅ and Phase 6's first physics target ticked.** **Not claimed:** no absolute mode frequency against AED (`ANS-6`'s), no B₁ homogeneity, no human scale. **Cost probe first (§5.1):** mesh + one shift-invert solve at `-n 4`, printed dofs / time / `ru_maxrss` — unmeasured on this mesh (`TH-9` / `TH-14` were boxes). | heavy *(by prediction; cost probe first)* |
 | `TH-18` | **Layered impedance boundary** — thin copper foil on a substrate (HFSS *Layered Impedance*), the construction of real coils; a refinement of `TH-14` — **feature ladder B4** (operator directive 2026-09-04; serial on `TH-14`) | ⬜ | standard |
 | `TH-19` | Carry the matched source projection to the coil, and retest the production element order | ⬜ Open: the matched source projection is shown to do the work on the coil fixture, and the disposition is referred to the weekly with no default change. The birdcage's lumped-sheet drive still bypasses the projection. **Ruled 2026-09-13 (weekly): outcome (a) accepted, no default change; step 3 re-scoped as the two degree-2 power identities on the sheet-driven 4-leg birdcage at 10 / 128 MHz (§10) — the production-order decision follows it at the 09-16 weekly.** **Step 3 executed 2026-09-13 13:30: both degree-2 identities green on the sheet-driven birdcage at 10 / 128 MHz — (a) 4.6e-15 / 8.9e-15 vs 1e-6, (b) 6.8e-11 / 1.8e-12 vs 1e-9, `W_e/W_m` unmoved by the order (`20260913T183446Z_TH-19-step3-10MHz.log`, `…183723Z_…-128MHz.log`, 134 / 118 s at `-n 8`); no default change, the decision is the 09-16 weekly's.** *History: `docs/planning/chunks/TH-19.md`.* | standard (steps 1–2), heavy (step 3) |
 
@@ -3371,7 +3371,15 @@ frozen: a review re-scopes the question as a new numbered step or banks the
 measured negative, and never queues a fifth letter (this replaces the former
 "items that fail twice get rescoped" sentence, which never fired); (3)
 **every item below names the status its result can move** (daily-review.md
-rubric element 7) — an item that cannot is not queued. Families frozen at
+rubric element 7) — an item that cannot is not queued; (4) **enumerated-chain
+licence (operator directive 2026-09-18):** when the queue is below the floor,
+the daily review may write and queue, at full rubric grain, any *numbered*
+step that the weekly has enumerated in a §10 chain (today: the "step count to
+a tuned birdcage" list) whose serial prerequisites have landed — the weekly
+supplied the question and the validation target, the review supplies the
+execution detail; it may not add, reorder or re-target chain steps, and a
+step whose target it cannot make assertable is queued as "write the anchor"
+and returned to the weekly. Families frozen at
 enactment: `WF-6` step 4 (4h–4k since 4g), `ANS-4` step 2 (2a‴, 2e, 2f, 2g
 since 2a″), `PORT-14` step 2 (2, 2b–2e; no gate landed) — each carries its
 ruling in §7.
@@ -3639,13 +3647,13 @@ the item texts are archived verbatim in `docs/planning/plan-archive.md`
 (2026-09-18) and journaled in `docs/testing/attempts.md`.)*
 
 **Predicted slot-minutes (rubric element 3 + 15 min fixed), running total:**
-item 1 → 22 · item 2 → 42 · item 3 → 62 · item 4 → **107**. Floor 240 and
-≥ 5 items: **shortfall 133 min and one item**, stated, not filled (the
-restock paragraph above says what exists and why it is not queued; item 4
-was added 2026-09-18 by the interactive operator session from the `ANS-2`
-adjudication). The four items are mutually independent; take them in order.
-A slot that finds all four done draws the drained-queue fallback below — one
-figure, then stop.
+item 1 → 22 · item 2 → 42 · item 3 → 62 · item 4 → 107 · item 5 → **167**.
+Floor 240 and ≥ 5 items: **shortfall 73 min, item count met**, stated, not
+filled (items 4 and 5 were added 2026-09-18 by the interactive operator
+session — item 4 from the `ANS-2` adjudication, item 5 from the §10 chain
+under rule (4)). The five items are mutually independent; take them in
+order. A slot that finds all five done draws the drained-queue fallback
+below — one figure, then stop.
 
 1. **DONE 2026-09-18 04:30 slot — on this item's own negative-result branch.**
    (a) landed and `OPS-50` is **🟡**, not ✅: the writer-side hole is closed
@@ -3864,6 +3872,47 @@ figure, then stop.
    **Status it can move:** the `ANS-2` verdict's pointwise band (±10 % →
    measured) and, under (b), the stated level of the `MAT-4` external
    anchor.
+
+5. **`TH-17` step 1 — eigenmodes of the loaded F-small birdcage with the PEC
+   coil and the tuned capacitor sheets: the internal "tuned birdcage"
+   milestone** (implementer; additive `src/fem_em_solver/core/cavity.py`
+   (a general-mesh pencil builder beside `_cavity_forms`, box path
+   byte-identical) and a new `tests/validation/test_th17_birdcage_eigenmodes.py`;
+   **heavy**, cost probe first; `-n 4`; `main`; independent of items 1–4;
+   **60 slot-min**: ≈ 5 min probe + ≈ 15 min gated run + ≈ 15 min controls
+   + ≈ 10 min `TH-9`/`TH-14`-step-1 gate re-runs + 15).
+   **Why:** §10 chain step 5 — the first Phase 6 physics target; serial on
+   chain steps 3 (`PORT-15` ✅ 09-13, `C_tuned`) and 4 (`TH-15` step 3c,
+   the hole mesh, 09-13), both landed. Written under §9 rule (4).
+   **The change:** as the §7 `TH-17` row states — (i) **cost probe:**
+   build the hole mesh with the four capacitor sheets at `C_tuned` and run
+   one shift-invert solve at the 64 MHz target with `nev = 6`, printing
+   cells / dofs / wall time / `ru_maxrss` per rank; **if the probe reads
+   > 15 min or > 40 GiB at `-n 4`, stop and journal — the step re-prices
+   (XL cost probe under the daily licence) and nothing else in this item
+   runs**; from the probe, set and pre-register the (C5) third-residual
+   band before (ii). (ii) the gated run: conduction linearised at
+   `ω_lin = 2π·64 MHz`, then one fixed-point re-solve at the found `Re ω`,
+   the shift printed and asserted < 0.1 %. (iii) the two controls.
+   **Anchors (asserted):** (a) mode-1 `Re f` within `PORT-14`'s κ band of
+   64 MHz — import the step-3 constant (`STEP3_KAPPA_RTOL` or the named
+   κ-systematic constant in `test_port_lumped_rlc_64mhz` / the `PORT-14`
+   step 3 module; name which in the journal, never restate); (b) pair
+   degeneracy ≤ the imported `PORT-11` C4 spread band; (c) positive `L_r`,
+   `L_l` from the (C5) fit and the third residual ≤ the pre-registered band;
+   the `TH-9` and `TH-14` step 1 gate modules re-run green on the touched
+   `cavity.py`.
+   **Negative control (asserted):** `2·C_tuned` moves mode-1 `Re f` by
+   `1/√2` within band (a); a shuffled-sheet control (capacitor on three
+   sheets only) breaks degeneracy (b) by ≥ 10× its band.
+   **Printed, never gated:** `Q` of each mode, the PEC-phantom control's
+   `Re f` shift, `f_0` and `f_2` beside their (C5) fit.
+   **Tier / ranks / cost:** heavy by prediction, cost probe first (§5.1);
+   `-n 4` throughout (`-n 2` for the gate re-runs).
+   **Status it can move:** `TH-17` ⬜ → ✅ and §6 Phase 6's "first physics
+   target"; under a failed (a), a `PORT-14`/`PORT-15` consistency
+   known-issues entry (the tuned `S₁₁` and the eigenmode disagree on where
+   64 MHz is).
 
 *(The per-review journal — slot recap, completion audits, plan-work notes,
 §10 assessment — lives in the review commits and
@@ -5513,7 +5562,11 @@ in the circuit layer, the tuned `S₁₁` reproduced in-model, and the tuned
    ladder-network closed form with the step-2 inductances. Target: closed
    form + circuit-layer consistency. Serial on 3 and 4. *Moves `TH-17` → ✅
    and ticks Phase 6's first physics target.* **This is the internal
-   "tuned birdcage" milestone.**
+   "tuned birdcage" milestone.** *(Written into §7 `TH-17` at execution grain
+   and queued as §9 item 5 on 2026-09-18 by the interactive operator session
+   under the enumerated-chain licence; serial prerequisites 3 and 4 landed
+   09-13. Gate (c) uses the eigen-spectrum's own (C5) fit with positive
+   inductances in place of the step-2 read-off, which came out negative.)*
 6. **`TH-19` step 3** (above) — the degree-2 identity on the sheet drive;
    then the production-order decision at a weekly. Target: two power
    identities. Serial on nothing; **gates whether steps 3 and 5 are quoted

@@ -120,6 +120,22 @@ are yours.
    that cannot yet state its anchor is not ready to queue, and writing that
    anchor is itself the better queue item.
 
+   **The enumerated-chain licence (operator directive 2026-09-18; §9 rule
+   (4)).** "Forbids inventing work" does not forbid *executing the weekly's
+   plan*. When the ready items do not reach the floor, you may write and
+   queue — at the full rubric grain, anchor and control and status-it-can-
+   move included — any **numbered** step the weekly has enumerated in a §10
+   chain (today the "step count to a tuned birdcage" list, §10 Phase 6)
+   whose serial prerequisites have landed on `main`. The weekly supplied the
+   question and the validation target; you supply the execution detail
+   (fixture, files, tier by measurement or cost probe, imported bands). You
+   may not add a step to a chain, reorder one, or change a step's target; a
+   step whose target you cannot make assertable is queued as "write the
+   anchor" (a documentation item) and named in the dashboard for the
+   weekly. Say in the item which chain step it executes. This is what
+   keeps four slots a day from draining into figures while a written plan
+   sits idle between weeklies.
+
    **The setup-figure filler (operator directive 2026-09-13, `EX-57`).**
    After the real items, **always append one `EX-57` item** — the recurring
    background task the operator asked for — naming the script that

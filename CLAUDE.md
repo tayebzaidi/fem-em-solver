@@ -130,7 +130,9 @@ no implementer runs). Canonical crontab: `scripts/automation/crontab`.
 
 - **Plan review** (high effort since 2026-09-15, 03:00 local, Sun/Mon/Wed/Fri/Sat) — audits
   results against §4, rescopes failed attempts, disposes of `recovered/*`
-  branches, tops the §9 "On deck" queue to the slot-minutes floor. Protocol:
+  branches, tops the §9 "On deck" queue to the slot-minutes floor — since
+  2026-09-18 by executing the weekly's enumerated §10 chain steps at full
+  rubric grain (§9 rule (4)), never by inventing physics. Protocol:
   docs/automation/daily-review.md.
 - **Weekly planning review** (high effort, **Saturday 21:00 local**) —
   owns the long horizon with brutal realism: §6 phase map and §10 roadmap
