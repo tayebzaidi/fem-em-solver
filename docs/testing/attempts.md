@@ -13821,3 +13821,39 @@ second, given the tree was clean and nothing was parked. On reading (3): it
 produced two further items, one of them a chunk closure the review itself
 wanted landed before Monday, so the reading is at least useful; it should
 still be ratified or reverted explicitly rather than left to precedent.
+
+## 2026-09-19T11:05Z (2026-09-19 06:00 CDT slot, item 4) — `OPS-50` step 2: two instruments on one 0.11 mesh — **complete on the item's pre-registered negative branch; `OPS-50` stays 🟡**
+
+**How it ran.** Preflight clean, container Up 8 days. §9 items 1 and 2 are BLOCKED and item 3 DONE (04:30 slot), so this slot took **item 4**, the first open one. Delegated to `implementer` in the foreground; every number below re-read by the slot from the logs, not taken from the report. Measurement-only: **no file under `src/`, `tests/` or `scripts/probes/` is in the diff**, nothing was re-recorded, `PIN_REPRO_RTOL` untouched, `POST-4` ✅ not re-opened.
+
+**The table** (0.11 image, complex build, `-n 2`, standard tier). Both probes print `cells=9291` on a bit-identical mesh fingerprint (`m1=6.071004883645e+01 m2=1.297311089112e+02`, `…probe4.log:377`; `…probe5.log:372`):
+
+| field | step-4 probe MID `rel_med` | step-5 probe `p1_mid_rel_med` | rel. diff | VTX/MID sep (both probes) | v0.7.2 record (`rel_med` / sep) |
+|---|---|---|---|---|---|
+| A (`A_N1curl`) | 4.532338e-01 | 4.532338e-01 | **0.00e+00** | 0.8198× | 5.117084e-01 / 0.4185× |
+| B (`B_DG1`) | 4.717160e-01 | 4.717141e-01 | **4.03e-06** | 0.8520× | 5.247224e-01 / 0.4818× |
+| E (`E_N1curl`) | 2.175825e-01 | 2.175825e-01 | **0.00e+00** | 1.2281× | 2.018185e-01 / 0.6835× |
+
+Step-4 probe rows at `…probe4.log:383–388, 395–400` (the HYPOTHESIS block carries the separations); step-5 probe at `…probe5.log:393, 400, 407, 411–413`. The v0.7.2 numbers are the records the probes gate on, printed in the `REPRO` lines.
+
+**The trap did not fire.** `post4_step4_probe.py` imports and runs unmodified on 0.11 — no removed-API traceback, only two `dofmap is deprecated` warnings (`…probe4.log:378–381`). It was not edited.
+
+**Negative control: GREEN, with room** (`…probe4.log:395–396, 407`). `CTRL_P1` MID *and* VTX read `rel_max = rel_med = scaled_max = scaled_med = 0.000000e+00` against the probe's `CONTROL_MAX` 1e-10; the DG1 discriminator rows (`A_toDG1`/`B_toDG1`/`E_toDG1`) are ≤ 6.95e-16 against `DISCRIM_MAX` 1e-14. The machinery is intact on 0.11, so the table is read.
+
+**Anchor, cell count: PASS** — 9291 in both. **Anchor, 1e-6 on MID `rel_med`: PASS on A and E (exactly 0.00e+00), FAIL on B at 4.03e-06.** The item's pre-registered negative branch was therefore taken: second known-issues entry filed, `OPS-50` left 🟡, no re-record proposed in-slot.
+
+**But that branch's stated cause is refuted, and the item's main question is answered.** (i) A and E agree *bit-identically* between the two instruments, so "the step-5 probe's P1 path is not the step-4 path it claims to be" does not survive — the paths coincide on two of three fields and the point sets are the same 400 midpoints/vertices. (ii) A third window, the step-4 probe repeated 34 s later at the same width (`20260919T110258Z_OPS-50-step2-probe4-repeat.log`), reprints B at **4.717154e-01** — self-spread 1.27e-06 on one instrument — and the step-5 probe's 09-18 run read 4.717157e-01 against today's 4.717141e-01 (self-spread 3.39e-06). The cross-instrument 4.03e-06 sits **inside** each instrument's own repeat spread on B; A and E are bit-identical across all four windows. So the anchor fails on a **B-only non-determinism at ~4e-6**, not on a path difference, and that is a new finding in its own right (filed, cause NOT DIAGNOSED).
+(iii) Consequently the 7.8 / 10.1 / 11.4 % drifts and the flipped E ordering (`PIN_SEP E` 1.2281× vs step 4's 0.6835×) are **properties of the 0.11 mesh**, measured by two instruments rather than asserted by one probe's guard: the instrument that *made* the v0.7.2 records reads the same drifted values today. The 2026-09-18 probe entry's *Cause* line moves from asserted to measured.
+
+**Windows** (all three Status 1 **by design** — both probes gate on the drifted v0.7.2 records, and the step-4 probe additionally trips its own `FAIL PIN E_N1curl` on the ordering flip, a line it prints only on failure, which is why its v0.7.2 window was silent and PASS). No window near its ceiling (`timeout -k 30 180` each), all foreground, no orphaned ranks, no denied commands.
+
+| log | Status | elapsed |
+|---|---|---|
+| `20260919T110204Z_OPS-50-step2-probe4.log` (`:412–413`) | 1 | 5 s |
+| `20260919T110225Z_OPS-50-step2-probe5.log` (`:426–427`) | 1 (expected — `PROBE_RESULT FAIL`, the known entry) | 5 s |
+| `20260919T110258Z_OPS-50-step2-probe4-repeat.log` (`:412–413`) | 1 | 4 s |
+
+- Files: `PROJECT_PLAN.md` (§7 `OPS-50` row step-2 record; §9 item 4 marked DONE with the table), `docs/testing/known-issues.md` (*Cause* line rewritten; new B-non-determinism entry), `docs/testing/test-results.md`, the three logs. Commit `99d99e0`; this journal follows.
+- Branch (if parked): none — landed on `main`.
+- Next-attempt hypothesis: B is the only one of the three fields whose dofs come from a rank-partitioned `DG1` projection of `curl A` rather than from a solve vector, so an unpinned summation order perturbs a few dof values at ~1e-15 and the 400-point **median** lands on a different sample element. Testable in one window with no code change: run `post4_step4_probe.py` three times at `-n 1` and three at `-n 2` and tabulate the `B_DG1` MID `rel_med` spread at each width — collapse to bit-identical at `-n 1` confirms, survival at `-n 1` refutes and points at the probe's own sampling instead.
+- **For the 09-20 03:00 review:** the item's own text says two instruments agreeing to 1e-6 with the control green licenses a version-tagged re-record of the four constants. A and E met that; **B did not**, and the reason is now known to be repeat-spread rather than path divergence. Whether that licenses the re-record on A and E and defers B, or whether the whole re-record waits on the `-n 1` width test above, is the review's call — this slot made none.
