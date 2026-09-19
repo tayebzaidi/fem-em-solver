@@ -17,3 +17,4 @@ rather than silently softened.
 
 | Date (UTC) | Chunk | Log | Ranks | Cells | Peak memory (GiB) | Elapsed (s) | Readout |
 |---|---|---|---|---:|---:|---:|---|
+| 2026-09-19 | WF-7-step0b | `20260919T070008Z_WF-7-step0b.log` | | | | 673 | |
