@@ -13601,3 +13601,135 @@ should require the mesh to be **built once and cached across the four
 drives** — otherwise 4 × 360 s of meshing is paid for a mesh that does not
 change between drives, which is over half the window's cost. Implementers
 never commission one, so step 4 stays BLOCKED until that entry exists.
+
+### 2026-09-19T09:58Z — `TH-17` step 1 (§9 On-deck item 2) — **blocked** (physics, not cost)
+
+**Slot:** 2026-09-19 04:30 CDT, **second item under take-next** (item 1's
+outcome commit `32f4eae` had landed, `git status --porcelain` empty, clock at
+minute 17). Delegated to the `implementer` agent, foreground.
+
+**Take-next note for the review, flagged rather than assumed.** Item 1 ended
+**blocked**, not complete. implementer-run.md step 2's guard reads "an
+incomplete first item parks per step 4 and the slot then stops, it does not
+move on" — but that clause's stated mechanism is the *dirty tree / parked
+work* case, and neither occurred: item 1 reached a pre-registered conclusion,
+left no incomplete code, landed one outcome commit on `main`, and left the
+tree clean, which is exactly the condition the guard requires ("a second item
+never starts on a dirty tree"). §9 step 2's selection rule then reads "the
+first item not marked done **or blocked**", and item 1 was marked blocked in
+`32f4eae`. I took item 2 on that reading and got ~35 productive minutes out
+of it. **If the review reads the guard the other way, say so and the next
+slot will stop instead** — the clause would benefit from saying whether it
+means "not complete" or "left work parked".
+
+**Outcome commits, all on `main`, tree clean; no `attempt/*` branch** (the
+code is additive, green, and independently useful):
+- `f085e51` — `src/fem_em_solver/core/cavity.py` (+129), the probe module
+  `tests/validation/test_th17_birdcage_eigenmodes.py` (+266), the probe log,
+  the `test-results.md` row, the §7 `TH-17` annotation (⬜ → 🟡, blocker
+  named) and §9 item 2 marked **BLOCKED** with its unblock condition — one
+  commit, standing rule (d).
+- `f5a87d9` — real-mode collection smoke on the new module (1 collected,
+  Status 0, 3 s): the default collection is unchanged, the module being
+  env-gated on `TH17_PROBE=1` + `complex_only`.
+- `941fa15` — **the owed gate re-runs, run by this slot, not by the
+  executor.** `f085e51` argued the pre-existing box paths were byte-identical
+  by construction (nothing above the new `TH-17` banner comment is touched)
+  but had not re-run the gates the item requires. `TH-9`
+  (`test_cavity_resonances.py`) + `TH-14` step 1
+  (`test_cavity_leontovich_q.py`), complex mode, `-n 2`:
+  `20260919T095138Z_TH-17.log:90` — **7 passed, Status 0, 11 s.** An argument
+  is not a measurement; new `src/` does not sit on `main` on a construction
+  argument alone.
+
+**Part (i), the cost probe: PROCEED with enormous margin** — the opposite of
+item 1 an hour earlier. `-n 4`, `20260919T094827Z_TH-17.log:895–907`
+(lines re-read by this slot), 51 s wall, Status 0:
+
+- 80 181 cells, 111 121 N1curl degree-1 dofs
+- mesh 20.62 s + eigensolve 26.70 s = **47.80 s** total
+- `ru_maxrss` 0.612 / 0.521 / 0.529 / 0.516 GiB → **2.179 GiB summed**
+- against the item's STOP rule (> 15 min or > 40 GiB at `-n 4`): 0.797 min
+  and 2.179 GiB ⇒ **PROCEED, ~19× margin in time and ~18× in memory**
+  (`:906–907`). **This step does not re-price to XL**; the probe settled it.
+- `C_tuned` = 1.556993028375804e-11 F, imported live from `PORT-15` step 3
+  (`tuning_sweep` + `select_c_tuned` on `S_64MHZ_EPS0_RECORD`), never
+  restated (`:898`).
+
+**The blocker — the slot's real finding, and it is physics.** With `nev = 6`
+and shift-invert at `k₀² = (2π·64 MHz/c)² ≈ 1.799`, the nine converged
+eigenvalues are the **N1curl gradient (null-space) cluster**: λ ∈
+[1.448e-09, 2.294e-09], `Re f` ≈ 1.8–2.3 kHz, `|λ − target| ≈ 1.8` for every
+one (`:899–905`). **Nothing in the pencil sits at 64 MHz.** So no mode-1
+frequency exists to read, the **(C5) third-residual band could not be
+pre-registered** (it was to be sized *from* this spectrum), and anchors
+(a)/(b)/(c) plus both negative controls are unreachable as written. Nothing
+was loosened, re-tuned or substituted in-slot — rules (e)/(f)/(h) all hold,
+the item stands at its pre-registered result.
+
+**One discrepancy the review must rule on, because it may BE the blocker.**
+The §7 `TH-17` row's Formulation paragraph states the capacitor sheet term as
+`−ω²μ₀(w/h)C ∫(n×u)·(n×v)`. The executor derived it from the imported
+`lumped_port_bilinear_term` law (L1 = `jωμ₀(1/R)∫(n×u)·(n×v)` with
+`R = Z_p·w/h`, `Z_p = 1/(jωC)`) and got **`h/w`, not `w/h`**, and implemented
+`h/w` — i.e. `B_sheet = +(C·h/w)/ε₀ ∫(n×u)·(n×v)`, ω_ref-independent because
+the term is exactly ω², built by calling `lumped_port_bilinear_term` and
+scaling so that restriction, facet measure, `ufl.inner` conjugation and
+`PORT-14` step 3's κ correction stay identical to the driven path. Under the
+`w = A/h` width convention this is not a cosmetic difference: the two
+readings differ by `(w/h)²`, which is exactly the "added mass is orders of
+magnitude too small" axis of the hypothesis below. **The row and the code
+disagree; one of them is wrong, and the slot did not decide which** — that is
+a physics adjudication, not an in-slot call.
+
+**Left undone:** part (ii) entirely (the gated run, the `ω_lin`
+linearisation, the fixed-point re-solve and its < 0.1 % shift assert), part
+(iii) both controls, all five anchors, and the (C5) band registration.
+
+**Harness logs:** `20260919T094827Z_TH-17.log` (probe, 51 s, Status 0),
+`20260919T095049Z_TH-17.log` (real-mode collection smoke, 3 s, Status 0),
+`20260919T095138Z_TH-17.log` (`TH-9` + `TH-14` step 1 gate re-runs, 11 s,
+Status 0). No denied commands, no orphaned ranks, no known-issues entry —
+nothing failed; the blocker is a measured negative, not a defect.
+
+**Next-attempt hypothesis (cheap — 48 s per solve, so iterate).** Two
+candidate causes, and one window can separate them: (1) print the **`C = 0`**
+spectrum on the same 80 181-cell mesh to locate the physical branch at all —
+if it sits at ~GHz as expected for this air box, the question becomes whether
+the capacitive added mass can plausibly pull it to 64 MHz, which is where the
+`h/w` vs `w/h` discrepancy above decides the answer; (2) **deflate the
+gradient cluster** before shift-invert (`EPS.setDeflationSpace`, or a larger
+`ncv`) — `TH-9` discards it by `null_cutoff_fraction` and the general-mesh
+path has no analogue, and `TH-9`'s own
+`test_n1curl_gradient_modes_form_a_clean_zero_cluster` is green
+(`20260919T095138Z_TH-17.log:62`), so the cluster is a known, characterised
+feature of this discretisation rather than a bug here. Do (1) and (2) in one
+window before re-choosing `nev` and target.
+
+### Slot close — 2026-09-19 04:30 CDT
+
+**Two items, four outcome commits, clean tree, `main` green.** Both items
+ended **blocked**, for opposite reasons, and both blockers are exactly the
+kind a cost probe is meant to find before a window is spent:
+
+| Item | Chunk | Probe verdict | Outcome |
+|---|---|---|---|
+| 1 | `ANS-2` step 4 | **STOP** (18.6 min / 40.89 GiB vs 15 min / 40 GiB) | `32f4eae` — re-prices to `xl`, BLOCKED on a commissioning review |
+| 2 | `TH-17` step 1 | **PROCEED** (0.797 min / 2.179 GiB, ~19× margin) | `f085e51`, `f5a87d9`, `941fa15` — BLOCKED on a physics negative: no eigenvalue near 64 MHz |
+
+Commits: `32f4eae`, `95a1c57` (journal), `f085e51`, `f5a87d9`, `941fa15`,
+plus this journal. No parked branches, no denied commands, no orphaned ranks,
+no known-issues entries (nothing failed). Queue state at close: §9 items 1
+and 2 both **BLOCKED**; the first open item for the next slot is **item 3,
+`OPS-52`**, which the 03:00 review marked "land this before Monday 09-21
+02:00 if a slot can" — the 09-21 `xl` and 09-26 `xxl` windows both run that
+probe. Six open items remain.
+
+**Three things for the 09-20 03:00 review, in priority order:** (1) the
+`h/w` vs `w/h` discrepancy between the §7 `TH-17` row and the landed code —
+a physics adjudication that may itself be `TH-17`'s blocker; (2) an
+`xl-pending.md` pre-registration for `ANS-2` step 4's four-drive halved-rung
+run (≈ 1 700 s, ≈ 41 GiB summed at `-n 8`, with the mesh built once and
+cached across drives), without which item 1 stays blocked; (3) the take-next
+reading recorded in the item-2 entry above — whether a *blocked* first item
+licenses a second, given the tree was clean and nothing was parked.
