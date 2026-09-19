@@ -28,7 +28,43 @@ unless fixing it is the task.
 
 ## Failing tests
 
-### Fourteen committed setup figures carry legends clipped mid-word — a false-artefact mode the setup-figure census cannot see (2026-09-19, 03:00 review, from the 2026-09-18 04:30 slot's finding)
+### Fourteen committed setup figures carry legends clipped mid-word — a false-artefact mode the setup-figure census cannot see (2026-09-19, 03:00 review, from the 2026-09-18 04:30 slot's finding; narrowed to leg B's nine 2026-09-19)
+
+**Leg A (the five magnetostatics figures) is re-rendered and this entry
+narrows to leg B's nine (`mesh:3`, `th:10`, `mri:1/2/3`, `ports:15–18`),
+2026-09-19:** `mag:1/2/4/5/6` re-rendered flagged (`FEM_EM_SETUP_FIGURES=1`,
+`-n 2`, real build, recorded width) at `1c12233` and read with the Read
+tool; every entry's legend now shows whole (`mag:2`'s previously read
+"wire (con" / "air (hidde" now reads "wire (conductor)" / "air (hidden)"
+in full — the negative control). Every printed identity reproduced to the
+digit against its original `EX-57` flagged window: `mag:1` mesh
+21830/4662, relL2 51.9781%, max rel 76.7331%→76.7332%
+(`20260914T125223Z_EX-57-straight-wire.log:271-272` vs
+`20260919T111506Z_EX-57.log:271-272`) — the max-rel last-printed-digit
+move is the same mesh-partition round-off class the original item already
+noted against the guide's own table (76.7330%), not a regression, and
+`mag:1` carries no `assert`; `mag:2` mesh 409596 cells, relL2 6.2134%, max
+rel 11.6541%, energy 2.466102e-08 J, byte-for-byte
+(`20260914T125551Z_EX-57-circular-loop.log:264,289-290,294` vs
+`20260919T111554Z_EX-57.log:264,289-290,294`); `mag:4` cells
+69918/103950/160677, centre B_z 3.563601e-09/3.519075e-09/3.483786e-09,
+rel err 0.92/0.34/1.34%, mean/max 2.15/7.92, 1.03/4.64, 1.56/5.33%, CV
+0.075/0.028/0.056% (`20260914T140147Z_EX-57-helmholtz.log:248-250,427-429,626-628`
+vs `20260919T111830Z_EX-57.log:248-250,427-429,626-628`); `mag:5` probe
+vector L2 0.0003%, volume L2 0.0040%, max|A| ratio 2.773e-11, multiplier
+spread nan/2.083e+02, "All assertions hold"
+(`20260916T095415Z_EX-57-mag5-flagged.log` vs
+`20260919T112024Z_EX-57.log:219,220,235-237,255`); `mag:6` errors
+21.8417%/15.3848%/4.4605%, rate 1.9038, exported fld 16.8915%
+(`20260916T095753Z_EX-57-mag6-flagged.log` vs
+`20260919T112054Z_EX-57.log:185,341,572,585-587,589,592`). Every caption's
+existing prose (region names, slice plane, hidden air) checked against the
+new image and still true; no caption or `.py` comment needed correction, so
+no re-run beyond the one flagged window per example was triggered. Census
+unchanged, `examples=54 ok=18 missing=36 broken=0`
+(`20260919T112334Z_EX-57.log:89`); docrefs `dead=0 guide=0 stale=25 exit=2`
+(`20260919T112335Z_EX-57.log:64`, ≠ 1). Leg B (the other nine) is untouched
+and this entry stays open until it lands.
 
 **Half (b) of this entry — `write_setup_figure` having no title-length guard —
 is fixed and retired by `OPS-53` (2026-09-19):** the helper now carries a

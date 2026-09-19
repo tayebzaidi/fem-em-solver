@@ -1,0 +1,456 @@
+# Test Run
+- Chunk: EX-57
+- Commit: 1c12233fb9aefbb54c5fa21ca5a595a9ca78e4f7
+- Time (UTC): 2026-09-19 11:15:06
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.5.1
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec fem-em-solver bash -lc "cd /workspace && PYTHONPATH=/workspace/src FEM_EM_SETUP_FIGURES=1 timeout -k 30 180 mpiexec -n 2 python3 examples/magnetostatics/01_straight_wire.py"
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 24
+drwxr-xr-x  3 taz5297 taz5297 4096 Sep  4 23:31 .
+drwxr-xr-x 17 taz5297 taz5297 4096 Sep 19 06:14 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  721 Sep  3 13:49 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 4275 Sep 13 19:19 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.5.1
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec fem-em-solver bash -lc "cd /workspace && PYTHONPATH=/workspace/src FEM_EM_SETUP_FIGURES=1 timeout -k 30 180 mpiexec -n 2 python3 examples/magnetostatics/01_straight_wire.py"'
+Info    : Meshing 1D...
+Info    : [  0%] Meshing curve 1 (Circle)
+Info    : [ 20%] Meshing curve 2 (Line)
+Info    : [ 40%] Meshing curve 3 (Circle)
+Info    : [ 60%] Meshing curve 4 (Circle)
+Info    : [ 70%] Meshing curve 5 (Line)
+Info    : [ 90%] Meshing curve 6 (Circle)
+Info    : Done meshing 1D (Wall 0.000614396s, CPU 0.000555s)
+Info    : Meshing 2D...
+Info    : [  0%] Meshing surface 1 (Cylinder, Frontal-Delaunay)
+Info    : [  0%] 124 triangles are equivalent
+Info    : [  0%] Meshing surface 1 (Cylinder, MeshAdapt)
+Info    : [ 20%] Meshing surface 2 (Plane, Frontal-Delaunay)
+Info    : [ 40%] Meshing surface 3 (Plane, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 4 (Cylinder, Frontal-Delaunay)
+Info    : [ 70%] Meshing surface 5 (Plane, Frontal-Delaunay)
+Info    : [ 90%] Meshing surface 6 (Plane, Frontal-Delaunay)
+Info    : Done meshing 2D (Wall 0.232661s, CPU 0.232486s)
+Info    : Meshing 3D...
+Info    : 3D Meshing 2 volumes with 1 connected component
+Info    : Tetrahedrizing 2184 nodes...
+Info    : Done tetrahedrizing 2192 nodes (Wall 0.0300278s, CPU 0.030027s)
+Info    : Reconstructing mesh...
+Info    :  - Creating surface mesh
+Info    :  - Identifying boundary edges
+Info    :  - Recovering boundary
+Info    : Done reconstructing mesh (Wall 0.0612153s, CPU 0.057463s)
+Info    : Found volume 2
+Info    : Found volume 1
+Info    : It. 0 - 0 nodes created - worst tet radius 4.44255 (nodes removed 0 0)
+Info    : It. 500 - 500 nodes created - worst tet radius 1.62962 (nodes removed 0 0)
+Info    : It. 1000 - 998 nodes created - worst tet radius 1.3176 (nodes removed 0 2)
+Info    : It. 1500 - 1498 nodes created - worst tet radius 1.15817 (nodes removed 0 2)
+Info    : It. 2000 - 1998 nodes created - worst tet radius 1.06625 (nodes removed 0 2)
+Info    : 3D refinement terminated (4663 nodes total):
+Info    :  - 0 Delaunay cavities modified for star shapeness
+Info    :  - 2 nodes could not be inserted
+Info    :  - 23498 tetrahedra created in 0.144354 sec. (162780 tets/s)
+Info    : 1 node relocations
+Info    : Done meshing 3D (Wall 0.270254s, CPU 0.266223s)
+[harness] 13 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 40 edge swaps, 0 node relocations (volume = 5.83542e-06): worst = 0.170707 / average = 0.629441 (Wall 0.000496097s, CPU 0.000497s)
+Info    : No ill-shaped tets in the mesh :-)
+[harness] 22 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 519 edge swaps, 6 node relocations (volume = 0.00149489): worst = 0.276618 / average = 0.776327 (Wall 0.0100773s, CPU 0.009929s)
+Info    : 521 edge swaps, 6 node relocations (volume = 0.00149489): worst = 0.276618 / average = 0.77636 (Wall 0.0117478s, CPU 0.0116s)
+Info    : No ill-shaped tets in the mesh :-)
+[harness] 10 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : Done optimizing mesh (Wall 0.0370617s, CPU 0.033125s)
+Info    : 4663 nodes 27537 elements
+[harness] 2 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : CalcLocalH: 361 Points 714 Elements 718 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 655 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 35.2557 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 490 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 57.4859 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 278 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 1368.89 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 162 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 1368.89 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 73 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 1368.89 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 26 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 909.361 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 9 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 909.361 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 4 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 909.361 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 85 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 17.7699 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 11 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 10.1679 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 1 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 8.0654 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : CalcLocalH: 4661 Points 22287 Elements 4364 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 299 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 17.0934 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 121 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 23.3498 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 24 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 1970.15 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 3 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 41.5493 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 145 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 18.9413 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 34 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 11.8832 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 9 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 12.7734 
+[harness] 11 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : Done optimizing mesh (Wall 1.7518s, CPU 1.75167s)
+2026-09-19 11:15:11.353 (   0.504s) [    7FA4DA81D140]vtkXOpenGLRenderWindow.:1460  WARN| bad X server connection. DISPLAY=
+/workspace/src/fem_em_solver/post/setup_figure.py:315: PyVistaFutureWarning: The default value of `algorithm` for the filter
+`UnstructuredGrid.extract_surface` will change in the future. It currently defaults to
+`'dataset_surface'`, but will change to `None`. Explicitly set the `algorithm` keyword to
+silence this warning.
+  surface = part.extract_surface() if tdim == 3 else part
+============================================================
+Example: Magnetic field of straight wire
+============================================================
+
+Parameters:
+  Current: 1.0 A
+  Wire length: 0.3 m
+  Wire radius: 0.003 m
+  Domain radius: 0.04 m
+  Mesh resolution: 0.008 m
+
+Generating mesh...
+  Mesh created: 21830 cells, 4662 vertices
+[setup-figure] wrote /workspace/examples/magnetostatics/figures/magnetostatics_01_straight_wire_setup.png (193 KiB; regions 1=wire (conductor), 2=air)
+============================================================
+Example: Magnetic field of straight wire
+============================================================
+
+Parameters:
+  Current: 1.0 A
+  Wire length: 0.3 m
+  Wire radius: 0.003 m
+  Domain radius: 0.04 m
+  Mesh resolution: 0.008 m
+
+Generating mesh...
+  Mesh created: 21830 cells, 4662 vertices
+  Cell tags found: [1 2]
+    Tag 1 (wire): 533 cells
+    Tag 2 (air/domain): 10392 cells
+
+Solving magnetostatic problem...
+  Solution computed (current restricted to wire volume)!
+
+Computing B-field...
+  Interpolating B to Lagrange space for evaluation...
+
+Evaluating B-field along x-axis:
+  From r = 3.00 mm (wire edge) to r = 3.80 cm
+  Wire radius: 3.00 mm, Domain radius: 4.00 cm
+  Number of evaluation points: 30
+
+  DEBUG - Evaluation points:
+  First 3 points: [[0.003      0.         0.        ]
+ [0.0042069  0.         0.        ]
+ [0.00541379 0.         0.        ]]
+  Last 3 points: [[0.03558621 0.         0.        ]
+ [0.0367931  0.         0.        ]
+ [0.038      0.         0.        ]]
+
+  DEBUG - Valid evaluation points: 30/30
+
+  DEBUG - Numerical B-field evaluation:
+  B_num shape: (30, 3), dtype: float64
+  First point: B = (-2.145009e-05, 1.293709e-05, -5.673240e-06) T
+  Last point:  B = (-3.215472e-09, 1.245373e-06, 2.190091e-07) T
+  |B| at first point: 2.568385e-05 T
+  |B| at last point:  1.264488e-06 T
+  Ratio (should be ~12.67): 20.31
+
+  DEBUG - Analytical B-field:
+  Wire position: (0.0, 0.0)
+  First point: B = (-0.000000e+00, 6.666667e-05, 0.000000e+00) T
+  Last point:  B = (-0.000000e+00, 5.263158e-06, 0.000000e+00) T
+  |B| at first point: 6.666667e-05 T
+  |B| at last point:  5.263158e-06 T
+  Ratio (expected ~12.67): 12.67
+
+  Expected from μ₀I/2πr formula:
+  At r=3.00mm: 6.666667e-05 T
+  At r=38.00mm: 5.263158e-06 T
+
+  Component verification at (x, 0, 0):
+  Expected: Bx≈0, By=μ₀I/2πx, Bz≈0
+      r [mm]       Bx [T]       By [T]       Bz [T]          |B|
+        3.00 -2.145009e-05 1.293709e-05 -5.673240e-06 2.568385e-05
+       21.10 -1.912505e-08 3.307577e-06 1.033392e-07 3.309246e-06
+       38.00 -3.215472e-09 1.245373e-06 2.190091e-07 1.264488e-06
+
+  Field magnitude verification (should decay as 1/r):
+      r [mm]     |B_num| [T]     |B_ana| [T]      Ratio
+        3.00    2.568385e-05    6.666667e-05     0.3853
+        4.21    1.997854e-05    4.754098e-05     0.4202
+        5.41    1.863277e-05    3.694268e-05     0.5044
+       21.10    3.309246e-06    9.477124e-06     0.3492
+       35.59    1.967361e-06    5.620155e-06     0.3501
+       36.79    1.615823e-06    5.435801e-06     0.2973
+       38.00    1.264488e-06    5.263158e-06     0.2403
+
+  1/r decay check:
+  Expected B(r_min)/B(r_max) = 12.67
+  Numerical: 20.31
+  Analytical: 12.67
+
+Results:
+  Max B-field (numerical): 2.568385e-05 T
+  Max B-field (analytical): 6.666667e-05 T
+  Relative L2 error: 51.9781%
+  Max relative error: 76.7332%
+
+  Magnetic energy: 2.630244e-08 J
+
+============================================================
+Saving results for ParaView visualization...
+============================================================
+
+  Writing XDMF files (traditional + combined)...
+
+  Writing VTX files (modern ADIOS2 format)...
+    ✓ Vector potential A saved to magnetostatics_01_straight_wire_A.bp/
+    ✓ Magnetic field B saved to magnetostatics_01_straight_wire_B.bp/
+
+============================================================
+ParaView Instructions:
+============================================================
+
+  RECOMMENDED: Use the combined file!
+    File -> Open -> magnetostatics_01_straight_wire_combined.xdmf
+    - Cell tags are the 'CellTags' cell array, on the SAME grid
+      as A, B, and B_analytical (thresholds like any other array)
+    - B field available for Glyph, Stream Tracer, etc.
+
+  Filtering workflow:
+    1. Apply Threshold filter:
+       - Scalars: 'CellTags'
+       - Min: 2, Max: 2 (removes wire cells)
+    2. Apply Glyph filter to thresholded data:
+       - Orientation/Scale: B
+    3. Compare with exact field via Calculator:
+       - mag(B - B_analytical) gives the pointwise error
+
+  Alternative: Individual files
+    - magnetostatics_01_straight_wire_A.xdmf (vector potential)
+    - magnetostatics_01_straight_wire_B.xdmf (magnetic field)
+    - magnetostatics_01_straight_wire_B_analytical.xdmf (exact field)
+    Each also carries the mesh and the CellTags array.
+
+  Alternative: VTX/ADIOS2 directories (EX-14)
+    - magnetostatics_01_straight_wire_A.bp/ (vector potential, Lagrange interpolant)
+    - magnetostatics_01_straight_wire_B.bp/ (magnetic field, Lagrange interpolant)
+    Open the directory itself; ParaView picks the ADIOS2VTXReader.
+============================================================
+
+============================================================
+Example completed successfully!
+============================================================
+  Cell tags found: [1 2]
+    Tag 1 (wire): 568 cells
+    Tag 2 (air/domain): 10337 cells
+
+Solving magnetostatic problem...
+  Solution computed (current restricted to wire volume)!
+
+Computing B-field...
+  Interpolating B to Lagrange space for evaluation...
+
+Evaluating B-field along x-axis:
+  From r = 3.00 mm (wire edge) to r = 3.80 cm
+  Wire radius: 3.00 mm, Domain radius: 4.00 cm
+  Number of evaluation points: 30
+
+  DEBUG - Evaluation points:
+  First 3 points: [[0.003      0.         0.        ]
+ [0.0042069  0.         0.        ]
+ [0.00541379 0.         0.        ]]
+  Last 3 points: [[0.03558621 0.         0.        ]
+ [0.0367931  0.         0.        ]
+ [0.038      0.         0.        ]]
+
+  DEBUG - Valid evaluation points: 30/30
+
+  DEBUG - Numerical B-field evaluation:
+  B_num shape: (30, 3), dtype: float64
+  First point: B = (-2.145009e-05, 1.293709e-05, -5.673240e-06) T
+  Last point:  B = (-3.215472e-09, 1.245373e-06, 2.190091e-07) T
+  |B| at first point: 2.568385e-05 T
+  |B| at last point:  1.264488e-06 T
+  Ratio (should be ~12.67): 20.31
+
+  DEBUG - Analytical B-field:
+  Wire position: (0.0, 0.0)
+  First point: B = (-0.000000e+00, 6.666667e-05, 0.000000e+00) T
+  Last point:  B = (-0.000000e+00, 5.263158e-06, 0.000000e+00) T
+  |B| at first point: 6.666667e-05 T
+  |B| at last point:  5.263158e-06 T
+  Ratio (expected ~12.67): 12.67
+
+  Expected from μ₀I/2πr formula:
+  At r=3.00mm: 6.666667e-05 T
+  At r=38.00mm: 5.263158e-06 T
+
+  Component verification at (x, 0, 0):
+  Expected: Bx≈0, By=μ₀I/2πx, Bz≈0
+      r [mm]       Bx [T]       By [T]       Bz [T]          |B|
+        3.00 -2.145009e-05 1.293709e-05 -5.673240e-06 2.568385e-05
+       21.10 -1.912505e-08 3.307577e-06 1.033392e-07 3.309246e-06
+       38.00 -3.215472e-09 1.245373e-06 2.190091e-07 1.264488e-06
+
+  Field magnitude verification (should decay as 1/r):
+      r [mm]     |B_num| [T]     |B_ana| [T]      Ratio
+        3.00    2.568385e-05    6.666667e-05     0.3853
+        4.21    1.997854e-05    4.754098e-05     0.4202
+        5.41    1.863277e-05    3.694268e-05     0.5044
+       21.10    3.309246e-06    9.477124e-06     0.3492
+       35.59    1.967361e-06    5.620155e-06     0.3501
+       36.79    1.615823e-06    5.435801e-06     0.2973
+       38.00    1.264488e-06    5.263158e-06     0.2403
+
+  1/r decay check:
+  Expected B(r_min)/B(r_max) = 12.67
+  Numerical: 20.31
+  Analytical: 12.67
+
+Results:
+  Max B-field (numerical): 2.568385e-05 T
+  Max B-field (analytical): 6.666667e-05 T
+  Relative L2 error: 51.9781%
+  Max relative error: 76.7332%
+
+  Magnetic energy: 2.630244e-08 J
+
+============================================================
+Saving results for ParaView visualization...
+============================================================
+
+  Writing XDMF files (traditional + combined)...
+    ✓ Standardized XDMF export complete
+    ✓ Combined file saved to magnetostatics_01_straight_wire_combined.xdmf
+    This file has BOTH cell tags and fields on the same grid!
+
+  Writing VTX files (modern ADIOS2 format)...
+    ✓ Vector potential A saved to magnetostatics_01_straight_wire_A.bp/
+    ✓ Magnetic field B saved to magnetostatics_01_straight_wire_B.bp/
+
+  VTX round-trip check (EX-14 anchor):
+    in-memory  max|B| = 4.972899604466e-05 T
+    read-back  max|B| = 4.972899604466e-05 T
+    relative difference = 0.000e+00  (tol 1e-10)
+    control (read-back vs 0.5 x in-memory) = 1.000e+00  -- must exceed the band
+    ✓ written .bp reproduces the in-memory field
+    ✓ control separated: wrong reference reads rel ~ 1
+
+============================================================
+ParaView Instructions:
+============================================================
+
+  RECOMMENDED: Use the combined file!
+    File -> Open -> magnetostatics_01_straight_wire_combined.xdmf
+    - Cell tags are the 'CellTags' cell array, on the SAME grid
+      as A, B, and B_analytical (thresholds like any other array)
+    - B field available for Glyph, Stream Tracer, etc.
+
+  Filtering workflow:
+    1. Apply Threshold filter:
+       - Scalars: 'CellTags'
+       - Min: 2, Max: 2 (removes wire cells)
+    2. Apply Glyph filter to thresholded data:
+       - Orientation/Scale: B
+    3. Compare with exact field via Calculator:
+       - mag(B - B_analytical) gives the pointwise error
+
+  Alternative: Individual files
+    - magnetostatics_01_straight_wire_A.xdmf (vector potential)
+    - magnetostatics_01_straight_wire_B.xdmf (magnetic field)
+    - magnetostatics_01_straight_wire_B_analytical.xdmf (exact field)
+    Each also carries the mesh and the CellTags array.
+
+  Alternative: VTX/ADIOS2 directories (EX-14)
+    - magnetostatics_01_straight_wire_A.bp/ (vector potential, Lagrange interpolant)
+    - magnetostatics_01_straight_wire_B.bp/ (magnetic field, Lagrange interpolant)
+    Open the directory itself; ParaView picks the ADIOS2VTXReader.
+============================================================
+
+  Plot saved to: /workspace/paraview_output/magnetostatics_01_straight_wire_validation.png
+
+============================================================
+Example completed successfully!
+============================================================
+
+## Exit
+- Status: 0
+- Elapsed (s): 8
+- Filtered lines (gmsh optimisation chatter): 216

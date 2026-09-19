@@ -4032,7 +4032,7 @@ done draws the drained-queue fallback below — one figure, then stop.
    constant from it, and say so.
 
 6. **`EX-57` re-render, leg A — the five magnetostatics figures drawn under
-   the clipped-legend path** (`example-runner`, spawned **foreground** with
+   the clipped-legend path — DONE (2026-09-19).** (`example-runner`, spawned **foreground** with
    "you are the executor, do not spawn agents, never return with a window
    running"; real build; `-n 2`; standard; **25 slot-min**: ≈ 6.5 min of
    flagged windows — `mag:1` 7 s, `mag:2` 137 s, `mag:4` 84 s, `mag:5` 7 s,
