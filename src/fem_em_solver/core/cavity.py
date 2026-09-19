@@ -46,7 +46,7 @@ import dolfinx
 from dolfinx import fem, mesh as dmesh
 from dolfinx.fem.petsc import assemble_matrix
 
-from ..utils.constants import C_0, ETA_0, MU_0
+from ..utils.constants import C_0, EPSILON_0, ETA_0, MU_0
 
 
 def analytic_cavity_frequencies(
@@ -545,3 +545,130 @@ def smallest_cavity_eigenvalues(
     A.destroy()
     B.destroy()
     return values[:n_values], lam_1
+
+
+# ---------------------------------------------------------------------------
+# `TH-17`: a general-mesh pencil beside ``_cavity_forms``.
+#
+# Purely additive.  ``_cavity_forms`` and every function above are untouched, so
+# the box path (`TH-9`, `TH-14` step 1) is byte-identical.
+#
+# The problem solved here is the source-free, loaded, capacitively-loaded
+# cavity on an arbitrary tetrahedral mesh:
+#
+#     ∫ (∇×u)·(∇×v) dx = k₀² [ ∫ ε_r,c u·v dx + Σ_s B_sheet,s(u, v) ]     (G1)
+#
+# with ``k₀² = ω²/c²``.  Two pieces are *imported*, never restated:
+#
+# * ``ε_r,c`` — the caller's complex relative permittivity per cell tag; a
+#   conducting region is linearised at one ``ω_lin`` exactly as `TH-14` step 1
+#   linearised the Leontovich wall (``ε_r − jσ/(ω_lin ε₀)`` on the ``e^{+jωt}``
+#   convention this solver uses throughout), and the fixed point is a second
+#   call at the found ``Re ω``.
+# * ``B_sheet`` — the lumped-sheet term (L1) of
+#   :func:`fem_em_solver.ports.lumped.lumped_port_bilinear_term`, *not* a
+#   re-derivation.  (L1) is ``jωμ₀(1/R)∫(n×u)·(n×v) dS`` with
+#   ``R = Z_p·w/h``; for a pure capacitor ``Z_p = 1/(jωC)`` this is
+#   ``−ω²μ₀ C (h/w) ∫(n×u)·(n×v) dS`` — exactly ω², so
+#
+#       B_sheet = −(c²/ω_ref²) · L1(ω_ref)
+#
+#   is independent of ``ω_ref`` and moves the whole capacitor term onto the
+#   right of (G1) as a surface *mass* term.  Building it through (L1) keeps the
+#   restriction, the facet measure, the ``ufl.inner`` conjugation and
+#   `PORT-14` step 3's κ width correction identical to the driven path.
+#
+# PEC is the ``_cavity_forms`` treatment: every exterior facet pinned by the
+# large-diagonal elimination, ``A`` at ``bc_diagonal`` and ``B`` at 1.0.  On the
+# `TH-15` step 3 hole mesh the coil's cavity wall *is* exterior, so this pins
+# the outer box and the coil together — the same ``pec_facet_tags=None``
+# reasoning the hole fixture documents.
+# ---------------------------------------------------------------------------
+
+
+def complex_relative_permittivity(
+    epsilon_r: float, sigma_s_per_m: float, omega_rad_s: float
+) -> complex:
+    """``ε_r − jσ/(ω ε₀)`` — the ``e^{+jωt}`` lossy permittivity at one ω."""
+
+    return complex(epsilon_r) - 1.0j * float(sigma_s_per_m) / (
+        float(omega_rad_s) * EPSILON_0
+    )
+
+
+def general_mesh_pencil(
+    V,
+    epsilon_r_field,
+    *,
+    bc_diagonal: float,
+    sheet_mass_forms: Sequence = (),
+):
+    """Assemble (G1)'s pencil ``(A, B)`` on a general mesh; see the note above.
+
+    ``epsilon_r_field`` is any UFL-valid coefficient (a DG0 ``fem.Function`` is
+    the intended shape); ``sheet_mass_forms`` are UFL forms already reduced to
+    the ``k₀²`` side, i.e. ``−(c²/ω_ref²)·L1(ω_ref)`` per sheet.
+
+    Returns ``(A, B, n_constrained_dofs_local)``.
+    """
+
+    if not np.issubdtype(PETSc.ScalarType, np.complexfloating):
+        raise RuntimeError(
+            "the general-mesh pencil needs the complex DolfinX build "
+            "(source /usr/local/bin/dolfinx-complex-mode)"
+        )
+
+    msh = V.mesh
+    u = ufl.TrialFunction(V)
+    v = ufl.TestFunction(V)
+
+    stiffness_ufl = ufl.inner(ufl.curl(u), ufl.curl(v)) * ufl.dx
+    mass_ufl = ufl.inner(epsilon_r_field * u, v) * ufl.dx
+    for form in sheet_mass_forms:
+        mass_ufl = mass_ufl + form
+
+    tdim = msh.topology.dim
+    msh.topology.create_connectivity(tdim - 1, tdim)
+    boundary_facets = dmesh.exterior_facet_indices(msh.topology)
+    boundary_dofs = fem.locate_dofs_topological(V, tdim - 1, boundary_facets)
+    zero = fem.Function(V)
+    zero.x.array[:] = 0.0
+    bc = fem.dirichletbc(zero, boundary_dofs)
+
+    A = assemble_matrix(fem.form(stiffness_ufl), bcs=[bc], diag=bc_diagonal)
+    A.assemble()
+    B = assemble_matrix(fem.form(mass_ufl), bcs=[bc], diag=1.0)
+    B.assemble()
+    return A, B, boundary_dofs.size
+
+
+def solve_general_mesh_modes(
+    V,
+    epsilon_r_field,
+    *,
+    target_k0_sq: float,
+    sheet_mass_forms: Sequence = (),
+    nev: int = 6,
+    bc_diagonal_factor: float = 1.0e4,
+    comm: MPI.Comm = None,
+) -> Tuple[np.ndarray, int, int]:
+    """Complex ``k₀²`` nearest ``target_k0_sq`` of (G1); GNHEP, shift-invert.
+
+    Returns ``(eigenvalues ordered by |λ − target|, n_converged,
+    n_constrained_dofs_local)``.  ``ω = c√λ`` and ``Q = Re ω/(2|Im ω|)``, the
+    `TH-14` step 1 readout.
+    """
+
+    comm = V.mesh.comm if comm is None else comm
+    A, B, n_bc = general_mesh_pencil(
+        V,
+        epsilon_r_field,
+        bc_diagonal=float(bc_diagonal_factor) * float(target_k0_sq),
+        sheet_mass_forms=sheet_mass_forms,
+    )
+    values, n_converged = _solve_pencil_nonhermitian(
+        A, B, float(target_k0_sq), nev=nev, comm=comm
+    )
+    A.destroy()
+    B.destroy()
+    return values, int(n_converged), int(n_bc)
