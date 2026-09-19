@@ -50,6 +50,43 @@ from mpi4py import MPI
 
 ENV_FLAG = "FEM_EM_SETUP_FIGURES"
 
+# Longest title this helper will accept, **set by measurement** on the fixed
+# canvas the helper draws on (``window_size=(1600, 720)``, two subplots, the
+# title an ``add_text`` at ``font_size=11`` anchored ``upper_left`` — see
+# :func:`_render`). The measured bracket is **[126 ok, 150 clipped]**: the
+# 2026-09-18 07:30 `EX-57` slot rendered `mesh:4` with a 150-character title
+# and the canvas edge ate the final letter of "drawn" ("not drawr", render
+# `20260918T123728Z_EX-57.log`), then shortened it to 126 characters and
+# viewed that PNG whole. 130 is the largest round number inside the bracket
+# that keeps the measured-whole end (126) legal with a little slack; nothing
+# between 127 and 149 has been rendered, so the true edge is unmeasured and
+# 130 is deliberately conservative. There is no wrap logic on purpose — a
+# wrapped title would move drawn pixels in every committed figure.
+MAX_TITLE_CHARS = 130
+
+
+def check_title_length(title: str, limit: int = MAX_TITLE_CHARS) -> str:
+    """Return ``title`` unchanged, or raise ``ValueError`` if it is too long.
+
+    Called by :func:`write_setup_figure` as its first statement — before the
+    opt-in gate, before the collective gather and before any plotting import,
+    and therefore **on every rank**: the helper is called inside collective
+    code, so a rank-0-only raise would hang the other ranks in the gather
+    (`OPS-53`, 2026-09-19). Importing this module does not import ``pyvista``,
+    so the guard is unit-testable without a render.
+    """
+    length = len(title)
+    if length > limit:
+        raise ValueError(
+            f"write_setup_figure: title is {length} characters, over the "
+            f"MAX_TITLE_CHARS limit of {limit}. The helper draws the title "
+            "as a single unwrapped add_text on a fixed canvas, so a longer "
+            "title is clipped at the canvas edge without any error "
+            "(measured: 126 characters draw whole, 150 lose their last "
+            f"letter). Shorten the title to {limit} characters or fewer."
+        )
+    return title
+
 # One colour per region *class*, keyed by the name the caller gives the tag,
 # so a "conductor" is copper in every figure in the tree whatever its tag
 # number is. Anything unnamed cycles through the fallback palette.
@@ -168,6 +205,10 @@ def write_setup_figure(
     region_names
         ``{tag: human name}`` for every tag worth drawing; the name picks the
         colour class (see :data:`CLASS_COLOURS`) and labels the legend.
+    title
+        Drawn unwrapped in the 3-D panel's upper-left corner. At most
+        :data:`MAX_TITLE_CHARS` characters — longer raises ``ValueError`` on
+        every rank before anything is drawn (:func:`check_title_length`).
     hide_tags
         Tags left out of the 3-D panel (the air box, typically). They still
         appear in the slice so the domain extent is visible.
@@ -192,6 +233,10 @@ def write_setup_figure(
         Every rank returns together (the gather is collective), so the call is
         safe inside collective code.
     """
+    # First statement, on every rank, whether or not the figure is enabled:
+    # an over-long title is a source defect, and it must not depend on which
+    # run happened to set FEM_EM_SETUP_FIGURES to surface (`OPS-53`).
+    check_title_length(title)
     if not figures_enabled(enabled):
         return None
     comm = comm if comm is not None else mesh.comm
@@ -386,7 +431,9 @@ def _render(
 
 __all__ = [
     "ENV_FLAG",
+    "MAX_TITLE_CHARS",
     "CLASS_COLOURS",
+    "check_title_length",
     "figures_enabled",
     "colour_for",
     "gather_tagged_grid",

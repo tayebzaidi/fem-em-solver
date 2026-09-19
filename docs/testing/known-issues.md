@@ -28,16 +28,34 @@ unless fixing it is the task.
 
 ## Failing tests
 
-### Fourteen committed setup figures carry legends clipped mid-word, and `write_setup_figure` has no title-length guard — two false-artefact modes the setup-figure census cannot see (2026-09-19, 03:00 review, from the 2026-09-18 04:30 and 07:30 slots' findings)
+### Fourteen committed setup figures carry legends clipped mid-word — a false-artefact mode the setup-figure census cannot see (2026-09-19, 03:00 review, from the 2026-09-18 04:30 slot's finding)
+
+**Half (b) of this entry — `write_setup_figure` having no title-length guard —
+is fixed and retired by `OPS-53` (2026-09-19):** the helper now carries a
+measured `MAX_TITLE_CHARS = 130` (bracket [126 ok, 150 clipped] at font size 11
+on its fixed canvas) and raises `ValueError` from `check_title_length` as its
+first statement, on every rank, before the opt-in gate and before any plotting
+import. `tests/unit/test_setup_figure_title.py` asserts 131 raises with both
+integers in the message and 130 does not, `ast`-scans all 18 `examples/` call
+sites plus the docstring exemplar (13 constant titles inside the limit, 5
+f-string/`%` titles listed and left to the runtime guard), and asserts the
+absent-guard control at the pinned pre-change sha `8ef79a1`: 7 passed at `-n 1`
+(`20260919T110950Z_OPS-53.log:51`, 1 s) and at `-n 2` on both ranks
+(`20260919T111004Z_OPS-53.log:68,71`, 2 s). The census is unchanged —
+`examples=54 ok=18 missing=36 broken=0` (`20260919T111013Z_OPS-53.log:89`, exit 2 on the 36 missing, as before) —
+and the flagged `mesh:5` re-run is green with every `GEO-17` digit identical to
+`20260918T140647Z_EX-57.log:952–963` and a byte-identical PNG
+(`20260919T111033Z_OPS-53.log:952–963,976`, 12 s). What remains open is half
+(a), below.
 
 | | |
 | --- | --- |
-| **Symptom** | (a) The PNGs for `mesh:3`, `th:10`, `mag:1/2/4/5/6`, `mri:1/2/3` and `ports:15–18` were rendered before `c9cc369` and show legends whose right edge overruns the subplot viewport — entries truncated mid-word. (b) The helper draws its title with a bare `add_text` (`src/fem_em_solver/post/setup_figure.py:321`), no wrap and no length check: on 2026-09-18 07:30 `mesh:4`'s 150-character title lost its last letter at the canvas edge ("not drawr", render `20260918T123728Z_EX-57.log`); the slot shortened it to 126 characters and left a ≈ 145-character ceiling as a comment at that one call site. |
-| **Verified at** | `e64cae5`. (a) by the 04:30 slot reading PyVista 0.48.4's `renderer.py::map_loc_to_pos` (the `upper right` family anchors `x = 1 − size[1] − border`, off the box's *height*) and viewing the images; (b) by the 07:30 slot viewing the clipped PNG. This review read the journal entries and `setup_figure.py:321`; it viewed no image. |
-| **Cause** | (a) a PyVista anchoring quirk, fixed for new renders by `c9cc369` (legend anchored `center left`, sized to the longest grouped label); committed PNGs do not change until re-rendered. (b) never guarded. |
+| **Symptom** | The PNGs for `mesh:3`, `th:10`, `mag:1/2/4/5/6`, `mri:1/2/3` and `ports:15–18` were rendered before `c9cc369` and show legends whose right edge overruns the subplot viewport — entries truncated mid-word. |
+| **Verified at** | `e64cae5`, by the 04:30 slot reading PyVista 0.48.4's `renderer.py::map_loc_to_pos` (the `upper right` family anchors `x = 1 − size[1] − border`, off the box's *height*) and viewing the images. This review read the journal entries; it viewed no image. |
+| **Cause** | A PyVista anchoring quirk, fixed for new renders by `c9cc369` (legend anchored `center left`, sized to the longest grouped label); committed PNGs do not change until re-rendered. |
 | **Not caused by** | The examples: every imported identity is green in every figure's flagged window, and the figures are opt-in (`FEM_EM_SETUP_FIGURES`). The census is not wrong either — `broken` checks that the file parses, which it does. |
-| **Scope** | Reader-facing artefacts only; no test, gate or number. The 18 call sites' current titles have each been viewed whole by a slot or predate the finding; (b) is a trap for the 36 figures still owed. **Not defects, recorded here so nobody files them again:** legends elide past two same-class labels (`first … last`) and one colour per region class cannot show a split between two same-class regions (`mesh:4`) — corpus design conventions, the operator's to change. |
-| **Resolves with** | (a) §9 items 6–7 (2026-09-19): re-render legs A (magnetostatics, five) and B (the other nine), each PNG read and each caption sentence checked against the new image — this entry narrowed after one leg, the (a) half retired after both. (b) `OPS-53` (§9 item 5): a measured `MAX_TITLE_CHARS` and a `ValueError` before plotting, unit-tested with a call-site scan; the (b) half retired in that commit. The entry is deleted when both halves are. |
+| **Scope** | Reader-facing artefacts only; no test, gate or number. **Not defects, recorded here so nobody files them again:** legends elide past two same-class labels (`first … last`) and one colour per region class cannot show a split between two same-class regions (`mesh:4`) — corpus design conventions, the operator's to change. |
+| **Resolves with** | §9 items 6–7 (2026-09-19): re-render legs A (magnetostatics, five) and B (the other nine), each PNG read and each caption sentence checked against the new image — this entry narrows after one leg and is deleted after both. |
 
 ### `post4_step5_probe.py` runs again on the 0.11 image but its step-4 fixture pins have drifted — `PROBE_RESULT FAIL` on a mesh that is 9 291 cells against a 9 261-cell record (2026-09-18, narrowed by `OPS-50`; was "the VTX gate is skipped when the `B` writer fails, and the probe calls the removed `adios2.ADIOS()`", 03:00 review)
 

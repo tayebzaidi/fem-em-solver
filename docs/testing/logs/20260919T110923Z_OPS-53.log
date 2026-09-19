@@ -1,0 +1,67 @@
+# Test Run
+- Chunk: OPS-53
+- Commit: 8ef79a1465c083e1abf60f3026579d78de78be69
+- Time (UTC): 2026-09-19 11:09:23
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.5.1
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 180 python3 -m pytest tests/unit/test_setup_figure_title.py -v --tb=short -s'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 24
+drwxr-xr-x  3 taz5297 taz5297 4096 Sep  4 23:31 .
+drwxr-xr-x 17 taz5297 taz5297 4096 Sep 19 06:07 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  721 Sep  3 13:49 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 4275 Sep 13 19:19 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.5.1
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 180 python3 -m pytest tests/unit/test_setup_figure_title.py -v --tb=short -s'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... collected 7 items
+
+tests/unit/test_setup_figure_title.py::test_one_character_over_the_limit_raises_naming_both_integers PASSED
+tests/unit/test_setup_figure_title.py::test_exactly_the_limit_does_not_raise PASSED
+tests/unit/test_setup_figure_title.py::test_limit_is_the_measured_value PASSED
+tests/unit/test_setup_figure_title.py::test_guard_path_does_not_import_pyvista PASSED
+tests/unit/test_setup_figure_title.py::test_every_constant_call_site_title_is_within_the_limit [OPS-53] non-constant titles (checked at runtime by the guard, not here): ['examples/magnetostatics/06_h_convergence_rate.py:180', 'examples/meshing/01_two_torus_ports.py:266', 'examples/meshing/02_cylindrical_phantom.py:364', 'examples/meshing/03_birdcage_graded_conductors.py:240', 'examples/ports/15_birdcage_sixteen_leg_quadrature_b1.py:237']
+PASSED
+tests/unit/test_setup_figure_title.py::test_the_150_character_case_raises FAILED
+tests/unit/test_setup_figure_title.py::test_pre_change_helper_has_no_guard PASSED
+
+=================================== FAILURES ===================================
+______________________ test_the_150_character_case_raises ______________________
+tests/unit/test_setup_figure_title.py:188: in test_the_150_character_case_raises
+    assert len(SYNTHETIC_150) == 150, len(SYNTHETIC_150)
+E   AssertionError: 142
+E   assert 142 == 150
+E    +  where 142 = len('mesh:4 \u2014 two-torus port sheet: each gap box split by its mid-plane port sheet, the split visible as the seam between the two cell groups drawn')
+=========================== short test summary info ============================
+FAILED tests/unit/test_setup_figure_title.py::test_the_150_character_case_raises - AssertionError: 142
+assert 142 == 150
+ +  where 142 = len('mesh:4 \u2014 two-torus port sheet: each gap box split by its mid-plane port sheet, the split visible as the seam between the two cell groups drawn')
+========================= 1 failed, 6 passed in 1.87s ==========================
+
+## Exit
+- Status: 1
+- Elapsed (s): 3
+- Filtered lines (gmsh optimisation chatter): 0
