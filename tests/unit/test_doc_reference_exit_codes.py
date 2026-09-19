@@ -433,11 +433,11 @@ def test_committed_tree_stale_count_equals_an_independent_full_census():
 #
 # Provenance of each member, and why this record moved:
 #   * `magnetostatics/straight_wire_validation.png` and the
-#     `loop_over_lossy_slab_10MHz` / `two_torus_gap_ports_10MHz`
+#     `ans1_loop_over_lossy_slab_10MHz` / `ans3_two_torus_gap_ports_10MHz`
 #     `metrics.json` — the three `EX-29` measured on 2026-08-24.
-#   * `ansys_benchmarks/birdcage_four_port_10_64_128MHz/metrics.json`
+#   * `ansys_benchmarks/ans4_birdcage_four_port_10_64_128MHz/metrics.json`
 #     (`ANS-2` step 1) and
-#     `ansys_benchmarks/birdcage_coil_driven_sar_10MHz/metrics.json`
+#     `ansys_benchmarks/ans2_birdcage_coil_driven_sar_10MHz/metrics.json`
 #     (`ANS-4`, committed 2026-09-09) — each landed under `ANS-1`'s rule that
 #     an `ans:` case commits its own `metrics.json`, but neither declared the
 #     widening here, so this test went red on `main` (found by `OPS-42`,
@@ -447,10 +447,10 @@ def test_committed_tree_stale_count_equals_an_independent_full_census():
 #     line of maintenance per benchmark case for a weaker guarantee, and the
 #     point of the pin is that widening the exemption must be *declared*.
 COMMITTED_EXAMPLE_ARTIFACTS = {
-    "examples/ansys_benchmarks/birdcage_coil_driven_sar_10MHz/metrics.json",
-    "examples/ansys_benchmarks/birdcage_four_port_10_64_128MHz/metrics.json",
-    "examples/ansys_benchmarks/loop_over_lossy_slab_10MHz/metrics.json",
-    "examples/ansys_benchmarks/two_torus_gap_ports_10MHz/metrics.json",
+    "examples/ansys_benchmarks/ans2_birdcage_coil_driven_sar_10MHz/metrics.json",
+    "examples/ansys_benchmarks/ans4_birdcage_four_port_10_64_128MHz/metrics.json",
+    "examples/ansys_benchmarks/ans1_loop_over_lossy_slab_10MHz/metrics.json",
+    "examples/ansys_benchmarks/ans3_two_torus_gap_ports_10MHz/metrics.json",
     "examples/magnetostatics/straight_wire_validation.png",
 }
 

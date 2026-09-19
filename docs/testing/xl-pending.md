@@ -531,7 +531,7 @@ rung onto one filename until step 4a measured it); `metrics.json` and
 
 ```
 XL_CHUNK="ANS-2-step4"
-XL_COMMAND="docker compose --profile xl exec -T fem-em-solver-xl bash -lc 'cd /workspace && source /usr/local/bin/dolfinx-complex-mode && mkdir -p /workspace/logs && R=/workspace/logs/ans2-step4-raw.log && { echo [orphans-before]; pgrep -c python3; true; } > \$R 2>&1; PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 FEM_EM_ANS2_PHANTOM_RESOLUTION=0.00125 timeout -k 60 7200 mpiexec -n 8 python3 examples/ansys_benchmarks/birdcage_coil_driven_sar_10MHz/02_birdcage_coil_driven_sar_10MHz.py >> \$R 2>&1; rc=\$?; { echo [orphans-after]; pgrep -c python3; true; } >> \$R 2>&1; echo \"[XL] memory.peak bytes:\" >> \$R; cat /sys/fs/cgroup/memory.peak >> \$R; echo \"[capture] rc=\$rc\" >> \$R; cat \$R; exit \$rc'"
+XL_COMMAND="docker compose --profile xl exec -T fem-em-solver-xl bash -lc 'cd /workspace && source /usr/local/bin/dolfinx-complex-mode && mkdir -p /workspace/logs && R=/workspace/logs/ans2-step4-raw.log && { echo [orphans-before]; pgrep -c python3; true; } > \$R 2>&1; PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 FEM_EM_ANS2_PHANTOM_RESOLUTION=0.00125 timeout -k 60 7200 mpiexec -n 8 python3 examples/ansys_benchmarks/ans2_birdcage_coil_driven_sar_10MHz/02_birdcage_coil_driven_sar_10MHz.py >> \$R 2>&1; rc=\$?; { echo [orphans-after]; pgrep -c python3; true; } >> \$R 2>&1; echo \"[XL] memory.peak bytes:\" >> \$R; cat /sys/fs/cgroup/memory.peak >> \$R; echo \"[capture] rc=\$rc\" >> \$R; cat \$R; exit \$rc'"
 ```
 
 **Price, measured (the probe):** mesh 360 s once + 4 × 188 s ≈ **1 115 s** —

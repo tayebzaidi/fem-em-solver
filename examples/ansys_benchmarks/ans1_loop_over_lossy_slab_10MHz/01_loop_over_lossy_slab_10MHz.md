@@ -1,7 +1,7 @@
 # `-e ans:1` — loop over a lossy slab at 10 MHz: our half of the AED benchmark
 
 Guide for
-`examples/ansys_benchmarks/loop_over_lossy_slab_10MHz/01_loop_over_lossy_slab_10MHz.py`.
+`examples/ansys_benchmarks/ans1_loop_over_lossy_slab_10MHz/01_loop_over_lossy_slab_10MHz.py`.
 Written to be followed without the source open.
 
 **Read `SPEC.md` and `COMPARISON.md` in this directory alongside this guide.**
@@ -173,7 +173,7 @@ about where the power went, and neither ΔR nor the picture should be trusted.
 `"aed": null` — the slot the operator's numbers go into.
 
 **Step 6 — open the field export in ParaView.**
-`File → Open → examples/ansys_benchmarks/loop_over_lossy_slab_10MHz/paraview_output/ans1_loop_over_lossy_slab_combined.xdmf`,
+`File → Open → examples/ansys_benchmarks/ans1_loop_over_lossy_slab_10MHz/paraview_output/ans1_loop_over_lossy_slab_combined.xdmf`,
 then colour by `J_magnitude` (A/m²).
 
 1. **Threshold** on `CellTags` — `3` is the lossy slab, `1` is the wire. Keep

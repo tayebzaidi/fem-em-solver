@@ -240,5 +240,5 @@
     17.444965593982488
   ],
   "total_seconds": 197.53733988199383,
-  "paraview_output": "/workspace/examples/ansys_benchmarks/birdcage_coil_driven_sar_10MHz/paraview_output/ans2_birdcage_coil_driven_sar_10mhz_combined.xdmf"
+  "paraview_output": "/workspace/examples/ansys_benchmarks/ans2_birdcage_coil_driven_sar_10MHz/paraview_output/ans2_birdcage_coil_driven_sar_10mhz_combined.xdmf"
 }

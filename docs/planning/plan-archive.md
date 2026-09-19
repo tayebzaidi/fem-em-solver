@@ -4822,7 +4822,7 @@ rescoped or killed here, with a dated one-line epitaph.
 8-example shortfall (Phase 1: 2, Phase 2: 5, Phase 3: 1) — backfill chunks
 `EX-4`…`EX-12` opened in §7 with the accounting stated there. First Ansys
 benchmark commissioned: `ANS-1`
-(`examples/ansys_benchmarks/loop_over_lossy_slab_10MHz/SPEC.md`, on `MAT-6`'s
+(`examples/ansys_benchmarks/ans1_loop_over_lossy_slab_10MHz/SPEC.md`, on `MAT-6`'s
 gated physics; runnable half chunked, dashboard hand-off on closure). No
 `COMPARISON.md` has AED numbers yet, so there was nothing to adjudicate
 this cycle.
@@ -5181,7 +5181,7 @@ status in §7 that is not `✅` should be read as "unknown", not "probably fine"
 
 **`ANS-1` — runnable half of the first commissioned benchmark** *(scoped
 2026-08-09, weekly review — the case is
-`examples/ansys_benchmarks/loop_over_lossy_slab_10MHz/`; `SPEC.md` is
+`examples/ansys_benchmarks/ans1_loop_over_lossy_slab_10MHz/`; `SPEC.md` is
 committed and is the authority for geometry/materials/BCs; the physics is
 `MAT-6`'s, gated at 1.58%/1.5834% vs Dodd–Deeds)*. Build a runnable script
 in the case directory reusing the `MAT-6` W = 0.15 fixture exactly
@@ -5207,7 +5207,7 @@ is ready to replicate. **Does not close:** nothing Larmor-frequency; the
 comparison is commissioned in the eddy-current regime on purpose, where our
 number is gated.
 
-**✅ 2026-08-09 (13:30 run).** `examples/ansys_benchmarks/loop_over_lossy_slab_10MHz/01_loop_over_lossy_slab_10MHz.py`,
+**✅ 2026-08-09 (13:30 run).** `examples/ansys_benchmarks/ans1_loop_over_lossy_slab_10MHz/01_loop_over_lossy_slab_10MHz.py`,
 dispatched through the runner's **new `ans:` group** (one case directory per
 benchmark, complex build sourced automatically):
 `./run_examples.sh -e ans:1 -n 2 -t 180`, log
@@ -13425,10 +13425,10 @@ COMPLIANT against §4 by the 10:30 review. Struck texts verbatim:
    to fail the unmoved 10% band as the negative control.
    `metrics.json` / `COMPARISON.md` / combined XDMF landed. **The
    operator's AED replication of
-   `two_torus_gap_ports_10MHz/SPEC.md` is now Waiting-on-you** — the
+   `ans3_two_torus_gap_ports_10MHz/SPEC.md` is now Waiting-on-you** — the
    next daily review must put it on the dashboard. Original item:
    execute the §7 `ANS-3` entry verbatim against
-   `examples/ansys_benchmarks/two_torus_gap_ports_10MHz/SPEC.md`:
+   `examples/ansys_benchmarks/ans3_two_torus_gap_ports_10MHz/SPEC.md`:
    regenerate the gated 2-port records through the `EX-20` path into
    `metrics.json` / `COMPARISON.md` (AED columns blank) / combined
    XDMF.
@@ -24200,8 +24200,8 @@ basename exemption hid more than half the census. `EX-30` is re-sized from
 
 **Two findings the entry's own text did not predict, both measured.** (1) The
 tracked set is **not empty**: `git ls-files` reports three committed artifacts
-under `examples/` — `ansys_benchmarks/loop_over_lossy_slab_10MHz/metrics.json`,
-`ansys_benchmarks/two_torus_gap_ports_10MHz/metrics.json`, and
+under `examples/` — `ansys_benchmarks/ans1_loop_over_lossy_slab_10MHz/metrics.json`,
+`ansys_benchmarks/ans3_two_torus_gap_ports_10MHz/metrics.json`, and
 `magnetostatics/straight_wire_validation.png`. These are exactly the
 "committed next to its own case" artifacts the exemption was written for, so
 the exemption is kept and **pinned by path** in
@@ -26805,7 +26805,7 @@ slot.)* `67e4c1c` prefixed every
 example's artifacts by a global text substitution, and in the two ANS
 scripts the substitution also hit the `__import__` string that loads the
 gated example module:
-`examples/ansys_benchmarks/loop_over_lossy_slab_10MHz/01_loop_over_lossy_slab_10MHz.py:96`
+`examples/ansys_benchmarks/ans1_loop_over_lossy_slab_10MHz/01_loop_over_lossy_slab_10MHz.py:96`
 now asks for `01_materials_01_dodd_deeds_coil_loading` and
 `…/two_torus_gap_ports_10MHz/03_two_torus_gap_ports_10MHz.py:88` for
 `02_ports_02_package_sparameter_sweep`, while the files on disk are
@@ -26988,9 +26988,9 @@ recommendation, not a decision.)*
 > **Executed 2026-08-31 00:00 slot — steps 1–2 landed, documentary, no
 > compute (§9 item 4).** The ruling is now written into the specs. `git diff
 > --stat`: `examples/ansys_benchmarks/README.md` (+40),
-> `birdcage_four_port_10_64_128MHz/SPEC.md` (+3/−1),
-> `loop_over_lossy_slab_10MHz/SPEC.md` (+18/−1),
-> `two_torus_gap_ports_10MHz/SPEC.md` (+13/−1) — four files, `*.md` under
+> `ans4_birdcage_four_port_10_64_128MHz/SPEC.md` (+3/−1),
+> `ans1_loop_over_lossy_slab_10MHz/SPEC.md` (+18/−1),
+> `ans3_two_torus_gap_ports_10MHz/SPEC.md` (+13/−1) — four files, `*.md` under
 > `examples/ansys_benchmarks/` only, **no band, tolerance, recorded figure or
 > physics claim moved**; the only numerals added are the 6 / 20 / 45
 > correspondence already stated in this entry. Written: the correspondence
@@ -30069,7 +30069,7 @@ it was the last compute path still sending a bare TERM to an `mpiexec` job
 **`ANS-3` — two coaxial gapped loops at 10 MHz: runnable half**
 *(commissioned 2026-08-16 by the interrupted weekly-scope session —
 authoritative spec in
-`examples/ansys_benchmarks/two_torus_gap_ports_10MHz/SPEC.md`; this entry
+`examples/ansys_benchmarks/ans3_two_torus_gap_ports_10MHz/SPEC.md`; this entry
 written by the 03:00 daily review to give the commission its runnable-half
 chunk, mirroring `ANS-1`'s shape.)* Regenerate the gated two-torus 2-port
 numbers through `run_n_port_sparameter_sweep` — the `EX-20` path, never

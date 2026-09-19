@@ -213,7 +213,7 @@ under-resolved even though the integrated quantity survived.
   2b/3), and PROJECT_PLAN.md §7 for their records.
 - The same compute path published as an Ansys benchmark, with `SPEC.md` for the
   operator to replicate:
-  `examples/ansys_benchmarks/loop_over_lossy_slab_10MHz/01_loop_over_lossy_slab_10MHz.py`
+  `examples/ansys_benchmarks/ans1_loop_over_lossy_slab_10MHz/01_loop_over_lossy_slab_10MHz.py`
   (`ans:1`, `ANS-1`).
 - The lossy-medium time-harmonic formulation this rests on, as a plane wave:
   `examples/time_harmonic/01_lossy_plane_wave.py` (`th:1`, `TH-6`).

@@ -1,0 +1,144 @@
+# Test Run
+- Chunk: OPS-ans-folder-rename
+- Commit: 4508304c59606b345d28728da9d46702362505a5
+- Time (UTC): 2026-09-19 23:40:20
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.13.12
+- Docker Compose: Docker Compose version v5.5.1
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 120 mpiexec -n 2 python3 -m pytest tests/unit/test_doc_reference_exit_codes.py -q --tb=short'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 24
+drwxr-xr-x  3 taz5297 taz5297 4096 Sep  4 23:31 .
+drwxr-xr-x 17 taz5297 taz5297 4096 Sep 19 18:40 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  721 Sep  3 13:49 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 4275 Sep 13 19:19 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.5.1
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 120 mpiexec -n 2 python3 -m pytest tests/unit/test_doc_reference_exit_codes.py -q --tb=short'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collected 19 items
+
+tests/unit/test_doc_reference_exit_codes.py ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collected 19 items
+
+tests/unit/test_doc_reference_exit_codes.py .........................F..F........          [100%]
+
+=================================== FAILURES ===================================
+_______________ test_the_in_tree_exemption_cannot_silently_widen _______________
+tests/unit/test_doc_reference_exit_codes.py:506: in test_the_in_tree_exemption_cannot_silently_widen
+    assert tracked == COMMITTED_EXAMPLE_ARTIFACTS
+E   AssertionError: assert {'examples/an...tup.png', ...} == {'examples/an...lidation.png'}
+E     
+E     Extra items in the left set:
+E     'examples/meshing/figures/meshing_07_birdcage_ring_gap_ports_setup.png'
+E     'examples/ports/figures/ports_15_birdcage_sixteen_leg_quadrature_b1_setup.png'
+E     'examples/mri/figures/mri_01_coil_phantom_fields_setup.png'
+E     'examples/time_harmonic/figures/time_harmonic_10_lossy_wall_cavity_q_setup.png'
+E     'examples/mri/figures/mri_02_mass_averaged_sar_setup.png'...
+E     
+E     ...Full output truncated (16 lines hidden), use '-vv' to show
+----------------------------- Captured stdout call -----------------------------
+OPS-44 pinned=5 checker=25 git_ls_files=25
+  tracked example artifact: examples/ansys_benchmarks/ans1_loop_over_lossy_slab_10MHz/metrics.json
+  tracked example artifact: examples/ansys_benchmarks/ans2_birdcage_coil_driven_sar_10MHz/metrics.json
+  tracked example artifact: examples/ansys_benchmarks/ans3_two_torus_gap_ports_10MHz/metrics.json
+  tracked example artifact: examples/ansys_benchmarks/ans4_birdcage_four_port_10_64_128MHz/metrics.json
+  tracked example artifact: examples/magnetostatics/figures/magnetostatics_01_straight_wire_setup.png
+  tracked example artifact: examples/magnetostatics/figures/magnetostatics_02_circular_loop_setup.png
+  tracked example artifact: examples/magnetostatics/figures/magnetostatics_04_helmholtz_analytic_comparison_setup.png
+  tracked example artifact: examples/magnetostatics/figures/magnetostatics_05_gauge_cross_check_setup.png
+  tracked example artifact: examples/magnetostatics/figures/magnetostatics_06_h_convergence_rate_setup.png
+  tracked example artifact: examples/magnetostatics/straight_wire_validation.png
+  tracked example artifact: examples/meshing/figures/meshing_01_two_torus_ports_setup.png
+  tracked example artifact: examples/meshing/figures/meshing_02_cylindrical_phantom_setup.png
+  tracked example artifact: examples/meshing/figures/meshing_03_birdcage_graded_conductors_setup.png
+  tracked example artifact: examples/meshing/figures/meshing_04_two_torus_port_sheet_setup.png
+  tracked example artifact: examples/meshing/figures/meshing_05_region_resolution_policy_setup.png
+  tracked example artifact: examples/meshing/figures/meshing_06_birdcage_leg_gaps_port_sheets_setup.png
+  tracked example artifact: examples/meshing/figures/meshing_07_birdcage_ring_gap_ports_setup.png
+  tracked example artifact: examples/mri/figures/mri_01_coil_phantom_fields_setup.png
+  tracked example artifact: examples/mri/figures/mri_02_mass_averaged_sar_setup.png
+  tracked example artifact: examples/mri/figures/mri_03_birdcage_mass_averaged_sar_setup.png
+  tracked example artifact: examples/ports/figures/ports_15_birdcage_sixteen_leg_quadrature_b1_setup.png
+  tracked example artifact: examples/ports/figures/ports_16_birdcage_b1_resolution_ladder_setup.png
+  tracked example artifact: examples/ports/figures/ports_17_birdcage_tuned_circuit_setup.png
+  tracked example artifact: examples/ports/figures/ports_18_birdcage_copper_leontovich_setup.png
+  tracked example artifact: examples/time_harmonic/figures/time_harmonic_10_lossy_wall_cavity_q_setup.png
+=========================== short test summary info ============================
+FAILED tests/unit/test_doc_reference_exit_codes.py::test_the_in_tree_exemption_cannot_silently_widen
+========================= 1 failed, 18 passed in 6.06s =========================
+.          [100%]
+
+=================================== FAILURES ===================================
+_______________ test_the_in_tree_exemption_cannot_silently_widen _______________
+tests/unit/test_doc_reference_exit_codes.py:506: in test_the_in_tree_exemption_cannot_silently_widen
+    assert tracked == COMMITTED_EXAMPLE_ARTIFACTS
+E   AssertionError: assert {'examples/an...tup.png', ...} == {'examples/an...lidation.png'}
+E     
+E     Extra items in the left set:
+E     'examples/meshing/figures/meshing_02_cylindrical_phantom_setup.png'
+E     'examples/magnetostatics/figures/magnetostatics_04_helmholtz_analytic_comparison_setup.png'
+E     'examples/mri/figures/mri_02_mass_averaged_sar_setup.png'
+E     'examples/meshing/figures/meshing_03_birdcage_graded_conductors_setup.png'
+E     'examples/meshing/figures/meshing_07_birdcage_ring_gap_ports_setup.png'...
+E     
+E     ...Full output truncated (16 lines hidden), use '-vv' to show
+----------------------------- Captured stdout call -----------------------------
+OPS-44 pinned=5 checker=25 git_ls_files=25
+  tracked example artifact: examples/ansys_benchmarks/ans1_loop_over_lossy_slab_10MHz/metrics.json
+  tracked example artifact: examples/ansys_benchmarks/ans2_birdcage_coil_driven_sar_10MHz/metrics.json
+  tracked example artifact: examples/ansys_benchmarks/ans3_two_torus_gap_ports_10MHz/metrics.json
+  tracked example artifact: examples/ansys_benchmarks/ans4_birdcage_four_port_10_64_128MHz/metrics.json
+  tracked example artifact: examples/magnetostatics/figures/magnetostatics_01_straight_wire_setup.png
+  tracked example artifact: examples/magnetostatics/figures/magnetostatics_02_circular_loop_setup.png
+  tracked example artifact: examples/magnetostatics/figures/magnetostatics_04_helmholtz_analytic_comparison_setup.png
+  tracked example artifact: examples/magnetostatics/figures/magnetostatics_05_gauge_cross_check_setup.png
+  tracked example artifact: examples/magnetostatics/figures/magnetostatics_06_h_convergence_rate_setup.png
+  tracked example artifact: examples/magnetostatics/straight_wire_validation.png
+  tracked example artifact: examples/meshing/figures/meshing_01_two_torus_ports_setup.png
+  tracked example artifact: examples/meshing/figures/meshing_02_cylindrical_phantom_setup.png
+  tracked example artifact: examples/meshing/figures/meshing_03_birdcage_graded_conductors_setup.png
+  tracked example artifact: examples/meshing/figures/meshing_04_two_torus_port_sheet_setup.png
+  tracked example artifact: examples/meshing/figures/meshing_05_region_resolution_policy_setup.png
+  tracked example artifact: examples/meshing/figures/meshing_06_birdcage_leg_gaps_port_sheets_setup.png
+  tracked example artifact: examples/meshing/figures/meshing_07_birdcage_ring_gap_ports_setup.png
+  tracked example artifact: examples/mri/figures/mri_01_coil_phantom_fields_setup.png
+  tracked example artifact: examples/mri/figures/mri_02_mass_averaged_sar_setup.png
+  tracked example artifact: examples/mri/figures/mri_03_birdcage_mass_averaged_sar_setup.png
+  tracked example artifact: examples/ports/figures/ports_15_birdcage_sixteen_leg_quadrature_b1_setup.png
+  tracked example artifact: examples/ports/figures/ports_16_birdcage_b1_resolution_ladder_setup.png
+  tracked example artifact: examples/ports/figures/ports_17_birdcage_tuned_circuit_setup.png
+  tracked example artifact: examples/ports/figures/ports_18_birdcage_copper_leontovich_setup.png
+  tracked example artifact: examples/time_harmonic/figures/time_harmonic_10_lossy_wall_cavity_q_setup.png
+=========================== short test summary info ============================
+FAILED tests/unit/test_doc_reference_exit_codes.py::test_the_in_tree_exemption_cannot_silently_widen
+========================= 1 failed, 18 passed in 6.20s =========================
+
+## Exit
+- Status: 1
+- Elapsed (s): 7
+- Filtered lines (gmsh optimisation chatter): 0

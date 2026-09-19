@@ -3687,7 +3687,7 @@ done draws the drained-queue fallback below — one figure, then stop.
 
    **`ANS-2` step 4 — the phantom h-halving diagnostic: does our driven-point
    sampling scatter collapse, and does the integral move?** (implementer;
-   `examples/ansys_benchmarks/birdcage_coil_driven_sar_10MHz/02_birdcage_coil_driven_sar_10MHz.py`
+   `examples/ansys_benchmarks/ans2_birdcage_coil_driven_sar_10MHz/02_birdcage_coil_driven_sar_10MHz.py`
    gains an env knob `FEM_EM_ANS2_PHANTOM_RESOLUTION` (default the `GEO-27`
    rung, unset ⇒ byte-identical output) and `tests/validation/` a small
    module for the anchors; no `src/`; **heavy**, cost probe first; `-n 8`;
@@ -4144,7 +4144,7 @@ done draws the drained-queue fallback below — one figure, then stop.
 
 9. **DONE 2026-09-19 (09:00 slot).** **`ANS-2` step 4a — the phantom-resolution knob in the example, so the XL
    window can run it** (implementer;
-   `examples/ansys_benchmarks/birdcage_coil_driven_sar_10MHz/02_birdcage_coil_driven_sar_10MHz.py`
+   `examples/ansys_benchmarks/ans2_birdcage_coil_driven_sar_10MHz/02_birdcage_coil_driven_sar_10MHz.py`
    only; no `src/`; standard; `-n 2`; `main`; independent; **20 slot-min**:
    ≈ 4 min windows + 15). **Why:** step 4's cost probe (`32f4eae`) re-priced
    the h-halving to `xl` (mesh 360 s + 188 s per drive, 40.9 GiB summed at
@@ -5427,7 +5427,7 @@ quadrant identity inside the unmoved 5 % band, and step 5b (2026-09-08)
 gated the 1 g column on `GEO-27`'s rung — a phase milestone on **gated**
 physics since `ANS-4`, which is §5.4's bar for a new case. **SPEC.md
 written this review:**
-`examples/ansys_benchmarks/birdcage_coil_driven_sar_10MHz/SPEC.md`.
+`examples/ansys_benchmarks/ans2_birdcage_coil_driven_sar_10MHz/SPEC.md`.
 
 Three scoping judgements are recorded in that spec and are this review's,
 not the operator's:
@@ -5494,7 +5494,7 @@ failure, so nothing is red; but a signal that fires on 85 % of the corpus is
 not carrying information any more, and the question for the daily review is
 whether the checker's 48 h threshold is the right one for a repo whose
 examples run weekly — **not** whether to refresh 40 artifacts by hand.
-(2) `examples/ansys_benchmarks/two_torus_gap_ports_10MHz/03_two_torus_gap_ports_10MHz.py:398`
+(2) `examples/ansys_benchmarks/ans3_two_torus_gap_ports_10MHz/03_two_torus_gap_ports_10MHz.py:398`
 emits `SyntaxWarning: invalid escape sequence '\*'` at *collection*, which
 has been polluting ~25 unrelated harness logs since 09-05 and makes a
 path-grep over-report `ans:3` runs by five days. Cosmetic, one-character

@@ -7760,7 +7760,7 @@ step 5) was already struck done by the 12:00 run, so the first open item was
 item 2, `ANS-1`. Preflight clean, container Up (22 h).
 
 **What was built.**
-`examples/ansys_benchmarks/loop_over_lossy_slab_10MHz/01_loop_over_lossy_slab_10MHz.py`
+`examples/ansys_benchmarks/ans1_loop_over_lossy_slab_10MHz/01_loop_over_lossy_slab_10MHz.py`
 — the runnable half of the case the 2026-08-09 weekly review commissioned. Per
 the §9 item's own instruction it **shares `EX-11`'s landed compute path rather
 than duplicating it**: `_build_fixture`, `_sigma_field`, `_ohmic_power_in_slab`,
@@ -13115,7 +13115,7 @@ to *fail* it (the `EX-20` inverted assertion); the corrected rung is −6.02%,
 inside. Im Z₂₁ = +1.110803269e+00 Ω vs ωM₁₂ = 1.241755 Ω;
 |Z₁₂−Z₂₁|/|Z₂₁| = 5.8309e-04, reported not gated.
 
-**Artifacts landed** in `examples/ansys_benchmarks/two_torus_gap_ports_10MHz/`:
+**Artifacts landed** in `examples/ansys_benchmarks/ans3_two_torus_gap_ports_10MHz/`:
 `03_two_torus_gap_ports_10MHz.py`, `metrics.json` (full complex 2×2 Z and S,
 ladder, identities, mesh/timings), `COMPARISON.md` (our columns filled, AED
 columns blank per SPEC), and the combined XDMF (untracked, as every
@@ -13151,7 +13151,7 @@ headings, 0 pending; `PASS: every runnable example has a guide with all
 required sections.`
 
 **Waiting-on-you, for the next daily review's dashboard.** The operator's AED
-replication of `two_torus_gap_ports_10MHz/SPEC.md` is now unblocked and is
+replication of `ans3_two_torus_gap_ports_10MHz/SPEC.md` is now unblocked and is
 the case's remaining half. It is also `PORT-10`'s independent adjudication
 input, so it is worth surfacing before `PORT-10` runs rather than after.
 
@@ -21117,8 +21117,8 @@ known-issues and §7:**
 1. **The tracked set is not empty.** The entry said to assert it is ("none
    today"). `git ls-files examples/ | grep -E '\.(xdmf|h5|bp|csv|json|png|msh)$'`
    returns three real committed artifacts —
-   `ansys_benchmarks/loop_over_lossy_slab_10MHz/metrics.json`,
-   `ansys_benchmarks/two_torus_gap_ports_10MHz/metrics.json`,
+   `ansys_benchmarks/ans1_loop_over_lossy_slab_10MHz/metrics.json`,
+   `ansys_benchmarks/ans3_two_torus_gap_ports_10MHz/metrics.json`,
    `magnetostatics/straight_wire_validation.png` — which are precisely the
    "committed next to its own case" artifacts the exemption exists for. Writing
    `assert tracked == {}` would have been writing a false assertion, so the
@@ -23935,7 +23935,7 @@ Under the licence, version-tagged, old digits in-comment, **no band moved**:
 **Not** re-recorded: `RECORDED_RAW_RATIO` / `RECORDED_CORRECTED_RATIO` in
 either example (they reproduce at 2.98e-05 / 2.92e-05 and leg (d3) did not move
 them), and no band, gate tolerance or reproduction band anywhere. The
-`ANS-1` import rule is why `examples/ansys_benchmarks/two_torus_gap_ports_10MHz/`
+`ANS-1` import rule is why `examples/ansys_benchmarks/ans3_two_torus_gap_ports_10MHz/`
 needed **zero script edits** — it imports all four records from `ports:2`, so
 one edit fixed both consumers. The structure the item asked for ("import rather
 than restate, so this class of divergence cannot recur") was already in place

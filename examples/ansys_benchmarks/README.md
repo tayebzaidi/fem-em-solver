@@ -63,17 +63,17 @@ are annotated.
 
 ## Cases
 
-- `loop_over_lossy_slab_10MHz/` — **ANS-1**, commissioned 2026-08-09
+- `ans1_loop_over_lossy_slab_10MHz/` — **ANS-1**, commissioned 2026-08-09
   (weekly review). Coil-loading ΔZ of a circular loop over a σ = 100 S/m
   slab at 10 MHz, on `MAT-6`'s gated physics (ΔR vs Dodd–Deeds to 1.58%).
   `SPEC.md` committed; runnable half is §7 chunk `ANS-1`; ready for operator
   replication when that chunk closes (it then goes to the dashboard's
   Waiting-on-you list).
-- `two_torus_gap_ports_10MHz/` — **ANS-3**, commissioned 2026-08-16
+- `ans3_two_torus_gap_ports_10MHz/` — **ANS-3**, commissioned 2026-08-16
   (weekly-scope session). Two coaxial gapped loops at 10 MHz: 2-port Z/S on
   `PORT-1`'s gated package (Im Z₂₁ against the filamentary ωM₁₂, plus the
   reciprocity and passivity identities).
-- `birdcage_four_port_10_64_128MHz/` — **ANS-4**, commissioned 2026-08-30
+- `ans4_birdcage_four_port_10_64_128MHz/` — **ANS-4**, commissioned 2026-08-30
   (weekly review). Gapped four-leg birdcage, phantom-loaded, four lumped
   ports: 4×4 S at 10 / 64 / 128 MHz on `PORT-9`/`PORT-11`'s self-consistency
   identities — the first case carrying Larmor-frequency numbers.
