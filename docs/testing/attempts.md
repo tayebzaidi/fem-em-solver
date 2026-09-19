@@ -13531,3 +13531,73 @@ says "one figure, then stop and journal" — no take-next. No parked branches, n
 denied commands (one self-inflicted wrong-filename window, journaled above).
 Queue state at close: §9 On-deck still drained (items 1–3 DONE); the 03:00
 review's shortfall of 178 min / two items against the floor stands.
+
+### 2026-09-19T09:43Z — `ANS-2` step 4 (§9 On-deck item 1) — **blocked** (re-priced to XL)
+
+**Slot:** 2026-09-19 04:30 CDT, scheduled implementer run. Preflight clean,
+container Up 8 days. Item 1 taken in order; delegated to the `implementer`
+agent (foreground, per implementer-run.md step 3).
+
+**Outcome commit:** `32f4eae` on `main` — measurement-only probe
+`tests/validation/probe_ans2_phantom_h_halving.py` (+128), its harness log,
+the `test-results.md` row, the §7 `ANS-2` annotation, and §9 item 1 marked
+**BLOCKED** with its unblock condition (standing rule (d)), all in one commit.
+Tree clean after.
+
+**What was tried.** Part (i) only — the item's own pre-registered cost probe:
+mesh the phantom at `phantom_resolution` = 0.00125 m (the halved rung) and run
+one drive at `-n 8`, printing cells / phantom cells / unknowns / solve time /
+`ru_maxrss` per rank. Parts (ii) (the four drives) and (iii) (the unset-knob
+control) did **not** run, and the env knob `FEM_EM_ANS2_PHANTOM_RESOLUTION`
+and the anchor module were deliberately **not written** — the stop branch
+fires before they are needed, and unverified code does not land on `main`.
+
+**Measured** (`20260919T093241Z_ANS-2.log:2033–2038`, Status 0, 553 s harness
+/ 566 s container, heavy tier, `-n 8`; lines re-read by this slot, not taken
+from the executor's report):
+
+- 719 769 cells, 452 228 phantom (tag-3) cells, 845 188 global unknowns
+- mesh **359.8 s**; one drive (P1) **188.4 s**; mesh + one drive 548.2 s
+- `ru_maxrss` 5.76 5.51 4.60 4.65 5.30 4.96 5.00 5.11 GiB → **40.89 GiB
+  summed**, 5.76 GiB max/rank
+- four-drive extrapolation **1 114 s = 18.6 min**, *before* the 21
+  mass-averaged ball integrals and the point evaluations (`:2037`)
+
+**Both stop criteria fire independently** (`:2038`): > 15 min **and** > 40 GiB
+summed. 18.6 min also breaches §5.1's hard 20-min-per-command cap, so the
+step is not merely over its own item ceiling — it is over the policy ceiling.
+The pre-registered branch was taken verbatim; nothing was re-tuned in-slot.
+
+**No decision branch (a)/(b)/(c) is selected.** Spread, phantom-power change
+and the negative control on the halved rung are unmeasured. The `ANS-2`
+verdict's pointwise band and the `MAT-4` external anchor's stated level are
+**unmoved**.
+
+**Why the prediction missed (the correctable part).** The item priced ≈ 610 k
+cells / ≈ 40 s per drive / ≈ 11 GiB summed by scaling `WF-7` step 0's
+**solve**, which carries no mesh time. 360 s of the 566 s measured here is the
+mesher, and the cell count came in 18 % high at 719 769. A cost prediction
+for a case whose *mesh* changes must price the mesher, not only the solve —
+worth carrying into the next h-refinement item anywhere in the repo.
+
+**One judgment call for the review to ratify or revert.** Step 4's part (i)
+ran to a *defined, pre-registered* conclusion and produced no incomplete code,
+so nothing was parked on `attempt/*`; the whole outcome (probe, log, record,
+BLOCKED mark) is one commit on `main`. Parking a measurement-only probe that
+ran green would have separated the measurement from its own record. If the
+review would rather see a branch, say so and the next such slot will park.
+
+**Harness logs:** `20260919T093241Z_ANS-2.log` (553 s, Status 0). No denied
+commands, no orphaned ranks (checked after the window), no known-issues
+entry needed — nothing failed.
+
+**Next-attempt hypothesis:** the four-drive halved-rung run costs ≈ 1 700 s
+and ≈ 41 GiB summed at `-n 8` — comfortably inside an `xl` window
+(≤ 512 GiB / 16 ranks / 4 h) with room to spare, so this is a cheap `xl`
+entry, not an `xxl` one. A review should pre-register it in
+`docs/testing/xl-pending.md` under licence class "cost probe", with the env
+knob and the anchor module written as part of the pre-registered command, and
+should require the mesh to be **built once and cached across the four
+drives** — otherwise 4 × 360 s of meshing is paid for a mesh that does not
+change between drives, which is over half the window's cost. Implementers
+never commission one, so step 4 stays BLOCKED until that entry exists.
