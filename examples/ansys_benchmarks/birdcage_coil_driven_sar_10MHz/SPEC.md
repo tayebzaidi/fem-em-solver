@@ -36,9 +36,14 @@ one frequency, plus a mass density and a field-calculator export.
       the gitignored `aed_results/` and `COMPARISON_private.md`, written by
       `20260918T235648Z_ANS-2-aed-private.log`; preliminary reading in
       `docs/private/ans2-operator-notes-2026-09-18.md`)
-- [ ] Adjudication (next weekly review after AED numbers land; numeric
-      ruling to gitignored `docs/private/ans2-adjudication-<date>.md`, only
-      the qualitative verdict into tracked files)
+- [x] Adjudication — **AGREE on rows 1–3, 2026-09-18** (interactive operator
+      session in the weekly's form; the 2026-09-19 weekly may amend; numeric
+      ruling in the gitignored `docs/private/ans2-adjudication-2026-09-18.md`).
+      Whole-phantom power at the 5 % level (AED lower), pointwise SAR within
+      ±10 % with the scatter on our side; the residual is the lumped-port feed
+      systematic, not the SAR operator. Rows 4–5 records; row 6 an HFSS
+      cube-averaging boundary artefact. A phantom h-halving diagnostic is
+      `ANS-2` step 4 (PROJECT_PLAN §7 / §9).
 
 ## Geometry (SI units — identical to `ANS-4`; reuse that project)
 
