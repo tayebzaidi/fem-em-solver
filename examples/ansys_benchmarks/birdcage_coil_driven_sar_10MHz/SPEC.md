@@ -31,8 +31,11 @@ one frequency, plus a mass density and a field-calculator export.
       the `MAT-4` gate modules — `ANS-1`'s rule, nothing restated — and
       writing `metrics.json`, `COMPARISON.md` with our columns filled and
       the AED columns verbatim blank, and combined XDMF)
-- [ ] Operator replication in AED *(goes to the top of the dashboard's
-      Waiting-on-you list when the box above is checked)*
+- [x] Operator replication in AED — **landed 2026-09-18** (HFSS 2026 R1, Zero
+      and First Order, via the untracked `aed/ans2_hfss_pyaedt.py`; numbers in
+      the gitignored `aed_results/` and `COMPARISON_private.md`, written by
+      `20260918T235648Z_ANS-2-aed-private.log`; preliminary reading in
+      `docs/private/ans2-operator-notes-2026-09-18.md`)
 - [ ] Adjudication (next weekly review after AED numbers land; numeric
       ruling to gitignored `docs/private/ans2-adjudication-<date>.md`, only
       the qualitative verdict into tracked files)
