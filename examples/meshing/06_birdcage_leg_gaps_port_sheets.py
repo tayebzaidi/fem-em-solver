@@ -15,7 +15,7 @@ are isolated air blocks sitting at the midpoint azimuth between adjacent legs,
 outside the metal. A sheet spanning such a box drives nothing. `leg_gap_length`
 removes ``|z| <= g/2`` from every leg and re-places each port box on its own leg
 axis spanning exactly the gap; `emit_port_sheets` then fragments that box with
-its mid-plane, so each port becomes **two** cell groups (``10x`` + ``11x``) and
+its mid-plane, so each port becomes **two** cell groups (``10x`` + ``20x``) and
 the sheet is rebuilt dolfinx-side from the interface between them (the
 known-issues-9 pattern — an interior dim-2 physical group hangs
 ``model_to_mesh`` at ``-n 2``).
@@ -44,7 +44,7 @@ re-executed here on the example's own two meshes:
 
 * conductor-facing port area **exactly 0.0** on all four ports — leg (b)'s
   finding, re-measured;
-* no ``11x`` cell tag, so there is no interface to rebuild a sheet from;
+* no ``20x`` cell tag, so there is no interface to rebuild a sheet from;
 * and — measured, not implied — ``_global_facet_count`` **= 0** on every
   ``210+i`` after running the same `_interface_facet_tags` rebuild on the uncut
   mesh. `GEO-18` step 2's audit found that clause asserted on the *cell* tags
@@ -64,7 +64,7 @@ Run it through the example runner::
 
 Output lands in ``examples/meshing/paraview_output/``: open
 ``meshing_06_birdcage_leg_gaps_port_sheets_sheeted_combined.xdmf`` and threshold on
-``CellTags`` (1 = conductor, 2 = air, 3 = phantom, 101-104 and 111-114 = the
+``CellTags`` (1 = conductor, 2 = air, 3 = phantom, 101-104 and 201-204 = the
 lower/upper halves of the four gap boxes) — the gaps are visible as breaks in
 the legs. ``..._uncut_combined.xdmf`` is the same view of `EX-21`'s coil for
 side-by-side comparison, and ``..._sheeted_facets.xdmf`` carries the
@@ -94,6 +94,7 @@ from fem_em_solver.io.paraview_utils import (  # noqa: E402
     adopt_host_ownership,
     write_xdmf_with_tags,
 )
+from fem_em_solver.post.setup_figure import write_setup_figure  # noqa: E402
 
 from tests.mesh.helpers import global_cell_tag_set  # noqa: E402
 from tests.mesh.test_coil_phantom_conforming import _tag_volume, _total_volume  # noqa: E402
@@ -150,6 +151,7 @@ from tests.mesh.test_two_torus_port_sheet import _sheet_extents  # noqa: E402
 CELL_TAG_NAMES = {1: "conductor", 2: "air", 3: "phantom"}
 
 OUTPUT_DIR = Path(__file__).resolve().parent / "paraview_output"
+FIGURE_DIR = Path(__file__).resolve().parent / "figures"  # committed, EX-57
 BASENAME = "meshing_06_birdcage_leg_gaps_port_sheets"
 
 PORTS = list(range(1, LEG_COUNT + 1))
@@ -219,6 +221,30 @@ def main() -> None:
     dx, dy, dz = diag["port_box_size_m"]
     halves = {i: (PORT_LOWER + i, PORT_UPPER + i) for i in PORTS}
     all_tags = [1, 2, 3, *[t for pair in halves.values() for t in pair]]
+
+    # Right after the mesh is built, before any analysis — `elapsed` above is
+    # already captured, so the render time never folds into it or any other
+    # printed record (`EX-57`).
+    write_setup_figure(
+        mesh,
+        cells,
+        FIGURE_DIR / f"{BASENAME}_setup.png",
+        region_names={
+            1: "conductor",
+            2: "air",
+            3: "phantom",
+            **{PORT_LOWER + i: f"port P{i} lower" for i in PORTS},
+            **{PORT_UPPER + i: f"port P{i} upper" for i in PORTS},
+        },
+        hide_tags=(2,),
+        translucent_tags=(3,),
+        slice_normal=(0.0, 0.0, 1.0),
+        title=(
+            f"mesh:6 — {LEG_COUNT}-leg gapped birdcage, port boxes split by "
+            f"mid-plane sheets (gap g={LEG_GAP_LENGTH:.1e} m)"
+        ),
+        comm=comm,
+    )
 
     tag_set = global_cell_tag_set(mesh, cells)
     assert tag_set == set(all_tags), (
@@ -414,7 +440,7 @@ def main() -> None:
             f"{n_cells_ctl / STEP3_CELL_COUNT_RECORD:.6f})  "
             f"meshed/CAD conductor={ctl_cad_ratio:.6f} (record "
             f"{UNCUT_CAD_RATIO_RECORD})  rung={ctl_elapsed:.2f} s"
-            f"\n[control] cell tags {sorted(ctl_tag_set)} — no 11x half tag, so "
+            f"\n[control] cell tags {sorted(ctl_tag_set)} — no 20x half tag, so "
             "there is no interface a sheet could be rebuilt from"
             f"\n[control] conductor-facing port areas "
             + " ".join(
@@ -472,7 +498,7 @@ def main() -> None:
         print(
             "\n[paraview] threshold `CellTags` in each _combined file "
             f"({', '.join(f'{t} = {n}' for t, n in CELL_TAG_NAMES.items())}, "
-            "101-104 / 111-114 = the lower/upper halves of the four gap boxes);"
+            "101-104 / 201-204 = the lower/upper halves of the four gap boxes);"
             "\n           open the two side by side — the legs are continuous in "
             "the uncut"
             "\n           rung and broken by an 8 mm gap in the sheeted one;"

@@ -13942,3 +13942,72 @@ Every non-identical digit is disclosed above; all four sit in unasserted-or-far-
 - Branch (if parked): none — landed on `main`.
 - Known-issues: with both legs in, the 2026-09-19 clipped-legend entry is **retired**, not narrowed — all fourteen pre-`c9cc369` figures have now been re-rendered and read (five in leg A, nine here). Together with `OPS-53`'s retirement of the title-guard half earlier in this slot, the whole 2026-09-19 setup-figure defect pair is closed.
 - Next-attempt hypothesis: n/a — closed. **For the 09-20 03:00 review:** §9 item 8 (`EX-57` figure for `examples/meshing/06_…`) is now the first open item, and items 1 and 2 remain BLOCKED on a commissioning review and a physics adjudication respectively (see the 04:30 slot's entries). The corpus's eighteen committed figures are, as of `f96502f`, all drawn under both the legend-anchor fix and the title guard.
+
+## 2026-09-19T12:44Z — `EX-57` (§9 item 8, `mesh:6`) — complete
+
+- Slot: 2026-09-19 07:30 CDT scheduled implementer run. Tree clean at
+  preflight, container Up 8 days. §9 items 1–2 BLOCKED, 3–7 DONE, so item 8
+  was the first open item — taken in order, no fallback used.
+- Executor: `example-runner`, spawned **foreground**, returned with no window
+  running. Its report was evidence only; every number below I re-read from the
+  logs myself, and the PNG I read with my own eyes.
+- What was done: `write_setup_figure` call added to
+  `examples/meshing/06_birdcage_leg_gaps_port_sheets.py` right after the
+  sheeted rung is built and **after** `elapsed` is captured, so the render
+  cannot fold into any printed timer; air (tag 2) hidden, phantom (3)
+  translucent, `slice_normal=(0,0,1)` so the `z = 0` plane cuts all four gap
+  boxes and the ports survive the clip; title 104 chars, inside the 130 limit.
+  Guide gained its `## Setup figure` section with the full PNG filename.
+- Anchors (imported, unmoved), flagged vs unflagged **digit-identical**:
+  sheeted `cells=116085`, meshed/CAD conductor `0.970069` (gate 0.95),
+  C4 sheet spread `6.050e-16` (band 1e-12), sheet meshed/analytic
+  `1.000000000000` on all four ports, terminal ratio `0.988616`; uncut
+  negative control `cells=98666` (`EX-21` record 98474, ratio 1.001950),
+  conductor-facing port area **exactly 0.0** on all four, cell tags
+  `[1,2,3,101,102,103,104]` with no upper-half tag. Status 0 both.
+- Elapsed: flagged **46.8 s**, unflagged **45.0 s**, `-n 2`, standard tier
+  (recorded window 46 s — on the nose). Censuses 1 s each.
+- Census: pre `examples=54 ok=18 missing=36 broken=0`; **predicted before
+  reading** `ok=19 missing=35 broken=0`; measured exactly that
+  (`20260919T124132Z_EX-57.log` SUMMARY). Docrefs `dead=0 guide=0 stale=20
+  exit=2` — `exit != 1`, gate met (`20260919T124140Z_EX-57.log:59`).
+  PNG 391 KiB (≤ 600 KiB).
+- **Finding, fixed in this commit — a pre-existing labelling error.** The
+  script's docstring (3 sites), its `[control]` and `[paraview]` end-of-run
+  prints, and the guide (5 sites) named the gap boxes' upper halves `11x` /
+  `111-114`. The imported constants are `PORT_LOWER = 100` and
+  `PORT_UPPER = 200` (`tests/mesh/test_birdcage_port_sheets.py:73,77`), so the
+  upper halves are `201-204`; `101-104` was always correct. Strings only — no
+  tag, assertion, band or record touched. The runner had spotted it and
+  written it into the caption as "a pre-existing label choice, not a mesh
+  defect"; that framing is wrong (it is an error, not a choice) and the §9
+  item 8 template explicitly puts false **source comments** in scope, so I
+  corrected all nine sites instead of shipping a caption that documents a bug.
+- Rule (i) honoured: the module was edited after the runner's last green
+  window, so **both** windows were re-run before the commit — logs
+  `20260919T123932Z_EX-57.log` (flagged) and `20260919T124032Z_EX-57.log`
+  (unflagged) are the windows this closes on, and the corrected strings are
+  on record in them (`…123932Z:3140,3149`).
+- Stronger than required: the post-edit re-render is **byte-identical** to the
+  pre-edit PNG (git kept it staged `A`, never `AM`), which is direct evidence
+  the string fix did not move the image, and that this figure's render is
+  deterministic run-to-run.
+- Logs: `20260919T123146Z` / `123148Z` (pre-censuses), `123331Z` (runner
+  flagged), `123611Z` (runner unflagged), `123712Z` / `123714Z` (runner
+  post-censuses), **`123932Z`** (flagged, as committed), **`124032Z`**
+  (unflagged, as committed), **`124132Z`** / **`124140Z`** (post-censuses,
+  as committed) — all `*_EX-57.log`.
+- Files: the example `.py` and its guide `.md`, the PNG, ten logs,
+  `docs/testing/test-results.md`, `PROJECT_PLAN.md` (§7 `EX-57` row census
+  line + done list, §9 item 8 DONE).
+- Branch (if parked): none — landed on `main`.
+- Known-issues: no entry opened or retired; the 2026-09-19 clipped-legend
+  pair stayed retired (this figure is drawn under both fixes and its legend
+  reads whole in the rendered PNG, viewed).
+- Next-attempt hypothesis: n/a — item complete. **For the 09-20 03:00
+  review:** §9 is now fully consumed — items 1 and 2 BLOCKED (each needs a
+  review, not an implementer: item 1 an `xl-pending.md` commissioning, item 2
+  a null-space/deflation decision), 3–8 DONE. The queue is **below the 240
+  slot-minute / 5-item floor with 0 open items**; the next slot will draw the
+  drained-queue `EX-57` fallback. Census now reads `missing=35`, so ~35
+  figures remain at roughly one per slot.

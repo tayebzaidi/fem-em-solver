@@ -33,7 +33,7 @@ direction is `ẑ` for every port, and a square transverse section makes the
 four-port layout exactly C4-invariant.
 
 `emit_port_sheets` then fragments that box with its own mid-plane, so each port
-becomes **two** cell groups (`10x` + `11x`) and the sheet is rebuilt
+becomes **two** cell groups (`10x` + `20x`) and the sheet is rebuilt
 dolfinx-side from the interface between them — never as a gmsh dim-2 physical
 group, which hangs `model_to_mesh` at `-n 2` inside `distribute_entity_data`
 (known-issues 9).
@@ -70,7 +70,7 @@ is a defect in the fragment, not a resolution effect.
 
 The uncut rung (`leg_gap_length=None`) must reproduce `EX-21`'s record — 98 474
 cells, meshed/CAD `0.967019` — and must **lack** everything above: conductor
--facing port area exactly `0.0` on all four ports, no `11x` cell tag, and
+-facing port area exactly `0.0` on all four ports, no `20x` cell tag, and
 `_global_facet_count` **= 0** on every `210+i` after running the *same*
 `_interface_facet_tags` rebuild on that mesh. `GEO-18` step 2's audit found that
 last clause asserted on the *cell* tags and only implied for the facet groups;
@@ -86,6 +86,43 @@ gates it demonstrates.
 gapped birdcage without lumped elements cannot resonate. This is the mesh
 `PORT-9` step 3 solves on, and nothing downstream of it. `PORT-9` is 🟡
 (PROJECT_PLAN.md §2).
+
+## Setup figure
+
+![mesh:6 setup — gapped birdcage with mid-plane port sheets, 3-D view and z = 0 slice](figures/meshing_06_birdcage_leg_gaps_port_sheets_setup.png)
+
+*Left:* the **sheeted rung**'s tagged regions with the air box (tag `2`)
+hidden — the four copper legs and two end rings (tag `1`), the translucent
+saline phantom (tag `3`) at the coil axis, and the four gap boxes (red) at
+each leg's mid-height. Each gap box is actually **two** cell groups meeting at
+the mid-plane sheet — tags `101`–`104` for the lower half, `201`–`204` for
+the upper half — but every half is named with the "port" keyword so all eight
+share the same red colour class (the `EX-57` one-colour-per-class
+convention), so **the split is not visible by colour in this render**; each
+gap box appears as one solid red block. To see the split itself, threshold
+`CellTags` to a lower tag (e.g. `101`) and its matching upper tag (`201`)
+separately in
+`examples/meshing/paraview_output/meshing_06_birdcage_leg_gaps_port_sheets_sheeted_combined.xdmf`
+(guide step 3). *(Rendering this figure surfaced a pre-existing labelling
+error: the script's docstring, its end-of-run print and this guide all named
+the upper halves `111`–`114`, where the imported `PORT_UPPER = 200`
+(`tests/mesh/test_birdcage_port_sheets.py`) makes them `201`–`204`. Strings
+only — no tag, assertion or band moved; corrected in the `EX-57` commit and
+both windows re-run.)* The reconstructed port-sheet
+facet tags `211`–`214` (the interior surfaces this example exists to show) are
+one topological dimension below what this figure draws and are **not drawn
+here**; open
+`examples/meshing/paraview_output/meshing_06_birdcage_leg_gaps_port_sheets_sheeted_facets.xdmf`
+and threshold `mesh_tags` to see them. The pale diagonal streak inside the
+phantom is the coarse cylinder tessellation's far-side facets showing through
+the translucent near side, the same artefact visible in `mesh:3`'s figure —
+not a crack in the mesh. *Right:* the `z = 0` slice (normal `(0, 0, 1)`) —
+the mid-height plane through all four gap boxes and the phantom's circular
+cross-section, air (grey) filling the rest of the box. Rendered by
+`fem_em_solver.post.setup_figure.write_setup_figure` from the example's own
+sheeted-rung mesh (`EX-57`), called immediately after that mesh is built and
+before any analysis, so the render never enters the printed `mesh=`/`rung=`
+timers; regenerate with `FEM_EM_SETUP_FIGURES=1` in the runner's environment.
 
 ## 2. How to run it
 
@@ -107,8 +144,8 @@ exit is an assertion failure, not a rendering problem.
 
 **Step 1 — read the tag inventory before opening ParaView.** Expected:
 
-- sheeted rung cell groups `1, 2, 3, 101-104, 111-114`. A set with `101-104` but
-  no `111-114` means the fragment did not happen and the sheet is not a mesh
+- sheeted rung cell groups `1, 2, 3, 101-104, 201-204`. A set with `101-104` but
+  no `201-204` means the fragment did not happen and the sheet is not a mesh
   entity at all — the identities below would then have nothing to reconstruct
   from, and the script stops on the non-emptiness guard rather than passing
   vacuously at `0 == 0`.
@@ -156,7 +193,7 @@ then `meshing_06_birdcage_leg_gaps_port_sheets_uncut_combined.xdmf` and
 `meshing_06_birdcage_leg_gaps_port_sheets_sheeted_facets.xdmf` alongside it.
 
 - Threshold the `CellTags` cell array in either `_combined` file: `1` is the
-  conductor, `2` the air, `3` the phantom, and `101-104` / `111-114` the lower
+  conductor, `2` the air, `3` the phantom, and `101-104` / `201-204` the lower
   and upper halves of the four gap boxes. Put the two rungs side by side — the
   legs are continuous in the uncut coil and broken by an 8 mm gap in the
   sheeted one. That break is the whole geometric content of `GEO-18` step 1.
