@@ -14011,3 +14011,86 @@ Every non-identical digit is disclosed above; all four sit in unasserted-or-far-
   slot-minute / 5-item floor with 0 open items**; the next slot will draw the
   drained-queue `EX-57` fallback. Census now reads `missing=35`, so ~35
   figures remain at roughly one per slot.
+
+## 2026-09-19T12:55Z — `EX-57` (drained-queue fallback, `mesh:7`) — complete
+
+- Slot: 2026-09-19 07:30 CDT, **second item under take-next** (item 8's
+  commit `6f75424` landed at minute 15 with a clean tree). §9 was fully
+  consumed by that commit — items 1–2 BLOCKED, 3–8 DONE — so this is the
+  standing drained-queue fallback, and per §9 the slot **stops after it**.
+  `check_example_setup_figures.py --next` named
+  `examples/meshing/07_birdcage_ring_gap_ports.py`
+  (`20260919T124301Z_EX-57.log`).
+- Executor: `example-runner`, foreground, returned with no window running.
+  Report treated as evidence only: I re-read every number from the logs, read
+  the PNG myself, and independently checked the one numeric claim its caption
+  makes about geometry (below).
+- What was done: `write_setup_figure` on the **leg+ring rung** (rung 2), the
+  figure call placed after `lr_elapsed` is captured so it cannot enter a
+  printed timer; air hidden, phantom translucent, `slice_normal=(0,0,1)`, no
+  clip (every port box is on the coil's outer periphery, so the unclipped
+  isometric keeps all twelve on screen). Title 84 chars.
+- **Rung choice — the "gated rung" trap.** The example builds three meshes.
+  Rung 2 is the only one carrying both port families as actual sheeted ports:
+  rung 1's four leg boxes are uncut floating blocks with no terminal, which is
+  an asymmetry the script itself asserts. So rung 2 is what the "first 12-port
+  dual-family mesh" headline is about, and it is the rung drawn. Stated in the
+  source comment and the caption.
+- Anchors (imported, unmoved), flagged vs unflagged **digit-identical**:
+  ring-gapped rung `cells=110786` = `RING_GAP_CELL_RECORD` exactly; leg+ring
+  rung `cells=128111` against `LEG_RING_CELL_RECORD` 128402 at the imported
+  1% `CELL_COUNT_BAND` (0.227% — inside); ring terminal ratio
+  `0.974454791–0.974454832` vs `RING_TERMINAL_RATIO` 0.974455 at 1e-5; leg
+  terminal ratio `0.988615826–0.988615858` vs `STEP1_TERMINAL_RATIO` at 1e-5;
+  Pappus ring primitives `1.000000000000`; C4+mirror spread `1.666e-15` /
+  `2.443e-16` against the 1e-12 symmetry band. **Negative control:**
+  `ring_gap_length=None` rung carries cell tags `[1,2,3,101,102,103,104]` with
+  no ring tag at all, and the same `_interface_facet_tags` rebuild finds
+  **0 facets on all eight** ring-sheet groups — measured, not implied
+  (`20260919T124648Z_EX-57.log:7174–7176`).
+- Elapsed: flagged **75.9 s**, unflagged **73.1 s** in-script, `-n 2`,
+  standard tier, Status 0 both (`…124648Z:7190,7193`; `…124937Z:7183,7186`).
+  Against the `EX-41` record of 83.5 s — comfortably inside.
+- Census: pre `examples=54 ok=19 missing=35 broken=0`, docrefs `dead=0 guide=0
+  stale=20 exit=2` (`20260919T124623Z_EX-57.log:89,116`); **predicted before
+  reading** `ok=20 missing=34 broken=0`; measured exactly that
+  (`20260919T125104Z_EX-57.log:89`), docrefs `dead=0 guide=0 stale=16 exit=2`
+  (`:112`) — `exit != 1`, gate met. PNG 383 KiB (≤ 600 KiB).
+- Labelling check (the defect class item 8 turned up on `mesh:6`): the runner
+  scanned every `10x`/`11x`/`20x`/`21x` literal in the script's docstring,
+  comments and prints and in the guide against `PORT_LOWER=100` /
+  `PORT_UPPER=200` (`tests/mesh/test_birdcage_port_sheets.py:73,77`) and
+  `RING_PORTS=5..12`. **All consistent — no error here.** One non-error noted
+  and deliberately not "fixed": the guide's on-record leg+ring cell count
+  (128 402) differs from this run's 128 111, which is ordinary mesher variance
+  already tolerated by the imported 1% band and asserted green — not a false
+  statement.
+- Caption claim verified independently: it says the eight ring ports sit at
+  `z = ±0.5·LEG_SPACING = ±0.055` m. `LEG_SPACING = 0.11`
+  (`tests/mesh/test_birdcage_port_tags.py:25`) — correct.
+- PNG read: title and legend both whole (legend elides to `leg port P1 lower
+  … ring port P12 upper`, the corpus elision convention, which stays); all
+  twelve red blocks placed as the caption describes; the `z = 0` panel shows
+  the four leg ports and the phantom's circular section only, as stated.
+- Process note from the runner, recorded because it is the `EX-43` trap: it
+  first edited the `.py` before running the pre-census, caught itself,
+  reverted via `git checkout`, ran the pre-census clean through the harness,
+  then reapplied the identical edit. The pre-census log therefore genuinely
+  predates any file write — but the near-miss is worth the review's notice.
+- Logs: `20260919T124301Z` (`--next`), `124623Z` (pre-censuses), `124648Z`
+  (flagged), `124937Z` (unflagged), `125104Z` (post-censuses) — all
+  `*_EX-57.log`.
+- Files: the example `.py` and guide `.md`, the PNG, five logs,
+  `docs/testing/test-results.md`, `PROJECT_PLAN.md` (§7 `EX-57` row).
+- Branch (if parked): none — landed on `main`.
+- Known-issues: nothing opened or retired.
+- Next-attempt hypothesis: n/a — complete, and the slot stops here per the
+  §9 drained-queue rule (one figure, then stop). **For the 09-20 03:00
+  review: §9 has 0 open items and is below the 240 slot-min / 5-item floor by
+  the full 240 minutes.** Items 1 and 2 each need a review decision, not an
+  implementer: item 1 an `xl-pending.md` commissioning of the four-drive
+  halved-rung run (≈ 1 700 s, ≈ 41 GiB — fits `xl` with margin), item 2 a
+  null-space deflation/filtering decision before `TH-17` step 1 can be
+  re-posed. Census now `missing=34`; at roughly one figure per slot the
+  `EX-57` fallback can absorb slots indefinitely, but it is a fallback, not a
+  queue.

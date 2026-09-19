@@ -86,6 +86,7 @@ from fem_em_solver.io.paraview_utils import (  # noqa: E402
     adopt_host_ownership,
     write_xdmf_with_tags,
 )
+from fem_em_solver.post.setup_figure import write_setup_figure  # noqa: E402
 
 from tests.mesh.helpers import global_cell_tag_set  # noqa: E402
 from tests.mesh.test_coil_phantom_conforming import _tag_volume, _total_volume  # noqa: E402
@@ -151,6 +152,7 @@ from tests.mesh.test_two_torus_port_sheet import _sheet_extents  # noqa: E402
 CELL_TAG_NAMES = {1: "conductor", 2: "air", 3: "phantom"}
 
 OUTPUT_DIR = Path(__file__).resolve().parent / "paraview_output"
+FIGURE_DIR = Path(__file__).resolve().parent / "figures"  # committed, EX-57
 BASENAME = "meshing_07_birdcage_ring_gap_ports"
 
 LEG_PORTS = list(range(1, LEG_COUNT + 1))
@@ -421,6 +423,41 @@ def main() -> None:
         leg_gap_length=LEG_GAP_LENGTH,
         emit_port_sheets=True,
     )
+
+    # Right after the mesh is built, before any analysis — `lr_elapsed` above
+    # is already captured, so the render time never folds into it or any
+    # other printed record (`EX-57`). This is the rung the figure draws: it
+    # is the only one carrying both port families as actual sheeted ports
+    # (rung 1's four leg boxes are uncut floating blocks, not ports — see the
+    # module docstring), so it is the rung the "12-port dual family" headline
+    # is about. The four leg ports split at their own mid-plane z=0 (the
+    # `GEO-18` cut); the eight ring ports sit at the two end rings,
+    # z=+/-0.5*LEG_SPACING, well clear of that plane — so the mid-plane slice
+    # panel on the right shows the leg cut only, and the ring ports are
+    # visible in the 3-D panel (left) alone, uncut by any clip.
+    write_setup_figure(
+        lr_mesh,
+        lr_cells,
+        FIGURE_DIR / f"{BASENAME}_setup.png",
+        region_names={
+            1: "conductor",
+            2: "air",
+            3: "phantom",
+            **{PORT_LOWER + i: f"leg port P{i} lower" for i in LEG_PORTS},
+            **{PORT_UPPER + i: f"leg port P{i} upper" for i in LEG_PORTS},
+            **{PORT_LOWER + i: f"ring port P{i} lower" for i in RING_PORTS},
+            **{PORT_UPPER + i: f"ring port P{i} upper" for i in RING_PORTS},
+        },
+        hide_tags=(2,),
+        translucent_tags=(3,),
+        slice_normal=(0.0, 0.0, 1.0),
+        title=(
+            "mesh:7 — 12-port dual family: 4 leg-gap ports + 8 ring-gap "
+            "ports (leg+ring rung)"
+        ),
+        comm=comm,
+    )
+
     lr_layout = lr_diag["ring_port_layout"]
     lr_port_cell_tags = {
         i: (PORT_LOWER + i, PORT_UPPER + i) for i in LEG_PORTS + RING_PORTS

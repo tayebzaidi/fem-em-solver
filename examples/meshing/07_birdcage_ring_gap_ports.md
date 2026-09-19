@@ -78,6 +78,42 @@ claim.** A gapped birdcage without lumped elements cannot resonate; a high-pass
 *layout* is not a high-pass *circuit*. `PORT-9` is 🟡 (PROJECT_PLAN.md §2) and
 nothing here is a port claim.
 
+## Setup figure
+
+![mesh:7 setup — 12-port dual-family birdcage, 3-D view and z = 0 slice](figures/meshing_07_birdcage_ring_gap_ports_setup.png)
+
+*Left:* the **leg+ring rung**'s tagged regions (rung 2, the doubly-gapped
+12-port mesh) with the air box (tag `2`) hidden — the four copper legs and
+two end rings (tag `1`), the translucent saline phantom (tag `3`) at the coil
+axis, and all twelve gap boxes (red): four at each leg's mid-height (the
+low-pass family, tags `101`–`104` / `201`–`204`) and eight at the mid-azimuth
+breaks in the two end rings (the high-pass family, tags `105`–`112` /
+`205`–`212`). This is the only rung with both families as actual sheeted
+ports — rung 1's four leg boxes are uncut floating blocks with no terminal
+(the asymmetry the script asserts), which is why this rung, not rung 1, is
+what the "12-port dual family" headline is about. Every half of every gap box
+is named with the "port" keyword, so all 24 tags share the same red colour
+class (the `EX-57` one-colour-per-class convention) — **the figure cannot
+show the split between a lower and upper half, nor which family a given red
+block belongs to, by colour alone**; only position does that (four blocks on
+the vertical legs vs. eight on the two rings). To see either split,
+threshold `CellTags` to a specific lower/upper tag pair, or to a leg range
+(`101`–`104`/`201`–`204`) vs. a ring range (`105`–`112`/`205`–`212`),
+separately in
+`examples/meshing/paraview_output/meshing_07_birdcage_ring_gap_ports_legring_combined.xdmf`
+(guide step 5). No `clip_normal` is used — every port box sits on the outer
+periphery of the coil, so the unclipped isometric view keeps all twelve on
+screen. *Right:* the `z = 0` slice (normal `(0, 0, 1)`, through the mesh
+centre) — this plane passes through the four **leg** gap boxes' own
+mid-height cut and the phantom's circular cross-section, air (grey) filling
+the rest of the box; it does **not** show any of the eight **ring** ports,
+which sit at the two end rings, `z = ±0.5·LEG_SPACING = ±0.055` m, well clear
+of this plane. The ring family is visible only in the left panel. Rendered
+by `fem_em_solver.post.setup_figure.write_setup_figure` from the leg+ring
+rung (`EX-57`), called immediately after that mesh is built and before any
+analysis, so the render never enters the printed `mesh=`/`rung=` timers;
+regenerate with `FEM_EM_SETUP_FIGURES=1` in the runner's environment.
+
 ## 2. How to run it
 
 ```
