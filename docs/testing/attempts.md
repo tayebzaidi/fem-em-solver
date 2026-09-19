@@ -13907,3 +13907,38 @@ The one non-identical digit is `mag:1`'s max-relative-error last place (76.7331 
 - Branch (if parked): none — landed on `main`.
 - Known-issues: the 2026-09-19 clipped-legend entry is **narrowed** from fourteen figures to **leg B's nine** (`mesh:3`, `th:10`, `mri:1/2/3`, `ports:15–18`), with the evidence block added. That is the status this item was allowed to move, and the only one.
 - Next-attempt hypothesis: n/a — leg A is done and closes nothing by design. **Leg B is §9 item 7 and is untouched**; it is the next open item and the first this slot did not reach.
+
+## 2026-09-19T11:47Z (2026-09-19 06:00 CDT slot, take-next item 7) — `EX-57` re-render, leg B: the remaining nine setup figures — **complete, nine of nine; the clipped-legend known-issues entry is retired**
+
+**How it ran.** Taken under take-next at minute ~27 with a clean tree, leg A's commit `997a5fe` and journal `f8018fc` landed. Delegated to `example-runner` in the foreground under item 6's prompt rules. Starting sha, pinning the negative control: **`f8018fc`**. The item's budget rule was honoured: the nine summed to **≈ 527 s (8.8 min)** of flagged windows against its 12-minute cap, so the "first five and mark 5 of 9" fallback did not fire and all nine landed.
+
+**Imported identities — green and digit-identical to each example's original flagged window** (old → new; the examples' own assertions, never restated):
+
+| example | original window | this window | verdict |
+|---|---|---|---|
+| `mri:1` | `20260916T110133Z_EX-57.log` | `20260919T112931Z_EX-57.log:438–439` | \|E\| mean 1.979842e+02, \|B\| mean 1.294602e-06 — identical |
+| `mri:2` | `20260916T123256Z_EX-57.log` | `20260919T112951Z_EX-57.log:122–137` | closed-form / point / DG0 / 1 g / 10 g / control byte-identical |
+| `mri:3` | `20260916T140657Z_EX-57-mri3-flagged-r2.log` | `20260919T113410Z_EX-57.log:1858,1865–1868,1885` | all four C4 spreads and controls byte-identical; **two round-off moves**, the ≤ 1e-10 identity residual 6.217e-15 → 5.107e-15 and the step-3f comparison 5.300e-11 → 4.453460e-11, both far inside their bounds |
+| `mesh:3` | the `GEO-15` gate record | `20260919T113114Z_EX-57.log:2869–2875` | graded 0.966977 / control 0.846150 / separation 0.120826 — identical |
+| `th:10` | `20260914T124948Z_EX-60.log` | `20260919T113011Z_EX-57.log:51,54–55,59` | Q and `[a]`/`[b]`/`[c]` byte-identical; **round-off moves** in the PEC control 4.798e-19 → 8.063e-20 and the Rayleigh residual 7.304e-14 → 7.473e-14, both ≪ bounds |
+| `ports:15` | `20260914T095534Z_EX-55.log` | `20260919T113830Z_EX-57.log:11641–11647` | (i) / (ii) / (iii) / `n_valid` byte-identical |
+| `ports:16` | `20260914T110437Z_EX-56.log` | `20260919T113547Z_EX-57.log:1840,3615,3618` | spreads and the monotone-fall assertion byte-identical |
+| `ports:17` | `20260914T112025Z_EX-58.log` | `20260919T113256Z_EX-57.log:41,43,1799–1800` | `C_tuned`, `Z_in`, \|S11\|, both residuals byte-identical |
+| `ports:18` | `20260914T124230Z_EX-59.log` | `20260919T113208Z_EX-57.log:910,913–914,918` | gates, powers, ratios byte-identical; reciprocity and residual moved at round-off, both ≪ bounds |
+
+Every non-identical digit is disclosed above; all four sit in unasserted-or-far-inside-bound round-off, none in a gated quantity.
+
+**The check that matters — each PNG Read.** All nine legends render **whole**, no mid-word truncation. `mri:3`'s eight unnamed port tags are **elision, corpus design, and were left alone** as the item directs.
+
+**Two captions corrected, prose only.** `examples/ports/16_birdcage_b1_resolution_ladder.md` and `…/17_birdcage_tuned_circuit.md` state the PNG's exact byte size in a parenthetical; the longer un-clipped legend moved them by < 3 KiB (259 → 260 KiB and 260 → 262 KiB). Both were corrected in the same commit and now name the re-render. **No `.py` file is in the diff**, so rule (i) did not bite and no example was owed a second run.
+
+**Imported gates.** Census **unchanged**, as predicted: `examples=54 ok=18 missing=36 broken=0` after (`20260919T114427Z_EX-57.log:89`, re-read by the slot) against the same line the slot itself read after leg A (`20260919T112334Z_EX-57.log:89`). Docrefs via `check_example_doc_references.py`: `dead=0 guide=0 stale=23 stale_severity=report exit=2` (`20260919T114436Z_EX-57.log:62`) — `exit != 1` is the condition; `stale` fell 25 → 23 because the two caption fixes refreshed their byte sizes. All nine PNGs ≤ 600 KiB.
+
+**Negative control, `ports:15`.** `git show f8018fc:examples/ports/figures/ports_15_birdcage_sixteen_leg_quadrature_b1_setup.png` — the pre-change image — has its legend truncated **mid-word**: `ring port 17 … ring p`. The re-rendered image reads `ring port 17 … ring port 38` in full. The still-clipped negative-result branch did not fire on any of the nine.
+
+**Windows** (standard, `-n 2` except `mri:3` at `-n 4` — its original width, matched from the journal; `mesh:3` real build, the other eight complex; `timeout -k 30` per example; all foreground, **all Status 0**): `mri:1` 6 s, `mri:2` 11 s, `th:10` 11 s, `mesh:3` 29 s, `ports:18` 35 s, `ports:17` 60 s, `mri:3` 79 s, `ports:16` 143 s, `ports:15` 153 s, plus census and docrefs. `pgrep -c python3` in the container read **0** after the run; no orphaned ranks, no denied commands, no window near its ceiling.
+
+- Files: nine PNGs under `examples/{meshing,mri,ports,time_harmonic}/figures/`, two guide captions, thirteen logs, `docs/testing/known-issues.md`, `docs/testing/test-results.md`, `PROJECT_PLAN.md` (§9 item 7 DONE). Commit `f96502f`; this journal follows.
+- Branch (if parked): none — landed on `main`.
+- Known-issues: with both legs in, the 2026-09-19 clipped-legend entry is **retired**, not narrowed — all fourteen pre-`c9cc369` figures have now been re-rendered and read (five in leg A, nine here). Together with `OPS-53`'s retirement of the title-guard half earlier in this slot, the whole 2026-09-19 setup-figure defect pair is closed.
+- Next-attempt hypothesis: n/a — closed. **For the 09-20 03:00 review:** §9 item 8 (`EX-57` figure for `examples/meshing/06_…`) is now the first open item, and items 1 and 2 remain BLOCKED on a commissioning review and a physics adjudication respectively (see the 04:30 slot's entries). The corpus's eighteen committed figures are, as of `f96502f`, all drawn under both the legend-anchor fix and the title guard.
