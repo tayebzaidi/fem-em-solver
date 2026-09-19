@@ -1,0 +1,116 @@
+# Test Run
+- Chunk: TH-17
+- Commit: f085e51182515822150fee99a77173dc2642ecda
+- Time (UTC): 2026-09-19 09:50:49
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.5.1
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 60 mpiexec -n 2 python3 -m pytest tests/validation/test_th17_birdcage_eigenmodes.py -v -s --tb=short --collect-only -q'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 24
+drwxr-xr-x  3 taz5297 taz5297 4096 Sep  4 23:31 .
+drwxr-xr-x 17 taz5297 taz5297 4096 Sep 19 04:50 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  721 Sep  3 13:49 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 4275 Sep 13 19:19 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.5.1
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 60 mpiexec -n 2 python3 -m pytest tests/validation/test_th17_birdcage_eigenmodes.py -v -s --tb=short --collect-only -q'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... collected 1 item
+
+<Dir workspace>
+  <Dir tests>
+    <Dir validation>
+      <Module test_th17_birdcage_eigenmodes.py>
+        `TH-17` — eigenmodes of the loaded F-small birdcage with the PEC coil and
+        `PORT-15` step 3's tuned capacitor sheets.
+        
+        Fixture: `TH-15` step 3's hole mesh (``_sheets_build(True, as_hole=True)`` —
+        the coil cut from the air, its cavity wall exterior and therefore PEC under the
+        ``pec_facet_tags=None`` reasoning that fixture documents), the phantom at
+        ``SALINE_SIGMA`` / ``SALINE_EPSILON_R``, and the four gap sheets carrying
+        ``Z_p = 1/(jωC)`` at `PORT-15` step 3's ``C_tuned`` (**imported** from
+        ``tests.validation.test_port_circuit_layer_field`` — ``select_c_tuned`` on
+        ``tuning_sweep``, never restated here).  No source, no termination: the whole
+        problem is the one non-Hermitian generalised pencil (G1) of
+        :func:`fem_em_solver.core.cavity.solve_general_mesh_modes`.
+        
+        Step 1 lands the **cost probe** first (§5.1, §9 item 2): this mesh has never
+        carried an eigensolve — `TH-9` and `TH-14` were boxes.  ``TH17_PROBE=1`` runs
+        mesh + one shift-invert solve at the 64 MHz target with ``nev = 6`` and prints
+        cells / dofs / wall / ``ru_maxrss`` per rank.  The item's **pre-registered STOP
+        rule**: > 15 min or > 40 GiB at ``-n 4`` ⇒ the step re-prices to an XL cost
+        probe and nothing else runs.
+        <Function test_cost_probe>
+          §9 item 2 (i): the unmeasured cost of one (G1) solve on the hole mesh.
+          
+          Prints cells / dofs / wall / ``ru_maxrss`` per rank and evaluates the
+          item's pre-registered STOP rule (> 15 min or > 40 GiB at ``-n 4``).
+          Asserts nothing but that an eigenpair converged — this is a probe.
+
+========================== 1 test collected in 1.27s ===========================
+collected 1 item
+
+<Dir workspace>
+  <Dir tests>
+    <Dir validation>
+      <Module test_th17_birdcage_eigenmodes.py>
+        `TH-17` — eigenmodes of the loaded F-small birdcage with the PEC coil and
+        `PORT-15` step 3's tuned capacitor sheets.
+        
+        Fixture: `TH-15` step 3's hole mesh (``_sheets_build(True, as_hole=True)`` —
+        the coil cut from the air, its cavity wall exterior and therefore PEC under the
+        ``pec_facet_tags=None`` reasoning that fixture documents), the phantom at
+        ``SALINE_SIGMA`` / ``SALINE_EPSILON_R``, and the four gap sheets carrying
+        ``Z_p = 1/(jωC)`` at `PORT-15` step 3's ``C_tuned`` (**imported** from
+        ``tests.validation.test_port_circuit_layer_field`` — ``select_c_tuned`` on
+        ``tuning_sweep``, never restated here).  No source, no termination: the whole
+        problem is the one non-Hermitian generalised pencil (G1) of
+        :func:`fem_em_solver.core.cavity.solve_general_mesh_modes`.
+        
+        Step 1 lands the **cost probe** first (§5.1, §9 item 2): this mesh has never
+        carried an eigensolve — `TH-9` and `TH-14` were boxes.  ``TH17_PROBE=1`` runs
+        mesh + one shift-invert solve at the 64 MHz target with ``nev = 6`` and prints
+        cells / dofs / wall / ``ru_maxrss`` per rank.  The item's **pre-registered STOP
+        rule**: > 15 min or > 40 GiB at ``-n 4`` ⇒ the step re-prices to an XL cost
+        probe and nothing else runs.
+        <Function test_cost_probe>
+          §9 item 2 (i): the unmeasured cost of one (G1) solve on the hole mesh.
+          
+          Prints cells / dofs / wall / ``ru_maxrss`` per rank and evaluates the
+          item's pre-registered STOP rule (> 15 min or > 40 GiB at ``-n 4``).
+          Asserts nothing but that an eigenpair converged — this is a probe.
+
+========================== 1 test collected in 1.29s ===========================
+
+## Exit
+- Status: 0
+- Elapsed (s): 3
+- Filtered lines (gmsh optimisation chatter): 0
