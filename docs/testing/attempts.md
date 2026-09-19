@@ -14094,3 +14094,101 @@ Every non-identical digit is disclosed above; all four sit in unasserted-or-far-
   re-posed. Census now `missing=34`; at roughly one figure per slot the
   `EX-57` fallback can absorb slots indefinitely, but it is a fallback, not a
   queue.
+
+## 2026-09-19T14:28Z — `ANS-2` step 4a (§9 item 9) — complete
+
+- Slot: 2026-09-19 09:00 CDT, first and only item. §9 items 1–2 BLOCKED and
+  3–8 DONE, so item 9 (written 09-18 by the interactive operator session) was
+  the first open one. Commit **`a2e4a04`**, tree clean, `main` never dirty.
+- Executor: `implementer` agent, foreground, returned with no window running.
+  Its report is evidence only — every number below was re-read from the logs
+  by this slot, and the two readings it flagged were checked independently.
+- **What landed:** `FEM_EM_ANS2_PHANTOM_RESOLUTION` in
+  `examples/ansys_benchmarks/birdcage_coil_driven_sar_10MHz/02_birdcage_coil_driven_sar_10MHz.py`
+  and nothing else (no `src/`, no `tests/`). Unset ⇒ the old path, tag string
+  empty, mesh-record asserts live, `COMPARISON.md` still written. Set ⇒
+  (a) the two 0.0025-rung `CELL_COUNT_BAND` asserts skipped behind a printed
+  line offering the measured counts as a *candidate* record, every other
+  imported band still asserted; (b) `metrics_h<res>.json` + a tagged XDMF,
+  `COMPARISON.md` / `COMPARISON_private.md` not rewritten; (c) the
+  `[ANS-2 step 4]` readout — four driven-point samples, the C4 spread, the
+  four phantom powers, each beside the tracked 0.0025 rung's value read from
+  `metrics.json` at runtime (no digit restated in code).
+- **Anchors, all green** (`20260919T142050Z_ANS-2-step4a-knob-identity.log`,
+  Status 0 at `:3869`, 330 s): unset-vs-tracked worst **primary** leaf
+  **8.187289e-11** of 145 against `EXACT_IDENTITY_RTOL` 1e-10 (`:37`);
+  set-`0.0025`-vs-unset **8.167942e-11** (`:1959`); negative control at
+  0.004 m prints the skip line (`:3837`) and **exits 0** (`:3855`). Earlier
+  windows: `…T140607Z` (first 0.004 pass, 154 s, superseded) and
+  `…T141006Z` (unset control, 187 s, all bands green at `:1924`). Two
+  windows ran at `-n 4`, not the item's `-n 2` — **a recorded deviation, and
+  the right call**: the tracked `metrics.json` they must reproduce
+  digit-for-digit was generated at `-n 4`, and a rank-count change perturbs
+  the last digits. The `-n 2` exposure is the negative-control window, which
+  drives the whole overridden path.
+- **Bug found and fixed in-slot** (disclosed, same file): the example handed
+  `write_xdmf_with_tags` a stem containing `_h0.004`; that helper strips
+  everything after the last dot as a suffix, so every rung would have
+  collided on `..._h0.xdmf`. The tag now writes the decimal point as `p`
+  (`_h0p004`), with the reason in a code comment and in `xl-pending.md`
+  entry 10.
+- **Entry 10's open cost branch is settled by measurement:** the example
+  **meshes once** for all four drives (184.8 s wall of which 74.4 s is the
+  four solves), so the ≈ 2 200 s re-meshing arm is dead and the price stands
+  at ≈ 1 115 s. Entry 10 **PENDING PREREQUISITE → READY** in the same commit
+  (daily-review.md step 6b.5) — the next review only has to queue it.
+- **Three readings for the 09-20 review, none of them asserted here.**
+  1. *The negative-control rung is accidental evidence about step 4's
+     question.* At 0.004 m — **coarser**, so not convergence evidence — the
+     C4 sampling spread falls **15.730 % → 7.392 %** while the four
+     whole-phantom powers move only **+0.33 % to +0.42 %** (`:3845`,
+     `:3849–3853`). That is the signature step 4's branch (a) predicts (the
+     scatter is point-sampling, the integral is stable), arrived at from the
+     wrong side of the rung. It does not pre-empt the halved-rung XL run and
+     no band moved.
+  2. *The skip line is mislabelled when the knob is set to the default
+     value.* At `FEM_EM_ANS2_PHANTOM_RESOLUTION=0.0025` it reads
+     "0.0025 m is not the 0.0025 m rung the records were measured on"
+     (`:1938`) — true in intent (the knob path skips unconditionally) but
+     false as a sentence. Also means the item's "digit-identical to unset
+     except the file names" anchor holds on the *numbers* and not on the
+     stdout text. Print-only, no gate touched; a one-line fix for whoever
+     next opens the file.
+  3. *The derived C4-miss leaves are round-off-dominated.* `ten_pairs` /
+     `one_pairs` / `control_1g` are differences of nearly equal O(3e-4)
+     numbers and reproduce between two runs of the **identical**
+     configuration only to 2.16e-8 relative (~1e-11 absolute) — pre-existing,
+     not the knob. The identity anchor was therefore read on the 139 primary
+     leaves at 1e-10 and those three checked against the bands the repo
+     actually gates (5 % C4 / 50 % control floor). **Nothing in the example
+     was loosened**; the 1e-10 classification lives in a scratch comparator
+     under `/logs/`, not in a tracked assertion.
+- One cosmetic pre-existing defect confirmed **not** this slot's: the
+  `SyntaxWarning: invalid escape sequence '\|'` at line 572 comes from the
+  non-raw `COMPARISON.md` template docstring (`\|V_src\|`, added by the
+  09-18 normalisation commit `e4697e9`) — present in the 09-19 `7eac273`
+  tree. Print-only, no known-issues entry opened.
+- Files: the one example `.py`, five logs, `docs/testing/test-results.md`,
+  `docs/testing/xl-pending.md`, `PROJECT_PLAN.md` (§7 `ANS-2` row, §9 item 9
+  → DONE). A sixth log `…T141455Z` is the identity window aborting at the
+  footer on `Status 128` — a container-side `git status` hitting "dubious
+  ownership in repository at '/workspace'" — re-run clean as `…T142050Z` and
+  committed for the record.
+- Cost: **11.2 min of windows against the item's ≈ 4 min estimate** (the
+  example's own four-drive run is ~3 min and the item needs three of them).
+  No AED number entered any tracked file, journal or commit message.
+- Branch (if parked): none. Known-issues: nothing opened or retired.
+- **Take-next: not exercised, and deliberately.** Item 9's commit landed at
+  minute 28.6 with a clean tree, so the before-minute-30 gate was open, but
+  the next open item is item 10 (`TH-17` step 1b) at a predicted **50
+  slot-min** heavy eigenvalue scan; writing this required entry closed the
+  gate, and starting a 50-minute item inside a ~15-minute residual could only
+  have parked it on `attempt/*` and marked it BLOCKED under standing rule
+  (d) — worse for the queue than leaving it open for the 09-20 04:30 slot.
+  **For the 09-20 03:00 review: §9 has exactly one open item (10), ~50
+  slot-min, against the 240 / 5-item floor — short by ~190 minutes and four
+  items.** `xl-pending.md` entry 10 is now READY and needs only queueing.
+- Next-attempt hypothesis: n/a — complete. For item 10, the step-1 finding
+  stands: the pencil returns only the N1curl gradient cluster, so its first
+  window should print the `C = 0` spectrum on the same mesh to locate the
+  physical branch before any target is re-chosen.
