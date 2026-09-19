@@ -13878,3 +13878,32 @@ Step-4 probe rows at `…probe4.log:383–388, 395–400` (the HYPOTHESIS block 
 - Branch (if parked): none — landed on `main`.
 - Known-issues: the 2026-09-19 title-guard entry's **half (b)** (no length guard) is retired in the commit. **Half (a) — the 14 committed figures with clipped legends — stays open**, which is correct: it is the subject of §9 items 6 and 7.
 - Next-attempt hypothesis: n/a — closed. **For the review, two things.** (1) The five f-string titles are checkable only at runtime; `mesh:1/2/3` and `ports:15` render at ≈ 90–115 characters today and nothing pins that, but the guard now fires on them in **any** run, flagged or not — so the failure mode is a loud `ValueError` in an example, not a clipped PNG. Worth knowing before items 6–7 re-render them. (2) `-n 2` runs the whole unit file on both ranks (no MPI test split), which is why the pre-change scratch module is pid-suffixed; that is a property of the suite, not of this item.
+
+## 2026-09-19T11:24Z (2026-09-19 06:00 CDT slot, take-next item 6) — `EX-57` re-render, leg A: the five magnetostatics setup figures — **complete, five of five; no chunk closed, no gate claimed**
+
+**How it ran.** Taken under take-next: `OPS-53`'s commit `da9db81` and its journal `1c12233` landed by minute ~13 with a clean tree, so the item's **soft dependency on item 5 was satisfied** — one render per helper change, as it wanted. Delegated to `example-runner` in the foreground with the "you are the executor, do not spawn, never return with a window running" prompt and the emit-then-harness rule. Starting sha, pinning the negative control: **`1c12233`**.
+
+**Imported identities — green and digit-identical to each example's original flagged window** (both log lines cited, old → new; none restated here, they are the examples' own assertions):
+
+| example | original flagged window | this window | verdict |
+|---|---|---|---|
+| `mag:1` | `20260914T125223Z_EX-57-straight-wire.log:186,271–272` | `20260919T111506Z_EX-57.log:186,271–272` | mesh 21830 cells / 4662 verts, rel L2 51.9781 % identical; max rel **76.7331 % → 76.7332 %** — last-printed-digit round-off, the same class already on record against the guide's own 76.7330 % table, and `mag:1` carries no `assert` |
+| `mag:2` | `20260914T125551Z_EX-57-circular-loop.log:264,289–290,294` | `20260919T111554Z_EX-57.log:264,289–290,294` | byte-identical: 409596 cells, rel L2 6.2134 %, max rel 11.6541 %, energy 2.466102e-08 J (**re-read by the slot, both files**) |
+| `mag:4` | `20260914T140147Z_EX-57-helmholtz.log:248–250,427–429,626–628` | `20260919T111830Z_EX-57.log:248–250,427–429,626–628` | cells 69918 / 103950 / 160677, B_z 3.563601e-09 / 3.519075e-09 / 3.483786e-09, rel err 0.92 / 0.34 / 1.34 %, mean / max / CV identical |
+| `mag:5` | `20260916T095415Z_EX-57-mag5-flagged.log` | `20260919T112024Z_EX-57.log:219–220,235–237,255` | probe vector L2 0.0003 %, volume L2 0.0040 %, max\|A\| ratio 2.773e-11, multiplier spread nan / 2.083e+02, "All assertions hold" |
+| `mag:6` | `20260916T095753Z_EX-57-mag6-flagged.log` | `20260919T112054Z_EX-57.log:185,341,572,585–587,589,592` | errors 21.8417 % / 15.3848 % / 4.4605 %, rate **1.9038**, exported fld 16.8915 % |
+
+The one non-identical digit is `mag:1`'s max-relative-error last place (76.7331 → 76.7332). It is not asserted anywhere, it is the same round-off class already noted against the guide's table, and it is disclosed here rather than smoothed over.
+
+**The check that matters — each PNG Read.** All five legends now render **whole**, no mid-word truncation. Every sentence of each guide's existing caption was checked against the new image (region names and tags, air hidden, slice plane, the C4 / merged-label conventions) and **every one is still true**, so no caption and no `.py` comment was edited — rule (i) therefore did not bite and no example needed a second run. The slot independently Read `magnetostatics_02_circular_loop_setup.png` itself and confirms the legend reads `wire (conductor)` / `air (hidden)` in full.
+
+**Negative control, `mag:2`.** `git show 1c12233:examples/magnetostatics/figures/magnetostatics_02_circular_loop_setup.png` — the pre-change image — shows the legend truncated **mid-word**: `wire (con` and `air (hidde`. The re-rendered image shows `wire (conductor)` and `air (hidden)`. The `c9cc369` anchor fix covers this label set; the negative-result branch (a still-clipped legend) did not fire on any of the five.
+
+**Imported gates.** Setup-figure census **unchanged**, as predicted for an item that adds no figure: `examples=54 ok=18 missing=36 broken=0` (`20260919T112334Z_EX-57.log:89`, re-read by the slot). Docrefs via `check_example_doc_references.py` — the right filename — `dead=0 guide=0 stale=25 stale_severity=report exit=2` (`20260919T112335Z_EX-57.log:64`), and `exit != 1` is the condition. PNG sizes all ≤ 600 KiB: 193 / 486 / 500 / 171 / 369 KiB.
+
+**Windows** (real build, standard, `-n 2`, `timeout -k 30 180`, all foreground, all Status 0, all inside their recorded times): `mag:1` 8 s, `mag:2` 134 s, `mag:4` 84 s, `mag:5` 6 s, `mag:6` 143 s, plus census and docrefs at ~1 s. No orphaned ranks, no denied commands, no window near its ceiling.
+
+- Files: five PNGs under `examples/magnetostatics/figures/`, seven logs, `docs/testing/known-issues.md`, `docs/testing/test-results.md`, `PROJECT_PLAN.md` (§9 item 6 DONE). Commit `997a5fe`; this journal follows. No `.py` file in the diff, as the item expected.
+- Branch (if parked): none — landed on `main`.
+- Known-issues: the 2026-09-19 clipped-legend entry is **narrowed** from fourteen figures to **leg B's nine** (`mesh:3`, `th:10`, `mri:1/2/3`, `ports:15–18`), with the evidence block added. That is the status this item was allowed to move, and the only one.
+- Next-attempt hypothesis: n/a — leg A is done and closes nothing by design. **Leg B is §9 item 7 and is untouched**; it is the next open item and the first this slot did not reach.
