@@ -13706,24 +13706,109 @@ path has no analogue, and `TH-9`'s own
 feature of this discretisation rather than a bug here. Do (1) and (2) in one
 window before re-choosing `nev` and target.
 
+### 2026-09-19T10:00Z — `OPS-52` (§9 On-deck item 3) — **complete**
+
+**Slot:** 2026-09-19 04:30 CDT, **third item under take-next** (item 2's
+outcome commits had landed, tree clean, clock at minute 25). Delegated to the
+`implementer` agent, foreground. Taken because it was the first open item and
+because the 03:00 review marked it "land this before Monday 09-21 02:00 if a
+slot can" — the 09-21 `xl` and 09-26 `xxl` windows both run this probe, so a
+wrong label would have been read off two more windows.
+
+**Outcome commit:** `99356d8` on `main` — probe change, the new unit test,
+all three harness logs, the `test-results.md` rows, §7 `OPS-52` ⬜ → **✅**,
+§9 item 3 marked DONE, and the 2026-09-19 probe-label **known-issues entry
+deleted**, all in one commit. Tree clean. `main` green.
+
+**Anchors, measured** (log lines re-read by this slot, not taken from the
+executor's report):
+
+| Anchor | Measured | Band / expectation | Verdict |
+|---|---|---|---|
+| `_phase4_label(2, 16, 1, …)` | `order readout`, `degree 2`; no `flag-off control` | as registered | PASS |
+| `_phase4_label(1, 8, 1, …)` | `flag-off control` + `ASSERTED` | as registered | PASS |
+| `_phase4_label(1, 16, 1, …)` *(added by the executor)* | `flag-off control` + `printed only`, no `ASSERTED` | — | PASS |
+| relative move on the 09-19 values | **recomputed 5.5008 %**, label prints **`5.50 %`** | `5.50 %` to two decimals | PASS |
+| negative control, source text | ungated `phase 4 flag-off control` **1 → 0** | integer identity 1 → 0 | PASS |
+| control window `S_driven(P17)` | `0.407423+0.344417j`, **ASSERTED** = `S_DRIVEN_STEP0_RECORD` | the probe's own executed assert | PASS |
+| control window cells | 507 266, rel +5.200e-03 | imported `CELL_COUNT_BAND` 0.01 | ANCHOR PASS |
+| re-dated brackets on their own point | 0.47 min in 0.31–1.23; 10.581 GiB in 5.47–21.86 | non-gating prints | both INSIDE |
+
+The relative move was **recomputed**, not copied from the review's
+arithmetic, as the item required: |Δ| = 0.0293464, |S₁| = 0.533494 ⇒
+5.5008 % (`20260919T095615Z_OPS-52.log:51`). The negative control pins the
+sha as a **module constant** (`19bed9a9`, this slot's own prior commit) and
+never `HEAD:` — the `test_orphan_guard.sh` trap avoided (`:60`).
+
+**Harness logs:** `20260919T095615Z_OPS-52.log` (unit test, `-n 2`, `-s`,
+complex build — `:64` **5 passed in 1.11s**, `:70` Status 0, 3 s);
+`20260919T095635Z_OPS-52.log` (the `-n 8` flag-off control window, the
+`20260916T093301Z:12` command verbatim, `timeout -k 30 590`, durable capture
+— `:10424` restored qualifier and INSIDE, `:10427` RSS INSIDE, `:10428` the
+phase-4 control line reading `ASSERTED`, `:10429–10430` both ANCHOR PASS,
+`:10433` `[capture] rc=0` **last**, `:10437` **154 s**; orphans 0 before and
+after, no kill);
+`20260919T095556Z_OPS-52.log` (the first unit window, **red**, committed as
+the record — see below).
+
+**One new environment trap, worth carrying forward.** The first unit window
+failed on `git show` **inside the container**: `fatal: detected dubious
+ownership in repository at '/workspace'` — the bind mount's uid does not
+match the container user's, so any in-container `git` call on `/workspace`
+is refused by default. Fixed in-test with `git -c safe.directory=<repo>
+show …`, commented with the measurement, and the red window committed as its
+own record. Any future test that shells out to `git` from inside the
+container will hit this; the one-line `-c safe.directory=` prefix is the fix.
+
+**Two executor judgment calls, disclosed, both in scope and both green.**
+(1) The `FEM_EM_WF7_PORTS=1` symptom named in the *same* known-issues entry
+was also fixed (now prints `(unset, default)`, visible at
+`20260919T095635Z_OPS-52.log:10423`) — a string-only change, and the entry
+was being retired in this commit, so leaving half of it would have retired a
+live symptom. (2) `_solve_qualifier(kind)` was added as a second small pure
+function so the `held` case reads `assemble + solve on the held factor`
+rather than falsely claiming a factorise; the item asked only for the literal
+qualifier restored, and this is strictly more correct. Both are strings.
+`S_DRIVEN_STEP0_RECORD`, the cell band, the `-n 8` assert condition and every
+solver call are untouched; no `src/`; no queued `.env` edited (frozen after
+`QUEUED`); the degree-2 power-accounting residual left alone (the weekly's).
+
+**Rule (i):** the control window ran the probe from a working tree
+byte-identical to what the commit holds — no edit between window and commit.
+
+**Next-attempt hypothesis:** nothing is outstanding. The one plausible future
+break is the negative control — `_flag_off_outside_degree1` walks
+indentation, so re-indenting the probe could shift the `degree == 1` block
+boundary and misattribute the phrase. The fix then is to pin on the **AST**
+rather than the source text, never to relax the 1 → 0 identity.
+
 ### Slot close — 2026-09-19 04:30 CDT
 
-**Two items, four outcome commits, clean tree, `main` green.** Both items
-ended **blocked**, for opposite reasons, and both blockers are exactly the
-kind a cost probe is meant to find before a window is spent:
+**Three items, six outcome commits, clean tree, `main` green.** Two items
+ended blocked on pre-registered branches and one closed a chunk; both
+blockers are exactly what a cost probe exists to find *before* a window is
+spent, and they fired in opposite directions:
 
 | Item | Chunk | Probe verdict | Outcome |
 |---|---|---|---|
 | 1 | `ANS-2` step 4 | **STOP** (18.6 min / 40.89 GiB vs 15 min / 40 GiB) | `32f4eae` — re-prices to `xl`, BLOCKED on a commissioning review |
 | 2 | `TH-17` step 1 | **PROCEED** (0.797 min / 2.179 GiB, ~19× margin) | `f085e51`, `f5a87d9`, `941fa15` — BLOCKED on a physics negative: no eigenvalue near 64 MHz |
+| 3 | `OPS-52` | n/a (labels + one 154 s control window) | `99356d8` — **`OPS-52` ⬜ → ✅**, known-issues entry retired |
 
 Commits: `32f4eae`, `95a1c57` (journal), `f085e51`, `f5a87d9`, `941fa15`,
-plus this journal. No parked branches, no denied commands, no orphaned ranks,
-no known-issues entries (nothing failed). Queue state at close: §9 items 1
-and 2 both **BLOCKED**; the first open item for the next slot is **item 3,
-`OPS-52`**, which the 03:00 review marked "land this before Monday 09-21
-02:00 if a slot can" — the 09-21 `xl` and 09-26 `xxl` windows both run that
-probe. Six open items remain.
+`19bed9a` (journal), `99356d8`, plus this journal. **No parked branches, no
+denied commands, no orphaned ranks, no new known-issues entries** — one
+entry was *retired*, and the only red window (the `safe.directory` one) was
+committed as its own record with the fix in the same commit.
+
+**Compute spent:** five harness windows — 553 s (`ANS-2` probe, `-n 8`,
+heavy), 51 s + 3 s + 11 s (`TH-17` probe, collection smoke, gate re-runs),
+3 s + 154 s (`OPS-52` unit test and control window, `-n 8`). Every window
+foreground, every container-side timeout `-k 30`, no window near its ceiling,
+no XL or XXL touched.
+
+Queue state at close: §9 items 1 and 2 **BLOCKED**, item 3 **DONE**; five
+open items remain (4–8), and the next slot's first item is **item 4**.
 
 **Three things for the 09-20 03:00 review, in priority order:** (1) the
 `h/w` vs `w/h` discrepancy between the §7 `TH-17` row and the landed code —
@@ -13731,5 +13816,8 @@ a physics adjudication that may itself be `TH-17`'s blocker; (2) an
 `xl-pending.md` pre-registration for `ANS-2` step 4's four-drive halved-rung
 run (≈ 1 700 s, ≈ 41 GiB summed at `-n 8`, with the mesh built once and
 cached across drives), without which item 1 stays blocked; (3) the take-next
-reading recorded in the item-2 entry above — whether a *blocked* first item
-licenses a second, given the tree was clean and nothing was parked.
+reading this slot used twice — whether a *blocked* first item licenses a
+second, given the tree was clean and nothing was parked. On reading (3): it
+produced two further items, one of them a chunk closure the review itself
+wanted landed before Monday, so the reading is at least useful; it should
+still be ratified or reverted explicitly rather than left to precedent.
