@@ -117,8 +117,24 @@ FREQUENCY_HZ = 64.0e6
 DEGREE = int(os.environ.get("FEM_EM_WF7_DEGREE", "1"))
 if DEGREE not in (1, 2):
     raise ValueError(f"FEM_EM_WF7_DEGREE must be 1 or 2, got {DEGREE}")
-PREDICTED_SUMMED_RSS_GIB = {1: (11.0, 33.0), 2: (150.0, 350.0)}[DEGREE]
-PREDICTED_SOLVE_MIN = {1: (3.0, 8.0), 2: (10.0, 60.0)}[DEGREE]
+# Both brackets below are *measured single-drive price at the stated width*,
+# re-dated by `OPS-52` (2026-09-19) from the measured points and set to
+# measured x [0.5, 2].  They gate nothing and never did — the INSIDE/OUTSIDE
+# verdict beside them is a print, not an assert.  Their predecessors were
+# pre-measurement predictions: degree 1 (11-33 GiB, 3-8 min) was never met on
+# either window, and degree 2 (150-350 GiB, 10-60 min) overshot the measured
+# price threefold on both axes.
+#
+#   degree 1: solve 37.02 s, summed ru_maxrss 10.932 GiB, -n 8,
+#             `20260913T190102Z_WF-7-step0.log` (2026-09-13, step 0).
+#   degree 2: solve 347.56 s, summed ru_maxrss 107.917 GiB, -n 16,
+#             `20260919T070008Z_WF-7-step0b.log` (2026-09-19, step 0b, xxl).
+#
+# Summed `ru_maxrss` scales with rank count on a fixed mesh (10.932 GiB at
+# -n 8, 13.419 GiB at -n 16, same mesh and order), so each bracket belongs to
+# the width in its comment; read the verdict with that in mind.
+PREDICTED_SUMMED_RSS_GIB = {1: (5.47, 21.86), 2: (53.96, 215.83)}[DEGREE]
+PREDICTED_SOLVE_MIN = {1: (0.31, 1.23), 2: (2.90, 11.59)}[DEGREE]
 
 PORTS_ENV = os.environ.get("FEM_EM_WF7_PORTS", "1").strip().lower()
 if PORTS_ENV != "all":
@@ -140,6 +156,48 @@ else:
 # version-tagged, compared only where it was measured; printed elsewhere).
 S_DRIVEN_STEP0_RECORD = "0.407423+0.344417j"
 S_DRIVEN_RECORD_RANKS = 8
+
+
+def _phase4_label(
+    degree: int,
+    comm_size: int,
+    n_driven: int,
+    port_id: str,
+    s_driven_str: str,
+    record: str = S_DRIVEN_STEP0_RECORD,
+    record_ranks: int = S_DRIVEN_RECORD_RANKS,
+) -> str:
+    """The phase-4 line, as a pure function of what actually ran (`OPS-52`).
+
+    At degree 1 with the knob unset this probe *is* step 0, so the line is the
+    flag-off control against the step-0 record.  At any other degree there is
+    no control to fail: the same two numbers are the order-sensitivity readout
+    the degree knob was added for, and the line says so and prints the relative
+    move ``|S_d - S_1| / |S_1|``.
+    """
+    if degree == 1:
+        asserted = comm_size == record_ranks and n_driven == 1
+        return (
+            f"phase 4 flag-off control: S_driven({port_id}) printed "
+            f"{s_driven_str} vs the step-0 record {record} "
+            f"(asserted only at -n {record_ranks} with one drive; here "
+            f"{'ASSERTED' if asserted else 'printed only'})"
+        )
+    move = abs(complex(s_driven_str) - complex(record)) / abs(complex(record))
+    return (
+        f"phase 4 order readout: S_driven at degree {degree} beside the "
+        f"degree-1 step-0 record — {port_id} printed {s_driven_str} vs "
+        f"{record}, relative move |S_{degree} - S_1| / |S_1| = "
+        f"{move * 100.0:.2f} % (printed only; no control is implied away from "
+        f"degree 1, where the record was measured)"
+    )
+
+
+def _solve_qualifier(solve_kind: str) -> str:
+    """What the drive timer covers (`OPS-52`; step 0's qualifier, restored)."""
+    if solve_kind == "held":
+        return "assemble + solve on the held factor"
+    return "assemble + factorise + solve"
 
 
 def _rss(comm, phase: str, t_window: float) -> None:
@@ -249,7 +307,9 @@ def main() -> int:
         list(ring_ports) if _n_ports is None else list(ring_ports)[:_n_ports]
     )
     driven_ids = [f"P{i}" for i in drives]
-    say(f"phase 3 solve: FEM_EM_WF7_PORTS={PORTS_ENV} -> {len(driven_ids)} drive(s) "
+    ports_src = "set" if "FEM_EM_WF7_PORTS" in os.environ else "unset, default"
+    say(f"phase 3 solve: FEM_EM_WF7_PORTS={PORTS_ENV} ({ports_src}) -> "
+        f"{len(driven_ids)} drive(s) "
         f"{driven_ids[0]}..{driven_ids[-1]}, the rest of the {len(ring_ports)} ring "
         f"sheets terminated at {TERMINATED_PORT_IMPEDANCE_OHM} Ohm")
 
@@ -268,10 +328,11 @@ def main() -> int:
         del fields
         columns[driven] = col
         solve_s = col["solve_time"]
+        kind = col.get("solve_kind", "solve")
         say(f"phase 3 drive {k + 1}/{len(driven_ids)} {driven}: solve {solve_s:.2f} s "
-            f"= {solve_s / 60:.2f} min ({col.get('solve_kind', 'solve')})  "
-            f"({'INSIDE' if lo_t <= solve_s / 60 <= hi_t else 'OUTSIDE'} predicted "
-            f"{lo_t}-{hi_t} min per drive)")
+            f"= {solve_s / 60:.2f} min ({kind}: {_solve_qualifier(kind)})  "
+            f"({'INSIDE' if lo_t <= solve_s / 60 <= hi_t else 'OUTSIDE'} measured "
+            f"single-drive price at the stated width, {lo_t}-{hi_t} min per drive)")
         say(f"phase 3 drive {k + 1} accounting (printed, not asserted): "
             f"supplied {col['supplied']:.6e} W  phantom {col['phantom']:.6e}  "
             f"conductor {col['conductor']:.6e}  sheets {col['sheet_total']:.6e}  "
@@ -287,23 +348,20 @@ def main() -> int:
                 f"[WF-7 step0] PRICE drive {k + 1}/{len(driven_ids)} {driven}: "
                 f"degree {DEGREE}  cells {n_cells}  unknowns {unknowns}  "
                 f"ranks {comm.size}  mesh build {build_s:.2f} s  "
-                f"solve {solve_s:.2f} s ({col.get('solve_kind', 'solve')})  "
+                f"solve {solve_s:.2f} s ({kind}: {_solve_qualifier(kind)})  "
                 f"cumulative window {time.perf_counter() - t_window:.2f} s\n"
                 f"[WF-7 step0] PRICE drive {k + 1}: ru_maxrss per rank GiB "
                 f"{[round(v, 3) for v in per_rank]}  summed {s:.3f} GiB  "
                 f"max {max(per_rank):.3f} GiB  "
-                f"({'INSIDE' if lo_m <= s <= hi_m else 'OUTSIDE'} predicted "
-                f"{lo_m}-{hi_m} GiB)",
+                f"({'INSIDE' if lo_m <= s <= hi_m else 'OUTSIDE'} measured "
+                f"single-drive price at the stated width, {lo_m}-{hi_m} GiB)",
                 flush=True,
             )
 
     # ---- phase 4: the k x k S, its identities (printed) -----------------
     first = driven_ids[0]
     s_first_str = f"{columns[first]['s_column'][first]:.6f}"
-    say(f"phase 4 flag-off control: S_driven({first}) printed {s_first_str} vs the "
-        f"step-0 record {S_DRIVEN_STEP0_RECORD} "
-        f"(asserted only at -n {S_DRIVEN_RECORD_RANKS} with one drive; here "
-        f"{'ASSERTED' if (comm.size == S_DRIVEN_RECORD_RANKS and len(driven_ids) == 1 and DEGREE == 1) else 'printed only'})")
+    say(_phase4_label(DEGREE, comm.size, len(driven_ids), first, s_first_str))
 
     ratio = None
     if len(driven_ids) >= 2:

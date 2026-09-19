@@ -1,0 +1,72 @@
+# Test Run
+- Chunk: OPS-52
+- Commit: 19bed9a9ba60c1ed6373dfc3ac5bf1e460cabc82
+- Time (UTC): 2026-09-19 09:56:15
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.5.1
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && source /usr/local/bin/dolfinx-complex-mode && PYTHONPATH=/workspace/src timeout -k 30 180 mpiexec -n 2 python3 -m pytest tests/unit/test_wf7_probe_labels.py -v -s --tb=short'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 24
+drwxr-xr-x  3 taz5297 taz5297 4096 Sep  4 23:31 .
+drwxr-xr-x 17 taz5297 taz5297 4096 Sep 19 04:56 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  721 Sep  3 13:49 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 4275 Sep 13 19:19 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.5.1
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && source /usr/local/bin/dolfinx-complex-mode && PYTHONPATH=/workspace/src timeout -k 30 180 mpiexec -n 2 python3 -m pytest tests/unit/test_wf7_probe_labels.py -v -s --tb=short'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... collected 5 items
+
+tests/unit/test_wf7_probe_labels.py::test_phase4_label_degree2_is_an_order_readout_not_a_control PASSED
+tests/unit/test_wf7_probe_labels.py::test_phase4_label_degree1_is_the_flag_off_control_and_says_asserted PASSED
+tests/unit/test_wf7_probe_labels.py::test_phase4_label_degree1_off_record_width_says_printed_only PASSED
+tests/unit/test_wf7_probe_labels.py::test_phase4_label_prints_the_0919_relative_move_to_two_decimals [OPS-52] recomputed relative move 5.5008 % ; label: phase 4 order readout: S_driven at degree 2 beside the degree-1 step-0 record — P17 printed 0.436656+0.346994j vs 0.407423+0.344417j, relative move |S_2 - S_1| / |S_1| = 5.50 % (printed only; no control is implied away from degree 1, where the record was measured)
+PASSED
+tests/unit/test_wf7_probe_labels.py::test_flag_off_phrase_left_the_ungated_path_negative_control collected 5 items
+
+tests/unit/test_wf7_probe_labels.py::test_phase4_label_degree2_is_an_order_readout_not_a_control PASSED
+tests/unit/test_wf7_probe_labels.py::test_phase4_label_degree1_is_the_flag_off_control_and_says_asserted PASSED
+tests/unit/test_wf7_probe_labels.py::test_phase4_label_degree1_off_record_width_says_printed_only PASSED
+tests/unit/test_wf7_probe_labels.py::test_phase4_label_prints_the_0919_relative_move_to_two_decimals [OPS-52] recomputed relative move 5.5008 % ; label: phase 4 order readout: S_driven at degree 2 beside the degree-1 step-0 record — P17 printed 0.436656+0.346994j vs 0.407423+0.344417j, relative move |S_2 - S_1| / |S_1| = 5.50 % (printed only; no control is implied away from degree 1, where the record was measured)
+PASSED
+tests/unit/test_wf7_probe_labels.py::test_flag_off_phrase_left_the_ungated_path_negative_control [OPS-52] negative control: ungated 'phase 4 flag-off control' 1 at 19bed9a9 -> 0 in the working tree
+PASSED[OPS-52] negative control: ungated 'phase 4 flag-off control' 1 at 19bed9a9 -> 0 in the working tree
+PASSED
+
+============================== 5 passed in 1.11s ===============================
+
+
+============================== 5 passed in 1.12s ===============================
+
+## Exit
+- Status: 0
+- Elapsed (s): 3
+- Filtered lines (gmsh optimisation chatter): 0

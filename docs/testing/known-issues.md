@@ -28,17 +28,6 @@ unless fixing it is the task.
 
 ## Failing tests
 
-### The F-human cost probe prints "flag-off control … vs the step-0 record" over its degree-2 readout, and its price brackets are stale — a reader sees a failed control and two OUTSIDE verdicts where the log holds the intended finding (2026-09-19, 03:00 review, on a `log-pathologist` reading of the `WF-7` step 0b XXL window)
-
-| | |
-| --- | --- |
-| **Symptom** | `20260919T070008Z_WF-7-step0b.log:21173` prints `phase 4 flag-off control: S_driven(P17) printed 0.436656+0.346994j vs the step-0 record 0.407423+0.344417j (… here printed only)` on the `FEM_EM_WF7_DEGREE=2` leg — the flag is *on*, and the difference is the order-sensitivity readout the window was commissioned for (5.50 %), not a drift. `:10598` prints `(OUTSIDE predicted 3.0-8.0 min per drive)` over a 24.61 s degree-1 solve — the same verdict step 0 printed over 37.02 s (`20260913T190102Z_WF-7-step0.log:10424`); the bracket has never been met. `:21169` / `:21172` print OUTSIDE on both degree-2 brackets (5.79 min vs 10–60; 107.917 GiB vs 150–350) — *below* both. `solve 347.56 s (solve)` no longer says "(assemble+factorise+solve)" as step 0's print did, while the adjacent `[solve] done in 332.4 s` is factorise + solve only. The probe also prints the default `FEM_EM_WF7_PORTS=1` as if the knob had been set. |
-| **Verified at** | `31267f8`, by reading the log lines above and the source: the label is emitted unconditionally at `scripts/probes/wf7_step0_f_human_cost.py:303–306` (only the *assert* is gated on `DEGREE == 1`); the brackets are the dicts at `:120–121`. No run — a review does not solve. |
-| **Cause** | The phase-4 line was written when the probe had one order; step 0b's degree knob made it false without touching it. The brackets are pre-measurement predictions that were never re-dated. |
-| **Not caused by** | The solves: both legs returned 0, the cell-band anchor passed on both (`:10603`, `:21174`), and the degree-1 `-n 16` leg reproduces step 0's `S_driven` to the last printed digit. No test is red; no gate reads these prints. |
-| **Scope** | Anyone reading a `WF-7` probe log — two more are queued (`xl` 2026-09-21 step 0c, `xxl` 2026-09-26 step 0d). The summed-`ru_maxrss` bracket verdict also flips with rank count alone (10.932 GiB OUTSIDE at `-n 8`, 13.419 GiB INSIDE at `-n 16`, same mesh and order). The 2026-09-19 ledger row was filled from the lines that format real values. |
-| **Resolves with** | `OPS-52` (§9 item 3, 2026-09-19): the label becomes a pure function, unit-tested, that says `flag-off control` only at degree 1; brackets re-dated from the measured points; the qualifier restored; the `-n 8` flag-off control re-run green; this entry deleted in that commit. |
-
 ### Fourteen committed setup figures carry legends clipped mid-word, and `write_setup_figure` has no title-length guard — two false-artefact modes the setup-figure census cannot see (2026-09-19, 03:00 review, from the 2026-09-18 04:30 and 07:30 slots' findings)
 
 | | |
