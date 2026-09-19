@@ -28,7 +28,7 @@ unless fixing it is the task.
 
 ## Failing tests
 
-### Fourteen committed setup figures carry legends clipped mid-word — a false-artefact mode the setup-figure census cannot see (2026-09-19, 03:00 review, from the 2026-09-18 04:30 slot's finding; narrowed to leg B's nine 2026-09-19)
+### RETIRED 2026-09-19 — Fourteen committed setup figures carried legends clipped mid-word — a false-artefact mode the setup-figure census cannot see (2026-09-19, 03:00 review, from the 2026-09-18 04:30 slot's finding; narrowed to leg B's nine 2026-09-19, retired when leg B landed)
 
 **Leg A (the five magnetostatics figures) is re-rendered and this entry
 narrows to leg B's nine (`mesh:3`, `th:10`, `mri:1/2/3`, `ports:15–18`),
@@ -66,6 +66,50 @@ unchanged, `examples=54 ok=18 missing=36 broken=0`
 (`20260919T112335Z_EX-57.log:64`, ≠ 1). Leg B (the other nine) is untouched
 and this entry stays open until it lands.
 
+**Leg B (`mesh:3`, `th:10`, `mri:1/2/3`, `ports:15–18`) is re-rendered and
+this entry is retired, 2026-09-19:** all nine re-rendered flagged
+(`FEM_EM_SETUP_FIGURES=1`, `mesh:3` real / the rest complex, `-n 2` except
+`mri:3` at its recorded `-n 4`) at `f8018fc` and read with the Read tool;
+every legend now shows whole. Negative control, `ports:15`: `git show
+f8018fc:examples/ports/figures/ports_15_birdcage_sixteen_leg_quadrature_b1_setup.png`
+shows the legend truncated mid-word — `"ring port 17 … ring p"` — where the
+re-rendered image reads `"ring port 17 … ring port 38"` in full. Every
+printed identity reproduced to the digit (or to the same solver-round-off
+class already on record) against each example's original `EX-57` flagged
+window — `mri:1` `|E|` 1.979842e+02 / `|B|` 1.294602e-06
+(`20260916T110133Z_EX-57.log` vs `20260919T112931Z_EX-57.log:438-439`);
+`mri:2` closed-form/point/DG0/1g/10g digits byte-identical
+(`20260916T123256Z_EX-57.log` vs `20260919T112951Z_EX-57.log:122-137`);
+`mri:3` all four C4 pair spreads and mis-paired controls byte-identical,
+only the ≤1e-10-budget identity residual moved 6.217e-15→5.107e-15 and the
+step-3f comparison 5.300e-11→4.453460e-11, both round-off
+(`20260916T140657Z_EX-57-mri3-flagged-r2.log` vs
+`20260919T113410Z_EX-57.log:1858,1865-1868,1885`); `mesh:3` `GEO-15` graded
+0.966977 / control 0.846150 / separation 0.120826 unmoved
+(`20260919T113114Z_EX-57.log:2869-2875`); `th:10` every gate/scaling/copper
+`Z_s`/`lambda`/`f`/`Q` line and `[a]`/`[b]`/`[c]` assertions byte-identical,
+only the PEC-pencil control (4.798e-19→8.063e-20) and Rayleigh residual
+(7.304e-14→7.473e-14) moved at round-off, both ≪ their 1e-10/1e-6 budgets
+(`20260914T124948Z_EX-60.log` vs `20260919T113011Z_EX-57.log:51,54-55,59`);
+`ports:15` (i)/(ii)/(iii)/n_valid byte-identical
+(`20260914T095534Z_EX-55.log` vs `20260919T113830Z_EX-57.log:11641-11647`);
+`ports:16` x1/x0.012 spreads and the monotone-fall assertion byte-identical
+(`20260914T110437Z_EX-56.log` vs `20260919T113547Z_EX-57.log:1840,3615,3618`);
+`ports:17` `C_tuned`, `Z_in`, `|S11|`, both residuals byte-identical
+(`20260914T112025Z_EX-58.log` vs `20260919T113256Z_EX-57.log:41,43,1799-1800`);
+`ports:18` gates/reciprocity/P_src/P_sheet/P_phantom/P_surf/ratios
+byte-identical, only the ≤1e-3-budget reciprocity and ≤1e-6-budget residual
+moved at round-off (`20260914T124230Z_EX-59.log` vs
+`20260919T113208Z_EX-57.log:910,913-914,918`). Two guide captions' exact
+byte-size parentheticals (`ports:16`, `ports:17`) drifted by under 3 KiB
+from the longer un-clipped legend text and were corrected in the same
+commit; every other caption sentence checked against the new image was
+still true, so no other correction and no `.py`-comment re-run was
+triggered. Census unchanged, `examples=54 ok=18 missing=36 broken=0`
+(`20260919T114427Z_EX-57.log:89`); docrefs `dead=0 guide=0 exit=2`
+(`20260919T114436Z_EX-57.log:62`, ≠ 1). Both legs have now landed; this
+entry is retired.
+
 **Half (b) of this entry — `write_setup_figure` having no title-length guard —
 is fixed and retired by `OPS-53` (2026-09-19):** the helper now carries a
 measured `MAX_TITLE_CHARS = 130` (bracket [126 ok, 150 clipped] at font size 11
@@ -91,7 +135,7 @@ and the flagged `mesh:5` re-run is green with every `GEO-17` digit identical to
 | **Cause** | A PyVista anchoring quirk, fixed for new renders by `c9cc369` (legend anchored `center left`, sized to the longest grouped label); committed PNGs do not change until re-rendered. |
 | **Not caused by** | The examples: every imported identity is green in every figure's flagged window, and the figures are opt-in (`FEM_EM_SETUP_FIGURES`). The census is not wrong either — `broken` checks that the file parses, which it does. |
 | **Scope** | Reader-facing artefacts only; no test, gate or number. **Not defects, recorded here so nobody files them again:** legends elide past two same-class labels (`first … last`) and one colour per region class cannot show a split between two same-class regions (`mesh:4`) — corpus design conventions, the operator's to change. |
-| **Resolves with** | §9 items 6–7 (2026-09-19): re-render legs A (magnetostatics, five) and B (the other nine), each PNG read and each caption sentence checked against the new image — this entry narrows after one leg and is deleted after both. |
+| **Resolved by** | §9 items 6–7 (2026-09-19): both legs re-rendered — A (magnetostatics, five, `997a5fe`) and B (`mesh:3`, `th:10`, `mri:1/2/3`, `ports:15–18`, this commit) — each PNG read and each caption sentence checked against the new image. Retired. |
 
 ### `post4_step5_probe.py` runs again on the 0.11 image but its step-4 fixture pins have drifted — `PROBE_RESULT FAIL` on a mesh that is 9 291 cells against a 9 261-cell record (2026-09-18, narrowed by `OPS-50`; was "the VTX gate is skipped when the `B` writer fails, and the probe calls the removed `adios2.ADIOS()`", 03:00 review)
 

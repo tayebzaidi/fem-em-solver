@@ -77,7 +77,7 @@ scripts/testing/run_and_log.sh EX-58 "docker compose exec -T fem-em-solver \
 ![ports:17 setup — the tuned birdcage (C_tuned at P2..P4, P1 driven)](figures/ports_17_birdcage_tuned_circuit_setup.png)
 
 `examples/ports/figures/ports_17_birdcage_tuned_circuit_setup.png`
-(260 KiB), rendered right after the mesh is built (`FEM_EM_SETUP_FIGURES=1`):
+(262 KiB, `EX-57` leg B re-render), rendered right after the mesh is built (`FEM_EM_SETUP_FIGURES=1`):
 air hidden, the phantom translucent, the slice normal to `z` through the
 port sheets.
 

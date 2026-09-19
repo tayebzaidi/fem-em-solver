@@ -4077,7 +4077,7 @@ done draws the drained-queue fallback below — one figure, then stop.
    example and the label lengths, leave its PNG as it was, stop.
 
 7. **`EX-57` re-render, leg B — `mesh:3`, `th:10`, `mri:1/2/3`,
-   `ports:15–18`** (`example-runner`, foreground, same prompt rules; build
+   `ports:15–18` — DONE (2026-09-19), all nine.** (`example-runner`, foreground, same prompt rules; build
    per example — `mesh:3` real, the rest **complex**; `-n 2` unless the
    example's original `EX-57` window used another width (read it from
    `attempts.md`); standard; **30 slot-min**: `mri:1` 8 s, `mri:2` 13 s,
@@ -4093,6 +4093,8 @@ done draws the drained-queue fallback below — one figure, then stop.
    here). Independent of item 6; soft dependency on item 5 as there.
    **Status it can move:** the clipped-legend known-issues entry →
    **retired** when both legs have landed (narrowed if only one has).
+   Both legs landed 2026-09-19 (leg A `997a5fe`, leg B this commit); the
+   known-issues entry is retired.
 
 8. **`EX-57` setup figure — `examples/meshing/06_birdcage_leg_gaps_port_sheets.py`**
    (`example-runner`, spawned **foreground** with "you are the executor, do

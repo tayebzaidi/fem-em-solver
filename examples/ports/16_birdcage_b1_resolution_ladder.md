@@ -70,7 +70,7 @@ scripts/testing/run_and_log.sh EX-56 "docker compose exec -T fem-em-solver \
 ![ports:16 setup — unloaded F-small birdcage, x1 rung](figures/ports_16_birdcage_b1_resolution_ladder_setup.png)
 
 `examples/ports/figures/ports_16_birdcage_b1_resolution_ladder_setup.png`
-(259 KiB), rendered on the x1 rung's mesh right after it is built
+(260 KiB, `EX-57` leg B re-render), rendered on the x1 rung's mesh right after it is built
 (`FEM_EM_SETUP_FIGURES=1`): air hidden, the vacuum phantom translucent, the
 slice normal to `z` through the plane the 21-point master lattice samples.
 
