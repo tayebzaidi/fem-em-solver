@@ -26,7 +26,11 @@ nominal over ±r_wire.
       JSON, XDMF, `COMPARISON.md` with our numbers filled in
       *(2026-08-16, `03_two_torus_gap_ports_10MHz.py`, log
       `20260816T110354Z_ANS-3-runnable-half-n2.log`)*
-- [ ] Operator replication in AED (goes to the dashboard Waiting-on-you list
+- [x] Operator replication in AED — **landed 2026-09-19** (HFSS 2026 R1, Zero and
+      First Order, `aed/ans3_hfss_pyaedt.py`; numbers in the gitignored
+      `aed_results/` and `COMPARISON_private.md`, written by
+      `20260920T002403Z_ANS-3-aed-private.log`; preliminary reading in
+      `docs/private/ans3-operator-notes-2026-09-19.md`) *(was: goes to the dashboard Waiting-on-you list
       when the box above is checked)
 - [ ] Adjudication (next weekly review after AED numbers land)
 

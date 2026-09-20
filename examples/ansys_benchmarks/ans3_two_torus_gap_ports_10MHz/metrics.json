@@ -2,7 +2,7 @@
   "case": "two_torus_gap_ports_10MHz",
   "chunk": "ANS-3",
   "spec": "SPEC.md (authority for geometry/materials/BCs/ports)",
-  "generated_utc": "2026-09-03T05:08:36Z",
+  "generated_utc": "2026-09-20T00:26:31Z",
   "regime": "eddy-current at 10 MHz; NOT a Larmor frequency (\u00a72.1)",
   "gated_path": "run_n_port_sparameter_sweep via examples/ports/02_package_sparameter_sweep.py (EX-20)",
   "frequency_hz": 10000000.0,
@@ -26,74 +26,74 @@
   },
   "n_cells": 177998,
   "mpi_ranks": 2,
-  "mesh_seconds": 35.22207762207836,
-  "sweep_seconds": 68.16614656802267,
-  "export_solve_seconds": 30.85423387598712,
-  "total_seconds": 161.9519420140423,
+  "mesh_seconds": 31.197234643856063,
+  "sweep_seconds": 59.36277110618539,
+  "export_solve_seconds": 25.941036000847816,
+  "total_seconds": 145.41382699110545,
   "z_matrix_ohm": [
     [
       {
-        "re": 3.819596798108327,
-        "im": 7.288631814537278
+        "re": 3.819596798485812,
+        "im": 7.288631797896378
       },
       {
-        "re": 0.008600669359189033,
-        "im": 1.109979863966395
+        "re": 0.008600669357900034,
+        "im": 1.1099798640032272
       }
     ],
     [
       {
-        "re": 0.008623361212683825,
-        "im": 1.110769842431933
+        "re": 0.008623361205807372,
+        "im": 1.110769842171431
       },
       {
-        "re": 3.8201326260807345,
-        "im": 7.164396053160897
+        "re": 3.8201326264038893,
+        "im": 7.164395928074915
       }
     ]
   ],
   "s_matrix": [
     [
       {
-        "re": -0.82459526876775,
-        "im": 0.24709964243103083
+        "re": -0.8245952689054667,
+        "im": 0.2470996418837874
       },
       {
-        "re": 0.002408881411591718,
-        "im": 0.02145368749598927
+        "re": 0.0024088813639457527,
+        "im": 0.021453687508502104
       }
     ],
     [
       {
-        "re": 0.0024495820757017474,
-        "im": 0.021458409551137498
+        "re": 0.002449582070868116,
+        "im": 0.021458409547524617
       },
       {
-        "re": -0.8256891051596613,
-        "im": 0.2430309845235554
+        "re": -0.8256891062590915,
+        "im": 0.2430309804252768
       }
     ]
   ],
   "omega_m12_ohm": 1.2417546159268154,
-  "im_z21_ohm": 1.110769842431933,
+  "im_z21_ohm": 1.110769842171431,
   "systematics_ladder": {
-    "raw": 0.8945163788281,
-    "raw_deviation": -0.10548362117190002,
-    "box_corrected": 0.9114163788281,
-    "box_deviation": -0.0885836211719,
-    "corrected": 0.9398215452105435,
-    "deviation": -0.06017845478945649
+    "raw": 0.8945163786183146,
+    "raw_deviation": -0.10548362138168543,
+    "box_corrected": 0.9114163786183146,
+    "box_deviation": -0.0885836213816854,
+    "corrected": 0.9398215449942199,
+    "deviation": -0.06017845500578012
   },
   "systematics": {
     "pec_box": 0.0169,
     "gap_physics": -0.030224
   },
   "mutual_tolerance": 0.1,
-  "s_symmetry_residual": 4.75863410603123e-05,
+  "s_symmetry_residual": 4.758638829593265e-05,
   "s_symmetry_rtol": 0.001,
-  "s_spectral_norm": 0.8648094567340935,
+  "s_spectral_norm": 0.8648094566381047,
   "s_spectral_norm_ceiling": 1.0,
-  "z_reciprocity_residual": 0.0007114709645071176,
+  "z_reciprocity_residual": 0.0007114706969648403,
   "reproduction_record": {
     "source": "docs/testing/logs/20260902T183603Z_OPS-32.log (0.11 image; re-recorded by OPS-33)",
     "raw": 0.8945163788281,
@@ -110,14 +110,14 @@
     }
   },
   "reproduction_miss": {
-    "raw": 0.0,
-    "corrected": 4.6307453566153795e-14,
-    "symmetry": 5.994970551882403e-14,
-    "spectral": 7.574287947804468e-15
+    "raw": 2.345238345883128e-10,
+    "corrected": 2.3012890695981058e-10,
+    "symmetry": 4.717567064397394e-11,
+    "spectral": 1.110017033861218e-10
   },
   "superseded_v072_miss": {
-    "raw": 2.9759521789336776e-05,
-    "corrected": 2.921191537846825e-05
+    "raw": 2.9759756306192045e-05,
+    "corrected": 2.9212145546958807e-05
   },
   "xdmf": "paraview_output/ans3_two_torus_gap_ports_combined.xdmf",
   "aed": null

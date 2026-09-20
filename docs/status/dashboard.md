@@ -46,7 +46,11 @@ page is a read-only digest for the human operator.
    (step 2 was re-classed "optional record" in the closing commit;
    `SPEC.md:28`'s box is unticked). The daily queued an XXL variant for
    09-26 (degree 2, all 32 ports) so the floor holds — rename or delete the
-   queue file to replace it.
+   queue file to replace it. **(e) *New 19:30:* adjudicate `ANS-3` — the
+   operator's AED numbers landed this evening; Linux half re-run, private
+   comparison filled, preliminary reading in
+   `docs/private/ans3-operator-notes-2026-09-19.md` (primary row agrees;
+   the S rows expose a definitional systematic in our current-drive route).**
 3. 🟡 **`example-runner` should not be able to spawn agents, and its "no
    deviations" is not evidence.** *(Carried, stronger.)* Four consecutive
    figure slots found a false caption, title or comment the runner had
