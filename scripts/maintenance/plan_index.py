@@ -9,8 +9,8 @@ PROJECT_PLAN.md (660 KB). Its prose is hand-written and stable; the one part
 that moves daily — which chunks are open — is generated here from the §7 table
 rows between the BEGIN/END markers, so there is no second, hand-edited status
 list to drift. PROJECT_PLAN.md §7 stays the single authority: this only reads
-it. One line per open chunk: ID, status glyph, tier, title cut to 90 chars,
-and the plan line number to jump to.
+it. One line per open chunk: ID, status glyph, tier, title cut to 90 chars.
+No line numbers: any edit above a row shifts them, and a stale number misleads.
 
 Read-only on the plan, stdlib only, no solves.
 """
@@ -72,10 +72,10 @@ def build() -> list[str]:
         fam = re.match(r"[A-Z]+", m.group(1)).group(0)
         tier_word = re.match(r"(smoke|standard|heavy|xl|xxl|unmeasured)", tier)
         families.setdefault(fam, []).append(
-            f"- `{m.group(1)}` {glyph} {tier_word.group(0) if tier_word else '—'} — {clean(title)} *(plan:{n})*")
+            f"- `{m.group(1)}` {glyph} {tier_word.group(0) if tier_word else '—'} — {clean(title)}")
     out = [BEGIN, "",
            f"**{total - closed} open of {total} chunks** (✅ / 🚫 / ⬛ omitted). Glyphs: PROJECT_PLAN.md §3. "
-           "`plan:N` is the §7 row's line — read that row, not the section.", ""]
+           "To read one: grep `^| \\`<ID>\\` |` in PROJECT_PLAN.md and read that row, not the section.", ""]
     for fam in sorted(families):
         out += [f"**{fam}**", ""] + families[fam] + [""]
     out.append(END)
