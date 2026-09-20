@@ -1,0 +1,86 @@
+# Test Run
+- Chunk: OPS-43b
+- Commit: 38a07918d779ac0a6de2de7cdf7c2319b2d78904
+- Time (UTC): 2026-09-20 00:45:43
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.13.12
+- Docker Compose: Docker Compose version v5.5.1
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: timeout -k 30 120 bash scripts/testing/test_orphan_guard.sh
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 24
+drwxr-xr-x  3 taz5297 taz5297 4096 Sep  4 23:31 .
+drwxr-xr-x 17 taz5297 taz5297 4096 Sep 19 19:45 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  721 Sep  3 13:49 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 4275 Sep 13 19:19 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.5.1
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'timeout -k 30 120 bash scripts/testing/test_orphan_guard.sh'
+== container process table before anything (fem-em-solver) ==
+    PID ELAPSED COMMAND
+      1  794721 /bin/bash
+  51046       0 ps -eo pid,etimes,args
+== start probe ==
+probe pid: 51059
+PASS: probe is live in fem-em-solver
+    PID ELAPSED COMMAND
+      1  794722 /bin/bash
+  51059       0 hydra_pmi_proxy-orphan-probe 120
+  51070       0 ps -eo pid,etimes,args
+== anchor, probe live: modified harness must refuse ==
+[harness] REFUSED (exit 75): live ranks in service fem-em-solver
+  pid=51059 elapsed_s=0 args=hydra_pmi_proxy-orphan-probe 120
+[harness] kill them (PROJECT_PLAN §5.1) and re-run; nothing was logged.
+status=75 rows_before=1976 rows_after=1976 logs_before=1448 logs_after=1448
+PASS: refusal status is exactly 75 (got 75)
+PASS: refusal names probe pid 51059
+PASS: no test-results row written (1976 -> 1976)
+PASS: no log file written (1448 -> 1448)
+== scope, probe live: host-only CMD is not checked ==
+Log written: /home/taz5297/Development/fem-em-solver/docs/testing/logs/20260920T004545Z_OPS-43b-hostonly.log
+Index updated: /home/taz5297/Development/fem-em-solver/docs/testing/test-results.md
+status=0 rows_before=1976 rows_after=1977
+PASS: host-only CMD proceeds with the probe live (got 0)
+PASS: host-only CMD appends exactly one row (1976 -> 1977)
+== negative control, probe live: pre-change harness proceeds ==
+Log written: /home/taz5297/Development/fem-em-solver/.ops43b_scratch_root/docs/testing/logs/20260920T004545Z_OPS-43b-control.log
+Index updated: /home/taz5297/Development/fem-em-solver/.ops43b_scratch_root/docs/testing/test-results.md
+control status=0
+control log Exit block:
+## Exit
+- Status: 0
+- Elapsed (s): 1
+PASS: pre-change harness proceeds with the probe live (got 0)
+PASS: probe was still live after the control
+== kill probe ==
+PASS: probe gone
+    PID ELAPSED COMMAND
+      1  794725 /bin/bash
+  51112       0 ps -eo pid,etimes,args
+== anchor, probe killed: same call must proceed ==
+Log written: /home/taz5297/Development/fem-em-solver/docs/testing/logs/20260920T004547Z_OPS-43b-proceed.log
+Index updated: /home/taz5297/Development/fem-em-solver/docs/testing/test-results.md
+status=0 rows_before=1977 rows_after=1978
+PASS: same call exits exactly 0 (got 0)
+PASS: exactly one row appended (1977 -> 1978)
+== summary: 0 failure(s) ==
+
+## Exit
+- Status: 0
+- Elapsed (s): 6
+- Filtered lines (gmsh optimisation chatter): 0

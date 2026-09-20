@@ -12,7 +12,7 @@ set -euo pipefail
 # Exit status: the wrapped command's own status, except
 #   2   usage error
 #   75  ORPHAN_REFUSAL (OPS-43 (b)): CMD is a `docker compose … exec` and the
-#       target service (fem-em-solver-xl if named, else fem-em-solver) already
+#       target service (fem-em-solver-xxl / -xl if named, else fem-em-solver) already
 #       runs a process matching mpiexec|hydra_pmi_proxy|pytest. The PIDs,
 #       elapsed seconds and args are printed on stderr; no log file, no
 #       test-results row and no XL ledger row is written. Kill the survivors
@@ -92,6 +92,28 @@ ROOT_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
 LOG_DIR="$ROOT_DIR/docs/testing/logs"
 INDEX_FILE="$ROOT_DIR/docs/testing/test-results.md"
 mkdir -p "$LOG_DIR"
+
+# Service routing, resolved ONCE and reused by the orphan check and the ledger
+# block below. They used to match CMD separately, and the orphan check had no
+# xxl branch: "fem-em-solver-xl" is not a substring of "fem-em-solver-xxl", so
+# an XXL command had its orphan check run against the ordinary service
+# (2026-09-19). xxl is tested first so a rename cannot silently file an xxl
+# run under xl. TARGET_TIER is empty for the ordinary service.
+TARGET_SERVICE="fem-em-solver"
+TARGET_TIER=""
+if [[ "$CMD" == *fem-em-solver-xxl* ]]; then
+  TARGET_SERVICE="fem-em-solver-xxl"; TARGET_TIER="xxl"
+elif [[ "$CMD" == *fem-em-solver-xl* ]]; then
+  TARGET_SERVICE="fem-em-solver-xl"; TARGET_TIER="xl"
+fi
+PROFILE_ARGS=()
+XL_LEDGER=""
+XL_TIER=""
+if [[ -n "$TARGET_TIER" ]]; then
+  PROFILE_ARGS=(--profile "$TARGET_TIER")
+  XL_LEDGER="$ROOT_DIR/docs/testing/$TARGET_TIER-ledger.md"
+  XL_TIER="${TARGET_TIER^^}"
+fi
 
 if [[ "$CAPTURE_MODE" == 1 ]]; then
   case "$RAW_ARG" in
@@ -196,6 +218,7 @@ if [[ "$DRY_RUN" == "1" ]]; then
   echo "[DRY RUN] Commit: $GIT_COMMIT_FULL"
   echo "[DRY RUN] Env: $ENV_META"
   echo "[DRY RUN] Log would be written to: $LOG_FILE"
+  echo "[DRY RUN] Routing: service=$TARGET_SERVICE profile=${TARGET_TIER:-<none>} ledger=${XL_LEDGER:+$(basename "$XL_LEDGER")}"
   echo ""
   echo "To actually run this test, execute:"
   echo "  $0 $CHUNK_ID \"$CMD\""
@@ -210,12 +233,6 @@ ORPHAN_REFUSAL=75
 ORPHAN_PATTERN='mpiexec|hydra_pmi_proxy|pytest'
 COMPOSE_EXEC_RE='docker[[:space:]]+compose[^;&|]*[[:space:]]exec([[:space:]]|$)'
 if [[ "$CAPTURE_MODE" == 0 && "$CMD" =~ $COMPOSE_EXEC_RE ]]; then
-  TARGET_SERVICE="fem-em-solver"
-  PROFILE_ARGS=()
-  if [[ "$CMD" == *fem-em-solver-xl* ]]; then
-    TARGET_SERVICE="fem-em-solver-xl"
-    PROFILE_ARGS=(--profile xl)
-  fi
   set +e
   PS_TABLE="$(cd "$ROOT_DIR" && docker compose ${PROFILE_ARGS[@]+"${PROFILE_ARGS[@]}"} exec -T "$TARGET_SERVICE" ps -eo pid,etimes,args </dev/null 2>&1)"
   PS_STATUS=$?
@@ -285,18 +302,9 @@ START_EPOCH="$(date -u +%s)"
 # the ledger row is appended BEFORE the run (a killed run still spent the box);
 # the bash guard reads this table. Ranks/cells/memory/readout are filled by hand.
 # Two big-compute tiers, each with its own ledger (operator directive
-# 2026-09-10). Test xxl first: "fem-em-solver-xl" is not a substring of
-# "fem-em-solver-xxl", but the order is explicit so a rename cannot silently
-# file an xxl run in the xl budget.
-if [[ "$CMD" == *fem-em-solver-xxl* ]]; then
-  XL_LEDGER="$ROOT_DIR/docs/testing/xxl-ledger.md"
-  XL_TIER="XXL"
-else
-  XL_LEDGER="$ROOT_DIR/docs/testing/xl-ledger.md"
-  XL_TIER="XL"
-fi
+# 2026-09-10); which one is the routing resolved at the top of this script.
 IS_XL=0
-if [[ "$CAPTURE_MODE" == 0 && ( "$CMD" == *fem-em-solver-xl* || "$CMD" == *fem-em-solver-xxl* ) && -f "$XL_LEDGER" ]]; then
+if [[ "$CAPTURE_MODE" == 0 && -n "$TARGET_TIER" && -f "$XL_LEDGER" ]]; then
   IS_XL=1
   printf '| %s | %s | `%s` | | | | | |\n' \
     "$(date -u '+%Y-%m-%d')" "$CHUNK_ID" "$(basename "$LOG_FILE")" >> "$XL_LEDGER"
