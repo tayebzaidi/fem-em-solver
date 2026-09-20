@@ -446,13 +446,76 @@ def test_committed_tree_stale_count_equals_an_independent_full_census():
 #     glob: the 2026-09-09 18:00 review ruled that a pattern would trade one
 #     line of maintenance per benchmark case for a weaker guarantee, and the
 #     point of the pin is that widening the exemption must be *declared*.
-COMMITTED_EXAMPLE_ARTIFACTS = {
+#
+# `OPS-59` (2026-09-20) splits the record in two. The list below stays the
+# *declared* half — every artifact that is not an `EX-57` setup figure is still
+# named here by hand, and widening it is still a deliberate edit. The setup
+# figures are admitted by a **rule** instead: `EX-57` commits one per example
+# and nothing about the list-form pin was catching anything a rule cannot, so
+# enumerating them only guaranteed one red test per figure slot (the 2026-09-19
+# known-issues entry: the pin was never widened and the whole census showed up
+# as "extra"). The rule is narrow by construction — see
+# `_setup_figures_admitted_by_rule`.
+LISTED_EXAMPLE_ARTIFACTS = {
     "examples/ansys_benchmarks/ans2_birdcage_coil_driven_sar_10MHz/metrics.json",
     "examples/ansys_benchmarks/ans4_birdcage_four_port_10_64_128MHz/metrics.json",
     "examples/ansys_benchmarks/ans1_loop_over_lossy_slab_10MHz/metrics.json",
     "examples/ansys_benchmarks/ans3_two_torus_gap_ports_10MHz/metrics.json",
     "examples/magnetostatics/straight_wire_validation.png",
 }
+
+SETUP_FIGURE_SUFFIX = "_setup.png"
+SETUP_FIGURE_DIRNAME = "figures"
+
+
+def _setup_figures_admitted_by_rule() -> set[str]:
+    """The `EX-57` setup figures, derived from the census's *own* pairing.
+
+    A path is admitted only if all three hold:
+
+    * it is the image an `ok` example guide embeds, as
+      `scripts/testing/check_example_setup_figures.py` resolves it — so it has
+      a same-stem example script *by construction*; an orphan PNG under
+      `figures/` that no script owns is reached by no census row at all;
+    * it lies in a `figures/` directory under `examples/`;
+    * its basename ends `_setup.png`.
+
+    The census module is imported, never re-implemented (`ANS-1`): the pairing
+    under test is the one the figure task actually uses.
+    """
+    spec = importlib.util.spec_from_file_location(
+        "ex57_setup_figure_census",
+        REPO_ROOT / "scripts" / "testing" / "check_example_setup_figures.py",
+    )
+    census = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(census)
+
+    admitted: set[str] = set()
+    for script in census.runnable_examples():
+        state, detail = census.assess(script, 600.0)
+        if state != "ok":
+            continue
+        guide = census.guide_for(script)
+        for target in census.IMAGE_RE.findall(census.figure_section(guide.read_text()) or ""):
+            path = (guide.parent / target).resolve()
+            try:
+                rel = path.relative_to(REPO_ROOT)
+            except ValueError:
+                continue
+            parts = rel.parts
+            if parts[0] != "examples" or len(parts) < 3:
+                continue
+            if parts[-2] != SETUP_FIGURE_DIRNAME:
+                continue
+            if not rel.name.endswith(SETUP_FIGURE_SUFFIX):
+                continue
+            admitted.add(str(rel))
+    return admitted
+
+
+def committed_example_artifacts() -> set[str]:
+    """The pinned set: the declared list **plus** the rule-admitted figures."""
+    return LISTED_EXAMPLE_ARTIFACTS | _setup_figures_admitted_by_rule()
 
 
 def _tracked_example_artifacts_via_git() -> set[str]:
@@ -488,6 +551,10 @@ def test_the_in_tree_exemption_cannot_silently_widen():
 
     `OPS-44` anchor: the identity holds against an *independent* re-derivation
     from `git ls-files`, not merely against a count.
+
+    `OPS-59` (2026-09-20): the pinned set is now the declared list plus the
+    rule-admitted `EX-57` setup figures, so a figure slot no longer turns this
+    red — but anything that is neither still has to be declared by hand.
     """
     tracked = {
         str(path.relative_to(REPO_ROOT))
@@ -495,16 +562,19 @@ def test_the_in_tree_exemption_cannot_silently_widen():
         for path in paths
     }
     from_git = _tracked_example_artifacts_via_git()
-    print(f"OPS-44 pinned={len(COMMITTED_EXAMPLE_ARTIFACTS)} "
+    pinned = committed_example_artifacts()
+    print(f"OPS-44 pinned={len(pinned)} "
+          f"(listed={len(LISTED_EXAMPLE_ARTIFACTS)} "
+          f"by_rule={len(pinned - LISTED_EXAMPLE_ARTIFACTS)}) "
           f"checker={len(tracked)} git_ls_files={len(from_git)}")
     for path in sorted(from_git):
         print(f"  tracked example artifact: {path}")
+    print(f"OPS-59 extras (tracked but not pinned): {sorted(tracked - pinned) or 'none'}")
     assert tracked == from_git, (
         "checker.tracked_artifacts disagrees with git ls-files — that is a "
         "defect in the checker, not in the pinned record"
     )
-    assert tracked == COMMITTED_EXAMPLE_ARTIFACTS
-    assert len(COMMITTED_EXAMPLE_ARTIFACTS) == 5
+    assert tracked == pinned
 
 
 def test_dropping_any_pinned_path_turns_the_identity_red():
@@ -519,13 +589,50 @@ def test_dropping_any_pinned_path_turns_the_identity_red():
         for paths in checker.tracked_artifacts(REPO_ROOT / "examples").values()
         for path in paths
     }
-    for dropped in sorted(COMMITTED_EXAMPLE_ARTIFACTS):
-        weakened = COMMITTED_EXAMPLE_ARTIFACTS - {dropped}
+    pinned = committed_example_artifacts()
+    for dropped in sorted(pinned):
+        weakened = pinned - {dropped}
         assert tracked != weakened, (
             f"the identity survives dropping {dropped} — the pin is not "
             "actually constraining that path"
         )
-        assert len(weakened) == 4
+        assert len(weakened) == len(pinned) - 1
+
+
+def test_the_setup_figure_rule_admits_nothing_but_setup_figures():
+    """`OPS-59` negative control — the rule half cannot silently widen either.
+
+    Two synthetic paths stand for the two ways the rule could have been too
+    generous: a PNG in a `figures/` directory that is not a setup figure, and
+    a `*_setup.png` no example script owns (an orphan). Neither is admitted by
+    the rule, and injecting either into the *declared* list turns the identity
+    red — which is the property the test above is named for.
+    """
+    tracked = {
+        str(path.relative_to(REPO_ROOT))
+        for paths in checker.tracked_artifacts(REPO_ROOT / "examples").values()
+        for path in paths
+    }
+    by_rule = _setup_figures_admitted_by_rule()
+    synthetic = [
+        "examples/ports/figures/not_a_setup.png",
+        "examples/ports/figures/zz_nonexistent_setup.png",
+    ]
+    print(f"OPS-59 by_rule={len(by_rule)} synthetic={synthetic}")
+    for path in synthetic:
+        assert path not in by_rule, f"the setup-figure rule admitted {path}"
+        widened = (LISTED_EXAMPLE_ARTIFACTS | {path}) | by_rule
+        assert tracked != widened, (
+            f"the identity survives listing {path} — the exemption widened "
+            "silently, which is exactly what this pin exists to stop"
+        )
+    # And every admitted path really is one: under examples/*/figures/,
+    # basename ending `_setup.png`, tracked by git.
+    for path in sorted(by_rule):
+        parts = Path(path).parts
+        assert parts[0] == "examples" and parts[-2] == SETUP_FIGURE_DIRNAME, path
+        assert path.endswith(SETUP_FIGURE_SUFFIX), path
+        assert path in tracked, f"{path} is admitted by the rule but not tracked"
 
 
 def test_an_untracked_example_artifact_never_enters_the_exemption(tmp_path):

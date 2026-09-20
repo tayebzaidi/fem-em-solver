@@ -1480,7 +1480,18 @@ entire attempt; the item's (i) and (ii) then ran green, unchanged, in one
 window. Bypassing the harness stays correctly refused by
 `scripts/automation/hooks/bash_guard.py`, and no operator action is needed.
 
-## 2026-09-20 — `tests/unit/test_setup_figure_title.py::` the call-site count pin (`EXPECTED_EXAMPLE_CALL_SITES = 18`, `:43`, asserted `:157`) is stale on `main` — **red by inspection, not yet executed**
+## RETIRED 2026-09-20 (`OPS-59` (b), 07:30 slot) — `tests/unit/test_setup_figure_title.py::` the call-site count pin (`EXPECTED_EXAMPLE_CALL_SITES = 18`) was stale on `main`
+
+**Retired** by replacing the literal with the identity it stood for. The red
+was executed first, as the entry asked: `assert 21 == 18`
+(`20260920T130047Z_OPS-59-prechange.log:763–764`) — **21**, not the 20 this
+entry predicted, because `75082a0` (`ANS-6`, the same slot's item 14) added a
+21st call site and a 21st figure two hours earlier. The test now computes
+three counts and asserts them equal —
+`call_sites=21 committed_setup_pngs=21 census_ok=21`
+(`20260920T130232Z_OPS-59-postchange.log:576`), green at `-n 2`, 8.2 s — so an
+`EX-57` slot no longer touches it. The title-length scan is unchanged.
+Original entry follows.
 
 **Found** by the 2026-09-20 03:00 review's `OPS-53` audit (the closure itself
 PASSes: at `da9db81` the tree had exactly 18 `write_setup_figure(` call sites
@@ -1514,6 +1525,26 @@ a small item that re-pins the set from `git ls-files` (the test prints the
 list) and, better, makes the `EX-57` per-item template say so — the figure
 task will keep committing PNGs for ~30 more slots. Not a physics gate; the
 docrefs checker itself passes (`dead=0`).
+
+**NARROWED, STILL OPEN — 2026-09-20 (`OPS-59` (a), 07:30 slot).** The setup
+figures are no longer the cause: the pin is now `LISTED_EXAMPLE_ARTIFACTS`
+(5, declared by hand) **plus** `_setup_figures_admitted_by_rule()` (21,
+derived from `check_example_setup_figures.py`'s own script↔figure pairing),
+so `pinned=26 (listed=5 by_rule=21)` against `checker=27 git_ls_files=27`
+(`20260920T130232Z_OPS-59-postchange.log:358`) and the extras fell **22 → 1**
+(`…prechange.log:736–758` → `…postchange.log:386`). The one survivor is
+**`examples/ansys_benchmarks/ans6_copper_birdcage_four_port_10_64_128MHz/metrics.json`**,
+a **non-setup** artifact committed undeclared by `75082a0` (`ANS-6` runnable
+half, the same slot's item 14). `OPS-59` pre-registered exactly that case as a
+negative result — "name it, leave it red, stop — that one is a real unpinned
+artifact" — so the implementer did not declare it and the test is still red
+(1 failed / 26 passed, `-n 2`, 8.2 s). The rule half is controlled: a
+non-setup PNG and an orphan `*_setup.png` are both refused by the rule and
+both turn the identity red if listed (`…postchange.log:420`). **Resolves
+with** a review declaring that one path in `LISTED_EXAMPLE_ARTIFACTS` under
+the `ANS-1` "an `ans:` case commits its own `metrics.json`" rule — `OPS-44`'s
+late declaration of the `ANS-2`/`ANS-4` files is the precedent — plus one
+≈ 8 s window, which closes `OPS-59` and retires this entry.
 
 ## 2026-09-19 — 🟡 OPEN (`ANS-3` adjudication, weekly review) — on the gap-voltage / impressed-current route `run_n_port_sparameter_sweep` reports an `S` that is **not the 50 Ω S-matrix**; its `z_matrix` is right
 

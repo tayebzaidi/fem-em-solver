@@ -37,10 +37,40 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 HELPER_REL = "src/fem_em_solver/post/setup_figure.py"
 HELPER = REPO_ROOT / HELPER_REL
 
-# One per census `ok` example (54 examples, 18 ok, 36 missing as of
-# 20260918T140725Z_EX-57.log:89). If this number moves, the scan says so
-# rather than being edited silently.
-EXPECTED_EXAMPLE_CALL_SITES = 18
+# `OPS-59` (2026-09-20) replaced the literal `EXPECTED_EXAMPLE_CALL_SITES = 18`
+# by the identity it stood for. The literal was an equality on a count that
+# `EX-57` grows by one per figure slot, so it was red on `main` within two days
+# of being written (18 pinned, 21 on the tree — measured
+# `20260920T130047Z_OPS-59-prechange.log:763–764`). What the pin actually meant
+# is that the three counts move together: one `write_setup_figure(` call site
+# per committed `*_setup.png` per census `ok` row. That is asserted below and
+# needs no edit when a figure lands.
+SETUP_FIGURE_SUFFIX = "_setup.png"
+CENSUS = REPO_ROOT / "scripts" / "testing" / "check_example_setup_figures.py"
+
+
+def _committed_setup_figures() -> list[str]:
+    """Tracked `examples/**/figures/*_setup.png`, straight from git."""
+    proc = subprocess.run(
+        ["git", "-c", "safe.directory=*", "-C", str(REPO_ROOT),
+         "ls-files", "-z", "--", "examples"],
+        capture_output=True, text=True, check=True,
+    )
+    return sorted(
+        entry for entry in proc.stdout.split("\0")
+        if entry.endswith(SETUP_FIGURE_SUFFIX) and "/figures/" in entry
+    )
+
+
+def _census_ok_count() -> int:
+    """The `EX-57` census's own `ok` count, from the census module."""
+    spec = importlib.util.spec_from_file_location("ex57_census_for_ops59", CENSUS)
+    census = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(census)
+    return sum(
+        1 for script in census.runnable_examples()
+        if census.assess(script, 600.0)[0] == "ok"
+    )
 
 # The commit the guard was written against — the last commit before the
 # `OPS-53` change. Pinned, never HEAD: the control has to read a tree that
@@ -154,10 +184,19 @@ def test_every_constant_call_site_title_is_within_the_limit():
             _write_setup_figure_calls(source, str(path.relative_to(REPO_ROOT)))
         )
 
-    assert len(example_calls) == EXPECTED_EXAMPLE_CALL_SITES, (
-        f"expected {EXPECTED_EXAMPLE_CALL_SITES} write_setup_figure call sites "
-        f"under examples/, found {len(example_calls)}: "
+    figures = _committed_setup_figures()
+    census_ok = _census_ok_count()
+    print(
+        f"[OPS-59] call_sites={len(example_calls)} committed_setup_pngs="
+        f"{len(figures)} census_ok={census_ok}",
+        flush=True,
+    )
+    assert len(example_calls) == len(figures) == census_ok, (
+        f"the three counts must move together: {len(example_calls)} "
+        f"write_setup_figure call sites under examples/, {len(figures)} "
+        f"committed *_setup.png, {census_ok} census ok. Call sites: "
         + ", ".join(f"{label}:{line}" for label, line, _ in example_calls)
+        + f". Figures: {figures}"
     )
 
     calls = example_calls + _exemplar_call()
