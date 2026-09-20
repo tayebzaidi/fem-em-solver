@@ -35,7 +35,12 @@ the source of truth; this page is a read-only digest for the human operator.
    **either confirm that a relative level is publishable (and the Privacy
    clause gets a sentence saying so) or redact to the bare verdict before
    pushing.**
-2. 🟠 **`ANS-6` is ready for your AED queue (commissioned by the 09-19
+2. 🟠 **`ANS-6` — AED numbers landed 2026-09-20 (interactive session):
+   Linux half re-run, by-hand reading in
+   `docs/private/ans6-operator-notes-2026-09-20.md`, adjudication owed to
+   the next review — loss partition and column difference agree; the
+   self-class offset is now attributed to the port model.** *(Was:* ready
+   for your AED queue (commissioned by the 09-19
    weekly).** `examples/ansys_benchmarks/ans6_copper_birdcage_four_port_10_64_128MHz/SPEC.md`
    — the `ANS-4` project with only the coil's treatment changed: a copper
    *Finite Conductivity* column and a *Perfect E* column, each at Zero and
