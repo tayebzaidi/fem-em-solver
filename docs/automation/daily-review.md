@@ -260,6 +260,18 @@ are yours.
    (only when §2 changed), recent activity, automation health, on-deck
    summary. Keep it a digest: no content that exists only there.
 
+   **Then regenerate the cold-start index (added 2026-09-19):**
+
+   ```
+   scripts/testing/run_and_log.sh PLAN-INDEX "timeout -k 30 30 python3 scripts/maintenance/plan_index.py"
+   ```
+
+   It rewrites the generated open-chunk block of `docs/status/START_HERE.md`
+   from the §7 rows you have just edited (through the harness: a bare
+   `python3` is not on the headless allowlist). Never edit that block by
+   hand, and put no status, number or ruling into the rest of that file — it
+   points, it does not record. Commit it with the dashboard.
+
    The artifact republish is **interactive-only**: the Artifact tool is not
    available in headless scheduled sessions, so do not attempt it here —
    the file update is this step's whole deliverable. The published copy at

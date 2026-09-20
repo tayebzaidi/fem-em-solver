@@ -31,6 +31,11 @@ that solves in the frequency domain needs the complex DolfinX build
 
 ## Read these before working
 
+- **docs/status/START_HERE.md** — read this FIRST (~10 KB): what to read for
+  which job, where everything lives and how big it is, and a generated
+  one-line index of every open chunk with its plan line number. The files
+  below total > 2 MB; none of them is meant to be read whole — grep a chunk
+  ID and read the span.
 - **PROJECT_PLAN.md** — the single source of truth. §2 honest current state,
   §4 definition of done, §5 compute budget + Docker + logging harness,
   §7 chunk backlog (stable IDs; several entries carry ready-to-execute
