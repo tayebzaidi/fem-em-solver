@@ -2635,3 +2635,44 @@ committed at 12:53Z).
   against `pinned=26`, one extra) — so the checker's artifact set evidently
   does not reach it. Whether that is by design or the same gap one class
   over is a question for the review, not a measurement this slot made.
+
+## 2026-09-20T14:20Z — `PORT-20` step 3 (§9 item 17) — **complete, `PORT-20` closed** (09:00 slot)
+
+- **What ran:** two standard windows, `-n 2`, complex build. `ports:2` as
+  edited — `20260920T140828Z_PORT-20.log`, Status 0, **181 s**; the `PORT-1`
+  step-4 gate module — `20260920T141141Z_PORT-20.log`, **18 passed / 190 s**
+  (was 17 passed / 1 xfailed before step 2's strict `xfail` was removed).
+  A pre-edit baseline of `ports:2` (`20260920T140255Z_PORT-20.log`, Status 1,
+  174 s) is the red that measured the new digits: it fails exactly on the two
+  S records and on nothing else.
+- **Measured:** `‖S − Sᵀ‖/‖S‖ = 3.112130445718013e-05`,
+  `‖S‖₂ = 0.8613568944845725` (example); `passivity_max_sigma
+  0.8613568944814173`, symmetry ratio `3.1121289645891435e-05` (gate module).
+  New records reproduce at 1.59e-11 abs / 1.43e-12 rel and 4.814e-10 /
+  3.541e-13 against unmoved 1e-6 / 5e-7 bands. **Negative control (asserted,
+  per record):** the superseded power-wave digits miss the corrected run by
+  **1.647e-05 abs** (symmetry) and **3.992e-03 rel** (`‖S‖₂`) in the example,
+  1.646e-05 / 3.453e-03 in the gate module — the ≈ 0.016-in-`|S₂₁|` size the
+  known-issues entry predicted. **Anchors:** raw / corrected mutual ratios
+  reproduce at 2.10e-10 / 2.06e-10 relative — every `Z`-derived record
+  digit-identical, so item 11 touched only S and the negative-result branch
+  (revert on `attempt/*`) did not fire.
+- **The `ans:3` leg did not run — pre-registered stop, not a failure.**
+  `03_two_torus_gap_ports_10MHz.py:725-727` writes the gitignored
+  `COMPARISON_private.md` unconditionally whenever `aed_results/` is present,
+  and it is present on this box; the item forbids a slot from rewriting that
+  file. Reported as the finding and filed as a 🟡 known-issues entry
+  (2026-09-20) with its unblock condition. That case's *records* are imported
+  from `examples/ports/02_package_sparameter_sweep.py` and are already
+  corrected; only its generated `metrics.json` / `COMPARISON.md` are stale.
+- **Status moved:** `PORT-20` 🟡 → **✅**; the 2026-09-19 current-route
+  known-issues entry **retired**; §2.1's `PORT-1` line gained the row's
+  sentence and its §2.2 finding (1) is marked FIXED; §9 item 17 done-marked.
+  CLAUDE.md's "`PORT-20`" open-finding clause is now stale and is **flagged
+  for the next interactive session**, not edited here.
+- **Denied commands:** four harness windows died in ≤ 1 s on
+  `permission denied … /var/run/docker.sock`
+  (`20260920T140145Z`, `…140152Z`, `…140204Z`, `…140223Z_PORT-20.log`) —
+  all four were **piped** (`| tail`), which is exactly the 2026-09-20
+  known-issues entry's first cause. Unpiped, the same command ran. The entry
+  is right and cost this slot ~5 minutes for not being read first.

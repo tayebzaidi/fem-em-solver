@@ -48,10 +48,12 @@ tabulated ``S`` did not, our ``z_to_s(Z)`` did).
 against ``ports/circuit.py``'s independent implementation of the same conversion
 at 1e-12.  Consequence: the two **S-derived** records below
 (``RECORDED_PASSIVITY_MAX_SIGMA``, ``RECORDED_S_SYMMETRY_RATIO``) are records of
-the superseded quantity, so
-``test_sanity_report_reproduces_the_gated_metrics_on_the_field_route`` carries a
-**strict** ``xfail`` until `PORT-20` step 3 re-records them.  No band moved and
-no record was edited here; the physics gates (reciprocity inside 1e-3,
+the superseded quantity.  **`PORT-20` step 3 (2026-09-20)** re-recorded exactly
+those two under the corrected definition and removed step 2's strict ``xfail``
+from ``test_sanity_report_reproduces_the_gated_metrics_on_the_field_route``; the
+power-wave digits are kept beside the new ones
+(``SUPERSEDED_POWERWAVE_*``) and *asserted* to miss this run by more than each
+record's own band.  No band moved at either step, and the physics gates (reciprocity inside 1e-3,
 ``‖S‖₂ ≤ 1``, the heuristic separation, the mutual ladder off ``Z``) are
 unchanged and green in the same window.
 
@@ -210,7 +212,21 @@ BLIND_FIXTURE_IM_Z12_OHM = 0.0
 # 0.861449 (v0.7.2); power-wave assembly **0.864809457** on the same
 # 184 176-cell mesh, a 4.008e-03 relative move.  No band moved and the physics
 # gates are untouched: sigma_max stays well inside 1, reciprocity inside 1e-3.
-RECORDED_PASSIVITY_MAX_SIGMA = 0.864809457
+#
+# `PORT-20` step 3 re-record, 2026-09-20 (the chunk's done-when; known-issues
+# 2026-09-19): on the gap-voltage (current-drive) route the undriven ports are
+# OPEN, so leg (d3)'s power-wave assembly `S_ij = b_i/a_j` was not the 50 Ohm
+# S-matrix; `PORT-20` converts this route's open-circuit `Z` instead, S =
+# z_to_s(Z).  `Z` is untouched (the mutual-ratio records below reproduce
+# digit-identically off `Z`), so this record moves and its band does not: the
+# power-wave value 0.864809457 is kept beside the new one as
+# SUPERSEDED_POWERWAVE_PASSIVITY_MAX_SIGMA and asserted to fail the 1e-6 band
+# against the same run.  Measured this slot at `-n 2`, complex build:
+# 0.8613568944857581 (20260920T095318Z_PORT-20.log:747) — nine digits kept, the
+# same precision as the terminated-Z reading 0.861356895 this record carried
+# before leg (d3).
+RECORDED_PASSIVITY_MAX_SIGMA = 0.861356894
+SUPERSEDED_POWERWAVE_PASSIVITY_MAX_SIGMA = 0.864809457
 PASSIVITY_REPRODUCTION_BAND = 1.0e-6
 # ||S - S^T||/||S|| = 2.5494e-05 (Frobenius) is what step 4 gated.  For a 2x2,
 # S - S^T has exactly two non-zero entries of equal magnitude, so
@@ -234,7 +250,16 @@ PASSIVITY_REPRODUCTION_BAND = 1.0e-6
 # in `z0`, so leg (d3)'s exact `S_ij ∝ I_i(drive j)` identity — which the
 # lumped-sheet route's matched drive does satisfy, at 1.3e-16 — does not apply
 # here; this residual is the route's own, gated as before by the unmoved 1e-3.
-RECORDED_S_SYMMETRY_RATIO = 4.758625e-05
+#
+# `PORT-20` step 3 re-record, 2026-09-20, same ruling and same reason as
+# RECORDED_PASSIVITY_MAX_SIGMA above: with the route's `S` corrected to
+# z_to_s(Z) this residual returns to the terminated-Z family — measured
+# 3.1121288540771594e-05 at `-n 2` (20260920T095318Z_PORT-20.log:747), six
+# significant digits as before (the 7th is not reproducible; see the OPS-18
+# paragraph).  Power-wave value kept beside it and asserted to fail the 5e-7
+# band against the same run.  The 1e-3 physics gate is untouched.
+RECORDED_S_SYMMETRY_RATIO = 3.112129e-05
+SUPERSEDED_POWERWAVE_S_SYMMETRY_RATIO = 4.758625e-05
 SYMMETRY_RATIO_BAND = 5.0e-7
 # The heuristic route's S is perfectly matched at every driven port (b = 0 on
 # the diagonal), so its S is numerically unitary and sigma_max sits at 1.
@@ -673,15 +698,6 @@ def test_retiring_heuristic_differs_from_the_solved_field(package_sweep):
 # --- PORT-5 step 1 ----------------------------------------------------------
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "PORT-20 (known-issues 2026-09-19) corrected the current-drive route's S "
-        "to z_to_s(Z); RECORDED_PASSIVITY_MAX_SIGMA and RECORDED_S_SYMMETRY_RATIO "
-        "are power-wave-assembly records of a quantity that was not S, and are "
-        "re-recorded by PORT-20 step 3 — never edited here"
-    ),
-)
 @record_width_xfail
 def test_sanity_report_reproduces_the_gated_metrics_on_the_field_route(package_sweep):
     """The sweep's own sanity report lands on the step-4 records.
@@ -766,6 +782,38 @@ def test_sanity_report_reproduces_the_gated_metrics_on_the_field_route(package_s
     assert abs(symmetry_ratio - RECORDED_S_SYMMETRY_RATIO) < SYMMETRY_RATIO_BAND, (
         f"the report's reciprocity delta converts to ||S-S^T||/||S|| = "
         f"{symmetry_ratio:.6e}, not the gated {RECORDED_S_SYMMETRY_RATIO:.4e}"
+    )
+
+    # `PORT-20` step 3's negative control, one per re-recorded constant: the
+    # power-wave digits these replaced must MISS this run by more than the band
+    # that accepts the new ones, or the route's `S` did not actually move when
+    # its assembly did.  Predicted (known-issues 2026-09-19) ~3.5e-03 on
+    # sigma_max and ~1.6e-05 on the symmetry ratio.
+    sigma_powerwave_miss = abs(
+        report.passivity_max_sigma - SUPERSEDED_POWERWAVE_PASSIVITY_MAX_SIGMA
+    )
+    symmetry_powerwave_miss = abs(
+        symmetry_ratio - SUPERSEDED_POWERWAVE_S_SYMMETRY_RATIO
+    )
+    if comm.rank == 0:
+        print(
+            f"[PORT-20 step 3] negative control: the superseded power-wave "
+            f"records miss this corrected run by sigma_max "
+            f"{sigma_powerwave_miss:.3e} (band "
+            f"{PASSIVITY_REPRODUCTION_BAND:.1e}), symmetry ratio "
+            f"{symmetry_powerwave_miss:.3e} (band {SYMMETRY_RATIO_BAND:.1e})",
+            flush=True,
+        )
+    assert sigma_powerwave_miss > PASSIVITY_REPRODUCTION_BAND, (
+        f"PORT-20 negative control failed: the power-wave record "
+        f"{SUPERSEDED_POWERWAVE_PASSIVITY_MAX_SIGMA:.9f} misses this run by only "
+        f"{sigma_powerwave_miss:.3e}, inside the "
+        f"{PASSIVITY_REPRODUCTION_BAND:.1e} band"
+    )
+    assert symmetry_powerwave_miss > SYMMETRY_RATIO_BAND, (
+        f"PORT-20 negative control failed: the power-wave record "
+        f"{SUPERSEDED_POWERWAVE_S_SYMMETRY_RATIO:.4e} misses this run by only "
+        f"{symmetry_powerwave_miss:.3e}, inside the {SYMMETRY_RATIO_BAND:.1e} band"
     )
 
 

@@ -64,7 +64,15 @@ Network identities on the same matrices:
 
 * `|Z₁₂ − Z₂₁|/|Z₂₁|` = 5.8309e-04 — two solves, two integrands, one operator,
   so this is a *measured* reciprocity, not an algebraic one;
-* `‖S − Sᵀ‖/‖S‖` = 4.7586e-05, `‖S‖₂` = 0.864809 ≤ 1 (passive).
+* `‖S − Sᵀ‖/‖S‖` = 3.1121e-05, `‖S‖₂` = 0.861357 ≤ 1 (passive).
+
+Both S figures are `PORT-20` step 3's (2026-09-20). On this **current-drive**
+route the undriven port is *open*, so the per-port power-wave assembly
+`S_ij = b_i/a_j` the sweep used until 2026-09-20 was not the 50 Ω S-matrix at
+all; the route now converts its open-circuit `Z` — `S = z_to_s(Z)` — and the two
+S-derived records move with it (`‖S − Sᵀ‖/‖S‖` 4.7586e-05 → 3.1121e-05, `‖S‖₂`
+0.864809 → 0.861357). `Z` did not move, so the mutual-ratio rungs above are
+digit-identical across the correction (they reproduce at 2.1e-10 relative).
 
 The negative control, same mesh and same ports:
 
@@ -87,11 +95,19 @@ comparison, and the band is `EX-37`'s measured ≤ 5e-8 Z/S scatter with ≥ 20�
 headroom.
 
 * four reproductions inside a pre-stated **1e-6 relative** band (**1e-6
-  absolute** on the symmetry residual — that entry is itself only ~4.8e-05, so
+  absolute** on the symmetry residual — that entry is itself only ~3.1e-05, so
   a 5e-8 S-entry scatter is ~1e-3 of it *relatively* and a relative 1e-6 there
   is arithmetically unreachable) — raw 0.8945163788281, corrected
-  0.9398215452105, `‖S − Sᵀ‖/‖S‖` 4.7586341120262e-05, `‖S‖₂`
-  0.8648094567341.
+  0.9398215452105, `‖S − Sᵀ‖/‖S‖` 3.1121288540772e-05, `‖S‖₂`
+  0.8613568944858.
+
+  **The two S records re-recorded 2026-09-20** (`PORT-20` step 3, the chunk's
+  own done-when): the power-wave digits `4.7586341120262e-05` /
+  `0.8648094567341` are kept in `SUPERSEDED_POWERWAVE_RECORD` and the example
+  **asserts** they miss the corrected run by more than the band that accepts the
+  new ones — measured **1.647e-05 absolute** on the symmetry residual and
+  **3.992e-03 relative** on `‖S‖₂`, against 1e-6 either way. No band moved, and
+  the two `Z`-derived records were not touched;
 
   **Re-recorded 2026-09-03** (`OPS-33`, in-class (1\*) licence): all four had
   been carrying v0.7.2-image digits (raw 0.894543, corrected 0.939849,

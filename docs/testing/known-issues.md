@@ -1546,7 +1546,7 @@ the `ANS-1` "an `ans:` case commits its own `metrics.json`" rule — `OPS-44`'s
 late declaration of the `ANS-2`/`ANS-4` files is the precedent — plus one
 ≈ 8 s window, which closes `OPS-59` and retires this entry.
 
-## 2026-09-19 — 🟡 OPEN (`ANS-3` adjudication, weekly review) — on the gap-voltage / impressed-current route `run_n_port_sparameter_sweep` reports an `S` that is **not the 50 Ω S-matrix**; its `z_matrix` is right
+## ✅ RETIRED 2026-09-20 (`PORT-20` steps 1–3, 04:30 + 09:00 implementer slots) — ~~🟡 OPEN 2026-09-19 (`ANS-3` adjudication, weekly review) — on the gap-voltage / impressed-current route `run_n_port_sparameter_sweep` reports an `S` that is **not the 50 Ω S-matrix**; its `z_matrix` is right~~
 
 | | |
 | --- | --- |
@@ -1556,6 +1556,17 @@ late declaration of the `ANS-2`/`ANS-4` files is the precedent — plus one
 | **Not affected** | Every lumped-sheet-route 4×4 / 32×32 (`PORT-9`, `PORT-11`, `PORT-13`, `ANS-4`, `TH-14`, `TH-15`), `PORT-1`'s gate of record (the mutual ratio is read from `Im Z₂₁`), `MAT-6`, `ANS-1`, `ANS-2`. |
 | **Affected** | Any S entry, `‖S‖₂`, or Touchstone export produced on the gap-voltage route: `EX-20` (`ports:2`), `ans:3`'s S table and its `‖S‖₂ = 0.864809` record, `PORT-1` step 4's passivity figure. They are self-consistent records of a quantity that is not S. |
 | **Fix** | `PORT-20` (§7). Do not "fix in passing": the reproduction records above move when it lands and are re-recorded by that chunk only. |
+| **Retirement** | `PORT-20` steps 1–2 landed 2026-09-20 (the route converts its open-circuit `Z`: `S = z_to_s(Z)`, agreeing with `ports/circuit.py`'s independent implementation at 9.4e-17 relative, closed form at 0.000e+00 on synthetic 2-/3-ports); **step 3, this slot** (`20260920T140828Z_PORT-20.log`, `ports:2`, 181 s, Status 0; `20260920T141141Z_PORT-20.log`, the `PORT-1` step-4 gate module, 18 passed / 190 s) re-recorded the four S-derived constants and removed step 2's strict `xfail`. Measured on the corrected route: `‖S − Sᵀ‖/‖S‖ = 3.112130445718013e-05`, `‖S‖₂ = 0.8613568944845725`; the superseded power-wave digits miss that same run by **1.647e-05 absolute** in the symmetry residual and **3.992e-03 relative** in `‖S‖₂` (gate module: 1.646e-05 and 3.453e-03) — the predicted ≈ 0.016-in-`\|S₂₁\|` size, asserted as each record's negative control. Nothing about `Z` moved: the mutual-ratio records reproduce at 2.10e-10 / 2.06e-10 relative against an unchanged 1e-6 band. **One residue, entry below:** `ans:3`'s *generated* `metrics.json` / `COMPARISON.md` still carry the pre-correction S table. |
+
+## 2026-09-20 — 🟡 OPEN (`PORT-20` step 3, 09:00 implementer slot) — `ans:3`'s tracked `metrics.json` / `COMPARISON.md` still carry the **pre-`PORT-20`** S table; the example cannot be re-run in a slot without rewriting the gitignored private comparison
+
+| | |
+| --- | --- |
+| **Symptom** | `examples/ansys_benchmarks/ans3_two_torus_gap_ports_10MHz/metrics.json` and `COMPARISON.md` were generated on 2026-09-19 by the pre-`PORT-20` power-wave assembly, so their `S` block (and the `‖S‖₂` / symmetry entries echoed there) is a record of the quantity `PORT-20` corrected. No test is red: the case's *records* are imported from `examples/ports/02_package_sparameter_sweep.py`, which step 3 re-recorded, so the next run of `ans:3` will gate on the corrected digits — the stale numbers are in the generated artifacts only. Our columns only; the AED columns of the tracked file are blank by construction. |
+| **Found by** | `PORT-20` step 3 (§9 item 17), which scoped `ans:3`'s our-half columns and then hit its own pre-registered trap. |
+| **Cause** | `03_two_torus_gap_ports_10MHz.py:725-727` writes the gitignored `COMPARISON_private.md` (AED columns filled) **unconditionally whenever `aed_results/` is present**, and it is present on this box. The step's instructions forbid a slot from opening or rewriting that file, so the run that would refresh the tracked artifacts cannot be issued in a scheduled slot. |
+| **Not affected** | Everything `PORT-20` step 3 did re-record: `examples/ports/02_package_sparameter_sweep.py`'s four constants and `tests/validation/test_port_package_sparameters.py`'s two, both green this slot. The `ANS-3` adjudication itself (its verdict rests on `Z`, which did not move, and on the S disagreement this correction explains). |
+| **Unblock condition** | Either (a) the operator (or an interactive session with the operator present) re-runs `ans:3` and lets the private file be regenerated from the unchanged `aed_results/`, or (b) a small `src`-free change gives the script an opt-out (`--no-private` / `FEM_EM_ANS_SKIP_PRIVATE=1`) so a slot can refresh the tracked half alone — then re-run `ans:3` and commit the regenerated `metrics.json` / `COMPARISON.md`. Until then, read the S rows of that case's tracked artifacts as superseded. |
 
 ## 2026-09-19 — 🟡 OPEN (`ANS-4` step 3 / 3c private readouts, weekly review) — the order-matched `ANS-4` comparison **disagrees on the self class at 64 MHz and 10 MHz**; the 128 MHz AGREE stands
 

@@ -20,9 +20,14 @@ the gate, not a passing example.
 
 **Anchor.**  Every asserted number reproduces this case's **0.11-image** record
 within **1e-6 relative** (``1e-6`` *absolute* on the symmetry residual, which is
-itself only ~4.8e-05): raw mutual ``0.8945163788281``, corrected
-``0.9398215452105``, ``||S - S^T||/||S|| = 4.7586341120262e-05`` and
-``||S||_2 = 0.8648094567341``.  All four were re-recorded by `OPS-33`
+itself only ~3.1e-05): raw mutual ``0.8945163788281``, corrected
+``0.9398215452105``, ``||S - S^T||/||S|| = 3.1121288540772e-05`` and
+``||S||_2 = 0.8613568944858``.  The two S records are `PORT-20` step 3's
+(2026-09-20): on this current-drive route ``S`` is ``z_to_s(Z)``, not the
+power-wave assembly that recorded ``4.7586341120262e-05`` / ``0.8648094567341``
+— those digits are kept in ``SUPERSEDED_POWERWAVE_RECORD`` and *asserted* to
+miss this run.  Nothing about ``Z`` moved, so the mutual-ratio records above are
+digit-identical across the correction.  All four were re-recorded by `OPS-33`
 (2026-09-03) from the current image; the superseded v0.7.2 digits are kept in
 ``SUPERSEDED_V072_RECORD`` and *asserted* to fail the tightened band.  The
 raw mutual is printed **first and labelled a miss** — at -10.55% the unmoved 10%
@@ -148,16 +153,44 @@ RECORDED_CORRECTED_RATIO = 0.9398215452105
 # (20260826T123139Z_EX-30-ports-run-1to2.log, the red that found the drift).
 # The physics gates (sigma_max <= 1, the gate module's unmoved 1e-3 symmetry
 # band, the 10% mutual band) are untouched by every re-record in this block.
-RECORDED_S_SYMMETRY_RESIDUAL = 4.7586341120262e-05
-RECORDED_S_SPECTRAL_NORM = 0.8648094567341
+#
+# `PORT-20` step 3 re-record, 2026-09-20 (the chunk's own done-when; known-issues
+# 2026-09-19).  On this **current-drive (gap-voltage)** route the undriven ports
+# are open, not terminated in z0, so the power-wave assembly `S_ij = b_i/a_j`
+# that leg (d3) installed was not the 50 Ohm S-matrix at all; `PORT-20` routes
+# this branch through `sparameters_from_impedance(Z)`, i.e. S = z_to_s(Z).  `Z`
+# did not move (the two mutual-ratio records above are digit-identical, read off
+# `Z`), so only the two S records below move.  Old (power-wave) digits kept
+# beside the new in SUPERSEDED_POWERWAVE_RECORD and *asserted* to fail this
+# file's bands against the same run — the negative control that shows the
+# re-record is the thing that changed.  New digits are the gate module's `-n 2`
+# measurement (tests/validation/test_port_package_sparameters.py, step 2's
+# 20260920T095318Z_PORT-20.log:747: 3.1121288540771594e-05 /
+# 0.8613568944857581) — this file reproduces them on its own mesh to the miss
+# printed at full precision below.  No band moved.
+RECORDED_S_SYMMETRY_RESIDUAL = 3.1121288540772e-05
+RECORDED_S_SPECTRAL_NORM = 0.8613568944858
 
 # The superseded v0.7.2-image record, kept as data rather than prose so the
 # negative control below can *assert* that it fails the tightened band.
+# NB the "symmetry"/"spectral" entries here are the v0.7.2 *power-wave* digits,
+# superseded twice over (image, then `PORT-20`); only "raw"/"corrected" are
+# asserted from this dict.
 SUPERSEDED_V072_RECORD = {
     "raw": 0.894543,
     "corrected": 0.939849,
     "symmetry": 4.758625e-05,
     "spectral": 0.864809457,
+}
+
+# `PORT-20` step 3: the immediately preceding records of the two S quantities —
+# the power-wave assembly's, on this image and this mesh.  Kept as data so the
+# negative control below can *assert* that they miss the corrected run by more
+# than this file's band (predicted ~1.6e-05 absolute in the symmetry residual
+# and ~4.0e-03 relative in ||S||_2, known-issues 2026-09-19).
+SUPERSEDED_POWERWAVE_RECORD = {
+    "symmetry": 4.7586341120262e-05,
+    "spectral": 0.8648094567341,
 }
 
 # OPS-33 (2026-09-03): with the records re-based onto this image, these four
@@ -429,6 +462,13 @@ def main() -> None:
             ladder["corrected"], SUPERSEDED_V072_RECORD["corrected"]
         ),
     }
+    # `PORT-20` step 3's negative control: the power-wave records of the two S
+    # quantities, against this (corrected) run.  Same kinds as the anchors —
+    # absolute on the symmetry residual, relative on ||S||_2.
+    powerwave_misses = {
+        "symmetry": _absolute_miss(s_symmetry, SUPERSEDED_POWERWAVE_RECORD["symmetry"]),
+        "spectral": _relative_miss(s_spectral, SUPERSEDED_POWERWAVE_RECORD["spectral"]),
+    }
 
     if comm.rank == 0:
         print(
@@ -469,6 +509,18 @@ def main() -> None:
             f"{REPRODUCTION_BAND_RELATIVE:.0e} band that now gates it",
             flush=True,
         )
+        # PORT-20 step 3: the records at the precision they are written to, plus
+        # the power-wave records they replaced and the miss that separates them.
+        print(
+            f"[EX-20] [PORT-20 step 3] S = z_to_s(Z) on this route: "
+            f"||S - S^T||/||S|| = {s_symmetry!r}, ||S||_2 = {s_spectral!r}\n"
+            f"    negative control — the superseded power-wave records miss this "
+            f"run by symmetry {powerwave_misses['symmetry']:.3e} (abs, band "
+            f"{REPRODUCTION_BAND_SYMMETRY_ABSOLUTE:.0e}), ||S||_2 "
+            f"{powerwave_misses['spectral']:.3e} (rel, band "
+            f"{REPRODUCTION_BAND_RELATIVE:.0e})",
+            flush=True,
+        )
         print(
             "[EX-20] negative control — the deprecated heuristic route "
             f"({len(deprecations)} DeprecationWarning(s)):\n{heuristic.s_matrix}\n"
@@ -507,6 +559,20 @@ def main() -> None:
             f"{superseded_misses[name]:.3e}, inside the "
             f"{REPRODUCTION_BAND_RELATIVE:.0e} band — the tightened band is not "
             "discriminating and the re-record was not the thing that fixed it"
+        )
+
+    # `PORT-20` step 3's own negative control, one per re-recorded S record: the
+    # power-wave digits must miss this run by MORE than the band that accepts the
+    # new ones, or the correction would not be measurable here.
+    for name, band, kind in (
+        ("symmetry", REPRODUCTION_BAND_SYMMETRY_ABSOLUTE, "absolute"),
+        ("spectral", REPRODUCTION_BAND_RELATIVE, "relative"),
+    ):
+        assert powerwave_misses[name] > band, (
+            f"PORT-20 negative control failed: the superseded power-wave "
+            f"{name} record {SUPERSEDED_POWERWAVE_RECORD[name]:.10g} misses this "
+            f"corrected run by only {powerwave_misses[name]:.3e} {kind}, inside "
+            f"the {band:.0e} band — S did not move when the route's assembly did"
         )
 
     assert abs(ladder["raw_deviation"]) >= MUTUAL_TOLERANCE, (
