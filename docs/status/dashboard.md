@@ -49,27 +49,35 @@ the source of truth; this page is a read-only digest for the human operator.
    on `main`** (2026-09-20 07:30 slot, item 14 ✅): `metrics.json` and
    `COMPARISON.md` are ready for you to fill the AED columns beside. The PEC
    column is the discriminator for the `S₁₁` finding.
-3. 🟡 **`example-runner` should not be able to spawn agents, and its "no
+3. 🟠 **For the 09-26 weekly to commission: `OPS-61`, Palace as a second
+   independent reference** (operator directive 2026-09-20, §7 row written,
+   §5.4 amended). Step 0 is a `fem-em-palace` compose service with a cost
+   probe; step 1 runs the `ANS-4` fixture (σ = 800 and PEC-coil variants)
+   through Palace at 10 / 64 / 128 MHz to adjudicate the ≈ 3 % self-class
+   offset `ANS-6` isolated to the port model. Palace numbers are publishable,
+   unlike AED's. The weekly decides the tier and whether step 0 goes to a
+   slot before it.
+4. 🟡 **`example-runner` should not be able to spawn agents, and its "no
    deviations" is not evidence.** *(Carried.)* The durable fix is in
    `.claude/agents/example-runner.md` (not writable from scheduled reviews):
    no Agent tool, census before any file is written, never return with a
    window running, view the figure and check each caption sentence.
-4. 🟡 **Two figure-style choices are yours.** *(Carried.)* Legends collapse
+5. 🟡 **Two figure-style choices are yours.** *(Carried.)* Legends collapse
    more than two same-colour entries to `first … last`, and one colour per
    region class cannot show a split between two same-class regions. Say if
    you want per-tag shades or full legends; otherwise nothing changes.
-5. 🟡 **The harness cannot prove "no orphans" on an XL night.** Its
+6. 🟡 **The harness cannot prove "no orphans" on an XL night.** Its
    pre-window check is silent when clean and nothing checks afterwards, so
    the ledger's earlier "orphans 0 / 0" wording rests on silence (tonight's
    row says so). A one-line echo in `scripts/testing/run_and_log.sh` before
    and after the window would make it evidence. Not queued — no status
    rides on it; say if you want it as an `OPS` item.
-6. 🟡 **This review's sandbox could not reach the docker socket** (one
+7. 🟡 **This review's sandbox could not reach the docker socket** (one
    attempted unit-test run, denied; nothing else needed it). The 02:00 cron
    window ran normally, so docker itself is up; whether the standard
    `fem-em-solver` service is Up was not observable from here. If the 04:30 slot journals
    the same denial, that is an outage to look at.
-7. 🟡 **XL / XXL windows ahead — information only.** Mon 09-21 `WF-7` step
+8. 🟡 **XL / XXL windows ahead — information only.** Mon 09-21 `WF-7` step
    0c (F-human, 32 ports, degree 1); Tue 09-22 `ANS-4` step 3e (64 MHz
    four-rung ladder); Wed 09-23 step 3f (10 MHz degree 2, congruent cut);
    **Thu 09-24 step 3g (10 MHz four-rung ladder — the weekly's entry 11);
@@ -77,15 +85,15 @@ the source of truth; this page is a read-only digest for the human operator.
    09-26 XXL `WF-7` step 0d. 3e and 3g are what the 09-26 weekly needs for
    the degree-2 default decision; 09-24 / 09-25 may each slip a night if a
    week-old row has not aged out by seconds.
-8. 🟡 **Codex review rollout — paused, yours.** *(Carried.)* Handoff at
+9. 🟡 **Codex review rollout — paused, yours.** *(Carried.)* Handoff at
    `logs/automation/codex-rollout-paused-20260910/HANDOFF.md` (gitignored).
-9. **Information:** the commit-first checkpoint in
+10. **Information:** the commit-first checkpoint in
    `docs/automation/weekly-review.md` (08-30) still awaits your OK.
-10. **One click: does ParaView open a DG1 `.bp`?** (since 2026-08-12.)
+11. **One click: does ParaView open a DG1 `.bp`?** (since 2026-08-12.)
    `scripts/probes/post4_step5_probe.py` writes the `.bp` and reads it back
    exactly; it still ends `PROBE_RESULT FAIL` on old fixture pins until
    item 15 of the queue lands — ignore that line for this purpose.
-11. **CLAUDE.md follow-up, when `PORT-20` closes:** its "two external
+12. **CLAUDE.md follow-up, when `PORT-20` closes:** its "two external
    findings stand open" sentence names `PORT-20`; slots do not edit
    CLAUDE.md, so the clause is yours to retire once item 17 lands.
 
