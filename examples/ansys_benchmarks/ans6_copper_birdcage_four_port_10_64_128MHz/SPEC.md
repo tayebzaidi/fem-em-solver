@@ -30,8 +30,12 @@ one that vanishes was the resolved σ = 800 interior's.
       filled, AED columns blank) and combined XDMF. Details: PROJECT_PLAN.md
       §7 `ANS-6` row; guide:
       `06_copper_birdcage_four_port_10_64_128MHz.md`.
-- [ ] Operator replication in AED — **this SPEC is sufficient on its own**;
-      the AED half does not wait for the runnable half
+- [x] Operator replication in AED — **landed 2026-09-20** (HFSS 2026 R1, Cu and
+      PEC columns × Zero and First Order, `aed/ans6_hfss_pyaedt.py`; numbers in
+      the gitignored `aed_results/`; Linux half re-run
+      `20260920T175038Z_ANS-6-aed-compare.log`; by-hand reading in
+      `docs/private/ans6-operator-notes-2026-09-20.md` — the example has no
+      private-mode writer yet)
 - [ ] Adjudication (next weekly review after AED numbers land)
 
 ## Geometry (SI units)
