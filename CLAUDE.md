@@ -24,7 +24,12 @@ gapped 4-leg birdcage carries four lumped-sheet ports whose 4×4 passes
 reciprocity / passivity / C4-symmetry gates at 10, 64 and 128 MHz
 (`PORT-9` ✅ 2026-08-25, `PORT-11` ✅ 2026-08-26) — **self-consistency
 identities on one fixture, not an absolute-accuracy, resonance or tuning
-claim**; read PROJECT_PLAN.md §2 before trusting any S-parameter or
+claim**. Two external findings stand open since the 2026-09-19 weekly
+(known-issues): the two-torus *current-drive* route's reported `S` is not
+the 50 Ω S-matrix — its `Z` is right (`PORT-20`) — and the order-matched
+AED comparison of the birdcage 4×4 agrees on the couplings and at 128 MHz
+but **disagrees on `S₁₁` at 10 and 64 MHz** (`PORT-21`), so no absolute
+`S₁₁` / `Z_in` figure is licensed there; read PROJECT_PLAN.md §2 before trusting any S-parameter or
 coil-loading/SAR figure. Anything
 that solves in the frequency domain needs the complex DolfinX build
 (`source /usr/local/bin/dolfinx-complex-mode`); real mode raises.

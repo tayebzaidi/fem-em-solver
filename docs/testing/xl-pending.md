@@ -554,3 +554,71 @@ spread. (b) phantom power moves ≥ 2 % toward AED ⇒ mesh convergence is part
 of the residual; a third rung is priced by a review. (c) spread does not
 fall ⇒ not `h` — a point-evaluation defect, known-issues + `POST` chunk.
 No band moves in the window; the review that finds the ledger row rules.
+
+### 11. `xl` — `ANS-4` step 3g: the 10 MHz degree-2 *h*-ladder (weekly 2026-09-19, §10 chain F step F2)
+
+**Status:** READY — no prerequisite; the knob, the module and the `RUNGSPEC`
+have all run green at `-n 16` (`ANS-4-step3c` 2026-09-18 at 10 MHz, step 2d
+2026-09-10 with this `RUNGSPEC`). The next daily review queues it for the
+first free `xl` night.
+
+**Why (the §10 question it answers):** the 2026-09-19 weekly ruled that 3c's
+public rule fired — the 10 MHz degree 1 → 2 move (4.41 / 1.35 / 1.08 %) is in
+the same class as the Larmor moves — and that the order-matched comparison
+disagrees on the self class at 10 MHz (known-issues 2026-09-19; numbers
+private). Both readings rest on **one** degree-2 rung at 10 MHz. Entry 7
+(3e) supplies the missing degree-2 rungs at 64 MHz; this is the same ladder
+at 10 MHz, where the disagreement is largest.
+
+**Command:** entry 7's, with `FEM_EM_ANS4_FREQUENCY_HZ=10e6` and the raw-log
+name changed — nothing else:
+
+```
+XL_CHUNK="ANS-4-step3g"
+XL_COMMAND="docker compose --profile xl exec -T fem-em-solver-xl bash -lc 'cd /workspace && source /usr/local/bin/dolfinx-complex-mode && mkdir -p /workspace/logs && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 FEM_EM_SOLVER_PROGRESS=2 FEM_EM_ANS4_FREQUENCY_HZ=10e6 FEM_EM_ANS4_STEP2_RUNGSPEC=\"0.015:1 0.015:2 0.0075:2 0.005:2\" timeout -k 60 14400 mpiexec -n 16 python3 -m pytest tests/environment tests/validation/test_ans4_resolution_ladder.py -v -s --tb=short > /workspace/logs/ans4-step3g-raw.log 2>&1; rc=\$?; echo \"[XL] memory.peak bytes:\" >> /workspace/logs/ans4-step3g-raw.log; cat /sys/fs/cgroup/memory.peak >> /workspace/logs/ans4-step3g-raw.log; echo \"[capture] rc=\$rc\" >> /workspace/logs/ans4-step3g-raw.log; cat /workspace/logs/ans4-step3g-raw.log; exit \$rc'"
+```
+
+**Price, measured in the family:** the finest rung at 10 MHz is 3c's own
+window — four drives 1419.4 s, `memory.peak` 284.8 GiB, 1603 s total; the two
+middle rungs scale from step 2d by the reuse factor entry 7 states
+(≈ 45 s + ≈ 295 s) plus four mesh builds ⇒ **predicted 2 000–3 500 s,
+270–295 GiB**. Frequency does not change the factorisation's size. Timeout
+14 400 s inside the 4 h window; 512 GiB limit.
+
+**Readout (record; nothing asserted beyond the module's imported gates and
+ladder controls):** public — the three C4 classes at 10 MHz on the three
+degree-2 rungs, the successive changes and their ratio beside step 2d's
+128 MHz 1.19 % → 0.62 % (1.90) and 3e's 64 MHz pair; every imported gate per
+rung (watch the self-class spread: 0.4451 % of a 0.5 % band on 3c's rung —
+a red there is a `GEO-31`-class mesh reading, and entry 8 (3f, the congruent
+cut at 10 MHz) is its control, not a reason to touch the band). Private —
+nothing new: the AED column is the one 3c was read against.
+
+**Decision rule (pre-registered, PROJECT_PLAN §10 2026-09-19):** successive
+degree-2 changes falling with ratio ≳ 1.5 **and** the last change below the
+smallest class move (1.08 %) ⇒ 3c's `0.005:2` figure is an *h*-converged
+value, the 10 MHz self-class disagreement is a model-level difference, and
+with the same outcome on 3e the production default flips to degree 2 by
+`TH-19` step 4 and `PORT-21` step 2 reads its table against a converged
+residual. Non-monotone or non-falling ⇒ the 10 MHz order-matched figure is a
+point, not a value; the default stays at degree 1; the ladder is the finding.
+No band moves.
+
+### Weekly rulings on RUN entries, 2026-09-19 (full text PROJECT_PLAN §10; AED figures private)
+
+- **Entry 1 (`WF-7` 0b, `xxl`)** — branch **(a)**: 5.50 % is in F-small's
+  64 MHz class; degree 2 is the human-scale order at 106.1 GiB / 348 s per
+  drive. The degree-2 terminal power residual (1.104e-02) is an unattributed
+  record; chain H step H3 asserts the exact discrete identity.
+- **Entry 2 (`ANS-4` step 3, 64 MHz)** — the pre-registered private rule
+  **fired on the self class**; couplings inside it. The 64 MHz "AGREE by
+  mechanism" is withdrawn for `S₁₁`, kept for the coupling classes.
+  Known-issues 2026-09-19, `PORT-21`.
+- **Entry 3 (`ANS-4` step 3b, 128 MHz, congruent cut)** — rule **did not
+  fire**: classes within step 2d's spreads of step 2d's (≤ 0.083 % against
+  ≤ 0.142 %). The cut is not a degree-2 systematic; the 128 MHz AGREE stands.
+- **Entry 4 (`ANS-4` step 3c, 10 MHz)** — rule **fired**: the 10 MHz move is
+  in the Larmor moves' class, so the degree-1 10 MHz AGREE is re-read as
+  partly coincidental. The self-class spread at 89 % of its band is read
+  with entry 8 when it runs.
+- Entries 5–9 (daily licence) **kept**; entry 10 stays READY; entry 11 added.

@@ -32,7 +32,12 @@ nominal over ±r_wire.
       `20260920T002403Z_ANS-3-aed-private.log`; preliminary reading in
       `docs/private/ans3-operator-notes-2026-09-19.md`) *(was: goes to the dashboard Waiting-on-you list
       when the box above is checked)
-- [ ] Adjudication (next weekly review after AED numbers land)
+- [x] Adjudication — **2026-09-19 weekly: AGREE on the primary row (the
+      mutual coupling `Im Z₂₁`, both AED orders); self rows informative as
+      pre-declared; S rows DISAGREE and the defect is ours** — the
+      current-drive route's tabulated `S` is not the 50 Ω S-matrix, the same
+      run's `Z` is right (`PORT-20`, known-issues 2026-09-19). Numbers:
+      gitignored `docs/private/ans3-ans4-adjudication-2026-09-19.md`.
 
 ## Geometry (SI units, exactly as the gated fixture)
 

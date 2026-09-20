@@ -13,9 +13,11 @@ reproduce), and four setup figures. Both ✅ changes were audited; one
 carries a privacy question for you (item 1).
 
 **Still a self-consistency story at the Larmor frequencies for degree-1
-figures:** the order-matched 4×4 is externally checked at 128 MHz; the
-64 MHz and 10 MHz order-matched rungs exist but their AED comparisons are
-not yet read. "Tuned" means series resonance on one F-small fixture at one
+figures:** the order-matched 4×4 is externally checked at 128 MHz (AGREE
+stands); **the 64 MHz and 10 MHz order-matched comparisons were read by the
+09-19 weekly and disagree on the self class (`S₁₁`) while agreeing on the
+couplings — no absolute `S₁₁` / `Z_in` claim at 10 or 64 MHz** (known-issues
+2026-09-19, `PORT-21`). "Tuned" means series resonance on one F-small fixture at one
 frequency. No C95.3 figure, no homogeneity, no closed-form B₁⁺ claim, no
 absolute S on a copper coil. `PROJECT_PLAN.md` is the source of truth; this
 page is a read-only digest for the human operator.
@@ -35,22 +37,26 @@ page is a read-only digest for the human operator.
    Privacy clause gets a sentence saying so) or redact to the bare verdict
    before pushing.** (b) *Carried:* the ours-vs-AED gap percentages still in
    `998edf9`'s diff — the same decision, on history.
-2. 🟠 **For tonight's 21:00 weekly — what it now owns:** (a) adjudicate the
-   three `ANS-4` XL windows (64 MHz; 128 MHz on the congruent cut; 10 MHz,
-   self spread at 89 % of its band); (b) **read the `WF-7` step 0b XXL
-   window** — branch (c) is excluded, (a)-vs-(b) compares 5.5 % with
-   F-small's 64 MHz moves (6.5 / 2.6 / 4.1 %) — and note the degree-2
-   power-accounting residual being worse than degree 1; place `GEO-33`;
-   (c) the production-order decision (`TH-19` step 3 has been green since
-   09-13 with the ruling owed), `ANS-6`'s SPEC, any amendment of `ANS-2`
-   (step 2 was re-classed "optional record" in the closing commit;
-   `SPEC.md:28`'s box is unticked). The daily queued an XXL variant for
-   09-26 (degree 2, all 32 ports) so the floor holds — rename or delete the
-   queue file to replace it. **(e) *New 19:30:* adjudicate `ANS-3` — the
-   operator's AED numbers landed this evening; Linux half re-run, private
-   comparison filled, preliminary reading in
-   `docs/private/ans3-operator-notes-2026-09-19.md` (primary row agrees;
-   the S rows expose a definitional systematic in our current-drive route).**
+2. 🟠 **`ANS-6` is ready for your AED queue (commissioned by the 09-19
+   weekly).** `examples/ansys_benchmarks/ans6_copper_birdcage_four_port_10_64_128MHz/SPEC.md`
+   — the `ANS-4` project with only the coil's treatment changed: a copper
+   *Finite Conductivity* column and a *Perfect E* column, each at Zero and
+   First Order, 10 / 64 / 128 MHz, plus phantom volume loss and coil surface
+   loss for port 1. It does not wait for our runnable half. The PEC column
+   is the discriminator for the finding below.
+   **What the 09-19 weekly ruled (numbers in
+   `docs/private/ans3-ans4-adjudication-2026-09-19.md`):** `ANS-3` **AGREE**
+   on the mutual-coupling row; its S rows **DISAGREE and the defect is
+   ours** — the current-drive route's `S` is not the 50 Ω S-matrix, its `Z`
+   is right (`PORT-20`). `ANS-4` order-matched: 128 MHz AGREE **stands**;
+   the 64 MHz pre-registered rule **fired on the self class**; the 10 MHz
+   degree-1 AGREE is re-read as partly coincidental — **no absolute `S₁₁` /
+   `Z_in` claim at 10 or 64 MHz at either order** (`PORT-21`; `xl` 3e 09-22
+   and new entry 11 decide whether those rungs are converged). `WF-7` 0b:
+   branch (a), degree 2 is the human-scale order. **Production order: target
+   degree 2, default not flipped; decided 09-26 on 3e / 3g.** `ANS-2`
+   ratified; `GEO-33` placed after the 16-leg F-human 32×32 (chain H6).
+   The 09-26 XXL queue file is kept.
 3. 🟡 **`example-runner` should not be able to spawn agents, and its "no
    deviations" is not evidence.** *(Carried, stronger.)* Four consecutive
    figure slots found a false caption, title or comment the runner had
@@ -72,8 +78,8 @@ page is a read-only digest for the human operator.
    0d** (degree 2, all 32 ports; predicted 10–20 min, 105–130 GiB).
 6. 🟡 **Codex review rollout — paused, yours.** *(Carried.)* Handoff at
    `logs/automation/codex-rollout-paused-20260910/HANDOFF.md` (gitignored).
-7. 🟢 **`ANS-3` AED run** — next in your AED queue now that `ANS-2` is back
-   (ready since 08-16).
+7. ✅ **`ANS-3` AED run — done 09-19, adjudicated by the weekly (item 2).** *(Was: next in your AED queue, ready since 08-16.)* `ANS-6` (item 2) is
+   now the only case waiting.
 8. **Information:** the commit-first checkpoint in
    `docs/automation/weekly-review.md` (08-30) still awaits your OK.
 9. **One click: does ParaView open a DG1 `.bp`?** (since 2026-08-12.) The
@@ -91,7 +97,7 @@ Nothing new is blocked on you; item 1 gates only a push.
 | Time-harmonic curl-curl | ✅ validated | lossy plane wave < 0.06%; Larmor sphere 3.64% / 1.77%, power 3.63%; degree 2 gated at 0.1405% on the sphere (`TH-12` ✅) — production order to the weekly |
 | Conductor model | ✅ two routes gated (`TH-14` ✅ 2026-09-14): the birdcage as a PEC hole and copper as a Leontovich surface (cavity Q vs Pozar +0.010 %, Dodd–Deeds copper slab ΔR −0.30 %) | one loop, one liftoff, 10 MHz for the floor; no absolute S on a copper coil (`ANS-6`) |
 | Coil loading | 🟡 measured flat in f across 10–64 MHz on one XL window — a record, not a gate | `MAT-6` ✅ Dodd–Deeds at 10 MHz; `TH-11` step 5d bracket [−2.04%, −0.43%] |
-| S-parameters / ports | ✅ 4-leg identities at 10/64/128 MHz; order-matched 4×4 externally checked (AGREE at 128 MHz, by mechanism at 64 MHz); order-matched rungs exist at all three frequencies (two-rung moves 4.4 / 1.4 / 1.1 % at 10 MHz, 6.5 / 2.6 / 4.1 % at 64 MHz, 5.7 / 4.5 / 6.7 % at 128 MHz on the congruent cut), adjudication tonight | degree-1 entries at 128 MHz sit 5–7 % from the order-matched value; the 10 MHz degree-2 self spread is at 89 % of its C4 band (cut off) |
+| S-parameters / ports | ✅ 4-leg identities at 10/64/128 MHz; order-matched 4×4 externally checked (09-19 weekly: AGREE at 128 MHz stands; at 64 and 10 MHz couplings AGREE, **self class DISAGREE, open** — `PORT-21`; the two-torus current-route `S` is not the 50 Ω S-matrix, its `Z` is right — `PORT-20`); order-matched rungs exist at all three frequencies (two-rung moves 4.4 / 1.4 / 1.1 % at 10 MHz, 6.5 / 2.6 / 4.1 % at 64 MHz, 5.7 / 4.5 / 6.7 % at 128 MHz on the congruent cut), adjudication tonight | degree-1 entries at 128 MHz sit 5–7 % from the order-matched value; the 10 MHz degree-2 self spread is at 89 % of its C4 band (cut off) |
 | Lumped RLC / circuit layer | ✅ `PORT-14`, `PORT-15` — capacitors in the model, `C_tuned` from the stored 4×4, in-model tuned `S₁₁` to 8.3e-5 | series resonance on one fixture at 64 MHz, not matched; mode spectrum is `TH-17` (queued, item 2) |
 | Multi-port drive | ✅ `POST-6` — 32-port ccw quadrature C16-invariant (0.81 %) | 10 MHz only |
 | B₁⁺ | ✅ `WF-6` — two-rung convergence statement (5.25 % → 2.07 %) | a convergence statement only |
