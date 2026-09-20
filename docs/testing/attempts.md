@@ -2423,3 +2423,82 @@ Every non-identical digit is disclosed above; all four sit in unasserted-or-far-
   re-registration the §9 item names, with the cause stated. Either way the
   parked module needs no structural change — it runs as-is, and the review's
   ruling is the only input missing.
+
+## 2026-09-20T12:53Z — `ANS-6` runnable half — **complete** (07:30 slot, item 14)
+
+- **Item:** §9 On deck item 14 (chain step T9), the first open item — items 10
+  and 13 are marked BLOCKED, 11 and 12 DONE. Delegated to `example-runner`
+  (foreground, one executor, the emit-then-harness rule restated in its spawn
+  prompt); the commit, the §4 claim and this entry are the slot's.
+- **Preflight:** tree clean. The first `docker compose ps` was denied the
+  socket (~1 s); retried once per the known-issues 2026-09-20 first entry and
+  it came back Up — intermittent, not the outage the 03:00 review's ruling
+  describes. The executor met the same denial twice more on piped harness
+  calls and cleared it the same way (unpiped re-run, immediate).
+- **What ran** (all through `run_and_log.sh`, foreground, `-n 2`, complex
+  build, durable capture with the trailing `; exit $rc`):
+  `20260920T123714Z_ANS-6-precensus-docrefs.log` (68 guides, dead=0, exit 2
+  staleness-only) · `…123716Z_ANS-6-precensus-figures.log` (examples=54 ok=20
+  missing=34 broken=0) · `…123746Z_ANS-6-TH14-gate-relift.log` (**11 passed,
+  Status 0, 101.62 s** — the rule (a) re-run of the gate module the lift
+  touched) · `…124620Z_ANS-6.log` (**Status 0, 167 s**, `[capture] rc=0` on
+  line 3015, the flagged `ans:6` run) · `…125042Z_…-postcensus-docrefs.log`
+  (70 guides, +2 = new guide + new `COMPARISON.md`, dead=0) ·
+  `…125043Z_…-postcensus-figures.log` (examples=55 ok=21 **broken=0**).
+- **Measured** (`20260920T124620Z_ANS-6.log`): mesh 80 181 cells;
+  `_build_ladder()` 103.3 s, PEC cross-check 32.2 s, export solve 4.2 s.
+  Copper surface-loss identity residual/P_src **1.571e-13 / 2.958e-13 /
+  7.022e-14** at 10 / 64 / 128 MHz, ASSERTED ≤ 1e-06 (lines 1848, 1994, 2140).
+  PEC cross-check — `TH-15`'s own `_hole_rung`, independently meshed and
+  solved at 10 MHz, against `TH-14`'s embedded PEC reference: worst relative
+  deviation **3.331e-13** against the imported 1e-8 band. Reciprocity
+  1.393e-14 / 3.285e-15 / 1.093e-15 (Cu) and 8.493e-15 / 1.427e-15 /
+  8.704e-16 (PEC); σ_max 0.999994231 / 0.999813505 / 0.999500814 (Cu);
+  C4-class spreads green on both columns at all three frequencies (lines
+  3002, 3005, 3008). Negative control, **predicted** (rule (e)): the
+  σ = 5.8e11 S/m rung's `max|S − S_PEC|` = 2.4–4.2e-06, ~25–40× under the
+  imported `PREDICTED_PEC_LIMIT_MAX_ABS_DS` = 1e-4.
+- **One anchor satisfied by construction, not asserted — flagged for the
+  review, not decided in-slot.** The item asks `TH-14`'s printed
+  `P_coil/P_in` (0.929 / 0.448 / 0.219) be *reproduced at rtol 1e-6 against
+  the value the `TH-14` module computes in the same run*, importing the
+  computation. The example imports the computation so completely — both
+  columns come from one live `_build_ladder()` call — that the comparison
+  would be `x == x`, so it is **printed** (9.288392e-01 / 4.483664e-01 /
+  2.186740e-01, lines 1849, 1995, 2141), reproducing the SPEC's reference
+  table and `TH-14`'s own log to every printed digit, and the §7 row says
+  so in those words. This is rule (h) shaped — an identity with one side
+  removed is a record — so the status moved is the item's own ⬜ → 🟡, never
+  a closure, and the substantive asserted quantities are the two above (the
+  1e-6 surface-loss identity and the 1e-8 two-build PEC cross-check), both
+  of which are independent comparisons and both green. If the review wants
+  the anchor as written, it needs a second, differently-built `P_coil/P_in`
+  — the `TH-15` `_hole_rung` route is the obvious candidate and is already
+  wired.
+- **`src/`-adjacent diff, disclosed (rule (a), additive):**
+  `tests/validation/test_th14_birdcage_copper.py` +11 lines — the `ladder`
+  fixture body lifted unchanged to a module-level `_build_ladder()`, fixture
+  now calling it. Gate module re-run green in the same slot (above); rule (i)
+  satisfied — the example window ran the code as committed.
+- **Privacy:** nothing under `docs/private/` or `aed_results/` was opened;
+  `COMPARISON.md` carries our columns only, AED columns blank by
+  construction; no AED number in any tracked file, log or message. No
+  absolute `S₁₁` / `Z_in` claim at 10 or 64 MHz (known-issues 2026-09-19,
+  `PORT-21`). Neither the `test_setup_figure_title.py` call-site pin nor the
+  `OPS-44` artifact pin was touched (`OPS-59` is item 16's).
+- **Files / commit:** `75082a0` on `main` — new example + same-stem guide +
+  `COMPARISON.md` + `metrics.json` + setup PNG (323 932 B, under the 600 KiB
+  ceiling) under
+  `examples/ansys_benchmarks/ans6_copper_birdcage_four_port_10_64_128MHz/`,
+  `SPEC.md` Runnable-half box ticked, six harness logs, `test-results.md`,
+  `PROJECT_PLAN.md` (§7 `ANS-6` ⬜ → 🟡, §9 item 14 DONE), `dashboard.md`
+  Waiting-on-you line. Tree clean after.
+- **Denied commands:** the three socket denials above, all transient and all
+  cleared by one retry; no allowlist change is needed.
+- **Next-attempt hypothesis:** the runnable half is done and the remaining
+  `ANS-6` work is the operator's AED replication (§5.4 Waiting-on-you), so
+  nothing here is queueable. The one queueable residue is the anchor note
+  above: one window that computes `P_coil/P_in` off the `TH-15` `_hole_rung`
+  build and asserts it against the `TH-14` route at rtol 1e-6 would convert
+  the printed record into the asserted anchor the item pre-registered, for
+  ~3 min of compute on a mesh both modules already build.
