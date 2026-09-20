@@ -2502,3 +2502,62 @@ Every non-identical digit is disclosed above; all four sit in unasserted-or-far-
   build and asserts it against the `TH-14` route at rtol 1e-6 would convert
   the printed record into the asserted anchor the item pre-registered, for
   ~3 min of compute on a mesh both modules already build.
+
+---
+
+## 2026-09-20T13:00Z — `OPS-50` step 3 (§9 item 15) — **incomplete, parked** — `attempt/OPS-50-20260920T125900Z` (`e2dd9ef`)
+
+Second item of the 07:30 CDT slot, under take-next (item 14, `ANS-6`,
+committed at 12:53Z).
+
+- **Tried:** the version-tagged re-record of `scripts/probes/post4_step5_probe.py`'s
+  step-4 fixture pins under the 2026-09-20 03:00 review's licence —
+  `STEP4_CELLS` 9261 → 9291 and `STEP4_MID_REL_MED` A `4.532338e-01` /
+  B `4.7172e-01` (five significant digits) / E `2.175825e-01`, GEO-16 comment
+  style with both instrument logs and the v0.7.2 values kept in-comment, plus
+  the 0.11 separations reading (0.8198× / 0.8520× / 1.2281×) in the
+  separations comment. `PIN_REPRO_RTOL`, `PIN_MID_MEDIAN_MIN`,
+  `ROUNDTRIP_MAX`, `DG1_VS_SOURCE_MAX` untouched. `post4_step4_probe.py` not
+  touched.
+- **Result / measured:** the re-record is correct and the item's *anchor*
+  still does not print. Pre-change control (`git -c safe.directory=/workspace
+  show 30cfd74:… > /workspace/logs/…`, run unmodified): `PROBE_RESULT FAIL`,
+  Status 1, 5 s — `cells=9291` vs `step-4 record 9261`, `REPRO` drifts
+  **11.4273% / 10.1016% / 7.8110%**, `FAIL PIN E`
+  (`20260920T125551Z_OPS-50-step3-prechange.log:372,418–423`). Post-change,
+  `-n 2`, complex build, 4 s: all four licensed pins green —
+  `MESH_FINGERPRINT cells=9291 (step-4 record 9291)` (`:372`), `REPRO` drifts
+  **8.293724e-08 / 9.705529e-06 / 1.167741e-07** against `PIN_REPRO_RTOL`
+  0.02 (`:393,400,407`) — the licence's predicted ≤ 1e-5 in all three — and
+  `RT_DOF A/B/E max_abs_diff=0.000000e+00` against `ROUNDTRIP_MAX` 1e-14
+  (`:383,386,389`). Verdict nonetheless **`PROBE_RESULT FAIL`**, Status 1, on
+  one line: `FAIL PIN E: P1 vertex scaled median 2.126638e-01 now exceeds
+  midpoint 1.731650e-01` (`20260920T125627Z_OPS-50-step3-probe.log:418`).
+  That is the `vtx_s > mid_s` guard at `post4_step5_probe.py:540` — a
+  **fifth** version-dependent pin. §9 item 15 licensed "the step-5 probe's
+  four fixture pins" and enumerated four untouchable constants; the ordering
+  guard is in neither list, and re-scoping it to make the probe pass is
+  loosening an assertion. Taken as the item's pre-registered negative-result
+  branch ("PASS does not print after the re-record ⇒ another pin moved —
+  report it, revert, stop"): `main` reverted, change parked.
+- **Logs:** `20260920T125532Z_OPS-50-step3-prechange.log` (Status 128, the
+  container `git show` hitting `dubious ownership in repository at
+  '/workspace'` — re-run with `git -c safe.directory=/workspace`, 0 s, no
+  compute), `20260920T125551Z_OPS-50-step3-prechange.log`,
+  `20260920T125627Z_OPS-50-step3-probe.log`.
+- **Branch (if parked):** `attempt/OPS-50-20260920T125900Z` (`e2dd9ef`, the
+  probe file only).
+- **Next-attempt hypothesis:** one review ruling version-tags the E
+  vertex/midpoint ordering guard to the 0.11 image (the flip is *measured*:
+  `PIN_SEP E` = 1.2281× in all four 0.11-image windows across both
+  instruments, against v0.7.2's 0.6835×, and the licence's own comment text
+  already says it flips). Either version-tag the guard the way the medians
+  were just version-tagged, or restrict it to A and B with the E flip
+  recorded. Then cherry-pick `e2dd9ef`, apply that one change, and one ≈ 5 s
+  `-n 2` window should print `PROBE_RESULT PASS` and close `OPS-50` (b).
+- **Housekeeping note for the review:** `docs/testing/known-issues.md`'s
+  2026-09-18 probe entry is **not** retired (amended with the above); the
+  B-nondeterminism entry stays open as ruled. The §7 `OPS-50` row's
+  Done-when (b) amendment *was* present as §9 claimed (the "amended
+  2026-09-20 03:00 review, §9 rule (j)" clause, `PROJECT_PLAN.md:1020`) —
+  row and §9 agree, so rule (j)'s tie-break did not have to fire.
