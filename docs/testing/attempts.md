@@ -2561,3 +2561,77 @@ committed at 12:53Z).
   Done-when (b) amendment *was* present as §9 claimed (the "amended
   2026-09-20 03:00 review, §9 rule (j)" clause, `PROJECT_PLAN.md:1020`) —
   row and §9 agree, so rule (j)'s tie-break did not have to fire.
+
+## 2026-09-20T13:05Z — `OPS-59` — **incomplete: (b) closed, (a) on its pre-registered negative result** (07:30 slot, item 16, third item)
+
+- **Item:** §9 item 16, taken as the slot's third under take-next (item 15's
+  outcome commit had landed on a clean tree at minute 29). Delegated to
+  `implementer`, foreground. Commit `5fd3d81`; the executor did not write this
+  journal entry, so it is the slot's (protocol step 5).
+- **Two windows, both smoke, `-n 2`, real build, unpiped top-level
+  `run_and_log.sh`, no socket denial this time:**
+  `20260920T130047Z_OPS-59-prechange.log` — both modules **unmodified**,
+  2 failed / 24 passed, 7.3 s pytest, Status 1, **9 s** wall; and
+  `20260920T130232Z_OPS-59-postchange.log` — after the change, 1 failed /
+  26 passed, 8.2 s, Status 1, **10 s**.
+- **Half (b) — the call-site pin — CLOSED.** The unmodified red reads
+  `expected 18 write_setup_figure call sites under examples/, found 21` /
+  `assert 21 == 18` (`…prechange.log:763–764`). The literal is replaced by
+  the identity it stood for and the three counts now agree:
+  **`call_sites=21 committed_setup_pngs=21 census_ok=21`**
+  (`…postchange.log:576`). The title-length scan over every site is
+  unchanged.
+- **The item's "expect 20" / "`20 != 18`" is one low, and the cause is this
+  slot's own item 14.** `75082a0` (`ANS-6` runnable half, 07:52) added the
+  21st example script, the 21st `write_setup_figure` call site and the 21st
+  committed `*_setup.png`; the setup-figure census moved `examples=54 ok=20`
+  → `examples=55 ok=21` between the review writing the item and the item
+  running. The item said *count, do not copy* and that is what was done — the
+  shift is arithmetic, not an anomaly, and it is exactly the disease half (b)
+  removes.
+- **Half (a) — the artifact pin — STOPPED on the item's pre-registered
+  negative result, not fixed.** The pin is now `LISTED_EXAMPLE_ARTIFACTS`
+  (5, declared by hand) **plus** `_setup_figures_admitted_by_rule()` (21,
+  derived from `check_example_setup_figures.py`'s own script↔figure pairing,
+  scoped to `examples/**/figures/*_setup.png`):
+  `pinned=26 (listed=5 by_rule=21) checker=27 git_ls_files=27`
+  (`…postchange.log:358`). Extras **22 → 1**, and the survivor is a
+  **non-setup** file — the item's stop condition, verbatim. Both asserted
+  negative controls are green (`:420`): the rule admits neither
+  `examples/ports/figures/not_a_setup.png` nor the orphan
+  `zz_nonexistent_setup.png`, listing either turns the identity red, and
+  `OPS-44`'s drop-any-member control still passes over all 26.
+- **The surviving extra is this slot's own doing, which makes it cheap for
+  the review to dispose of:**
+  `examples/ansys_benchmarks/ans6_copper_birdcage_four_port_10_64_128MHz/metrics.json`
+  (`…postchange.log:386`) — committed undeclared by `75082a0` two hours
+  earlier in this same slot, by an item (14) whose trap list named the
+  `COMMITTED_EXAMPLE_ARTIFACTS` pin only *conditionally* ("if item 16 has
+  landed" — it had not). It is a legitimate benchmark artifact of exactly
+  the class `OPS-44` declared late for `ANS-2`/`ANS-4`, not an accident of
+  the new rule. Neither the executor nor this slot declared it: §9 item 16
+  pre-registers "extras include a non-setup file ⇒ name it, leave it red,
+  stop", and a slot that declares its own undeclared artifact into the pin
+  that exists to catch undeclared artifacts is marking its own homework.
+- **Status moved:** `OPS-59` ⬜ → **🟡**; the 2026-09-20 call-site-pin
+  known-issues entry **retired**; the 2026-09-19 artifact entry **narrowed
+  (22 extras → 1, named), still open**; §9 item 16 marked **BLOCKED** with
+  its unblock condition (rule (d)); residual `main` reds **4 → 3**. §7 and
+  §9 agreed on both anchors — no rule (j) conflict.
+- **Files / commit:** `5fd3d81` —
+  `tests/unit/test_doc_reference_exit_codes.py` (+121/−),
+  `tests/unit/test_setup_figure_title.py` (+53/−), two logs,
+  `test-results.md`, `known-issues.md`, `PROJECT_PLAN.md` (§7 `OPS-59`,
+  the `EX-57` per-item list line, §9 item 16). No branch parked — the change
+  is green on `main` and stands on its own; the one red it leaves is the
+  pre-existing artifact pin, now narrowed to a single named path.
+- **Denied commands:** none.
+- **Next-attempt hypothesis:** one review line adds that `metrics.json` path
+  to `LISTED_EXAMPLE_ARTIFACTS` under the `ANS-1` rule (`OPS-44`'s late
+  declaration of the `ANS-2`/`ANS-4` `metrics.json` is the precedent), and
+  one ≈ 8 s `-n 2` window closes `OPS-59` and retires the 2026-09-19 entry.
+  Worth checking while that line is written: `ANS-6` also committed a
+  `COMPARISON.md`, which did **not** show up as a second extra (`checker=27`
+  against `pinned=26`, one extra) — so the checker's artifact set evidently
+  does not reach it. Whether that is by design or the same gap one class
+  over is a question for the review, not a measurement this slot made.
