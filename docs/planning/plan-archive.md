@@ -32831,3 +32831,750 @@ here so it is not lost.**
    step 5 re-anchored at `-n 1`, and a third sample of a 2-in-34 event
    diagnoses nothing; it stays an observation until a gate needs a `-n 2`
    bit-identity again.
+
+## §9 — the 2026-09-19 03:00 daily review's journal block (interval recap, audits, rulings, §10 assessment, restock, XL clerk), moved by the 2026-09-20 03:00 review under daily-review.md step 6c — archived 2026-09-20
+
+Last reviewed **2026-09-19, 03:00 review** (Saturday). *(The 2026-09-18
+03:00 interval narrative and its three closed items are archived verbatim in
+`docs/planning/plan-archive.md`.)*
+
+**Interval (09-18 03:00 → 09-19 03:00): four slots fired on Friday and all
+four did chunk work; the three-item queue was again consumed by the 04:30
+slot alone, and the other three each drew one fallback figure. An
+interactive operator session in the evening landed the `ANS-2` AED
+replication, fixed a printed-only normalisation, adjudicated the case and
+queued two physics items. The XXL window ran unattended and passed at a
+third of its predicted price. Nothing parked.**
+
+| Slot | Chunk | Outcome |
+|---|---|---|
+| 04:30 | `OPS-50`; `OPS-51`; `EX-57` | `e091c0c` **`OPS-50` ⬜ → 🟡** on its pre-registered negative branch: (a) the writer-side hole closed, control binary (exit 1 post-change vs exit 0 on the `a33be1d`-pinned file); (b) the probe's `adios2` port runs with its own round trip exact, but `PROBE_RESULT FAIL` on the step-4 fixture pins (9 291 vs 9 261 cells; REPRO drifts 11.4 / 10.1 / 7.8 % against an untouched 0.02). `ad18656` **`OPS-51` ⬜ → ✅** (count identity 6 → 0, the `-n 8` record control at 8.2e-11 vs an unmoved 1e-6; 2 + 3 + 68 + 36 s). `c9cc369` figure for `mesh:1` (census 40 → 39) **and a shared-helper fix**: every legend `write_setup_figure` had drawn was clipped (PyVista anchors the `upper right` family off the box's height) |
+| 06:00 | `EX-57` (fallback) | `3da0ee4` `mesh:2` (→ 38); the slot replaced a figure that hid its own subject (the outer region) and fixed a dead doc reference the runner's caption introduced |
+| 07:30 | `EX-57` (fallback) | `d97531d` `mesh:4` (→ 37); three defects caught by viewing the PNG — a false title, the render folded into the printed mesh time, a title clipped at the canvas edge |
+| 09:00 | `EX-57` (fallback) | `e64cae5` `mesh:5` (→ 36); two false caption claims corrected, rule (i) re-run honoured |
+| operator (09-18 evening) | `ANS-2` | `1f3b563` step 3 — AED numbers landed (private), Linux half re-run; `e4697e9` the printed-only incident power corrected to `|V|²/(8 Z₀)`; `f5759f5` **`ANS-2` 🟡 → ✅, adjudicated AGREE**, step 4 opened and queued; `9315634` `TH-17` step 1 written and queued, §9 rule (4) enacted |
+| XXL 02:00 (09-19) | `WF-7` step 0b | `31267f8` both legs rc 0, Status 0, **673 s, `memory.peak` 106.1 GiB**; degree 2 = 3 256 418 unknowns, 347.56 s |
+
+This review ran on `claude-fable-5-1`, no override.
+
+**Tree and branches (step 2).** Clean at review start; no `recovered/*`. The
+same four `attempt/*` branches remain (`TH-15-step2proper`,
+`WF-6-step4b/4c/4e`, kept on the 2026-09-09 18:00 ruling). Nothing to clear.
+
+**Audit (§4, step 3) — two status changes to ✅, two `auditor` reports,
+re-cited.**
+- **`OPS-51` ✅ (`ad18656`) — PASS.** `20260918T094347Z_OPS-51.log:51,57`
+  (count 0 required 0; control at the pinned `e091c0c` count 6 expected 6 —
+  lines re-read by this review); both are executed `assert`s
+  (`tests/unit/test_log_label_literals.py:86, :129`) and the sha is a module
+  constant (`:35`), never `HEAD`. `…094446Z_OPS-51-ladder-n8.log:2087,
+  2153–2157` (labels read `-n 8`; 2a″ record rel 7.068e-11 / 8.176e-11 /
+  1.983e-13 against `STEP3A_RECORD_RTOL` 1e-6, untouched in the diff),
+  Status 0, 68 s; `…094408Z_OPS-51-collect.log:85` (14 collected, 3 s);
+  `…094803Z_OPS-51-lumped.log:1824` (the additive `comm_size` fixture key's
+  module green, 36 s). Six label edits plus that one key; no band, record,
+  tolerance or assertion in the diff; no `src/`. One wrapper-hygiene note:
+  the two longer windows ran under `timeout -k 30 300`, inherited verbatim
+  from the step-3a command they reproduce — measured 68 / 36 s, inside
+  standard.
+- **`ANS-2` ✅ (`f5759f5`, interactive operator session) — the §4 evidence
+  passes; the auditor returned DEMOTE on a *privacy* ground, which this
+  review does not act on and hands to the operator.** Evidence:
+  `20260919T001707Z_ANS-2-normalisation-fix.log:1935, 1937–1940` (`ALL
+  ANCHORS GREEN`, Status 0, 201 s) — the log header's commit is the pre-fix
+  `1f3b563` but the content is the fixed tree (`:1919–1923` print the
+  corrected incident power), the ordinary run-then-commit order; the anchors
+  are executed `assert`s
+  (`02_birdcage_coil_driven_sar_10MHz.py:706–745`: C4 pairs at the imported
+  5 % band, the mis-paired control as a floor, the coverage identity, the
+  cell band), byte-identical across the three commits; `e4697e9` touches
+  only `_incident_power_w`, a printed-never-gated line; no `src/`, no
+  `tests/`. No raw AED-side value appears in any tracked file
+  (`COMPARISON.md`'s AED columns are blank). **The flag:** the closing
+  commits state *relative agreement levels* against HFSS in tracked files
+  (§2.2, §6, the §7 row, §9 item 1 below, `chunks/ANS-2.md`, the case's
+  `SPEC.md` status block), where that same `SPEC.md`'s Privacy section and
+  the `ANS-1` / `ANS-4` precedent carry only the word AGREE. An `ANS-*`
+  adjudication is the weekly's and the operator's act (§5.4), the operator
+  made it knowingly in session, and a demotion to 🧪 is for missing
+  evidence, which is not the case — so the row stands, **nothing was
+  redacted by this review, this review repeats none of those levels, and the
+  question is dashboard item 1: decide before the next push.** Two further
+  notes for tonight's weekly, which "may amend": step 2 (SPEC rows 4–6) was
+  re-classed from held to "optional record" in the closing commit, and
+  `SPEC.md:28`'s "runnable half implemented" box is still unticked.
+- Not audited (no status change to ✅): `OPS-50` (🟡 by its own branch),
+  the four `EX-57` figures (census 40 → 36, `broken=0` throughout).
+
+**Rulings (step 4).**
+1. **`WF-7` step 0b's XXL window is banked as a record, not adjudicated**
+   (`log-pathologist`: CONFIRMED countable, CONFIRMED a real solve; lines
+   re-read by this review). `20260919T070008Z_WF-7-step0b.log`: command
+   identical to the queue file, both legs rc 0 (`:10607`, `:21178`),
+   `[capture] rc=0` last, Status 0, 673 s (`:21183–21188`), orphans 0 / 0.
+   Degree 1 at `-n 16`: 607 039 unknowns, 24.61 s, 13.4 GiB summed, and
+   `S_driven(P17)` reproduces step 0's `-n 8` digits to the last printed
+   place — *printed*, not asserted at this width (`:10600–10602`). Degree 2:
+   **3 256 418 unknowns**, factorisation 242.5 s, solve 347.56 s, summed
+   `ru_maxrss` 107.9 GiB, `memory.peak` 106.1 GiB (`:21112`,
+   `:21169–21172`, `:21181–21182`). **The price is a third of the
+   prediction on both axes** (≈ 235 GiB / ≈ 17 min): branch (c) of the
+   pre-registered rule is excluded, and a degree-2 F-human drive is
+   `xl`-sized, not `xxl`-sized. **Public readout:** `|S₂ − S₁| / |S₁|` =
+   **5.50 %** (this review's arithmetic from the two printed values; the
+   probe does not print it). (a)-vs-(b) is the weekly's. **One reading the
+   weekly should not miss:** the printed, never-asserted power-accounting
+   residual is 1.104e-02 at degree 2 against 4.187e-03 at degree 1 — worse
+   at the higher order, where `TH-19` step 3 holds the *exact* discrete
+   identity at 1e-6 at degree 2 on F-small. Unattributed; entry 9 below
+   reads it on every column. Ledger row filled, `xl-pending.md` entry 1 →
+   `RUN`.
+2. **Three label defects in that log → `OPS-52`** (known-issues
+   2026-09-19): the degree-2 leg prints `phase 4 flag-off control … vs the
+   step-0 record` over the order-sensitivity readout (`:21173` — it reads as
+   a drift red and is the finding); the degree-1 time bracket (3–8 min) has
+   never been met (37.02 s, 24.61 s) and the degree-2 brackets are now
+   measured-stale; `solve … (solve)` lost step 0's "(assemble + factorise +
+   solve)" qualifier. Prints only; two queued windows (09-21, 09-26) run
+   this probe.
+3. **`OPS-50`'s residue cannot go to `record-reconciler` as the slot
+   proposed — the agent's own licence forbids it.** Its drift-sanity gate
+   stops a site above ≈ 0.5 %; the three `STEP4_MID_REL_MED` records moved
+   7.8–11.4 % and the E-field vertex/midpoint ordering flipped
+   (`20260918T093644Z_OPS-50-probe.log:418–426`). The cell count alone
+   (9 261 → 9 291, 0.32 %) is in class. These are medians over 400 points
+   *subsampled from the mesh's own vertices and midpoints*, so a 30-cell
+   change re-draws the sample — plausible, but unmeasured. The instrument
+   that made the records still exists (`post4_step4_probe.py`); item 4 below
+   runs it on the 0.11 image and the *next review* rules on a re-record from
+   two instruments' agreement. Known-issues entry re-pointed. `POST-4` ✅ is
+   untouched: it closed on its own v0.7.2 logs and no gate reads either
+   probe.
+4. **`mag:1`'s `max|B|` moved 2.3e-6 between two windows on one image**
+   (`4.972891321210e-05` on 09-16, `4.972902974704e-05` on 09-18, both
+   `-n 2`). Recorded, not chased: the value carries no band anywhere
+   (`plan-navigator`: NOT FOUND), the example's gates are its closed-form
+   comparison and the exact round trip, both green in both windows — no
+   status to move (rubric element 7). The `OPS-50` row's "mesher-side"
+   attribution is a guess and is marked so.
+5. **The setup-figure findings of four slots, disposed.** (i) The 14
+   figures rendered before `c9cc369` carry clipped legends the census cannot
+   see → known-issues entry, re-render items 6–7. (ii) No title-length
+   guard in `write_setup_figure` (a false-artefact mode: `mesh:4` lost a
+   letter) → `OPS-53`, item 5. (iii) Legend elision past two same-class
+   labels and one-colour-per-class hiding a same-class split are *design
+   conventions of the figure corpus*, not defects — dashboard item for the
+   operator, not queued. (iv) The `EX-57` item template now says "hide the
+   region that is not the subject", names both census scripts, and reads
+   "check every caption and comment sentence against the geometry": four
+   consecutive runner self-reports of "no deviations" did not survive the
+   slot viewing the PNG.
+6. **No attempt branches or parked work this interval** — nothing to
+   rescope. No step family moved toward its cap.
+
+**§10 assessment (step 5).** No gap the daily may fill beyond the chain.
+The "step count to a tuned birdcage" chain stands at: steps 1–4 landed,
+**step 5 queued (item 2)**, step 6 (`TH-19` step 3) executed 09-13 with the
+production-order ruling still owed by a weekly, steps 7–8 landed (`TH-14` ✅
+09-14), steps 9–10 the weekly's and the operator's — so rule (4) has nothing
+further to write today. Tonight's weekly owns: the `ANS-4` step 3 / 3b / 3c
+adjudications, the `WF-7` step 0b reading and `GEO-33`'s placement (its row
+sequences it after that reading), `ANS-6`'s SPEC, the production-order
+decision, any amendment of `ANS-2`. Two maintenance chunks opened from
+defects this review's readings found (`OPS-52`, `OPS-53`), each with a
+known-issues entry. **Example step (§5.4):** `ANS-2`'s case directory *is*
+its example; `OPS-51` is labels — no new example chunk.
+
+**Restock (step 6).** Eight items, **240 predicted slot-minutes — floor met
+exactly, item count met.** Items 1–2 are the operator's physics items, kept
+first; 3–5 are independent maintenance with a status each; 6–7 depend
+softly on 5 (said in the items); 8 is the standing figure. Not queued, and
+why: `GEO-33` step 1 (the weekly places it), the frozen families (`WF-6`
+4l, `ANS-4` 2h, `PORT-14` 2f, `TH-15` 2i), the figure-convention changes
+(ruling 5 (iii)).
+
+**XL clerk (step 6b).** XXL ledger gained one row — entry 1 marked `RUN`,
+columns filled. **`xl` budget:** 3 charged rows in the trailing 7 days
+(09-16, 09-17, 09-18); **4 entries ahead (09-20 … 09-23) — floor met**,
+nothing to queue. One arithmetic note: the 09-23 window would be the sixth
+charged row only if the 09-16 row (07:00:08Z) has aged out by 07:00Z that
+morning — it is seconds either way, the launcher decides, and a denied
+window simply stays in the FIFO for the next night. **`xxl`: 0 ahead after
+tonight's run ⇒ one entry written under the daily licence and queued:
+entry 9**, `WF-7` step 0d — the degree-2 F-human solve at the full 32-port
+set, a priced-family variant of tonight's row (port set varied only;
+predicted 10–20 min, 105–130 GiB) → `xxl-queue.d/20260926-WF-7-step0d.env`.
+**1 `xxl` ahead — floor met.** The weekly may replace it by renaming or
+deleting the file.
+
+**Residual `main` reds at `-n 2`: 3 deliberate/known**, plus the padding
+module's red at `-n 4` (known-issues, 2026-09-09). The `WF-6` ×0.0095 red is
+opt-in only and is not counted. Two `test-results.md` rows of 09-18 are red
+by design (`OPS-50-control-raises`, `OPS-50-probe`).
+
+## §9 — the 2026-09-19 On-deck queue's items 1–9 (execution text and measured readouts; all done, blocked-and-superseded, or re-priced), moved by the 2026-09-20 03:00 review under daily-review.md step 6c — archived 2026-09-20
+
+*(The 09-18 queue's three items are all done: `OPS-50` (`e091c0c`, 🟡 on its
+negative branch), `OPS-51` (`ad18656`), the `mesh:1` figure (`c9cc369`); the
+item texts are archived verbatim in `docs/planning/plan-archive.md`
+(2026-09-19) and journaled in `docs/testing/attempts.md`.)*
+
+**Predicted slot-minutes (rubric element 3 + 15 min fixed), running total:**
+item 1 → 45 · item 2 → 105 · item 3 → 125 · item 4 → 145 · item 5 → 165 · … · item 8 → 240 · **item 9 → 260 · item 10 → 310** (items 9–10 added 2026-09-19 by the interactive operator session: 9 is the prerequisite the `ANS-2` step 4 XL entry waits on, 10 is `TH-17` step 1b under rule (4); with items 1–8 done or blocked the *open* work is 70 slot-min — the Sunday review restocks) ·
+item 6 → 190 · item 7 → 220 · item 8 → **240**. Floor 240 and ≥ 5 items:
+**met** (2026-09-19 03:00 review). Items 1 and 2 were written 2026-09-18 by
+the interactive operator session (item 1 from the `ANS-2` adjudication,
+item 2 from the §10 chain under rule (4)); items 3–8 by this review. Items
+1–5 and 8 are mutually independent; 6 and 7 prefer item 5 landed and say
+what to do if it has not. Take them in order. A slot that finds all eight
+done draws the drained-queue fallback below — one figure, then stop.
+
+1. *(→ `xl-pending.md` entry 10, PENDING PREREQUISITE on item 9 below; queued for the first free night once 9 lands — operator session 2026-09-19.)* **BLOCKED 2026-09-19 (04:30 slot) — the cost probe (i) fired its own
+   pre-registered STOP rule; the step re-prices to XL and an implementer may
+   not commission the window.** Measured at `-n 8`
+   (`20260919T093241Z_ANS-2.log:2033–2038`, Status 0, 566 s): 719 769 cells /
+   452 228 phantom / 845 188 unknowns, **mesh 359.8 s**, one drive 188.4 s,
+   `ru_maxrss` **40.89 GiB** summed over eight ranks. Four drives extrapolate
+   to **1 114 s (18.6 min)** before post-processing — past the item's 15 min
+   *and* past 40 GiB, both criteria independently. Parts (ii) and (iii) did
+   not run; no anchor was measured; the `ANS-2` pointwise band is unmoved; no
+   decision branch (a)/(b)/(c) is selected. The prediction missed because it
+   scaled `WF-7` step 0's **solve** and carried no mesh time: 360 s of the
+   566 s is meshing. **Unblock condition:** a review pre-registers the
+   four-drive halved-rung run in `docs/testing/xl-pending.md` (licence class
+   "cost probe") — at ≈ 1 700 s and ≈ 41 GiB it fits an `xl` window with wide
+   margin. The measurement-only probe is on `main` as
+   `tests/validation/probe_ans2_phantom_h_halving.py`; the env knob and the
+   anchor module the item specifies were **not written** (no unverified code
+   on `main`). Original item text follows, for the review that re-prices it.
+
+   **`ANS-2` step 4 — the phantom h-halving diagnostic: does our driven-point
+   sampling scatter collapse, and does the integral move?** (implementer;
+   `examples/ansys_benchmarks/ans2_birdcage_coil_driven_sar_10MHz/02_birdcage_coil_driven_sar_10MHz.py`
+   gains an env knob `FEM_EM_ANS2_PHANTOM_RESOLUTION` (default the `GEO-27`
+   rung, unset ⇒ byte-identical output) and `tests/validation/` a small
+   module for the anchors; no `src/`; **heavy**, cost probe first; `-n 8`;
+   `main`; independent; **45 slot-min**: ≈ 2 min probe + ≈ 8 min four
+   drives + control ≈ 4 min + 15).
+   **Why:** the 2026-09-18 `ANS-2` adjudication (gitignored
+   `docs/private/ans2-adjudication-2026-09-18.md`): our four driven-point
+   SAR values on the 0.0025 m rung spread **15.7 %** across the C4 images
+   (`metrics.json`, public) where HFSS First Order's spread 0.02 % —
+   point sampling of a degree-1 cell-wise field, not physics — and the
+   ±10 % pointwise band on the verdict is set by that scatter. The
+   whole-phantom integral sits 5 % from HFSS; whether any of that is mesh
+   (ours converging toward AED with `h`) or all feed is the open question.
+   **The change:** (i) **cost probe** — mesh at `phantom_resolution` =
+   0.00125 m and one drive at `-n 8`, printing cells / phantom cells /
+   unknowns / solve time / `ru_maxrss` per rank; predicted ≈ 610 000 cells
+   (≈ 470 000 phantom), ≈ 750 000 unknowns, ≈ 40 s per drive, ≈ 11 GiB
+   summed (scaled from `WF-7` step 0's 607 000 unknowns at 37 s / 10.9 GiB
+   at `-n 8`). **If the probe reads > 15 min or > 40 GiB, stop: the step
+   re-prices to an XL cost probe (`xl-pending.md`, daily licence class
+   "cost probe") and nothing else in this item runs.** (ii) the four
+   drives on the halved rung through the example's own path; (iii) the
+   unset-knob control reproducing this run's `metrics.json` digits.
+   **Anchors (asserted):** the driven-point C4 spread on the halved rung
+   ≤ `C4_COVARIANCE_BAND` (5 %, imported from
+   `tests/validation/test_birdcage_sar_mass_averaged.py`, unmoved); the
+   control run reproduces the 0.0025 rung's four driven-point values and
+   phantom powers to `EXACT_IDENTITY_RTOL`; the mass-averaged C4 pairs on
+   the halved rung inside the same 5 % band (imported). **Printed, never
+   gated:** the four phantom powers on the halved rung beside the 0.0025
+   values and their relative change; the halved rung's cell counts as a
+   candidate record (a later `MAT-4`-style step registers it).
+   **Negative control (asserted):** the mis-paired 1 g control of this
+   example (`control_1g`, `(c_{k+2}; k)`) on the halved rung stays ≥ 10× the
+   band, as it does on the 0.0025 rung (87 %).
+   **Decision rule (pre-registered in the adjudication file):** (a) spread
+   < 5 % and phantom power moves < 2 % ⇒ residual is the feed; the verdict's
+   pointwise band tightens to the measured spread. (b) phantom power moves
+   ≥ 2 % toward AED ⇒ mesh convergence is part of the residual; a third rung
+   is priced by a review. (c) spread does not fall ⇒ not `h` — a
+   point-evaluation defect: known-issues entry + `POST` chunk.
+   **Tier / ranks / cost:** heavy by prediction (cost probe first, the §5.1
+   rule); `-n 8` for the drives, `-n 2` for the control.
+   **Status it can move:** the `ANS-2` verdict's pointwise band (±10 % →
+   measured) and, under (b), the stated level of the `MAT-4` external
+   anchor.
+
+
+2. *(→ item 10 below, `TH-17` step 1b — operator session 2026-09-19.)* **BLOCKED 2026-09-19 (04:30 slot, second item under take-next) — part (i)
+   done, parts (ii)/(iii) not startable.** The cost probe **passed** its
+   pre-registered STOP rule with enormous margin (47.80 s and 2.179 GiB
+   summed at `-n 4` against 15 min / 40 GiB; 80 181 cells, 111 121 dofs,
+   `20260919T094827Z_TH-17.log:899–915`) and the additive
+   `core/cavity.py` pencil builder + probe module are green on `main`.
+   **The blocker:** the pencil has no eigenvalue anywhere near
+   `k₀² = (2π·64 MHz/c)² ≈ 1.799` — all nine converged pairs are the N1curl
+   gradient cluster at λ ≈ 1.4–2.3e-09 (`Re f` ≈ 2 kHz). Because no mode-1
+   frequency exists to read, the item's (C5) third-residual band **could not
+   be pre-registered** and anchors (a)–(c) and both negative controls are
+   unreachable as written. ***Unblock condition:*** one window that exhibits
+   a **physical** (non-gradient) eigenvalue on this pencil — deflate or
+   filter the null space (`TH-9`'s `null_cutoff_fraction` has no analogue on
+   the general-mesh path), and print the `C = 0` spectrum on the same mesh to
+   locate the physical branch before re-choosing `nev`/target. Nothing in
+   this item re-prices to XL: the probe settled that. Full reading in the §7
+   `TH-17` row. Original spec follows. **`TH-17` step 1 — eigenmodes of the
+   loaded F-small birdcage with the PEC
+   coil and the tuned capacitor sheets: the internal "tuned birdcage"
+   milestone** (implementer; additive `src/fem_em_solver/core/cavity.py`
+   (a general-mesh pencil builder beside `_cavity_forms`, box path
+   byte-identical) and a new `tests/validation/test_th17_birdcage_eigenmodes.py`;
+   **heavy**, cost probe first; `-n 4`; `main`; independent of item 1;
+   **60 slot-min**: ≈ 5 min probe + ≈ 15 min gated run + ≈ 15 min controls
+   + ≈ 10 min `TH-9`/`TH-14`-step-1 gate re-runs + 15).
+   **Why:** §10 chain step 5 — the first Phase 6 physics target; serial on
+   chain steps 3 (`PORT-15` ✅ 09-13, `C_tuned`) and 4 (`TH-15` step 3c,
+   the hole mesh, 09-13), both landed. Written under §9 rule (4).
+   **The change:** as the §7 `TH-17` row states — (i) **cost probe:**
+   build the hole mesh with the four capacitor sheets at `C_tuned` and run
+   one shift-invert solve at the 64 MHz target with `nev = 6`, printing
+   cells / dofs / wall time / `ru_maxrss` per rank; **if the probe reads
+   > 15 min or > 40 GiB at `-n 4`, stop and journal — the step re-prices
+   (XL cost probe under the daily licence) and nothing else in this item
+   runs**; from the probe, set and pre-register the (C5) third-residual
+   band before (ii). (ii) the gated run: conduction linearised at
+   `ω_lin = 2π·64 MHz`, then one fixed-point re-solve at the found `Re ω`,
+   the shift printed and asserted < 0.1 %. (iii) the two controls.
+   **Anchors (asserted):** (a) mode-1 `Re f` within `PORT-14`'s κ band of
+   64 MHz — import the step-3 constant (`STEP3_KAPPA_RTOL` or the named
+   κ-systematic constant in `test_port_lumped_rlc_64mhz` / the `PORT-14`
+   step 3 module; name which in the journal, never restate); (b) pair
+   degeneracy ≤ the imported `PORT-11` C4 spread band; (c) positive `L_r`,
+   `L_l` from the (C5) fit and the third residual ≤ the pre-registered band;
+   the `TH-9` and `TH-14` step 1 gate modules re-run green on the touched
+   `cavity.py`.
+   **Negative control (asserted):** `2·C_tuned` moves mode-1 `Re f` by
+   `1/√2` within band (a); a shuffled-sheet control (capacitor on three
+   sheets only) breaks degeneracy (b) by ≥ 10× its band.
+   **Printed, never gated:** `Q` of each mode, the PEC-phantom control's
+   `Re f` shift, `f_0` and `f_2` beside their (C5) fit.
+   **Tier / ranks / cost:** heavy by prediction, cost probe first (§5.1);
+   `-n 4` throughout (`-n 2` for the gate re-runs).
+   **Status it can move:** `TH-17` ⬜ → ✅ and §6 Phase 6's "first physics
+   target"; under a failed (a), a `PORT-14`/`PORT-15` consistency
+   known-issues entry (the tuned `S₁₁` and the eigenmode disagree on where
+   64 MHz is).
+
+3. **DONE 2026-09-19 (04:30 slot, third item under take-next) — `OPS-52`
+   landed; `OPS-52` ⬜ → ✅ in §7 and the 2026-09-19 probe-label
+   known-issues entry retired in the same commit. `_phase4_label` is a pure
+   function: `order readout` with the relative move at degree ≠ 1,
+   `flag-off control` + `ASSERTED` only at degree 1 / `-n 8` / one drive;
+   five unit assertions green at `-n 2` in 1.1 s
+   (`20260919T095615Z_OPS-52.log:51,60,64`), the recomputed 09-19 move
+   **5.5008 % → printed `5.50 %`**, the source-text negative control
+   **1 → 0** against the pinned sha `19bed9a9`. The `-n 8` flag-off control
+   window is green as committed: `S_driven(P17)` 0.407423+0.344417j
+   **ASSERTED** equal to `S_DRIVEN_STEP0_RECORD`, both `ANCHOR PASS` lines,
+   cells 507 266 (+5.200e-03, INSIDE), rc 0, 154 s
+   (`20260919T095635Z_OPS-52.log:10424–10433`). Re-dated brackets now read
+   INSIDE on their own measured point (0.47 min in 0.31–1.23; 10.581 GiB in
+   5.47–21.86). Original text below.** — the F-human cost probe's labels say
+   what ran (implementer;
+   `scripts/probes/wf7_step0_f_human_cost.py` + one new
+   `tests/unit/test_wf7_probe_labels.py`; no `src/`; heavy by record for the
+   one control window, `-n 8`; `main`; independent; **20 slot-min**: ≈ 3 min
+   of windows + 15). **Land this before Monday 09-21 02:00 if a slot can** —
+   the 09-21 `xl` window and the 09-26 `xxl` window both run this probe.
+   **Why:** known-issues 2026-09-19 — in `20260919T070008Z_WF-7-step0b.log`
+   the degree-2 leg prints `phase 4 flag-off control: S_driven(P17) printed
+   0.436656+0.346994j vs the step-0 record 0.407423+0.344417j` (`:21173`):
+   with the degree flag *on* that line is the order-sensitivity readout, and
+   it reads as a failed control. The time bracket for degree 1 (3–8 min) has
+   never been met (37.02 s at `-n 8`, 24.61 s at `-n 16`), the degree-2
+   brackets are step 0b's prediction (measured 5.79 min / 107.9 GiB, both
+   below), and `solve 347.56 s (solve)` dropped step 0's "(assemble+factorise+solve)".
+   **The change:** (a) move the phase-4 label into a pure function
+   `_phase4_label(degree, comm_size, n_driven, …)` that says `flag-off
+   control` only when `degree == 1`, and otherwise `order readout: S_driven
+   at degree {d} beside the degree-1 step-0 record` with the relative move
+   `|S_d − S_1| / |S_1|` **printed**; (b) re-date `PREDICTED_SOLVE_MIN` /
+   `PREDICTED_SUMMED_RSS_GIB` from the measured points, each with its log
+   filename, width and date in a comment, labelled *measured single-drive
+   price at the stated width*, brackets = measured × [0.5, 2] — they gate
+   nothing and never did; (c) restore the qualifier on the two `solve` prints.
+   Strings and two bracket dicts only — `S_DRIVEN_STEP0_RECORD`, the cell
+   band, the `-n 8` assert condition and every solver call untouched.
+   **Anchors (asserted):** (a) the unit test: `_phase4_label(2, 16, 1, …)`
+   contains `order readout` and not `flag-off control`;
+   `_phase4_label(1, 8, 1, …)` contains `flag-off control` and `ASSERTED`;
+   and with the two printed values of the 09-19 window as inputs the printed
+   move is `5.50 %` to two decimals (|Δ| = 0.029346, |S₁| = 0.533495 — this
+   review's arithmetic; recompute, do not copy). (b) the flag-off control
+   window — the command of `20260916T093301Z_WF-7-step0c.log:12` verbatim
+   (`-n 8`, knobs unset) — green with the probe's own **executed** assert of
+   `S_driven` against `S_DRIVEN_STEP0_RECORD` and `ANCHOR PASS` on the cell
+   band; 158 s on record.
+   **Negative control (asserted):** the unit test imports the label function
+   from the file at the pinned pre-change commit (`git show <sha>:…` to a
+   scratch path under `/logs/`, sha a module constant, never `HEAD:` — the
+   `test_orphan_guard.sh` trap) only if the function exists there; it does
+   not, so instead assert on the **source text**: the regex
+   `phase 4 flag-off control` occurs outside any `degree == 1` / `DEGREE == 1`
+   branch **1** time at the pinned sha and **0** times at the working tree.
+   Integer identity 1 → 0; no ceiling to compute.
+   **Tier / ranks / cost:** the control window 158 s at `-n 8`, ≈ 11 GiB
+   (`20260916T093301Z_WF-7-step0c.log`), `timeout -k 30 590`, durable
+   capture with the trailing `; exit $rc`; the unit test seconds at `-n 2`,
+   `-s`. **No degree-2 run**: it is 108 GiB and is not a heavy-tier job —
+   that is why (a) is a pure function.
+   **Traps:** the probe imports dolfinx and runs on import-time env knobs —
+   make `_phase4_label` importable without executing `main()` (it already
+   guards with `if __name__`; verify, do not assume), and run the unit test
+   in the container; complex build for the probe window
+   (`source /usr/local/bin/dolfinx-complex-mode`, `FEM_EM_REQUIRE_COMPLEX=1`);
+   rule (i) — the control window runs the probe as committed; the queued
+   `.env` commands are **not** edited (entries are frozen after `QUEUED`).
+   **Scope:** labels and two non-gating bracket dicts on one probe. Not the
+   degree-2 power-accounting residual (1.104e-02 vs 4.187e-03) — that is
+   the weekly's reading and `xl-pending.md` entry 9's per-column readout.
+   **Status it can move:** the 2026-09-19 probe-label known-issues entry →
+   **retired** in the same commit; `OPS-52` ⬜ → ✅ (Done-when = this item).
+   **Negative result:** the control window's `S_driven` assert goes red with
+   strings-only edits ⇒ something other than a label moved — revert, park on
+   `attempt/*`, keep the entry, stop; never touch `S_DRIVEN_STEP0_RECORD`.
+
+4. **DONE 2026-09-19 (implementer slot) — measurement executed, table
+   delivered, `OPS-50` stays 🟡 for the next review to rule on. The step-4
+   probe imports and runs unmodified on 0.11 (the "dead API" trap did not
+   fire) and its conforming-source control is green with room to spare:
+   `CTRL_P1` MID and VTX `rel_max = rel_med = scaled_max = scaled_med =
+   0.000000e+00` against `CONTROL_MAX = 1e-10`, DG1 discriminator
+   ≤ 4.15e-17 against `DISCRIM_MAX = 1e-14`
+   (`20260919T110204Z_OPS-50-step2-probe4.log:389–396,407`), so the table is
+   readable. Both probes print `cells=9291` (`…probe4.log:377`;
+   `20260919T110225Z_OPS-50-step2-probe5.log:372`) — the cell-count half of
+   the anchor **holds**. MID rel med, step-4 probe vs step-5 probe on that
+   one mesh: A `4.532338e-01` / `4.532338e-01` (rel diff **0.00e+00**),
+   B `4.717160e-01` / `4.717141e-01` (**4.03e-06**), E `2.175825e-01` /
+   `2.175825e-01` (**0.00e+00**); VTX/MID scaled-median separation
+   **0.8198× / 0.8520× / 1.2281×** identical to the last digit in both,
+   against the v0.7.2 records `5.117084e-01` / `5.247224e-01` /
+   `2.018185e-01` and `0.4185× / 0.4818× / 0.6835×`. **The 1e-6 anchor holds
+   exactly on A and E and fails on B at 4.03e-06 — the pre-registered
+   negative branch, taken.** But the disagreement is not the branch's stated
+   cause ("the step-5 probe's P1 path is not the step-4 path"): a repeat of
+   the step-4 probe 34 s later reprints B as `4.717154e-01`
+   (`20260919T110258Z_OPS-50-step2-probe4-repeat.log:399`, self-spread
+   1.27e-06) and the step-5 probe's two runs differ by 3.39e-06, so the
+   cross-instrument 4.03e-06 sits **inside** each instrument's own repeat
+   spread on B, while A and E are bit-identical in all four windows. Filed
+   as its own known-issues entry (B-nondeterminism, cause **not
+   diagnosed**); the first entry's *Cause* line moves from asserted-by-the-
+   guard to **measured by two instruments**. Nothing re-recorded,
+   `PIN_REPRO_RTOL` untouched, no file under `src/`, `tests/` or
+   `scripts/probes/` edited. Three windows, 5 / 5 / 4 s, all Status 1 by
+   design (both probes gate on the drifted v0.7.2 records). **The review's
+   licence question is now: does a 4e-6-reproducible B median clear the bar
+   for a version-tagged re-record, or must B be recorded to 5 digits?**
+   Original text below.** — run the instrument that made the step-4 records,
+   on the 0.11 image** (implementer, measurement-only; **no file under `src/`,
+   `tests/` or `scripts/probes/` is edited by this item**; standard; `-n 2`;
+   complex build; `main`; independent; **20 slot-min**: two ≈ 5–10 s windows
+   + the comparison table + 15).
+   **Why:** ruling 3 of the 2026-09-19 review — `post4_step5_probe.py` fails
+   its fixture pins on 0.11 (9 291 cells vs `STEP4_CELLS` 9 261;
+   `STEP4_MID_REL_MED` drifts 11.4273 / 10.1019 / 7.8110 % against
+   `PIN_REPRO_RTOL` 0.02; `PIN_SEP E` 1.2281× where step 4 recorded 0.6835×),
+   and `record-reconciler`'s own drift gate (≈ 0.5 %) forbids it the
+   re-record. Those records are medians over 400 points subsampled from the
+   mesh's own midpoints and vertices, so a 30-cell mesh change re-draws the
+   sample; whether *that* is the whole drift is what two instruments on one
+   mesh can say and one cannot.
+   **The measurement:** run `scripts/probes/post4_step4_probe.py` unmodified
+   at `-n 2` on the 0.11 image (its recorded v0.7.2 window is the
+   `POST-4` step 4 log cited in `docs/planning/chunks/POST-4.md` — read the
+   command from that log's header, do not reconstruct it), then
+   `post4_step5_probe.py` again in the same slot, and tabulate per field
+   (A, B, E): step-4-probe MID `rel_med`, step-5-probe `p1_mid_rel_med`,
+   their relative difference, and both probes' VTX/MID scaled-median
+   separation, beside the three v0.7.2 records.
+   **Anchor (asserted, in the journal's table — no test file):** the two
+   probes sample the same points of the same mesh by construction
+   (`_collect_points` is "verbatim from the step-4 probe"), so on 0.11 their
+   MID `rel_med` must agree to **1e-6 relative** per field, and both must
+   print the same global cell count. That identity is what licenses reading
+   either number as "the 0.11 value". **Negative control (asserted):** the
+   step-4 probe's own conforming-source control (P1 fed back through
+   `interpolate`) reproduces itself to the probe's stated round-off bound at
+   both point sets — a control that fails says the machinery broke on 0.11,
+   and nothing else in the table is read. Ceiling: the control is round-off
+   vs O(0.1–0.5) medians, ≥ 10¹² separation available; no factor asserted
+   beyond the probe's own bound.
+   **Tier / ranks / cost:** standard; the step-5 probe is 5 s at `-n 2` on
+   0.11 (`20260918T093644Z_OPS-50-probe.log`); the step-4 probe is
+   unmeasured on 0.11 (same fixture, no VTX write — *predicted* ≤ 10 s);
+   `timeout -k 30 180` each. The step-5 window is **expected Status 1**
+   (`PROBE_RESULT FAIL`, the known entry) — name it `OPS-50-step2-probe5`
+   and say so in the journal.
+   **Traps:** complex build for both; the step-4 probe predates the 0.11
+   image — if it dies on an API the image removed, that is the finding
+   (report the traceback, stop; porting it is a new item); do not pipe
+   either window through a filter (footer status); `/logs/` scratch only.
+   **Scope:** a table. **Nothing is re-recorded in this slot** — not
+   `STEP4_CELLS`, not the medians, and `PIN_REPRO_RTOL` is never widened.
+   `POST-4` ✅ is not re-opened: it closed on its own v0.7.2 logs.
+   **Status it can move:** the 2026-09-18 known-issues probe entry's
+   *Cause* line (from "the fixture moved" asserted-by-the-guard to measured
+   by two instruments, or refuted) and, through the next review's ruling,
+   `OPS-50` 🟡 → ✅: **two instruments agreeing to 1e-6 on 0.11 with the
+   control green ⇒ the review licenses a version-tagged re-record of the
+   four constants (GEO-16 comment style, old values and logs kept
+   in-comment) as a one-window item; an E-field ordering that stays flipped
+   in both is then recorded as a property of the 0.11 mesh, with step 4's
+   v0.7.2 reading kept beside it.**
+   **Negative result:** the two probes disagree beyond 1e-6 on one mesh ⇒
+   the step-5 probe's P1 path is not the step-4 path it claims to be — a
+   second known-issues entry with both rows, `OPS-50` stays 🟡, stop.
+
+5. **DONE 2026-09-19 (11:07 implementer slot) — guard landed, 7 unit
+   assertions green at `-n 1` and `-n 2`, 18 call sites found as expected
+   (5 of them non-constant and listed), census unchanged and the flagged
+   `mesh:5` re-run digit-identical; known-issues half (b) retired. Evidence
+   in the §7 `OPS-53` row.** `OPS-53` — `write_setup_figure` refuses a title it cannot draw
+   (implementer; `src/fem_em_solver/post/setup_figure.py` + new
+   `tests/unit/test_setup_figure_title.py`; smoke/standard; `-n 1` and
+   `-n 2`; real build; `main`; independent; **20 slot-min**).
+   **Why:** known-issues 2026-09-19 — the helper draws the title with a bare
+   `add_text` (`setup_figure.py:321`), no wrap and no length guard; on
+   2026-09-18 07:30 `mesh:4`'s 150-character title ran off the canvas and
+   the committed-candidate PNG read "not drawr". The census cannot see it
+   (`broken` only checks the file parses), and every future figure item can
+   hit it. A ≈ 145-character ceiling exists today only as a comment at one
+   call site.
+   **The change:** a module constant `MAX_TITLE_CHARS` set **by
+   measurement** — the longest title among the committed figures that the
+   slots have viewed whole is `mesh:4`'s 126 characters, and 150 clipped;
+   set it to 130 and say in the comment that the bracket is [126 ok, 150
+   clipped] at font size 11 on the helper's fixed canvas — and a
+   `ValueError` naming the length and the limit when `len(title)` exceeds
+   it, raised **before** any plotting and on every rank (the helper is
+   called collectively; a rank-0-only raise hangs `-n 2`). No wrap logic, no
+   signature change, no change to any drawn pixel for a legal title.
+   **Anchors (asserted):** (a) the unit test — a 131-character title raises
+   `ValueError` whose message contains both integers; a 130-character title
+   does not raise at the guard (call the guard function directly; do not
+   render in the unit test); (b) a source scan, in the same test, over every
+   `write_setup_figure(` call under `examples/` and
+   `src/fem_em_solver/post/setup_figure.py`'s exemplar: the literal `title=`
+   string at each call site is ≤ `MAX_TITLE_CHARS` — **18 call sites
+   expected** (one per census `ok`; count them, and if the number
+   differs say so rather than editing the expectation silently); (c) the
+   setup-figure census after the change: `examples=54 ok=18 missing=36
+   broken=0` unchanged, and one flagged re-run of `mesh:5` (12 s at `-n 2`,
+   `20260918T140647Z_EX-57.log`) green with its `GEO-17` digits identical.
+   **Negative control (asserted):** the guard called with the 150-character
+   title the 07:30 slot first tried (reconstruct it from
+   `20260918T123728Z_EX-57.log`'s `[setup-figure]` line, or, if the log does
+   not carry it, a synthetic 150-character string — say which) raises; the
+   same call against the helper at the pinned pre-change sha (`git show
+   <sha>:src/fem_em_solver/post/setup_figure.py` to a scratch module under
+   `/logs/`, sha a module constant) has no guard function —
+   `AttributeError` / absent symbol, asserted. Binary; no ceiling.
+   **Tier / ranks / cost:** unit test seconds; census 1–2 s; `mesh:5` 12 s;
+   `timeout -k 30 180`.
+   **Traps:** f-string or concatenated titles defeat a naive regex — parse
+   call sites with `ast` and evaluate only constant strings / implicit
+   concatenation, listing (not failing) any site whose title is not a
+   compile-time constant; `pyvista` must not be imported by the unit test's
+   guard path (keep the guard above the plotting imports, as the helper's
+   opt-in gate already is); standing rule (c): this is a `src/` change — the
+   census re-run *is* the pre-existing gate, and the item says so.
+   **Scope:** the title only. Legend elision past two same-class labels and
+   the one-colour-per-class convention are design choices of the corpus and
+   are the operator's (dashboard, 2026-09-19) — not touched.
+   **Status it can move:** the 2026-09-19 title-guard known-issues entry →
+   **retired**; `OPS-53` ⬜ → ✅ (Done-when = this item).
+   **Negative result:** an existing committed call site already exceeds 130
+   ⇒ do not raise the limit to fit it: view that PNG (Read tool); if it is
+   clipped, shorten that title in the same commit and re-render it; if it
+   is whole, the bracket is wrong — report the measured length, set the
+   constant from it, and say so.
+
+6. **`EX-57` re-render, leg A — the five magnetostatics figures drawn under
+   the clipped-legend path — DONE (2026-09-19).** (`example-runner`, spawned **foreground** with
+   "you are the executor, do not spawn agents, never return with a window
+   running"; real build; `-n 2`; standard; **25 slot-min**: ≈ 6.5 min of
+   flagged windows — `mag:1` 7 s, `mag:2` 137 s, `mag:4` 84 s, `mag:5` 7 s,
+   `mag:6` 149 s, all on record in `test-results.md` 09-14 / 09-16 — + five
+   PNG reads + 15). **Soft dependency:** better after item 5 (one render per
+   helper change); if item 5 has not landed, proceed — a legal title renders
+   identically either way.
+   **Why:** known-issues 2026-09-19 — `c9cc369` fixed a legend anchor that
+   had clipped every legend `write_setup_figure` ever drew; the 14 PNGs
+   committed before it (`mesh:3`, `th:10`, `mag:1/2/4/5/6`, `mri:1/2/3`,
+   `ports:15–18`) still carry the truncated legends, and the census cannot
+   see it.
+   **The work:** for each of the five, the flagged run exactly as its
+   original `EX-57` item ran it (`FEM_EM_SETUP_FIGURES=1`, the example's
+   recorded width), `git add` the regenerated PNG. **No `.py` edit is
+   expected**; if a region name was shortened on 09-14/16 only to dodge the
+   clipping, leave it — renaming is not this item's.
+   **Anchors (asserted, imported):** every example's own identities green
+   and digit-identical to its original flagged window (cite both log lines
+   per example in the journal); setup-figure census `broken=0` and `ok` /
+   `missing` **unchanged** (this item adds no figure);
+   `python3 scripts/testing/check_example_doc_references.py` `exit != 1`
+   (that filename — two slots lost a window to `check_doc_references.py`).
+   **The check that matters (2026-09-18, four slots running):** Read each
+   PNG; the legend must show every entry whole, and **every sentence of the
+   guide's existing caption must still be true of the new image** — a
+   caption that described the old clipped legend, or that is false, is
+   corrected in the same commit. **Negative control:** `git show
+   HEAD:<png>` (the pre-change image, pinned by the commit you start from —
+   record that sha in the journal) viewed beside the new one for at least
+   `mag:2`: the old legend is visibly truncated, the new is not; say what
+   the truncated text was. Qualitative by nature — this item closes no
+   chunk and claims no gate.
+   **Traps:** magnetostatics runs on the **real** build; PNG ≤ 600 KiB;
+   rule (i) does not bite (no module edit) unless a caption fix touches a
+   `.py` comment — then re-run that example; the docker-socket runner trap
+   above.
+   **Scope:** five PNGs. **Status it can move:** the 2026-09-19
+   clipped-legend known-issues entry → **narrowed** to leg B's nine.
+   **Negative result:** a re-rendered legend is still clipped ⇒ the
+   `c9cc369` fix does not cover that figure's label set — report the
+   example and the label lengths, leave its PNG as it was, stop.
+
+7. **`EX-57` re-render, leg B — `mesh:3`, `th:10`, `mri:1/2/3`,
+   `ports:15–18` — DONE (2026-09-19), all nine.** (`example-runner`, foreground, same prompt rules; build
+   per example — `mesh:3` real, the rest **complex**; `-n 2` unless the
+   example's original `EX-57` window used another width (read it from
+   `attempts.md`); standard; **30 slot-min**: `mri:1` 8 s, `mri:2` 13 s,
+   `mri:3` 80 s, `mesh:3` ≈ 31 s on record; `th:10` and `ports:15–18` take
+   their windows from their 09-13 / 09-14 `EX-57` journal entries — **read
+   them before starting, and if the nine sum past 12 min, do the first
+   five and mark this item "leg B: 5 of 9 done" rather than overrun**).
+   Everything else exactly as item 6: no `.py` edit expected, identities
+   digit-identical, census `ok` / `missing` unchanged and `broken=0`,
+   docrefs `exit != 1`, every PNG read and every caption sentence checked
+   against the new image (on 09-16 `mri:3`'s legend had eight unnamed port
+   tags by *elision*, which is corpus design and stays — do not "fix" it
+   here). Independent of item 6; soft dependency on item 5 as there.
+   **Status it can move:** the clipped-legend known-issues entry →
+   **retired** when both legs have landed (narrowed if only one has).
+   Both legs landed 2026-09-19 (leg A `997a5fe`, leg B this commit); the
+   known-issues entry is retired.
+
+8. **DONE 2026-09-19 (07:30 slot) — figure landed, census 36 → 35 as
+   predicted, `broken=0`; and the slot corrected a pre-existing labelling
+   error the render surfaced.** Flagged and unflagged windows digit-identical
+   (sheeted `cells=116085`, meshed/CAD conductor `0.970069` against the
+   unmoved gate 0.95, C4 sheet spread `6.050e-16` against band 1e-12, uncut
+   control `cells=98666` / `0.966977` with cell tags `[1,2,3,101,102,103,104]`
+   and conductor-facing area exactly 0.0), Status 0 both, **46.8 s / 45.0 s**
+   at `-n 2` (`20260919T123932Z_EX-57.log:1800,1806,3139,3155,3158`;
+   `20260919T124032Z_EX-57.log:1793,1799,3132,3148,3151`). Census
+   `examples=54 ok=19 missing=35 broken=0`
+   (`20260919T124132Z_EX-57.log:SUMMARY`), docrefs `dead=0 guide=0 stale=20
+   exit=2` (`20260919T124140Z_EX-57.log:59`). PNG 391 KiB, and the
+   post-edit re-render is **byte-identical** to the pre-edit one (staged `A`,
+   never `AM`) — the string fix provably did not move the image.
+   **The labelling error:** the script's docstring (3 sites), its `[control]`
+   and `[paraview]` end-of-run prints, and the guide (5 sites) all named the
+   gap boxes' upper halves `11x` / `111-114`, where the imported
+   `PORT_UPPER = 200` (`tests/mesh/test_birdcage_port_sheets.py:77`) makes
+   them `201-204`; `101-104` (lower) was always right. Strings only — no tag,
+   assertion, band or record moved, and the corrected text is on record in
+   both re-run windows (`…123932Z:3140,3149`). Found by checking every
+   source-comment sentence against the geometry, per this item's own
+   template. Original text below.** — `examples/meshing/06_birdcage_leg_gaps_port_sheets.py`
+   (`example-runner`, spawned **foreground** with "you are the executor, do
+   not spawn agents, never return with a window running"; the example's own
+   tier and width — read its recorded window from its `EX-*` row before
+   running; real build; independent; **20 slot-min**). The census's `--next`
+   at review time (`check_example_setup_figures.py`: 54 examples, 18 ok,
+   36 missing, 0 broken). The example's own identities are the imported
+   assertions and must stay green and digit-identical flagged vs unflagged.
+   **Template, amended 2026-09-19 from four slots' findings:** hide the
+   region that is *not the subject* (air is usually that; in `mesh:2` it
+   was the subject); place the `write_setup_figure` call **outside** any
+   timer the example prints; keep the title ≤ 130 characters; port sheets
+   are *facet* tags — caption them, do not invent a cell region, and if the
+   subject is a split between two same-class regions say in the caption
+   that the figure cannot show it and which ParaView threshold does; run
+   `python3 scripts/testing/check_example_setup_figures.py` and
+   `python3 scripts/testing/check_example_doc_references.py` — those
+   filenames; guide references carry the full artifact filename (rule (b)).
+   **Read the PNG and check every caption *and source-comment* sentence
+   against the geometry before committing** — four consecutive runner
+   reports of "no deviations" did not survive that reading. Done-when is
+   the §7 `EX-57` entry's per-item list. **Status it can move:** `EX-57`
+   census `missing` 36 → 35.
+
+9. **DONE 2026-09-19 (09:00 slot).** **`ANS-2` step 4a — the phantom-resolution knob in the example, so the XL
+   window can run it** (implementer;
+   `examples/ansys_benchmarks/ans2_birdcage_coil_driven_sar_10MHz/02_birdcage_coil_driven_sar_10MHz.py`
+   only; no `src/`; standard; `-n 2`; `main`; independent; **20 slot-min**:
+   ≈ 4 min windows + 15). **Why:** step 4's cost probe (`32f4eae`) re-priced
+   the h-halving to `xl` (mesh 360 s + 188 s per drive, 40.9 GiB summed at
+   `-n 8`), and `xl-pending.md` entry 10 is written for it — but the entry's
+   command runs the *example* at the halved rung, and the example has no
+   knob (the probe reads `FEM_EM_ANS2_PHANTOM_RESOLUTION`; the example is
+   hard-wired to `PHANTOM_RESOLUTION_1G_RUNG`). **The change:** the example
+   reads `FEM_EM_ANS2_PHANTOM_RESOLUTION` (unset ⇒ byte-identical to today);
+   when set, (a) the mesh-record assertions (`CELL_COUNT_BAND` against the
+   0.0025 records) are *skipped with a printed line* — the halved rung has
+   no record yet — every other imported band stays asserted; (b) `metrics.json`
+   and the XDMF go to resolution-tagged names (`metrics_h0.00125.json`,
+   …) and **`COMPARISON.md` / `COMPARISON_private.md` are not rewritten**
+   (the tracked comparison stays the 0.0025 rung's; the XL launcher commits
+   whatever the run writes); (c) the four driven-point values, their C4
+   spread, and the four phantom powers beside the 0.0025 rung's are printed
+   as `[ANS-2 step 4]` lines — the XL readout. **Anchors (asserted):** the
+   unset control reproduces today's `metrics.json` digits
+   (`EXACT_IDENTITY_RTOL`); with the knob set to `0.0025` (the default's own
+   value) the output is digit-identical to unset except the file names.
+   **Negative control (asserted):** knob set to a value with no record
+   (`0.004`, a coarser rung that meshes in seconds) prints the skip line and
+   the run exits 0 — the skip path exists and is visible. **Tier / cost:**
+   standard, three windows ≈ 4 min. **Status it can move:** `xl-pending.md`
+   entry 10 `PENDING PREREQUISITE` → `READY` — **the implementer marks it
+   READY in the same commit** (daily-review.md step 6b.5) so the next review
+   only queues it.
+   **Measured readout (2026-09-19, three windows, 154 + 187 + 330 s = 11.2 min
+   total, `-n 4` for the two identity windows and `-n 2` for the negative
+   control):** the knob landed exactly as specified and `xl-pending.md` entry
+   10 is `READY`.
+   *(a) Unset control* — `20260919T141006Z_ANS-2-step4a-unset-control.log:1924,
+   1936–1939` (Status 1 by construction: the first comparator pass treated the
+   coverage round-off residual relatively; re-run clean in the third window):
+   199 920 / 58 866 cells, all bands green, and against the tracked
+   `metrics.json` **every primary leaf digit-identical, worst 8.187289e-11 at
+   `.pointwise.2.sar_w_per_kg[1]`, inside `EXACT_IDENTITY_RTOL` = 1e-10**
+   (145 leaves). *(b) Knob = 0.0025* —
+   `20260919T142050Z_ANS-2-step4a-knob-identity.log:1956–1961`: **worst primary
+   leaf 8.167942e-11 against the unset run, i.e. digit-identical except the
+   file names** (`metrics_h0.0025.json`, `..._h0p0025.xdmf`; `COMPARISON.md`
+   untouched). *(c) Negative control, 0.004 m* — same log `:3837, 3845, 3855`:
+   the `MESH-RECORD ASSERTIONS SKIPPED` line prints (139 861 / 15 353 cells as
+   a candidate record, asserted against nothing), every other band stays
+   asserted and green, **exit 0**.
+   **Two measurements worth keeping.** (i) The **derived** C4-miss leaves
+   (`ten_pairs` / `one_pairs` / `control_1g`) — differences of nearly equal
+   numbers, O(3e-4) — reproduce between two runs of the *identical*
+   configuration only to **2.16e-8** relative (worst, `.ten_pairs.1`), i.e.
+   ~1e-11 absolute: run-to-run round-off in the pre-existing path, not the
+   knob, and the reason the identity anchor is read on the primary leaves with
+   the derived ones checked against the bands the repo actually gates them at
+   (5 % C4 band / 50 % control floor) rather than at 1e-10. (ii)
+   `write_xdmf_with_tags` strips everything after the last dot as a suffix, so
+   a `_h0.004` basename was written as `..._h0.xdmf` — **every rung colliding
+   on one filename**; the XDMF tag therefore writes the point as `p`
+   (`_h0p004`), found and fixed inside the slot.
+   **Also settled for the XL entry:** the example **meshes once** for all four
+   drives (184.8 s wall, 74.4 s of it the four solves), so entry 10's
+   "≈ 2 200 s if it re-meshes per drive" arm is dead and the price stands at
+   ≈ 1 115 s.
+   *Deviation from the item's plan, recorded:* the two identity windows ran at
+   **`-n 4`, not `-n 2`** — the tracked `metrics.json` they must reproduce
+   digit-for-digit was generated at `-n 4`, and a rank-count change perturbs
+   the partitioning and hence the last digits, which would have made the anchor
+   untestable rather than tested. The `-n 2` exposure the rule asks for is the
+   negative-control window, which runs the whole overridden path (skip line,
+   readout, tagged outputs) at `-n 2`. The item's "≈ 4 min" cost estimate was
+   also low by ≈ 3× (11.2 min measured, three full four-drive runs of a 200 k-cell
+   fixture).

@@ -240,8 +240,14 @@ frequency-dependent gate and holds trivially at 10 MHz.
 
 ### 5. `xl` — `ANS-4` step 3d: the 64 MHz degree-2 rung on the C4-congruent cut (daily licence: priced-family variant, 2026-09-16 review)
 
-**Status:** QUEUED 2026-09-16 for Sunday 2026-09-20 02:00 —
-`docs/testing/xl-queue.d/20260920-ANS-4-step3d.env`.
+**Status:** RUN `20260920T070008Z_ANS-4-step3d.log` — 16 passed, 0 skipped,
+Status 0, 1619 s, `memory.peak` 281.1 GiB; class spreads on the cut
+0.0132 / 0.0126 / 0.0081 %, two-rung move 6.50 / 2.61 / 4.12 % beside step
+3's 6.51 / 2.60 / 4.11 % (ledger row, 2026-09-20 review). By the public rule
+below the cut is not a degree-2 systematic at 64 MHz; the 09-26 weekly
+rules and reads the private column. *(Was QUEUED 2026-09-16 for Sunday
+2026-09-20 02:00 — `docs/testing/xl-queue.d/20260920-ANS-4-step3d.env`,
+consumed by the launcher.)*
 
 **Licence class:** priced-family variant of `ANS-4-step3` — same module,
 same `RUNGSPEC`, same frequency (64 MHz); **one named env knob varied**:
@@ -493,7 +499,8 @@ suspect, a `POST` item — **never a band change**.
 
 ### 10. `xl` — `ANS-2` step 4: the phantom h-halving, four drives (operator session 2026-09-19; daily-licence class: cost probe, price measured by the step's own probe)
 
-**Status:** READY — `ANS-2` step 4a landed 2026-09-19 (§9 item 9): the example
+**Status:** QUEUED 2026-09-20 for Friday 2026-09-25 02:00 —
+`docs/testing/xl-queue.d/20260925-ANS-2-step4.env`. *(Was READY.)* `ANS-2` step 4a landed 2026-09-19 (§9 item 9): the example
 reads `FEM_EM_ANS2_PHANTOM_RESOLUTION`, tags `metrics_h<res>.json` and the
 XDMF, skips the two 0.0025-rung mesh-record assertions **with a printed
 `[ANS-2 step 4] MESH-RECORD ASSERTIONS SKIPPED` line** while every other
@@ -557,7 +564,10 @@ No band moves in the window; the review that finds the ledger row rules.
 
 ### 11. `xl` — `ANS-4` step 3g: the 10 MHz degree-2 *h*-ladder (weekly 2026-09-19, §10 chain F step F2)
 
-**Status:** READY — no prerequisite; the knob, the module and the `RUNGSPEC`
+**Status:** QUEUED 2026-09-20 for Thursday 2026-09-24 02:00 —
+`docs/testing/xl-queue.d/20260924-ANS-4-step3g.env` (ahead of entry 10 so
+that a budget-denied night still leaves 3g run before the 09-26 weekly,
+which reads it with 3e). *(Was READY.)* No prerequisite; the knob, the module and the `RUNGSPEC`
 have all run green at `-n 16` (`ANS-4-step3c` 2026-09-18 at 10 MHz, step 2d
 2026-09-10 with this `RUNGSPEC`). The next daily review queues it for the
 first free `xl` night.
