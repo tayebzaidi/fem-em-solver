@@ -1,0 +1,128 @@
+# Test Run
+- Chunk: PORT-20
+- Commit: 4244b4420723a4a6a039163610fff16e9752713c
+- Time (UTC): 2026-09-20 09:52:08
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.5.1
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 60 mpiexec -n 2 python3 -m pytest tests/unit/test_port20_current_route_s.py -v -s --tb=short'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 24
+drwxr-xr-x  3 taz5297 taz5297 4096 Sep  4 23:31 .
+drwxr-xr-x 17 taz5297 taz5297 4096 Sep 20 04:51 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  721 Sep  3 13:49 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 4275 Sep 13 19:19 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.5.1
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 60 mpiexec -n 2 python3 -m pytest tests/unit/test_port20_current_route_s.py -v -s --tb=short'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... collected 3 items
+
+tests/unit/test_port20_current_route_s.py::test_current_drive_route_s_is_the_closed_form[T-network 2-port-_t_network_z] collected 3 items
+
+tests/unit/test_port20_current_route_s.py::test_current_drive_route_s_is_the_closed_form[T-network 2-port-_t_network_z] 
+[PORT-20 step 1] T-network 2-port, z0 = 50 Ohm
+    Z (known):
+[[50.+50.j 40.+30.j]
+ [40.+30.j 55.+25.j]]
+    Z (route assembly) max|delta| = 0.000e+00
+    S (route assembly):
+[[-0.01400836+0.3420988j   0.49397886+0.04177931j]
+ [ 0.49397886+0.04177931j -0.10346522+0.10567707j]]
+    S (analytic (Z-z0)(Z+z0)^-1) max|delta| = 0.000e+00 (band 1.0e-12)
+
+[PORT-20 step 1] T-network 2-port, z0 = 50 Ohm
+    Z (known):
+[[50.+50.j 40.+30.j]
+ [40.+30.j 55.+25.j]]
+    Z (route assembly) max|delta| = 0.000e+00
+    S (route assembly):
+[[-0.01400836+0.3420988j   0.49397886+0.04177931j]
+ [ 0.49397886+0.04177931j -0.10346522+0.10567707j]]
+    S (analytic (Z-z0)(Z+z0)^-1) max|delta| = 0.000e+00 (band 1.0e-12)
+PASSEDPASSED
+tests/unit/test_port20_current_route_s.py::test_current_drive_route_s_is_the_closed_form[seeded random reciprocal 3-port-_random_reciprocal_z] 
+tests/unit/test_port20_current_route_s.py::test_current_drive_route_s_is_the_closed_form[seeded random reciprocal 3-port-_random_reciprocal_z] 
+[PORT-20 step 1] seeded random reciprocal 3-port, z0 = 50 Ohm
+    Z (known):
+[[ 5.65470847+1.60857093j -0.95787643-1.0839301j   2.10053079+0.62052441j]
+ [-0.95787643-1.0839301j   6.87911147-1.09964774j -4.18749814-0.57959588j]
+ [ 2.10053079+0.62052441j -4.18749814-0.57959588j  7.99672346-0.5496433j ]]
+    Z (route assembly) max|delta| = 0.000e+00
+    S (route assembly):
+[[-0.79742249+0.04959384j -0.0260449 -0.03213174j  0.06392392+0.01546052j]
+ [-0.0260449 -0.03213174j -0.7663047 -0.03795643j -0.12636153-0.02014741j]
+ [ 0.06392392+0.01546052j -0.12636153-0.02014741j -0.73511399-0.02040531j]]
+    S (analytic (Z-z0)(Z+z0)^-1) max|delta| = 0.000e+00 (band 1.0e-12)
+PASSED
+[PORT-20 step 1] seeded random reciprocal 3-port, z0 = 50 Ohm
+    Z (known):
+[[ 5.65470847+1.60857093j -0.95787643-1.0839301j   2.10053079+0.62052441j]
+ [-0.95787643-1.0839301j   6.87911147-1.09964774j -4.18749814-0.57959588j]
+ [ 2.10053079+0.62052441j -4.18749814-0.57959588j  7.99672346-0.5496433j ]]
+    Z (route assembly) max|delta| = 0.000e+00
+    S (route assembly):
+[[-0.79742249+0.04959384j -0.0260449 -0.03213174j  0.06392392+0.01546052j]
+ [-0.0260449 -0.03213174j -0.7663047 -0.03795643j -0.12636153-0.02014741j]
+ [ 0.06392392+0.01546052j -0.12636153-0.02014741j -0.73511399-0.02040531j]]
+    S (analytic (Z-z0)(Z+z0)^-1) max|delta| = 0.000e+00 (band 1.0e-12)
+
+tests/unit/test_port20_current_route_s.py::test_power_wave_assembly_misses_the_closed_form_s21 PASSED
+tests/unit/test_port20_current_route_s.py::test_power_wave_assembly_misses_the_closed_form_s21 
+[PORT-20 step 1] negative control — the pre-PORT-20 power-wave assembly on open undriven ports:
+    S (power waves):
+[[0.2       +0.4j        0.4248927 +0.18454936j]
+ [0.44      +0.08j       0.09871245+0.21459227j]]
+    S (analytic):
+[[-0.01400836+0.3420988j   0.49397886+0.04177931j]
+ [ 0.49397886+0.04177931j -0.10346522+0.10567707j]]
+    S21: power-wave np.complex128(0.44+0.08j) vs analytic np.complex128(0.49397886458589346+0.041779306955025804j)
+    |dS21| = 6.614030e-02, max|dS| = 2.296483e-01 (floor 1.0e-02, ceiling 2.0)
+PASSED
+[PORT-20 step 1] negative control — the pre-PORT-20 power-wave assembly on open undriven ports:
+    S (power waves):
+[[0.2       +0.4j        0.4248927 +0.18454936j]
+ [0.44      +0.08j       0.09871245+0.21459227j]]
+    S (analytic):
+[[-0.01400836+0.3420988j   0.49397886+0.04177931j]
+ [ 0.49397886+0.04177931j -0.10346522+0.10567707j]]
+    S21: power-wave np.complex128(0.44+0.08j) vs analytic np.complex128(0.49397886458589346+0.041779306955025804j)
+    |dS21| = 6.614030e-02, max|dS| = 2.296483e-01 (floor 1.0e-02, ceiling 2.0)
+PASSED
+
+============================== 3 passed in 0.75s ===============================
+
+
+============================== 3 passed in 0.76s ===============================
+
+## Exit
+- Status: 0
+- Elapsed (s): 2
+- Filtered lines (gmsh optimisation chatter): 0

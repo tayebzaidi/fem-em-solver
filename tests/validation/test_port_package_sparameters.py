@@ -39,6 +39,22 @@ hand-built matrix — §10 target 3's "sweep-level path is untouched".  They
 assert the report the *sweep* returns against the step-4 records by a second
 route, and drive the warning paths with a heuristic and an asymmetrised S.
 
+**`PORT-20` step 2 (2026-09-20) — this route's ``S`` is ``z_to_s(Z)``.**  The
+sweep no longer assembles this route's S from per-port power waves: the undriven
+port is *open* here, so ``b_i/a_j`` was not an S entry (known-issues 2026-09-19,
+found by the `ANS-3` comparison — our ``Z`` agreed with an independent code, our
+tabulated ``S`` did not, our ``z_to_s(Z)`` did).
+``test_current_route_s_is_the_open_circuit_conversion`` asserts the sweep's S
+against ``ports/circuit.py``'s independent implementation of the same conversion
+at 1e-12.  Consequence: the two **S-derived** records below
+(``RECORDED_PASSIVITY_MAX_SIGMA``, ``RECORDED_S_SYMMETRY_RATIO``) are records of
+the superseded quantity, so
+``test_sanity_report_reproduces_the_gated_metrics_on_the_field_route`` carries a
+**strict** ``xfail`` until `PORT-20` step 3 re-records them.  No band moved and
+no record was edited here; the physics gates (reciprocity inside 1e-3,
+``‖S‖₂ ≤ 1``, the heuristic separation, the mutual ladder off ``Z``) are
+unchanged and green in the same window.
+
 **Scope.**  Two-torus fixture only.  No birdcage ports, no B1+, no ``S11``
 claim: `PORT-1` step 2b localised an electric-energy excess on this fixture's
 diagonal, so nothing here reads ``Z_in`` or ``S11``.  The systematics are this
@@ -91,7 +107,9 @@ from fem_em_solver.core import HomogeneousMaterial, TimeHarmonicProblem
 from fem_em_solver.io.mesh import MeshGenerator
 from fem_em_solver.ports.definitions import PortDefinition
 from fem_em_solver.ports.gap_voltage import GapVoltagePortSpec
+from fem_em_solver.ports.circuit import z_to_s
 from fem_em_solver.ports.sparameters import (
+    _assemble_sparameter_matrix,
     run_n_port_sparameter_sweep,
     summarize_sparameter_sanity,
 )
@@ -163,6 +181,9 @@ SUPERSEDED_V072_RECORD = (0.894283, 0.939581)
 HEURISTIC_SEPARATION_FLOOR = 2.0e-3
 MUTUAL_TOLERANCE = 0.10
 S_SYMMETRY_BAND = 1.0e-3
+# `PORT-20` step 2: two implementations of one algebraic conversion on one Z —
+# a round-off band, not a physics tolerance.
+CURRENT_ROUTE_CONVERSION_BAND = 1.0e-12
 S_SPECTRAL_NORM_CEILING = 1.0
 BLIND_FIXTURE_IM_Z12_OHM = 0.0
 
@@ -548,6 +569,78 @@ def test_package_smatrix_is_symmetric_and_passive(package_sweep):
     )
 
 
+def test_current_route_s_is_the_open_circuit_conversion(package_sweep):
+    """`PORT-20` step 2 — on this route ``S`` *is* ``z_to_s(Z)``, to 1e-12.
+
+    The fixture drives an impressed current across one gap and leaves the other
+    port **open**, so the assembled ``Z`` is the open-circuit matrix and the
+    50 Ω S-matrix is its algebraic conversion.  The comparand is
+    ``ports.circuit.z_to_s`` — a **second, independent implementation** of the
+    same formula (it solves ``X(Z + z0 I) = Z − z0 I`` where
+    ``sparameters_from_impedance`` multiplies by an explicit inverse), which is
+    the point of asserting it: an agreement at 1e-12 says the sweep's ``S`` and
+    its own ``Z`` are one matrix, by two code paths.
+
+    **Printed, predicted, never asserted** (§9 standing rule (e)): the
+    magnitude the *pre-`PORT-20`* power-wave assembly tabulated for ``S₂₁`` on
+    this fixture beside the value implied by ``Z``.  known-issues 2026-09-19
+    read ≈ 0.0216 vs ≈ 0.0377 off the `ans:3` table by hand; this window prints
+    both exactly, computed here.  No band is attached to that pair — the
+    S-derived records that move with it are `PORT-20` step 3's.
+    """
+    result = package_sweep["solved"]
+    comm = package_sweep["comm"]
+    s = result.s_matrix
+    z = result.z_matrix
+
+    assert z is not None, "the current-drive route must return the Z that S came from"
+
+    independent = z_to_s(z, REFERENCE_IMPEDANCE_OHM)
+    miss = float(np.linalg.norm(s - independent) / np.linalg.norm(s))
+
+    # The route's previous assembly, on this run's own port states: the number
+    # the `ans:3` / `EX-20` tables carry today.  Reconstructed here from the
+    # returned excitation results, so no second solve is spent on it.
+    legacy_ports = [
+        PortDefinition(
+            port_id=pid,
+            positive_tag=10 * (idx + 1),
+            negative_tag=10 * (idx + 1) + 1,
+            orientation=f"legacy_readout_{pid}",
+            z0_ohm=REFERENCE_IMPEDANCE_OHM,
+        )
+        for idx, pid in enumerate(result.port_ids)
+    ]
+    legacy_s = _assemble_sparameter_matrix(
+        legacy_ports, result.excitation_results, z0_ohm=REFERENCE_IMPEDANCE_OHM
+    )
+
+    if comm.rank == 0:
+        print(
+            f"[PORT-20 step 2] S through the sweep vs z_to_s(Z) "
+            f"(independent implementation, ports/circuit.py):\n"
+            f"    S:\n{s}\n"
+            f"    z_to_s(Z):\n{independent}\n"
+            f"    ||S - z_to_s(Z)||/||S|| = {miss:.6e} "
+            f"(band {CURRENT_ROUTE_CONVERSION_BAND:.1e})",
+            flush=True,
+        )
+        print(
+            f"[PORT-20 step 2] PREDICTED, never asserted (rule (e)): "
+            f"tabulated-vs-implied |S21| — pre-PORT-20 power-wave assembly "
+            f"{abs(legacy_s[1, 0]):.6f} (known-issues 2026-09-19 read it as "
+            f"~0.0216 off the ans:3 table), Z-implied {abs(s[1, 0]):.6f} "
+            f"(predicted ~0.0377); |dS21| = {abs(legacy_s[1, 0] - s[1, 0]):.6f}",
+            flush=True,
+        )
+
+    assert miss <= CURRENT_ROUTE_CONVERSION_BAND, (
+        f"the current-drive route's S is not its own Z converted: "
+        f"||S - z_to_s(Z)||/||S|| = {miss:.6e} > "
+        f"{CURRENT_ROUTE_CONVERSION_BAND:.1e}"
+    )
+
+
 def test_retiring_heuristic_differs_from_the_solved_field(package_sweep):
     """Negative control: the heuristic's S on the same fixture is a different S.
 
@@ -580,6 +673,15 @@ def test_retiring_heuristic_differs_from_the_solved_field(package_sweep):
 # --- PORT-5 step 1 ----------------------------------------------------------
 
 
+@pytest.mark.xfail(
+    strict=True,
+    reason=(
+        "PORT-20 (known-issues 2026-09-19) corrected the current-drive route's S "
+        "to z_to_s(Z); RECORDED_PASSIVITY_MAX_SIGMA and RECORDED_S_SYMMETRY_RATIO "
+        "are power-wave-assembly records of a quantity that was not S, and are "
+        "re-recorded by PORT-20 step 3 — never edited here"
+    ),
+)
 @record_width_xfail
 def test_sanity_report_reproduces_the_gated_metrics_on_the_field_route(package_sweep):
     """The sweep's own sanity report lands on the step-4 records.

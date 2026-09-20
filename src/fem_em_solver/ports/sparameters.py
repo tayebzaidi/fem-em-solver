@@ -52,6 +52,10 @@ class SParameterSweepResult:
     # reciprocity symmetrises, so it is never reciprocity-gated (`PORT-9` leg
     # (d2) mechanism (ii), leg (d3)).  S itself comes from power waves.  `None`
     # on the heuristic route, which has no impedance matrix to speak of.
+    # `PORT-20` (2026-09-20): that reading holds on the **lumped-sheet** route,
+    # where S comes from power waves.  On the gap-voltage (current-drive) route
+    # the undriven ports are *open*, so this is the open-circuit matrix and S is
+    # its conversion `sparameters_from_impedance(Z)`.
     z_matrix: Optional[np.ndarray] = None
     # Present only when the sweep was run with ``keep_fields=True`` on the
     # lumped-sheet route (`POST-6` step 1): ``{port_id: fields}``, the solver's
@@ -176,6 +180,19 @@ def _assemble_sparameter_matrix(
 ) -> np.ndarray:
     """Assemble S from per-port power waves: ``S_ij = b_i / a_j``.
 
+    **Which route may call this (`PORT-20`, 2026-09-20).**  This assembly is a
+    column of the S-matrix only when every *undriven* port is terminated in the
+    reference impedance, so that its incident wave ``a_i`` vanishes and
+    ``b_i/a_j`` is the ratio the S-matrix is defined by.  That holds on the
+    **lumped-sheet** route at a matched drive (``Z_p = z0``) — the route
+    `PORT-9`/`PORT-11`/`PORT-13`/`ANS-4` gate — and on the retiring heuristic,
+    whose driven ports are matched by construction.  It does **not** hold on the
+    gap-voltage (impressed-current) route, where each drive leaves the other
+    ports *open*: there ``a_i ≠ 0``, the reported matrix is not S, and the route
+    goes through :func:`_assemble_current_drive_route_matrices` instead
+    (known-issues 2026-09-19, adjudicated against an independent code on the
+    two-torus fixture).
+
     ``a`` and ``b`` are the incident/reflected amplitudes of :func:`_power_waves`
     read off the port states of the solve driven at ``j``.  On the gated
     solved-field routes this is what makes S reciprocal: with every port
@@ -257,6 +274,38 @@ def _assemble_impedance_matrix(
     return z_matrix
 
 
+def _assemble_current_drive_route_matrices(
+    ports: Sequence[PortDefinition],
+    excitation_results: dict[str, SinglePortExcitationResult],
+    *,
+    z0_ohm: float,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Return ``(Z, S)`` for the **current-drive** (gap-voltage) route.
+
+    `PORT-20` (2026-09-20), from the `ANS-3` adjudication of 2026-09-19.  On this
+    route each drive impresses a current across one gap and leaves every other
+    port **open**: ``I_i = 0`` there, so ``V_i/I_k`` is by definition a column of
+    the *open-circuit* impedance matrix, and the S-matrix at a real scalar
+    reference is the algebraic conversion
+
+        ``S = (Z − z0 I)(Z + z0 I)⁻¹``
+
+    (:func:`sparameters_from_impedance`).  The per-port power-wave assembly
+    :func:`_assemble_sparameter_matrix` is *not* applicable here — an open
+    undriven port has ``a_i ≠ 0``, so ``b_i/a_j`` is not an S entry — and using
+    it is exactly the defect known-issues 2026-09-19 records: the same run's
+    ``Z`` agreed with an independent code on the two-torus fixture while the
+    tabulated ``S`` did not, and the ``z_to_s(Z)`` of that ``Z`` did.
+
+    One conversion, not two: ``sparameters_from_impedance`` is the package's
+    impedance-to-S function and ``ports.circuit.z_to_s`` is the independent
+    implementation of the same formula the `PORT-20` step-2 gate measures this
+    against (`OPS-57` would consolidate them; it has not landed).
+    """
+    z_matrix = _assemble_impedance_matrix(ports, excitation_results)
+    return z_matrix, sparameters_from_impedance(z_matrix, z0_ohm=z0_ohm)
+
+
 def run_n_port_sparameter_sweep(
     problem: TimeHarmonicProblem,
     ports: Sequence[PortDefinition],
@@ -285,16 +334,26 @@ def run_n_port_sparameter_sweep(
     * **solved field** (`PORT-1` step 4) — pass one
       :class:`~fem_em_solver.ports.gap_voltage.GapVoltagePortSpec` per port and
       the sweep runs one impressed-gap solve per port, reads ``V`` and ``I`` off
-      the field, and assembles ``S = b_i/a_j`` from the per-port power waves.
-      ``is_placeholder`` is False and ``z_matrix`` is populated with the
-      *terminated transimpedance* as a diagnostic.
+      the field, and assembles the **open-circuit** ``Z[i, k] = V_i/I_k``
+      (every undriven port is open on this route).  ``S`` is that ``Z``
+      converted, ``S = (Z − z0 I)(Z + z0 I)⁻¹``, through
+      :func:`sparameters_from_impedance` — **since `PORT-20`, 2026-09-20**: the
+      per-port power-wave assembly this route used before is a column of S only
+      at a terminated drive, and known-issues 2026-09-19 records the resulting
+      tabulated ``S`` disagreeing with an independent code on the two-torus
+      fixture where the same run's ``Z`` agreed.  ``is_placeholder`` is False and
+      ``z_matrix`` carries the ``Z`` S was derived from.
     * **lumped sheet** (`PORT-9` step 2c) — pass one
       :class:`~fem_em_solver.ports.lumped.LumpedSheetPortSpec` per port plus the
       mesh's ``lumped_sheet_facet_tags``, and every port becomes a resistive
       sheet in the bilinear form with the driven one carrying the impressed
       source.  ``V`` and ``I`` come from the sheets' own constitutive law on the
       generator convention (``V = V_src − I·Z_p``); ``Z`` and ``S`` are then
-      assembled exactly as on the gap-voltage route.  This is the route
+      assembled as they always were — the *terminated* transimpedance as a
+      diagnostic and the per-port power-wave ``S_ij = b_i/a_j``, **not** the
+      gap-voltage route's conversion, because here the undriven ports are
+      terminated rather than open (`PORT-20` leaves this branch untouched).
+      This is the route
       `PORT-9` step 3's reciprocity gate runs through — and that gate is only
       exact at a **matched** drive, ``Z_p = z0``, where ``a_j`` reduces to
       ``V_src/(2√z0)`` and the driven port's own current drops out of the
@@ -413,13 +472,24 @@ def run_n_port_sparameter_sweep(
             z0_ohm = references.pop()
         else:
             z0_ohm = float(reference_impedance_ohm)
-        # S from power waves (`PORT-9` leg (d3)).  The terminated Z is retained
-        # beside it as a diagnostic, never as S's source: pushing it through
-        # `sparameters_from_impedance` — which assumes the open-circuit matrix —
-        # inherits the per-column normalisation asymmetry leg (d2) measured and
-        # adds a conversion bias on top of it.
-        z_matrix = _assemble_impedance_matrix(ports, excitation_results)
-        s_matrix = _assemble_sparameter_matrix(ports, excitation_results, z0_ohm=z0_ohm)
+        if gap_voltage_ports is not None:
+            # Current-drive route: the undriven ports are **open**, so the
+            # assembled `Z` is the open-circuit impedance matrix and S is its
+            # algebraic conversion (`PORT-20`, known-issues 2026-09-19).  The
+            # power-wave assembly's `b_i/a_j` is not an S entry here.
+            z_matrix, s_matrix = _assemble_current_drive_route_matrices(
+                ports, excitation_results, z0_ohm=z0_ohm
+            )
+        else:
+            # Lumped-sheet route, unchanged: S from power waves (`PORT-9` leg
+            # (d3)), exact at the matched drive `Z_p = z0` that route uses.  The
+            # terminated Z is retained beside it as a diagnostic, never as S's
+            # source: pushing it through `sparameters_from_impedance` — which
+            # assumes the open-circuit matrix — inherits the per-column
+            # normalisation asymmetry leg (d2) measured and adds a conversion
+            # bias on top of it.
+            z_matrix = _assemble_impedance_matrix(ports, excitation_results)
+            s_matrix = _assemble_sparameter_matrix(ports, excitation_results, z0_ohm=z0_ohm)
     else:
         warnings.warn(
             "run_n_port_sparameter_sweep() without gap_voltage_ports uses the "

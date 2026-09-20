@@ -1438,6 +1438,27 @@ none" cause read is **wrong**: harness children reach the socket routinely.
 occurrences in 21 slots), now observed on a `run_and_log.sh` window directly.
 Not diagnosed further.
 
+**DIAGNOSED 2026-09-20 (the same slot's `PORT-20` executor) — it is not
+intermittent at all: the denial is produced by *how the harness call is
+wrapped*.** `.claude/settings.json` exempts the harness from the OS sandbox by
+prefix (`sandbox.excludedCommands: ["docker *", "scripts/testing/run_and_log.sh
+*", …]`), and the sandbox's write allowlist does **not** include
+`/var/run/docker.sock`. A Bash call whose text does not *start* with that prefix
+— anything compound or piped, e.g. `cd <repo> && scripts/testing/run_and_log.sh
+…` or `scripts/testing/run_and_log.sh … 2>&1 | tail -6` — misses the exemption,
+runs sandboxed, and the socket write is refused in ~1 s. Measured, same tree,
+same window text, four denials then green:
+`20260920T095034Z/095043Z/095130Z_PORT-20.log` (Status 1, ≤ 1 s — `cd … &&` plus
+a `| tail` pipe), `…095149Z_PORT-20.log` (Status 1 — bare prefix but still
+piped), then the **same** command with no pipe and no `cd`:
+`20260920T095207Z_PORT-20.log`, Status 0, 2 s, 3 passed. Also reproduced
+directly: `docker compose … exec -T fem-em-solver bash -lc 'echo hi'` succeeds,
+while `bash -c '<the same docker command>'` is denied — a subshell loses the
+exemption. So **invoke `run_and_log.sh` as the whole command, unpiped**, and read
+the log with the Read tool rather than `| tail`. The "retry once" advice below
+still works (the retry usually happens to be typed bare), but the mechanism is
+the wrapper, not chance.
+
 **What to do:** **retry the window once.** A second denial in a row, with a
 trivial `echo` probe through the harness also denied, is the point at which an
 outage becomes the better reading — and only then. Do not park an item, and do
