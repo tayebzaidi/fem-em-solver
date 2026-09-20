@@ -216,9 +216,25 @@ mitigations.
    verbatim in the archive (a set-difference check over non-blank lines
    is sufficient), and every § reference in CLAUDE.md and
    docs/automation/*.md must still resolve. Same treatment for
-   `docs/testing/attempts.md`: entries older than 14 days move verbatim
-   to `docs/testing/attempts-archive.md` (create it with a one-paragraph
-   preamble mirroring plan-archive.md's on first use). A §7 row whose
+   `docs/testing/attempts.md`: entries older than **7 days** move verbatim
+   to `docs/testing/attempts-archive.md` (was 14 until 2026-09-19: the
+   rotation ran every week and the file was still 1.04 MB / 14 194 lines,
+   because 14 days at ~12 entries a day *is* that much — measured, 220
+   entries. Nothing reads further back than the interval since the last
+   weekly; the archive is one grep away). **`docs/testing/known-issues.md`
+   (added 2026-09-19):** every agent is told to check that file before
+   debugging, and two thirds of it was retired entries — 451 KB of 669 KB.
+   Move them out each week, mechanically:
+
+   ```
+   scripts/testing/run_and_log.sh WEEKLY-ROTATE "timeout -k 30 30 python3 scripts/maintenance/rotate_plan_archive.py known-issues YYYY-MM-DD"
+   ```
+
+   (through the harness: a bare `python3` is not on the headless allowlist).
+   The tool moves every entry whose heading says RETIRED / RESOLVED / FIXED /
+   CLOSED to `docs/testing/known-issues-archive.md`, verbatim, runs the
+   zero-loss check itself, and leaves one index line per entry so a grep for
+   a test name still lands. It is a no-op when nothing is retired. A §7 row whose
    history already moved to `docs/planning/chunks/<ID>.md` (`OPS-46`,
    `rotate_plan_archive.py chunks`) keeps that file where it is when the
    chunk closes — closed chunks' files are not rotated into

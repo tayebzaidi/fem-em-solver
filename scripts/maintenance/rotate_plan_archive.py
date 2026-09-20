@@ -48,8 +48,19 @@ the row does not already carry. ``--dry-run`` prints ID, glyph, span bytes and
 replacement bytes and writes nothing; ``--census`` dry-runs every §7 row whose
 line exceeds ``--min-bytes`` (default 2048) and prints per-family totals.
 
+  known-issues — move every RETIRED entry of docs/testing/known-issues.md,
+              verbatim, to docs/testing/known-issues-archive.md. No spec: an
+              entry is a ``###`` heading (or a dated ``## YYYY-MM-DD`` one)
+              down to the next heading of any level, and it is retired iff
+              its heading line carries RETIRED / RESOLVED / FIXED / CLOSED
+              (upper case; not PARTIAL, not led by OPEN). One index line per
+              moved entry is appended under ``## Retired entries`` in the
+              live file so a grep for the test name still lands. ``--dry-run``
+              lists what would move and writes nothing.
+
 Usage:
   python3 scripts/maintenance/rotate_plan_archive.py attempts FIRST LAST DATE
+  python3 scripts/maintenance/rotate_plan_archive.py known-issues DATE [--dry-run]
   python3 scripts/maintenance/rotate_plan_archive.py plan SPEC DATE
   python3 scripts/maintenance/rotate_plan_archive.py chunks SPEC [--dry-run]
           [--plan PATH] [--chunks-dir DIR]
@@ -76,6 +87,18 @@ PLAN = ROOT / "PROJECT_PLAN.md"
 PLAN_ARCHIVE = ROOT / "docs" / "planning" / "plan-archive.md"
 ATTEMPTS = ROOT / "docs" / "testing" / "attempts.md"
 ATTEMPTS_ARCHIVE = ROOT / "docs" / "testing" / "attempts-archive.md"
+KNOWN_ISSUES = ROOT / "docs" / "testing" / "known-issues.md"
+KNOWN_ISSUES_ARCHIVE = ROOT / "docs" / "testing" / "known-issues-archive.md"
+KI_INDEX_HEADING = "## Retired entries — full text in `known-issues-archive.md`"
+KI_ARCHIVE_PREAMBLE = """# Known-issues archive — retired entries moved out of known-issues.md
+
+Verbatim RETIRED entries moved out of `docs/testing/known-issues.md` by
+`scripts/maintenance/rotate_plan_archive.py known-issues` (first batch
+2026-09-19), in their original order — never summarized, never edited.
+known-issues.md answers "is this failure mine?", which only OPEN entries can;
+a retired entry is history. Grep here when a retirement's reasoning, digits or
+log lines are needed; the live file keeps one index line per entry.
+"""
 
 
 def _read(path: Path) -> list[str]:
@@ -127,6 +150,77 @@ def rotate_attempts(first: int, last: int, date: str) -> None:
     _write(ATTEMPTS_ARCHIVE, new_arc + [""])
     print(f"moved {len(moved)} lines / {n_entries} entries ({date}); attempts.md now "
           f"{len(new_src)} lines, archive {len(new_arc) + 1}")
+
+
+def _ki_closed(heading: str) -> bool:
+    """The file has used four words for a finished entry. Upper-case only:
+    "closed by decision" in prose is a standing workaround, not a retirement.
+    A heading that says PARTIAL, or that leads with an OPEN marker, stays."""
+    if re.search(r"PARTIAL", heading) or re.match(r"^#+\s*(🟡|🔴)?\s*OPEN\b", heading):
+        return False
+    return bool(re.search(r"\b(RETIRED|RESOLVED|FIXED|CLOSED)\b", heading))
+
+
+def rotate_known_issues(date: str, dry_run: bool) -> None:
+    src = _read(KNOWN_ISSUES)
+    entry_re = re.compile(r"^(### |## \d{4}-\d{2}-\d{2})")
+    any_heading = re.compile(r"^#{1,3} ")
+    in_fence = False
+    heads = []                       # every heading line index, fences skipped
+    for i, l in enumerate(src):
+        if l.lstrip().startswith("```"):
+            in_fence = not in_fence
+        elif not in_fence and any_heading.match(l):
+            heads.append(i)
+    spans = []
+    for k, i in enumerate(heads):
+        if entry_re.match(src[i]) and _ki_closed(src[i]) and src[i] != KI_INDEX_HEADING:
+            spans.append((i, heads[k + 1] if k + 1 < len(heads) else len(src)))
+    if not spans:
+        print("no RETIRED entries in known-issues.md; nothing to move")
+        return
+    moved, index = [], []
+    for a, b in spans:
+        block = src[a:b]
+        while block and block[-1].strip() in ("", "---"):
+            block.pop()
+        moved += block + [""]
+        title = re.sub(r"^#+\s*", "", src[a])
+        index.append(f"- {title[:160]}{'…' if len(title) > 160 else ''}")
+    n_bytes = sum(len(l) + 1 for l in moved)
+    print(f"{len(spans)} RETIRED entries, {len(moved)} lines, {n_bytes} bytes")
+    if dry_run:
+        for line in index:
+            print("  " + line[:140])
+        return
+    keep = [True] * len(src)
+    for a, b in spans:
+        for j in range(a, b):
+            keep[j] = False
+    new_src = [l for l, k in zip(src, keep) if k]
+    while new_src and new_src[-1].strip() == "":
+        new_src.pop()
+    added = Counter()
+    if KI_INDEX_HEADING not in new_src:
+        new_src += ["", KI_INDEX_HEADING, ""]
+        added[KI_INDEX_HEADING] += 1
+    new_src += index + [""]
+    added.update(index)
+    if KNOWN_ISSUES_ARCHIVE.exists():
+        arc = _read(KNOWN_ISSUES_ARCHIVE)
+    else:
+        arc = []
+        added.update(l for l in KI_ARCHIVE_PREAMBLE.split("\n") if l.strip())
+    base = arc if arc else KI_ARCHIVE_PREAMBLE.split("\n")
+    while base and base[-1].strip() == "":
+        base.pop()
+    batch = f"## Batch moved {date}"
+    added[batch] += 1
+    new_arc = base + ["", "---", "", batch, ""] + moved
+    _zero_loss(src, arc, new_src, new_arc, added, "known-issues.md")
+    _write(KNOWN_ISSUES, new_src)
+    _write(KNOWN_ISSUES_ARCHIVE, new_arc)
+    print(f"known-issues.md {len(src)} -> {len(new_src)} lines; archive {len(new_arc)} lines ({date})")
 
 
 def rotate_plan(spec_path: Path, date: str) -> None:
@@ -607,6 +701,8 @@ def _chunks_main(argv: list[str]) -> int:
 def main(argv: list[str]) -> None:
     if len(argv) >= 5 and argv[1] == "attempts":
         rotate_attempts(int(argv[2]), int(argv[3]), argv[4])
+    elif len(argv) >= 3 and argv[1] == "known-issues":
+        rotate_known_issues(argv[2], "--dry-run" in argv[3:])
     elif len(argv) >= 4 and argv[1] == "plan":
         rotate_plan(Path(argv[2]), argv[3])
     elif len(argv) >= 3 and argv[1] == "chunks":
