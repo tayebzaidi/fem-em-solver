@@ -78,6 +78,42 @@ legs do not fit this ring at all: the clearance floor
 `N ≤ 25` (`SEPARATION_LEG_COUNT_CEILING`, measured 2026-08-23), which is why the
 production rung this example prices is 16 and not the directive's 32.
 
+## Setup figure
+
+![mesh:8 setup — 16-leg gapped birdcage, 3-D view and z = 0 slice](figures/meshing_08_birdcage_sixteen_legs_setup.png)
+
+*Left:* the **16-leg rung**'s tagged regions (`_measure(SCALED_LEG_COUNT)`,
+the `GEO-19`-gated capability this example prices) with the air box (tag `2`)
+hidden — the sixteen copper legs and two end rings (tag `1`), the
+translucent saline phantom (tag `3`) at the coil axis, and all thirty-two
+gap-box halves (red, tags `101`–`116` lower / `201`–`216` upper) at each
+leg's own mid-height, split by its port sheet. All thirty-two halves share
+the same red colour class (the `EX-57` one-colour-per-class convention), so
+the split between a lower and upper half of one leg is not visible by
+colour alone — the isometric view does show it structurally, as the seam
+running around the cylinder at mid-height where every leg is broken. No
+`clip_normal` is used: at sixteen legs every port box sits on the outer
+periphery with nothing behind it to hide, so the unclipped view keeps all
+sixteen on screen (contrast the four-leg fixtures, `mesh:6`/`mesh:7`, whose
+figures make the same choice for the same reason). The four-leg **negative
+control** built later in the script (`_measure(CONTROL_LEG_COUNT)`) is not
+pictured — the whole point of this figure is the sixteen-leg rung `GEO-19`
+newly gates, not the four-leg rung every other birdcage example already
+shows. *Right:* the `z = 0` slice (normal `(0, 0, 1)`, through the mesh
+centre) — this plane passes through all sixteen legs' shared mid-height
+gap/sheet cut, cutting the phantom's circular cross-section in the middle
+and showing all sixteen 8 mm × 8 mm port-box cross-sections in a ring
+around it at the 22.5° pitch, air (grey) filling the rest. Twelve of the
+sixteen visible squares sit off a coordinate axis — the reading this
+example exists to show is that the frame-aware sheet extents (radial,
+azimuthal, axial) hold for those twelve exactly as they do for the four
+on-axis ones. Rendered by
+`fem_em_solver.post.setup_figure.write_setup_figure` from the 16-leg rung
+(`EX-57`), called immediately after `_measure` returns and before any
+analysis or the control build, so the render never enters the printed
+`elapsed`/`mesh_wall_time_s` timers; regenerate with
+`FEM_EM_SETUP_FIGURES=1` in the runner's environment.
+
 ## 2. How to run it
 
 ```

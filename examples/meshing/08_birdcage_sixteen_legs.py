@@ -87,6 +87,7 @@ from fem_em_solver.io.paraview_utils import (  # noqa: E402
     adopt_host_ownership,
     write_xdmf_with_tags,
 )
+from fem_em_solver.post.setup_figure import write_setup_figure  # noqa: E402
 
 from tests.mesh.test_birdcage_conductor_sizing import CAD_MASS_GATE  # noqa: E402
 from tests.mesh.test_birdcage_port_sheet_prerequisite import (  # noqa: E402
@@ -122,10 +123,12 @@ from tests.mesh.test_birdcage_port_scaleup import (  # noqa: E402
 )
 from tests.mesh.test_birdcage_port_terminals import CONDUCTOR_IFACE  # noqa: E402
 from tests.mesh.test_birdcage_leg_gaps import _analytic_terminal_area  # noqa: E402
+from tests.mesh.test_birdcage_port_sheets import PORT_LOWER, PORT_UPPER  # noqa: E402
 
 CELL_TAG_NAMES = {1: "conductor", 2: "air", 3: "phantom"}
 
 OUTPUT_DIR = Path(__file__).resolve().parent / "paraview_output"
+FIGURE_DIR = Path(__file__).resolve().parent / "figures"  # committed, EX-57
 BASENAME = "meshing_08_birdcage_sixteen_legs"
 
 # The back-compat identity `GEO-19`'s `_azimuth_class` docstring states and this
@@ -204,6 +207,34 @@ def main() -> None:
     # inside it is entered by every rank before anything is printed (the
     # `GEO-18` step 2 attempt-1 deadlock).
     scaled = _measure(SCALED_LEG_COUNT)
+
+    # Right after the mesh is built, before any analysis or printed timer —
+    # `scaled["elapsed"]` and `scaled["diag"]["mesh_wall_time_s"]` are already
+    # captured inside `_measure`, so the render time never folds into either
+    # printed record (`EX-57`). This is the gated rung the figure draws: the
+    # 16-leg build is `GEO-19`'s newly-gated capability, while the 4-leg rung
+    # built below is the in-script negative control and is not pictured.
+    write_setup_figure(
+        scaled["mesh"],
+        scaled["cells"],
+        FIGURE_DIR / f"{BASENAME}_setup.png",
+        region_names={
+            1: "conductor",
+            2: "air",
+            3: "phantom",
+            **{PORT_LOWER + i: f"port P{i} lower" for i in scaled["ports"]},
+            **{PORT_UPPER + i: f"port P{i} upper" for i in scaled["ports"]},
+        },
+        hide_tags=(2,),
+        translucent_tags=(3,),
+        slice_normal=(0.0, 0.0, 1.0),
+        title=(
+            f"mesh:8 — {SCALED_LEG_COUNT}-leg gapped birdcage, port boxes "
+            "split by mid-plane sheets (22.5 deg pitch, GEO-19)"
+        ),
+        comm=comm,
+    )
+
     problems = [_report_safely(f"{SCALED_LEG_COUNT} legs", scaled, comm)]
 
     # ---- rung 2: four legs, same code path, the negative control -----------

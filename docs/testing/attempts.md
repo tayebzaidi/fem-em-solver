@@ -2676,3 +2676,58 @@ committed at 12:53Z).
   all four were **piped** (`| tail`), which is exactly the 2026-09-20
   known-issues entry's first cause. Unpiped, the same command ran. The entry
   is right and cost this slot ~5 minutes for not being read first.
+
+## 2026-09-20T14:24Z — `EX-57` `mesh:8` setup figure (§9 item 18) — **complete** (09:00 slot, second item)
+
+- **What ran:** the standing `EX-57` per-item template on
+  `examples/meshing/08_birdcage_sixteen_legs.py` (`mesh:8`), the 16-leg
+  gapped + sheeted birdcage mesh (`EX-33`/`GEO-19`). Pre-census through the
+  harness before any file was written
+  (`20260920T142115Z_EX-57-precensus.log`, `examples=55 ok=21 missing=34
+  broken=0`; `20260920T142132Z_EX-57-precensus-docrefs.log`, `dead=0
+  guide=0 exit=2`). `write_setup_figure` added right after
+  `scaled = _measure(SCALED_LEG_COUNT)` returns — before the control build
+  and before any print — on the **16-leg rung** (the `GEO-19`-gated
+  capability), following the `mesh:6`/`mesh:7` call-site pattern exactly:
+  `hide_tags=(2,)` (air), `translucent_tags=(3,)` (phantom), default
+  `slice_normal=(0, 0, 1)`, no `clip_normal` (every port box sits on the
+  outer periphery at sixteen legs, same as at four). Region names imported
+  `PORT_LOWER`/`PORT_UPPER` from `tests.mesh.test_birdcage_port_sheets`,
+  never invented.
+- **Flagged run** (`FEM_EM_SETUP_FIGURES=1`, `-n 2`, real build, standard
+  tier, `-t 300`): `20260920T142137Z_EX-57.log`, Status 0, **120 s**
+  (117.6 s in-script) — every `EX-33` record reproduced to the digit:
+  `307296` cells, `meshed/CAD conductor=0.981503`, three azimuth classes
+  (`0.988615772`/`0.989367514`/`0.989449735`, intra-class
+  `1.923e-07`/`5.849e-08`/`6.144e-08`), inter-class spread `8.431e-04`
+  (ceiling `5e-3`), port-centre separation margin `1.560723x`, 4-leg
+  control `116085` cells / one azimuth class. PNG written 497 KiB at
+  `examples/meshing/figures/meshing_08_birdcage_sixteen_legs_setup.png`.
+- **Unflagged control run:** `20260920T142443Z_EX-57-control.log`, Status
+  0, **116 s** (113.5 s in-script) — the same digits (`307296` cells,
+  `0.981503`, `8.431e-04`, `1.560723x`) and **no** `[setup-figure]` line —
+  confirms the render stays opt-in and folds no time into the printed
+  timers.
+- **Post-censuses:** setup-figure
+  `20260920T142424Z_EX-57-postcensus-figures.log`, `examples=55 ok=22
+  missing=33 broken=0` — the predicted delta (`missing` 34→33, `ok`
+  21→22), matched exactly. Docrefs
+  `20260920T142432Z_EX-57-postcensus-docrefs.log`, `dead=0 guide=0
+  exit=2` (stale count fell 16→14 only because this run refreshed the
+  `meshing_08` XDMF files; not a gate — `exit != 1` both sides).
+- **PNG read and checked** against every caption and source-comment
+  sentence before committing (the `mesh:4`/`mesh:5`/`mesh:6` precedent):
+  sixteen copper legs around the translucent phantom, red port-sheet
+  boxes visible at mid-height in the 3-D panel and as sixteen squares on
+  the `z = 0` slice; no labelling defect found.
+- **Guide:** new `## Setup figure` section added to
+  `examples/meshing/08_birdcage_sixteen_legs.md`, embedding the PNG by
+  full filename, naming the regions/tags/slice plane, and stating plainly
+  that the 4-leg rung is the in-script negative control and is not
+  pictured.
+- **No pin-file edit** (`OPS-59` rule, 2026-09-20): the committed PNG is
+  admitted by the census's own script↔figure pairing; neither
+  `LISTED_EXAMPLE_ARTIFACTS` nor any other artifact/call-site literal was
+  touched. No `src/` change.
+- **Status moved:** §9 item 18 done-marked; §7 `EX-57` row's running
+  narrative extended with the `mesh:8` entry.
