@@ -73,6 +73,62 @@ mitigations.
    away at current pace, that is a scoping problem to fix now (cut the goal,
    not the honesty).
 
+2b. **Progress against cost — one dated section, ending in a decision**
+   (added 2026-09-19, operator-approved, from an external code review).
+   Step 2 measures how fast chunks close; this step asks whether the
+   closures, the windows and the slots were *worth what they cost*, and
+   forces one call. Run
+
+   ```
+   scripts/testing/run_and_log.sh WEEKLY-COUNTS "timeout -k 30 30 python3 scripts/automation/weekly_counts.py"
+   ```
+
+   and read the block from the log it names. (Through the harness because a
+   bare `python3` is not on the headless allowlist and would be refused; the
+   log is also the durable record of the counts.) It is
+   read-only, < 1 s, no solves — counts from the launcher logs,
+   `test-results.md`, both ledgers, `attempts.md` and `git`, over the same
+   "since the last weekly-review commit" interval as step 1 (this session's
+   own commits, younger than 12 h, are skipped). **Append**
+   one section headed `## YYYY-MM-DD` to `docs/status/weekly-progress.md`:
+   the script's block pasted verbatim, then these rows written by you, each
+   ≤ 3 lines and each citing a chunk ID, a `log:line` or a commit:
+
+   - **Newly supported workflows** — end-to-end capability a user could now
+     run that they could not last week. "None" is the expected answer most
+     weeks; a closed component gate is not a workflow, and per-workflow
+     parity wording (realism rules below) applies.
+   - **Uncertainties resolved** — questions that now have an answer,
+     *including negative ones*: a record that says "flat in f", a cost
+     probe that prices a family out, an `ANS-*` adjudication either way. A
+     negative result that stops work is progress and is listed as such.
+   - **Defects retired** — known-issues entries retired, by name.
+   - **Repeated failure** — anything the script flags with ≥ 2 non-complete
+     entries, plus any chunk that took ≥ 4 entries: say in one line *why*
+     it keeps costing slots (a wrong estimate, an executor's first pass
+     needing rework, a blocked prerequisite).
+   - **Lost slots** — sessions that did not end `ok`, with the cause where
+     the log gives one.
+   - **Cost** — the script's compute and session figures stand as printed.
+     Anything it prints as `unavailable` stays `unavailable`: never
+     estimate tokens, never back-fill core-hours from memory.
+   - **Decision** — exactly three lines: **Continue** one activity,
+     **Change or stop** one activity, and the **evidence** for each from
+     the rows above. If the honest answer is "stop nothing", say what
+     evidence next week would change that. The stop call is carried out
+     through your own instruments — a §10 epitaph, a rescoped subgoal, an
+     `xl-pending.md` entry superseded — never by editing §9.
+
+   **No single score, and three numbers are not success:** commit count,
+   queue depth (the §9 slot-minutes floor and the XL backlog floor exist to
+   avoid idle windows, not to be filled for their own sake) and machine
+   time spent. Report what each XL / XXL window *decided*, never how many
+   ran. Keep the section to about a screen; it is a report, not an
+   analytics project — if a row needs a sweep to fill, write "not
+   measured this week" and move on. Commit it on its own as
+   `docs(plan): weekly review YYYY-MM-DD — progress vs cost` (step 6's
+   commit-first rule).
+
 3. **Audit the roadmap against the mission.** Is §10's phase/subgoal
    structure still the shortest path to §1 (AED-parity for the MRI-safety
    workflow: construct → tune at 64/128 MHz → drive with saline phantom ±
