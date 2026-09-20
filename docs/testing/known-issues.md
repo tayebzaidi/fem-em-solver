@@ -1413,7 +1413,17 @@ below (`rotate_plan_archive.py known-issues`, since 2026-09-19). This file
 holds OPEN entries only — that is what makes "is this failure mine?" quick to
 answer.
 
-## 2026-09-20 — **INTERMITTENT, not an outage: a `run_and_log.sh` window can return the docker-socket denial in ~1 s — retry once before believing it** — `permission denied while trying to connect to the docker API at unix:///var/run/docker.sock`
+## 2026-09-20 — **A *piped* or subshell-wrapped harness call is denied the docker socket in ~1 s; a plain `cd <repo> && run_and_log.sh …` is NOT. Never an outage — never park a slot on it** — `permission denied while trying to connect to the docker API at unix:///var/run/docker.sock`
+
+**The rule, in one line:** invoke `scripts/testing/run_and_log.sh …` as the
+whole command with **no pipe and no `bash -c`** wrapper, and read the log with
+the Read tool instead of `| tail`. A `cd <repo> &&` prefix is fine.
+
+**Why this entry is long:** two executors in the same slot reached two *wrong*
+conclusions from this denial — the first that it was a project-wide outage, the
+second that any compound command triggers it. Both are refuted below by
+measurement. The history is kept because the first reading cost a whole
+attempt.
 
 **Seen** by the 2026-09-20 04:30 implementer slot's delegated executor
 (`TH-17` step 1b) at `1ba7302`: `20260920T093410Z_TH-17.log` — Status 1,
@@ -1433,40 +1443,42 @@ declared impossible — **Status 0, 232 s, 3 passed** at `-n 4`. So the denial i
 "sandbox binds the socket per allowlisted command, so harness children get
 none" cause read is **wrong**: harness children reach the socket routinely.
 
-**What this is, most likely:** the same intermittent socket denial PROJECT_PLAN
-§9 already records for `./run_examples.sh` (2026-08-29, 08-30, 09-01 — three
-occurrences in 21 slots), now observed on a `run_and_log.sh` window directly.
-Not diagnosed further.
+**Mechanism (the `PORT-20` executor's diagnosis, corrected).**
+`.claude/settings.json` exempts the harness from the OS sandbox by prefix
+(`sandbox.excludedCommands: ["docker *", "scripts/testing/run_and_log.sh *",
+…]`), and the sandbox's write allowlist does **not** include
+`/var/run/docker.sock`. A harness call that loses that exemption runs sandboxed
+and the socket write is refused in ~1 s, before any test runs. What loses it,
+measured in this slot:
 
-**DIAGNOSED 2026-09-20 (the same slot's `PORT-20` executor) — it is not
-intermittent at all: the denial is produced by *how the harness call is
-wrapped*.** `.claude/settings.json` exempts the harness from the OS sandbox by
-prefix (`sandbox.excludedCommands: ["docker *", "scripts/testing/run_and_log.sh
-*", …]`), and the sandbox's write allowlist does **not** include
-`/var/run/docker.sock`. A Bash call whose text does not *start* with that prefix
-— anything compound or piped, e.g. `cd <repo> && scripts/testing/run_and_log.sh
-…` or `scripts/testing/run_and_log.sh … 2>&1 | tail -6` — misses the exemption,
-runs sandboxed, and the socket write is refused in ~1 s. Measured, same tree,
-same window text, four denials then green:
-`20260920T095034Z/095043Z/095130Z_PORT-20.log` (Status 1, ≤ 1 s — `cd … &&` plus
-a `| tail` pipe), `…095149Z_PORT-20.log` (Status 1 — bare prefix but still
-piped), then the **same** command with no pipe and no `cd`:
-`20260920T095207Z_PORT-20.log`, Status 0, 2 s, 3 passed. Also reproduced
-directly: `docker compose … exec -T fem-em-solver bash -lc 'echo hi'` succeeds,
-while `bash -c '<the same docker command>'` is denied — a subshell loses the
-exemption. So **invoke `run_and_log.sh` as the whole command, unpiped**, and read
-the log with the Read tool rather than `| tail`. The "retry once" advice below
-still works (the retry usually happens to be typed bare), but the mechanism is
-the wrapper, not chance.
+- **A pipe loses it.** `20260920T095034Z/095043Z/095130Z_PORT-20.log` and
+  `…095149Z_PORT-20.log` — Status 1, ≤ 1 s, all piped (the last one with a bare
+  `scripts/testing/…` prefix and still denied). The same window text with the
+  pipe removed: `…095207Z_PORT-20.log`, Status 0, 2 s, 3 passed.
+- **An explicit `bash -c` subshell loses it.** `docker compose … exec -T
+  fem-em-solver bash -lc 'echo hi'` succeeds directly, while
+  `bash -c '<the same docker command>'` is denied.
+- **A `cd <repo> &&` prefix does NOT lose it** — this is where the executor's
+  write-up was wrong, and it named that shape explicitly. Three green windows in
+  this slot were invoked as `cd /home/…/fem-em-solver && scripts/testing/run_and_log.sh …`:
+  `20260920T093731Z_TH-17.log` (Status 0), `20260920T093810Z_TH-17.log`
+  (Status 0, 232 s, 3 passed) and a probe run specifically to settle it,
+  `20260920T100019Z_PORT-20.log` (Status 0). So compounding is not the trigger;
+  piping and subshell-wrapping are.
 
-**What to do:** **retry the window once.** A second denial in a row, with a
-trivial `echo` probe through the harness also denied, is the point at which an
-outage becomes the better reading — and only then. Do not park an item, and do
-not write an infrastructure blocker, on a single ~1 s Status-1 window: that
-cost the 04:30 slot its executor's whole attempt (the item's (i) and (ii) then
-ran green unchanged in one window). Bypassing the harness stays correctly
-refused by `scripts/automation/hooks/bash_guard.py`; the retry needs no
-allowlist change and no operator action.
+The original `TH-17` denial (`…093410Z`) and the 03:00 review's
+(`…080639Z_OPS-53-callsite-pin.log`) have no surviving record of their outer
+wrapper, so they are consistent with the pipe mechanism but not proof of it.
+Whether this is also what PROJECT_PLAN §9 records for `./run_examples.sh`
+(2026-08-29, 08-30, 09-01) is **not** established.
+
+**What to do.** Write the call bare and unpiped; a `cd` prefix is safe. If a
+window is denied anyway, **retry it once, unpiped** — do not park an item, do
+not write an infrastructure blocker, and do not propose an allowlist change on a
+~1 s Status-1 window. That misreading cost the 04:30 slot its first executor's
+entire attempt; the item's (i) and (ii) then ran green, unchanged, in one
+window. Bypassing the harness stays correctly refused by
+`scripts/automation/hooks/bash_guard.py`, and no operator action is needed.
 
 ## 2026-09-20 — `tests/unit/test_setup_figure_title.py::` the call-site count pin (`EXPECTED_EXAMPLE_CALL_SITES = 18`, `:43`, asserted `:157`) is stale on `main` — **red by inspection, not yet executed**
 

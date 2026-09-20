@@ -2130,3 +2130,85 @@ Every non-identical digit is disclosed above; all four sit in unasserted-or-far-
   premise, making `C_tuned` ↔ eigen-resonance the finding rather than the gate.
   That control needs no closed form and no padding rung, so it is not blocked
   the way (iii) is.
+
+## 2026-09-20T10:02Z — `PORT-20` steps 1–2 (§9 item 11) — **complete** — `37ede7d`
+
+- **Slot:** 04:30 CDT scheduled implementer, **second item under take-next**
+  (item 10's commits landed at minute ~14 with a clean tree; the judgement call
+  is flagged in the previous entry). Delegated to the `implementer` agent,
+  foreground.
+- **The change** (`src/fem_em_solver/ports/sparameters.py`): new
+  `_assemble_current_drive_route_matrices` returns
+  `(Z, sparameters_from_impedance(Z, z0_ohm=…))`, and
+  `run_n_port_sparameter_sweep` calls it on the `gap_voltage_ports is not None`
+  branch **only**. The lumped-sheet branch still uses
+  `_assemble_sparameter_matrix`; no second conversion was written, as the item
+  requires (`OPS-57` has not landed). Docstrings on both assemblies, the
+  sweep's two route bullets and the `z_matrix` field comment now say which
+  route uses which and why.
+- **Step 1** (`20260920T095207Z_PORT-20.log`, smoke, `-n 2`, **2 s**, 3
+  passed): T-network 2-port and the seeded random reciprocal 3-port — route `Z`
+  and route `S` against the analytic `(Z − z0)(Z + z0)⁻¹` both at
+  **max|Δ| = 0.000e+00** (band 1e-12).
+- **Negative control (asserted, met):** `|ΔS₂₁| = 6.614030e-02`, above the
+  1e-2 floor and below the ≤ 2 ceiling — the power-wave assembly's
+  `0.44+0.08j` against the analytic `0.49397886+0.04177931j`. Recomputed in
+  the test, not copied from the item; it lands on the review's ≈ 0.066.
+- **Step 2** (`20260920T095318Z_PORT-20.log`, standard, `-n 2`, complex build,
+  **201 s**, 17 passed / 1 xfailed): **‖S − z_to_s(Z)‖/‖S‖ = 9.417603e-17**
+  (band 1e-12), with `z_to_s` imported from `ports/circuit.py` as the
+  independent implementation. Reciprocity `‖S−Sᵀ‖/‖S‖ = 3.1121e-05` inside the
+  **unmoved** 1e-3; passivity `‖S‖₂ = 0.861357` ≤ 1 and column power sum
+  0.741120 ≤ 1. `PORT-1` step 4's mutual-ratio record reproduced untouched
+  (raw miss 2.960e-11, corrected 2.905e-11 against 1e-6). Heuristic control
+  3.031724e-01 > 2e-3; σ separation 0.138629 > 0.13.
+- **Predicted, printed, never asserted (rule (e)):** tabulated-vs-implied
+  `|S₂₁| = 0.021598` vs `0.037654` (|Δ| 0.016698) against the item's ≈ 0.0216
+  / ≈ 0.0377 — both predictions met.
+- **`PORT-9` leg (d) byte-identity control** (`20260920T095659Z_PORT-20.log`,
+  16 passed, **66.28 s**): digit-identical to
+  `20260914T004031Z_PORT-14-step3-port9-gate.log` — `‖S−Sᵀ‖/‖S‖ =
+  1.044255156e-14`, `‖Z−Zᵀ‖/‖Z‖ = 8.814400604e-05`, σ_max 0.999992805, class
+  spreads 0.0553 / 0.0353 / 0.0214 %. The lumped route is untouched, as
+  intended.
+- **No record edited**, per the item's trap.
+  `test_sanity_report_reproduces_the_gated_metrics_on_the_field_route` now
+  carries `xfail(strict=True)` citing known-issues 2026-09-19
+  (`passivity_max_sigma` reads 0.861356894 against the 0.864809457 record) —
+  the re-record is **item 17's**, not this item's.
+- **Status:** `PORT-20` ⬜ → 🟡 (steps 1–2 of 3; the row's Done-when also needs
+  step 3 and the known-issues retirement, both item 17's). §9 item 11 marked
+  done in `37ede7d`.
+- **Known-issues:** the 2026-09-20 socket entry was **rewritten twice in this
+  slot and is now correct.** The `PORT-20` executor diagnosed the mechanism —
+  `sandbox.excludedCommands` matches by command-text prefix, so a harness call
+  that loses the exemption runs sandboxed and the socket write is refused in
+  ~1 s — and measured four piped denials followed by the same window green
+  unpiped. But its write-up over-generalised to "anything compound or piped",
+  naming `cd <repo> && scripts/testing/run_and_log.sh …` as a denied shape.
+  **That shape is not denied:** three windows in this slot were invoked exactly
+  that way and returned Status 0 (`20260920T093731Z_TH-17.log`,
+  `20260920T093810Z_TH-17.log`, and `20260920T100019Z_PORT-20.log` — a probe
+  the slot owner ran specifically to settle it). The entry now says what the
+  measurements support: **a pipe or a `bash -c` subshell loses the exemption, a
+  `cd` prefix does not**; write the call bare and unpiped, read logs with the
+  Read tool, and if denied anyway retry once. The claim that this is the same
+  phenomenon as §9's `./run_examples.sh` denials is explicitly **not**
+  established.
+- **Files:** `src/fem_em_solver/ports/sparameters.py`,
+  `tests/unit/test_port20_current_route_s.py` (new),
+  `tests/validation/test_port_package_sparameters.py`, four logs,
+  `test-results.md`, `known-issues.md`, `PROJECT_PLAN.md` (§7 `PORT-20` row,
+  §9 item 11 → done).
+- **Cost:** 2 + 201 + 66 = **269 s** of gated compute across three windows,
+  plus probes; against the item's ≈ 35 slot-min estimate the whole item took
+  ~13 min of executor wall clock. No AED number entered any tracked file,
+  journal or commit message. No absolute `S₁₁` / `Z_in` claim is made.
+- **Branch:** none. **Denied commands:** the four piped harness windows above,
+  now explained, not a boundary.
+- **Next-attempt hypothesis (item 17):** the re-records are mechanical — the
+  new digits are already printed in `20260920T095318Z_PORT-20.log`
+  (`passivity_max_sigma 0.861356894`, `‖S−Sᵀ‖/‖S‖ = 3.1121e-05`, the S table,
+  `|S₂₁| 0.037654`); the risk sits in `EX-20` / `ans:3`'s example-side tables
+  and the Touchstone fixture, and the strict `xfail` must come out in the same
+  commit that lands the new records.
