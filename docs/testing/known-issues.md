@@ -1413,39 +1413,39 @@ below (`rotate_plan_archive.py known-issues`, since 2026-09-19). This file
 holds OPEN entries only — that is what makes "is this failure mine?" quick to
 answer.
 
-## 2026-09-20 — **INFRASTRUCTURE, blocks every verification window: `scripts/testing/run_and_log.sh` cannot reach the docker socket from a scheduled session** — `permission denied while trying to connect to the docker API at unix:///var/run/docker.sock`
+## 2026-09-20 — **INTERMITTENT, not an outage: a `run_and_log.sh` window can return the docker-socket denial in ~1 s — retry once before believing it** — `permission denied while trying to connect to the docker API at unix:///var/run/docker.sock`
 
-**Seen** by the 2026-09-20 04:30 implementer slot (`TH-17` step 1b) at
-`1ba7302`: `20260920T093410Z_TH-17.log` — Status 1, Elapsed 1 s, no test ran,
-`## Output` is the one denial line. The same slot had, seconds earlier and in
-the same session, run `docker compose -f docker/docker-compose.yml ps`
-successfully (service Up, 9 days), and `docker compose -f … exec -T
-fem-em-solver bash -lc 'echo direct-ok'` returned `direct-ok`. The harness's
-**own** docker calls fail: the orphan check (`run_and_log.sh:237`) and the
-wrapped command (`:354`, `bash -lc "$CMD"`). The 03:00 review hit the same
-denial (`20260920T080639Z_OPS-53-callsite-pin.log`, Status 1, 0 s) and
-recorded it only in passing, inside the entry below.
+**Seen** by the 2026-09-20 04:30 implementer slot's delegated executor
+(`TH-17` step 1b) at `1ba7302`: `20260920T093410Z_TH-17.log` — Status 1,
+Elapsed 1 s, no test ran, `## Output` is the one denial line. The 03:00 review
+met the same denial the same morning
+(`20260920T080639Z_OPS-53-callsite-pin.log`, Status 1, 0 s).
 
-**Cause (read, not proven):** the session sandbox binds `/var/run/docker.sock`
-per *command*, for the exact allowlisted `docker compose …` forms only, so a
-docker client spawned as a **child of the harness script** sees no socket.
-Nothing in the repo changed — `run_and_log.sh` last moved before 09-19, whose
-windows all ran green.
+**Disproof of the "outage" reading — read this before parking a slot.** The
+executor concluded from the two denials that the harness could reach no socket
+at all and that no scheduled slot could execute any compute; it parked its item
+on that basis. The slot owner re-ran the *identical* command minutes later in
+the same session and it ran **green**: `20260920T093731Z_TH-17.log` (a trivial
+`echo` probe through the harness, Status 0) and then
+`20260920T093810Z_TH-17.log` — the byte-identical window the executor had
+declared impossible — **Status 0, 232 s, 3 passed** at `-n 4`. So the denial is
+**transient and per-invocation**, not a configuration boundary, and the
+"sandbox binds the socket per allowlisted command, so harness children get
+none" cause read is **wrong**: harness children reach the socket routinely.
 
-**Consequence:** a scheduled session can execute *no* compute at all.
-Bypassing the harness is correctly refused by
-`scripts/automation/hooks/bash_guard.py` ("pytest must run through the logging
-harness"), and the durable-capture route needs the same denied
-`docker compose … exec`. Slots therefore park their code and stop; this is not
-a physics or test failure and no assertion is implicated.
+**What this is, most likely:** the same intermittent socket denial PROJECT_PLAN
+§9 already records for `./run_examples.sh` (2026-08-29, 08-30, 09-01 — three
+occurrences in 21 slots), now observed on a `run_and_log.sh` window directly.
+Not diagnosed further.
 
-**Fix:** an operator/sandbox-configuration change (an allowlist entry that
-covers the harness's docker invocations, or socket access granted to
-`scripts/testing/run_and_log.sh`). Not something an implementer slot may
-change (`.claude/settings.json` is write-denied, and that is the correct
-boundary). Until it is fixed, treat every scheduled slot's verification as
-unavailable and check this entry **first** when a window returns Status 1 in
-~1 s.
+**What to do:** **retry the window once.** A second denial in a row, with a
+trivial `echo` probe through the harness also denied, is the point at which an
+outage becomes the better reading — and only then. Do not park an item, and do
+not write an infrastructure blocker, on a single ~1 s Status-1 window: that
+cost the 04:30 slot its executor's whole attempt (the item's (i) and (ii) then
+ran green unchanged in one window). Bypassing the harness stays correctly
+refused by `scripts/automation/hooks/bash_guard.py`; the retry needs no
+allowlist change and no operator action.
 
 ## 2026-09-20 — `tests/unit/test_setup_figure_title.py::` the call-site count pin (`EXPECTED_EXAMPLE_CALL_SITES = 18`, `:43`, asserted `:157`) is stale on `main` — **red by inspection, not yet executed**
 

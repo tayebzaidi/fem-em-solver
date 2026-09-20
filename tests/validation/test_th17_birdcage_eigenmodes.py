@@ -29,7 +29,9 @@ import numpy as np
 import pytest
 import ufl
 from dolfinx import fem
+from dolfinx.fem.petsc import assemble_matrix
 from mpi4py import MPI
+from petsc4py import PETSc
 
 from fem_em_solver.core.cavity import (
     complex_relative_permittivity,
@@ -70,6 +72,14 @@ from tests.validation.test_port_circuit_layer_field import (
 from tests.validation.test_port_lumped_narrowed_sheet import GATED_WIDTH_FRACTION
 
 PROBE_ENV = "TH17_PROBE"
+#: Step 1b's two diagnostics (§9 item 10 (i) and (ii)) — env-gated exactly as the
+#: probe is, so the default collection of this module is unchanged.
+STEP1B_ENV = "TH17_STEP1B"
+#: (ii) the eight shift-invert targets [Hz], the item's list verbatim.
+SCAN_TARGETS_HZ = (1e6, 4e6, 16e6, 32e6, 64e6, 128e6, 256e6, 512e6)
+#: (ii) only converged eigenvalues above this are interesting — below it is the
+#: N1curl gradient (null-space) cluster step 1 part (i) found (`Re f` ≈ 2 kHz).
+SCAN_PRINT_FLOOR_HZ = 1.0e6
 #: `PORT-15` step 3's registered tuning frequency is the eigen target.
 TARGET_FREQUENCY_HZ = STEP3_REGISTERED_FREQUENCY_HZ
 NEV = 6
@@ -189,8 +199,13 @@ def _capacitor_mass_forms(msh, sheet_facet_tags, sheets, c_f, trial, test,
     return forms
 
 
-def solve_modes(fx, c_f, *, omega_lin_rad_s, degree=1, nev=NEV, live=None):
-    """One (G1) solve; returns ``(eigenvalues, n_converged, n_dofs, wall_s)``."""
+def solve_modes(fx, c_f, *, omega_lin_rad_s, degree=1, nev=NEV, live=None,
+                target_hz=TARGET_FREQUENCY_HZ):
+    """One (G1) solve; returns ``(eigenvalues, n_converged, n_dofs, wall_s)``.
+
+    ``target_hz`` (default: the registered 64 MHz target, so step 1's probe is
+    unchanged) is the shift-invert target; step 1b (ii) sweeps it.
+    """
 
     msh = fx["mesh"]
     V = fem.functionspace(msh, ("N1curl", degree))
@@ -200,7 +215,7 @@ def solve_modes(fx, c_f, *, omega_lin_rad_s, degree=1, nev=NEV, live=None):
         msh, fx["sheet_facet_tags"], fx["sheets"], c_f, trial, test,
         omega_ref_rad_s=omega_lin_rad_s, live=live,
     )
-    k0_sq = (2.0 * np.pi * TARGET_FREQUENCY_HZ / C_0) ** 2
+    k0_sq = (2.0 * np.pi * float(target_hz) / C_0) ** 2
     t0 = time.perf_counter()
     values, n_converged, n_bc = solve_general_mesh_modes(
         V, eps, target_k0_sq=k0_sq, sheet_mass_forms=forms, nev=nev,
@@ -264,3 +279,176 @@ def test_cost_probe():
               f"summed rss {summed:.3f} GiB -> {'STOP' if stop_mem else 'ok'}")
         print(f"[TH-17 probe] VERDICT: {'STOP' if (stop_time or stop_mem) else 'PROCEED'}")
     assert n_converged > 0, "no eigenpair converged near the 64 MHz target"
+
+
+# ---------------------------------------------------------------------------
+# Step 1b (§9 item 10) — the two diagnostics, printed and never gated.
+#
+# Step 1 part (i) found only the N1curl gradient cluster at the 64 MHz target
+# (`Re f` ~ 2 kHz, `f085e51`).  Two things have to be ruled out before the
+# formulation is blamed: that the (L1) sheet forms never reached the pencil at
+# all (facet tags / restriction — diagnostic (i) below), and that the loaded
+# modes simply sit somewhere other than 64 MHz (diagnostic (ii)).  Neither
+# asserts a physical number: the item's asserted anchor is the closed-form LC
+# loop control (iii), which is a different fixture.
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture(scope="module")
+def step1b_fixture():
+    """One hole-mesh build shared by both step 1b diagnostics."""
+
+    return build_hole_fixture()
+
+
+def _sheet_dof_indicator(V, fx):
+    """A ``V``-Function that is 1 on the four gap sheets' dofs and 0 elsewhere.
+
+    Returns ``(indicator, n_sheet_dofs_global_owned)``; the owned count is
+    reduced across ranks (``locate_dofs_topological`` is rank-local).
+    """
+
+    msh = V.mesh
+    tdim = msh.topology.dim
+    tags = fx["sheet_facet_tags"]
+    pieces = [np.asarray(tags.find(int(s["tag"])), dtype=np.int32) for s in fx["sheets"]]
+    facets = (
+        np.unique(np.concatenate(pieces)) if pieces else np.empty(0, dtype=np.int32)
+    )
+    dofs = fem.locate_dofs_topological(V, tdim - 1, facets)
+    ind = fem.Function(V)
+    ind.x.array[:] = 0.0
+    ind.x.array[dofs] = 1.0
+    ind.x.scatter_forward()
+    n_owned_local = int(
+        np.count_nonzero(dofs < V.dofmap.index_map.size_local * V.dofmap.index_map_bs)
+    )
+    return ind, int(msh.comm.allreduce(n_owned_local, op=MPI.SUM))
+
+
+def _quadratic_form(mat, vec):
+    """``|xᴴ M x|`` — the mass a matrix carries on the indicator's support."""
+
+    out = mat.createVecLeft()
+    mat.mult(vec, out)
+    value = complex(vec.dot(out))
+    out.destroy()
+    return abs(value), value
+
+
+@complex_only
+@pytest.mark.skipif(os.environ.get(STEP1B_ENV) != "1", reason=f"set {STEP1B_ENV}=1")
+def test_step1b_sheet_mass_norms(step1b_fixture):
+    """(i) ``‖B_sheet‖`` against ``‖B‖`` on the sheet dofs — printed, not gated.
+
+    A zero (or a ratio at round-off) says the (L1) forms never reached the
+    pencil — the facet tags or the interior restriction — and is the first thing
+    the item rules out.  The only assertion is that the sheet term is nonzero and
+    finite, which is the premise every later step of `TH-17` rests on; the ratio
+    itself is a diagnostic reading and carries no band.
+    """
+
+    fx = step1b_fixture
+    comm = fx["mesh"].comm
+    c_f = c_tuned_farad()
+    omega_lin = 2.0 * np.pi * TARGET_FREQUENCY_HZ
+    V = fem.functionspace(fx["mesh"], ("N1curl", 1))
+    eps = permittivity_field(fx["mesh"], fx["cell_tags"], omega_lin)
+    trial, test = ufl.TrialFunction(V), ufl.TestFunction(V)
+
+    volume_ufl = ufl.inner(eps * trial, test) * ufl.dx
+    forms = _capacitor_mass_forms(
+        fx["mesh"], fx["sheet_facet_tags"], fx["sheets"], c_f, trial, test,
+        omega_ref_rad_s=omega_lin,
+    )
+    assert forms, "no capacitor sheet forms were built at all"
+    sheet_ufl = forms[0]
+    for form in forms[1:]:
+        sheet_ufl = sheet_ufl + form
+
+    b_vol = assemble_matrix(fem.form(volume_ufl))
+    b_vol.assemble()
+    b_sheet = assemble_matrix(fem.form(sheet_ufl))
+    b_sheet.assemble()
+
+    n_vol = float(b_vol.norm(PETSc.NormType.FROBENIUS))
+    n_sheet = float(b_sheet.norm(PETSc.NormType.FROBENIUS))
+
+    ind, n_sheet_dofs = _sheet_dof_indicator(V, fx)
+    x = ind.x.petsc_vec
+    q_vol, q_vol_c = _quadratic_form(b_vol, x)
+    q_sheet, q_sheet_c = _quadratic_form(b_sheet, x)
+
+    n_dofs = int(V.dofmap.index_map.size_global * V.dofmap.index_map_bs)
+    if comm.rank == 0:
+        print(f"\n[TH-17 1b(i)] cells = {fx['n_cells']}, N1curl deg-1 dofs = {n_dofs}, "
+              f"sheet dofs (owned, reduced) = {n_sheet_dofs}, "
+              f"C_tuned = {c_f:.9e} F")
+        for s in fx["sheets"]:
+            print(f"    sheet tag {s['tag']}: facets {s['facets']}, area {s['area']:.6e} m^2, "
+                  f"h {s['h']:.6e} m, w {s['w']:.6e} m, h/w {s['h'] / s['w']:.6e}")
+        print(f"[TH-17 1b(i)] Frobenius: ||B_volume|| = {n_vol:.9e}, "
+              f"||B_sheet|| = {n_sheet:.9e}, ratio = {n_sheet / n_vol:.9e}")
+        print(f"[TH-17 1b(i)] on the sheet-dof indicator: x^H B_volume x = {q_vol_c:.9e}, "
+              f"x^H B_sheet x = {q_sheet_c:.9e}, ratio |sheet/volume| = "
+              f"{(q_sheet / q_vol if q_vol else float('inf')):.9e}")
+    b_vol.destroy()
+    b_sheet.destroy()
+
+    assert np.isfinite(n_sheet) and n_sheet > 0.0, (
+        f"||B_sheet|| = {n_sheet!r}: the (L1) sheet forms never reached the pencil"
+    )
+    assert np.isfinite(q_sheet) and q_sheet > 0.0, (
+        f"x^H B_sheet x = {q_sheet!r} on the sheet dofs: the restriction is empty"
+    )
+
+
+@complex_only
+@pytest.mark.skipif(os.environ.get(STEP1B_ENV) != "1", reason=f"set {STEP1B_ENV}=1")
+def test_step1b_target_scan(step1b_fixture):
+    """(ii) shift-invert at eight targets; every converged `Re f` > 1 MHz printed.
+
+    Printed, never gated (the item): this locates where the capacitor-loaded
+    modes of the F-small hole mesh actually sit, so a later step can say whether
+    the circuit layer's `C_tuned` puts the *eigen* resonance at 64 MHz.  The one
+    assertion is that at least one target converged something — a scan that
+    converges nothing is a solver report, not a spectrum.
+    """
+
+    fx = step1b_fixture
+    comm = fx["mesh"].comm
+    c_f = c_tuned_farad()
+    omega_lin = 2.0 * np.pi * TARGET_FREQUENCY_HZ
+    total_converged = 0
+    above_floor = []
+    for target in SCAN_TARGETS_HZ:
+        values, n_converged, n_dofs, wall, _n_bc = solve_modes(
+            fx, c_f, omega_lin_rad_s=omega_lin, target_hz=target
+        )
+        total_converged += int(n_converged)
+        k0_sq = (2.0 * np.pi * float(target) / C_0) ** 2
+        if comm.rank == 0:
+            print(f"\n[TH-17 1b(ii)] target {target / 1e6:.0f} MHz "
+                  f"(k0^2 = {k0_sq:.6e}), nev = {NEV}, converged = {n_converged}, "
+                  f"{wall:.2f} s, dofs = {n_dofs}")
+        for lam in values:
+            f_c = frequency_of(lam)
+            if abs(f_c.real) <= SCAN_PRINT_FLOOR_HZ:
+                continue
+            above_floor.append((float(target), complex(lam), complex(f_c)))
+            q = abs(f_c.real / (2.0 * f_c.imag)) if f_c.imag != 0 else float("inf")
+            if comm.rank == 0:
+                print(f"    lam = {lam.real:+.9e} {lam.imag:+.9e}j  "
+                      f"f = {f_c.real:.9e} {f_c.imag:+.9e}j Hz  Q = {q:.6e}  "
+                      f"|lam - target| = {abs(lam - k0_sq):.6e}")
+        if comm.rank == 0 and not any(t == float(target) for t, _l, _f in above_floor):
+            print(f"    (nothing above {SCAN_PRINT_FLOOR_HZ / 1e6:.0f} MHz at this target "
+                  f"— gradient cluster only)")
+    if comm.rank == 0:
+        print(f"\n[TH-17 1b(ii)] summary: {len(above_floor)} converged eigenvalue(s) "
+              f"with Re f > {SCAN_PRINT_FLOOR_HZ / 1e6:.0f} MHz across "
+              f"{len(SCAN_TARGETS_HZ)} targets")
+        for t, lam, f_c in above_floor:
+            print(f"    target {t / 1e6:.0f} MHz -> Re f = {f_c.real:.9e} Hz, "
+                  f"lam = {lam.real:+.9e} {lam.imag:+.9e}j")
+    assert total_converged > 0, "no eigenpair converged at any of the eight targets"
