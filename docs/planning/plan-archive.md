@@ -31996,3 +31996,263 @@ here so it is not lost.**
    the Phase-5 exit condition is written against), `PORT-14` **step 1e**
    (tests only, the phase's oldest owed item), the `ANS-2` runnable half,
    and finding 1's renumbering.
+
+## §7 TH-14 full narrative — archived 2026-09-19 (weekly review)
+
+**`TH-14` — surface-impedance (Leontovich) boundary on conductor
+surfaces** 🟡 *(step 1 gated 2026-09-13; the birdcage step — §9 item 6, "step 3" below — gated 2026-09-14, see its result below; **the 21:00 slot's ✅ was demoted to 🟡 by the 2026-09-14 03:00 review** — step 2, the Dodd–Deeds copper slab, is unexecuted and the Done-when names it; queued as §9 item 2)* *(commissioned 2026-09-04 by operator directive, interactive
+session; the second conductor-model route; **serial on `TH-15`** — same
+hole mesh, same facet tags, one surface term added; `ANS-6` is serial on
+it.)* **Formulation.** On the conductor-surface facets Γ_c the field
+satisfies `n × E = Z_s n × (n × H)` with `Z_s = (1 + j)/(σδ)` (Jin §1.5.3,
+(1.54)–(1.56); valid when δ ≪ the surface's radius of curvature, which copper
+satisfies on every fixture here by 10³–10⁴). In the `E`-field curl-curl weak
+form that is the third-kind boundary term of Jin §5.8.3,
+`jωμ₀ ∫_Γc (1/Z_s)(n × E)·(n × W) dS`, i.e. exactly the shape of the
+lumped-sheet term the `PORT-9` `extra_bilinear_terms` hook already carries
+— the hook is the implementation route, with a `surface_impedance` material
+attribute per facet tag. HFSS's counterpart is the *Finite Conductivity*
+boundary with Solve Inside off, which is what `ANS-6` replicates.
+> * **Step 1 (closed form, plane wave).** The `TH-6` lossy-half-space fixture
+>   with the half-space replaced by an impedance surface at σ ∈ {1e4, 5.8e7}
+>   S/m: reflection coefficient against the exact Fresnel `Γ = (η_c − η₀)/(η_c
+>   + η₀)`; the Leontovich error is O(δ/λ), so pre-state **≤ 1e-3** on `|Γ|`
+>   and `arg Γ` at 5.8e7 and record the 1e4 rung as the approximation's own
+>   scale. Negative control: `Z_s = 0` (PEC) must give `|Γ| = 1` and miss the
+>   phase by the recorded amount. Smoke/standard tier.
+>   **Annotation, 2026-09-06 10:30 review — step 1 as written cannot state
+>   a separating anchor, and is not queued until the weekly rewrites it.**
+>   At 10 MHz and σ = 5.8e7 S/m, `η_c/η₀ = (1 + j)·√(ωε₀/(2σ))` ≈
+>   2.2e-6, so the Fresnel Γ differs from the PEC's −1 by ≈ 4e-6 in
+>   modulus and phase — the "≤ 1e-3" band cannot tell the copper rung from
+>   the `Z_s = 0` control, and the control as written ("miss the phase by
+>   the recorded amount") is a 4e-6 miss no FEM band resolves. The
+>   1e4 S/m rung is the same to 1e-4. Two facts the rewrite can use: (a)
+>   for a plane wave at normal incidence on a *flat* surface the impedance
+>   condition `n × E = η_c n × (n × H)` is exact at any σ (the half-space
+>   wave impedance is η_c exactly), so the gate rung can sit where the
+>   effect is first-order visible — at σ = 1 S/m, `σ/(ωε₀)` ≈ 1.8e3 keeps
+>   the good-conductor form valid, `|η_c/η₀|` ≈ 0.024 and `|Γ|` ≈ 0.967,
+>   arg Γ ≈ π − 0.034: a 3.3% effect against a 1e-3 band, 33× separation
+>   from the `Z_s = 0` control, with the copper rung printed as the
+>   PEC-limit reading; (b) the `TH-6` fixture pins the exact total field on
+>   every wall by Dirichlet data, which makes any Γ comparison circular —
+>   the rewrite needs a non-circular drive (an impressed current sheet or
+>   a Dirichlet wall that carries the incident field only) and that design
+>   is the weekly's, not an implementer's. The sphere-with-`Z_s` idea the
+>   18:00 review recorded has the same defect at copper (the E-driven β
+>   moves at O(δ/a) ≈ 1e-4).
+>   **Re-scoped by the 2026-09-13 weekly (§10 tuned-birdcage chain, step 7)
+>   and written here by the 18:00 daily review — step 1 is now the
+>   closed-form Q of a lossy-wall cavity, and it is queued (§9).** The `TH-9`
+>   PEC box (`core/cavity.py`, edges 1.0 × 0.8 × 0.6 m, TE₁₀₁ at ≈ 291.6 MHz)
+>   with its Dirichlet walls replaced by the third-kind term
+>   `jω₀μ₀/Z_s ∫_Γ (n × E)·(n × W) dS`, `Z_s = (1 + j)R_s`,
+>   `R_s = √(ω₀μ₀/(2σ))`, linearised at the PEC frequency ω₀ (the one-step
+>   fixed-point update printed). Anchor: the complex eigenfrequency's
+>   `Q = Re ω / (2 |Im ω|)` against Pozar's perturbation closed form
+>   `Q_c = (kad)³ b η / (2π² R_s) · 1/(2a³b + 2bd³ + a³d + ad³)` **within
+>   5 %** at the gate rung **σ = 1e4 S/m** (`R_s` ≈ 0.34 Ω, `Q_c` ≈ 800,
+>   δ ≈ 0.29 mm ≪ every edge, so both Leontovich and the perturbation are
+>   valid), with the σ = 1e6 rung asserting the scaling identity
+>   `Q(1e6)/Q(1e4) = 10` within 5 % and copper (5.8e7, `Q_c` ≈ 6e4) printed
+>   as the PEC-limit reading. Negative control: the Dirichlet PEC pencil
+>   (`TH-9`'s own) gives `|Im λ|/Re λ ≤ 1e-10` — no damping. Complex build,
+>   smoke/standard, `-n 1`–`2`. This is the loss-partition anchor the
+>   09-06 annotation said was missing: a copper-scale surface loss with an
+>   exact reference, non-circular (an eigenproblem has no drive to pin).
+>   The Fresnel step above is retired as written, not deleted.
+>   **Step-1 result, 2026-09-13 19:30 slot — gated; the 09-06 annotation
+>   above is retired.** `core/cavity.py` gains the opt-in
+>   `_cavity_forms(..., surface_impedance_ohm=, omega_rad_s=)` (no pin, the
+>   §5.8.3 term on `ds`), a `GNHEP` shift-invert solve and
+>   `solve_impedance_wall_cavity_mode`; the default path is untouched (TH-9
+>   re-ran green in the same window with its 2026-07-30 record digits:
+>   0.0436 % / 0.0102 %, rate 3.85, null cluster 5.56e-14). On
+>   `tests/validation/test_cavity_leontovich_q.py`, fine rung (9, 7, 6),
+>   degree 2, `-n 2`: σ = 1e4 Q = 801.77 vs Pozar Q_c = 801.68 (**+0.010 %**,
+>   band 5 %), Re f shift −0.0624 % = −1/(2Q_c) to the printed digit (band
+>   1 %); Q(1e6)/Q(1e4) = **9.995** (−0.050 %); Im ω > 0 (lossy under
+>   e^{jωt}); PEC control |Im λ|/Re λ = **4.8e-19** (bound 1e-10). Printed:
+>   coarse (6, 5, 4) Q = 800.35 (−0.166 %); copper Q = 6.1028e4 vs Q_c
+>   6.1055e4 (−0.044 %); one fixed-point Z_s(Re ω) update moves Q by
+>   −3.0e-4. Note: TE₁₀₁ (291.35 MHz) is this box's *second* mode, the
+>   (1,1,0) at 240 MHz is lower; the target is TE₁₀₁'s k². 18 passed, 45 s
+>   (`20260914T004807Z_TH-14.log`).
+> * **Step 2 (closed form, coil loading — the copper Dodd–Deeds).** `MAT-6`'s
+>   loop-over-slab fixture with the slab as an impedance surface at **σ =
+>   5.8e7** and the loop itself still solved inside at its gated σ: ΔR and ΔX
+>   against Dodd–Deeds (the closed form is valid at any σ), pre-stated band
+>   **2%** (the `MAT-6` record is 1.58% at 100 S/m on a resolved volume; the
+>   surface route has no resolution term, so if it misses by more the miss is
+>   the formulation). Standard tier; the `ANS-1` slab geometry, so it is also
+>   an AED-checkable point.
+>   **Queued 2026-09-14 03:00 review as §9 item 2, with the route:** the
+>   slab as a Leontovich *floor* — `MAT-6`'s air box above `z = 0` with the
+>   bottom face as Γ_c (facet group 401, the other five faces 499 under
+>   `pec_facet_tags`), the term through
+>   `TimeHarmonicSolver.solve(extra_bilinear_terms=)`, ΔZ by `MAT-6`'s
+>   reaction integral against the same box with the floor pinned. Anchors:
+>   ΔR vs Dodd–Deeds at the 2 % above, the surface-loss identity at 1e-6,
+>   `ΔR(5.8e7)/ΔR(5.8e9) = 10` within 1 %, and the thin-skin identity
+>   `ΔX(σ) − ΔX_PEC = ΔR(σ)` within 2 % (the FEM's own difference, so the
+>   box-truncation systematic cancels); control: the PEC floor's ΔR = 0. The
+>   "loop itself still solved inside at its gated σ" clause is superseded —
+>   `MAT-6`'s gated drive is the impressed unprojected current
+>   (`project_source=False`), which the item keeps. Heavy by ceiling, ≈ 3–4
+>   min at `-n 2`.
+> * **Step 3 (the copper birdcage, heavy).** `TH-15` step 3's hole mesh with
+>   `Z_s` for copper on the coil surface, phantom present: `PORT-9`/`PORT-11`
+>   gates at 10 / 64 / 128 MHz (bands imported), the power identity
+>   **`Re P_in = ½∫_phantom σ|E|² + ½∫_Γc Re(Z_s)|H_t|² ≤ 1e-3`**, and the
+>   **bracket**: the copper 4×4 must lie between the σ = 800 record and the
+>   `TH-15` PEC 4×4 class by class, and the σ ladder {5.8e7, 5.8e9, 5.8e11}
+>   must converge onto the PEC matrix monotonically — the consistency
+>   identity between the two routes, and the reason `TH-15` goes first.
+>   Print the coil-loss share `P_coil/P_in` at each frequency beside the
+>   σ = 800 fixture's; that pair of numbers is the whole point of the
+>   directive.
+>   **Result, 2026-09-13 21:00 CDT slot (§9 item 6, executed as that item's
+>   letter, which supersedes the `Re(Z_s)|H_t|²` 1e-3 form above with the
+>   discrete identity at `DISCRETE_IDENTITY_RTOL`) — gated.** New
+>   `tests/validation/test_th14_birdcage_copper.py`; `src/` change (rule (c),
+>   disclosed): additive `extra_bilinear_terms=` keyword on
+>   `run_n_port_sparameter_sweep` and `run_lumped_sheet_port_case` (default
+>   `None` byte-identical), `TH-15` step 3's module re-run green in the same
+>   window (10 MHz + solid control, `P_src` 2.657078677e-03 W and solid
+>   `C/terminal − 1` 1.059204217e-02 reproduced). **The trap resolved without
+>   step 2a:** the test builds a separate facet `MeshTags` holding exterior ∖
+>   tag-401 (tag 499, asserted absent from the mesh; census exterior 23 144 =
+>   outer 3 318 + cavity 19 826, reduced) and passes it as
+>   `facet_tags` with `pec_facet_tags=(499,)`; the mesh is untouched, so no
+>   `GEO-18`/3a mesh identity re-run was needed. Term:
+>   `jωμ₀/Z_s ∫_401 (n×E)·conj(n×W) ds`, `Z_s = (1+j)R_s`. At 10 / 64 / 128
+>   MHz, copper: `‖S−Sᵀ‖/‖S‖` 1.85e-14 / 3.68e-15 / 1.16e-15, σ_max
+>   0.999994231 / 0.999813505 / 0.999500814, spreads ≤ 0.0190 % / 0.0496 % /
+>   0.0734 %; (b) residual 1.575e-13 / 2.963e-13 / 7.024e-14; (c) 10 MHz per
+>   class max|S − S_PEC| copper (self/adj/opp) 2.360e-4 / 6.12e-5 / 1.14e-4 vs
+>   the `LEG_D_S_MATRIX_10MHZ` solid-800 record 9.77e-2 / 2.48e-2 / 4.83e-2;
+>   ladder self-class 2.360e-4 → 2.367e-5 → 2.368e-6 (10 MHz), the 1/√σ
+>   scaling to 3 digits at every f. Predicted control (printed): σ = 5.8e11
+>   max entry 2.37e-6 / 4.20e-6 / 3.19e-6 ≤ 1e-4 — met, which also shows the
+>   outer box is pinned. Printed `P_coil/P_in` copper 0.929 / 0.448 / 0.219
+>   (phantom 0.071 / 0.552 / 0.781); the σ = 800 solid's 10 MHz share from the
+>   same window's step-3c attribution is `P_(Ω∖phantom)` 4.482216632e-04 W
+>   over `P_src − ΣP_sheet,field` = 3.143759587e-03 − 2.695481546e-03 =
+>   4.4828e-04 W ≈ 0.99987 (`:4079`; the denominator is arithmetic on that
+>   line, not a printed literal — traced by the 2026-09-14 03:00 review).
+>   **Caveats:** no stored σ = 800 4×4 at 64/128 MHz exists, so the bracket's
+>   solid side is asserted at 10 MHz only (ladder at all three); the solid
+>   record sits ~400× farther from PEC than copper, so the bracket is loose
+>   (it includes the solid/hole mesh difference). Step 2 (Dodd–Deeds slab) and
+>   the §2.1 conductor-model line are not executed by this slot. 32 passed,
+>   211 s, Status 0 (`20260914T021500Z_TH-14.log:1037–1347`, `:4079`).
+> * **Done-when (§4).** Steps 1–3 executed, Fresnel and Dodd–Deeds asserted,
+>   the power identity and the two-route bracket asserted, elapsed times
+>   recorded, §2.1's conductor-model line updated to "copper via Leontovich,
+>   gated on a plane wave, a Dodd–Deeds slab and the F-small birdcage's
+>   identities". Still no absolute S claim on the copper coil — that is
+>   `ANS-6`.
+>   **Audit, 2026-09-14 03:00 review — not met as written at closure:**
+>   step 2 unexecuted and the §2.1 line unwritten; ✅ → 🟡. The Fresnel
+>   clause is discharged by the 2026-09-13 re-scope (step 1 is the cavity
+>   Q; the plane-wave step is "retired as written, not deleted"). The §2.1
+>   line is written by this review (copper via Leontovich, gated on the
+>   cavity Q and the F-small birdcage's identities, the slab open). Met when
+>   §9 item 2 lands (a)–(d): then steps 1–3 executed, Dodd–Deeds asserted,
+>   the identity and the bracket asserted, elapsed recorded.
+
+## §7 PORT-15 full narrative — archived 2026-09-19 (weekly review)
+
+**`PORT-15` — the circuit layer (HFSS + Circuit)** ✅ *(**step 3 ✅
+2026-09-14 02:07Z** closes the row on gate (i) + the tuned `S₁₁`; gate (ii)
+is `TH-17`'s. **step 1 ✅
+2026-09-05, 22:30 slot** — the algebra and its three identities; digits in
+the §7 table row. **feature ladder A3**, operator directive 2026-09-04;
+serial on `PORT-13` ✅ for the 32×32.)*
+Pure linear algebra on a stored N-port S- or Z-matrix: terminate ports in a
+lumped network (capacitor values per ring gap, a drive port with its
+matching), read tuned S₁₁/S₂₁ and the mode spectrum as the network's
+resonances, sweep capacitor values at zero field-solve cost. Gates: (i) the
+same reduction identity as `PORT-14` from the circuit side, against
+`PORT-14`'s in-model solve; (ii) mode frequencies of the 32-port high-pass
+network against the ladder-network closed form (Phase 6's named target).
+With `POST-6` this turns one EM solve into tuned-coil B₁⁺ maps — the Ansys
+workflow. Standard tier; the field solves are already on disk.
+> **Steps 2 and 3, written into §7 by the 2026-09-13 18:00 daily review from
+> the weekly's §10 tuned-birdcage chain (steps 2 and 3 there).**
+> * **Step 2 — gate (i) from the circuit side, and the stored 64 MHz 4×4.**
+>   Serial on `PORT-14` step 3 (the registered κ-derived route). The
+>   identity itself — `reduce_terminated_ports` on the ε = 0 4×4 at the
+>   fixture's C / L against the in-model capacitor-sheet 3×3 — is the *same
+>   function on the same numbers* as `PORT-14` step 3's anchor (ii) (that
+>   module already imports `ports/circuit.py`), so what step 2 adds is (a)
+>   the 64 MHz ε = 0 4×4 and the corrected-width terminated 3×3s **stored as
+>   module records** (`S_64MHZ_EPS0_RECORD`, per-element digits, `-n 2`,
+>   cited to their log lines) so that step 3's sweep runs at zero field-solve
+>   cost, asserted to reproduce the live solve at `DIGIT_REPRODUCTION`-class
+>   rtol 1e-6 on the same width; (b) the reduction identity re-asserted from
+>   the *stored* matrix at the band imported from `PORT-14` step 3 (never
+>   re-derived); (c) the inductance read-off — `Im Z` of the 10 MHz 4×4
+>   (`s_to_z`) mapped onto step 1's ladder model's `L_leg`, `L_ring` —
+>   printed, no closed form claims it. Negative control (*predicted*, printed):
+>   terminating in 2 × C breaks (b) by ≫ 1e-3. Standard, `-n 2`, ≈ 2e's
+>   191 s + a 92 s 10 MHz control. Moves the row's gate (i) sentence to
+>   "discharged by `PORT-14` step 3, stored record here"; the row stays 🟡.
+>   **Step 2 ✅ 2026-09-14 01:07Z (2026-09-13 19:30 slot, take-next 4th).**
+>   `tests/validation/test_port_circuit_layer_field.py`, 4 passed, 125 s at
+>   `-n 2` (`20260914T010448Z_PORT-15.log`; records measured in
+>   `20260914T010149Z_PORT-15.log:1902–1938`). κ passed to the opt-in is the
+>   registered `STEP2D_C_OVER_TERMINAL_64MHZ_P1`, not a live re-derivation.
+>   Also stored: the 10 MHz C / L / R 3×3s, which (c) needs. (a) 7 records
+>   reproduced ≤ 1.805e-13 (rtol 1e-6); (b) stored-record residuals C
+>   5.358983e-05, L 1.998473e-06 (≤ 1e-3); 2 × C control 2.152e-01
+>   (*predicted* ≫ 1e-3, held, printed); (c) `REDUCTION_FLOOR_F_SMALL`
+>   |ratio − 1| ≤ 2.4e-07. **Finding for step 3:** `Im Z / ω` of the 10 MHz
+>   4×4 is *negative* (self −2.9848e-05 H, adjacent −2.9934e-05, opposite
+>   −2.9951e-05) — the port-side Z is gap-capacitance-dominated, so the
+>   printed `L_leg` / `L_ring` "mapping" is meaningless as printed. Step 3
+>   must de-embed the gap capacitance (or read L off a shorted-gap route)
+>   before feeding the ladder closed form.
+> * **Step 3 — the tuning sweep and the HFSS + Circuit self-consistency
+>   identity.** Serial on step 2. On the stored 64 MHz 4×4, sweep the three
+>   ring-gap capacitor terminations (drive port at 50 Ω) and find `C_tuned`
+>   where the reduced 1×1's `Im Z_in(64 MHz; C) = 0` (pure numpy, exact to
+>   the sweep's bisection tolerance — asserted ≤ 1e-6 relative); then **one**
+>   in-model solve with `PORT-14`'s capacitor sheets at `C_tuned` at 64 MHz,
+>   asserting the circuit-predicted tuned `S₁₁` and the reduced 2×2 against
+>   the in-model values at the band imported from `PORT-14` step 3. Printed:
+>   `|S₁₁|` at `C_tuned` beside two untuned values (predicted lower, never
+>   asserted — the identity holds at any C and is not the tuning test), and
+>   the ladder-network closed form's mode-1 frequency at `C_tuned` with
+>   step 2's read-off inductances. Standard/heavy by `PORT-14`'s ceiling
+>   (one ε = 0-free terminated solve ≈ 90 s at `-n 2`). Moves `PORT-15`
+>   🟡 → ✅ on gate (i) + the tuned `S₁₁`; gate (ii) (mode frequencies of the
+>   32-port network) is `TH-17`'s and is *not* claimed here — a tuned
+>   4-leg F-small fixture at one frequency, no F-human, no AED claim.
+>   **Step 3 ✅ 2026-09-14 02:07Z (2026-09-13 21:00 slot).** Same module,
+>   `test_step3_*` + `scripts/probes/port15_step3_tuning_sweep.py` (sweep
+>   printer, `20260914T020404Z_PORT-15.log`, 4 s). Closing window: whole
+>   module as committed, `7 passed in 173.59s`, Status 0 / 176 s, `-n 2`,
+>   `timeout -k 30 590`, `-s` (`20260914T020419Z_PORT-15.log`). Root rule
+>   pre-registered in the module: bisect every `Im Z_in` sign change on a
+>   2001-point log grid 0.1 pF–10 nF, reject poles by (a)'s own tolerance,
+>   take the zero with least `|S₁₁|`; the grid has exactly one sign change.
+>   (a) `C_tuned` = 1.556993028375804e-11 F, `|Im Z_in|/|Z_in|` = 2.113e-15
+>   (`:1968`), `Z_in` = 6.7726 Ω. (b) in-model (P2..P4 capacitor sheets at
+>   `Z_C` = −j159.718 Ω, κ-corrected specs, 116 085 cells, 3 driven solves
+>   19.6 s + build 25.3 s, `:3728`) vs the stored record reduced: `S₁₁`
+>   residual 8.255812e-05, 2×2 (P1 + P2 kept, P3/P4 in `C_tuned`) 6.123431e-05,
+>   both under `REDUCTION_BAND` 1e-3 (`:3732`, `:3742`) — so at 15.6 pF
+>   (outside `PORT-14`'s 100 pF registration) the κ systematic is not visibly
+>   C-dependent. Control (*predicted*, printed): `|S₁₁|` 0.846072 at 0.5× and
+>   0.785168 at 2× vs 0.761413 at `C_tuned` — held (`:1969–1970`). Printed:
+>   de-embedded two-frequency series-LC fit of the stored 10/64 MHz self and
+>   adjacent reactances gives `L_leg` ≈ 1.038e-08 H, `L_ring` ≈ 5.270e-08 H,
+>   and the ring-capacitor ladder closed form at `C_tuned` puts mode 1 at
+>   1.606e+08 Hz (`:1973–1974`) — ≠ 64 MHz, indicative only (the fixture's
+>   capacitors are in the *legs*, the closed form's in the rings; the fit is a
+>   one-element model). **Caveats:** "tuned" means `Im Z_in = 0` (a series
+>   resonance, `R_in` 6.77 Ω, `|S₁₁|` 0.761), not a match; the sweep's
+>   deepest `|S₁₁|` (≈ 0.636 near 75 pF, probe `:61`) has no `Im Z` zero and
+>   is not the selected point; the circuit input is one −n 2 record.
