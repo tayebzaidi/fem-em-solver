@@ -77,3 +77,9 @@ are annotated.
   (weekly review). Gapped four-leg birdcage, phantom-loaded, four lumped
   ports: 4×4 S at 10 / 64 / 128 MHz on `PORT-9`/`PORT-11`'s self-consistency
   identities — the first case carrying Larmor-frequency numbers.
+- `ans6_copper_birdcage_four_port_10_64_128MHz/` — **ANS-6**, commissioned
+  2026-09-19 (weekly review; operator directive 2026-09-04). The `ANS-4`
+  geometry with the coil as a boundary: a copper *Finite Conductivity* column
+  and a PEC column, on `TH-14` / `TH-15`'s gated physics — 4×4 S at 10 / 64 /
+  128 MHz plus the coil / phantom loss partition. `SPEC.md` is sufficient for
+  the AED half on its own; the runnable half is §7 chunk `ANS-6`.

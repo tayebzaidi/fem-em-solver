@@ -1,0 +1,41 @@
+# Test Run
+- Chunk: WEEKLY-ROTATE
+- Commit: 97fd0a15ae0b47071faf2d57a78035e15f8d8914
+- Time (UTC): 2026-09-20 02:10:50
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.5.1
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: timeout -k 30 30 python3 scripts/maintenance/rotate_plan_archive.py history .weekly-history-spec.txt 2026-09-19 --dry-run
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 24
+drwxr-xr-x  3 taz5297 taz5297 4096 Sep  4 23:31 .
+drwxr-xr-x 17 taz5297 taz5297 4096 Sep 19 21:10 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  721 Sep  3 13:49 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 4275 Sep 13 19:19 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.5.1
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'timeout -k 30 30 python3 scripts/maintenance/rotate_plan_archive.py history .weekly-history-spec.txt 2026-09-19 --dry-run'
+§10 weekly blocks 2026-09-09 and 2026-09-13 (assessment, pace ledger, agent value, Phase-5 exit decision, frozen families, ANS-4 Larmor verdict, TH-19 / POST-6 / TH-11 rulings, tuned-birdcage chain as first written, XL-XXL, examples health, benchmarks, hygiene, flagged): 572 lines, 38956 bytes
+    first: '**Assessment 2026-09-09 — Phase 6 has a measured pace for the first time,'
+    last:  '   bit-identity again.'
+
+## Exit
+- Status: 0
+- Elapsed (s): 1
+- Filtered lines (gmsh optimisation chatter): 0

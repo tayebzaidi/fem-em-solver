@@ -1428,6 +1428,27 @@ list) and, better, makes the `EX-57` per-item template say so — the figure
 task will keep committing PNGs for ~30 more slots. Not a physics gate; the
 docrefs checker itself passes (`dead=0`).
 
+## 2026-09-19 — 🟡 OPEN (`ANS-3` adjudication, weekly review) — on the gap-voltage / impressed-current route `run_n_port_sparameter_sweep` reports an `S` that is **not the 50 Ω S-matrix**; its `z_matrix` is right
+
+| | |
+| --- | --- |
+| **Symptom** | On the two-torus fixture (`EX-20`, `ans:3`) the tabulated `S₂₁` and the `S₂₁` implied by the *same run's* `Z` through `z_to_s(Z, 50 Ω)` differ by **≈ 0.016 in magnitude** (tabulated \|S₂₁\| = 0.0216; Z-implied ≈ 0.0377 by hand from the tabulated `Z`, to be printed exactly by `PORT-20` — both our numbers, `examples/ansys_benchmarks/ans3_two_torus_gap_ports_10MHz/COMPARISON.md`). `S₁₁` moves ≈ 2 %. No test is red: reciprocity and passivity pass on either matrix. |
+| **Found by** | The `ANS-3` AED comparison, adjudicated 2026-09-19 (PROJECT_PLAN §10): our `Z` agrees with the independent code on the primary row; our tabulated `S` does not, our Z-implied `S` does. Qualitative verdict only — numbers in the gitignored `docs/private/ans3-ans4-adjudication-2026-09-19.md`. |
+| **Cause** | Read, not yet measured: on this route each drive impresses a current across one gap and leaves the other port **open**, so the undriven port's incident wave `a_i ≠ 0` and `S_ij = b_i/a_j` (`ports/sparameters.py::_assemble_sparameter_matrix`) is not a column of the S-matrix. The assembly is exact only when every undriven port is terminated in the reference — the lumped-sheet route at `Z_p = z0`, which is what `PORT-9`/`PORT-11`/`ANS-4` use and what the docstring says. On the current route the "terminated transimpedance" *is* the open-circuit `Z`, and `z_to_s(Z)` is the S-matrix. |
+| **Not affected** | Every lumped-sheet-route 4×4 / 32×32 (`PORT-9`, `PORT-11`, `PORT-13`, `ANS-4`, `TH-14`, `TH-15`), `PORT-1`'s gate of record (the mutual ratio is read from `Im Z₂₁`), `MAT-6`, `ANS-1`, `ANS-2`. |
+| **Affected** | Any S entry, `‖S‖₂`, or Touchstone export produced on the gap-voltage route: `EX-20` (`ports:2`), `ans:3`'s S table and its `‖S‖₂ = 0.864809` record, `PORT-1` step 4's passivity figure. They are self-consistent records of a quantity that is not S. |
+| **Fix** | `PORT-20` (§7). Do not "fix in passing": the reproduction records above move when it lands and are re-recorded by that chunk only. |
+
+## 2026-09-19 — 🟡 OPEN (`ANS-4` step 3 / 3c private readouts, weekly review) — the order-matched `ANS-4` comparison **disagrees on the self class at 64 MHz and 10 MHz**; the 128 MHz AGREE stands
+
+| | |
+| --- | --- |
+| **Symptom** | None in CI — every imported `PORT-9`/`PORT-11` gate is green on every degree-2 rung (`xl-ledger.md` rows 2026-09-16/17/18). The disagreement is against the external code only. |
+| **Ruling** | 2026-09-13's pre-registered private rule for the 64 MHz order-matched rung **fired on the self class** (couplings inside it); 3c's public rule also fired — the 10 MHz degree 1 → 2 move (4.41 / 1.35 / 1.08 %) is in the same class as the Larmor moves, so the 09-06 "10 MHz AGREE", read at degree 1, was partly coincidental. 3b's rule did not fire: on the C4-congruent cut the 128 MHz degree-2 classes sit within step 2d's own spreads of step 2d's (≤ 0.083 % against ≤ 0.142 %), and the 128 MHz AGREE stands as written. Numbers: gitignored `docs/private/ans3-ans4-adjudication-2026-09-19.md`. |
+| **What is and is not known** | The order-matched disagreement is concentrated in `S₁₁` and **falls** with frequency, which a fixed-`h` discretisation error does not do; `ANS-2`'s 09-18 ruling independently named the lumped-port feed as its residual at 10 MHz. But at 10 and 64 MHz only one degree-2 rung exists, so neither figure is yet an `h`-converged value. |
+| **Consequence** | No absolute `S₁₁` (hence no `Z_in`, no tuned-`S₁₁` absolute, no match claim) is licensed at 10 or 64 MHz at either order. Coupling classes: AGREE at all three frequencies. The production element order is not changed on this evidence. |
+| **Next** | `xl` entries 7 (3e, 64 MHz degree-2 `h`-ladder, queued 09-22) and 11 (3g, the same at 10 MHz) decide whether the rungs are converged; then `PORT-21` (§7) and `ANS-6`'s PEC-coil column (which removes the resolved conductor interior from both codes). |
+
 ## Retired entries — full text in `known-issues-archive.md`
 
 - RETIRED 2026-09-19 — Fourteen committed setup figures carried legends clipped mid-word — a false-artefact mode the setup-figure census cannot see (2026-09-19, 0…

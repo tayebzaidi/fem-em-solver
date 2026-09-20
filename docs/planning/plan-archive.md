@@ -32256,3 +32256,578 @@ workflow. Standard tier; the field solves are already on disk.
 >   resonance, `R_in` 6.77 Ω, `|S₁₁|` 0.761), not a match; the sweep's
 >   deepest `|S₁₁|` (≈ 0.636 near 75 pF, probe `:61`) has no `Im Z` zero and
 >   is not the selected point; the circuit input is one −n 2 record.
+
+## §10 weekly blocks 2026-09-09 and 2026-09-13 (assessment, pace ledger, agent value, Phase-5 exit decision, frozen families, ANS-4 Larmor verdict, TH-19 / POST-6 / TH-11 rulings, tuned-birdcage chain as first written, XL-XXL, examples health, benchmarks, hygiene, flagged) — archived 2026-09-19
+
+**Assessment 2026-09-09 — Phase 6 has a measured pace for the first time,
+and no denominator to spend it against.** Four §4 closures landed on Phase 6
+this interval (`TH-15` step 3a, `TH-15` step 2d, `PORT-16` steps 1 and 2)
+over 2.99 days = **1.34/day** — the first non-zero measured Phase-6 rate in
+this section's history, which since 2026-08-09 has written "no completion
+date" because *no pace existed*. That reason is now spent, and it is
+replaced by a different and more honest one: **nobody has enumerated how
+many gated steps stand between here and "a tuned birdcage at 64 MHz", so
+there is nothing for 1.34/day to divide into.** A rate without a denominator
+dates nothing, and inventing the denominator is exactly the unmeasured
+estimate this section deletes on sight. **The subgoal this review adds is
+the enumeration itself** — see below.
+
+*The interval's real finding, and it is not a good one.* Both active physics
+fronts are in multi-attempt spirals against sub-percent modelling artifacts:
+`WF-6` step 4 is **six attempts over five days with zero gates**, and
+`TH-15` step 2 is **seven sub-steps over three days and still open** (2f
+attributed the 2 % `Z` asymmetry to the point-sampled `_path_voltage`, 2g
+measured the calibrated gap average as reading B; the `src/` replacement is
+specified but unwritten). Each sub-step is individually §4-compliant and
+each counts in the pace number, which is why the headline 4.68/day flatters:
+half the interval's closures belong to two items that did not close. This is
+not a discipline failure — every one of those sub-steps measured something
+real and several were negative results correctly banked — but it is a
+scoping signal. A front that needs seven sub-steps to characterise one
+artifact is a front whose *chunk* was scoped at the wrong grain, and the
+remedy is to name the closing step before the next sub-step runs, not to
+keep subdividing. Applied concretely: `TH-15` step 2's next landing must be
+the `src/` `_path_voltage` replacement written from reading B, not an
+eighth measurement.
+
+**Phase 6 subgoal added 2026-09-09 — *the step count to a tuned birdcage***.
+Target: a written, ordered enumeration of every gated step between the
+current state and "the F-small birdcage is tuned to 64 MHz and the tuned
+`S₁₁` matches an AED HFSS + Circuit case", each step with its validation
+target named (closed form, identity, or AED comparison) and its serial
+dependencies. This is a *planning* deliverable, not a solve, and it is
+weekly-owned — the next weekly review writes it, from the feature ladder
+(§9 item 5), the `PORT-14` → `PORT-15` → `TH-17` chain, and the conductor
+lineage `TH-15` → `TH-14` → `ANS-6`. Until it exists, **Phase 6 still has no
+completion date, and the reason is now recorded as a missing enumeration
+rather than a missing pace.** *Oldest unstarted owed item on this phase:*
+`PORT-14` step 1e — the 2026-09-06 ruling's `REDUCTION_FLOOR_F_SMALL`
+re-registration, tests only, which has not been queued in three days and
+blocks `PORT-14` step 2, which blocks `TH-17`.
+
+---
+
+*(The 2026-09-09 weekly's XL-slot, benchmarks, ramp-check, plan-hygiene and flagged-for-the-daily blocks — all since actioned or superseded by the 2026-09-13 blocks below: `docs/planning/plan-archive.md`, moved verbatim 2026-09-19.)*
+
+---
+
+**Pace ledger, interval 2026-09-09 02:35 → 09-13 02:15 (3.99 days; measured
+2026-09-13 by the scheduled Sunday weekly review; sources: 128 commits
+`713516e..0589bbe`, 54 attempts.md entries (lines 15057–17975 before this
+session's rotation), +149 rows in test-results.md, the census and examples
+sweeps delegated to two general-purpose agents and every number re-cited by
+the reviewer).** **12 items reached §4-✅** — six chunk closures, `OPS-42`,
+`OPS-43` (auditor DEMOTE on tier honesty, corrected smoke → standard),
+`OPS-44`, `OPS-45`, `OPS-46` (closure claim made 21:09 on 09-12, **audit
+pending** at the 03:00 review — anchor (iii) is operator-pending by design),
+`PORT-19` — and six gated steps outside them: `ANS-2` step 1, `TH-11` step 5d
+(operator-run, `xl`), `WF-6` step 4g, `PORT-14` step 1e, `TH-19` steps 1–2,
+`TH-15` step 3b. **12 / 3.99 = 3.01 closures/day**, against the 09-09
+interval's 4.68 (−36 %) and the 09-06 interval's 7.9 (−62 %). The coarser
+denominator is worse: **six chunks reached ✅ (1.50/day) and none of them is
+physics** — five are `OPS` infrastructure and the sixth, `PORT-19`, is a solver
+speed-up (factor reuse, an 11.2× wall-clock win, gated on bit-identity). The
+operator's own interactive measurement on 09-12 (`247290d`: 79 chunk-step
+commits in seven days, two closures in four, steps-per-closure ≈ 15:1) is
+what this interval reads like from the inside. Attribution by phase:
+**Phase 0 five chunks**; **Phase 2 two steps** (`TH-11` 5d, `TH-19` 1–2);
+**Phase 5 two steps** (`ANS-2` 1, `WF-6` 4g); **Phase 6 one chunk + two
+steps** (`PORT-19`; `PORT-14` 1e, `TH-15` 3b); Phases 1, 3, 4 zero. Physics
+share by item 7/12 = 58 %; by chunk **0/6**. Measured-only 🧪 and negative
+landings, all banked honestly with bands unmoved: `WF-6` 4f/4h/4i/4j/4k,
+`PORT-14` 2/2b/2c/2d/2e, `ANS-4` 2a/2b/2d/2a′/2a″/2a‴/2e/2f/2g, `TH-15` 2h,
+`GEO-30`/`31`/`32`, `PORT-18`, `OPS-43` (d)'s blocked window — **26 sub-steps
+on five fronts, three of which the 09-12 18:00 review froze under the
+operator's four-attempt cap**. Eleven stable IDs opened (`GEO-30`–`32`,
+`OPS-42`–`46`, `PORT-18`, `PORT-19`, `TH-19`) against six closed; known-issues
+6 opened / 4 retired (9 open headers, was 7). **Slot ledger — the first
+interval since 09-02 with zero governing-half losses:** 48 implementer slots
+scheduled, **48 fired**, 43 did chunk work, **4 stopped on a drained §9**
+(09-10 09:00, 09-11 00:00, 09-12 22:30, 09-13 00:00), 1 anomaly (09-10 12:00,
+the operator's in-flight XL window left the tree dirty); **12 of 12 daily
+reviews fired**, this weekly fired on schedule, no session died on limits or
+credentials. The drain has a new cause worth naming: the 09-12 18:00 review
+queued five items of which four were one serial chain, the enacted take-next
+rule let the 19:30 slot run four items and the 21:00 slot three, and the
+queue that was sized for four slots lasted two — **under take-next, five
+items is one slot's worth when they are cheap**, and the daily review's
+restock floor needs to count expected slot-minutes, not items (flagged
+below). The verdict on pace, brutally: **throughput is now bounded by
+diagnosis, not by slots.** Every slot fired and every review ran, and the
+interval still closed zero physics chunks because the three active physics
+fronts each spent 4–9 sub-steps characterising a sub-percent artifact
+(`WF-6` ×0.0095's 2 % power residual, `PORT-14`'s 1 % width offset, `ANS-4`'s
+degree-1 non-asymptoticity) — all three real, all three now banked, none of
+them a gate. The four-attempt cap enacted 09-12 is the right mechanism and
+this review applies it: each frozen family below gets exactly one numbered
+step with a status it can move, or a closure.
+
+**Agent value, third measurement (weekly-review.md's 09-01 clause).** (a)
+Auditor: 5 chunk audits (`OPS-42`/`43`/`44`/`45`, `PORT-19`), 5 PASS on
+evidence, **one DEMOTE on tier honesty** (`OPS-43` declared smoke, measured
+53–61 s under `-k 30 180` → re-declared standard, `710c743`) — the first
+auditor-originated demotion on record; the catch is small but it is the
+class §4 item 4 exists for. Keep. (b) Pathologist: **0 invocations** in 12
+review logs, second interval running; nothing disputed reached it. Keep at
+opus (no review died mid-session with an agent bill behind it). (c) Review
+completion: **13 of 13** governing sessions fired (12 dailies + this weekly)
+against 2-of-3-died at the clause's baseline — the 02:00-reset alignment and
+the operator's credit top-up, not the agents, but the agents did not make it
+worse. (d) Navigator: used once by the 09-12 18:00 review (the `POST-6`
+staleness flag, which this review confirms below was a correct flag); its
+corpus still excludes `docs/planning/chunks/` until the operator's
+`.claude/agents` edit lands (dashboard item 1), so this review Read the chunk
+files directly and re-cited every number itself — 0 citation errors on ~60
+re-opened. (e) Example-runner: 0 example closures this interval (no gate
+closed, so daily-review step 5 opened nothing; `PORT-19` step 6 ran two
+examples implementer-direct as a regression record). (f) Mesh-probe: 2
+invocations (`TH-15` 2h, `WF-6` 4k), both no-solve, both deterministic across
+a repeat build, both honest negatives. **Verdict: all six stay at their
+tiers.** Footers: six dated 2026-08-31 (13 days, inside the 30-day window);
+`implementer.md` still carries none — flagged for the fourth consecutive
+review, and it is an operator edit (`Edit(.claude/**)` is on the ask list),
+dashboard item 7.
+
+**Phase-5 exit decision, 2026-09-13 (the 09-09 scoping rule, applied).** The
+09-09 rule was: *if `WF-6` step 4f has not either landed the B₁⁺ gate or
+printed a monotone fall of the eleven-point miss across ≥ 2 refinement rungs
+by this review, subgoal 4's B₁⁺ target is re-scoped from a band gate to a
+measured convergence statement, and Phase 5 exits on that.* **Neither arm is
+met as written, and the rule fires.** No closed-form B₁⁺ gate exists (4g's
+own commit: "closes nothing … no closed-form B₁⁺ gate"). What was measured is
+a monotone fall of the **C4 four-copy spread** — 5.2506 % → 2.0719 % over
+`resolution` 0.015 → 0.012 m on `main` with asserted anchors (4g,
+`20260909T200431Z_WF-6.log:1982–1994`), 1.9514 % at 0.0095 on the parked
+branch (4f) and then a stall — not of the eleven-point closed-form miss,
+because the 09-09 03:00 review had already refuted that comparand's route
+(no cube order satisfies the identity; `CLOSED_FORM_BAND` 5e-2 unmoved and
+unused). The 4f/4g/4h–4k sequence then spent four more slots on a rung that
+was already off the ladder, and the 09-12 18:00 review froze the family. So
+the cut pre-registered on 09-09 is taken now, not extended: **subgoal 4's
+B₁⁺ target becomes the convergence statement** — "on the unloaded F-small
+birdcage at 10 MHz the worst-radius C4 four-copy spread of `|B₁⁺|` falls
+5.2506 % → 2.0719 % (ratio 0.3946) as the global resolution goes 0.015 →
+0.012 m, the C4 covariance 3.6159 % → 1.6815 % alongside it, the power
+residual inside the unmoved 1 % band on both rungs; the closed-form
+comparand (odd-order cube sum `S₁₁`, bar ≤ 1.1 %) misses the ×1 rung by
+≈ 3.2 % at the centre and ≈ 5.3 / 7.9 % at 0.4R / 0.5R, a record; the third
+rung's 2 % common-mode power residual is a banked, unexplained negative" —
+and **`WF-6` step 5, scoped below, registers it**. *Epitaph, 2026-09-13 —
+the closed-form B₁⁺ band gate on F-small, killed.* Six attempts (4, 4b–4e)
+found the comparand needed an image sum whose order the identity does not
+fix, and the `h`-ladder found the FEM side stalls at ≈ 2 % on a rung whose
+power accounting then breaks — a 2 % CG1 floor cannot host a 5 % band with
+a 1.1 % comparand bar and a 3–8 % miss, and ten days on a fully priced
+fixture is the honest evidence that the gate was written at the wrong
+altitude. Revive only on a degree-2 or curved-geometry rung that moves the
+CG1 floor. **Date:** Phase 5 exits on F-small **when `WF-6` step 5 lands** —
+one tests-only item priced by 4g at 204 s at `-n 4`, queueable by the 03:00
+review, so **≈ 2026-09-14…15 if its first window is green**; the aggregate
+3.01/day is not applied because this item's own family rate is one green
+landing (4g) in eleven attempts. Honest scope of "exit": symmetry-gated
+B₁⁺ maps at three frequencies, a two-rung convergence statement, 1 g / 10 g
+mass-averaged SAR C4-gated at 10 MHz at fixed `h`, pictures in ParaView —
+no absolute, homogeneity, C95.3, Larmor-SAR or closed-form B₁⁺ claim; the
+human-scale maps are Phase 6's.
+
+**The three frozen families, each given its numbered step (owed by the
+09-12 18:00 review; the daily review queues them, in this order).**
+
+* **`WF-6` step 5 — register the convergence statement and close the
+  F-small deliverable.** Tests only, `tests/validation/test_birdcage_b1_plus_closed_form.py`,
+  default `LADDER` (×1, ×0.012), `-n 4`, heavy by measurement (204 s).
+  Asserted: (i) the ×1 four-copy spread reproduces 5.2506 % and the ×0.012
+  spread 2.0719 % at rtol 1e-3 (records backed by 4f and 4g on the same
+  fixture, same statistic); (ii) the fall is monotone —
+  `spread(×0.012) < spread(×1)` and `covariance(×0.012) < covariance(×1)`,
+  the identity form; (iii) the existing anchors (cell counts at
+  `CELL_COUNT_BAND`, covariance ≤ the imported 5 %, power residual ≤ the
+  imported 1e-2, cw separation ≥ 5×) unchanged. Printed, never asserted
+  (rule (e)): the interior CV of `|B₁⁺|` on both rungs beside the filament
+  closed form's own CV from step 4a, and the ×1 eleven-point miss against
+  `S₁₁` (the record above). ×0.0095 stays out. **Status it can move:**
+  `WF-6` 🟡 → **✅** on the re-scoped target (§2's B₁⁺ clause moves to the
+  convergence wording in the same commit); a red on (i) or (ii) is an
+  `OPS-18`-class drift, known-issues, stop. Not a 4l: nothing here diagnoses
+  ×0.0095.
+* **`PORT-14` step 3 — the κ-derived width route, registered at 64 MHz,
+  out-of-sample at 128 MHz.** One additive `src/` change — an opt-in on the
+  lumped-sheet law that scales the told width by `1/(1 + κ)` *(corrected
+  2026-09-13 18:00 review — the weekly wrote `(1 + κ)`, sign-inverted: 2e's
+  fitted ×0.989446732 is `1/(1 + κ)`, and the step-3 code implements that)*
+  with **κ computed
+  in-run** from the ε = 0 solve's `C/terminal − 1` (`PORT-16`'s
+  `_exact_shares`, the Cauchy–Schwarz deficit 2d showed *is* κ to 0.3 %),
+  never a fitted number — plus tests in the step-2 module. Asserted: (i)
+  the derived κ(64) reproduces 2d's 1.0641e-2 at rtol 1e-3 (record, same
+  fixture); (ii) with the derived width both lossless residuals at 64 MHz on
+  the 116 085-cell gate mesh ≤ `REDUCTION_BAND` 1e-3 (backed by 2e's
+  1.190127e-04 / 9.581734e-07 with a fitted width within 3e-4 of the derived
+  one, same comparison, same fixture); (iii) the registered 10 MHz floor
+  `REDUCTION_FLOOR_F_SMALL` still reproduces on the *uncorrected* route
+  (unmoved). Negative control (asserted by record): the uncorrected width at
+  64 MHz misses 1e-3 (step 2's 1.354202e-02). Printed, *predicted* under
+  1e-3, never asserted: the corrected 10 MHz residuals and the **128 MHz**
+  pair with its own in-run κ(128) — the out-of-sample reading a review
+  decides on. Heavy by ceiling (2e: 191 s at `-n 2`; 128 MHz adds one
+  solve). **Status it can move:** `PORT-14` 🟡 → **✅** on (i)–(iii) green,
+  with the κ correction carried as the sheet's **named systematic** (the
+  09-06 ruling) and `TH-17` barred from gating a mode frequency tighter than
+  it; `PORT-15` gate (i) unblocks. A red on (ii) with the derived width is a
+  finding that the fitted and derived κ differ by more than the residual
+  slope allows — known-issues, stop, no fit.
+* **`ANS-4` step 3 — the 64 MHz order-matched rung, `xl`.** Degree 2 at
+  h = 0.005 (592 744 cells, 3.79 M unknowns) at **64 MHz**, `-n 16` against
+  `fem-em-solver-xl`, `timeout -k 60 7200`, durable capture, service
+  restarted first. **Priced by measurement**, not extrapolation: step 2d ran
+  this exact mesh and order at 128 MHz in 7225 s for four drives at a
+  **290.2 GiB** peak — before `PORT-19`'s factor reuse; with one
+  factorisation and three back-substitutions the window is *predicted*
+  2 000–3 000 s and the memory the same. Public readout: the three C4
+  classes at 64 MHz at degree 2 against the degree-1 record, every imported
+  `PORT-11` gate on the rung. Private readout (`docs/private/`): the miss
+  against the AED First Order column. Decision rule, pre-registered: a miss
+  in the same class as the 128 MHz order-matched residual ⇒ the 64 MHz
+  AGREE below stands on evidence and its "by mechanism" qualifier is
+  dropped; a materially larger miss ⇒ a frequency-dependent feed-model
+  systematic re-opens as a known-issues entry and a `PORT` systematics
+  chunk. **Cannot run before Thursday 2026-09-17 02:00** — see the XL
+  ledger ruling below — so it is the 09-16 review's to queue into
+  `xl-queue.env`, and this review pre-registers it so that review only has
+  to copy it.
+
+**`ANS-4` Larmor verdict, banked 2026-09-13 (protocol step 5, adjudicate;
+numeric ruling in gitignored `docs/private/ans4-adjudication-2026-09-13.md`,
+nothing numeric about AED enters this file).** **AGREE at 128 MHz** on the
+order-matched comparison: step 2d's finest degree-2 rung — by `ANS-5`, our
+degree 2 *is* HFSS First Order, and AED's First Order run converged at a
+comparable unknown count — sits at a residual in the same class as AED's own
+two orders' mutual agreement, and the degree-2 sequence converges
+(successive change 1.19 → 0.62 % on `S₁₁`, ratio 1.90; 1.21 → 0.62 on
+`S₂₁`; 0.75 → 0.50 on `S₃₁`), so the residual is a disagreement between two
+converged codes, not our truncation, and it is small. The 09-06 decision
+rule ("closes ≥ 50 % of the private gap ⇒ discretisation") is met on every
+class. **AGREE at 64 MHz by mechanism, one caveat carried:** step 2d ran at
+128 MHz only; at 64 MHz the degree-1 miss was smaller with the same
+signature, and the mechanism 2d established — our degree-1 gate fixture is
+unconverged while AED's run is converged — is what produces a miss that
+grows with frequency at fixed `h`. `ANS-4` step 3 above is the rung that
+turns "by mechanism" into evidence. **The 09-06 reasoning error, recorded so
+it is not re-derived:** that ruling excluded element order because AED's
+own Zero→First Order shift was small; the inference is invalid when only
+one side is converged — AED was order-insensitive *because* it had
+converged, ours moved 6.09 / 5.38 / 6.70 % under the same change because it
+had not, and the asymmetry was the signal. **What the frozen degree-1
+families add:** no degree-1 ladder on this fixture is in a proven
+asymptotic range on either knob (2a‴, 2f, 2g), so a degree-1 extrapolant is
+not an h → 0 reference; the rung that decided was the order-matched one.
+**What this does and does not license:** the 64 / 128 MHz 4×4 gains
+"externally checked, AGREE" in §2.2 / §6 with the qualifier; the 2026-09-06
+known-issues entry retires; **no absolute-accuracy figure is quoted**, no
+resonance, tuning, SAR, B₁⁺ or human-scale claim. **The public consequence
+that matters most:** at degree 1 the gate fixture's own 128 MHz S entries sit
+5–7 % from their order-matched value (our own order move) while every
+self-consistency gate in the repo passes on them unchanged — identities do
+not see this class of error, and §2.2 now says so. The production element
+order is therefore live again: `TH-19` below.
+
+**`TH-19` outcome (a) — ruled; step 3 re-scoped.** Steps 1–2 showed the
+matched source projection takes the degree-2 coil identity from 2.39e-09
+(red, reproduced first) to 2.04e-14 / 5.94e-15 on both σ-halves against the
+unmoved 1e-9, with `W_e` falling 3.8e7× — outcome (a), the injector was the
+whole of the `TH-12` objection on a projected volume drive. **The
+production-order default is not changed by this review**, because the
+birdcage's lumped-sheet drive bypasses the projection (`ports/lumped.py:480–483`)
+and the objection has never been tested on it. **Step 3, re-scoped:** the
+degree-2 identity on the sheet-driven 4-leg F-small birdcage — `PORT-16`'s
+exact discrete power identity `P_src,exact = P_vol + P_sheet,exact` at the
+imported `DISCRETE_IDENTITY_RTOL` 1e-6 and the reactive identity
+`Im P_src = 2ω(W_m − W_e)` at the `TH-12` family band, at 10 and 128 MHz,
+degree 2 on the 116 085-cell mesh, `W_e/W_m` printed beside degree 1's;
+negative control (asserted): degree 1 reproduces `PORT-16` step 1's four
+readings. Priced by 2b: degree 2 on this mesh solves four drives in 178 s at
+`-n 16` (≈ 16.6 GiB observed) ⇒ two single drives at `-n 8` ≈ 3–4 min,
+ordinary service, heavy. **Status it can move:** none directly; (a) on the
+birdcage sends the production-order decision to the 2026-09-16 weekly with
+both fixtures identity-clean, (b)/(c) opens the gauged degree-2 formulation
+chunk `TH-12` step 3 named. The `TH-13`-era degree-2 known-issues entry
+stays open until that decision.
+
+**`POST-6` — audited against `PORT-16`'s logs; re-scoped, not closed.** The
+09-12 18:00 review's staleness flag was correct. What is met: step 1's four
+anchors — (i) the package quadrature reproduces `WF-6` step 2's C4 / mirror
+records (0.9818 % / 0.8087 %, path equality 1.2e-15), (ii) linearity at
+1e-12, (iv) the single-drive residuals, and (iii) **as re-pointed by
+`PORT-16` step 2** at the exact discrete identity on the superposed field
+(5.877e-15 / 1.435e-14 vs 1e-6, `20260907T110826Z_PORT-16.log:1942–1946`,
+23 passed, 104 s) with the terminal residual printed beside the untouched
+band. The 09-06 weekly's "step 2" (the common-mode re-registration) is
+**void — superseded by `PORT-16` step 2 before it ran** (epitaph: the exact
+identity is the stronger statement and the same test module carries it).
+What is *not* met is the chunk's own written done-when: its original step 2
+— the 16-fold quadrature drive through `superpose_drives` on `PORT-13`'s
+32-ring-port fixture with the **C16 invariance of `|B₁⁺|`** as the gate —
+has never run, and the "re-point `WF-6` step 3 and `WF-7`" clause has not
+happened. Ruling: the done-when is re-scoped to **step 3 (renumbered from
+the original step 2)** — the 32-port ccw quadrature drive on `PORT-13`'s
+fixture at 10 MHz through `superpose_drives` under factor reuse, gated on
+C16 invariance of the CG1 `|B₁⁺|` map at the imported `WF-6` 5 % band, the
+mirror identity, and `PORT-16`'s exact power identity on the superposed
+field; negative control the cw / mis-paired weights (asserted by the same
+comparison's 4-leg record) — heavy (`PORT-13` measured 9–10 s/solve at
+`-n 8`, 32 drives ≈ 6 min with reuse, plus the projection); and the
+re-pointing clause is **dropped** — `WF-6` step 3h's gate stands on its own
+sums and a gated test is not refactored for tidiness; `ports:13` (`EX-49`)
+and `PORT-16` step 2 already consume the entry point. `POST-6` closes ✅
+when step 3 lands. The auditor's reading of the same logs is recorded in
+this review's commit.
+
+**`TH-11` step 5d's §2 sentence — ruled: the bracket is a record, and the
+"extrapolation" wording moves.** The 64 MHz three-rung ladder on the XL
+service (2 808 204 cells, 4838 s at `-n 8`, 17 passed / 1 skipped,
+`20260909T153910Z_TH-11-step5d.log`) reads +10.2698 % → +2.8063 % →
++0.3824 % and brackets h → 0 at **[−2.0415 %, −0.4256 %]**, overlapping the
+10 MHz [−2.15, −0.91] and 30 MHz [−3.37, −0.38] brackets. So the coil-loading
+ΔR against Dodd–Deeds is **measured flat in f across 10–64 MHz to the
+bracket width (≈ 1.6 pp)** — the 08-23 epitaph's physics half is confirmed
+on the box that could afford it. It is **not gated** and this review does
+not gate it: the comparand is the quasi-static kernel (a comparison, not a
+reference, at 64 MHz), the two-rung `p_eff` 2.876 disagrees with the
+three-rung 1.623 so only the bracket is honest, and a 4838 s XL window is
+not a CI assertion. §2.2's bullet head changes from "is an extrapolation" to
+"is measured, not gated, at 64 MHz on one XL window", and CLAUDE.md's
+sentence with it; §2.1 gains nothing.
+
+**Phase 6 subgoal — *the step count to a tuned birdcage*, written (owed
+since 09-09).** Target restated: the F-small 4-leg birdcage tuned to 64 MHz
+in the circuit layer, the tuned `S₁₁` reproduced in-model, and the tuned
+`S₁₁` matched to an AED HFSS + Circuit case. Every step below is a
+*numbered* step with its validation target; the serial chain is marked.
+
+1. **`PORT-14` step 3** (above) — registered 64 MHz lumped-RLC route,
+   κ-derived. Target: reduction identity ≤ 1e-3 on C and L. Serial on
+   nothing. *Moves `PORT-14` → ✅.*
+2. **`PORT-15` step 2** — gate (i) from the circuit side: terminate the
+   stored 64 MHz 4×4 `S` (10 MHz control) in the capacitor / inductor
+   values of step 1's fixture through `reduce_terminated_ports` and assert
+   equality with `PORT-14` step 3's in-model sheet solve at the registered
+   residual (band imported from step 3, never re-derived); plus the
+   inductance read-off — `Im Z` of the 10 MHz 4×4 gives the per-window
+   `L_r`, `L_l` of `PORT-15` step 1's ladder model, printed. Target: identity
+   with the FEM at the registered band. Serial on 1. *Moves nothing; opens
+   3.*
+3. **`PORT-15` step 3** — the tuning sweep: capacitor value swept on the
+   stored 64 MHz 4×4 to put the mode-1 resonance of the reduced network at
+   64 MHz; then **one** in-model solve with `PORT-14`'s capacitor sheets at
+   the tuned `C` at 64 MHz, asserting the circuit-predicted tuned `S₁₁` and
+   the reduced 2×2 against the in-model values at the step-3 registered
+   band. Target: the HFSS + Circuit self-consistency identity (circuit
+   prediction = field solve at the tuned value), plus the ladder-network
+   closed form's resonance with the step-2 inductances printed beside it.
+   Serial on 2. *Moves `PORT-15` → ✅ (its gates (i) and the tuned `S₁₁`);
+   the mode-frequency gate (ii) is `TH-17`'s.*
+4. **`TH-15` step 3** — the birdcage as a PEC hole: `PORT-9`/`PORT-11`'s
+   three gates at 10 / 64 / 128 MHz on `birdcage_port_domain(as_hole=True)`
+   plus `Re P_in = ½∫_phantom σ|E|²` ≤ 1e-3. Target: the identities and the
+   lossless power identity. Serial on nothing (mesh route ✅ step 3a,
+   `gap_cell_tags` ✅ 3b). *Moves `TH-15` → ✅ with step 2's `Re Z = 0`
+   two-torus identity, which the parked `attempt/TH-15-step2proper` carries
+   and which lands with this step or is ruled a record.*
+5. **`TH-17` step 1** — eigenmodes of the loaded F-small birdcage with the
+   PEC coil (4) and the tuned capacitor sheets (3): the `TH-9` eigensolver,
+   mode-1 frequency asserted at 64 MHz within `PORT-14`'s named systematic
+   (the κ correction, ≈ 1 %) and the mode spectrum against the
+   ladder-network closed form with the step-2 inductances. Target: closed
+   form + circuit-layer consistency. Serial on 3 and 4. *Moves `TH-17` → ✅
+   and ticks Phase 6's first physics target.* **This is the internal
+   "tuned birdcage" milestone.** *(Written into §7 `TH-17` at execution grain
+   and queued as §9 item 5 on 2026-09-18 by the interactive operator session
+   under the enumerated-chain licence; serial prerequisites 3 and 4 landed
+   09-13. Gate (c) uses the eigen-spectrum's own (C5) fit with positive
+   inductances in place of the step-2 read-off, which came out negative.
+   Part (i) ran 09-19: the pencil is cheap but returned only the gradient
+   null space at the 64 MHz target; step 1b (closed-form LC control on a
+   single PEC loop, a target scan, the sheet-mass norm) is queued to find
+   the mode or the defect before (ii)–(iii) are retried.)*
+6. **`TH-19` step 3** (above) — the degree-2 identity on the sheet drive;
+   then the production-order decision at a weekly. Target: two power
+   identities. Serial on nothing; **gates whether steps 3 and 5 are quoted
+   at degree 1 or degree 2** — the `ANS-4` verdict says degree-1 absolute
+   entries are 5–7 % off at 128 MHz, so a tuned `S₁₁` quoted at degree 1
+   carries that.
+7. **`TH-14` step 1** — the Leontovich surface-impedance boundary, gated on
+   **the closed-form Q of a lossy-wall cavity**: the `TH-9` PEC box with its
+   walls given `Z_s = (1 + j)/(σδ)`, the TE₁₀₁ complex eigenfrequency's
+   `Q = Re ω / (2 Im ω)` against Pozar's perturbation closed form
+   `Q_c = (kad)³ b η / (2π² R_s) · 1/(2a³b + 2bd³ + a³d + ad³)` at an `R_s`
+   where the perturbation is valid (Q ≳ 100), within 5 %; negative control
+   PEC walls give no damping. This is the loss-partition anchor `TH-14` has
+   lacked since 09-06 (β cannot be its anchor) — a copper-scale surface
+   loss with an exact reference. Serial on 4's mesh (the hole's facet tags).
+8. **`TH-14` step 2** — the copper F-small birdcage 4×4 at 10 / 64 / 128 MHz
+   beside the PEC (4) and σ = 800 columns; target: the identities, and the
+   loss partition `P_coil / P_phantom` printed. Serial on 7. *Moves `TH-14`
+   → ✅.*
+9. **`ANS-6`** — the copper AED case (Finite Conductivity + PEC columns),
+   SPEC written by a weekly when 8 lands; adjudicated by the next weekly
+   after the operator returns numbers. Serial on 8 **and on the operator's
+   AED queue**.
+10. **`ANS-7` (to be opened)** — the HFSS + Circuit tuned case: the `ANS-6`
+    fixture with the four capacitors at our tuned `C`, AED's tuned `S₁₁(f)`
+    and resonance beside ours. Target: **the subgoal's terminal AED
+    comparison.** Serial on 5, 6, 9 and the AED queue.
+
+*The arithmetic, honest.* Steps 1–5 are the internal chain — five numbered
+steps, four of them serial. Phase 6's measured closure rate this interval
+is **3 gated items / 3.99 days = 0.75/day** (09-09: 1.34/day), but those
+were sub-steps; the rate that applies to *numbered* steps is the frozen
+families' own: `PORT-14` step 2 took five sub-steps over two days to reach
+a positive-but-unregistered reading, `TH-15` step 2 eight sub-steps over
+four days and is still open, `ANS-4` step 2 nine sub-steps over four days.
+**≈ 2–3 days per numbered step, serial** ⇒ steps 1–5 ≈ 10–15 days of fired
+slots ⇒ **the internal tuned-birdcage milestone (`TH-17` mode 1 at 64 MHz)
+≈ 2026-09-25 … 10-01**, inside a quarter, no cut forced. Steps 6–8 run in
+parallel on the same slots and add no calendar time if the queue carries
+two fronts. **Steps 9–10 have no date this review can write:** the
+operator's AED queue has returned nothing since 2026-09-04 and has two
+cases in it (`ANS-2` ready since 09-09, `ANS-3` since 08-16), so the
+terminal AED comparison is bounded by the human half, not by slots — the
+same governing-half conclusion every pace ledger since 08-09 has reached,
+now on the operator's side of the table. **Phase 6 still has no completion
+date, and the reason is now recorded as the AED queue, not a missing
+enumeration.** Watch condition for the 09-16 weekly: if `PORT-14` step 3
+has not landed a registered 64 MHz route by then, the chain's first step
+took longer than its family's own history and the 2–3-day figure is wrong
+— re-plan, do not extend.
+
+**XL and XXL slots, 2026-09-13 (protocol step 3b).** **XL: not spent —
+the budget is exhausted.** `docs/testing/xl-ledger.md` carries three rows
+with non-zero elapsed inside the trailing 7 days (09-09 `ANS-4` step 2b
+249 s; 09-09 `TH-11` step 5d 4838 s; 09-10 `ANS-4` step 2d 7225 s — the
+killed and the 0-second rows are uncharged by §5.1), which is the whole
+three-per-week budget; the oldest ages out at 2026-09-16 ≈ 14:37Z, so the
+first window that can run is **Thursday 2026-09-17 02:00**, and the guard
+would deny anything queued before it. `xl-queue.env` stays empty. The
+candidate is pre-registered above (`ANS-4` step 3) so the Wednesday review
+commissions it by copying. Two findings for §5.1, both already enacted by
+the operator on 09-09/10 and confirmed here: the first slot went to a
+249 s / ~16.6 GiB run (2b) because its price was extrapolated, and §5.1's
+"no `xl` without a measured memory price" rule now exists; and 2d ran 25 s
+past the 2 h ceiling with the deadline lifted by hand — with `PORT-19`'s
+reuse landed since, the same case is predicted to fit, and step 3 is
+written with that margin. **XXL (Saturday 2026-09-19 02:00): not spent** —
+no candidate has a measured memory price at the human scale, and §5.1
+forbids marking one without it. The prerequisite is a cost probe, scoped
+here as **`WF-7` step 0**: the F-human rung (`GEO-25`, 504 642 cells, the
+32-ring-port longitudinal layout) at 64 MHz, degree 1, one single-drive
+lumped-sheet solve through `run_lumped_sheet_port_case`, printing cells,
+unknowns, factorisation time and `ru_maxrss` on every rank, `-n 8`, heavy,
+durable capture — *predicted* 11–33 GiB and 3–8 min from the two priced
+degree-1 points (`TH-11` 0.99 M cells / 64 GiB, `PORT-13` 270 k / 5.7 GiB),
+🧪 by the §3 rule, closes nothing, gated by nothing but the cell record.
+Its reading prices the F-human 32×32 under reuse (ordinary service if the
+single solve is under ~30 GiB) and the F-human **degree-2** rung — ≈ 3.2 M
+unknowns, bracketed at ≈ 250–300 GiB by 2d's 3.79 M-unknown measurement —
+which is the genuine xxl candidate (the human-scale order sensitivity: at
+F-small, degree 1 is 5–7 % off at 128 MHz, and nobody has measured it at
+0.15 m). The 09-16 review commissions the 09-19 window from `WF-7` step 0's
+number or writes "not spent" again.
+
+**Examples health, 2026-09-13 (step 4; delegated sweep, re-cited).**
+**48 runnable examples** (the runner enumerates 48, not 47 — `ans:2` landed
+09-09 after the last count), **every one with a footered Status-0 harness
+run, every one with its same-stem guide**, and the corpus census at
+`20260913T004551Z_PORT-19-step6-census.log:39` reads
+`dead=0 guide=0 stale=0 exit=0` under the 14-day window `OPS-42` set
+(`check_example_doc_references.py:100`). Ramp per phase (gating ✅ at the
+chunk-or-gated-step granularity / ramp / examples): Phase 1 **6 / 5 / 5**
+(complete, flat five, still zero margin); Phase 2 **≥ 5 / 5 / 9**
+(`th:1`–`9`); Phase 3 **3 / 3 / 4** (`mat:1`, `mat:2`, `mri:2`, `ans:1`);
+Phase 4 **4 / 4 / 5** (`ports:1`–`5`); Phase 5 **5 / 5 / 6** (`ports:6`–`9`,
+`mri:3`, `ans:2`); Phase 6 **6 / 5 / 9** (`mesh:8`–`12`, `ports:10`–`13`);
+mesh group ramp-exempt. **No shortfall; no chunk opened.** Two health
+readings, neither a defect: (1) **39 of the 48 have no run in the last
+seven days** — the oldest cohort (`th:1`–`8`, `ports:4`–`7`, twelve
+examples) last ran 2026-08-31 and **crosses the 14-day census window on
+2026-09-14**, when `stale` starts firing as `exit 2`; by `OPS-19` that is
+information, not failure, and the daily review's step-5 machinery may
+refresh them as an `EX-30`-pattern leg when a slot is otherwise drained —
+this review does not open a chunk for artifacts that are green and merely
+old. (2) `examples/mri/01_coil_phantom_fields.md:246` names its combined
+XDMF under `examples/mri/paraview_output/` while the file lives in the
+repo-root `paraview_output/`; the checker resolves it through its second
+candidate directory so the census is clean — a one-line guide correction,
+rider on the next `mri:`-touching chunk. Agent footers: six at 2026-08-31,
+`implementer.md` none (above). The three untracked AED replication scripts
+under `*/aed/` are correctly outside the runner's discovery.
+
+**Benchmarks, 2026-09-13 (protocol step 5, both directions).** *Adjudicate:*
+`ANS-4`'s Larmor verdict is banked above — the only adjudication this
+interval, and it came from **our** rung (step 2d), not from new AED numbers:
+no case gained AED data (newest file under any `aed_results/` is still
+2026-09-04; `ANS-2` and `ANS-3` have no `aed_results/` at all). `ANS-1`
+AGREE stands (re-checked 09-09, nothing moved since). *Commission:* **no new
+case.** The gated-physics milestones since `ANS-2` was commissioned (09-09)
+are `PORT-19` (a solver speed-up, gated on bit-identity — not physics) and
+the two `MAT-4` steps `ANS-2` already covers; `ANS-6` waits on `TH-14`
+(step 8 above) by the operator's own directive, and a copper spec written
+before the conductor model gates would be a benchmark on ungated physics.
+`ANS-2` stays at the top of the dashboard's Waiting-on-you list — **ready
+since 09-09, four days without an AED session; `ANS-3` behind it since
+08-16**. The AED queue is now the longest pole on every absolute claim in
+§2 (the coil-driven SAR absolute, the copper coil, the tuned `S₁₁`), and
+this review says so on the dashboard rather than opening a third case into
+the same queue.
+
+**Plan hygiene, 2026-09-13.** The rotation ran first and committed on its
+own (`bf1ea49`): `attempts.md` 17 981 → **12 243** lines (51 entries older
+than 14 days, 5 738 lines, moved verbatim; zero-loss check on 35 207
+non-blank lines) — still over `OPS-36`'s 6 000-line budget with the residue
+inside the retention window, the rule question for the operator unchanged;
+`PROJECT_PLAN.md` 9 699 → **9 207** lines (`MAT-4` 303, `ANS-4` 76,
+`ANS-3` 62, `MAT-6` 70 archived verbatim, each replaced by a ≤ 6-line
+result block; zero-loss on 38 195 non-blank lines; every § reference in
+CLAUDE.md and docs/automation/*.md re-verified). **The 4 000-line guide is
+unreachable and this review says so plainly:** `OPS-46` moved the 73 heavy
+table *rows* (806 962 B, under its 850 000 B bound) but the `>`-blockquote
+narratives it declared out of scope are the line count — `WF-6` 2 295,
+`TH-15` 1 243, `PORT-14` 736, `POST-6` 157 lines, **4 431 lines = 48 % of
+the file**, all under **open** chunks the archive contract forbids
+compressing. What the contract does *not* forbid is moving them byte for
+byte to `docs/planning/chunks/<ID>.md` the way `OPS-46` moved the rows —
+that is neither a summary nor a compression. **`OPS-47` opened** (§7 OPS
+table): extend the `chunks` subcommand to a chunk's blockquote narrative,
+same byte-identity refusal, same leak check, the plan line count as the
+anchor. Until it lands the guide stays unmet by construction.
+
+**Flagged for the 2026-09-13 03:00 daily review — not weekly-owned, stated
+here so it is not lost.**
+
+1. **`OPS-46`'s closure claim is unaudited.** It flipped ✅ at 21:09 on
+   09-12 with "the review audits"; no review has run since. Anchor (iii)
+   is operator-pending by design and does not block the audit.
+2. **Five numbered steps are ready to queue**, each with the status it can
+   move: `WF-6` step 5 (tests only, 204 s at `-n 4` — the Phase-5 exit item),
+   `PORT-14` step 3 (the chain's first step, ≈ 4 min at `-n 2`), `TH-19`
+   step 3 (heavy, `-n 8`), `POST-6` step 3 (heavy, `-n 8`), `WF-7` step 0
+   (cost probe, heavy, `-n 8`, 🧪). `ANS-4` step 3 is the 09-16 review's
+   (`xl`, budget). All five are mutually independent — the first genuinely
+   independent five-item queue in a week.
+3. **The restock floor should count slot-minutes under take-next.** Four
+   slots drained this interval with every review alive, three of them after
+   a five-item queue of cheap serial `OPS-46` moves was consumed by two
+   slots. daily-review.md step 6's "queue more than five when items are
+   short" needs a number: ≥ 4 slots × 60 min of *predicted* work, not five
+   items.
+4. **`TH-15`'s row state line is stale** ("step 1 of 3 landed") against its
+   history (3a ✅ 09-06, 2d ✅ 09-07, 3b ✅ 09-09, 2h 🧪 09-09; step 2's
+   unitarity gate and step 3 open). The `OPS-46` state line was written from
+   the row's last *ruling*, which predates those; a one-sentence refresh.
+5. **The 2026-09-14 census will start reporting `stale` on twelve examples**
+   (above) — `exit 2`, information; do not spend a slot on it unless the
+   queue is otherwise drained.
+6. **The `-n 2` MUMPS drift's third draw is not queued** (dashboard item 6's
+   last clause): no gate depends on it since `OPS-43` (d) and `PORT-19`
+   step 5 re-anchored at `-n 1`, and a third sample of a 2-in-34 event
+   diagnoses nothing; it stays an observation until a gate needs a `-n 2`
+   bit-identity again.
