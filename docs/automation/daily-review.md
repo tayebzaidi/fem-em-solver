@@ -231,6 +231,30 @@ are yours.
       `READY` in the same commit (so a Tuesday landing does not wait for
       Wednesday's review).
 
+6c. **Keep §9 current-state only** (added 2026-09-19, operator directive —
+   every agent reads this section before it starts, and on that date it was
+   71 KB). §9 answers one question: *what does the next slot do?* Three
+   rules, applied every review, in the same commit as the restock:
+   - **A DONE item collapses to one line** the review after it lands:
+     `N. DONE <date> (<slot>) — <chunk/step>: <result in ≤ 25 words>;
+     <commit>; <log>`. Its execution text has served its purpose — the
+     closure narrative is already in the §7 row / `docs/planning/chunks/<ID>.md`
+     and the journal entry. Move nothing; delete the execution text (git
+     keeps it) unless it holds a ruling recorded nowhere else, in which case
+     move that paragraph verbatim to the chunk's history file first.
+   - **This review's own journal** — interval recap, audit reports, rulings,
+     §10 assessment, restock and XL-clerk notes — is written to
+     `docs/planning/reviews/YYYY-MM-DD-daily.md` (create the directory on
+     first use), **not** into §9. §9 carries a digest of **≤ 15 lines**:
+     the rulings that bind the next slots, one line each, and the path of
+     the full journal. The dashboard (step 7) digests the same file.
+   - **Standing rules stay, dated one-offs go.** A standing rule that a
+     slot must obey stays in §9 verbatim. A paragraph that records *why* a
+     rule exists, or an incident, moves verbatim to
+     `docs/planning/plan-archive.md` with a one-line pointer.
+   Target, not a gate: §9 under ~25 KB with a full queue. If it is over,
+   say so in the journal and say which rule was not enough.
+
 7. **Refresh the status dashboard.** Rewrite `docs/status/dashboard.md` from
    what steps 1–6 established — Waiting-on-you first, then the §2 digest
    (only when §2 changed), recent activity, automation health, on-deck

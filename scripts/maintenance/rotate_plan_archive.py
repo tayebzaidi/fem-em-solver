@@ -58,8 +58,24 @@ line exceeds ``--min-bytes`` (default 2048) and prints per-family totals.
               live file so a grep for the test name still lands. ``--dry-run``
               lists what would move and writes nothing.
 
+  history   — move any dated block of PROJECT_PLAN.md (a superseded §10 pace
+              ledger or phase-exit assessment, a §9 incident paragraph) to
+              docs/planning/plan-archive.md, verbatim, leaving the pointer
+              line(s) given in the spec. Same spec shape as ``plan`` but the
+              label is free text and nothing is assumed about how the block
+              opens::
+
+                  === <label, free text> <first-line> <last-line>
+                  <pointer line(s) left in the plan>
+
+              ``--plan`` / ``--archive`` redirect both files (for a rehearsal
+              on copies); ``--dry-run`` prints each span's first and last line
+              and writes nothing.
+
 Usage:
   python3 scripts/maintenance/rotate_plan_archive.py attempts FIRST LAST DATE
+  python3 scripts/maintenance/rotate_plan_archive.py history SPEC DATE [--dry-run]
+          [--plan PATH] [--archive PATH]
   python3 scripts/maintenance/rotate_plan_archive.py known-issues DATE [--dry-run]
   python3 scripts/maintenance/rotate_plan_archive.py plan SPEC DATE
   python3 scripts/maintenance/rotate_plan_archive.py chunks SPEC [--dry-run]
@@ -275,6 +291,53 @@ def rotate_plan(spec_path: Path, date: str) -> None:
     _write(PLAN, new_plan)
     _write(PLAN_ARCHIVE, new_arc + [""])
     print(f"PROJECT_PLAN.md {len(plan)} -> {len(new_plan)} lines; archive {len(arc)} -> {len(new_arc) + 1}")
+
+
+def rotate_history(spec_path: Path, date: str, plan_path: Path, arc_path: Path, dry_run: bool) -> None:
+    head_re = re.compile(r"^=== (.+?) (\d+) (\d+)\s*$")
+    sections: list[tuple[str, int, int, list[str]]] = []
+    for l in spec_path.read_text(encoding="utf-8").split("\n"):
+        m = head_re.match(l)
+        if m:
+            sections.append((m.group(1), int(m.group(2)), int(m.group(3)), []))
+        elif sections:
+            sections[-1][3].append(l)
+    if not sections:
+        raise SystemExit("no sections in spec")
+    plan, arc = _read(plan_path), _read(arc_path)
+    spans = sorted(sections, key=lambda s: s[1])
+    for i, (label, a, b, block) in enumerate(spans):
+        while block and block[-1].strip() == "":
+            block.pop()
+        if not block:
+            raise SystemExit(f"{label}: no pointer line given")
+        if not (1 <= a <= b <= len(plan)):
+            raise SystemExit(f"{label}: span {a}-{b} outside the file")
+        if i and a <= spans[i - 1][2]:
+            raise SystemExit(f"overlapping spans: {spans[i - 1][0]} and {label}")
+        if not plan[a - 1].strip() or (a > 1 and plan[a - 2].strip()):
+            raise SystemExit(f"{label}: line {a} must open a paragraph (non-blank, after a blank line)")
+        if b < len(plan) and plan[b].strip():
+            raise SystemExit(f"{label}: line {b} must close a paragraph (line {b + 1} is not blank)")
+    new_plan, arc_add, added = list(plan), [], Counter()
+    for label, a, b, block in sorted(sections, key=lambda s: -s[1]):
+        moved = plan[a - 1:b]
+        print(f"{label}: {len(moved)} lines, {sum(len(l) + 1 for l in moved)} bytes\n"
+              f"    first: {moved[0][:100]!r}\n    last:  {moved[-1][:100]!r}")
+        header = f"## {label} — archived {date}"
+        arc_add = ["", header, ""] + moved + arc_add
+        added[header] += 1
+        added.update(l for l in block if l.strip() and l.strip() != "---")
+        new_plan[a - 1:b] = block
+    if dry_run:
+        return
+    while arc and arc[-1].strip() == "":
+        arc.pop()
+    new_arc = arc + arc_add
+    _zero_loss(plan, arc, new_plan, new_arc, added, plan_path.name)
+    _write(plan_path, new_plan)
+    _write(arc_path, new_arc + [""])
+    print(f"{plan_path.name} {len(plan)} -> {len(new_plan)} lines; archive {len(arc)} -> {len(new_arc) + 1}")
 
 
 CHUNKS_DIR = ROOT / "docs" / "planning" / "chunks"
@@ -703,6 +766,12 @@ def main(argv: list[str]) -> None:
         rotate_attempts(int(argv[2]), int(argv[3]), argv[4])
     elif len(argv) >= 3 and argv[1] == "known-issues":
         rotate_known_issues(argv[2], "--dry-run" in argv[3:])
+    elif len(argv) >= 4 and argv[1] == "history":
+        opts = argv[4:]
+        def _opt(name, default):
+            return Path(opts[opts.index(name) + 1]) if name in opts else default
+        rotate_history(Path(argv[2]), argv[3], _opt("--plan", PLAN), _opt("--archive", PLAN_ARCHIVE),
+                       "--dry-run" in opts)
     elif len(argv) >= 4 and argv[1] == "plan":
         rotate_plan(Path(argv[2]), argv[3])
     elif len(argv) >= 3 and argv[1] == "chunks":

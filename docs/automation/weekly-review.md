@@ -240,6 +240,23 @@ mitigations.
    chunk closes — closed chunks' files are not rotated into
    `plan-archive.md`; this rotation is otherwise unchanged.
 
+   **§10 holds the current assessment of each kind, not the series
+   (added 2026-09-19, operator directive; effective from the first weekly
+   after that date — the backlog was moved by the operator's interactive
+   session).** §10 had grown to 121 KB because every review appended a new
+   dated block — pace ledger, phase-exit assessment, agent-value
+   measurement, examples health, rulings owed — beneath the old ones, and
+   only the newest of each is current. When you write this week's block of
+   a kind, move the **previous** block of that kind, verbatim, to
+   `docs/planning/plan-archive.md` in the same rotation (same zero-loss
+   check; `rotate_plan_archive.py history SPEC DATE` takes
+   `=== <label> <first-line> <last-line>` spans and leaves the pointer line
+   you give it). §10 then carries: the phase/subgoal structure, the live
+   chains with their open numbered steps, operator directives still in
+   force, epitaphs (one line each, they are the lesson), and **one** dated
+   block of each assessment kind. A trend across weeks is read from
+   `docs/status/weekly-progress.md` and the archive, not kept inline.
+
    **Commit-first checkpoint (added 2026-08-30).** Do the rotation
    **before** any other edit in this session and commit it on its own as
    `docs(plan): weekly review YYYY-MM-DD — archive rotation` the moment
