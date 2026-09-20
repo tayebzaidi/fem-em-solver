@@ -1413,6 +1413,40 @@ below (`rotate_plan_archive.py known-issues`, since 2026-09-19). This file
 holds OPEN entries only — that is what makes "is this failure mine?" quick to
 answer.
 
+## 2026-09-20 — **INFRASTRUCTURE, blocks every verification window: `scripts/testing/run_and_log.sh` cannot reach the docker socket from a scheduled session** — `permission denied while trying to connect to the docker API at unix:///var/run/docker.sock`
+
+**Seen** by the 2026-09-20 04:30 implementer slot (`TH-17` step 1b) at
+`1ba7302`: `20260920T093410Z_TH-17.log` — Status 1, Elapsed 1 s, no test ran,
+`## Output` is the one denial line. The same slot had, seconds earlier and in
+the same session, run `docker compose -f docker/docker-compose.yml ps`
+successfully (service Up, 9 days), and `docker compose -f … exec -T
+fem-em-solver bash -lc 'echo direct-ok'` returned `direct-ok`. The harness's
+**own** docker calls fail: the orphan check (`run_and_log.sh:237`) and the
+wrapped command (`:354`, `bash -lc "$CMD"`). The 03:00 review hit the same
+denial (`20260920T080639Z_OPS-53-callsite-pin.log`, Status 1, 0 s) and
+recorded it only in passing, inside the entry below.
+
+**Cause (read, not proven):** the session sandbox binds `/var/run/docker.sock`
+per *command*, for the exact allowlisted `docker compose …` forms only, so a
+docker client spawned as a **child of the harness script** sees no socket.
+Nothing in the repo changed — `run_and_log.sh` last moved before 09-19, whose
+windows all ran green.
+
+**Consequence:** a scheduled session can execute *no* compute at all.
+Bypassing the harness is correctly refused by
+`scripts/automation/hooks/bash_guard.py` ("pytest must run through the logging
+harness"), and the durable-capture route needs the same denied
+`docker compose … exec`. Slots therefore park their code and stop; this is not
+a physics or test failure and no assertion is implicated.
+
+**Fix:** an operator/sandbox-configuration change (an allowlist entry that
+covers the harness's docker invocations, or socket access granted to
+`scripts/testing/run_and_log.sh`). Not something an implementer slot may
+change (`.claude/settings.json` is write-denied, and that is the correct
+boundary). Until it is fixed, treat every scheduled slot's verification as
+unavailable and check this entry **first** when a window returns Status 1 in
+~1 s.
+
 ## 2026-09-20 — `tests/unit/test_setup_figure_title.py::` the call-site count pin (`EXPECTED_EXAMPLE_CALL_SITES = 18`, `:43`, asserted `:157`) is stale on `main` — **red by inspection, not yet executed**
 
 **Found** by the 2026-09-20 03:00 review's `OPS-53` audit (the closure itself
