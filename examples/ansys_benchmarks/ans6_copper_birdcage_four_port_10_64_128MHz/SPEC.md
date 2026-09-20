@@ -21,11 +21,15 @@ one that vanishes was the resolved σ = 800 interior's.
 
 ## Status
 
-- [ ] Runnable half (`ANS-6`, §7) — script in this directory dispatching
-      through `./run_examples.sh -e ans:6`, importing every constant from
-      `tests/validation/test_th14_birdcage_copper.py` and the `TH-15` step 3
-      module, writing `metrics.json`, `COMPARISON.md` (our columns filled,
-      AED columns blank) and combined XDMF
+- [x] Runnable half (`ANS-6`, §7) — ✅ 2026-09-20. Script in this directory
+      dispatching through `./run_examples.sh -e ans:6`, importing every
+      constant from `tests/validation/test_th14_birdcage_copper.py` (lifted
+      to a module-level `_build_ladder()`, rule (a)) and cross-checking the
+      PEC column against `tests/validation/test_th15_birdcage_pec_hole.py`'s
+      own `_hole_rung`, writing `metrics.json`, `COMPARISON.md` (our columns
+      filled, AED columns blank) and combined XDMF. Details: PROJECT_PLAN.md
+      §7 `ANS-6` row; guide:
+      `06_copper_birdcage_four_port_10_64_128MHz.md`.
 - [ ] Operator replication in AED — **this SPEC is sufficient on its own**;
       the AED half does not wait for the runnable half
 - [ ] Adjudication (next weekly review after AED numbers land)

@@ -1,0 +1,94 @@
+# Test Run
+- Chunk: ANS-6-precensus-figures
+- Commit: 14c86feea601d331d3f1ac19204eecb74f407346
+- Time (UTC): 2026-09-20 12:37:16
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.5.1
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 60 python3 scripts/testing/check_example_setup_figures.py'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 24
+drwxr-xr-x  3 taz5297 taz5297 4096 Sep  4 23:31 .
+drwxr-xr-x 17 taz5297 taz5297 4096 Sep 20 07:37 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  721 Sep  3 13:49 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 4275 Sep 13 19:19 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.5.1
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 60 python3 scripts/testing/check_example_setup_figures.py'\'''
+examples/magnetostatics/01_straight_wire.py                                                           ok       figures/magnetostatics_01_straight_wire_setup.png
+examples/magnetostatics/02_circular_loop.py                                                           ok       figures/magnetostatics_02_circular_loop_setup.png
+examples/magnetostatics/04_helmholtz_analytic_comparison.py                                           ok       figures/magnetostatics_04_helmholtz_analytic_comparison_setup.png
+examples/magnetostatics/05_gauge_cross_check.py                                                       ok       figures/magnetostatics_05_gauge_cross_check_setup.png
+examples/magnetostatics/06_h_convergence_rate.py                                                      ok       figures/magnetostatics_06_h_convergence_rate_setup.png
+examples/mri/01_coil_phantom_fields.py                                                                ok       figures/mri_01_coil_phantom_fields_setup.png
+examples/mri/02_mass_averaged_sar.py                                                                  ok       figures/mri_02_mass_averaged_sar_setup.png
+examples/mri/03_birdcage_mass_averaged_sar.py                                                         ok       figures/mri_03_birdcage_mass_averaged_sar_setup.png
+examples/meshing/01_two_torus_ports.py                                                                ok       figures/meshing_01_two_torus_ports_setup.png
+examples/meshing/02_cylindrical_phantom.py                                                            ok       figures/meshing_02_cylindrical_phantom_setup.png
+examples/meshing/03_birdcage_graded_conductors.py                                                     ok       figures/meshing_03_birdcage_graded_conductors_setup.png
+examples/meshing/04_two_torus_port_sheet.py                                                           ok       figures/meshing_04_two_torus_port_sheet_setup.png
+examples/meshing/05_region_resolution_policy.py                                                       ok       figures/meshing_05_region_resolution_policy_setup.png
+examples/meshing/06_birdcage_leg_gaps_port_sheets.py                                                  ok       figures/meshing_06_birdcage_leg_gaps_port_sheets_setup.png
+examples/meshing/07_birdcage_ring_gap_ports.py                                                        ok       figures/meshing_07_birdcage_ring_gap_ports_setup.png
+examples/meshing/08_birdcage_sixteen_legs.py                                                          missing  no '## Setup figure' heading
+examples/meshing/09_birdcage_sixteen_ring_gaps.py                                                     missing  no '## Setup figure' heading
+examples/meshing/10_birdcage_ring_sheet_longitudinal.py                                               missing  no '## Setup figure' heading
+examples/meshing/11_birdcage_sixteen_ring_sheet_longitudinal.py                                       missing  no '## Setup figure' heading
+examples/meshing/12_birdcage_f_human_rung.py                                                          missing  no '## Setup figure' heading
+examples/materials/01_dodd_deeds_coil_loading.py                                                      missing  no '## Setup figure' heading
+examples/materials/02_lossy_sphere_sar.py                                                             missing  no '## Setup figure' heading
+examples/time_harmonic/01_lossy_plane_wave.py                                                         missing  no '## Setup figure' heading
+examples/time_harmonic/02_pec_cavity_resonances.py                                                    missing  no '## Setup figure' heading
+examples/time_harmonic/03_dielectric_sphere_in_uniform_field.py                                       missing  no '## Setup figure' heading
+examples/time_harmonic/04_evanescent_waveguide_decay.py                                               missing  no '## Setup figure' heading
+examples/time_harmonic/05_resonance_guard_sweep.py                                                    missing  no '## Setup figure' heading
+examples/time_harmonic/06_larmor_lossy_sphere.py                                                      missing  no '## Setup figure' heading
+examples/time_harmonic/07_element_order_lossy_sphere.py                                               missing  no '## Setup figure' heading
+examples/time_harmonic/08_poynting_power_balance.py                                                   missing  no '## Setup figure' heading
+examples/time_harmonic/09_pec_sphere_as_hole.py                                                       missing  no '## Setup figure' heading
+examples/time_harmonic/10_lossy_wall_cavity_q.py                                                      ok       figures/time_harmonic_10_lossy_wall_cavity_q_setup.png
+examples/ansys_benchmarks/ans1_loop_over_lossy_slab_10MHz/01_loop_over_lossy_slab_10MHz.py            missing  no '## Setup figure' heading
+examples/ansys_benchmarks/ans2_birdcage_coil_driven_sar_10MHz/02_birdcage_coil_driven_sar_10MHz.py    missing  no '## Setup figure' heading
+examples/ansys_benchmarks/ans3_two_torus_gap_ports_10MHz/03_two_torus_gap_ports_10MHz.py              missing  no '## Setup figure' heading
+examples/ansys_benchmarks/ans4_birdcage_four_port_10_64_128MHz/04_birdcage_four_port_10_64_128MHz.py  missing  no '## Setup figure' heading
+examples/ports/01_two_torus_port_pair.py                                                              missing  no '## Setup figure' heading
+examples/ports/02_package_sparameter_sweep.py                                                         missing  no '## Setup figure' heading
+examples/ports/03_lumped_sheet_port_widths.py                                                         missing  no '## Setup figure' heading
+examples/ports/04_birdcage_four_port_sparameters.py                                                   missing  no '## Setup figure' heading
+examples/ports/05_birdcage_larmor_frequency_ladder.py                                                 missing  no '## Setup figure' heading
+examples/ports/06_birdcage_b1_plus_map.py                                                             missing  no '## Setup figure' heading
+examples/ports/07_birdcage_b1_quadrature_map.py                                                       missing  no '## Setup figure' heading
+examples/ports/08_birdcage_b1_larmor_ladder.py                                                        missing  no '## Setup figure' heading
+examples/ports/09_birdcage_sar_quadrant_powers.py                                                     missing  no '## Setup figure' heading
+examples/ports/10_birdcage_ring_column.py                                                             missing  no '## Setup figure' heading
+examples/ports/11_birdcage_ring_mirror_pair.py                                                        missing  no '## Setup figure' heading
+examples/ports/12_birdcage_ring_quarter_turn.py                                                       missing  no '## Setup figure' heading
+examples/ports/13_birdcage_asymmetric_drive.py                                                        missing  no '## Setup figure' heading
+examples/ports/14_birdcage_pec_hole_ports.py                                                          missing  no '## Setup figure' heading
+examples/ports/15_birdcage_sixteen_leg_quadrature_b1.py                                               ok       figures/ports_15_birdcage_sixteen_leg_quadrature_b1_setup.png
+examples/ports/16_birdcage_b1_resolution_ladder.py                                                    ok       figures/ports_16_birdcage_b1_resolution_ladder_setup.png
+examples/ports/17_birdcage_tuned_circuit.py                                                           ok       figures/ports_17_birdcage_tuned_circuit_setup.png
+examples/ports/18_birdcage_copper_leontovich.py                                                       ok       figures/ports_18_birdcage_copper_leontovich_setup.png
+
+SUMMARY: examples=54 ok=20 missing=34 broken=0
+
+## Exit
+- Status: 2
+- Elapsed (s): 1
+- Filtered lines (gmsh optimisation chatter): 0

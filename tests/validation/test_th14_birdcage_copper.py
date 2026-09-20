@@ -250,6 +250,17 @@ def _sweep_record(result):
 
 @pytest.fixture(scope="module")
 def ladder():
+    return _build_ladder()
+
+
+def _build_ladder():
+    """`ladder`'s body, lifted module-level (`ANS-6`, rule (a)) so a caller
+
+    outside pytest's fixture machinery — the `ans:6` example script — can
+    invoke the exact same computation `ladder` gives this module's own
+    tests, rather than re-implementing it. Nothing below this line moved or
+    changed; the fixture above is now a one-line wrapper.
+    """
     comm = MPI.COMM_WORLD
     t0 = time.perf_counter()
     msh, cell_tags, facet_tags, _diag, t_mesh = _sheets_build(True, as_hole=True)

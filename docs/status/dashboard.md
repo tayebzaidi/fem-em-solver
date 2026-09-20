@@ -40,8 +40,10 @@ the source of truth; this page is a read-only digest for the human operator.
    — the `ANS-4` project with only the coil's treatment changed: a copper
    *Finite Conductivity* column and a *Perfect E* column, each at Zero and
    First Order, 10 / 64 / 128 MHz, plus phantom volume loss and coil surface
-   loss for port 1. It does not wait for our runnable half (queued today,
-   item 14). The PEC column is the discriminator for the `S₁₁` finding.
+   loss for port 1. It does not wait for our runnable half — **our half is
+   on `main`** (2026-09-20 07:30 slot, item 14 ✅): `metrics.json` and
+   `COMPARISON.md` are ready for you to fill the AED columns beside. The PEC
+   column is the discriminator for the `S₁₁` finding.
 3. 🟡 **`example-runner` should not be able to spawn agents, and its "no
    deviations" is not evidence.** *(Carried.)* The durable fix is in
    `.claude/agents/example-runner.md` (not writable from scheduled reviews):
