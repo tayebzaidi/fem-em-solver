@@ -1,0 +1,93 @@
+# Test Run
+- Chunk: OPS-XL-ISOLATION
+- Commit: aaba4efe31411df0ebc1918098c3657d1cefac28
+- Time (UTC): 2026-09-20 00:49:16
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.13.12
+- Docker Compose: Docker Compose version v5.5.1
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: timeout -k 30 120 bash scripts/testing/test_xl_window_isolation.sh
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 24
+drwxr-xr-x  3 taz5297 taz5297 4096 Sep  4 23:31 .
+drwxr-xr-x 17 taz5297 taz5297 4096 Sep 19 19:48 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  721 Sep  3 13:49 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 4275 Sep 13 19:19 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.5.1
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'timeout -k 30 120 bash scripts/testing/test_xl_window_isolation.sh'
+== window 1: concurrent session in flight ==
+xl-run exit=0
+-- launcher log:
+   Sun Sep 20 00:49:16 UTC 2026 xl-run starting: tier=xl service=fem-em-solver-xl
+   Sun Sep 20 00:49:16 UTC 2026 queue entry 01-ISO.env -> chunk ISO-1 (1 file(s) in xl-queue.d)
+   Sun Sep 20 00:49:16 UTC 2026 xl budget: 0 of 6 used in the trailing 7 days
+   Sun Sep 20 00:49:21 UTC 2026 running xl chunk ISO-1
+   Log written: /tmp/xl_isolation.DTr9CI/repo/docs/testing/logs/20260920T004921Z_ISO-1.log
+   Index updated: /tmp/xl_isolation.DTr9CI/repo/docs/testing/test-results.md
+   Sun Sep 20 00:49:23 UTC 2026 run_and_log exit=0
+   Sun Sep 20 00:49:23 UTC 2026 queue entry 01-ISO.env consumed; 0 left
+   Sun Sep 20 00:49:24 UTC 2026 NOTE: paths not owned by this window left out of its commit (another session's work in flight?):
+   A  foreign_staged.txt
+    M src.txt
+   ?? foreign_untracked.txt
+   Sun Sep 20 00:49:24 UTC 2026 committed 3250c82
+PASS: xl-run exits 0 (got 0)
+PASS: mid-window git status --porcelain is empty (0 lines)
+-- xl-run commit:
+   fem-em xl-run | chore(xl): scheduled xl window — ISO-1 2026-09-20
+   
+    docs/testing/logs/20260920T004921Z_ISO-1.log | 33 ++++++++++++++++++++++++++++
+    docs/testing/test-results.md                 |  8 +++++++
+    docs/testing/xl-ledger.md                    |  1 +
+    docs/testing/xl-queue.d/01-ISO.env           |  2 --
+    4 files changed, 42 insertions(+), 2 deletions(-)
+PASS: HEAD is the xl-run commit
+PASS: commit holds exactly 4 paths (got 4)
+PASS: those paths are log + ledger + test-results + queue entry
+-- git status after window 1:
+   A  foreign_staged.txt
+    M src.txt
+   ?? foreign_untracked.txt
+PASS: other session's untracked file still untracked
+PASS: other session's edit still modified, unstaged
+PASS: other session's staged file still staged, not committed
+PASS: nothing else is dirty
+PASS: launcher log names the paths it left alone
+   ledger row: | 2026-09-20 | ISO-1 | `20260920T004921Z_ISO-1.log` | | | | 2 | |
+PASS: ledger row elapsed is a number >= 1 (got '2')
+PASS: sidecar removed after the fold
+PASS: in-flight log moved out of logs/inflight
+PASS: bash_guard charges exactly 1 row (got 1)
+== window 2: killed wrapper left a sidecar row ==
+PASS: xl-run exits 0 (got 0)
+PASS: mid-window git status --porcelain is empty
+PASS: ledger rows 1 -> 3 (got 3)
+PASS: killed wrapper's row folded in with a blank elapsed
+PASS: bash_guard charges 2 rows, not 3 (got 2)
+PASS: tree clean after window 2
+== branch: another session checked out attempt/* mid-window ==
+PASS: nothing committed onto attempt/other-session
+PASS: main unmoved
+PASS: launcher log says FAILED and why
+== summary: 0 failure(s) ==
+
+## Exit
+- Status: 0
+- Elapsed (s): 23
+- Filtered lines (gmsh optimisation chatter): 0

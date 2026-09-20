@@ -1,0 +1,63 @@
+# Test Run
+- Chunk: OPS-ROUTING
+- Commit: aaba4efe31411df0ebc1918098c3657d1cefac28
+- Time (UTC): 2026-09-20 00:49:51
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.13.12
+- Docker Compose: Docker Compose version v5.5.1
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: timeout -k 30 60 bash scripts/testing/test_service_routing.sh
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 24
+drwxr-xr-x  3 taz5297 taz5297 4096 Sep  4 23:31 .
+drwxr-xr-x 17 taz5297 taz5297 4096 Sep 19 19:48 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  721 Sep  3 13:49 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 4275 Sep 13 19:19 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.5.1
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'timeout -k 30 60 bash scripts/testing/test_service_routing.sh'
+== fem-em-solver ==
+  [DRY RUN] Routing: service=fem-em-solver profile=<none> ledger=
+PASS: fem-em-solver: dry run resolves service=fem-em-solver profile=<none> ledger=<none>
+  status=75 listing argv: compose exec -T fem-em-solver ps -eo pid,etimes,args
+PASS: fem-em-solver: stubbed survivor -> refusal status 75 (got 75)
+PASS: fem-em-solver: orphan listing is exactly 'compose exec -T fem-em-solver ps …'
+PASS: fem-em-solver: refusal names service fem-em-solver
+PASS: fem-em-solver: no row, no ledger row, no log written
+== fem-em-solver-xl ==
+  [DRY RUN] Routing: service=fem-em-solver-xl profile=xl ledger=xl-ledger.md
+PASS: fem-em-solver-xl: dry run resolves service=fem-em-solver-xl profile=xl ledger=xl-ledger.md
+  status=75 listing argv: compose --profile xl exec -T fem-em-solver-xl ps -eo pid,etimes,args
+PASS: fem-em-solver-xl: stubbed survivor -> refusal status 75 (got 75)
+PASS: fem-em-solver-xl: orphan listing is exactly 'compose --profile xl exec -T fem-em-solver-xl ps …'
+PASS: fem-em-solver-xl: refusal names service fem-em-solver-xl
+PASS: fem-em-solver-xl: no row, no ledger row, no log written
+== fem-em-solver-xxl ==
+  [DRY RUN] Routing: service=fem-em-solver-xxl profile=xxl ledger=xxl-ledger.md
+PASS: fem-em-solver-xxl: dry run resolves service=fem-em-solver-xxl profile=xxl ledger=xxl-ledger.md
+  status=75 listing argv: compose --profile xxl exec -T fem-em-solver-xxl ps -eo pid,etimes,args
+PASS: fem-em-solver-xxl: stubbed survivor -> refusal status 75 (got 75)
+PASS: fem-em-solver-xxl: orphan listing is exactly 'compose --profile xxl exec -T fem-em-solver-xxl ps …'
+PASS: fem-em-solver-xxl: refusal names service fem-em-solver-xxl
+PASS: fem-em-solver-xxl: no row, no ledger row, no log written
+== summary: 0 failure(s) ==
+
+## Exit
+- Status: 0
+- Elapsed (s): 1
+- Filtered lines (gmsh optimisation chatter): 0

@@ -260,6 +260,18 @@ if [[ "$CAPTURE_MODE" == 0 && "$CMD" =~ $COMPOSE_EXEC_RE ]]; then
   fi
 fi
 
+# An XL / XXL window keeps its log under the gitignored /logs/ while it runs and
+# moves it to docs/testing/logs/ when it ends (2026-09-19): an untracked file
+# under docs/ made `git status` dirty for every session the window overlapped.
+# Every other run writes straight to docs/testing/logs/ as before.
+IS_XL=0
+FINAL_LOG_FILE="$LOG_FILE"
+if [[ "$CAPTURE_MODE" == 0 && -n "$TARGET_TIER" && -f "$XL_LEDGER" ]]; then
+  IS_XL=1
+  mkdir -p "$ROOT_DIR/logs/inflight"
+  LOG_FILE="$ROOT_DIR/logs/inflight/$(basename "$FINAL_LOG_FILE")"
+fi
+
 START_EPOCH="$(date -u +%s)"
 
 {
@@ -297,18 +309,24 @@ START_EPOCH="$(date -u +%s)"
   echo "## Output"
 } > "$LOG_FILE"
 
-# XL tier (PROJECT_PLAN §5.1, operator directive 2026-09-05): a command against
-# the fem-em-solver-xl service consumes the weekly slot the moment it starts, so
-# the ledger row is appended BEFORE the run (a killed run still spent the box);
-# the bash guard reads this table. Ranks/cells/memory/readout are filled by hand.
-# Two big-compute tiers, each with its own ledger (operator directive
-# 2026-09-10); which one is the routing resolved at the top of this script.
-IS_XL=0
-if [[ "$CAPTURE_MODE" == 0 && -n "$TARGET_TIER" && -f "$XL_LEDGER" ]]; then
-  IS_XL=1
+# XL / XXL tiers (PROJECT_PLAN §5.1, operator directives 2026-09-05 / 09-10),
+# each with its own ledger; which one is the routing resolved at the top of
+# this script. The row is written the moment the window starts, so a killed
+# run still leaves its record -- but into a gitignored sidecar, not the tracked
+# ledger (2026-09-19). A window runs for hours under its own lock, across the
+# 03:00 review and the implementer slots, and a row appended to the tracked
+# ledger at 02:00 kept main dirty for all of it: every session that met it
+# read a stalled tree. The sidecar is folded into the ledger when the window
+# ends (below), together with any row a killed wrapper left behind. The budget
+# is unaffected: bash_guard.py never charged a row whose elapsed is blank.
+# Ranks/cells/memory/readout are filled by hand.
+XL_PENDING=""
+if [[ "$IS_XL" == 1 ]]; then
+  XL_PENDING="$ROOT_DIR/logs/$TARGET_TIER-ledger.pending"
+  mkdir -p "$ROOT_DIR/logs"
   printf '| %s | %s | `%s` | | | | | |\n' \
-    "$(date -u '+%Y-%m-%d')" "$CHUNK_ID" "$(basename "$LOG_FILE")" >> "$XL_LEDGER"
-  echo "[harness] ${XL_TIER} slot consumed: row appended to $(basename "$XL_LEDGER")" >> "$LOG_FILE"
+    "$(date -u '+%Y-%m-%d')" "$CHUNK_ID" "$(basename "$LOG_FILE")" >> "$XL_PENDING"
+  echo "[harness] ${XL_TIER} window started: row held in logs/$(basename "$XL_PENDING"), folded into $(basename "$XL_LEDGER") when the window ends" >> "$LOG_FILE"
 fi
 
 set +e
@@ -422,21 +440,30 @@ fi
 } >> "$LOG_FILE"
 
 if [[ "$IS_XL" == 1 ]]; then
-  # fill the elapsed column of the row appended above (last row naming this log)
-  python3 - "$XL_LEDGER" "$(basename "$LOG_FILE")" "$ELAPSED_SECONDS" <<'PY' || true
+  # Fold the sidecar into the tracked ledger: every pending row in order (a row
+  # left by a killed wrapper keeps its blank elapsed, which the guard does not
+  # charge), with this window's elapsed filled on the row naming this log.
+  python3 - "$XL_LEDGER" "$XL_PENDING" "$(basename "$LOG_FILE")" "$ELAPSED_SECONDS" <<'PY' || true
 import sys
 from pathlib import Path
-path, log, elapsed = Path(sys.argv[1]), sys.argv[2], sys.argv[3]
-lines = path.read_text().splitlines(keepends=True)
-for i in range(len(lines) - 1, -1, -1):
-    if log in lines[i]:
-        cells = lines[i].rstrip("\n").split("|")
+ledger, pending, log, elapsed = Path(sys.argv[1]), Path(sys.argv[2]), sys.argv[3], sys.argv[4]
+rows = [r for r in pending.read_text().splitlines() if r.strip()]
+for i in range(len(rows) - 1, -1, -1):
+    if log in rows[i]:
+        cells = rows[i].split("|")
         if len(cells) >= 9:
             cells[7] = f" {elapsed} "
-            lines[i] = "|".join(cells) + "\n"
+            rows[i] = "|".join(cells)
         break
-path.write_text("".join(lines))
+text = ledger.read_text()
+if text and not text.endswith("\n"):
+    text += "\n"
+ledger.write_text(text + "".join(r + "\n" for r in rows))
+pending.unlink()
 PY
+  echo "[harness] ${XL_TIER} slot recorded: row(s) folded into $(basename "$XL_LEDGER")" >> "$LOG_FILE"
+  mv "$LOG_FILE" "$FINAL_LOG_FILE"
+  LOG_FILE="$FINAL_LOG_FILE"
 fi
 
 ensure_index_file

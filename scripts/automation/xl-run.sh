@@ -34,7 +34,9 @@ case "$TIER" in
   *)   echo "usage: xl-run.sh [xl|xxl]" >&2; exit 2 ;;
 esac
 
-REPO="/home/taz5297/Development/fem-em-solver"
+# Overridable so scripts/testing/test_xl_window_isolation.sh can run this script
+# end to end in a scratch repo; cron sets nothing.
+REPO="${FEM_EM_REPO:-/home/taz5297/Development/fem-em-solver}"
 # Overridable because $HOME is read-only inside the agent sandbox; cron has a
 # writable one. `housekeeping.sh` carries the same escape hatch.
 LOCK="${FEM_EM_XL_LOCK:-$HOME/.fem-em-$TIER.lock}"   # its own lock, NOT the automation flock:
@@ -158,15 +160,57 @@ else
   echo "$(date -u) queue entry $(basename "$ENTRY") consumed; $(ls "$QUEUE_DIR"/*.env 2>/dev/null | wc -l) left"
 fi
 
-git add -A
-if git diff --cached --quiet; then
+# Stage ONLY what this window owns (2026-09-19; was `git add -A`). The window
+# holds its own lock, not the automation flock, so the 03:00 review and the
+# implementer slots run while it does, and `git add -A` at the end of a 4 h /
+# 8 h window would have committed whatever they had in flight under this
+# script's name. Every window since 09-16 has committed exactly these paths:
+# its harness log(s), the tier ledger, the test-results row, and the queue
+# entry's removal (already staged above). The commit is path-limited too, so
+# another session's *staged* files stay out of it. test-results.md is staged
+# whole: a concurrent session's uncommitted row rides along, which is an index
+# line, not work. Anything else dirty is left alone and named in this log.
+SAFE_CHUNK="${CHUNK//[^a-zA-Z0-9._-]/_}"
+OWN=("docs/testing/$TIER-ledger.md" docs/testing/test-results.md "${ENTRY#"$REPO"/}")
+while IFS= read -r f; do
+  [[ -n "$f" ]] && OWN+=("$f")
+done < <(git ls-files --others --exclude-standard -- "docs/testing/logs/*_${SAFE_CHUNK}.log")
+for f in "${OWN[@]}"; do
+  [[ -e "$f" ]] && git add -- "$f"
+done
+LEFT="$(git status --porcelain | grep -v -F -f <(printf '%s\n' "${OWN[@]}") || true)"
+if [[ -n "$LEFT" ]]; then
+  echo "$(date -u) NOTE: paths not owned by this window left out of its commit (another session's work in flight?):"
+  echo "$LEFT"
+fi
+
+# The tree was on main at 02:00; a session may have moved it since (implementer
+# runs park work on attempt/*). Never commit a window onto somebody's branch.
+NOW_ON="$(git rev-parse --abbrev-ref HEAD)"
+if [[ "$NOW_ON" != "main" ]]; then
+  echo "$(date -u) FAILED: HEAD is on $NOW_ON, not main; the window's record is left staged, uncommitted"
+elif git diff --cached --quiet -- "${OWN[@]}"; then
   echo "$(date -u) nothing to commit"
 else
-  git -c user.name="fem-em xl-run" -c user.email="xl-run@localhost" commit -q -m "chore($TIER): scheduled $TIER window — $CHUNK $(date -u +%Y-%m-%d)
+  # A session committing at the same moment holds .git/index.lock; retry
+  # rather than leave the window's record uncommitted on main.
+  COMMITTED=0
+  for attempt in 1 2 3 4 5; do
+    if git -c user.name="fem-em xl-run" -c user.email="xl-run@localhost" commit -q -m "chore($TIER): scheduled $TIER window — $CHUNK $(date -u +%Y-%m-%d)
 
 Ran by scripts/automation/xl-run.sh $TIER at the 02:00 slot. Harness log, ledger row
 and test-results row are in this commit; the readout still needs a human or a
-review to interpret it, and the ledger's last four columns are filled by hand."
-  echo "$(date -u) committed $(git rev-parse --short HEAD)"
+review to interpret it, and the ledger's last four columns are filled by hand." -- "${OWN[@]}"; then
+      COMMITTED=1
+      break
+    fi
+    echo "$(date -u) commit attempt $attempt failed; retrying in 20 s"
+    sleep 20
+  done
+  if [[ "$COMMITTED" == 1 ]]; then
+    echo "$(date -u) committed $(git rev-parse --short HEAD)"
+  else
+    echo "$(date -u) FAILED: could not commit the window's record; it is staged on main"
+  fi
 fi
 exit "$STATUS"
