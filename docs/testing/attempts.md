@@ -2310,3 +2310,116 @@ Every non-identical digit is disclosed above; all four sit in unasserted-or-far-
   the closed-form LC loop control, whose 2 % pre-condition still needs
   re-scoping. A sweep of the *unloaded* (C = 0) driven `Z_in` on this same
   mesh would bracket it from the other side for ≈ one window.
+
+## 2026-09-20T11:44Z — `PORT-21` step 1 (§9 item 13) — **incomplete, parked** — `attempt/PORT-21-20260920T114000Z`
+
+- **Slot:** the same 2026-09-20 06:00 CDT run, second item under take-next —
+  `PORT-22` step 1 committed at minute 20 with a clean tree (`44c0ee9`), so
+  item 13 was taken. Executed by the `implementer` agent, foreground; the
+  rule-(i) re-run, the parking, the plan edits and this entry are the slot
+  owner's.
+- **Outcome in one line:** the deliverable — the public sensitivity table —
+  **is complete and printed at all three frequencies**, but the step's
+  *"every variant run still passes the imported gates"* anchor is **red on
+  variant (c)**, so step 1 does not close as written and the module is parked
+  unmerged for the review to rule on. Nothing was widened, nothing diagnosed
+  further, no `src/` touched.
+- **What was written (parked, not on `main`):**
+  `tests/validation/test_port21_feed_sensitivity.py` — 5 tests, all
+  `@complex_only`, gated on `FEM_EM_PORT21_FREQUENCIES_MHZ` (unset ⇒ every
+  test skips, so `main`'s default collection is unchanged). Per-frequency
+  readings persisted as JSON under the gitignored `logs/port21/`, so the
+  later window prints the whole three-frequency table — the shape `PORT-22`
+  step 1 used an hour earlier in this slot.
+- **Imported, nothing restated:** from `test_port_birdcage_four_port` —
+  `build_four_port_sweep`, `_circulant_classes`, `RECIPROCITY_BAND`,
+  `PASSIVITY_SIGMA_TOLERANCE`, `ADJACENT_SPREAD_BAND`, `LEG_D0_Z_COLUMN`,
+  `LEG_D0_REPRODUCTION_BAND`; from `test_port_lumped_rlc_termination` (the
+  `PORT-14` step 3 module) — `REDUCTION_BAND`, `STEP1_CELL_RECORD`,
+  `STEP1B_TERMINATIONS`, `STEP3_REGISTERED_FREQUENCY_HZ`,
+  `TERMINATED_PORT_INDEX`, `_terminated_three_port`, `reduce_terminated_ports`,
+  `series_rlc_impedance`; plus `CONDUCTOR_RESOLUTION`
+  (`tests/mesh/test_birdcage_port_sheet_prerequisite`),
+  `REFERENCE_IMPEDANCE_OHM`, `_solve_driven`, `ports.shares.terminal_form_deficit`.
+- **Windows** (`-n 2`, complex, `FEM_EM_REQUIRE_COMPLEX=1`,
+  `timeout -k 30 590`, durable capture, `-s -v --tb=short`; heavy by ceiling,
+  measured standard):
+  - `20260920T111725Z_PORT-21.log` — 10 + 64 MHz, **Status 1, 264 s**,
+    1 failed 4 passed, `[capture] rc=1`.
+  - `20260920T112242Z_PORT-21.log` — 128 MHz, **Status 1, 127 s**,
+    1 failed 2 passed 2 skipped.
+  - `20260920T112548Z_PORT-21.log` — 10 + 64 MHz **re-run by the slot owner
+    against the module as parked**, **Status 1, 263 s**, 1 failed 4 passed,
+    `[capture] rc=1`. Two reasons it was worth 263 s of the remaining clock:
+    it satisfies **rule (i)** on the parked branch (the executor had
+    restructured the gate test *after* window 1 — from short-circuiting on the
+    first miss to collecting every miss and asserting once — so window 1 had
+    run a superseded file), and it **supplied the 64 MHz variant-(c) row that
+    the short-circuiting version never printed**. The table in the §7 row is
+    complete because of it.
+- **Green, measured:**
+  - **Control — PASS, and this is the load-bearing one.** The P1-driven column
+    reproduces leg (d0)'s gate record at **1.071e-10 … 2.568e-10** against the
+    imported 1e-9, at all three frequencies, meshing **116 085** cells =
+    `STEP1_CELL_RECORD`. **The gate record has not drifted on `main`**, so the
+    item's "control fails ⇒ record drift, stop, read no variant" clause did
+    not fire and every variant reading below is legible.
+  - **Variant (a) registered residual — PASS.** 64 MHz, terminated C = 100 pF:
+    **5.359129e-05 = 0.054× `REDUCTION_BAND` (1e-3)**. In-run κ =
+    1.059204217e-02 / 1.060762155e-02 / 1.064828193e-02 at 10 / 64 / 128 MHz,
+    the 64 MHz value reproducing `PORT-14` step 2d's 1.060762e-02.
+  - **Knob-reaches-the-solve (asserted) — PASS, all six rows.** Smallest move
+    **6.327e-03 = 6.3e3×** the 1e-6 floor, largest 3.411e-02 = 3.4e4×. No
+    variant silently failed to reach the solve (`OPS-41` pattern).
+  - Reciprocity and passivity **pass on every run including (c)**: worst
+    `‖S − Sᵀ‖/‖S‖` **1.79e-14**, σ_max ≤ 0.999993, max column power ≤ 0.8704.
+- **Red, measured — variant (c) only.** Halving the port-box conductor-side
+  grading (8.0000e-04 m against `CONDUCTOR_RESOLUTION` 1.6000e-03 m) re-meshes
+  to **259 509 cells**, and the **C4 class-spread gate misses the imported
+  0.5 % band at all three frequencies**: 10 MHz self **2.3607 %** / adj
+  1.2387 % / opp 1.0399 %; 64 MHz self **1.0508 %** / adj 0.9719 % / opp
+  0.9038 %; 128 MHz self **0.5553 %** / adj 0.6751 % / opp 0.6914 %. Control
+  and (a) sit at **≤ 0.1013 %** on the same runs, so the fixture itself is
+  fine and the spread is (c)'s doing. **The band was imported and left
+  untouched**; the executor did not add the congruent-sheet knob and did not
+  diagnose past naming the suspicion.
+- **Variant (b) — SKIPPED AND NAMED, not built**, exactly as the item
+  directs. `build_four_port_sweep` narrows every sheet with a module-level
+  `GATED_WIDTH_FRACTION` and exposes no width-fraction parameter (its ninth
+  additive parameter is `width_correction_kappa`); exposing `f = 1.0` would be
+  the `src/`-adjacent generator change the step forbids. So the table has two
+  variants, not three, and says so.
+- **The table (printed, never asserted) — `|ΔS|/|S|` per C4 class:**
+
+  ```
+    f (MHz)  variant            self       adjacent       opposite   cells
+     10.000  a          3.411387e-02   1.002216e-02   9.459542e-03   116085
+     10.000  c          5.982326e-03   2.205190e-03   7.502789e-04   259509
+     64.000  a          1.552110e-02   8.605348e-03   7.093172e-03   116085
+     64.000  c          1.607415e-02   6.406405e-03   1.110089e-02   259509
+    128.000  a          6.327010e-03   6.344015e-03   3.992451e-03   116085
+    128.000  c          1.668383e-02   1.296737e-02   1.846200e-02   259509
+  ```
+
+  Variant (a)'s self-class move **FALLS** monotonically with frequency
+  (3.411e-02 → 1.552e-02 → 6.327e-03); variant (c)'s **RISES** (5.982e-03 →
+  1.607e-02 → 1.668e-02). The two conventions have **opposite frequency
+  trends** — that is the table's readable content, and it is precisely the
+  discriminator step 2 (the weekly's, private) exists to use. Nothing under
+  `docs/private/` or `aed_results/` was opened in this slot and no AED number
+  appears in any tracked file, log or message.
+- **Files:** parked on `attempt/PORT-21-20260920T114000Z` —
+  `tests/validation/test_port21_feed_sensitivity.py`. On `main` — three logs,
+  `test-results.md`, `PROJECT_PLAN.md` (§7 `PORT-21` row ⬜ → 🟡 with the full
+  readout, §9 item 13 → 🚫 BLOCKED with the unblock condition, rule (d)).
+- **Branch:** `attempt/PORT-21-20260920T114000Z`. **Denied commands:** none
+  this half of the slot.
+- **Next-attempt hypothesis:** the cheap discriminator is one window, no new
+  physics — re-run variant (c) with `c4_congruent_sheets=True` (`GEO-32`'s
+  mechanism) on the same 259 509-cell grading. If the spread collapses under
+  0.5 %, the red was the re-cut sheets losing C4 congruence and (c) is simply
+  re-scoped onto the congruent cut; if it survives, the 0.5 % band is a
+  property of the gate cut's resolution and the honest close is the
+  re-registration the §9 item names, with the cause stated. Either way the
+  parked module needs no structural change — it runs as-is, and the review's
+  ruling is the only input missing.
