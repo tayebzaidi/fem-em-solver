@@ -92,7 +92,7 @@ if [ "$LOGS" = 1 ]; then
     [ "$end_epoch" -lt "$SINCE_EPOCH" ] && continue
     found=1
     kind="${base#*_}"; kind="${kind%.log}"
-    exitline="$(grep -o 'exit=[0-9]*' "$f" | tail -1)"
+    exitline="$(grep -oE '(outcome=[a-z-]+ )?exit=[0-9]+' "$f" | tail -1)"
     skipped=""; grep -q 'holds the lock; skipping' "$f" && skipped=" SKIPPED(lock)"
     dur=$(( (end_epoch - start_epoch) / 60 ))
     printf '\n-- %s  %s  %s  %dm  %s%s  (%s bytes)\n' \

@@ -3,20 +3,30 @@
 # see docs/automation/weekly-review.md for the protocol the session follows.
 set -euo pipefail
 
-REPO="/home/taz5297/Development/fem-em-solver"
-LOCK="$HOME/.fem-em-automation.lock"
+# REPO / LOCK / CLAUDE_BIN are overridable so scripts/testing/test_launcher_status.sh
+# can drive this launcher against a stub CLI in a scratch root; cron sets none.
+REPO="${FEM_EM_REPO:-/home/taz5297/Development/fem-em-solver}"
+LOCK="${FEM_EM_AUTOMATION_LOCK:-$HOME/.fem-em-automation.lock}"
 LOGDIR="$REPO/logs/automation"
-CLAUDE_BIN="$HOME/.local/bin/claude"
+CLAUDE_BIN="${FEM_EM_CLAUDE_BIN:-$HOME/.local/bin/claude}"
 export PATH="$HOME/.local/bin:/usr/local/bin:/usr/bin:/bin"
 
 mkdir -p "$LOGDIR"
 TS="$(date -u +%Y%m%dT%H%M%SZ)"
 LOG="$LOGDIR/${TS}_weekly-review.log"
 
+# Footer on EVERY exit path. Under `set -e` a nonzero `timeout` used to end the
+# script before `STATUS=$?`, so exactly the runs that needed diagnosis (timeout,
+# session-limit death, CLI error) left no exit line. `exit=<n>` stays the token
+# checkin.sh greps; outcome= says which path wrote it.
+OUTCOME="launcher-error"
+trap 'rc=$?; echo "$(date -u) outcome=${OUTCOME} exit=${rc}" >> "$LOG"' EXIT
+
 # One automation session at a time on this shared box, ever.
 exec 9>"$LOCK"
 if ! flock -n 9; then
   echo "$(date -u) another automation run holds the lock; skipping" >> "$LOG"
+  OUTCOME="skipped-lock"
   exit 0
 fi
 
@@ -53,14 +63,19 @@ echo "$(date -u) model=${REVIEW_MODEL}" >> "$LOG"
 # High effort: this is the long-horizon judgement session (phase planning,
 # pace extrapolation, benchmark adjudication) and runs once a week.
 # Documentation-only, so subagents spend tokens, not cores.
+STATUS=0
 timeout --kill-after=120 3600 "$CLAUDE_BIN" \
   --model "$REVIEW_MODEL" \
   --effort high \
   --permission-mode acceptEdits \
   --disallowedTools WebFetch WebSearch \
   -p "Scheduled weekly planning review session, started ${START}. Read docs/automation/weekly-review.md and execute it exactly. Documentation work only: no solves, no meshing." \
-  >> "$LOG" 2>&1
-STATUS=$?
+  >> "$LOG" 2>&1 || STATUS=$?
 
-echo "$(date -u) exit=${STATUS}" >> "$LOG"
+# 124 = timeout sent TERM at the cap, 137 = the --kill-after KILL landed.
+case "$STATUS" in
+  0)       OUTCOME="ok" ;;
+  124|137) OUTCOME="timeout" ;;
+  *)       OUTCOME="session-failed" ;;
+esac
 exit "$STATUS"

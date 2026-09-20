@@ -1,0 +1,93 @@
+# Test Run
+- Chunk: OPS-LAUNCHER
+- Commit: 114db4c2f70f4dc6074c52bd2935d352608ae52f
+- Time (UTC): 2026-09-20 00:43:38
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.13.12
+- Docker Compose: Docker Compose version v5.5.1
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: timeout -k 30 60 bash scripts/testing/test_launcher_status.sh
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 24
+drwxr-xr-x  3 taz5297 taz5297 4096 Sep  4 23:31 .
+drwxr-xr-x 17 taz5297 taz5297 4096 Sep 19 19:43 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  721 Sep  3 13:49 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 4275 Sep 13 19:19 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.5.1
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'timeout -k 30 60 bash scripts/testing/test_launcher_status.sh'
+== daily-review ==
+  [daily-review/rc0] status=0 footer: Sun Sep 20 00:43:38 UTC 2026 outcome=ok exit=0
+PASS: daily-review: stub rc=0 -> launcher exits 0 (got 0)
+PASS: daily-review: stub rc=0 -> footer outcome=ok exit=0
+  [daily-review/rc1] status=1 footer: Sun Sep 20 00:43:38 UTC 2026 outcome=session-failed exit=1
+PASS: daily-review: stub rc=1 -> launcher exits 1 (got 1)
+PASS: daily-review: stub rc=1 -> footer outcome=session-failed exit=1
+  [daily-review/rc124] status=124 footer: Sun Sep 20 00:43:39 UTC 2026 outcome=timeout exit=124
+PASS: daily-review: stub rc=124 -> launcher exits 124 (got 124)
+PASS: daily-review: stub rc=124 -> footer outcome=timeout exit=124
+  [daily-review/rc137] status=137 footer: Sun Sep 20 00:43:39 UTC 2026 outcome=timeout exit=137
+PASS: daily-review: stub rc=137 -> launcher exits 137 (got 137)
+PASS: daily-review: stub rc=137 -> footer outcome=timeout exit=137
+  [daily-review/locked] status=0 footer: Sun Sep 20 00:43:39 UTC 2026 outcome=skipped-lock exit=0
+PASS: daily-review: held lock -> exit 0, outcome=skipped-lock, stub not invoked
+  [daily-review/nocli] status=127 footer: Sun Sep 20 00:43:39 UTC 2026 outcome=session-failed exit=127
+PASS: daily-review: missing CLI -> launcher exits 127 (got 127)
+PASS: daily-review: missing CLI -> footer outcome=session-failed exit=127
+== weekly-review ==
+  [weekly-review/rc0] status=0 footer: Sun Sep 20 00:43:39 UTC 2026 outcome=ok exit=0
+PASS: weekly-review: stub rc=0 -> launcher exits 0 (got 0)
+PASS: weekly-review: stub rc=0 -> footer outcome=ok exit=0
+  [weekly-review/rc1] status=1 footer: Sun Sep 20 00:43:39 UTC 2026 outcome=session-failed exit=1
+PASS: weekly-review: stub rc=1 -> launcher exits 1 (got 1)
+PASS: weekly-review: stub rc=1 -> footer outcome=session-failed exit=1
+  [weekly-review/rc124] status=124 footer: Sun Sep 20 00:43:39 UTC 2026 outcome=timeout exit=124
+PASS: weekly-review: stub rc=124 -> launcher exits 124 (got 124)
+PASS: weekly-review: stub rc=124 -> footer outcome=timeout exit=124
+  [weekly-review/rc137] status=137 footer: Sun Sep 20 00:43:39 UTC 2026 outcome=timeout exit=137
+PASS: weekly-review: stub rc=137 -> launcher exits 137 (got 137)
+PASS: weekly-review: stub rc=137 -> footer outcome=timeout exit=137
+  [weekly-review/locked] status=0 footer: Sun Sep 20 00:43:39 UTC 2026 outcome=skipped-lock exit=0
+PASS: weekly-review: held lock -> exit 0, outcome=skipped-lock, stub not invoked
+  [weekly-review/nocli] status=127 footer: Sun Sep 20 00:43:39 UTC 2026 outcome=session-failed exit=127
+PASS: weekly-review: missing CLI -> launcher exits 127 (got 127)
+PASS: weekly-review: missing CLI -> footer outcome=session-failed exit=127
+== implementer-run ==
+  [implementer-run/rc0] status=0 footer: Sun Sep 20 00:43:39 UTC 2026 outcome=ok exit=0
+PASS: implementer-run: stub rc=0 -> launcher exits 0 (got 0)
+PASS: implementer-run: stub rc=0 -> footer outcome=ok exit=0
+  [implementer-run/rc1] status=1 footer: Sun Sep 20 00:43:39 UTC 2026 outcome=session-failed exit=1
+PASS: implementer-run: stub rc=1 -> launcher exits 1 (got 1)
+PASS: implementer-run: stub rc=1 -> footer outcome=session-failed exit=1
+  [implementer-run/rc124] status=124 footer: Sun Sep 20 00:43:39 UTC 2026 outcome=timeout exit=124
+PASS: implementer-run: stub rc=124 -> launcher exits 124 (got 124)
+PASS: implementer-run: stub rc=124 -> footer outcome=timeout exit=124
+  [implementer-run/rc137] status=137 footer: Sun Sep 20 00:43:39 UTC 2026 outcome=timeout exit=137
+PASS: implementer-run: stub rc=137 -> launcher exits 137 (got 137)
+PASS: implementer-run: stub rc=137 -> footer outcome=timeout exit=137
+  [implementer-run/locked] status=0 footer: Sun Sep 20 00:43:39 UTC 2026 outcome=skipped-lock exit=0
+PASS: implementer-run: held lock -> exit 0, outcome=skipped-lock, stub not invoked
+  [implementer-run/nocli] status=127 footer: Sun Sep 20 00:43:39 UTC 2026 outcome=session-failed exit=127
+PASS: implementer-run: missing CLI -> launcher exits 127 (got 127)
+PASS: implementer-run: missing CLI -> footer outcome=session-failed exit=127
+== summary: 0 failure(s) ==
+
+## Exit
+- Status: 0
+- Elapsed (s): 1
+- Filtered lines (gmsh optimisation chatter): 0

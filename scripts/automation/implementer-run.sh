@@ -3,10 +3,12 @@
 # docs/automation/implementer-run.md for the protocol the session follows.
 set -euo pipefail
 
-REPO="/home/taz5297/Development/fem-em-solver"
-LOCK="$HOME/.fem-em-automation.lock"
+# REPO / LOCK / CLAUDE_BIN are overridable so scripts/testing/test_launcher_status.sh
+# can drive this launcher against a stub CLI in a scratch root; cron sets none.
+REPO="${FEM_EM_REPO:-/home/taz5297/Development/fem-em-solver}"
+LOCK="${FEM_EM_AUTOMATION_LOCK:-$HOME/.fem-em-automation.lock}"
 LOGDIR="$REPO/logs/automation"
-CLAUDE_BIN="$HOME/.local/bin/claude"
+CLAUDE_BIN="${FEM_EM_CLAUDE_BIN:-$HOME/.local/bin/claude}"
 export PATH="$HOME/.local/bin:/usr/local/bin:/usr/bin:/bin"
 
 # Background-task ceiling OFF: a slot that ends its turn with work still
@@ -24,10 +26,18 @@ mkdir -p "$LOGDIR"
 TS="$(date -u +%Y%m%dT%H%M%SZ)"
 LOG="$LOGDIR/${TS}_implementer.log"
 
+# Footer on EVERY exit path. Under `set -e` a nonzero `timeout` used to end the
+# script before `STATUS=$?`, so exactly the runs that needed diagnosis (timeout,
+# session-limit death, CLI error) left no exit line. `exit=<n>` stays the token
+# checkin.sh greps; outcome= says which path wrote it.
+OUTCOME="launcher-error"
+trap 'rc=$?; echo "$(date -u) outcome=${OUTCOME} exit=${rc}" >> "$LOG"' EXIT
+
 # One automation session at a time on this shared box, ever.
 exec 9>"$LOCK"
 if ! flock -n 9; then
   echo "$(date -u) another automation run holds the lock; skipping" >> "$LOG"
+  OUTCOME="skipped-lock"
   exit 0
 fi
 
@@ -52,6 +62,7 @@ START="$(date '+%Y-%m-%d %H:%M %Z')"
 # NOTE: if a future Claude Code release adds a built-in agent type, add it to
 # this deny list -- the scoping enumerates what is forbidden, not what is
 # allowed.
+STATUS=0
 timeout --kill-after=120 3900 "$CLAUDE_BIN" \
   --model claude-opus-5 \
   --effort medium \
@@ -60,8 +71,12 @@ timeout --kill-after=120 3900 "$CLAUDE_BIN" \
     "Agent(general-purpose)" "Agent(Explore)" "Agent(Plan)" \
     "Agent(claude)" "Agent(claude-code-guide)" "Agent(statusline-setup)" \
   -p "Scheduled implementer run, started ${START}. You have 60 minutes of wall clock (externally enforced at 65); start no new implementation work after minute 45. Read docs/automation/implementer-run.md and execute it exactly." \
-  >> "$LOG" 2>&1
-STATUS=$?
+  >> "$LOG" 2>&1 || STATUS=$?
 
-echo "$(date -u) exit=${STATUS}" >> "$LOG"
+# 124 = timeout sent TERM at the cap, 137 = the --kill-after KILL landed.
+case "$STATUS" in
+  0)       OUTCOME="ok" ;;
+  124|137) OUTCOME="timeout" ;;
+  *)       OUTCOME="session-failed" ;;
+esac
 exit "$STATUS"
