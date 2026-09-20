@@ -2212,3 +2212,101 @@ Every non-identical digit is disclosed above; all four sit in unasserted-or-far-
   `|S₂₁| 0.037654`); the risk sits in `EX-20` / `ans:3`'s example-side tables
   and the Touchstone fixture, and the strict `xfail` must come out in the same
   commit that lands the new records.
+
+## 2026-09-20T11:18Z — `PORT-22` step 1 (§9 item 12) — **complete**
+
+- **Slot:** 2026-09-20 06:00 CDT / 11:00 UTC scheduled implementer run.
+  Preflight clean at `7af8537`; item 10 is BLOCKED on a review re-scope and
+  item 11 landed at 04:30, so item 12 was the first open one. Executed by the
+  `implementer` agent, foreground, with the commit, this entry and the plan
+  edits kept by the slot owner.
+- **Socket, first thing:** `docker compose … ps` at the *top level of a
+  compound command* was denied twice (`permission denied … /var/run/docker.sock`),
+  which reads like the outage the 03:00 review warned about. It is not. A bare
+  `cd <repo> && scripts/testing/run_and_log.sh …` echo probe ran green
+  immediately (`20260920T110041Z_PORT-22.log`, Status 0, 1 s) and every
+  subsequent window did too. So the 2026-09-20 known-issues entry's rule holds
+  and extends one notch: **the exemption is checked against the command the
+  harness is invoked as** — a bare `docker compose` at top level can be denied
+  in the same session where the harness call beside it is not. Probe through
+  the harness before concluding anything about the socket; never park a slot on
+  a `docker compose ps`.
+- **What was done:** new `tests/validation/test_port22_driven_sweep_resonance.py`
+  (464 lines, 5 tests, all `@complex_only`, gated on
+  `FEM_EM_PORT22_FREQUENCIES_MHZ` — unset it collects 5 skips in 2.9 s, so
+  `main`'s default CI time is unchanged). **No `src/` change.** Six solves per
+  frequency on one mesh build per window: κ in-run by `PORT-14` step 3's route
+  (one uncorrected P1 `_solve_driven` + pooled `ports.shares.terminal_form_deficit`),
+  the untuned matched 4×4 via `build_four_port_sweep(..., width_correction_kappa=κ)`
+  with factor reuse, and the in-model tuned single drive via
+  `_terminated_kept_network` with `Z_C(f, C_tuned)` on P2..P4. Per-frequency
+  readings persist as JSON under the gitignored `logs/port22/`, so anchor (iii)
+  asserts in whichever window completes the 11-point grid and skips — printing
+  what is missing — in the earlier one.
+- **Imported, nothing restated** (rule the item sets): from
+  `test_port_circuit_layer_field.py` — `S_64MHZ_EPS0_RECORD`, `tuning_sweep`,
+  `select_c_tuned`, `tuned_input`, `_terminated_kept_network`,
+  `_capacitor_impedance`, `_residual`, `TUNING_TERMINATED_INDICES`; from
+  `test_port_lumped_rlc_termination.py` — `REDUCTION_BAND`,
+  `RECORD_RANK_WIDTH`, `STEP1_CELL_RECORD`, `STEP3_REGISTERED_FREQUENCY_HZ`;
+  plus `build_four_port_sweep`, `_solve_driven`, `REFERENCE_IMPEDANCE_OHM`.
+  `C_tuned` is **recomputed** in-run by `PORT-15` step 3's own sweep at
+  1.556993028375804e-11 F, not transcribed.
+- **Windows** (`-n 2`, complex build, `FEM_EM_REQUIRE_COMPLEX=1`,
+  `timeout -k 30 590`, §5.1 durable capture with the trailing `; exit $rc`,
+  `-s -v --tb=short`):
+  - `20260920T110437Z_PORT-22.log` — import/collect smoke, Status 0, 5 s, 5 skipped.
+  - `20260920T110503Z_PORT-22.log` — 44,48,52,56,60,64 MHz, **Status 0, 191 s**,
+    4 passed 1 skipped, `[capture] rc=0` (mesh 25.02 s + 163.35 s of solves).
+  - `20260920T110833Z_PORT-22.log` — 68,72,76,80,84 MHz + anchor (iii),
+    **Status 0, 167 s**, 3 passed 2 skipped, `[capture] rc=0` (mesh 27.08 s +
+    136.71 s of solves).
+  Both windows assert 116 085 cells against `STEP1_CELL_RECORD`. Costed heavy
+  by ceiling; **measured standard** — 358 s of gated compute total, well inside
+  the 590 s per-window budget, so the item's "shrink to 4 frequencies" fallback
+  was never needed.
+- **Measured, against bands:**
+  - **(i) PASS** — 64 MHz tuned `S₁₁` residual **8.256069e-05** against the
+    imported `REDUCTION_BAND` 1e-3 = **0.083× band**, reproducing `PORT-15`
+    step 3's 8.26e-05 (`…110503Z:2136–2139`). Printed beside it: in-run
+    κ(64) = 1.060762155e-02 vs `PORT-14` step 2d's 1.060762e-02; `|S₁₁|`
+    0.761413303 vs step 3's 0.761; `R_in` 6.772592686 Ω vs 6.77 Ω.
+  - **(ii) PASS at all 11 grid points** — worst **8.256069e-05** (0.083× band),
+    at 64 MHz; the residual rises monotonically 5.779018e-05 (44 MHz) →
+    8.256069e-05 (64 MHz) and falls to 7.255190e-05 (84 MHz). κ computed
+    in-run per frequency drifts 1.059954e-02 → 1.061802e-02, **0.17 % across
+    the band** (`…110503Z:2144–2149`, `…110833Z:2083–2087`).
+  - **(iii) PASS** — `Im Z_in` from the in-model tuned drive runs
+    −3.462456996e+01 Ω (44 MHz) monotonically to +2.559855276e+01 Ω (84 MHz):
+    **exactly one sign change, in [60, 64] MHz**, the bracket holding 64 MHz
+    (`…110833Z:2094–2106`).
+  - **Negative control (asserted, backed by `PORT-15` step 3's 0.846-vs-0.761
+    record on the same comparison and fixture) PASS** — the circuit prediction
+    at `0.5 × C_tuned` gives `|S₁₁|` 0.846071753 and misses the in-model curve
+    by **1.116902 = 1116.9× the band** against the 10× asked; the tuned
+    prediction misses by 8.256069e-05, four orders away (`…110503Z:2153`).
+  - **Printed, never gated:** interpolated zero **f₀ = 63.998619 MHz**,
+    `R_in(f₀)` = 6.772516 Ω, `d(Im Z)/df` = 1.467392 Ω/MHz, loaded **Q = 6.9332**.
+    No `TH-17` eigenvalue exists to print beside it — item 10's (iii) is
+    blocked, and the step-1b scan puts the loaded pencil's floor at ≈ 129.6 MHz.
+    **That tension is the interesting reading of this slot and belongs to the
+    review:** the driven route finds a series resonance at 63.9986 MHz on the
+    same fixture and the same `C_tuned` where the eigen route finds nothing
+    below 129.6 MHz. Neither is loosened here; both are measured.
+- **No band moved, no record edited, no assertion loosened, no `src/` touched.**
+  Rule (i) holds — the module was not edited after either green window. No
+  absolute `S₁₁` / `Z_in` claim is made anywhere in the module, the §7 row or
+  §2.1; the docstring and the (i) print both cite known-issues 2026-09-19.
+  Nothing under `docs/private/` or `aed_results/` was opened.
+- **Files:** `tests/validation/test_port22_driven_sweep_resonance.py` (new),
+  four logs, `test-results.md`, `PROJECT_PLAN.md` (§2.1 sentence, §7 `PORT-22`
+  row ⬜ → ✅, §9 item 12 → done).
+- **Branch:** none — landed on `main`. **Denied commands:** the two bare
+  `docker compose … ps` calls described above; the harness was never denied.
+- **Next-attempt hypothesis (for the review):** `PORT-22` step 1 closes the
+  row's Done-when as written, so the open question it hands on is not this
+  chunk's — it is the 63.9986 MHz / 129.6 MHz split between the driven and
+  eigen routes. The cheapest discriminator is the one item 10 already names:
+  the closed-form LC loop control, whose 2 % pre-condition still needs
+  re-scoping. A sweep of the *unloaded* (C = 0) driven `Z_in` on this same
+  mesh would bracket it from the other side for ≈ one window.

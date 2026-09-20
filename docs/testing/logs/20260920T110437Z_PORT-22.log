@@ -1,0 +1,55 @@
+# Test Run
+- Chunk: PORT-22
+- Commit: 7af853778720d381ce39c5f8d6a7cd4ca573a018
+- Time (UTC): 2026-09-20 11:04:37
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.5.1
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose -f docker/docker-compose.yml exec -T fem-em-solver bash -lc 'cd /workspace && source /usr/local/bin/dolfinx-complex-mode && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 timeout -k 30 120 python3 -m pytest tests/validation/test_port22_driven_sweep_resonance.py -v --tb=short -s'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 24
+drwxr-xr-x  3 taz5297 taz5297 4096 Sep  4 23:31 .
+drwxr-xr-x 17 taz5297 taz5297 4096 Sep 20 06:04 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  721 Sep  3 13:49 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 4275 Sep 13 19:19 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.5.1
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose -f docker/docker-compose.yml exec -T fem-em-solver bash -lc '\''cd /workspace && source /usr/local/bin/dolfinx-complex-mode && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 timeout -k 30 120 python3 -m pytest tests/validation/test_port22_driven_sweep_resonance.py -v --tb=short -s'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... collected 5 items
+
+tests/validation/test_port22_driven_sweep_resonance.py::test_the_window_ran_on_the_gate_mesh 
+[PORT-22 step1] C_tuned (recomputed through `PORT-15` step 3's own tuning_sweep on S_64MHZ_EPS0_RECORD) = 1.556993028375804e-11 F   step 3 printed 1.557000e-11 F (PRINTED)   |S11(C_tuned)| on the record = 0.761412964
+SKIPPEDa slot asks)
+tests/validation/test_port22_driven_sweep_resonance.py::test_anchor_i_the_64mhz_tuned_s11_reproduces_port15_step3 SKIPPED
+tests/validation/test_port22_driven_sweep_resonance.py::test_anchor_ii_the_circuit_reduction_matches_the_in_model_drive_at_every_frequency SKIPPED
+tests/validation/test_port22_driven_sweep_resonance.py::test_negative_control_the_half_c_prediction_misses_the_in_model_curve SKIPPED
+tests/validation/test_port22_driven_sweep_resonance.py::test_anchor_iii_im_z_in_changes_sign_once_in_the_64mhz_bracket SKIPPED
+
+============================== 5 skipped in 2.93s ==============================
+
+## Exit
+- Status: 0
+- Elapsed (s): 5
+- Filtered lines (gmsh optimisation chatter): 0
