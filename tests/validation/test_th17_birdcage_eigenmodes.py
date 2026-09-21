@@ -452,3 +452,268 @@ def test_step1b_target_scan(step1b_fixture):
             print(f"    target {t / 1e6:.0f} MHz -> Re f = {f_c.real:.9e} Hz, "
                   f"lam = {lam.real:+.9e} {lam.imag:+.9e}j")
     assert total_converged > 0, "no eigenpair converged at any of the eight targets"
+
+
+# ---------------------------------------------------------------------------
+# Step 1c (§9 item 24) — the closed-form LC control on the two-torus hole
+# fixture.  One gapped PEC loop (torus 1's hole, its sheet 211 carrying the
+# capacitor mass form exactly as `_capacitor_mass_forms` builds it) is an LC
+# circuit: `f_LC = 1/(2π√(L·C))`.  `L` is this fixture's own driven reading,
+# `L_fem = Im Z_in/ω` of sheet 211 at the target, so both sides of the 5 % are
+# this mesh's numbers and the box's effect on `L` cancels.  Torus 2's gap is
+# left open in both solves (no sheet form in the pencil; ≥ 1e9 Ω driven).
+#
+# Note on the facet tag: the item text names "facet tag 201"; on the
+# ``as_hole=True`` route the gap<->conductor groups 201/202 do not exist
+# (`io/mesh.py` docstring, `as_hole`) — torus 1's port **sheet** is 211, the
+# group every lumped-sheet caller of this fixture uses (``SHEET_FACET_TAGS``).
+# ---------------------------------------------------------------------------
+
+STEP1C_ENV = "TH17_STEP1C"
+#: Open-gap termination for torus 2's sheet in the driven solve (the item: ≥ 1e9 Ω).
+STEP1C_OPEN_OHM = 1.0e9
+#: The driven P1 sheet's source impedance — any finite value; Z_in is V/I.
+STEP1C_SOURCE_OHM = 50.0
+#: The two driven frequencies (both printed; the target's `L` is the one used).
+STEP1C_L_FREQUENCIES_HZ = (10.0e6, TARGET_FREQUENCY_HZ)
+#: Anchor (a): the eigenvalue nearest f_LC within 5 % (item 24, registered).
+STEP1C_FLC_BAND = 0.05
+#: Anchor (b): at 2·C the same mode moves by 1/√2 within 2 % (item 24).
+STEP1C_SQRT2_BAND = 0.02
+#: Negative control: no eigenvalue with Re f in f_LC·[0.8, 1.2] without the form.
+STEP1C_CONTROL_WINDOW = (0.8, 1.2)
+
+
+def build_two_torus_hole_fixture():
+    """`TH-15` step 2a's two-torus PEC-hole mesh + sheet 211/212 geometry.
+
+    Every constant is imported (`test_port_reaction_impedance` for the torus
+    and box, `test_port_gap_voltage_impedance` for the gap), never restated.
+    """
+
+    from fem_em_solver.io.mesh import MeshGenerator
+    from tests.mesh.test_two_torus_port_sheet import SHEET_FACET_TAGS, _sheet_extents
+    from tests.validation.test_port_gap_voltage_impedance import (
+        GAP_ANGLE,
+        GAP_ARC_RESOLUTION,
+        GAP_BURIAL,
+        GAP_OVERHANG,
+    )
+    from tests.validation.test_port_reaction_impedance import (
+        AIR_PADDING,
+        H_FAR,
+        H_WIRE,
+        MAJOR_RADIUS,
+        MINOR_RADIUS,
+        SEPARATION,
+    )
+
+    comm = MPI.COMM_WORLD
+    t0 = time.perf_counter()
+    msh, cell_tags, facet_tags = MeshGenerator.two_torus_domain(
+        separation=SEPARATION,
+        major_radius=MAJOR_RADIUS,
+        minor_radius=MINOR_RADIUS,
+        resolution=H_FAR,
+        air_padding=AIR_PADDING,
+        wire_resolution=H_WIRE,
+        far_resolution=H_FAR,
+        port_gap=True,
+        gap_angle=GAP_ANGLE,
+        gap_burial=GAP_BURIAL,
+        gap_overhang=GAP_OVERHANG,
+        gap_arc_resolution=GAP_ARC_RESOLUTION,
+        emit_port_sheet=True,
+        as_hole=True,
+        comm=comm,
+    )
+    t_mesh = time.perf_counter() - t0
+    tdim = msh.topology.dim
+    msh.topology.create_connectivity(tdim - 1, tdim)
+    msh.topology.create_entity_permutations()
+    sheets = []
+    for tag in SHEET_FACET_TAGS:
+        tag = int(tag)
+        n_facets = _sheet_facet_count(msh, facet_tags, tag, comm)
+        assert n_facets > 0, f"sheet {tag}: no owned facets anywhere"
+        area = _facet_group_area(msh, facet_tags, tag, comm)
+        extents = _sheet_extents(msh, facet_tags, tag, comm)
+        h = float(extents[1])
+        sheets.append({"tag": tag, "facets": int(n_facets), "area": float(area),
+                       "h": h, "w": float(area / h)})
+    return {
+        "mesh": msh,
+        "cell_tags": cell_tags,
+        "facet_tags": facet_tags,
+        "sheets": sheets,
+        "n_cells": int(comm.allreduce(msh.topology.index_map(tdim).size_local,
+                                      op=MPI.SUM)),
+        "t_mesh_s": float(t_mesh),
+    }
+
+
+def _driven_loop_impedance(fx, frequency_hz):
+    """P1 driven, P2 open: ``(Z_in = V1/I1, Z21/Z11, wall_s)`` off the solved field."""
+
+    from fem_em_solver.core import HomogeneousMaterial, TimeHarmonicProblem
+    from fem_em_solver.ports.definitions import PortDefinition
+    from fem_em_solver.ports.lumped import LumpedSheetPortSpec, run_lumped_sheet_port_case
+
+    msh = fx["mesh"]
+    problem = TimeHarmonicProblem(
+        mesh=msh,
+        frequency_hz=float(frequency_hz),
+        material=HomogeneousMaterial(sigma=0.0, epsilon_r=1.0, mu_r=1.0),
+        cell_tags=fx["cell_tags"],
+        boundary_condition="pec_zero_tangential_a",
+        facet_tags=fx["facet_tags"],
+        pec_facet_tags=None,
+    )
+    ports, specs = [], []
+    for k, s in enumerate(fx["sheets"]):
+        pid = f"P{k + 1}"
+        ports.append(PortDefinition(
+            port_id=pid, positive_tag=int(s["tag"]), negative_tag=int(s["tag"]),
+            orientation="gap_azimuthal_plus_y", z0_ohm=STEP1C_SOURCE_OHM,
+        ))
+        specs.append(LumpedSheetPortSpec(
+            port_id=pid, facet_tag=int(s["tag"]),
+            port_impedance_ohm=STEP1C_SOURCE_OHM if k == 0 else STEP1C_OPEN_OHM,
+            gap_height_m=s["h"], sheet_width_m=s["w"],
+            drive_direction=(0.0, 1.0, 0.0), drive_voltage_v=1.0 + 0.0j,
+            interior=True,
+        ))
+    t0 = time.perf_counter()
+    res = run_lumped_sheet_port_case(
+        problem, ports, specs, facet_tags=fx["facet_tags"], driven_port_id="P1",
+        verbose=False,
+    )
+    wall = float(time.perf_counter() - t0)
+    r1, r2 = res.responses["P1"], res.responses["P2"]
+    z11 = complex(r1.voltage_v) / complex(r1.current_a)
+    z21 = complex(r2.voltage_v) / complex(r1.current_a)
+    return z11, z21 / z11, wall
+
+
+def _solve_loop_modes(fx, c_f, *, target_hz, live):
+    """One (G1) solve with torus 1's sheet (211) carrying ``C``; torus 2 open."""
+
+    msh = fx["mesh"]
+    V = fem.functionspace(msh, ("N1curl", 1))
+    Q = fem.functionspace(msh, ("DG", 0))
+    eps = fem.Function(Q, name="epsilon_r_air")
+    eps.x.array[:] = 1.0 + 0.0j
+    trial, test = ufl.TrialFunction(V), ufl.TestFunction(V)
+    loop_sheet = [fx["sheets"][0]]
+    forms = _capacitor_mass_forms(
+        msh, fx["facet_tags"], loop_sheet, c_f, trial, test,
+        omega_ref_rad_s=2.0 * np.pi * TARGET_FREQUENCY_HZ, live=live,
+    )
+    k0_sq = (2.0 * np.pi * float(target_hz) / C_0) ** 2
+    t0 = time.perf_counter()
+    values, n_converged, _n_bc = solve_general_mesh_modes(
+        V, eps, target_k0_sq=k0_sq, sheet_mass_forms=forms, nev=NEV, comm=msh.comm,
+    )
+    wall = float(time.perf_counter() - t0)
+    n_dofs = int(V.dofmap.index_map.size_global * V.dofmap.index_map_bs)
+    freqs = [frequency_of(lam) for lam in values]
+    return freqs, int(n_converged), n_dofs, wall, len(forms)
+
+
+def _nearest(freqs, f_hz):
+    return min(freqs, key=lambda f: abs(f.real - f_hz))
+
+
+@complex_only
+@pytest.mark.skipif(os.environ.get(STEP1C_ENV) != "1", reason=f"set {STEP1C_ENV}=1")
+def test_step1c_lc_loop_closed_form():
+    """(iii) the pencil-with-sheet-mass reproduces ``f_LC = 1/(2π√(LC))``.
+
+    Anchors (asserted): (a) nearest eigenvalue to ``f_LC`` within 5 %;
+    (b) at ``2·C`` the same mode moves by ``1/√2`` within 2 %.  Negative
+    control (asserted): with the capacitor form removed (``live=()``) no
+    eigenvalue has ``Re f`` in ``f_LC·[0.8, 1.2]``.
+    """
+
+    from tests.validation.test_port_self_impedance_energy import grover_loop_inductance
+    from tests.validation.test_port_reaction_impedance import MAJOR_RADIUS, MINOR_RADIUS
+
+    comm = MPI.COMM_WORLD
+    t_all = time.perf_counter()
+    fx = build_two_torus_hole_fixture()
+    rank0 = comm.rank == 0
+    if rank0:
+        print(f"\n[TH-17 1c] two-torus hole fixture: {fx['n_cells']} cells, "
+              f"mesh {fx['t_mesh_s']:.1f} s, ranks {comm.size}")
+        for s in fx["sheets"]:
+            print(f"    sheet {s['tag']}: facets {s['facets']}, area {s['area']:.9e} m^2, "
+                  f"h {s['h']:.9e} m, w = A/h {s['w']:.9e} m, h/w {s['h'] / s['w']:.9e}")
+
+    l_fem = {}
+    for f_hz in STEP1C_L_FREQUENCIES_HZ:
+        z11, ratio21, wall = _driven_loop_impedance(fx, f_hz)
+        omega = 2.0 * np.pi * f_hz
+        l_fem[f_hz] = z11.imag / omega
+        if rank0:
+            print(f"[TH-17 1c] driven f = {f_hz / 1e6:.3f} MHz: Z_in = "
+                  f"{z11.real:+.9e} {z11.imag:+.9e}j Ohm, L_fem = Im Z_in/w = "
+                  f"{l_fem[f_hz]:.9e} H, Z21/Z11 = {ratio21.real:+.6e} "
+                  f"{ratio21.imag:+.6e}j (|.| = {abs(ratio21):.6e}), {wall:.1f} s")
+    l_use = l_fem[TARGET_FREQUENCY_HZ]
+    assert l_use > 0.0, f"L_fem = {l_use!r} H at the target: not an inductive loop"
+    l_grover = grover_loop_inductance(MAJOR_RADIUS, MINOR_RADIUS)
+    omega_t = 2.0 * np.pi * TARGET_FREQUENCY_HZ
+    c_f = 1.0 / (omega_t ** 2 * l_use)
+    f_lc = 1.0 / (2.0 * np.pi * np.sqrt(l_use * c_f))
+    if rank0:
+        print(f"[TH-17 1c] Grover (printed, never gated) = {l_grover:.9e} H; "
+              f"L_fem(target)/Grover = {l_use / l_grover:.6f}, "
+              f"L_fem(10 MHz)/Grover = {l_fem[STEP1C_L_FREQUENCIES_HZ[0]] / l_grover:.6f}")
+        print(f"[TH-17 1c] C = 1/(w_t^2 L_fem) = {c_f:.9e} F; f_LC = {f_lc:.9e} Hz")
+
+    freqs_c, n_c, n_dofs, wall_c, n_forms = _solve_loop_modes(
+        fx, c_f, target_hz=f_lc, live=None)
+    f_c = _nearest(freqs_c, f_lc)
+    f_lc2 = f_lc / np.sqrt(2.0)
+    freqs_2c, n_2c, _d, wall_2c, _n = _solve_loop_modes(
+        fx, 2.0 * c_f, target_hz=f_lc2, live=None)
+    f_2c = _nearest(freqs_2c, f_lc2)
+    freqs_0, n_0, _d, wall_0, n_forms0 = _solve_loop_modes(
+        fx, c_f, target_hz=f_lc, live=())
+    lo, hi = (w * f_lc for w in STEP1C_CONTROL_WINDOW)
+    in_window = [f for f in freqs_0 if lo <= f.real <= hi]
+
+    err_a = abs(f_c.real - f_lc) / f_lc
+    ratio_b = f_2c.real / f_c.real
+    err_b = abs(ratio_b * np.sqrt(2.0) - 1.0)
+    if rank0:
+        print(f"[TH-17 1c] N1curl deg-1 dofs = {n_dofs}; sheet forms in pencil = "
+              f"{n_forms}, control = {n_forms0}")
+        for label, freqs, n, wall in (("C", freqs_c, n_c, wall_c),
+                                      ("2C", freqs_2c, n_2c, wall_2c),
+                                      ("no-C control", freqs_0, n_0, wall_0)):
+            print(f"[TH-17 1c] {label}: converged {n} of nev {NEV}, {wall:.1f} s")
+            for f in freqs:
+                print(f"    f = {f.real:.9e} {f.imag:+.9e}j Hz")
+        print(f"[TH-17 1c] (a) nearest Re f = {f_c.real:.9e} Hz (Im {f_c.imag:+.6e}) vs "
+              f"f_LC = {f_lc:.9e} Hz: rel err {err_a:.6e} (band {STEP1C_FLC_BAND})")
+        print(f"[TH-17 1c] (b) Re f(2C) = {f_2c.real:.9e} Hz; f(2C)/f(C) = {ratio_b:.9e} "
+              f"vs 1/sqrt2 = {1.0 / np.sqrt(2.0):.9e}: rel err {err_b:.6e} "
+              f"(band {STEP1C_SQRT2_BAND})")
+        above = sorted((f for f in freqs_0 if f.real > SCAN_PRINT_FLOOR_HZ),
+                       key=lambda f: f.real)
+        first = f"{above[0].real:.9e} Hz" if above else "none (gradient cluster only)"
+        print(f"[TH-17 1c] control: {len(in_window)} eigenvalue(s) in "
+              f"f_LC*{STEP1C_CONTROL_WINDOW}; first converged Re f above "
+              f"{SCAN_PRINT_FLOOR_HZ / 1e6:.0f} MHz = {first}")
+        print(f"[TH-17 1c] total {time.perf_counter() - t_all:.1f} s")
+
+    assert n_forms == 1 and n_forms0 == 0, "the capacitor form did not reach/leave the pencil"
+    assert n_c > 0 and n_2c > 0, "no eigenpair converged near f_LC or f_LC/sqrt2"
+    assert err_a <= STEP1C_FLC_BAND, (
+        f"(a) nearest Re f {f_c.real:.6e} Hz vs f_LC {f_lc:.6e} Hz: {err_a:.3e} > 5 %")
+    assert err_b <= STEP1C_SQRT2_BAND, (
+        f"(b) f(2C)/f(C) = {ratio_b:.6e} vs 1/sqrt2: {err_b:.3e} > 2 %")
+    assert not in_window, (
+        f"negative control: {len(in_window)} eigenvalue(s) in f_LC*[0.8,1.2] "
+        f"with no capacitor")
