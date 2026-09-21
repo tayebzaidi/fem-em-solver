@@ -275,9 +275,21 @@ First Order column beside step 3's. No band moves.
 
 ### 6. `xl` — `WF-7` step 0c: the F-human degree-1 solve at the full 32-port set (daily licence: cost probe, 2026-09-16 review)
 
-**Status:** QUEUED 2026-09-18 for Monday 2026-09-21 02:00 —
-`docs/testing/xl-queue.d/20260921-WF-7-step0c.env` (the first `xl` night
-after entry 5's 09-20; Saturday 09-19 is the `xxl` night). *(Was READY —
+**Status:** RUN `20260921T070008Z_WF-7-step0c.log` — `[capture] rc=0`,
+Status 0, 228 s, `memory.peak` 11.96 GiB; one factorisation (24.73 s) + 31
+held back-substitutions (0.40–0.57 s), cumulative 3.74 min — **below** the
+5–45 min bracket, memory INSIDE; full 32×32 reciprocity 1.084e-14 asserted
+green. Ledger row filled by the 2026-09-21 03:00 review. **Two corrections to
+this entry's own text (log-pathologist, 2026-09-21):** the Readout's "nothing
+asserted beyond the imported cell band" is wrong — the probe also asserts the
+32×32 reciprocity and the drive-2 ≠ drive-1 floor (`:394–428`); and the
+refinement paragraph called its own ≈ 3.5 min extrapolation "well inside"
+a bracket whose floor is 5 min. Neither moves the decision rule: the set fits
+one window with two orders of magnitude to spare, so chain step H3 is written
+at the **heavy** tier (§9, 2026-09-21). *(Was QUEUED 2026-09-18 for Monday
+2026-09-21 02:00 —
+`docs/testing/xl-queue.d/20260921-WF-7-step0c.env`, the first `xl` night
+after entry 5's 09-20; Saturday 09-19 is the `xxl` night; READY before that —
 2026-09-16 09:38Z, §9 item 1 landed on `main` as `a267c5a`.)* The
 probe's `FEM_EM_WF7_PORTS` knob is in (`scripts/probes/wf7_step0_f_human_cost.py`),
 proved at heavy tier by the flag-off control (knob unset reproduces step 0's
