@@ -606,6 +606,16 @@ def test_current_route_s_is_the_open_circuit_conversion(package_sweep):
     the point of asserting it: an agreement at 1e-12 says the sweep's ``S`` and
     its own ``Z`` are one matrix, by two code paths.
 
+    **Since `OPS-57` (2026-09-21) that is no longer true:**
+    ``sparameters_from_impedance`` now *delegates* to ``z_to_s`` (one
+    impedance-to-S implementation), so this 1e-12 residual only checks that the
+    sweep's ``S`` was built from its own ``Z`` — the cross-implementation
+    reading is a tautology.  **The anchor from here on is the closed form**:
+    ``tests/unit/test_port20_current_route_s.py`` checks the route's assembly
+    against an analytic T-network and a seeded 3-port whose ``S`` it computes
+    by its own explicit inverse, independent of ``ports.circuit``.  No
+    tolerance moved.
+
     **Printed, predicted, never asserted** (§9 standing rule (e)): the
     magnitude the *pre-`PORT-20`* power-wave assembly tabulated for ``S₂₁`` on
     this fixture beside the value implied by ``Z``.  known-issues 2026-09-19

@@ -10,6 +10,7 @@ import numpy as np
 
 from ..core import TimeHarmonicProblem
 from ..core.solvers import DEFAULT_GAUGE_PENALTY
+from .circuit import z_to_s
 from .definitions import PortDefinition
 from .excitation import (
     SinglePortExcitationResult,
@@ -105,9 +106,9 @@ def sparameters_from_impedance(z_matrix: np.ndarray, *, z0_ohm: float) -> np.nda
     if z0_ohm <= 0.0:
         raise ValueError("z0_ohm must be positive")
 
-    identity = np.eye(z.shape[0], dtype=np.complex128)
-    z0_identity = float(z0_ohm) * identity
-    return (z - z0_identity) @ np.linalg.inv(z + z0_identity)
+    # OPS-57: one impedance-to-S implementation — delegate to `circuit.z_to_s`
+    # (a solve, not an explicit inverse; circuit.py imports only numpy, no cycle).
+    return z_to_s(z, float(z0_ohm))
 
 
 def summarize_sparameter_sanity(

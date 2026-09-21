@@ -2809,3 +2809,10 @@ committed at 12:53Z).
 - **Logs:** `20260921T112323Z_OPS-56.log` (control, Status 0 by the script's 3/3-fail exit convention), `20260921T112330Z_OPS-56.log` (green); `20260921T112317Z_OPS-56.log` is a control-script bug (dataclass on an unregistered `importlib` module — `AttributeError`, fixed by registering in `sys.modules`), not a finding.
 - **Records:** `OPS-56` row ✅; §9 item 28 DONE.
 - **Hypothesis for the next attempt:** none — chunk closed.
+
+## 2026-09-21T11:30Z (2026-09-21 11:00 UTC slot) — `OPS-57` (§9 item 29) — **complete: ✅**
+- **Tried:** `ports/circuit.py`: the three `abs(det) == 0.0` guards (`reduce_terminated_ports`, `s_to_z`, `z_to_s`) replaced by `try/except np.linalg.LinAlgError` raising `ValueError` with the existing messages; `_check_finite` added to `s_to_z`/`z_to_s`. `ports/sparameters.py::sparameters_from_impedance` keeps signature, docstring and validation and delegates to `z_to_s` (no import cycle). New `tests/unit/test_ops57_sz_conversions.py`; `PORT-20` step-2 docstring now names the unit closed form (`test_port20_current_route_s.py`, own explicit inverse) as the anchor, the 1e-12 residual being same-implementation since this change.
+- **Result / measured:** unit `-n 2` 22 passed, 3 s: 16-port round trip at z0 = 1e-21 max|Δ| 1.877e-16 (cond 3.944, |det| = 0 — pre-change guard would raise, asserted); singular sites raise same messages; delegation diff 0.000e+00. Package module `-n 2` complex: 18 passed + known `OPS-60` skrf red, 194 s; σ_max miss 4.353e-10, symmetry miss 1.867e-11; S vs z_to_s(Z) 0. `PORT-9` gate: 5 passed, 37 s, ‖S − Sᵀ‖/‖S‖ 1.0788e-14 (last-bit, was 1.0443e-14), Z/σ/spreads digit-identical.
+- **Logs:** `20260921T112537Z_OPS-57.log`, `20260921T112548Z_OPS-57.log`, `20260921T112912Z_OPS-57.log`.
+- **Records:** `OPS-57` row ✅; §9 item 29 DONE. No tolerance touched.
+- **Hypothesis for the next attempt:** none — chunk closed.

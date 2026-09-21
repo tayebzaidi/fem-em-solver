@@ -135,9 +135,14 @@ def reduce_terminated_ports(
     s_bb = matrix[np.ix_(b, b)]
 
     inner = np.eye(b.size, dtype=np.complex128) - s_bb @ gamma
-    if abs(np.linalg.det(inner)) == 0.0:
-        raise ValueError("(I − S_bb Γ) is singular: this termination has no bounded solution")
-    return s_aa + s_ab @ gamma @ np.linalg.solve(inner, s_ba)
+    # OPS-57: let the factorisation report singularity; a determinant test is
+    # scale-dependent (1e-21·I₁₆ has det == 0.0 at condition number 1).
+    try:
+        return s_aa + s_ab @ gamma @ np.linalg.solve(inner, s_ba)
+    except np.linalg.LinAlgError as exc:
+        raise ValueError(
+            "(I − S_bb Γ) is singular: this termination has no bounded solution"
+        ) from exc
 
 
 # ---------------------------------------------------------------------------
@@ -152,6 +157,11 @@ def _check_real_z0(z0_ohm: float) -> float:
     return z0
 
 
+def _check_finite(matrix: np.ndarray, name: str) -> None:
+    if not np.all(np.isfinite(matrix)):
+        raise ValueError(f"{name} contains non-finite values")
+
+
 def s_to_z(s: np.ndarray, z0: float) -> np.ndarray:
     """``Z = z0 (I + S)(I − S)⁻¹`` — the impedance matrix of an N-port.
 
@@ -162,12 +172,14 @@ def s_to_z(s: np.ndarray, z0: float) -> np.ndarray:
     matrix = np.asarray(s, dtype=np.complex128)
     if matrix.ndim != 2 or matrix.shape[0] != matrix.shape[1]:
         raise ValueError(f"s must be a square rank-2 matrix, got shape {matrix.shape}")
+    _check_finite(matrix, "s")
     identity = np.eye(matrix.shape[0], dtype=np.complex128)
     lhs = identity - matrix
-    if abs(np.linalg.det(lhs)) == 0.0:
-        raise ValueError("(I − S) is singular: this S has no finite Z representation")
     # X (I − S) = z0 (I + S)  ⇔  (I − S)ᵀ Xᵀ = z0 (I + S)ᵀ.
-    return np.linalg.solve(lhs.T, z0 * (identity + matrix).T).T
+    try:
+        return np.linalg.solve(lhs.T, z0 * (identity + matrix).T).T
+    except np.linalg.LinAlgError as exc:
+        raise ValueError("(I − S) is singular: this S has no finite Z representation") from exc
 
 
 def z_to_s(z: np.ndarray, z0: float) -> np.ndarray:
@@ -180,12 +192,16 @@ def z_to_s(z: np.ndarray, z0: float) -> np.ndarray:
     matrix = np.asarray(z, dtype=np.complex128)
     if matrix.ndim != 2 or matrix.shape[0] != matrix.shape[1]:
         raise ValueError(f"z must be a square rank-2 matrix, got shape {matrix.shape}")
+    _check_finite(matrix, "z")
     identity = np.eye(matrix.shape[0], dtype=np.complex128)
     rhs = matrix + z0 * identity
-    if abs(np.linalg.det(rhs)) == 0.0:
-        raise ValueError("(Z + z0 I) is singular: this Z has no S representation at that z0")
     # X (Z + z0 I) = (Z − z0 I)  ⇔  (Z + z0 I)ᵀ Xᵀ = (Z − z0 I)ᵀ.
-    return np.linalg.solve(rhs.T, (matrix - z0 * identity).T).T
+    try:
+        return np.linalg.solve(rhs.T, (matrix - z0 * identity).T).T
+    except np.linalg.LinAlgError as exc:
+        raise ValueError(
+            "(Z + z0 I) is singular: this Z has no S representation at that z0"
+        ) from exc
 
 
 # ---------------------------------------------------------------------------

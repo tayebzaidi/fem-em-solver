@@ -1,0 +1,228 @@
+# Test Run
+- Chunk: OPS-57
+- Commit: 1da2fe553a9e9b39aa6a75b6e11a66d73130500f
+- Time (UTC): 2026-09-21 11:25:37
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.5.1
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose -f docker/docker-compose.yml exec -T fem-em-solver bash -lc 'cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 30 mpiexec -n 2 python3 -m pytest tests/unit/test_ops57_sz_conversions.py tests/unit/test_port20_current_route_s.py tests/unit/test_port_circuit_layer.py -v -s --tb=short'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 24
+drwxr-xr-x  3 taz5297 taz5297 4096 Sep 21 04:30 .
+drwxr-xr-x 17 taz5297 taz5297 4096 Sep 21 06:25 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  744 Sep 21 04:30 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 4275 Sep 13 19:19 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.5.1
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose -f docker/docker-compose.yml exec -T fem-em-solver bash -lc '\''cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 30 mpiexec -n 2 python3 -m pytest tests/unit/test_ops57_sz_conversions.py tests/unit/test_port20_current_route_s.py tests/unit/test_port_circuit_layer.py -v -s --tb=short'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... collected 22 items
+
+tests/unit/test_ops57_sz_conversions.py::test_round_trip_survives_an_underflowing_determinant collected 22 items
+
+tests/unit/test_ops57_sz_conversions.py::test_round_trip_survives_an_underflowing_determinant 
+[OPS-57] 16-port, z0=1e-21: |det(Z+z0 I)|=0 cond=3.944428e+00 max|z_to_s(s_to_z(S))-S|=1.877e-16 (tol 1e-12)
+PASSED
+tests/unit/test_ops57_sz_conversions.py::test_exactly_singular_matrices_raise_the_same_message 
+[OPS-57] 16-port, z0=1e-21: |det(Z+z0 I)|=0 cond=3.944428e+00 max|z_to_s(s_to_z(S))-S|=1.877e-16 (tol 1e-12)
+PASSEDPASSED
+tests/unit/test_ops57_sz_conversions.py::test_exactly_singular_matrices_raise_the_same_message 
+tests/unit/test_ops57_sz_conversions.py::test_conversions_refuse_non_finite_input[nan-s_to_z] PASSED
+tests/unit/test_ops57_sz_conversions.py::test_conversions_refuse_non_finite_input[nan-s_to_z] PASSED
+tests/unit/test_ops57_sz_conversions.py::test_conversions_refuse_non_finite_input[nan-z_to_s] PASSEDPASSED
+tests/unit/test_ops57_sz_conversions.py::test_conversions_refuse_non_finite_input[nan-z_to_s] 
+tests/unit/test_ops57_sz_conversions.py::test_conversions_refuse_non_finite_input[inf-s_to_z] PASSEDPASSED
+tests/unit/test_ops57_sz_conversions.py::test_conversions_refuse_non_finite_input[inf-s_to_z] 
+tests/unit/test_ops57_sz_conversions.py::test_conversions_refuse_non_finite_input[inf-z_to_s] PASSEDPASSED
+tests/unit/test_ops57_sz_conversions.py::test_conversions_refuse_non_finite_input[infj-s_to_z] PASSED
+tests/unit/test_ops57_sz_conversions.py::test_conversions_refuse_non_finite_input[inf-z_to_s] 
+tests/unit/test_ops57_sz_conversions.py::test_conversions_refuse_non_finite_input[infj-z_to_s] PASSEDPASSED
+tests/unit/test_ops57_sz_conversions.py::test_conversions_refuse_non_finite_input[infj-s_to_z] 
+tests/unit/test_ops57_sz_conversions.py::test_sparameters_from_impedance_is_z_to_s PASSED
+tests/unit/test_ops57_sz_conversions.py::test_conversions_refuse_non_finite_input[infj-z_to_s] 
+[OPS-57] max|sparameters_from_impedance - z_to_s| = 0.000e+00
+PASSEDPASSED
+tests/unit/test_port20_current_route_s.py::test_current_drive_route_s_is_the_closed_form[T-network 2-port-_t_network_z] 
+tests/unit/test_ops57_sz_conversions.py::test_sparameters_from_impedance_is_z_to_s 
+[OPS-57] max|sparameters_from_impedance - z_to_s| = 0.000e+00
+PASSED
+tests/unit/test_port20_current_route_s.py::test_current_drive_route_s_is_the_closed_form[T-network 2-port-_t_network_z] 
+[PORT-20 step 1] T-network 2-port, z0 = 50 Ohm
+    Z (known):
+[[50.+50.j 40.+30.j]
+ [40.+30.j 55.+25.j]]
+    Z (route assembly) max|delta| = 0.000e+00
+    S (route assembly):
+[[-0.01400836+0.3420988j   0.49397886+0.04177931j]
+ [ 0.49397886+0.04177931j -0.10346522+0.10567707j]]
+    S (analytic (Z-z0)(Z+z0)^-1) max|delta| = 1.119e-16 (band 1.0e-12)
+
+[PORT-20 step 1] T-network 2-port, z0 = 50 Ohm
+    Z (known):
+[[50.+50.j 40.+30.j]
+ [40.+30.j 55.+25.j]]
+    Z (route assembly) max|delta| = 0.000e+00
+    S (route assembly):
+[[-0.01400836+0.3420988j   0.49397886+0.04177931j]
+ [ 0.49397886+0.04177931j -0.10346522+0.10567707j]]
+    S (analytic (Z-z0)(Z+z0)^-1) max|delta| = 1.119e-16 (band 1.0e-12)
+PASSEDPASSED
+tests/unit/test_port20_current_route_s.py::test_current_drive_route_s_is_the_closed_form[seeded random reciprocal 3-port-_random_reciprocal_z] 
+tests/unit/test_port20_current_route_s.py::test_current_drive_route_s_is_the_closed_form[seeded random reciprocal 3-port-_random_reciprocal_z] 
+[PORT-20 step 1] seeded random reciprocal 3-port, z0 = 50 Ohm
+    Z (known):
+[[ 5.65470847+1.60857093j -0.95787643-1.0839301j   2.10053079+0.62052441j]
+ [-0.95787643-1.0839301j   6.87911147-1.09964774j -4.18749814-0.57959588j]
+ [ 2.10053079+0.62052441j -4.18749814-0.57959588j  7.99672346-0.5496433j ]]
+    Z (route assembly) max|delta| = 0.000e+00
+    S (route assembly):
+[[-0.79742249+0.04959384j -0.0260449 -0.03213174j  0.06392392+0.01546052j]
+ [-0.0260449 -0.03213174j -0.7663047 -0.03795643j -0.12636153-0.02014741j]
+ [ 0.06392392+0.01546052j -0.12636153-0.02014741j -0.73511399-0.02040531j]]
+    S (analytic (Z-z0)(Z+z0)^-1) max|delta| = 1.110e-16 (band 1.0e-12)
+PASSED
+[PORT-20 step 1] seeded random reciprocal 3-port, z0 = 50 Ohm
+    Z (known):
+[[ 5.65470847+1.60857093j -0.95787643-1.0839301j   2.10053079+0.62052441j]
+ [-0.95787643-1.0839301j   6.87911147-1.09964774j -4.18749814-0.57959588j]
+ [ 2.10053079+0.62052441j -4.18749814-0.57959588j  7.99672346-0.5496433j ]]
+    Z (route assembly) max|delta| = 0.000e+00
+    S (route assembly):
+[[-0.79742249+0.04959384j -0.0260449 -0.03213174j  0.06392392+0.01546052j]
+ [-0.0260449 -0.03213174j -0.7663047 -0.03795643j -0.12636153-0.02014741j]
+ [ 0.06392392+0.01546052j -0.12636153-0.02014741j -0.73511399-0.02040531j]]
+    S (analytic (Z-z0)(Z+z0)^-1) max|delta| = 1.110e-16 (band 1.0e-12)
+PASSED
+tests/unit/test_port20_current_route_s.py::test_power_wave_assembly_misses_the_closed_form_s21 
+tests/unit/test_port20_current_route_s.py::test_power_wave_assembly_misses_the_closed_form_s21 
+[PORT-20 step 1] negative control — the pre-PORT-20 power-wave assembly on open undriven ports:
+    S (power waves):
+[[0.2       +0.4j        0.4248927 +0.18454936j]
+ [0.44      +0.08j       0.09871245+0.21459227j]]
+    S (analytic):
+[[-0.01400836+0.3420988j   0.49397886+0.04177931j]
+ [ 0.49397886+0.04177931j -0.10346522+0.10567707j]]
+    S21: power-wave np.complex128(0.44+0.08j) vs analytic np.complex128(0.49397886458589346+0.041779306955025804j)
+    |dS21| = 6.614030e-02, max|dS| = 2.296483e-01 (floor 1.0e-02, ceiling 2.0)
+PASSED
+[PORT-20 step 1] negative control — the pre-PORT-20 power-wave assembly on open undriven ports:
+    S (power waves):
+[[0.2       +0.4j        0.4248927 +0.18454936j]
+ [0.44      +0.08j       0.09871245+0.21459227j]]
+    S (analytic):
+[[-0.01400836+0.3420988j   0.49397886+0.04177931j]
+ [ 0.49397886+0.04177931j -0.10346522+0.10567707j]]
+    S21: power-wave np.complex128(0.44+0.08j) vs analytic np.complex128(0.49397886458589346+0.041779306955025804j)
+    |dS21| = 6.614030e-02, max|dS| = 2.296483e-01 (floor 1.0e-02, ceiling 2.0)
+PASSED
+tests/unit/test_port_circuit_layer.py::test_ladder_closed_form_matches_the_mesh_matrix_eigenvalues[4] 
+tests/unit/test_port_circuit_layer.py::test_ladder_closed_form_matches_the_mesh_matrix_eigenvalues[4] 
+[PORT-15 (i)] N = 4: closed-form mode frequencies (MHz), k = 0…N/2:
+  k=0:112.539540  k=1:45.944075  k=2:33.931948
+[PORT-15 (i)] N = 4: max |eig − closed form| / closed form = 5.280e-16
+PASSED
+[PORT-15 (i)] N = 4: closed-form mode frequencies (MHz), k = 0…N/2:
+  k=0:112.539540  k=1:45.944075  k=2:33.931948
+[PORT-15 (i)] N = 4: max |eig − closed form| / closed form = 5.280e-16
+PASSED
+tests/unit/test_port_circuit_layer.py::test_ladder_closed_form_matches_the_mesh_matrix_eigenvalues[16] 
+tests/unit/test_port_circuit_layer.py::test_ladder_closed_form_matches_the_mesh_matrix_eigenvalues[16] 
+[PORT-15 (i)] N = 16: closed-form mode frequencies (MHz), k = 0…N/2:
+  k=0:112.539540  k=1:95.779118  k=2:71.687545  k=3:55.670482  k=4:45.944075  k=5:40.005813  k=6:36.444553  k=7:34.534661  k=8:33.931948
+[PORT-15 (i)] N = 16: max |eig − closed form| / closed form = 2.366e-15
+PASSED
+[PORT-15 (i)] N = 16: closed-form mode frequencies (MHz), k = 0…N/2:
+  k=0:112.539540  k=1:95.779118  k=2:71.687545  k=3:55.670482  k=4:45.944075  k=5:40.005813  k=6:36.444553  k=7:34.534661  k=8:33.931948
+[PORT-15 (i)] N = 16: max |eig − closed form| / closed form = 2.366e-15
+PASSED
+tests/unit/test_port_circuit_layer.py::test_one_detuned_leg_moves_the_spectrum_off_the_closed_form 
+tests/unit/test_port_circuit_layer.py::test_one_detuned_leg_moves_the_spectrum_off_the_closed_form 
+[PORT-15 control] N = 4, one leg ×1.01 (ε = 0.01, ceiling 2ε/N = 5.000e-03):
+  per-mode |Δω²|/ω² = [2.2789e-03 4.1287e-03 0.0000e+00 7.6800e-16]
+  worst mode: 4.1287e-03 in ω², 2.0622e-03 in ω
+  k = 1 degenerate pair split: 4.1287e-03 in ω²
+PASSED
+tests/unit/test_port_circuit_layer.py::test_s_route_termination_equals_the_z_route[matched-50] 
+[PORT-15 control] N = 4, one leg ×1.01 (ε = 0.01, ceiling 2ε/N = 5.000e-03):
+  per-mode |Δω²|/ω² = [2.2789e-03 4.1287e-03 0.0000e+00 7.6800e-16]
+  worst mode: 4.1287e-03 in ω², 2.0622e-03 in ω
+  k = 1 degenerate pair split: 4.1287e-03 in ω²
+PASSED
+tests/unit/test_port_circuit_layer.py::test_s_route_termination_equals_the_z_route[matched-50] 
+[PORT-15 (ii)] Z = 50.0 Ω: max |S'_S-route − S'_Z-route| = 1.388e-16  (‖S'‖_F = 0.701032)
+PASSED
+tests/unit/test_port_circuit_layer.py::test_s_route_termination_equals_the_z_route[C-100pF-at-10MHz] 
+[PORT-15 (ii)] Z = 50.0 Ω: max |S'_S-route − S'_Z-route| = 1.388e-16  (‖S'‖_F = 0.701032)
+PASSED
+tests/unit/test_port_circuit_layer.py::test_s_route_termination_equals_the_z_route[C-100pF-at-10MHz] 
+[PORT-15 (ii)] Z = (-0-159.15j) Ω: max |S'_S-route − S'_Z-route| = 2.559e-16  (‖S'‖_F = 0.742108)
+PASSED
+tests/unit/test_port_circuit_layer.py::test_s_route_termination_equals_the_z_route[L-1uH-at-10MHz] 
+[PORT-15 (ii)] Z = (-0-159.15j) Ω: max |S'_S-route − S'_Z-route| = 2.559e-16  (‖S'‖_F = 0.742108)
+PASSED
+[PORT-15 (ii)] Z = 62.83j Ω: max |S'_S-route − S'_Z-route| = 2.666e-16  (‖S'‖_F = 0.857709)
+PASSED
+tests/unit/test_port_circuit_layer.py::test_s_route_termination_equals_the_z_route[L-1uH-at-10MHz] 
+tests/unit/test_port_circuit_layer.py::test_s_route_termination_equals_the_z_route[R-200] 
+[PORT-15 (ii)] Z = 200.0 Ω: max |S'_S-route − S'_Z-route| = 2.359e-16  (‖S'‖_F = 0.723455)
+PASSED
+[PORT-15 (ii)] Z = 62.83j Ω: max |S'_S-route − S'_Z-route| = 2.666e-16  (‖S'‖_F = 0.857709)
+PASSED
+tests/unit/test_port_circuit_layer.py::test_s_route_termination_equals_the_z_route[short] 
+tests/unit/test_port_circuit_layer.py::test_s_route_termination_equals_the_z_route[R-200] 
+[PORT-15 (ii)] Z = 200.0 Ω: max |S'_S-route − S'_Z-route| = 2.359e-16  (‖S'‖_F = 0.723455)
+PASSED
+[PORT-15 (ii)] Z = 0.0 Ω: max |S'_S-route − S'_Z-route| = 1.671e-16  (‖S'‖_F = 0.826060)
+PASSED
+tests/unit/test_port_circuit_layer.py::test_s_route_termination_equals_the_z_route[short] 
+tests/unit/test_port_circuit_layer.py::test_s_route_termination_equals_the_z_route[open-1e9] 
+[PORT-15 (ii)] Z = 1000000000.0 Ω: max |S'_S-route − S'_Z-route| = 2.502e-16  (‖S'‖_F = 0.756262)
+PASSED
+tests/unit/test_port_circuit_layer.py::test_matched_termination_returns_s_aa_exactly 
+[PORT-15 (ii)] Z = 0.0 Ω: max |S'_S-route − S'_Z-route| = 1.671e-16  (‖S'‖_F = 0.826060)
+PASSED
+tests/unit/test_port_circuit_layer.py::test_s_route_termination_equals_the_z_route[open-1e9] 
+[PORT-15 (iii)] Γ = 0: max|S' − S_aa| = 0.000e+00 (1 port), 0.000e+00 (2 ports)
+PASSED
+[PORT-15 (ii)] Z = 1000000000.0 Ω: max |S'_S-route − S'_Z-route| = 2.502e-16  (‖S'‖_F = 0.756262)
+PASSED
+tests/unit/test_port_circuit_layer.py::test_matched_termination_returns_s_aa_exactly 
+[PORT-15 (iii)] Γ = 0: max|S' − S_aa| = 0.000e+00 (1 port), 0.000e+00 (2 ports)
+PASSED
+
+============================== 22 passed in 0.72s ==============================
+
+
+============================== 22 passed in 0.72s ==============================
+
+## Exit
+- Status: 0
+- Elapsed (s): 3
+- Filtered lines (gmsh optimisation chatter): 0
