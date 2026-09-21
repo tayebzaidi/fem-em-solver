@@ -28,6 +28,14 @@ unless fixing it is the task.
 
 ## Failing tests
 
+### 🟡 DELIBERATE 2026-09-21 (`OPS-60`, 04:30 implementer slot) — `tests/environment/test_scikit_rf_version.py` is red on the running image until the operator rebuilds it
+
+| | |
+| --- | --- |
+| **Symptom** | `test_pinned_scikit_rf_version_is_exact` fails with `ModuleNotFoundError: No module named 'skrf'` (`20260921T093041Z_OPS-60.log:48`, Status 1, 1 s, `-n 1`). |
+| **Cause** | Expected: `OPS-60` pinned `scikit-rf==2.1.0` in `docker/Dockerfile`, but the running container was built before that line existed. This failure is the chunk's negative control. |
+| **Resolves with** | The operator's image rebuild (`docker compose -f docker/docker-compose.yml build`, then `up -d --force-recreate`); the same test then passes and closes `OPS-60` ✅ and unblocks `PORT-23` (§9 item 20). Retire this entry then. |
+
 ### `post4_step5_probe.py` runs again on the 0.11 image but its step-4 fixture pins have drifted — `PROBE_RESULT FAIL` on a mesh that is 9 291 cells against a 9 261-cell record (2026-09-18, narrowed by `OPS-50`; was "the VTX gate is skipped when the `B` writer fails, and the probe calls the removed `adios2.ADIOS()`", 03:00 review)
 
 **Part (a) of this entry — the `mag:1` / `mag:2` writer-side hole — is fixed and retired by `OPS-50`**: a `B` writer failure now raises in both examples, and the gate is called unconditionally. Measured separation, same wrapper, same rank width: the post-change `mag:1` under a monkeypatched `dolfinx.io.VTXWriter` exits **1** with `⚠ VTX output of B failed` and no "XDMF files were still created" line (`20260918T093606Z_OPS-50-control-raises.log:283,287,411`), where the file pinned at `a33be1d` exits **0** and prints `Note: XDMF files were still created and can be used instead` (`20260918T093622Z_OPS-50-control-prechange.log:266–267,445`). Unpatched, both examples still pass the `EX-14` / `EX-17` anchor at `-n 2` (`…093320Z_OPS-50-mag1.log:404–407`, `…093336Z_OPS-50-mag2.log:340–343`). What remains open is part (b), below.

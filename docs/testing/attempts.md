@@ -2731,3 +2731,12 @@ committed at 12:53Z).
   touched. No `src/` change.
 - **Status moved:** §9 item 18 done-marked; §7 `EX-57` row's running
   narrative extended with the `mesh:8` entry.
+
+## 2026-09-21T09:32Z — `OPS-60` (§9 item 19) — **complete as scoped: ⬜ → 🟡** (04:30 slot)
+
+- **Preflight:** tree clean, container Up.
+- **Version:** host `curl` to PyPI denied by the allowlist; `pip index versions scikit-rf` inside the container through the harness works — newest release **2.1.0** (`20260921T093027Z_OPS-60-version-probe.log:34`, 2 s). Pinned that.
+- **Change:** `docker/Dockerfile` pip block gains `scikit-rf==2.1.0` beside `pyvista`; new `tests/environment/test_scikit_rf_version.py` (imports `skrf`, prints version + file, asserts `== "2.1.0"`, the `OPS-18` pattern). No `src/`.
+- **Negative control (asserted):** on the current image the test fails with `ModuleNotFoundError: No module named 'skrf'` — `20260921T093041Z_OPS-60.log:48`, Status 1, 1 s, `-n 1`. As predicted.
+- **Status moved:** `OPS-60` 🟡; known-issues gains a DELIBERATE entry for the red test; dashboard already carries "rebuild the image when `OPS-60` lands" (item 2), not edited.
+- **Next:** operator rebuild → the same test green closes `OPS-60` ✅ and opens §9 item 20 (`PORT-23` step 1).

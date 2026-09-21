@@ -8,6 +8,7 @@ RUN pip install --no-cache-dir --no-binary=h5py h5py
 RUN pip install --no-cache-dir \
     gmsh \
     pyvista \
+    scikit-rf==2.1.0 \
     meshio \
     tqdm \
     pydantic \

@@ -1,0 +1,43 @@
+# Test Run
+- Chunk: OPS-60-version-probe
+- Commit: 9eb1e39412940f7ef90c99de0e24a5003cbf9c6f
+- Time (UTC): 2026-09-21 09:30:27
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.5.1
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'timeout -k 10 60 pip index versions scikit-rf 2>&1 | head -5'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 24
+drwxr-xr-x  3 taz5297 taz5297 4096 Sep  4 23:31 .
+drwxr-xr-x 17 taz5297 taz5297 4096 Sep 21 04:30 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  721 Sep  3 13:49 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 4275 Sep 13 19:19 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.5.1
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''timeout -k 10 60 pip index versions scikit-rf 2>&1 | head -5'\'''
+scikit-rf (2.1.0)
+Available versions: 2.1.0, 2.0.1, 2.0.0, 1.13.0, 1.12.0, 1.11.0, 1.10.0, 1.9.0, 1.8.0, 1.7.0, 1.6.2, 1.5.0, 1.4.1, 1.4.0, 1.3.0, 1.2.0, 1.1.0, 1.0.0, 0.32.0, 0.31.0, 0.30.0, 0.29.1, 0.29.0, 0.28.0, 0.27.1, 0.27.0, 0.26.0, 0.25.0, 0.24.1, 0.24.0, 0.23.1, 0.23.0, 0.22.1, 0.22.0, 0.21.0, 0.20.0, 0.19.0, 0.18.1, 0.18.0, 0.17.0, 0.16.0, 0.15.5, 0.15.4, 0.15.3, 0.15.2, 0.15.1, 0.15, 0.14.9, 0.14.8, 0.14.7, 0.14.5, 0.14.3, 0.14.2, 0.14.1, 0.14, 0.13, 0.12, 0.11, 0.1
+
+[notice] A new release of pip is available: 26.1.2 -> 26.2.1
+[notice] To update, run: pip install --upgrade pip
+
+## Exit
+- Status: 0
+- Elapsed (s): 2
+- Filtered lines (gmsh optimisation chatter): 0
