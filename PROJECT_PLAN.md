@@ -3760,7 +3760,7 @@ operator opened on 09-19 "for a review to queue".
    **Status it can move:** `OPS-57` ⬜ → ✅. **Negative result:** any PORT
    record moves beyond its band ⇒ revert, known-issues, stop.
 
-30. **`OPS-58` — private-leak check: commit messages, fail-closed, "skipped"
+30. BLOCKED 2026-09-21 (12:36 UTC) — `OPS-58` negative result fired: the new checker's controls pass 16/16 (`20260921T123441Z_OPS-58.log`, 2 s) but `--audit` on this clone reports **1 match in one tracked file** (location withheld from tracked files — gitignored `docs/private/OPS-58-audit-hit.md`); code parked on `attempt/OPS-58-20260921T123545Z` (`5ddc1f3`). **Unblock:** the operator rules the match a leak (history rewrite before any push) or a false positive (shared input value), and says which; then merge the branch, re-run `--audit` to `clean:`, flip the row. 30. **`OPS-58` — private-leak check: commit messages, fail-closed, "skipped"
    is not "clean"** (implementer; the §7 row is the item;
    `scripts/testing/check_private_leak.py`, `install_git_hooks.sh`, a
    script-style test beside `test_tier_guard.py`; smoke, **host-side through
