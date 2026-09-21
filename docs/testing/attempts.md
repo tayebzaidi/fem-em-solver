@@ -2740,3 +2740,12 @@ committed at 12:53Z).
 - **Negative control (asserted):** on the current image the test fails with `ModuleNotFoundError: No module named 'skrf'` — `20260921T093041Z_OPS-60.log:48`, Status 1, 1 s, `-n 1`. As predicted.
 - **Status moved:** `OPS-60` 🟡; known-issues gains a DELIBERATE entry for the red test; dashboard already carries "rebuild the image when `OPS-60` lands" (item 2), not edited.
 - **Next:** operator rebuild → the same test green closes `OPS-60` ✅ and opens §9 item 20 (`PORT-23` step 1).
+
+## 2026-09-21T09:42Z — `WF-7` step 1 (§9 item 21) — **complete: 🧪 → 🟡** (09:30 slot)
+
+- **Item 20 skipped:** §9 item 20 (`PORT-23` step 1) was not taken — `import skrf` fails on the un-rebuilt image (`20260921T093041Z_OPS-60.log:48`); it waits on the operator rebuild that closes `OPS-60`.
+- **Change:** new `tests/validation/test_wf7_f_human_ring_matrix.py` (no `src/`): the F-human fixture built as the step-0 probe builds it, all 32 ring ports driven through `_solve_one_drive` with factor reuse, `PORT-16`'s `_source_power_w` / `_sheet_field_dissipation_w` and `ports.shares.terminal_form_deficit` evaluated before each drive's fields are dropped; every band imported.
+- **Window:** heavy, `-n 8`, complex, durable capture, `20260921T093429Z_WF-7-step1.log`, Status 0, 372 s (collect-only smoke `20260921T093404Z_WF-7-step1-collect.log`; `20260921T093357Z_WF-7-step1-collect.log` is a docker-socket denial, no run).
+- **Measured (all asserted green):** cells 507 266 (+5.200e-03, `:10480`); reciprocity 9.200731e-15 (`:10518`); σ_max 0.999914648 (`:10519`); 18 classes, worst spread 3.6997 % other-ring/2-steps (`:10520–10539`); exact identity ≤ 2.835e-15 on drives 1/9/17/25 (`:10540`); default-orientation extent 2.816e-17 m vs chord 1.716154e-02 m (`:20224`); column control lift 2.244e+11× (`:10542`). Predicted control 2.064468e-03 vs 2e-3 — at/above, as predicted (`:10543`).
+- **Identity coverage:** the first identity cost 17.31 s > the item's 15 s stop rule (`:10481`), so the item's fallback (drives 1, 9, 17, 25) ran; the window also printed the projected all-32 window at 886 s against the slot's 540 s budget.
+- **Next-attempt hypothesis / follow-up:** the identity on all 32 drives is ≈ 32 × 17 s ≈ 9 min of facet assembly (it recompiles one form per sheet per drive); caching the per-sheet forms across drives would make the all-32 reading cheap if a review wants it. H4/H5 (fields, B₁⁺, SAR) are the chain's next steps; the dashboard Human-scale row moves "priced" → "identities gated" at the next daily review.
