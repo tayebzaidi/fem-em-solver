@@ -93,12 +93,14 @@ from fem_em_solver.io.paraview_utils import (  # noqa: E402
     adopt_host_ownership,
     write_xdmf_with_tags,
 )
+from fem_em_solver.post.setup_figure import write_setup_figure  # noqa: E402
 
 from tests.mesh.test_birdcage_conductor_sizing import CAD_MASS_GATE  # noqa: E402
 from tests.mesh.test_birdcage_port_sheet_prerequisite import (  # noqa: E402
     CELL_COUNT_BAND,
     CONDUCTOR_RESOLUTION,
 )
+from tests.mesh.test_birdcage_port_sheets import PORT_LOWER, PORT_UPPER  # noqa: E402
 from tests.mesh.test_birdcage_port_tags import (  # noqa: E402
     AIR_PADDING,
     COIL_LENGTH,
@@ -137,6 +139,7 @@ from tests.mesh.test_birdcage_ring_gaps_scaleup import (  # noqa: E402
 CELL_TAG_NAMES = {1: "conductor", 2: "air", 3: "phantom"}
 
 OUTPUT_DIR = Path(__file__).resolve().parent / "paraview_output"
+FIGURE_DIR = Path(__file__).resolve().parent / "figures"  # committed, EX-57
 BASENAME = "meshing_09_birdcage_sixteen_ring_gaps"
 
 # `GEO-20` step 2's own record run at `-n 2`
@@ -228,6 +231,44 @@ def main() -> None:
     # collective inside it is entered by every rank before anything is printed
     # (the `GEO-18` step 2 attempt-1 deadlock).
     scaled = _measure_ring(SCALED_LEG_COUNT)
+
+    # Right after the mesh is built, before any analysis or printed timer —
+    # `scaled["elapsed"]` and `scaled["diag"]["mesh_wall_time_s"]` are already
+    # captured inside `_measure_ring`, so the render time never folds into
+    # either printed record (`EX-57`). This is the gated rung the figure
+    # draws: the 16-leg, both-end-rings-cut build is `GEO-20` step 2's newly
+    # gated capability, while the 4-leg rung built below is the in-script
+    # negative control and is not pictured.
+    write_setup_figure(
+        scaled["mesh"],
+        scaled["cells"],
+        FIGURE_DIR / f"{BASENAME}_setup.png",
+        region_names={
+            1: "conductor",
+            2: "air",
+            3: "phantom",
+            **{
+                PORT_LOWER + i: f"leg L{i} conductor (uncut)"
+                for i in range(1, SCALED_LEG_COUNT + 1)
+            },
+            **{PORT_LOWER + i: f"ring port P{i} lower" for i in scaled["ring_ports"]},
+            **{PORT_UPPER + i: f"ring port P{i} upper" for i in scaled["ring_ports"]},
+        },
+        hide_tags=(2,),
+        translucent_tags=(3,),
+        slice_normal=(0.0, 0.0, 1.0),
+        # Off the ring's exact axial centre (0.5*COIL_LENGTH) by 1 mm so the
+        # cut plane does not sit exactly on the torus's own symmetry plane,
+        # which produced a degenerate near-empty slice through the ring
+        # band on the first render (viewed, then corrected).
+        slice_origin=(0.0, 0.0, 0.5 * COIL_LENGTH - 1.0e-3),
+        title=(
+            "mesh:9 - 16-leg birdcage, both end rings gap-cut into 32 ports "
+            "(22.5 deg pitch, GEO-20 step 2)"
+        ),
+        comm=comm,
+    )
+
     problems = [_report_safely(f"{SCALED_LEG_COUNT} legs", scaled, comm)]
 
     # ---- rung 2: four legs, same code path, the negative control -----------

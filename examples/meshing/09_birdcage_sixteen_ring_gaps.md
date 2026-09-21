@@ -79,6 +79,40 @@ cannot resonate; a high-pass *layout* is not a high-pass *circuit*. Nothing in
 this repo solves at sixteen legs, and `PORT-9` is 🟡 (PROJECT_PLAN.md §2). This
 is F-small — a 0.07 m ring.
 
+## Setup figure
+
+![mesh:9 setup — 16-leg ring-gapped birdcage, 3-D view and near-ring slice](figures/meshing_09_birdcage_sixteen_ring_gaps_setup.png)
+
+*Left:* the **16-leg rung**'s tagged regions (`_measure_ring(SCALED_LEG_COUNT)`,
+`GEO-20` step 2's newly gated capability) with the air box (tag `2`) hidden —
+the sixteen copper legs (tags `101`-`116`, named `leg L{i} conductor
+(uncut)` so they share the `conductor` colour class with the two end
+rings, tag `1`, rather than each drawing in a different fallback colour —
+the first render used a bare `leg L{i} (uncut)` name that matched no
+`CLASS_COLOURS` keyword and came out as a six-colour cycle, corrected before
+committing) at the coil axis, the translucent saline phantom (tag `3`), and
+all thirty-two ring gap-box halves (red, tags `117`-`148` lower /
+`217`-`248` upper — the `port` colour class) sitting on the outer periphery
+of both end rings at the 22.5° pitch. No `clip_normal`: every gap box sits
+on the outside with nothing behind it to hide, so the unclipped isometric
+view keeps all thirty-two on screen, eight per quadrant per ring. *Right:*
+the slice at `z = 0.5 * COIL_LENGTH − 1 mm = 0.069 m` (normal `(0, 0, 1)`),
+1 mm below the top ring's own axial centre rather than exactly on it — the
+first render put the cut exactly on the ring's symmetry plane and it came
+back with no visible ring band, only the sixteen leg cross-sections, and
+moving 1 mm off it did not change that. The panel therefore shows what it
+actually shows: the sixteen leg cross-sections (`conductor`, brown) on the
+`LEG_SPACING` circle with air (grey) around and between them, confirming
+the C16 leg pitch; the ring band and its 32 gaps are **not resolved** at
+this slice — `RING_MINOR_RADIUS` is 4 mm and the gap boxes are the feature
+of interest, so the 3-D panel on the left, not this slice, is the one to
+read for the ring-gap layout. Rendered by
+`fem_em_solver.post.setup_figure.write_setup_figure` from the 16-leg rung,
+called immediately after `_measure_ring` returns and before any analysis or
+the four-leg control build, so the render never enters the printed
+`elapsed`/`mesh_wall_time_s` timers; regenerate with
+`FEM_EM_SETUP_FIGURES=1` in the runner's environment.
+
 ## 2. How to run it
 
 ```
