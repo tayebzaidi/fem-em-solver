@@ -1,0 +1,39 @@
+# Test Run
+- Chunk: EX-61-port22-regate
+- Commit: 0d66fdbd1025cadc0a210e70ce3042cf64bd48ca
+- Time (UTC): 2026-09-21 12:51:14
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.5.1
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose -f docker/docker-compose.yml exec -T fem-em-solver bash -lc 'cd /workspace && mkdir -p /workspace/logs && source /usr/local/bin/dolfinx-complex-mode && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 FEM_EM_PORT22_FREQUENCIES_MHZ=44,48,52,56,60,64 timeout -k 30 590 mpiexec -n 2 python3 -m pytest tests/validation/test_port22_driven_sweep_resonance.py -s -v --tb=short > /workspace/logs/ex61-port22-regate-raw.log 2>&1; rc=$?; echo "[capture] rc=$rc" >> /workspace/logs/ex61-port22-regate-raw.log; cat /workspace/logs/ex61-port22-regate-raw.log; exit $rc'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 24
+drwxr-xr-x  3 taz5297 taz5297 4096 Sep 21 04:30 .
+drwxr-xr-x 17 taz5297 taz5297 4096 Sep 21 07:51 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  744 Sep 21 04:30 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 4275 Sep 13 19:19 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.5.1
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose -f docker/docker-compose.yml exec -T fem-em-solver bash -lc '\''cd /workspace && mkdir -p /workspace/logs && source /usr/local/bin/dolfinx-complex-mode && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 FEM_EM_PORT22_FREQUENCIES_MHZ=44,48,52,56,60,64 timeout -k 30 590 mpiexec -n 2 python3 -m pytest tests/validation/test_port22_driven_sweep_resonance.py -s -v --tb=short > /workspace/logs/ex61-port22-regate-raw.log 2>&1; rc=$?; echo "[capture] rc=$rc" >> /workspace/logs/ex61-port22-regate-raw.log; cat /workspace/logs/ex61-port22-regate-raw.log; exit $rc'\'''
+permission denied while trying to connect to the docker API at unix:///var/run/docker.sock
+
+## Exit
+- Status: 1
+- Elapsed (s): 0
+- Filtered lines (gmsh optimisation chatter): 0

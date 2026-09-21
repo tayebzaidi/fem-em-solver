@@ -2831,3 +2831,8 @@ committed at 12:53Z).
 - **Logs:** `20260921T124008Z_EX-61.log`, `20260921T124012Z_EX-61.log` (both docker-socket denials, the `date -u &&` prefix mistake); `20260921T124138Z_EX-61.log` (the green example run); `20260921T124752Z_EX-61.log`, `20260921T124756Z_EX-61.log` (pre-censuses); `20260921T124808Z_EX-61.log` (post docrefs, red on the shortened filename); `20260921T124841Z_EX-61.log`, `20260921T124848Z_EX-61.log` (post-censuses, green).
 - **Records:** `EX-61` row ✅ (PROJECT_PLAN.md §7); §9 item 31 DONE. No `src/` touched; no band moved. No absolute `S₁₁`/`Z_in` claim made.
 - **Hypothesis for the next attempt:** none — chunk closed.
+
+## 2026-09-21T12:54Z (2026-09-21 12:30 UTC slot, slot owner) — `EX-61` addendum — rule (a) gate re-run
+- **Why:** the `EX-61` executor lifted the `c_tuned` / `window` fixture bodies in `tests/validation/test_port22_driven_sweep_resonance.py` (rule (a)) but did not re-run that gate module in the slot; rule (a) requires it. Also: the executor's code landed on `main` in an intermediate `fd5980c` "attempt(EX-61)" commit rather than on an `attempt/*` branch — harmless now that `0d66fdb` closes it, but noted for the review.
+- **Result / measured:** `PORT-22` module as committed, window `44,48,52,56,60,64` MHz (the recorded `w1` window), `-n 2` complex: **5 passed in 157.65 s**, Status 0, 160 s elapsed; 48 MHz residual 6.532384e-05 (0.0653 × band). `20260921T125120Z_EX-61-port22-regate.log`. `20260921T125113Z_EX-61-port22-regate.log` is a docker-socket denial (my `| tail` pipe — known issue), no compute.
+- **Hypothesis for the next attempt:** none — rule (a) satisfied.
