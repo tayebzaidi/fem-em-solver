@@ -241,8 +241,12 @@ def _cavity_census(msh, facet_tags, comm):
     )
 
 
-def _hole_rung(frequency_hz):
-    """`_four_port_rung`'s construction on the hole mesh; no conductor material."""
+def _hole_rung(frequency_hz, degree: int = 1):
+    """`_four_port_rung`'s construction on the hole mesh; no conductor material.
+
+    ``degree`` (`ANS-6` step 2, additive): N1curl order forwarded to both
+    solves; the default 1 is this module's gate, unchanged.
+    """
     comm = MPI.COMM_WORLD
     ports_idx = list(range(1, LEG_COUNT + 1))
     msh, cell_tags, facet_tags, diag, t_mesh = _sheets_build(True, as_hole=True)
@@ -314,7 +318,8 @@ def _hole_rung(frequency_hz):
     comm.Barrier()
     t0 = time.perf_counter()
     result = run_n_port_sparameter_sweep(
-        problem, port_defs, lumped_sheet_ports=specs, lumped_sheet_facet_tags=tags_f
+        problem, port_defs, lumped_sheet_ports=specs, lumped_sheet_facet_tags=tags_f,
+        degree=degree,
     )
     comm.Barrier()
     t_sweep = time.perf_counter() - t0
@@ -323,7 +328,7 @@ def _hole_rung(frequency_hz):
     t0 = time.perf_counter()
     p1, fields = run_lumped_sheet_port_case(
         problem, port_defs, specs, facet_tags=tags_f, driven_port_id=DRIVEN,
-        verbose=False, return_fields=True,
+        verbose=False, return_fields=True, degree=degree,
     )
     comm.Barrier()
     t_p1 = time.perf_counter() - t0

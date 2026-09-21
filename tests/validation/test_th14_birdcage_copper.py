@@ -253,14 +253,19 @@ def ladder():
     return _build_ladder()
 
 
-def _build_ladder():
+def _build_ladder(degree: int = 1, sigmas=None):
     """`ladder`'s body, lifted module-level (`ANS-6`, rule (a)) so a caller
 
     outside pytest's fixture machinery — the `ans:6` example script — can
     invoke the exact same computation `ladder` gives this module's own
     tests, rather than re-implementing it. Nothing below this line moved or
     changed; the fixture above is now a one-line wrapper.
+
+    ``degree`` / ``sigmas`` (`ANS-6` step 2, additive): the N1curl order
+    forwarded to every solve, and the σ subset of ``SIGMA_LADDER`` to sweep.
+    Defaults (1, the full ladder) are this module's gate, unchanged.
     """
+    sigma_list = SIGMA_LADDER if sigmas is None else tuple(sigmas)
     comm = MPI.COMM_WORLD
     t0 = time.perf_counter()
     msh, cell_tags, facet_tags, _diag, t_mesh = _sheets_build(True, as_hole=True)
@@ -283,18 +288,19 @@ def _build_ladder():
         t1 = time.perf_counter()
         pec_problem = _problem(msh, cell_tags, f_hz, facet_tags, None)
         rec["pec"] = _sweep_record(run_n_port_sparameter_sweep(
-            pec_problem, port_defs, lumped_sheet_ports=specs, lumped_sheet_facet_tags=tags_f))
+            pec_problem, port_defs, lumped_sheet_ports=specs, lumped_sheet_facet_tags=tags_f,
+            degree=degree))
         comm.Barrier()
         rec["t_pec"] = time.perf_counter() - t1
         imp_problem = _problem(msh, cell_tags, f_hz, outer_tags, (OUTER_BOX_TAG,))
-        for sig in SIGMA_LADDER:
+        for sig in sigma_list:
             r_s = surface_resistance_ohm(omega, sig)
             z_s = (1.0 + 1.0j) * r_s
             t1 = time.perf_counter()
             term = _leontovich_term(msh, facet_tags, z_s, omega)
             sw = _sweep_record(run_n_port_sparameter_sweep(
                 imp_problem, port_defs, lumped_sheet_ports=specs, lumped_sheet_facet_tags=tags_f,
-                extra_bilinear_terms=[term]))
+                extra_bilinear_terms=[term], degree=degree))
             comm.Barrier()
             sw["t"] = time.perf_counter() - t1
             sw["z_s"] = z_s
@@ -308,7 +314,7 @@ def _build_ladder():
         t1 = time.perf_counter()
         p1, fields = run_lumped_sheet_port_case(
             imp_problem, port_defs, specs, facet_tags=tags_f, driven_port_id=DRIVEN,
-            verbose=False, return_fields=True, extra_bilinear_terms=[term_cu])
+            verbose=False, return_fields=True, extra_bilinear_terms=[term_cu], degree=degree)
         comm.Barrier()
         rec["t_p1"] = time.perf_counter() - t1
         e = fields.e_complex
@@ -357,8 +363,8 @@ def _build_ladder():
                 print("    max|S_sigma - S_PEC| per class: " + ", ".join(
                     f"{c} {sw['class_ds'][c]:.9e}" for c in CLASSES)
                     + f"; max entry {sw['max_abs_ds']:.9e}", flush=True)
-            last = rec["sigma"][SIGMA_LADDER[-1]]["max_abs_ds"]
-            print(f"    negative control (PREDICTED, printed): sigma = {SIGMA_LADDER[-1]:.1e} "
+            last = rec["sigma"][sigma_list[-1]]["max_abs_ds"]
+            print(f"    negative control (PREDICTED, printed): sigma = {sigma_list[-1]:.1e} "
                   f"max|S - S_PEC| = {last:.3e} vs predicted <= {PREDICTED_PEC_LIMIT_MAX_ABS_DS:.0e}: "
                   f"{'met' if last <= PREDICTED_PEC_LIMIT_MAX_ABS_DS else 'NOT met'}", flush=True)
             print(f"    (b) P1 copper: P_src {p['p_src']:.9e} W, sum P_sheet {p['p_sheets']:.9e} W, "

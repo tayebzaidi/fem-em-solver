@@ -70,6 +70,17 @@ suite it changed is re-run separately:
 docker compose exec -T fem-em-solver bash -lc 'cd /workspace && source /usr/local/bin/dolfinx-complex-mode && PYTHONPATH=/workspace/src mpiexec -n 2 python3 -m pytest tests/validation/test_th14_birdcage_copper.py -v --tb=short -s'
 ```
 
+**Degree knob (`ANS-6` step 2).** Set `FEM_EM_ANS6_DEGREE=<p>` and
+`FEM_EM_ANS6_FREQ_MHZ=<10|64|128>` (add `-e NAME=value` after `exec -T`, or
+`export` inside the `bash -lc`) to run the Cu and PEC columns at one frequency
+and N1curl degree `p` — no σ-ladder, no PEC cross-check, no field export. The
+gates are asserted as usual, plus a negative control that every C4 class moves
+by more than 1e-6 relative from the tracked degree-1 `metrics.json`. Output is
+`metrics_degree<p>_<f>MHz.json` (untracked; do not commit); `metrics.json` and
+`COMPARISON.md` are never rewritten on this route. Unset, the script behaves
+exactly as before. Measured at `p = 2`, 64 MHz, `-n 8`: 183.9 s, 13.78 GiB
+summed peak RSS.
+
 Tier: **heavy** (measured 167 s at `-n 2`, well under the 590 s ceiling —
 `TH-14`'s own gate re-run measured 103 s for all three frequencies, much
 cheaper than its originally quoted 340 s three-frequency window).

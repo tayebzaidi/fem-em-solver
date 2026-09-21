@@ -70,6 +70,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import os
 import sys
 import time
 from datetime import datetime, timezone
@@ -116,6 +117,7 @@ from tests.validation.test_th14_birdcage_copper import (  # noqa: E402
     COPPER_SIGMA,
     DISCRETE_IDENTITY_RTOL,
     DRIVEN,
+    FREQS_ENV,
     FREQUENCIES_HZ,
     OUTER_BOX_TAG,
     PREDICTED_PEC_LIMIT_MAX_ABS_DS,
@@ -174,6 +176,129 @@ PEC_CROSS_CHECK_RTOL = 1.0e-8
 BASIS_ORDER = "Nedelec first kind, degree 1 (N1curl)"
 BASIS_UNKNOWNS_PER_TET = 6
 AED_ORDER_CORRESPONDENCE = "HFSS Zero Order (20 unknowns/tet = First Order, the AED default)"
+
+#: `ANS-6` step 2 (T9b): the degree knob. Unset => byte-identical behaviour
+#: (degree 1, full ladder, tracked ``metrics.json`` / ``COMPARISON.md``
+#: rewritten as before). Set => one frequency (``FEM_EM_ANS6_FREQ_MHZ``), the
+#: Cu and PEC columns only (no sigma-ladder, no PEC cross-check, no field
+#: export), degree-tagged ``metrics_degree<p>_<f>MHz.json`` (untracked), the
+#: tracked files never touched.
+DEGREE_ENV = "FEM_EM_ANS6_DEGREE"
+FREQ_ENV = "FEM_EM_ANS6_FREQ_MHZ"
+#: Negative control (rule (e)): the knob reaches the solve -- every C4 class
+#: moves by more than this relative amount between degree 1 (tracked
+#: ``metrics.json``) and the knob's degree. ASSERTED floor.
+KNOB_MOVE_FLOOR = 1.0e-6
+#: ... and by no more than this (sanity ceiling, ASSERTED).
+KNOB_MOVE_CEILING = 2.0
+#: PREDICTED size, printed only: F-small's one-mesh order move, 6.09 / 5.38 /
+#: 6.70 % at 128 MHz (`ANS-4` step 2b) => roughly 3e-2 .. 7e-2.
+KNOB_MOVE_PREDICTED = (3.0e-2, 7.0e-2)
+
+
+def _basis_order(degree: int) -> str:
+    if degree == 1:
+        return BASIS_ORDER
+    return f"Nedelec first kind, degree {degree} (N1curl)"
+
+
+def _basis_unknowns_per_tet(degree: int) -> int:
+    # N1curl (first kind) dimension on a tetrahedron: p (p + 2)(p + 3) / 2.
+    return degree * (degree + 2) * (degree + 3) // 2
+
+
+def _knob_main(comm, degree: int) -> None:
+    """The degree-knob route: Cu + PEC columns at one frequency, gates asserted."""
+    import resource
+
+    raw_f = os.environ.get(FREQ_ENV)
+    if raw_f is None or raw_f.strip() not in FREQUENCIES_HZ:
+        raise RuntimeError(
+            f"{DEGREE_ENV} set requires {FREQ_ENV} in {sorted(FREQUENCIES_HZ)}; got {raw_f!r}"
+        )
+    key = raw_f.strip()
+    label = f"{key} MHz"
+    os.environ[FREQS_ENV] = key
+    if comm.rank == 0:
+        print(
+            f"[ANS-6 step 2] degree knob: {DEGREE_ENV}={degree}, {FREQ_ENV}={key}; "
+            f"basis {_basis_order(degree)}, {_basis_unknowns_per_tet(degree)} unknowns/tet; "
+            "Cu + PEC columns only; tracked metrics.json / COMPARISON.md not rewritten",
+            flush=True,
+        )
+    tracked = json.loads((CASE_DIR / "metrics.json").read_text())
+    started = time.perf_counter()
+    ladder = _build_ladder(degree=degree, sigmas=(COPPER_SIGMA,))
+    comm.Barrier()
+    elapsed = time.perf_counter() - started
+    rec = ladder["freqs"][key]
+    cu = rec["sigma"][COPPER_SIGMA]
+    pec = rec["pec"]
+    for name, sw in (("cu", cu), ("pec", pec)):
+        assert sw["reciprocity"] <= RECIPROCITY_BAND, (label, name, sw["reciprocity"])
+        sigma_max = float(np.max(sw["sigma"]))
+        assert sigma_max <= 1.0 + PASSIVITY_SIGMA_TOLERANCE, (label, name, sigma_max)
+        for cname, value in sw["spreads"].items():
+            assert value <= ADJACENT_SPREAD_BAND, (label, name, cname, value)
+    assert rec["identity_residual"] <= DISCRETE_IDENTITY_RTOL, (label, rec["identity_residual"])
+
+    moves = {}
+    for name, sw in (("cu", cu), ("pec", pec)):
+        s_d1 = np.asarray(
+            [[complex(e["re"], e["im"]) for e in row]
+             for row in tracked["rungs"][label][name]["s_matrix"]]
+        )
+        c1 = _class_entries(s_d1)
+        cp = _class_entries(np.asarray(sw["s"]))
+        moves[name] = {c: float(abs(cp[c] - c1[c]) / abs(c1[c])) for c in CLASSES}
+    rss_kib = comm.allreduce(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss, op=MPI.SUM)
+    if comm.rank == 0:
+        for name, sw in (("cu", cu), ("pec", pec)):
+            print(
+                f"[ANS-6 step 2] degree {degree} {label} {name}: reciprocity "
+                f"{sw['reciprocity']:.3e} (band {RECIPROCITY_BAND:.0e}), sigma_max "
+                f"{float(np.max(sw['sigma'])):.12f}, spreads "
+                + ", ".join(f"{c} {v * 100:.4f}%" for c, v in sw["spreads"].items())
+                + f"; class move vs degree 1 (ASSERTED > {KNOB_MOVE_FLOOR:.0e}, <= "
+                f"{KNOB_MOVE_CEILING:g}; PREDICTED {KNOB_MOVE_PREDICTED[0]:.0e}.."
+                f"{KNOB_MOVE_PREDICTED[1]:.0e}): "
+                + ", ".join(f"{c} {v:.4e}" for c, v in moves[name].items()),
+                flush=True,
+            )
+        print(
+            f"[ANS-6 step 2] degree {degree} {label}: copper surface-loss identity residual "
+            f"{rec['identity_residual']:.3e} (ASSERTED <= {DISCRETE_IDENTITY_RTOL:g}); "
+            f"PEC sweep {rec['t_pec']:.1f} s, Cu sweep {cu['t']:.1f} s, P1 {rec['t_p1']:.1f} s; "
+            f"total {elapsed:.1f} s at -n {comm.size}; summed ru_maxrss "
+            f"{rss_kib / 1024 ** 2:.2f} GiB",
+            flush=True,
+        )
+    for name in ("cu", "pec"):
+        for c, v in moves[name].items():
+            assert KNOB_MOVE_FLOOR < v <= KNOB_MOVE_CEILING, (name, c, v)
+    if comm.rank == 0:
+        out = CASE_DIR / f"metrics_degree{degree}_{key}MHz.json"
+        payload = {
+            "chunk": "ANS-6 step 2",
+            "degree": degree,
+            "basis": _basis_order(degree),
+            "unknowns_per_tet": _basis_unknowns_per_tet(degree),
+            "frequency": label,
+            "n_cells": int(ladder["cells"]),
+            "mpi_ranks": int(comm.size),
+            "seconds": float(elapsed),
+            "summed_ru_maxrss_gib": float(rss_kib / 1024 ** 2),
+            "cu": {"s_matrix": _matrix_payload(np.asarray(cu["s"])),
+                   "reciprocity": float(cu["reciprocity"]),
+                   "sigma_max": float(np.max(cu["sigma"]))},
+            "pec": {"s_matrix": _matrix_payload(np.asarray(pec["s"])),
+                    "reciprocity": float(pec["reciprocity"]),
+                    "sigma_max": float(np.max(pec["sigma"]))},
+            "identity_residual": float(rec["identity_residual"]),
+            "class_move_vs_degree1": moves,
+        }
+        out.write_text(json.dumps(payload, indent=2) + "\n")
+        print(f"[ANS-6 step 2] wrote {out.name} (untracked); all gates green", flush=True)
 
 _BLANK = " "
 
@@ -401,6 +526,11 @@ def main() -> None:
             "source /usr/local/bin/dolfinx-complex-mode (the runner does this "
             "automatically for the `ans:` group)."
         )
+
+    raw_degree = os.environ.get(DEGREE_ENV)
+    if raw_degree is not None:
+        _knob_main(comm, int(raw_degree))
+        return
 
     if comm.rank == 0:
         print("=" * 78, flush=True)
