@@ -1,0 +1,73 @@
+# Test Run
+- Chunk: OPS-55
+- Commit: 14a0d71554b11756fcb5f844883f3c81b14e809b
+- Time (UTC): 2026-09-21 11:17:43
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.5.1
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && OPS55_PRECHANGE_MODULE=/workspace/logs/ops55_prechange_evaluation.py PYTHONPATH=/workspace/src timeout -k 30 180 mpiexec -n 2 python3 -m pytest tests/post/test_evaluation_collective_guard.py -v -s --tb=short'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 24
+drwxr-xr-x  3 taz5297 taz5297 4096 Sep 21 04:30 .
+drwxr-xr-x 17 taz5297 taz5297 4096 Sep 21 06:17 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  744 Sep 21 04:30 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 4275 Sep 13 19:19 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.5.1
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && OPS55_PRECHANGE_MODULE=/workspace/logs/ops55_prechange_evaluation.py PYTHONPATH=/workspace/src timeout -k 30 180 mpiexec -n 2 python3 -m pytest tests/post/test_evaluation_collective_guard.py -v -s --tb=short'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... collected 6 items
+
+tests/post/test_evaluation_collective_guard.py::test_rank_dependent_point_list_raises_on_every_rank collected 6 items
+
+tests/post/test_evaluation_collective_guard.py::test_rank_dependent_point_list_raises_on_every_rank PASSEDPASSED
+tests/post/test_evaluation_collective_guard.py::test_identical_point_list_path_unchanged 
+tests/post/test_evaluation_collective_guard.py::test_identical_point_list_path_unchanged PASSEDPASSED
+tests/post/test_evaluation_collective_guard.py::test_equal_count_different_coordinates_raises_on_every_rank 
+tests/post/test_evaluation_collective_guard.py::test_equal_count_different_coordinates_raises_on_every_rank OPS55 flags=[True, True] message[0]='evaluate_vector_field_parallel received point lists of equal length but different coordinates on different ranks (vs rank 0 — rank 0: first differing row -1, max abs deviation 0.000e+00; rank 1: first differing row 0, max abs deviation 1.000e-02). This routine is collective: the point list must be bitwise identical on every rank — broadcast the points from rank 0 (a gross deviation means rank-local points; ~1e-16 means rank-dependent floating-point ordering).'
+PASSEDPASSED
+tests/post/test_evaluation_collective_guard.py::test_prechange_control_was_silent 
+tests/post/test_evaluation_collective_guard.py::test_prechange_control_was_silent PASSEDOPS55 prechange n=2 valid_all=True row_dev=[1.110223e-16 3.000000e-02 3.000000e-02 3.000000e-02 3.000000e-02
+ 3.000000e-02 3.000000e-02 3.000000e-02]
+PASSED
+tests/post/test_evaluation_collective_guard.py::test_shape_validation_precedes_nothing_it_should[bad0] 
+tests/post/test_evaluation_collective_guard.py::test_shape_validation_precedes_nothing_it_should[bad0] PASSEDPASSED
+tests/post/test_evaluation_collective_guard.py::test_shape_validation_precedes_nothing_it_should[bad1] 
+tests/post/test_evaluation_collective_guard.py::test_shape_validation_precedes_nothing_it_should[bad1] PASSEDPASSED
+
+============================== 6 passed in 0.76s ===============================
+
+
+============================== 6 passed in 0.74s ===============================
+
+## Exit
+- Status: 0
+- Elapsed (s): 2
+- Filtered lines (gmsh optimisation chatter): 0

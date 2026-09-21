@@ -1,0 +1,1273 @@
+# Test Run
+- Chunk: OPS-55-callers-complex
+- Commit: 14a0d71554b11756fcb5f844883f3c81b14e809b
+- Time (UTC): 2026-09-21 11:18:02
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.5.1
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'source /usr/local/bin/dolfinx-complex-mode && cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 180 mpiexec -n 2 python3 -m pytest tests/post tests/ports tests/validation/test_lossy_sphere_sar.py -v -s --tb=short'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 24
+drwxr-xr-x  3 taz5297 taz5297 4096 Sep 21 04:30 .
+drwxr-xr-x 17 taz5297 taz5297 4096 Sep 21 06:17 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  744 Sep 21 04:30 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 4275 Sep 13 19:19 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.5.1
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''source /usr/local/bin/dolfinx-complex-mode && cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 180 mpiexec -n 2 python3 -m pytest tests/post tests/ports tests/validation/test_lossy_sphere_sar.py -v -s --tb=short'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... collected 57 items
+
+tests/post/test_csv_export_stats_parity.py::test_probe_csv_round_trip_precision collected 57 items
+
+tests/post/test_csv_export_stats_parity.py::test_probe_csv_round_trip_precision 
+[POST-1 step 6] probe at -n 2:
+  tag 1: header ['x', 'y', 'z', 'fx_re', 'fx_im', 'fy_re', 'fy_im', 'fz_re', 'fz_im', 'mag']
+    rows 5184  stats count 5184
+    min  : csv       0.5708276489752251  stats       0.5708276489752251  rel 0.000e+00
+    max  : csv       0.9980976155749427  stats       0.9980976155749427  rel 0.000e+00
+    mean : csv       0.8205203318606563  stats       0.8205203318606563  rel 0.000e+00
+    mag vs components: worst rel 3.715e-16
+  tag 2: header ['x', 'y', 'z', 'fx_re', 'fx_im', 'fy_re', 'fy_im', 'fz_re', 'fz_im', 'mag']
+    rows 5184  stats count 5184
+    min  : csv       0.5776145445584431  stats       0.5776145445584431  rel 0.000e+00
+    max  : csv       0.8850402333786896  stats       0.8850402333786898  rel 1.254e-16
+    mean : csv       0.7651432632537062  stats       0.7651432632537062  rel 0.000e+00
+    mag vs components: worst rel 3.793e-16
+  worst relative disagreement over all quantities: 3.793e-16
+PASSEDPASSED
+tests/post/test_csv_export_stats_parity.py::test_csv_rows_match_the_stats_sample_set[False-1] 
+tests/post/test_csv_export_stats_parity.py::test_csv_rows_match_the_stats_sample_set[False-1] 
+[POST-1 step 6] tag 1, prefer_interior=False, -n 2: csv rows 5184, stats count 5184
+  min  : csv       0.5708276489752251  stats       0.5708276489752251
+  max  : csv       0.9980976155749427  stats       0.9980976155749427
+  mean : csv       0.8205203318606563  stats       0.8205203318606563
+PASSEDPASSED
+tests/post/test_csv_export_stats_parity.py::test_csv_rows_match_the_stats_sample_set[False-2] 
+tests/post/test_csv_export_stats_parity.py::test_csv_rows_match_the_stats_sample_set[False-2] 
+[POST-1 step 6] tag 2, prefer_interior=False, -n 2: csv rows 5184, stats count 5184
+  min  : csv       0.5776145445584431  stats       0.5776145445584431
+  max  : csv       0.8850402333786896  stats       0.8850402333786898
+  mean : csv       0.7651432632537062  stats       0.7651432632537062
+PASSED
+tests/post/test_csv_export_stats_parity.py::test_csv_rows_match_the_stats_sample_set[True-1] PASSED
+tests/post/test_csv_export_stats_parity.py::test_csv_rows_match_the_stats_sample_set[True-1] 
+[POST-1 step 6] tag 1, prefer_interior=True, -n 2: csv rows 4896, stats count 4896
+  min  : csv       0.5708276489752251  stats       0.5708276489752251
+  max  : csv       0.9980976155749427  stats       0.9980976155749427
+  mean : csv       0.8286690987505565  stats       0.8286690987505565
+PASSEDPASSED
+tests/post/test_csv_export_stats_parity.py::test_csv_rows_match_the_stats_sample_set[True-2] 
+tests/post/test_csv_export_stats_parity.py::test_csv_rows_match_the_stats_sample_set[True-2] 
+[POST-1 step 6] tag 2, prefer_interior=True, -n 2: csv rows 4896, stats count 4896
+  min  : csv       0.5799772430927195  stats       0.5799772430927195
+  max  : csv       0.8795752144642566  stats       0.8795752144642566
+  mean : csv       0.7700474428825692  stats       0.7700474428825692
+PASSEDPASSED
+tests/post/test_csv_export_stats_parity.py::test_guarded_export_is_short_by_exactly_the_dropped_layer[1] 
+tests/post/test_csv_export_stats_parity.py::test_guarded_export_is_short_by_exactly_the_dropped_layer[1] 
+[POST-1 step 6] negative control, tag 1, -n 2: default rows 5184, guarded rows 4896, guardrail drops 288
+PASSEDPASSED
+tests/post/test_csv_export_stats_parity.py::test_guarded_export_is_short_by_exactly_the_dropped_layer[2] 
+tests/post/test_csv_export_stats_parity.py::test_guarded_export_is_short_by_exactly_the_dropped_layer[2] 
+[POST-1 step 6] negative control, tag 2, -n 2: default rows 5184, guarded rows 4896, guardrail drops 288
+PASSEDPASSED
+tests/post/test_drop_set_semantics_planar.py::test_supplied_closed_form_is_the_solution 
+tests/post/test_drop_set_semantics_planar.py::test_supplied_closed_form_is_the_solution PASSED
+[POST-1 step 4] two-slab planar interface, sigma = 0.1 | 1.4 S/m at x = 0.05 m
+  k1 = 2.373991e+01-2.124260e+00j   k2 = 3.223161e+01-2.190447e+01j   |R| = 0.353398  |T| = 0.782605
+  rel L2 vs closed form: 16^3 4.3147% -> 32^3 2.1568%, rate in h = 1.0004
+PASSED
+tests/post/test_drop_set_semantics_planar.py::test_drop_set_semantics_on_a_planar_interface 
+tests/post/test_drop_set_semantics_planar.py::test_drop_set_semantics_on_a_planar_interface 
+[POST-1 step 4] slab-2 tag at 32^3; closed-form |E| at the interface = 0.703744 (the slab's true maximum)
+  cell classes (global, owned): tagged 98304, interior 96256, drop 2048 (2.08% of the tag)
+  (a) prefer_interior=True : n = 96256  mean rel err = 1.1472%  max rel err = 1.7706%  |E| in [0.237386, 0.692107]  x_min = 0.051562
+  (b) full tagged set      : n = 98304  mean rel err = 1.1420%  max rel err = 1.7706%  |E| in [0.237386, 0.698349]  x_min = 0.050781
+  (c) drop set alone       : n =  2048  mean rel err = 0.8974%  max rel err = 0.9462%  |E| in [0.697742, 0.698349]  x_min = 0.050781
+  separation (c)/(a) in mean error: 0.7822x   (sphere, curvature-confounded: 1.009x)
+  peak vs closed-form entry face: (b) 0.7666%, (a) 1.6537% -> 2.157x worse
+PASSEDPASSED
+tests/post/test_drop_set_semantics_planar.py::test_production_default_reproduces_row_b_on_this_fixture 
+tests/post/test_drop_set_semantics_planar.py::test_production_default_reproduces_row_b_on_this_fixture 
+[POST-1 step 5] production path on the step-4 planar fixture, -n 2; closed-form |E| at the interface = 0.703744
+  default (no kwarg)     : n = 98304  |E| in [0.237386, 0.698349]  peak deficit 0.7666%   [row (b), measured 0.7666%]
+  row (b) helper         : n = 98304  |E| in [0.237386, 0.698349]
+  prefer_interior=True   : n = 96256  |E| in [0.237386, 0.692107]  peak deficit 1.6537%   [row (a), measured 1.6536%]
+  row (a) helper         : n = 96256  |E| in [0.237386, 0.692107]
+  retired-default penalty: 2.157x (measured 2.157x)
+PASSEDPASSED
+tests/post/test_drop_set_semantics_sphere.py::test_drop_set_semantics_against_the_sphere_closed_form Info    : Meshing 1D...
+Info    : [ 10%] Meshing curve 2 (Circle)
+Info    : [ 30%] Meshing curve 4 (Line)
+Info    : [ 30%] Meshing curve 5 (Line)
+Info    : [ 40%] Meshing curve 6 (Line)
+Info    : [ 50%] Meshing curve 7 (Line)
+Info    : [ 50%] Meshing curve 8 (Line)
+Info    : [ 60%] Meshing curve 9 (Line)
+Info    : [ 70%] Meshing curve 10 (Line)
+Info    : [ 70%] Meshing curve 11 (Line)
+Info    : [ 80%] Meshing curve 12 (Line)
+Info    : [ 90%] Meshing curve 13 (Line)
+Info    : [ 90%] Meshing curve 14 (Line)
+Info    : [100%] Meshing curve 15 (Line)
+Info    : Done meshing 1D (Wall 0.0011734s, CPU 0.001174s)
+Info    : Meshing 2D...
+Info    : [  0%] Meshing surface 1 (Sphere, Frontal-Delaunay)
+
+tests/post/test_drop_set_semantics_sphere.py::test_drop_set_semantics_against_the_sphere_closed_form Info    : [ 20%] Meshing surface 2 (Plane, Frontal-Delaunay)
+Info    : [ 30%] Meshing surface 3 (Plane, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 4 (Plane, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 5 (Plane, Frontal-Delaunay)
+Info    : [ 80%] Meshing surface 6 (Plane, Frontal-Delaunay)
+Info    : [ 90%] Meshing surface 7 (Plane, Frontal-Delaunay)
+Info    : Done meshing 2D (Wall 0.0670726s, CPU 0.067059s)
+Info    : Meshing 3D...
+Info    : 3D Meshing 2 volumes with 1 connected component
+Info    : Tetrahedrizing 1582 nodes...
+Info    : Done tetrahedrizing 1590 nodes (Wall 0.0246506s, CPU 0.024649s)
+Info    : Reconstructing mesh...
+Info    :  - Creating surface mesh
+Info    :  - Identifying boundary edges
+Info    :  - Recovering boundary
+Info    : Done reconstructing mesh (Wall 0.0434424s, CPU 0.043439s)
+Info    : Found volume 1
+Info    : Found volume 2
+Info    : It. 0 - 0 nodes created - worst tet radius 6.47201 (nodes removed 0 0)
+Info    : It. 500 - 496 nodes created - worst tet radius 1.40566 (nodes removed 0 4)
+Info    : It. 1000 - 995 nodes created - worst tet radius 1.18243 (nodes removed 0 5)
+Info    : It. 1500 - 1495 nodes created - worst tet radius 1.0609 (nodes removed 0 5)
+Info    : 3D refinement terminated (3414 nodes total):
+Info    :  - 2 Delaunay cavities modified for star shapeness
+Info    :  - 5 nodes could not be inserted
+Info    :  - 17975 tetrahedra created in 0.133597 sec. (134546 tets/s)
+Info    : 0 node relocations
+Info    : Done meshing 3D (Wall 0.234072s, CPU 0.234052s)
+[harness] 13 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 103 edge swaps, 0 node relocations (volume = 0.000518251): worst = 0.302351 / average = 0.779314 (Wall 0.00250409s, CPU 0.002505s)
+Info    : No ill-shaped tets in the mesh :-)
+[harness] 22 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 227 edge swaps, 5 node relocations (volume = 0.00748175): worst = 0.00641344 / average = 0.779828 (Wall 0.00488138s, CPU 0.00488s)
+Info    : 229 edge swaps, 5 node relocations (volume = 0.00748175): worst = 0.00641344 / average = 0.779751 (Wall 0.00594328s, CPU 0.005942s)
+Info    : No ill-shaped tets in the mesh :-)
+[harness] 10 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : Done optimizing mesh (Wall 0.030312s, CPU 0.03031s)
+Info    : 3414 nodes 20996 elements
+PASSED
+[POST-1 step 3] TH-8 sphere, h_sphere = 0.00833, eps_r = 78.0, closed form |E_in|/E0 = 0.037500
+  cell classes (global, owned): tagged 4428, interior 3325, drop 1103 (24.91% of the tag)
+  (a) prefer_interior=True : n =  3325  mean = 0.039095 (4.253%)  min = 0.035692  max = 0.043769
+  (b) full tagged set      : n =  4428  mean = 0.039099 (4.263%)  min = 0.033788  max = 0.044560
+  (c) drop set alone       : n =  1103  mean = 0.039110 (4.293%)  min = 0.033788  max = 0.044560
+  (a) vs (b): 4.253% vs 4.263%  [reported, not gated]
+  separation (c)/(a) in mean error: 1.009x
+  spread: surviving 0.008077, full 0.010772 -> ratio 1.334x
+PASSED
+tests/post/test_drop_set_semantics_sphere.py::test_drop_set_semantics_scored_on_the_phasor_magnitude 
+tests/post/test_drop_set_semantics_sphere.py::test_drop_set_semantics_scored_on_the_phasor_magnitude Info    : Meshing 1D...
+Info    : [ 10%] Meshing curve 2 (Circle)
+Info    : [ 30%] Meshing curve 4 (Line)
+Info    : [ 30%] Meshing curve 5 (Line)
+Info    : [ 40%] Meshing curve 6 (Line)
+Info    : [ 50%] Meshing curve 7 (Line)
+Info    : [ 50%] Meshing curve 8 (Line)
+Info    : [ 60%] Meshing curve 9 (Line)
+Info    : [ 70%] Meshing curve 10 (Line)
+Info    : [ 70%] Meshing curve 11 (Line)
+Info    : [ 80%] Meshing curve 12 (Line)
+Info    : [ 90%] Meshing curve 13 (Line)
+Info    : [ 90%] Meshing curve 14 (Line)
+Info    : [100%] Meshing curve 15 (Line)
+Info    : Done meshing 1D (Wall 0.0011568s, CPU 0.001069s)
+Info    : Meshing 2D...
+Info    : [  0%] Meshing surface 1 (Sphere, Frontal-Delaunay)
+Info    : [ 20%] Meshing surface 2 (Plane, Frontal-Delaunay)
+Info    : [ 30%] Meshing surface 3 (Plane, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 4 (Plane, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 5 (Plane, Frontal-Delaunay)
+Info    : [ 80%] Meshing surface 6 (Plane, Frontal-Delaunay)
+Info    : [ 90%] Meshing surface 7 (Plane, Frontal-Delaunay)
+Info    : Done meshing 2D (Wall 0.067025s, CPU 0.067023s)
+Info    : Meshing 3D...
+Info    : 3D Meshing 2 volumes with 1 connected component
+Info    : Tetrahedrizing 1582 nodes...
+Info    : Done tetrahedrizing 1590 nodes (Wall 0.0236969s, CPU 0.023695s)
+Info    : Reconstructing mesh...
+Info    :  - Creating surface mesh
+Info    :  - Identifying boundary edges
+Info    :  - Recovering boundary
+Info    : Done reconstructing mesh (Wall 0.0430644s, CPU 0.043046s)
+Info    : Found volume 1
+Info    : Found volume 2
+Info    : It. 0 - 0 nodes created - worst tet radius 6.47201 (nodes removed 0 0)
+Info    : It. 500 - 496 nodes created - worst tet radius 1.40566 (nodes removed 0 4)
+Info    : It. 1000 - 995 nodes created - worst tet radius 1.18243 (nodes removed 0 5)
+Info    : It. 1500 - 1495 nodes created - worst tet radius 1.0609 (nodes removed 0 5)
+Info    : 3D refinement terminated (3414 nodes total):
+Info    :  - 2 Delaunay cavities modified for star shapeness
+Info    :  - 5 nodes could not be inserted
+Info    :  - 17975 tetrahedra created in 0.120143 sec. (149612 tets/s)
+Info    : 0 node relocations
+Info    : Done meshing 3D (Wall 0.211606s, CPU 0.211589s)
+[harness] 13 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 103 edge swaps, 0 node relocations (volume = 0.000518251): worst = 0.302351 / average = 0.779314 (Wall 0.00174409s, CPU 0.001746s)
+Info    : No ill-shaped tets in the mesh :-)
+[harness] 22 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 227 edge swaps, 5 node relocations (volume = 0.00748175): worst = 0.00641344 / average = 0.779828 (Wall 0.00575218s, CPU 0.005752s)
+Info    : 229 edge swaps, 5 node relocations (volume = 0.00748175): worst = 0.00641344 / average = 0.779751 (Wall 0.00680117s, CPU 0.006801s)
+Info    : No ill-shaped tets in the mesh :-)
+[harness] 10 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : Done optimizing mesh (Wall 0.0260445s, CPU 0.026043s)
+Info    : 3414 nodes 20996 elements
+PASSED
+[POST-1 step 4b] TH-8 sphere scored on |E| (fields.e_complex), h_sphere = 0.00833, closed form = 0.037500
+  cell classes (global, owned): tagged 4428, interior 3325, drop 1103 (24.91% of the tag)
+  (a) prefer_interior=True : n =  3325  mean = 0.039095 (4.2532%)  min = 0.035692  max = 0.043769
+  (b) full tagged set      : n =  4428  mean = 0.039099 (4.2631%)  min = 0.033788  max = 0.044560
+  (c) drop set alone       : n =  1103  mean = 0.039110 (4.2929%)  min = 0.033788  max = 0.044560
+  separation (c)/(a) in mean error: 1.0093x   (step 3 on Re E: 1.0094x)
+  spread: surviving 0.008077, full 0.010772 -> ratio 1.3337x   (step 3 on Re E: 1.3337x)
+  phase content: max|Im E| = 0.000000e+00, max|E| = 4.455998e-02 -> 0.000e+00
+  worst |E|-vs-Re E disagreement over 12 statistics: 2.054e-16 at [(b) full tagged set min]
+PASSED
+tests/post/test_evaluation_collective_guard.py::test_rank_dependent_point_list_raises_on_every_rank 
+tests/post/test_evaluation_collective_guard.py::test_rank_dependent_point_list_raises_on_every_rank PASSEDPASSED
+tests/post/test_evaluation_collective_guard.py::test_identical_point_list_path_unchanged 
+tests/post/test_evaluation_collective_guard.py::test_identical_point_list_path_unchanged PASSEDPASSED
+tests/post/test_evaluation_collective_guard.py::test_equal_count_different_coordinates_raises_on_every_rank 
+tests/post/test_evaluation_collective_guard.py::test_equal_count_different_coordinates_raises_on_every_rank OPS55 flags=[True, True] message[0]='evaluate_vector_field_parallel received point lists of equal length but different coordinates on different ranks (vs rank 0 — rank 0: first differing row -1, max abs deviation 0.000e+00; rank 1: first differing row 0, max abs deviation 1.000e-02). This routine is collective: the point list must be bitwise identical on every rank — broadcast the points from rank 0 (a gross deviation means rank-local points; ~1e-16 means rank-dependent floating-point ordering).'
+PASSEDPASSED
+tests/post/test_evaluation_collective_guard.py::test_prechange_control_was_silent 
+tests/post/test_evaluation_collective_guard.py::test_prechange_control_was_silent SKIPPEDSKIPPED
+tests/post/test_evaluation_collective_guard.py::test_shape_validation_precedes_nothing_it_should[bad0] 
+tests/post/test_evaluation_collective_guard.py::test_shape_validation_precedes_nothing_it_should[bad0] PASSEDPASSED
+tests/post/test_evaluation_collective_guard.py::test_shape_validation_precedes_nothing_it_should[bad1] 
+tests/post/test_evaluation_collective_guard.py::test_shape_validation_precedes_nothing_it_should[bad1] PASSEDPASSED
+tests/post/test_interface_guardrail_fallback.py::test_interior_regime_statistics_equal_the_interior_only_reference[1] 
+tests/post/test_interface_guardrail_fallback.py::test_interior_regime_statistics_equal_the_interior_only_reference[1] 
+[POST-1 step 2] interior regime, tag 1, -n 2, sliver ranks 0:
+  count : production                 4896  interior-only                 4896
+  min   : production                  1.0  interior-only                  1.0
+  max   : production                  1.0  interior-only                  1.0
+  mean  : production                  1.0  interior-only                  1.0
+PASSEDPASSED
+tests/post/test_interface_guardrail_fallback.py::test_interior_regime_statistics_equal_the_interior_only_reference[2] 
+tests/post/test_interface_guardrail_fallback.py::test_interior_regime_statistics_equal_the_interior_only_reference[2] 
+[POST-1 step 2] interior regime, tag 2, -n 2, sliver ranks 0:
+  count : production                 4896  interior-only                 4896
+  min   : production                  2.0  interior-only                  2.0
+  max   : production                  2.0  interior-only                  2.0
+  mean  : production                  2.0  interior-only                  2.0
+PASSEDPASSED
+tests/post/test_interface_guardrail_fallback.py::test_global_fallback_regime_equals_the_full_owned_tagged_set 
+tests/post/test_interface_guardrail_fallback.py::test_global_fallback_regime_equals_the_full_owned_tagged_set 
+[POST-1 step 2] global-fallback regime, tag 2, -n 2: production count 16, full owned tagged 16, max 200.0
+PASSEDPASSED
+tests/post/test_interface_guardrail_fallback.py::test_mixed_regime_is_not_contaminated_by_sliver_ranks 
+tests/post/test_interface_guardrail_fallback.py::test_mixed_regime_is_not_contaminated_by_sliver_ranks 
+[POST-1 step 2] mixed regime, tag 2, -n 2: sliver ranks 1, global interior 28, predicted contamination 4 samples
+  production count 28, interior-only 28, excess 0; max production 2.0 vs interior-only 2.0
+PASSEDPASSED
+tests/post/test_interface_guardrail_fallback.py::test_owned_cell_count_escape_hatch_is_characterised 
+tests/post/test_interface_guardrail_fallback.py::test_owned_cell_count_escape_hatch_is_characterised PASSEDPASSED
+tests/post/test_phantom_field_metrics.py::test_phantom_field_metrics_and_exports_are_finite 
+tests/post/test_phantom_field_metrics.py::test_phantom_field_metrics_and_exports_are_finite [coil-phantom-mesh] fragment volumes=4 masses[m^3]: 1:1.381745e-04, 2:1.381745e-04, 3:2.261947e-04, 4:9.865456e-03 | air=4 coil_1=1 coil_2=2 phantom=3
+[coil-phantom-mesh] sizing ownership: air: field 1 on volume 4 -> 2.400000e-02 m, coil_1: field 2 on volume 1 -> 2.400000e-02 m, coil_2: field 3 on volume 2 -> 2.400000e-02 m, phantom: field 4 on volume 3 -> 2.400000e-02 m | Min field 5 | clamps min=2.400000e-02 max=2.400000e-02 m
+Info    : Meshing 1D...
+Info    : [  0%] Meshing curve 1 (Circle)
+Info    : [ 10%] Meshing curve 2 (Circle)
+Info    : [ 20%] Meshing curve 3 (Circle)
+Info    : [ 20%] Meshing curve 4 (Circle)
+Info    : [ 30%] Meshing curve 5 (Circle)
+Info    : [ 30%] Meshing curve 6 (Line)
+Info    : [ 40%] Meshing curve 7 (Circle)
+Info    : [ 40%] Meshing curve 8 (Line)
+Info    : [ 50%] Meshing curve 9 (Line)
+Info    : [ 50%] Meshing curve 10 (Line)
+Info    : [ 60%] Meshing curve 11 (Line)
+Info    : [ 60%] Meshing curve 12 (Line)
+Info    : [ 70%] Meshing curve 13 (Line)
+Info    : [ 70%] Meshing curve 14 (Line)
+Info    : [ 80%] Meshing curve 15 (Line)
+Info    : [ 80%] Meshing curve 16 (Line)
+Info    : [ 90%] Meshing curve 17 (Line)
+Info    : [ 90%] Meshing curve 18 (Line)
+Info    : [100%] Meshing curve 19 (Line)
+Info    : Done meshing 1D (Wall 0.00202089s, CPU 0.002023s)
+Info    : Meshing 2D...
+Info    : [  0%] Meshing surface 1 (Torus, Frontal-Delaunay)
+Info    : [ 10%] Meshing surface 2 (Torus, Frontal-Delaunay)
+Info    : [ 20%] Meshing surface 3 (Cylinder, Frontal-Delaunay)
+Info    : [ 30%] Meshing surface 4 (Plane, Frontal-Delaunay)
+Info    : [ 40%] Meshing surface 5 (Plane, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 6 (Plane, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 7 (Plane, Frontal-Delaunay)
+Info    : [ 70%] Meshing surface 8 (Plane, Frontal-Delaunay)
+Info    : [ 80%] Meshing surface 9 (Plane, Frontal-Delaunay)
+Info    : [ 90%] Meshing surface 10 (Plane, Frontal-Delaunay)
+Info    : [100%] Meshing surface 11 (Plane, Frontal-Delaunay)
+Info    : Done meshing 2D (Wall 0.0378111s, CPU 0.03781s)
+Info    : Meshing 3D...
+Info    : 3D Meshing 4 volumes with 1 connected component
+Info    : Tetrahedrizing 870 nodes...
+Info    : Done tetrahedrizing 878 nodes (Wall 0.00943686s, CPU 0.009436s)
+Info    : Reconstructing mesh...
+Info    :  - Creating surface mesh
+Info    :  - Identifying boundary edges
+Info    :  - Recovering boundary
+Info    : Done reconstructing mesh (Wall 0.019101s, CPU 0.019064s)
+Info    : Found volume 4
+Info    : Found volume 3
+Info    : Found volume 2
+Info    : Found volume 1
+Info    : It. 0 - 0 nodes created - worst tet radius 2.74787 (nodes removed 0 0)
+Info    : 3D refinement terminated (1157 nodes total):
+Info    :  - 0 Delaunay cavities modified for star shapeness
+Info    :  - 0 nodes could not be inserted
+Info    :  - 5140 tetrahedra created in 0.0166073 sec. (309501 tets/s)
+Info    : 0 node relocations
+Info    : Done meshing 3D (Wall 0.0570448s, CPU 0.056911s)
+[harness] 13 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 18 edge swaps, 0 node relocations (volume = 6.80089e-05): worst = 0.0809909 / average = 0.647795 (Wall 0.000277299s, CPU 0.000278s)
+Info    : 22 edge swaps, 0 node relocations (volume = 6.80089e-05): worst = 0.244886 / average = 0.654752 (Wall 0.000375198s, CPU 0.000376s)
+Info    : 23 edge swaps, 0 node relocations (volume = 6.80089e-05): worst = 0.244886 / average = 0.65836 (Wall 0.000414598s, CPU 0.000415s)
+Info    : No ill-shaped tets in the mesh :-)
+[harness] 22 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 17 edge swaps, 0 node relocations (volume = 6.80089e-05): worst = 0.0809909 / average = 0.657573 (Wall 0.000364799s, CPU 0.000365s)
+Info    : 21 edge swaps, 0 node relocations (volume = 6.80089e-05): worst = 0.273771 / average = 0.660225 (Wall 0.000473298s, CPU 0.000474s)
+Info    : No ill-shaped tets in the mesh :-)
+[harness] 22 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : No ill-shaped tets in the mesh :-)
+[harness] 22 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 125 edge swaps, 1 node relocations (volume = 0.0100209): worst = 0.300331 / average = 0.759911 (Wall 0.00186509s, CPU 0.001865s)
+Info    : No ill-shaped tets in the mesh :-)
+[harness] 10 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : Done optimizing mesh (Wall 0.00711057s, CPU 0.007109s)
+Info    : 1157 nodes 6936 elements
+[harness] 2 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : CalcLocalH: 91 Points 144 Elements 182 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 125 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 20.2678 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 102 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 20.2678 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 89 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 20.2678 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 69 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 90.4135 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 50 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 90.4135 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 45 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 90.4135 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 45 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 90.4135 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 45 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 90.4135 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 45 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 90.4135 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 45 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 90.4135 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 45 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 90.4135 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 45 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 90.4135 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 45 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 90.4135 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 45 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 90.4135 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 45 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 90.4135 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 45 illegal tets 
+Info    : Volume Optimization 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 8 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 21.8724 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 3 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 13.5205 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 4 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 4.5861 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : CalcLocalH: 91 Points 143 Elements 182 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 128 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 15.138 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 109 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 48.6116 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 96 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 48.6116 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 80 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 48.6116 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 60 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 48.6116 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 52 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 48.6116 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 48 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 48.6116 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 45 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 48.6116 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 45 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 48.6116 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 45 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 48.6116 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 45 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 48.6116 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 45 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 48.6116 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 45 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 48.6116 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 45 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 48.6116 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 45 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 48.6116 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 45 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 48.6116 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 45 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 48.6116 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 45 illegal tets 
+Info    : Volume Optimization 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 10 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 34.1526 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 0 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 22.9353 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 2 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 5.10557 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : CalcLocalH: 56 Points 127 Elements 104 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 42 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 15.3173 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 29 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 15.3173 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 7 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 15.3173 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 4 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 7.55363 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 0 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 3.64665 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 0 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 3.59762 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : CalcLocalH: 1155 Points 4590 Elements 1732 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 326 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 21.6133 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 184 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 21.6133 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 60 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 21.6133 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 30 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 21.6133 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 6 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 21.6133 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 38 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 21.6133 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 3 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 9.91441 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 1 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 9.04066 
+[harness] 11 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : Done optimizing mesh (Wall 0.501024s, CPU 0.501009s)
+PASSED[coil-phantom-mesh] region resolution policy: coil=2.400000e-02 m, phantom=2.400000e-02 m, air=2.400000e-02 m
+[coil-phantom-sanity] geometry sanity report:
+[coil-phantom-sanity] required tag counts:
+[coil-phantom-sanity]   coil_1: 190
+[coil-phantom-sanity]   coil_2: 233
+[coil-phantom-sanity]   phantom: 188
+[coil-phantom-sanity]   air: 4853
+[coil-phantom-sanity] volume ratio check (expected_volume_ratio vs observed_cell_ratio):
+[coil-phantom-sanity]   coil_1: expected=0.013327, observed=0.034773
+[coil-phantom-sanity]   coil_2: expected=0.013327, observed=0.042643
+[coil-phantom-sanity]   phantom: expected=0.021817, observed=0.034407
+[coil-phantom-sanity]   air: expected=0.951529, observed=0.888177
+[coil-phantom-sanity] effective air padding: 4.000000e-02 m
+[coil-phantom-sanity] warnings: none
+GEO-23 step 2b: coil_phantom_domain(resolution=0.024) -> 5464 cells
+phantom E/B diagnostics:
+  |E| min/max/mean: 4.967760e-02 / 8.876285e-02 / 6.908983e-02
+  |B| min/max/mean: 1.145644e+00 / 1.145644e+00 / 1.145644e+00
+  exports: d3_test_phantom_E_samples.csv, d3_test_phantom_B_samples.csv, d3_test_phantom_metrics.json
+PASSED
+tests/post/test_phantom_field_metrics.py::test_evaluate_on_cells_fallback_skips_invalid_cell_point_pairs 
+tests/post/test_phantom_field_metrics.py::test_evaluate_on_cells_fallback_skips_invalid_cell_point_pairs PASSEDPASSED
+tests/post/test_phantom_phasor_semantics.py::test_reported_magnitudes_match_the_complex_sampling_helper 
+tests/post/test_phantom_phasor_semantics.py::test_reported_magnitudes_match_the_complex_sampling_helper 
+[POST-3 step 4] identity 1, tag 2, 4896 centroid samples:
+  worst relative disagreement vs evaluate_vector_field_parallel: 0.000e+00
+  mean |E| (phasor)  = 7.700474e-01
+  mean |Re E| (old)  = 4.282469e-01
+  Re-cast deficit    = 44.3870%
+PASSEDPASSED
+tests/post/test_phantom_phasor_semantics.py::test_reported_statistics_are_phase_rotation_invariant 
+tests/post/test_phantom_phasor_semantics.py::test_reported_statistics_are_phase_rotation_invariant 
+[POST-3 step 4] identity 2, phase-rotation invariance:
+  theta = 0        : min/max/mean = 5.799772431e-01 / 8.795752145e-01 / 7.700474429e-01
+  theta = 1.570796 : min/max/mean = 5.799772431e-01 / 8.795752145e-01 / 7.700474429e-01
+  theta = 0.628319 : min/max/mean = 5.799772431e-01 / 8.795752145e-01 / 7.700474429e-01
+PASSEDPASSED
+tests/post/test_phantom_phasor_semantics.py::test_re_cast_negative_control_is_wrong_by_the_measured_deficit 
+tests/post/test_phantom_phasor_semantics.py::test_re_cast_negative_control_is_wrong_by_the_measured_deficit 
+[POST-3 step 4] negative control, Re-cast against the phasor magnitude:
+  theta = 0.000000 : mean|Re E|/mean|E| deficit = 44.3870%
+  theta = 1.570796 : mean|Re E|/mean|E| deficit = 20.9731%
+  theta = 0.628319 : mean|Re E|/mean|E| deficit = 76.7269%
+  deficit spread across rotations: 0.55754
+  sampled phase span: 1.2386 rad (measured at band time 1.2667; 2*pi = 6.2832)
+  uniform-phase prediction 1 - 2/pi = 36.3380% (does not apply here)
+PASSEDPASSED
+tests/post/test_quicklook_report.py::test_build_phantom_quicklook_report_ok_status_without_warning_flags 
+tests/post/test_quicklook_report.py::test_build_phantom_quicklook_report_ok_status_without_warning_flags PASSEDPASSED
+tests/post/test_quicklook_report.py::test_build_phantom_quicklook_report_warn_status_when_consistency_warnings_present 
+tests/post/test_quicklook_report.py::test_build_phantom_quicklook_report_warn_status_when_consistency_warnings_present PASSEDPASSED
+tests/post/test_quicklook_report.py::test_format_and_write_phantom_quicklook_report_produce_expected_artifacts 
+tests/post/test_quicklook_report.py::test_format_and_write_phantom_quicklook_report_produce_expected_artifacts PASSED
+tests/post/test_tagged_cell_partition_invariance.py::test_statistics_are_owned_cell_partition_invariant[True-1] PASSED
+tests/post/test_tagged_cell_partition_invariance.py::test_statistics_are_owned_cell_partition_invariant[True-1] 
+[POST-1 step 1] tag 1, prefer_interior=True, -n 2:
+  count : production                     4896  owned-only                     4896
+  min   : production       0.5708276489752251  owned-only       0.5708276489752251
+  max   : production       0.9980976155749427  owned-only       0.9980976155749427
+  mean  : production       0.8286690987505565  owned-only       0.8286690987505565
+PASSEDPASSED
+tests/post/test_tagged_cell_partition_invariance.py::test_statistics_are_owned_cell_partition_invariant[True-2] 
+tests/post/test_tagged_cell_partition_invariance.py::test_statistics_are_owned_cell_partition_invariant[True-2] 
+[POST-1 step 1] tag 2, prefer_interior=True, -n 2:
+  count : production                     4896  owned-only                     4896
+  min   : production       0.5799772430927195  owned-only       0.5799772430927195
+  max   : production       0.8795752144642566  owned-only       0.8795752144642566
+  mean  : production       0.7700474428825691  owned-only       0.7700474428825691
+PASSED
+tests/post/test_tagged_cell_partition_invariance.py::test_statistics_are_owned_cell_partition_invariant[False-1] PASSED
+tests/post/test_tagged_cell_partition_invariance.py::test_statistics_are_owned_cell_partition_invariant[False-1] 
+[POST-1 step 1] tag 1, prefer_interior=False, -n 2:
+  count : production                     5184  owned-only                     5184
+  min   : production       0.5708276489752251  owned-only       0.5708276489752251
+  max   : production       0.9980976155749427  owned-only       0.9980976155749427
+  mean  : production       0.8205203318606563  owned-only       0.8205203318606563
+PASSEDPASSED
+tests/post/test_tagged_cell_partition_invariance.py::test_statistics_are_owned_cell_partition_invariant[False-2] 
+tests/post/test_tagged_cell_partition_invariance.py::test_statistics_are_owned_cell_partition_invariant[False-2] 
+[POST-1 step 1] tag 2, prefer_interior=False, -n 2:
+  count : production                     5184  owned-only                     5184
+  min   : production        0.577614544558443  owned-only        0.577614544558443
+  max   : production       0.8850402333786898  owned-only       0.8850402333786898
+  mean  : production       0.7651432632537062  owned-only       0.7651432632537062
+PASSEDPASSED
+tests/post/test_tagged_cell_partition_invariance.py::test_production_default_samples_the_full_owned_tagged_set[1] 
+tests/post/test_tagged_cell_partition_invariance.py::test_production_default_samples_the_full_owned_tagged_set[1] 
+[POST-1 step 5] tag 1, -n 2, default sampling:
+  count : default                     5184  full-owned                     5184  prefer_interior=True                     4896
+  min   : default       0.5708276489752251  full-owned       0.5708276489752251  prefer_interior=True       0.5708276489752251
+  max   : default       0.9980976155749427  full-owned       0.9980976155749427  prefer_interior=True       0.9980976155749427
+  mean  : default       0.8205203318606563  full-owned       0.8205203318606563  prefer_interior=True       0.8286690987505565
+  guardrail drops 288 boundary-adjacent tagged cells (288 fewer samples)
+PASSEDPASSED
+tests/post/test_tagged_cell_partition_invariance.py::test_production_default_samples_the_full_owned_tagged_set[2] 
+tests/post/test_tagged_cell_partition_invariance.py::test_production_default_samples_the_full_owned_tagged_set[2] 
+[POST-1 step 5] tag 2, -n 2, default sampling:
+  count : default                     5184  full-owned                     5184  prefer_interior=True                     4896
+  min   : default        0.577614544558443  full-owned        0.577614544558443  prefer_interior=True       0.5799772430927195
+  max   : default       0.8850402333786898  full-owned       0.8850402333786898  prefer_interior=True       0.8795752144642566
+  mean  : default       0.7651432632537062  full-owned       0.7651432632537062  prefer_interior=True       0.7700474428825691
+  guardrail drops 288 boundary-adjacent tagged cells (288 fewer samples)
+PASSEDPASSED
+tests/post/test_tagged_cell_partition_invariance.py::test_ghost_inclusive_control_overcounts_by_exactly_the_ghost_count[1] 
+tests/post/test_tagged_cell_partition_invariance.py::test_ghost_inclusive_control_overcounts_by_exactly_the_ghost_count[1] 
+[POST-1 step 1] negative control, tag 1, -n 2: ghost-inclusive count 5433, owned 5184, excess 249, tagged ghosts 249
+  mean: ghost-inclusive 8.142765086582e-01 vs owned 8.205203318607e-01
+PASSEDPASSED
+tests/post/test_tagged_cell_partition_invariance.py::test_ghost_inclusive_control_overcounts_by_exactly_the_ghost_count[2] 
+tests/post/test_tagged_cell_partition_invariance.py::test_ghost_inclusive_control_overcounts_by_exactly_the_ghost_count[2] 
+[POST-1 step 1] negative control, tag 2, -n 2: ghost-inclusive count 5519, owned 5184, excess 335, tagged ghosts 335
+  mean: ghost-inclusive 7.615219453717e-01 vs owned 7.651432632537e-01
+PASSEDPASSED
+tests/ports/test_frequency_sweep_planner.py::test_plan_frequency_sweep_coarse_only_is_deterministic_and_inclusive 
+tests/ports/test_frequency_sweep_planner.py::test_plan_frequency_sweep_coarse_only_is_deterministic_and_inclusive PASSEDPASSED
+tests/ports/test_frequency_sweep_planner.py::test_plan_frequency_sweep_coarse_plus_refined_merges_and_sorts_frequencies 
+tests/ports/test_frequency_sweep_planner.py::test_plan_frequency_sweep_coarse_plus_refined_merges_and_sorts_frequencies PASSEDPASSED
+tests/ports/test_frequency_sweep_planner.py::test_plan_frequency_sweep_rejects_invalid_refined_config 
+tests/ports/test_frequency_sweep_planner.py::test_plan_frequency_sweep_rejects_invalid_refined_config PASSEDPASSED
+tests/ports/test_port_definition.py::test_port_definition_defaults_and_tag_name_contract 
+tests/ports/test_port_definition.py::test_port_definition_defaults_and_tag_name_contract PASSEDPASSED
+tests/ports/test_port_definition.py::test_required_port_tags_collection_and_validation_success 
+tests/ports/test_port_definition.py::test_required_port_tags_collection_and_validation_success PASSEDPASSED
+tests/ports/test_port_definition.py::test_validate_required_port_tags_exist_raises_for_missing_tags 
+tests/ports/test_port_definition.py::test_validate_required_port_tags_exist_raises_for_missing_tags PASSED
+tests/ports/test_port_definition.py::test_port_definition_rejects_invalid_values PASSED
+tests/ports/test_port_definition.py::test_port_definition_rejects_invalid_values PASSEDPASSED
+tests/ports/test_port_definition.py::test_run_port_calibration_checks_accepts_consistent_order_orientation_and_area 
+tests/ports/test_port_definition.py::test_run_port_calibration_checks_accepts_consistent_order_orientation_and_area PASSEDPASSED
+tests/ports/test_port_definition.py::test_run_port_calibration_checks_rejects_order_mismatch_with_checklist_reference 
+tests/ports/test_port_definition.py::test_run_port_calibration_checks_rejects_order_mismatch_with_checklist_reference PASSEDPASSED
+tests/ports/test_port_definition.py::test_run_port_calibration_checks_rejects_missing_orientation_metadata 
+tests/ports/test_port_definition.py::test_run_port_calibration_checks_rejects_missing_orientation_metadata PASSEDPASSED
+tests/ports/test_port_definition.py::test_run_port_calibration_checks_rejects_inconsistent_face_area_ratio 
+tests/ports/test_port_definition.py::test_run_port_calibration_checks_rejects_inconsistent_face_area_ratio PASSEDPASSED
+tests/ports/test_port_orientation_sensitivity.py::test_port_orientation_flip_changes_induced_voltage_sign 
+tests/ports/test_port_orientation_sensitivity.py::test_port_orientation_flip_changes_induced_voltage_sign *** PLACEHOLDER PORT MODEL -- values below are NOT from the solved field ***
+single-port excitation diagnostics:
+  driven_port: P1 (index=0)
+  frequency [Hz]: 1.277400e+08
+  P1: idx=0, driven=True, orientation=cw, distance=0, coupling=1.000000e+00, termination=50.000000 ohm, V=1.000000e+00+0.000000e+00j V, I=1.000000e-03+1.421299e-04j A
+  P2: idx=1, driven=False, orientation=cw, distance=1, coupling=1.000000e-01, termination=50.000000 ohm, V=5.000000e-02+0.000000e+00j V, I=1.000000e-03+0.000000e+00j A
+*** PLACEHOLDER PORT MODEL -- values below are NOT from the solved field ***
+single-port excitation diagnostics:
+  driven_port: P1 (index=0)
+  frequency [Hz]: 1.277400e+08
+  P1: idx=0, driven=True, orientation=cw, distance=0, coupling=1.000000e+00, termination=50.000000 ohm, V=1.000000e+00+0.000000e+00j V, I=1.000000e-03+1.421299e-04j A
+  P2: idx=1, driven=False, orientation=ccw, distance=1, coupling=-1.000000e-01, termination=50.000000 ohm, V=-5.000000e-02+0.000000e+00j V, I=-1.000000e-03+0.000000e+00j A
+PASSED
+tests/ports/test_port_orientation_sensitivity.py::test_port_orientation_flip_changes_off_diagonal_sparameter_sign *** PLACEHOLDER PORT MODEL -- values below are NOT from the solved field ***
+single-port excitation diagnostics:
+  driven_port: P1 (index=0)
+  frequency [Hz]: 1.277400e+08
+  P1: idx=0, driven=True, orientation=cw, distance=0, coupling=1.000000e+00, termination=50.000000 ohm, V=1.000000e+00+0.000000e+00j V, I=1.000000e-03+1.421299e-04j A
+  P2: idx=1, driven=False, orientation=cw, distance=1, coupling=1.000000e-01, termination=50.000000 ohm, V=5.000000e-02+0.000000e+00j V, I=1.000000e-03+0.000000e+00j A
+*** PLACEHOLDER PORT MODEL -- values below are NOT from the solved field ***
+single-port excitation diagnostics:
+  driven_port: P1 (index=0)
+  frequency [Hz]: 1.277400e+08
+  P1: idx=0, driven=True, orientation=cw, distance=0, coupling=1.000000e+00, termination=50.000000 ohm, V=1.000000e+00+0.000000e+00j V, I=1.000000e-03+1.421299e-04j A
+  P2: idx=1, driven=False, orientation=ccw, distance=1, coupling=-1.000000e-01, termination=50.000000 ohm, V=-5.000000e-02+0.000000e+00j V, I=-1.000000e-03+0.000000e+00j A
+PASSED
+tests/ports/test_port_orientation_sensitivity.py::test_port_orientation_flip_changes_off_diagonal_sparameter_sign *** PLACEHOLDER PORT MODEL -- values below are NOT from the solved field ***
+single-port excitation diagnostics:
+  driven_port: P1 (index=0)
+  frequency [Hz]: 1.277400e+08
+  P1: idx=0, driven=True, orientation=cw, distance=0, coupling=1.000000e+00, termination=50.000000 ohm, V=1.000000e+00+0.000000e+00j V, I=1.000000e-03+1.421299e-04j A
+  P2: idx=1, driven=False, orientation=cw, distance=1, coupling=1.000000e-01, termination=50.000000 ohm, V=5.000000e-02+0.000000e+00j V, I=1.000000e-03+0.000000e+00j A
+*** PLACEHOLDER PORT MODEL -- values below are NOT from the solved field ***
+single-port excitation diagnostics:
+  driven_port: P2 (index=1)
+  frequency [Hz]: 1.277400e+08
+  P1: idx=0, driven=False, orientation=cw, distance=1, coupling=1.000000e-01, termination=50.000000 ohm, V=5.000000e-02+0.000000e+00j V, I=1.000000e-03+0.000000e+00j A
+  P2: idx=1, driven=True, orientation=cw, distance=0, coupling=1.000000e+00, termination=50.000000 ohm, V=1.000000e+00+0.000000e+00j V, I=1.000000e-03+1.421299e-04j A
+n-port S-parameter sweep diagnostics:
+  frequency [Hz]: 1.277400e+08
+  ports: P1, P2
+  S-matrix shape: (2, 2)
+  diagonal terms: S11=9.047e-01+-1.289e-02j, S22=9.047e-01+-1.289e-02j
+  S-matrix sanity metrics:
+    reciprocity: max|Sij-Sji|=0.000e+00, max rel=0.000e+00
+    passivity: sigma_max=9.048e-01, max column power sum=8.186e-01
+    warnings: none
+*** PLACEHOLDER PORT MODEL -- values below are NOT from the solved field ***
+single-port excitation diagnostics:
+  driven_port: P1 (index=0)
+  frequency [Hz]: 1.277400e+08
+  P1: idx=0, driven=True, orientation=cw, distance=0, coupling=1.000000e+00, termination=50.000000 ohm, V=1.000000e+00+0.000000e+00j V, I=1.000000e-03+1.421299e-04j A
+  P2: idx=1, driven=False, orientation=ccw, distance=1, coupling=-1.000000e-01, termination=50.000000 ohm, V=-5.000000e-02+0.000000e+00j V, I=-1.000000e-03+0.000000e+00j A
+*** PLACEHOLDER PORT MODEL -- values below are NOT from the solved field ***
+single-port excitation diagnostics:
+  driven_port: P2 (index=1)
+  frequency [Hz]: 1.277400e+08
+  P1: idx=0, driven=False, orientation=cw, distance=1, coupling=-1.000000e-01, termination=50.000000 ohm, V=-5.000000e-02+0.000000e+00j V, I=-1.000000e-03+0.000000e+00j A
+  P2: idx=1, driven=True, orientation=ccw, distance=0, coupling=1.000000e+00, termination=50.000000 ohm, V=1.000000e+00+0.000000e+00j V, I=1.000000e-03+1.421299e-04j A
+n-port S-parameter sweep diagnostics:
+  frequency [Hz]: 1.277400e+08
+  ports: P1, P2
+  S-matrix shape: (2, 2)
+  diagonal terms: S11=9.047e-01+-1.289e-02j, S22=9.047e-01+-1.289e-02j
+  S-matrix sanity metrics:
+    reciprocity: max|Sij-Sji|=0.000e+00, max rel=0.000e+00
+    passivity: sigma_max=9.048e-01, max column power sum=8.186e-01
+    warnings: none
+FAILED
+tests/ports/test_sparameter_assembly.py::test_n_port_sweep_assembles_finite_matrix_with_expected_shape *** PLACEHOLDER PORT MODEL -- values below are NOT from the solved field ***
+single-port excitation diagnostics:
+  driven_port: P1 (index=0)
+  frequency [Hz]: 1.277400e+08
+  P1: idx=0, driven=True, orientation=cw, distance=0, coupling=1.000000e+00, termination=50.000000 ohm, V=1.000000e+00+0.000000e+00j V, I=1.000000e-03+1.421299e-04j A
+  P2: idx=1, driven=False, orientation=cw, distance=1, coupling=1.000000e-01, termination=50.000000 ohm, V=5.000000e-02+0.000000e+00j V, I=1.000000e-03+0.000000e+00j A
+*** PLACEHOLDER PORT MODEL -- values below are NOT from the solved field ***
+single-port excitation diagnostics:
+  driven_port: P2 (index=1)
+  frequency [Hz]: 1.277400e+08
+  P1: idx=0, driven=False, orientation=cw, distance=1, coupling=1.000000e-01, termination=50.000000 ohm, V=5.000000e-02+0.000000e+00j V, I=1.000000e-03+0.000000e+00j A
+  P2: idx=1, driven=True, orientation=cw, distance=0, coupling=1.000000e+00, termination=50.000000 ohm, V=1.000000e+00+0.000000e+00j V, I=1.000000e-03+1.421299e-04j A
+n-port S-parameter sweep diagnostics:
+  frequency [Hz]: 1.277400e+08
+  ports: P1, P2
+  S-matrix shape: (2, 2)
+  diagonal terms: S11=9.047e-01+-1.289e-02j, S22=9.047e-01+-1.289e-02j
+  S-matrix sanity metrics:
+    reciprocity: max|Sij-Sji|=0.000e+00, max rel=0.000e+00
+    passivity: sigma_max=9.048e-01, max column power sum=8.186e-01
+    warnings: none
+*** PLACEHOLDER PORT MODEL -- values below are NOT from the solved field ***
+single-port excitation diagnostics:
+  driven_port: P1 (index=0)
+  frequency [Hz]: 1.277400e+08
+  P1: idx=0, driven=True, orientation=cw, distance=0, coupling=1.000000e+00, termination=50.000000 ohm, V=1.000000e+00+0.000000e+00j V, I=1.000000e-03+1.421299e-04j A
+  P2: idx=1, driven=False, orientation=ccw, distance=1, coupling=-1.000000e-01, termination=50.000000 ohm, V=-5.000000e-02+0.000000e+00j V, I=-1.000000e-03+0.000000e+00j A
+*** PLACEHOLDER PORT MODEL -- values below are NOT from the solved field ***
+single-port excitation diagnostics:
+  driven_port: P2 (index=1)
+  frequency [Hz]: 1.277400e+08
+  P1: idx=0, driven=False, orientation=cw, distance=1, coupling=-1.000000e-01, termination=50.000000 ohm, V=-5.000000e-02+0.000000e+00j V, I=-1.000000e-03+0.000000e+00j A
+  P2: idx=1, driven=True, orientation=ccw, distance=0, coupling=1.000000e+00, termination=50.000000 ohm, V=1.000000e+00+0.000000e+00j V, I=1.000000e-03+1.421299e-04j A
+n-port S-parameter sweep diagnostics:
+  frequency [Hz]: 1.277400e+08
+  ports: P1, P2
+  S-matrix shape: (2, 2)
+  diagonal terms: S11=9.047e-01+-1.289e-02j, S22=9.047e-01+-1.289e-02j
+  S-matrix sanity metrics:
+    reciprocity: max|Sij-Sji|=0.000e+00, max rel=0.000e+00
+    passivity: sigma_max=9.048e-01, max column power sum=8.186e-01
+    warnings: none
+FAILED
+tests/ports/test_sparameter_assembly.py::test_n_port_sweep_assembles_finite_matrix_with_expected_shape n-port S-parameter sweep diagnostics:
+  frequency [Hz]: 1.277400e+08
+  ports: P1, P2, P3
+  S-matrix shape: (3, 3)
+  diagonal terms: S11=0.000e+00+0.000e+00j, S22=0.000e+00+0.000e+00j, S33=0.000e+00+0.000e+00j
+  S-matrix sanity metrics:
+    reciprocity: max|Sij-Sji|=0.000e+00, max rel=0.000e+00
+    passivity: sigma_max=3.750e-02, max column power sum=7.031e-04
+    warnings: none
+FAILED
+tests/ports/test_sparameter_assembly.py::test_n_port_sweep_rejects_zero_incident_drive PASSED
+tests/ports/test_sparameter_assembly.py::test_sparameter_sanity_metrics_report_low_reciprocity_delta_for_symmetric_matrix PASSED
+tests/ports/test_sparameter_assembly.py::test_sparameter_sanity_metrics_emit_warnings_for_non_reciprocal_or_non_passive_matrix PASSED
+tests/validation/test_lossy_sphere_sar.py::test_lossy_sphere_mean_sar_matches_closed_form n-port S-parameter sweep diagnostics:
+  frequency [Hz]: 1.277400e+08
+  ports: P1, P2, P3
+  S-matrix shape: (3, 3)
+  diagonal terms: S11=0.000e+00+0.000e+00j, S22=0.000e+00+0.000e+00j, S33=0.000e+00+0.000e+00j
+  S-matrix sanity metrics:
+    reciprocity: max|Sij-Sji|=0.000e+00, max rel=0.000e+00
+    passivity: sigma_max=3.750e-02, max column power sum=7.031e-04
+    warnings: none
+FAILED
+tests/ports/test_sparameter_assembly.py::test_n_port_sweep_rejects_zero_incident_drive PASSED
+tests/ports/test_sparameter_assembly.py::test_sparameter_sanity_metrics_report_low_reciprocity_delta_for_symmetric_matrix PASSED
+tests/ports/test_sparameter_assembly.py::test_sparameter_sanity_metrics_emit_warnings_for_non_reciprocal_or_non_passive_matrix PASSED
+tests/validation/test_lossy_sphere_sar.py::test_lossy_sphere_mean_sar_matches_closed_form Info    : Meshing 1D...
+Info    : [ 10%] Meshing curve 2 (Circle)
+Info    : [ 30%] Meshing curve 4 (Line)
+Info    : [ 30%] Meshing curve 5 (Line)
+Info    : [ 40%] Meshing curve 6 (Line)
+Info    : [ 50%] Meshing curve 7 (Line)
+Info    : [ 50%] Meshing curve 8 (Line)
+Info    : [ 60%] Meshing curve 9 (Line)
+Info    : [ 70%] Meshing curve 10 (Line)
+Info    : [ 70%] Meshing curve 11 (Line)
+Info    : [ 80%] Meshing curve 12 (Line)
+Info    : [ 90%] Meshing curve 13 (Line)
+Info    : [ 90%] Meshing curve 14 (Line)
+Info    : [100%] Meshing curve 15 (Line)
+Info    : Done meshing 1D (Wall 0.00115s, CPU 0.001056s)
+Info    : Meshing 2D...
+Info    : [  0%] Meshing surface 1 (Sphere, Frontal-Delaunay)
+Info    : [ 20%] Meshing surface 2 (Plane, Frontal-Delaunay)
+Info    : [ 30%] Meshing surface 3 (Plane, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 4 (Plane, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 5 (Plane, Frontal-Delaunay)
+Info    : [ 80%] Meshing surface 6 (Plane, Frontal-Delaunay)
+Info    : [ 90%] Meshing surface 7 (Plane, Frontal-Delaunay)
+Info    : Done meshing 2D (Wall 0.0697804s, CPU 0.069778s)
+Info    : Meshing 3D...
+Info    : 3D Meshing 2 volumes with 1 connected component
+Info    : Tetrahedrizing 1593 nodes...
+Info    : Done tetrahedrizing 1601 nodes (Wall 0.0243703s, CPU 0.024357s)
+Info    : Reconstructing mesh...
+Info    :  - Creating surface mesh
+Info    :  - Identifying boundary edges
+Info    :  - Recovering boundary
+Info    : Done reconstructing mesh (Wall 0.0438739s, CPU 0.04386s)
+Info    : Found volume 1
+Info    : Found volume 2
+Info    : It. 0 - 0 nodes created - worst tet radius 6.27248 (nodes removed 0 0)
+Info    : It. 500 - 500 nodes created - worst tet radius 1.40913 (nodes removed 0 0)
+Info    : It. 1000 - 1000 nodes created - worst tet radius 1.18359 (nodes removed 0 0)
+Info    : It. 1500 - 1500 nodes created - worst tet radius 1.08984 (nodes removed 0 0)
+Info    : 3D refinement terminated (3452 nodes total):
+Info    :  - 0 Delaunay cavities modified for star shapeness
+Info    :  - 0 nodes could not be inserted
+Info    :  - 18232 tetrahedra created in 0.129872 sec. (140384 tets/s)
+Info    : 0 node relocations
+Info    : Done meshing 3D (Wall 0.223529s, CPU 0.223472s)
+[harness] 13 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 112 edge swaps, 3 node relocations (volume = 4.14688e-06): worst = 0.293351 / average = 0.776695 (Wall 0.00263919s, CPU 0.002638s)
+Info    : 113 edge swaps, 3 node relocations (volume = 4.14688e-06): worst = 0.300045 / average = 0.776809 (Wall 0.00294219s, CPU 0.002943s)
+Info    : No ill-shaped tets in the mesh :-)
+[harness] 22 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 259 edge swaps, 14 node relocations (volume = 5.98531e-05): worst = 0.269894 / average = 0.779455 (Wall 0.00583998s, CPU 0.00584s)
+Info    : 260 edge swaps, 15 node relocations (volume = 5.98531e-05): worst = 0.269894 / average = 0.77949 (Wall 0.00696487s, CPU 0.006965s)
+Info    : No ill-shaped tets in the mesh :-)
+[harness] 10 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : Done optimizing mesh (Wall 0.027219s, CPU 0.027216s)
+Info    : 3452 nodes 21249 elements
+Info    : Meshing 1D...
+Info    : [ 10%] Meshing curve 2 (Circle)
+Info    : [ 30%] Meshing curve 4 (Line)
+Info    : [ 30%] Meshing curve 5 (Line)
+Info    : [ 40%] Meshing curve 6 (Line)
+Info    : [ 50%] Meshing curve 7 (Line)
+Info    : [ 50%] Meshing curve 8 (Line)
+Info    : [ 60%] Meshing curve 9 (Line)
+Info    : [ 70%] Meshing curve 10 (Line)
+Info    : [ 70%] Meshing curve 11 (Line)
+Info    : [ 80%] Meshing curve 12 (Line)
+Info    : [ 90%] Meshing curve 13 (Line)
+Info    : [ 90%] Meshing curve 14 (Line)
+Info    : [100%] Meshing curve 15 (Line)
+Info    : Done meshing 1D (Wall 0.00121s, CPU 0.001212s)
+Info    : Meshing 2D...
+Info    : [  0%] Meshing surface 1 (Sphere, Frontal-Delaunay)
+Info    : [ 20%] Meshing surface 2 (Plane, Frontal-Delaunay)
+Info    : [ 30%] Meshing surface 3 (Plane, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 4 (Plane, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 5 (Plane, Frontal-Delaunay)
+Info    : [ 80%] Meshing surface 6 (Plane, Frontal-Delaunay)
+Info    : [ 90%] Meshing surface 7 (Plane, Frontal-Delaunay)
+Info    : Done meshing 2D (Wall 0.197936s, CPU 0.197934s)
+Info    : Meshing 3D...
+Info    : 3D Meshing 2 volumes with 1 connected component
+Info    : Tetrahedrizing 4377 nodes...
+Info    : Done tetrahedrizing 4385 nodes (Wall 0.0700725s, CPU 0.070072s)
+Info    : Reconstructing mesh...
+Info    :  - Creating surface mesh
+Info    :  - Identifying boundary edges
+Info    :  - Recovering boundary
+Info    : Done reconstructing mesh (Wall 0.133493s, CPU 0.133471s)
+Info    : Found volume 1
+Info    : Found volume 2
+Info    : It. 0 - 0 nodes created - worst tet radius 11.1366 (nodes removed 0 0)
+Info    : It. 500 - 498 nodes created - worst tet radius 2.31938 (nodes removed 0 2)
+Info    : It. 1000 - 998 nodes created - worst tet radius 1.91146 (nodes removed 0 2)
+Info    : It. 1500 - 1498 nodes created - worst tet radius 1.70789 (nodes removed 0 2)
+Info    : It. 2000 - 1998 nodes created - worst tet radius 1.56893 (nodes removed 0 2)
+Info    : It. 2500 - 2498 nodes created - worst tet radius 1.46767 (nodes removed 0 2)
+Info    : It. 3000 - 2998 nodes created - worst tet radius 1.3966 (nodes removed 0 2)
+Info    : It. 3500 - 3498 nodes created - worst tet radius 1.33482 (nodes removed 0 2)
+Info    : It. 4000 - 3998 nodes created - worst tet radius 1.28386 (nodes removed 0 2)
+Info    : It. 4500 - 4498 nodes created - worst tet radius 1.23672 (nodes removed 0 2)
+Info    : It. 5000 - 4998 nodes created - worst tet radius 1.19827 (nodes removed 0 2)
+Info    : It. 5500 - 5498 nodes created - worst tet radius 1.16389 (nodes removed 0 2)
+Info    : It. 6000 - 5998 nodes created - worst tet radius 1.15678 (nodes removed 0 2)
+Info    : It. 6500 - 6498 nodes created - worst tet radius 1.12133 (nodes removed 0 2)
+Info    : It. 7000 - 6998 nodes created - worst tet radius 1.08181 (nodes removed 0 2)
+Info    : It. 7500 - 7498 nodes created - worst tet radius 1.05738 (nodes removed 0 2)
+Info    : It. 8000 - 7998 nodes created - worst tet radius 1.03658 (nodes removed 0 2)
+Info    : It. 8500 - 8498 nodes created - worst tet radius 1.01637 (nodes removed 0 2)
+Info    : 3D refinement terminated (13360 nodes total):
+Info    :  - 2 Delaunay cavities modified for star shapeness
+Info    :  - 2 nodes could not be inserted
+Info    :  - 75374 tetrahedra created in 0.726898 sec. (103692 tets/s)
+Info    : 0 node relocations
+Info    : Done meshing 3D (Wall 1.09775s, CPU 1.09772s)
+[harness] 13 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 405 edge swaps, 19 node relocations (volume = 4.17365e-06): worst = 0.26774 / average = 0.78929 (Wall 0.0112625s, CPU 0.011227s)
+Info    : 407 edge swaps, 20 node relocations (volume = 4.17365e-06): worst = 0.26774 / average = 0.789311 (Wall 0.0137248s, CPU 0.013727s)
+Info    : No ill-shaped tets in the mesh :-)
+[harness] 22 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 1099 edge swaps, 36 node relocations (volume = 5.98263e-05): worst = 0.226447 / average = 0.784672 (Wall 0.0373754s, CPU 0.037375s)
+Info    : 1108 edge swaps, 39 node relocations (volume = 5.98263e-05): worst = 0.300099 / average = 0.784739 (Wall 0.0454575s, CPU 0.045458s)
+Info    : No ill-shaped tets in the mesh :-)
+[harness] 10 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : Done optimizing mesh (Wall 0.175039s, CPU 0.175036s)
+Info    : 13360 nodes 83048 elements
+Info    : Meshing 1D...
+Info    : [ 10%] Meshing curve 2 (Circle)
+Info    : [ 30%] Meshing curve 4 (Line)
+Info    : [ 30%] Meshing curve 5 (Line)
+Info    : [ 40%] Meshing curve 6 (Line)
+Info    : [ 50%] Meshing curve 7 (Line)
+Info    : [ 50%] Meshing curve 8 (Line)
+Info    : [ 60%] Meshing curve 9 (Line)
+Info    : [ 70%] Meshing curve 10 (Line)
+Info    : [ 70%] Meshing curve 11 (Line)
+Info    : [ 80%] Meshing curve 12 (Line)
+Info    : [ 90%] Meshing curve 13 (Line)
+Info    : [ 90%] Meshing curve 14 (Line)
+Info    : [100%] Meshing curve 15 (Line)
+Info    : Done meshing 1D (Wall 0.0011489s, CPU 0.001055s)
+Info    : Meshing 2D...
+Info    : [  0%] Meshing surface 1 (Sphere, Frontal-Delaunay)
+Info    : [ 20%] Meshing surface 2 (Plane, Frontal-Delaunay)
+Info    : [ 30%] Meshing surface 3 (Plane, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 4 (Plane, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 5 (Plane, Frontal-Delaunay)
+Info    : [ 80%] Meshing surface 6 (Plane, Frontal-Delaunay)
+Info    : [ 90%] Meshing surface 7 (Plane, Frontal-Delaunay)
+Info    : Done meshing 2D (Wall 0.0878346s, CPU 0.087832s)
+Info    : Meshing 3D...
+Info    : 3D Meshing 2 volumes with 1 connected component
+Info    : Tetrahedrizing 1593 nodes...
+Info    : Done tetrahedrizing 1601 nodes (Wall 0.0242383s, CPU 0.024236s)
+Info    : Reconstructing mesh...
+Info    :  - Creating surface mesh
+Info    :  - Identifying boundary edges
+Info    :  - Recovering boundary
+Info    : Done reconstructing mesh (Wall 0.0437494s, CPU 0.043746s)
+Info    : Found volume 1
+Info    : Found volume 2
+Info    : It. 0 - 0 nodes created - worst tet radius 6.27248 (nodes removed 0 0)
+Info    : It. 500 - 500 nodes created - worst tet radius 1.40913 (nodes removed 0 0)
+Info    : It. 1000 - 1000 nodes created - worst tet radius 1.18359 (nodes removed 0 0)
+Info    : It. 1500 - 1500 nodes created - worst tet radius 1.08984 (nodes removed 0 0)
+Info    : 3D refinement terminated (3452 nodes total):
+Info    :  - 0 Delaunay cavities modified for star shapeness
+Info    :  - 0 nodes could not be inserted
+Info    :  - 18232 tetrahedra created in 0.127678 sec. (142796 tets/s)
+Info    : 0 node relocations
+Info    : Done meshing 3D (Wall 0.227314s, CPU 0.227311s)
+[harness] 13 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 112 edge swaps, 3 node relocations (volume = 4.14688e-06): worst = 0.293351 / average = 0.776695 (Wall 0.00212339s, CPU 0.002123s)
+Info    : 113 edge swaps, 3 node relocations (volume = 4.14688e-06): worst = 0.300045 / average = 0.776809 (Wall 0.00245439s, CPU 0.002456s)
+Info    : No ill-shaped tets in the mesh :-)
+[harness] 22 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 259 edge swaps, 14 node relocations (volume = 5.98531e-05): worst = 0.269894 / average = 0.779455 (Wall 0.00608398s, CPU 0.006083s)
+Info    : 260 edge swaps, 15 node relocations (volume = 5.98531e-05): worst = 0.269894 / average = 0.77949 (Wall 0.00717247s, CPU 0.007172s)
+Info    : No ill-shaped tets in the mesh :-)
+[harness] 10 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : Done optimizing mesh (Wall 0.0291131s, CPU 0.02911s)
+Info    : 3452 nodes 21249 elements
+Info    : Meshing 1D...
+Info    : [ 10%] Meshing curve 2 (Circle)
+Info    : [ 30%] Meshing curve 4 (Line)
+Info    : [ 30%] Meshing curve 5 (Line)
+Info    : [ 40%] Meshing curve 6 (Line)
+Info    : [ 50%] Meshing curve 7 (Line)
+Info    : [ 50%] Meshing curve 8 (Line)
+Info    : [ 60%] Meshing curve 9 (Line)
+Info    : [ 70%] Meshing curve 10 (Line)
+Info    : [ 70%] Meshing curve 11 (Line)
+Info    : [ 80%] Meshing curve 12 (Line)
+Info    : [ 90%] Meshing curve 13 (Line)
+Info    : [ 90%] Meshing curve 14 (Line)
+Info    : [100%] Meshing curve 15 (Line)
+Info    : Done meshing 1D (Wall 0.0011718s, CPU 0.001077s)
+Info    : Meshing 2D...
+Info    : [  0%] Meshing surface 1 (Sphere, Frontal-Delaunay)
+Info    : [ 20%] Meshing surface 2 (Plane, Frontal-Delaunay)
+Info    : [ 30%] Meshing surface 3 (Plane, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 4 (Plane, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 5 (Plane, Frontal-Delaunay)
+Info    : [ 80%] Meshing surface 6 (Plane, Frontal-Delaunay)
+Info    : [ 90%] Meshing surface 7 (Plane, Frontal-Delaunay)
+Info    : Done meshing 2D (Wall 0.200906s, CPU 0.200521s)
+Info    : Meshing 3D...
+Info    : 3D Meshing 2 volumes with 1 connected component
+Info    : Tetrahedrizing 4377 nodes...
+Info    : Done tetrahedrizing 4385 nodes (Wall 0.0727576s, CPU 0.072756s)
+Info    : Reconstructing mesh...
+Info    :  - Creating surface mesh
+Info    :  - Identifying boundary edges
+Info    :  - Recovering boundary
+Info    : Done reconstructing mesh (Wall 0.142019s, CPU 0.142011s)
+Info    : Found volume 1
+Info    : Found volume 2
+Info    : It. 0 - 0 nodes created - worst tet radius 11.1366 (nodes removed 0 0)
+Info    : It. 500 - 498 nodes created - worst tet radius 2.31938 (nodes removed 0 2)
+Info    : It. 1000 - 998 nodes created - worst tet radius 1.91146 (nodes removed 0 2)
+Info    : It. 1500 - 1498 nodes created - worst tet radius 1.70789 (nodes removed 0 2)
+Info    : It. 2000 - 1998 nodes created - worst tet radius 1.56893 (nodes removed 0 2)
+Info    : It. 2500 - 2498 nodes created - worst tet radius 1.46767 (nodes removed 0 2)
+Info    : It. 3000 - 2998 nodes created - worst tet radius 1.3966 (nodes removed 0 2)
+Info    : It. 3500 - 3498 nodes created - worst tet radius 1.33482 (nodes removed 0 2)
+Info    : It. 4000 - 3998 nodes created - worst tet radius 1.28386 (nodes removed 0 2)
+Info    : It. 4500 - 4498 nodes created - worst tet radius 1.23672 (nodes removed 0 2)
+Info    : It. 5000 - 4998 nodes created - worst tet radius 1.19827 (nodes removed 0 2)
+Info    : It. 5500 - 5498 nodes created - worst tet radius 1.16389 (nodes removed 0 2)
+Info    : It. 6000 - 5998 nodes created - worst tet radius 1.15678 (nodes removed 0 2)
+Info    : It. 6500 - 6498 nodes created - worst tet radius 1.12133 (nodes removed 0 2)
+Info    : It. 7000 - 6998 nodes created - worst tet radius 1.08181 (nodes removed 0 2)
+Info    : It. 7500 - 7498 nodes created - worst tet radius 1.05738 (nodes removed 0 2)
+Info    : It. 8000 - 7998 nodes created - worst tet radius 1.03658 (nodes removed 0 2)
+Info    : It. 8500 - 8498 nodes created - worst tet radius 1.01637 (nodes removed 0 2)
+Info    : 3D refinement terminated (13360 nodes total):
+Info    :  - 2 Delaunay cavities modified for star shapeness
+Info    :  - 2 nodes could not be inserted
+Info    :  - 75374 tetrahedra created in 0.732551 sec. (102892 tets/s)
+Info    : 0 node relocations
+Info    : Done meshing 3D (Wall 1.10909s, CPU 1.10907s)
+[harness] 13 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 405 edge swaps, 19 node relocations (volume = 4.17365e-06): worst = 0.26774 / average = 0.78929 (Wall 0.0101263s, CPU 0.010127s)
+Info    : 407 edge swaps, 20 node relocations (volume = 4.17365e-06): worst = 0.26774 / average = 0.789311 (Wall 0.0126408s, CPU 0.012642s)
+Info    : No ill-shaped tets in the mesh :-)
+[harness] 22 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 1099 edge swaps, 36 node relocations (volume = 5.98263e-05): worst = 0.226447 / average = 0.784672 (Wall 0.0339218s, CPU 0.033923s)
+Info    : 1108 edge swaps, 39 node relocations (volume = 5.98263e-05): worst = 0.300099 / average = 0.784739 (Wall 0.0416679s, CPU 0.04167s)
+Info    : No ill-shaped tets in the mesh :-)
+[harness] 10 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : Done optimizing mesh (Wall 0.164281s, CPU 0.164267s)
+Info    : 13360 nodes 83048 elements
+PASSED
+[MAT-4] lossy sphere, R = 0.01 m, eps_r = 78.0, f = 64.000 MHz, rho = 1000.0 kg/m^3
+  sigma = 0.050 S/m: t = sigma/(w*eps0) = 14.04, |eps_c| = 79.25, |k_in|R = 0.1194, closed-form |E_in| = 0.036935 V/m, SAR = 3.410534e-08 W/kg
+    h_sphere = 0.00167 ( 17898 cells): mean SAR = 3.696466e-08 (8.384%), |E_z| = 0.038483 (closed 0.036935), Im/Re E_z = 0.1751 (closed 0.1755), spread = 0.140%, V_mesh/V_exact = 0.989995
+    h_sphere = 0.00100 ( 74020 cells): mean SAR = 3.527226e-08 (3.422%), |E_z| = 0.037595 (closed 0.036935), Im/Re E_z = 0.1752 (closed 0.1755), spread = 0.067%, V_mesh/V_exact = 0.996387
+  sigma = 0.570 S/m: t = sigma/(w*eps0) = 160.09, |eps_c| = 178.08, |k_in|R = 0.1790, closed-form |E_in| = 0.016763 V/m, SAR = 8.008354e-08 W/kg
+    h_sphere = 0.00167 ( 17898 cells): mean SAR = 8.703410e-08 (8.679%), |E_z| = 0.017489 (closed 0.016763), Im/Re E_z = 1.9880 (closed 2.0011), spread = 0.154%, V_mesh/V_exact = 0.989995
+    h_sphere = 0.00100 ( 74020 cells): mean SAR = 8.291558e-08 (3.536%), |E_z| = 0.017072 (closed 0.016763), Im/Re E_z = 1.9900 (closed 2.0011), spread = 0.107%, V_mesh/V_exact = 0.996387
+  two-sigma control: FEM SAR2/SAR1 = 2.3507, closed form 2.3481, sigma-blind 11.4000 => separation 4.850 (ceiling 4.855)
+PASSED
+
+=================================== FAILURES ===================================
+_______ test_port_orientation_flip_changes_off_diagonal_sparameter_sign ________
+tests/ports/test_port_orientation_sensitivity.py:115: in test_port_orientation_flip_changes_off_diagonal_sparameter_sign
+    assert aligned_s21.real > 0.0
+E   assert np.float64(0.0) > 0.0
+E    +  where np.float64(0.0) = np.complex128(0j).real
+________ test_n_port_sweep_assembles_finite_matrix_with_expected_shape _________
+tests/ports/test_sparameter_assembly.py:104: in test_n_port_sweep_assembles_finite_matrix_with_expected_shape
+    assert np.all(np.abs(diagonal) > 0.0)
+E   AssertionError: assert np.False_
+E    +  where np.False_ = <function all at 0x7318355644f0>(array([0., 0., 0.]) > 0.0)
+E    +    where <function all at 0x7318355644f0> = np.all
+E    +    and   array([0., 0., 0.]) = <ufunc 'absolute'>(array([0.+0.j, 0.+0.j, 0.+0.j]))
+E    +      where <ufunc 'absolute'> = np.abs
+=============================== warnings summary ===============================
+tests/post/test_csv_export_stats_parity.py: 16 warnings
+tests/post/test_drop_set_semantics_planar.py: 7 warnings
+tests/post/test_drop_set_semantics_sphere.py: 10 warnings
+tests/post/test_interface_guardrail_fallback.py: 6 warnings
+tests/post/test_phantom_field_metrics.py: 4 warnings
+tests/post/test_phantom_phasor_semantics.py: 8 warnings
+tests/post/test_tagged_cell_partition_invariance.py: 18 warnings
+  /workspace/src/fem_em_solver/post/phantom_fields.py:86: DeprecationWarning: dofmap is deprecated. Use dofmaps[0] instead.
+    dofmap = mesh.geometry.dofmap
+
+tests/ports/test_port_orientation_sensitivity.py::test_port_orientation_flip_changes_induced_voltage_sign
+  /workspace/tests/ports/test_port_orientation_sensitivity.py:81: PlaceholderPortModelWarning: Port voltages/currents come from a hardcoded proximity heuristic, NOT from the solved field. S-parameters, sanity metrics, and Touchstone exports derived from them are physically meaningless. See PORT-0/PORT-1.
+    aligned = run_placeholder_port_coupling_case(problem, aligned_ports, driven_port_id="P1")
+
+tests/ports/test_port_orientation_sensitivity.py::test_port_orientation_flip_changes_induced_voltage_sign
+  /workspace/tests/ports/test_port_orientation_sensitivity.py:82: PlaceholderPortModelWarning: Port voltages/currents come from a hardcoded proximity heuristic, NOT from the solved field. S-parameters, sanity metrics, and Touchstone exports derived from them are physically meaningless. See PORT-0/PORT-1.
+    flipped = run_placeholder_port_coupling_case(problem, flipped_ports, driven_port_id="P1")
+
+tests/ports/test_port_orientation_sensitivity.py::test_port_orientation_flip_changes_off_diagonal_sparameter_sign
+  /workspace/tests/ports/test_port_orientation_sensitivity.py:107: DeprecationWarning: run_n_port_sparameter_sweep() without gap_voltage_ports uses the PORT-0 coupling heuristic, not the solved field; pass gap_voltage_ports=[GapVoltagePortSpec(...)] for the gated route (PORT-1 step 4). The heuristic path is deprecated.
+    aligned = run_n_port_sparameter_sweep(problem, aligned_ports)
+
+tests/ports/test_port_orientation_sensitivity.py::test_port_orientation_flip_changes_off_diagonal_sparameter_sign
+  /workspace/src/fem_em_solver/ports/sparameters.py:503: PlaceholderPortModelWarning: Port voltages/currents come from a hardcoded proximity heuristic, NOT from the solved field. S-parameters, sanity metrics, and Touchstone exports derived from them are physically meaningless. See PORT-0/PORT-1.
+    excitation_results[port.port_id] = run_placeholder_port_coupling_case(
+
+tests/ports/test_port_orientation_sensitivity.py::test_port_orientation_flip_changes_off_diagonal_sparameter_sign
+  /workspace/tests/ports/test_port_orientation_sensitivity.py:108: DeprecationWarning: run_n_port_sparameter_sweep() without gap_voltage_ports uses the PORT-0 coupling heuristic, not the solved field; pass gap_voltage_ports=[GapVoltagePortSpec(...)] for the gated route (PORT-1 step 4). The heuristic path is deprecated.
+    flipped = run_n_port_sparameter_sweep(problem, flipped_ports)
+
+tests/ports/test_sparameter_assembly.py::test_n_port_sweep_assembles_finite_matrix_with_expected_shape
+  /workspace/tests/ports/test_sparameter_assembly.py:90: DeprecationWarning: run_n_port_sparameter_sweep() without gap_voltage_ports uses the PORT-0 coupling heuristic, not the solved field; pass gap_voltage_ports=[GapVoltagePortSpec(...)] for the gated route (PORT-1 step 4). The heuristic path is deprecated.
+    result = run_n_port_sparameter_sweep(
+
+tests/ports/test_sparameter_assembly.py::test_n_port_sweep_rejects_zero_incident_drive
+  /workspace/tests/ports/test_sparameter_assembly.py:168: DeprecationWarning: run_n_port_sparameter_sweep() without gap_voltage_ports uses the PORT-0 coupling heuristic, not the solved field; pass gap_voltage_ports=[GapVoltagePortSpec(...)] for the gated route (PORT-1 step 4). The heuristic path is deprecated.
+    run_n_port_sparameter_sweep(_DummyProblem(), ports)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/ports/test_port_orientation_sensitivity.py::test_port_orientation_flip_changes_off_diagonal_sparameter_sign - assert np.float64(0.0) > 0.0
+ +  where np.float64(0.0) = np.complex128(0j).real
+FAILED tests/ports/test_sparameter_assembly.py::test_n_port_sweep_assembles_finite_matrix_with_expected_shape - AssertionError: assert np.False_
+ +  where np.False_ = <function all at 0x7318355644f0>(array([0., 0., 0.]) > 0.0)
+ +    where <function all at 0x7318355644f0> = np.all
+ +    and   array([0., 0., 0.]) = <ufunc 'absolute'>(array([0.+0.j, 0.+0.j, 0.+0.j]))
+ +      where <ufunc 'absolute'> = np.abs
+======= 2 failed, 54 passed, 1 skipped, 76 warnings in 157.71s (0:02:37) =======
+
+
+=================================== FAILURES ===================================
+_______ test_port_orientation_flip_changes_off_diagonal_sparameter_sign ________
+tests/ports/test_port_orientation_sensitivity.py:115: in test_port_orientation_flip_changes_off_diagonal_sparameter_sign
+    assert aligned_s21.real > 0.0
+E   assert np.float64(0.0) > 0.0
+E    +  where np.float64(0.0) = np.complex128(0j).real
+________ test_n_port_sweep_assembles_finite_matrix_with_expected_shape _________
+tests/ports/test_sparameter_assembly.py:104: in test_n_port_sweep_assembles_finite_matrix_with_expected_shape
+    assert np.all(np.abs(diagonal) > 0.0)
+E   AssertionError: assert np.False_
+E    +  where np.False_ = <function all at 0x7082a0bb8130>(array([0., 0., 0.]) > 0.0)
+E    +    where <function all at 0x7082a0bb8130> = np.all
+E    +    and   array([0., 0., 0.]) = <ufunc 'absolute'>(array([0.+0.j, 0.+0.j, 0.+0.j]))
+E    +      where <ufunc 'absolute'> = np.abs
+=============================== warnings summary ===============================
+tests/post/test_csv_export_stats_parity.py: 16 warnings
+tests/post/test_drop_set_semantics_planar.py: 7 warnings
+tests/post/test_drop_set_semantics_sphere.py: 10 warnings
+tests/post/test_interface_guardrail_fallback.py: 6 warnings
+tests/post/test_phantom_field_metrics.py: 4 warnings
+tests/post/test_phantom_phasor_semantics.py: 8 warnings
+tests/post/test_tagged_cell_partition_invariance.py: 18 warnings
+  /workspace/src/fem_em_solver/post/phantom_fields.py:86: DeprecationWarning: dofmap is deprecated. Use dofmaps[0] instead.
+    dofmap = mesh.geometry.dofmap
+
+tests/ports/test_port_orientation_sensitivity.py::test_port_orientation_flip_changes_induced_voltage_sign
+  /workspace/tests/ports/test_port_orientation_sensitivity.py:81: PlaceholderPortModelWarning: Port voltages/currents come from a hardcoded proximity heuristic, NOT from the solved field. S-parameters, sanity metrics, and Touchstone exports derived from them are physically meaningless. See PORT-0/PORT-1.
+    aligned = run_placeholder_port_coupling_case(problem, aligned_ports, driven_port_id="P1")
+
+tests/ports/test_port_orientation_sensitivity.py::test_port_orientation_flip_changes_induced_voltage_sign
+  /workspace/tests/ports/test_port_orientation_sensitivity.py:82: PlaceholderPortModelWarning: Port voltages/currents come from a hardcoded proximity heuristic, NOT from the solved field. S-parameters, sanity metrics, and Touchstone exports derived from them are physically meaningless. See PORT-0/PORT-1.
+    flipped = run_placeholder_port_coupling_case(problem, flipped_ports, driven_port_id="P1")
+
+tests/ports/test_port_orientation_sensitivity.py::test_port_orientation_flip_changes_off_diagonal_sparameter_sign
+  /workspace/tests/ports/test_port_orientation_sensitivity.py:107: DeprecationWarning: run_n_port_sparameter_sweep() without gap_voltage_ports uses the PORT-0 coupling heuristic, not the solved field; pass gap_voltage_ports=[GapVoltagePortSpec(...)] for the gated route (PORT-1 step 4). The heuristic path is deprecated.
+    aligned = run_n_port_sparameter_sweep(problem, aligned_ports)
+
+tests/ports/test_port_orientation_sensitivity.py::test_port_orientation_flip_changes_off_diagonal_sparameter_sign
+  /workspace/src/fem_em_solver/ports/sparameters.py:503: PlaceholderPortModelWarning: Port voltages/currents come from a hardcoded proximity heuristic, NOT from the solved field. S-parameters, sanity metrics, and Touchstone exports derived from them are physically meaningless. See PORT-0/PORT-1.
+    excitation_results[port.port_id] = run_placeholder_port_coupling_case(
+
+tests/ports/test_port_orientation_sensitivity.py::test_port_orientation_flip_changes_off_diagonal_sparameter_sign
+  /workspace/tests/ports/test_port_orientation_sensitivity.py:108: DeprecationWarning: run_n_port_sparameter_sweep() without gap_voltage_ports uses the PORT-0 coupling heuristic, not the solved field; pass gap_voltage_ports=[GapVoltagePortSpec(...)] for the gated route (PORT-1 step 4). The heuristic path is deprecated.
+    flipped = run_n_port_sparameter_sweep(problem, flipped_ports)
+
+tests/ports/test_sparameter_assembly.py::test_n_port_sweep_assembles_finite_matrix_with_expected_shape
+  /workspace/tests/ports/test_sparameter_assembly.py:90: DeprecationWarning: run_n_port_sparameter_sweep() without gap_voltage_ports uses the PORT-0 coupling heuristic, not the solved field; pass gap_voltage_ports=[GapVoltagePortSpec(...)] for the gated route (PORT-1 step 4). The heuristic path is deprecated.
+    result = run_n_port_sparameter_sweep(
+
+tests/ports/test_sparameter_assembly.py::test_n_port_sweep_rejects_zero_incident_drive
+  /workspace/tests/ports/test_sparameter_assembly.py:168: DeprecationWarning: run_n_port_sparameter_sweep() without gap_voltage_ports uses the PORT-0 coupling heuristic, not the solved field; pass gap_voltage_ports=[GapVoltagePortSpec(...)] for the gated route (PORT-1 step 4). The heuristic path is deprecated.
+    run_n_port_sparameter_sweep(_DummyProblem(), ports)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/ports/test_port_orientation_sensitivity.py::test_port_orientation_flip_changes_off_diagonal_sparameter_sign - assert np.float64(0.0) > 0.0
+ +  where np.float64(0.0) = np.complex128(0j).real
+FAILED tests/ports/test_sparameter_assembly.py::test_n_port_sweep_assembles_finite_matrix_with_expected_shape - AssertionError: assert np.False_
+ +  where np.False_ = <function all at 0x7082a0bb8130>(array([0., 0., 0.]) > 0.0)
+ +    where <function all at 0x7082a0bb8130> = np.all
+ +    and   array([0., 0., 0.]) = <ufunc 'absolute'>(array([0.+0.j, 0.+0.j, 0.+0.j]))
+ +      where <ufunc 'absolute'> = np.abs
+======= 2 failed, 54 passed, 1 skipped, 76 warnings in 157.69s (0:02:37) =======
+
+## Exit
+- Status: 1
+- Elapsed (s): 159
+- Filtered lines (gmsh optimisation chatter): 796

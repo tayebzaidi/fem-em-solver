@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import hashlib
+
 import numpy as np
 from mpi4py import MPI
 from dolfinx import geometry
@@ -44,7 +46,18 @@ def evaluate_vector_field_parallel(function, points: np.ndarray, comm: MPI.Intra
     # size 36378`` at -n 2, EX-52, 20260907T033551Z_EX-52.log:400) and passes
     # silently at -n 1. Refuse it on EVERY rank — a rank-0-only raise ahead of
     # the gather below would hang the other ranks.
-    counts = comm.allgather(n_points)
+    #
+    # OPS-55: equal counts are not enough — with equal counts and different
+    # coordinates each rank locates ITS OWN rows and rank 0 scatters the hits
+    # by positional index, so ``values[i]`` silently becomes the field at some
+    # other rank's row ``i``. A digest rides the same allgather (no extra round
+    # on the valid path). Validate, never broadcast: a broadcast would hide a
+    # caller that still indexes the result against its own local ``points``.
+    # The contract is bitwise identity.
+    points = np.ascontiguousarray(points)
+    digest = hashlib.blake2b(points.tobytes(), digest_size=16).digest()
+    gathered_keys = comm.allgather((n_points, digest))
+    counts = [c for c, _ in gathered_keys]
     if len(set(counts)) > 1:
         per_rank = ", ".join(f"rank {r}: {c}" for r, c in enumerate(counts))
         raise ValueError(
@@ -52,6 +65,27 @@ def evaluate_vector_field_parallel(function, points: np.ndarray, comm: MPI.Intra
             f"points on different ranks ({per_rank}). This routine is "
             "collective: the point list must be identical on every rank — "
             "allgather your points first."
+        )
+    if len({d for _, d in gathered_keys}) > 1:
+        # Every rank knows the digests differ, so further collectives are safe
+        # here: compare against rank 0's list and raise on EVERY rank.
+        ref = comm.bcast(points if comm.rank == 0 else None, root=0)
+        diff = np.abs(points - ref)
+        rows = np.flatnonzero(np.any(points != ref, axis=1))
+        first_row = int(rows[0]) if rows.size else -1
+        max_dev = float(np.max(diff)) if diff.size else 0.0
+        stats = comm.allgather((first_row, max_dev))
+        per_rank = "; ".join(
+            f"rank {r}: first differing row {row}, max abs deviation {dev:.3e}"
+            for r, (row, dev) in enumerate(stats)
+        )
+        raise ValueError(
+            "evaluate_vector_field_parallel received point lists of equal "
+            "length but different coordinates on different ranks (vs rank 0 — "
+            f"{per_rank}). This routine is collective: the point list must be "
+            "bitwise identical on every rank — broadcast the points from "
+            "rank 0 (a gross deviation means rank-local points; ~1e-16 means "
+            "rank-dependent floating-point ordering)."
         )
 
     value_shape = function.function_space.element.value_shape
