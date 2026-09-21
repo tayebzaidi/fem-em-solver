@@ -81,8 +81,7 @@ page is a read-only digest for the human operator.
     `docs/automation/weekly-review.md` (08-30) still awaits your OK.
 13. **One click: does ParaView open a DG1 `.bp`?** (since 2026-08-12.)
     `scripts/probes/post4_step5_probe.py` writes the `.bp` and reads it back
-    exactly; it still ends `PROBE_RESULT FAIL` on an old fixture pin until
-    item 26 lands — ignore that line for this purpose.
+    exactly, and since 2026-09-21 (`OPS-50` ✅) ends `PROBE_RESULT PASS`.
 
 Nothing new is blocked on you except item 2, which gates only `PORT-23`.
 Claude connectors for Gmail, Microsoft 365 and PubMed are unauthorised in

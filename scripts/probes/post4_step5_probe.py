@@ -20,8 +20,9 @@ Three things are measured on one run of the ``examples/mri/01`` debug fixture:
 2. **Fidelity to the source.** The step-4 comparison, re-run with the read-back
    DG1 fields in the interpolant slot: these must read round-off where the P1
    path reads the step-4 numbers.  The P1 path is measured in the *same* run,
-   and its refutation pin (midpoint relative median >= 10%, vertex <= midpoint)
-   must still fire — if the P1 numbers moved, the fixture drifted and the whole
+   and its refutation pin (midpoint relative median >= 10%, vertex/midpoint
+   separation reproducing its version-tagged record ``STEP4_SEP``) must still
+   fire — if the P1 numbers moved, the fixture drifted and the whole
    comparison is void.
 3. **Cost.** Writer wall-clock and on-disk size for both routes.  ADIOS2 ``.bp``
    is a *directory*: it is sized by a tree walk, never ``stat``.
@@ -77,7 +78,15 @@ RESOLUTION_M = 0.02
 FREQUENCY_HZ = 127.74e6
 FIELD_FLOOR = 1e-30
 N_SAMPLE = 400
-STEP4_CELLS = 9261  # fixture identity: step-4's recorded global cell count
+# Fixture identity: step-4's recorded global cell count.  Version-tagged to the
+# dolfinx 0.11 image (`fem-em-solver:latest`, adios2 2.12.1), re-recorded
+# 2026-09-20 under the 2026-09-20 03:00 review's licence (`OPS-50` step 3,
+# §9 item 15) from two instruments on one mesh:
+# `20260919T110204Z_OPS-50-step2-probe4.log:377` (post4_step4_probe.py, the
+# instrument that made the v0.7.2 records) and
+# `20260919T110225Z_OPS-50-step2-probe5.log:372` (this probe) both read 9291.
+# v0.7.2 value: 9261 (`20260812T003454Z_POST-4-step4-anchor-n2.log`).
+STEP4_CELLS = 9291
 
 MESH_PARAMS = {
     "coil_major_radius": 0.08,
@@ -98,17 +107,56 @@ ROUNDTRIP_MAX = 1e-14
 #     used for its DG1 discriminator.
 DG1_VS_SOURCE_MAX = 1e-14
 # Negative control -- step 4's refutation pin on the P1 path, measured in this
-# same run.  These are step 4's own recorded digits, not new bounds: midpoint
-# relative medians were 5.117084e-01 / 5.247224e-01 / 2.018185e-01 and the
-# vertex/midpoint scaled-median separations 0.4185x / 0.4818x / 0.6835x.
+# same run.  These are step 4's own recorded digits, not new bounds.
+# v0.7.2 image: midpoint relative medians 5.117084e-01 / 5.247224e-01 /
+# 2.018185e-01 and vertex/midpoint scaled-median separations
+# 0.4185x / 0.4818x / 0.6835x (`20260812T003454Z_POST-4-step4-anchor-n2.log`).
+# dolfinx 0.11 image, 2026-09-20: separations 0.8198x / 0.8520x / 1.2281x,
+# identical to the printed digit in both instruments
+# (`20260919T110204Z_OPS-50-step2-probe4.log`,
+#  `20260919T110225Z_OPS-50-step2-probe5.log:411-413`).  E's vertex/midpoint
+# ordering flips on the 0.11 mesh; step 4's `REFUTED` verdict is unchanged in
+# all three fields on both images.
 PIN_MID_MEDIAN_MIN = 0.10
 # Fixture-drift guard: the P1 midpoint relative medians must reproduce step 4's
 # to this relative tolerance, else the fixture moved and the comparison is void.
 PIN_REPRO_RTOL = 0.02
+# Version-tagged to the dolfinx 0.11 image, re-recorded 2026-09-20 under the
+# 2026-09-20 03:00 review's licence (`OPS-50` step 3, §9 item 15).  Both
+# instruments on one mesh agree exactly on A and E and to 4.03e-06 on B, so B
+# is recorded to five significant digits -- its ~4e-6 run-to-run floor is a
+# property of the `curl A -> DG1` projection, still open in known-issues.
+#   A 4.532338e-01, E 2.175825e-01: bit-identical in
+#     `20260919T110204Z_OPS-50-step2-probe4.log:398,400` and
+#     `20260919T110225Z_OPS-50-step2-probe5.log:393,407`.
+#   B 4.7172e-01: 4.717160e-01 (probe4 `:399`) / 4.717141e-01 (probe5 `:400`).
+# v0.7.2 values: A 5.117084e-01, B 5.247224e-01, E 2.018185e-01
+# (`20260812T003454Z_POST-4-step4-anchor-n2.log`).
 STEP4_MID_REL_MED = {
-    "A": 5.117084e-01,
-    "B": 5.247224e-01,
-    "E": 2.018185e-01,
+    "A": 4.532338e-01,
+    "B": 4.7172e-01,
+    "E": 2.175825e-01,
+}
+# Fixture-drift tripwire on the vertex/midpoint scaled-median separation
+# (P1 path), version-tagged to the dolfinx 0.11 image, recorded 2026-09-21
+# under the 2026-09-21 review's ruling (`OPS-50` step 3b, §9 item 26).  It
+# replaces the one-sided `vtx <= mid` ordering guard, which was frozen from
+# v0.7.2's separations and admitted any value in (0, 1]; this record is
+# stricter -- each separation must reproduce to the unchanged PIN_REPRO_RTOL
+# (+-2 %) and fires on drift in either direction.  The 0.11 digits read the
+# same in all four 0.11 windows on both instruments:
+#   `20260919T110204Z_OPS-50-step2-probe4.log`,
+#   `20260919T110225Z_OPS-50-step2-probe5.log:411-413`,
+#   `20260920T125627Z_OPS-50-step3-probe.log:411-413`.
+# v0.7.2 values: A 0.4185, B 0.4818, E 0.6835
+# (`20260812T003454Z_POST-4-step4-anchor-n2.log`).
+# Step 4's `REFUTED` verdict needs the vertex error "not O(50x)" below the
+# midpoint error; 1.2281x (E) satisfies that as much as 0.4185x did, so the
+# E ordering flip on the 0.11 mesh does not touch the verdict.
+STEP4_SEP = {
+    "A": 0.8198,
+    "B": 0.8520,
+    "E": 1.2281,
 }
 
 
@@ -526,7 +574,8 @@ def main():
                             f"REPRO {nm}: P1 midpoint rel median drifted {drift:.4%} from the "
                             f"step-4 record — the fixture moved, the comparison is void"
                         )
-        # vertex <= midpoint half of step 4's refutation pin
+        # separation half of step 4's refutation pin: two-sided, version-tagged
+        # record (STEP4_SEP), not the v0.7.2-frozen `vtx <= mid` ordering
         if comm.rank == 0:
             for nm in ("A", "B", "E"):
                 mid_s = p1_scaled[(nm, "MID")]
@@ -537,10 +586,17 @@ def main():
                     f"p1_mid_scaled_med={mid_s:.6e} separation={sep:.4f}x",
                     flush=True,
                 )
-                if vtx_s > mid_s:
+                sep_rec = STEP4_SEP[nm]
+                sep_drift = abs(sep - sep_rec) / sep_rec
+                print(
+                    f"PIN_SEP_REPRO {nm} separation={sep:.6f} record={sep_rec:.4f} "
+                    f"drift={sep_drift:.6e}",
+                    flush=True,
+                )
+                if sep_drift > PIN_REPRO_RTOL:
                     failures.append(
-                        f"PIN {nm}: P1 vertex scaled median {vtx_s:.6e} now exceeds midpoint "
-                        f"{mid_s:.6e} — step 4's measured localization has flipped"
+                        f"PIN {nm}: P1 vertex/midpoint separation {sep:.4f}x drifted "
+                        f"{sep_drift:.4%} from the record {sep_rec:.4f}x — the fixture moved"
                     )
 
     # ---- cost table ---------------------------------------------------------

@@ -2788,3 +2788,10 @@ committed at 12:53Z).
 - **Measured:** `pinned=28 (listed=6 by_rule=22) checker=28 git_ls_files=28`, extras none (`:354,383`); negative controls green (`:418–420`); `call_sites=22 committed_setup_pngs=22 census_ok=22` (`:570`). Counts are one above the 09-20 record because one setup figure landed since (`EX-57`, `5e52e8c`).
 - **Records:** `OPS-59` row ✅; known-issues 2026-09-19 entry retired; residual `main` reds at `-n 2` 4 → 3.
 - **Hypothesis for the next attempt:** none — chunk closed. The standing rule (an `ans:` runnable-half item declares its `metrics.json` in its own commit) is what prevents a repeat.
+
+## 2026-09-21T11:20Z (2026-09-21 11:00 UTC slot, third item) — `OPS-50` step 3b (§9 item 26) — **complete: ✅**
+- **Tried:** `scripts/probes/post4_step5_probe.py` taken by path from `attempt/OPS-50-20260920T125900Z` (`e2dd9ef`); the `vtx_s > mid_s` ordering guard replaced by the two-sided version-tagged record `STEP4_SEP` = A 0.8198 / B 0.8520 / E 1.2281 (0.11 image; v0.7.2 0.4185 / 0.4818 / 0.6835 in-comment) at the unchanged `PIN_REPRO_RTOL` 0.02. No other constant, no other code file.
+- **Result / measured:** negative control (the `e2dd9ef` blob from `/workspace/logs/`) `FAIL PIN E` / `PROBE_RESULT FAIL`, Status 1, 4 s (by design). Committed probe, `-n 2`, complex build: `PROBE_RESULT PASS`, Status 0, 4 s; `cells=9291`; round-trip `max_abs_diff=0` A/B/E; `REPRO` drifts 8.293724e-08 / 1.122198e-05 / 1.167740e-07; `PIN_SEP_REPRO` drifts 5.118413e-06 / 3.490732e-06 / 7.381801e-07, all against 0.02. B's REPRO drift (1.12e-05) is slightly above the 9.71e-06 the item quoted — the open B-nondeterminism spread, 1 800× inside the pin.
+- **Logs:** `20260921T111404Z_OPS-50-step3b-prechange.log`, `20260921T111436Z_OPS-50-step3b-probe.log`
+- **Records:** `OPS-50` row ✅; known-issues 2026-09-18 probe entry retired (B-nondeterminism entry stays open, annotated); dashboard item 13's "ignore that FAIL line" note replaced; §9 item 26 DONE. `attempt/OPS-50-20260920T125900Z` left for the review to delete.
+- **Hypothesis for the next attempt:** none — chunk closed.
