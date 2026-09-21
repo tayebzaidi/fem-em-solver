@@ -68,6 +68,47 @@ terminal covariance exceeds the unmoved `2.0e-5` band) and is a deliberate red
 on `main` with its own known-issues entry; nothing about it is claimed or
 built here.
 
+## Setup figure
+
+![mesh:10 setup — 4-leg birdcage, longitudinal ring-gap port box split at u = R](figures/meshing_10_birdcage_ring_sheet_longitudinal_setup.png)
+
+*Left:* the **longitudinal (subject) rung**'s tagged regions
+(`_measure_ring(CONTROL_LEG_COUNT, orientation="longitudinal")`, `GEO-26`
+step 1's newly gated capability) with the air box (tag `2`) hidden and the
+saline phantom (tag `3`) translucent. The four copper rods and the two end
+rings are the bulk conductor, tag `1`; the free-standing copper cubes are
+the four floating leg boxes (tags `101`-`104`, uncut — no gap in the legs,
+so no terminals and nothing to split — named `leg L{i} conductor (uncut)`
+so they take the `conductor` colour class); the eight ring-port boxes (tags `105`-`112` = the inner
+(`u < R`) half and `205`-`212` = the outer (`u > R`) half, the `port`
+colour class, red) sit at the four gap azimuths (`45/135/225/315` deg) on
+both end rings — six are unoccluded from the default isometric angle, the
+remaining two sit behind the near ring/leg geometry from this view. No
+`clip_normal`: every port sits on the coil's outer periphery with nothing
+in front of it to hide. *Right:* the slice on the vertical plane through the
+coil axis and the on-plane gap pair at `45°`/`225°`
+(`slice_normal = phi_hat(45°) = (-0.7071067811865475, 0.7071067811865476,
+0.0)`, `slice_origin = (0, 0, 0)`) — not a `z`-normal slice near a ring's
+own axial centre, which `mesh:9` (`EX-57`, 2026-09-21 09:00 slot) found
+empty of ring band at a 1 mm offset because a horizontal cut barely grazes
+a torus whose minor radius is 4 mm. `phi_hat(45°)` is exactly the sheet's
+own chord direction at that azimuth, so slicing on the plane it spans
+(`u_hat`, `ẑ`) cuts straight across the sheet instead of running parallel
+to it, and reads the `u = R` split as a line rather than hiding it
+edge-on. The pale grey field is the air box — still drawn in the slice
+panel per `write_setup_figure`'s own convention even though it is hidden
+from the 3-D panel — and the blue rectangle at the centre is the phantom's
+own cross-section on the coil axis (`z` runs horizontally in this panel,
+per its axis widget). The four red patches are the ring-port
+cross-sections, **two per ring** — this plane carries both the `45°` and
+the `225°` gap of each end ring — and the two copper squares at mid-length
+are leg-box cross-sections (a rod would cut as a strip along `z`, not a
+square). Rendered by `fem_em_solver.post.setup_figure.write_setup_figure`
+immediately after `_measure_ring` returns the longitudinal rung and before
+`_report_safely` or the transverse control build, so the render never
+enters the printed `elapsed`/`mesh_wall_time_s` timers; regenerate with
+`FEM_EM_SETUP_FIGURES=1` in the runner's environment.
+
 ## 2. How to run it
 
 ```

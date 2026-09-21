@@ -80,8 +80,10 @@ from fem_em_solver.io.paraview_utils import (  # noqa: E402
     adopt_host_ownership,
     write_xdmf_with_tags,
 )
+from fem_em_solver.post.setup_figure import write_setup_figure  # noqa: E402
 
 from tests.mesh.test_birdcage_port_sheet_prerequisite import CELL_COUNT_BAND  # noqa: E402
+from tests.mesh.test_birdcage_port_sheets import PORT_LOWER, PORT_UPPER  # noqa: E402
 from tests.mesh.test_birdcage_port_tags import RING_RADIUS  # noqa: E402
 from tests.mesh.test_birdcage_ring_gaps import RING_GAP_CELL_RECORD, RING_GAP_LENGTH  # noqa: E402
 from tests.mesh.test_birdcage_ring_gaps_scaleup import (  # noqa: E402
@@ -100,7 +102,23 @@ from tests.mesh.test_birdcage_ring_sheet_orientation import (  # noqa: E402
 )
 
 OUTPUT_DIR = Path(__file__).resolve().parent / "paraview_output"
+FIGURE_DIR = Path(__file__).resolve().parent / "figures"  # committed, EX-57
 BASENAME = "meshing_10_birdcage_ring_sheet_longitudinal"
+
+# Gap centres for the 4-leg control fold to a single azimuth class at
+# 45 + 90*j deg (`GEO-20`/`GEO-26`); the setup figure below slices on the
+# vertical plane through the coil axis and the j=0/j=2 gap pair (45/225 deg)
+# so the panel cuts straight across the longitudinal sheet's own chord
+# direction (`phi_hat`) rather than along it, which is what shows the u = R
+# split between a port's inner and outer halves as a line instead of hiding
+# it edge-on-parallel. `phi_hat(45 deg) = (-sin 45, cos 45, 0)`; that vector
+# *is* the slice normal (`EX-57`).
+_GAP_AZIMUTH_DEG = 45.0
+_SLICE_NORMAL = (
+    -np.sin(np.radians(_GAP_AZIMUTH_DEG)),
+    np.cos(np.radians(_GAP_AZIMUTH_DEG)),
+    0.0,
+)
 
 
 def _write_combined(mesh, cell_tags, facet_tags, comm):
@@ -164,6 +182,42 @@ def main() -> None:
 
     # ---- the subject: longitudinal sheets on the 4-leg rung ----------------
     long_m = _measure_ring(CONTROL_LEG_COUNT, orientation="longitudinal")
+
+    # Right after the mesh is built, before any analysis or printed timer —
+    # `long_m["elapsed"]` and `long_m["diag"]["mesh_wall_time_s"]` are already
+    # captured inside `_measure_ring`, so the render time never folds into
+    # either printed record (`EX-57`). This is the gated rung the figure
+    # draws: the longitudinal sheet is `GEO-26` step 1's newly gated
+    # capability, while the transverse control built below is the in-script
+    # negative control and is not pictured.
+    write_setup_figure(
+        long_m["mesh"],
+        long_m["cells"],
+        FIGURE_DIR / f"{BASENAME}_setup.png",
+        region_names={
+            1: "conductor",
+            2: "air",
+            3: "phantom",
+            **{
+                PORT_LOWER + i: f"leg L{i} conductor (uncut)"
+                for i in range(1, CONTROL_LEG_COUNT + 1)
+            },
+            **{PORT_LOWER + i: f"ring port P{i} lower (inner, u < R)" for i in long_m["ring_ports"]},
+            **{PORT_UPPER + i: f"ring port P{i} upper (outer, u > R)" for i in long_m["ring_ports"]},
+        },
+        hide_tags=(2,),
+        translucent_tags=(3,),
+        slice_normal=_SLICE_NORMAL,
+        # Through the coil axis, on the vertical plane that carries the
+        # 45/225 deg gap pair — not a z-slice near a ring's own axial
+        # centre, which `mesh:9` (`EX-57`, 2026-09-21) found empty of ring
+        # band at 1 mm off. This plane cuts straight across the sheet's own
+        # chord direction, so the u = R split reads as a line.
+        slice_origin=(0.0, 0.0, 0.0),
+        title="mesh:10 - 4-leg birdcage, longitudinal ring-gap port box split at u = R (GEO-26 step 1)",
+        comm=comm,
+    )
+
     long_problem = _report_safely("longitudinal (subject)", long_m, comm)
 
     # ---- the negative control: default (transverse) sheets, same rung ------
