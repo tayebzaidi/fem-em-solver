@@ -446,6 +446,10 @@ def test_committed_tree_stale_count_equals_an_independent_full_census():
 #     glob: the 2026-09-09 18:00 review ruled that a pattern would trade one
 #     line of maintenance per benchmark case for a weaker guarantee, and the
 #     point of the pin is that widening the exemption must be *declared*.
+#   * `ansys_benchmarks/ans6_copper_birdcage_four_port_10_64_128MHz/metrics.json`
+#     (`ANS-6` runnable half, committed 2026-09-20 by `75082a0`) — the same
+#     `ANS-1` rule, again committed without the declaration; `OPS-59` (a)
+#     declares it late on the 2026-09-21 review's ruling (`OPS-44` precedent).
 #
 # `OPS-59` (2026-09-20) splits the record in two. The list below stays the
 # *declared* half — every artifact that is not an `EX-57` setup figure is still
@@ -461,6 +465,7 @@ LISTED_EXAMPLE_ARTIFACTS = {
     "examples/ansys_benchmarks/ans4_birdcage_four_port_10_64_128MHz/metrics.json",
     "examples/ansys_benchmarks/ans1_loop_over_lossy_slab_10MHz/metrics.json",
     "examples/ansys_benchmarks/ans3_two_torus_gap_ports_10MHz/metrics.json",
+    "examples/ansys_benchmarks/ans6_copper_birdcage_four_port_10_64_128MHz/metrics.json",
     "examples/magnetostatics/straight_wire_validation.png",
 }
 

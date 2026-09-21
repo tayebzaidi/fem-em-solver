@@ -1518,7 +1518,12 @@ replace the literal by the identity it stood for (call sites == committed
 `*_setup.png` == census `ok`). Until then every `EX-57` slot makes it one
 worse; do not bump the literal in passing.
 
-## 2026-09-19 — `tests/unit/test_doc_reference_exit_codes.py::test_the_in_tree_exemption_cannot_silently_widen` is red on `main`: the `OPS-44` artifact pin was never widened for the `EX-57` setup figures
+## ✅ RETIRED 2026-09-21 (`OPS-59` (a), 06:00 implementer slot) — ~~2026-09-19 — `tests/unit/test_doc_reference_exit_codes.py::test_the_in_tree_exemption_cannot_silently_widen` is red on `main`: the `OPS-44` artifact pin was never widened for the `EX-57` setup figures~~
+
+**Retired:** `ans6_…/metrics.json` declared in `LISTED_EXAMPLE_ARTIFACTS` on
+the 2026-09-21 03:00 review's ruling; both modules green at `-n 2` (27 passed,
+8.2 s), `pinned=28 (listed=6 by_rule=22) checker=28 git_ls_files=28`, extras
+none (`20260921T111239Z_OPS-59.log:354,383`).
 
 **Seen** in `20260919T234019Z_OPS-ans-folder-rename.log` (1 failed / 18
 passed, `-n 2`, 7 s) while verifying the benchmark-folder rename; **not
