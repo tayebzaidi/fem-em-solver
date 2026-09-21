@@ -1,0 +1,94 @@
+# Test Run
+- Chunk: OPS-58
+- Commit: bef049382da0258fa111636d7e8d1f807dd2c490
+- Time (UTC): 2026-09-21 12:33:30
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.5.1
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: timeout -k 5 30 python3 scripts/testing/test_private_leak.py
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 24
+drwxr-xr-x  3 taz5297 taz5297 4096 Sep 21 04:30 .
+drwxr-xr-x 17 taz5297 taz5297 4096 Sep 21 07:33 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  744 Sep 21 04:30 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 4275 Sep 13 19:19 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.5.1
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'timeout -k 5 30 python3 scripts/testing/test_private_leak.py'
+== committed checker ==
+PASS  planted figure staged                                      expected 1, got 1  ['BLOCKED' present]
+PASS  planted figure in the message                              expected 1, got 1  ['BLOCKED' present]
+PASS  truncated spelling in the message                          expected 1, got 1  ['BLOCKED' present]
+PASS  figure only on a '#' comment line                          expected 0, got 0  ['clean:' present]
+PASS  missing message file                                       expected 2, got 2  ['could not inspect:' present]
+PASS  clean staged change                                        expected 0, got 0  ['clean:' present]
+PASS  no reference data                                          expected 0, got 0  ['SKIPPED: no reference data on this machine; nothing was checked' present]
+PASS  broken git (hook mode)                                     expected 2, got 2  ['could not inspect:' present]
+PASS  broken git (--audit)                                       expected 2, got 2  ['could not inspect:' present]
+PASS  --audit finds a figure in history                          expected 1, got 1  ['commit ' present]
+PASS  --audit on a clean history                                 expected 0, got 0  ['clean:' present]
+
+== installed hooks, end to end (a scratch clone laid out like this one) ==
+PASS  committed hooks refuse the message plant                   expected 1, got 1
+PASS  PRE-CHANGE hooks accept the message plant (control)        expected 0, got 0
+
+== pre-change control: the checker pinned at bef0493 (the defects OPS-58 fixes) ==
+FAIL  PRE-CHANGE planted figure staged (still caught)            expected 1, got 1  ['BLOCKED' present]
+      | BLOCKED — Ansys benchmark figures found in staged changes.
+      | 
+      | Licence terms restrict disclosure of these (operator directive
+      | 2026-09-02). They belong only in the gitignored aed_results/,
+      | COMPARISON_private.md and docs/private/. Committing one puts it in
+      | git history, where the fix is a rewrite and not a revert.
+      | 
+      |   notes.md:1   0.7351928464
+      |       s11 came out at 0.7351928464 here
+      | 
+      | Write the qualitative verdict instead — agree / disagree /
+      | inconclusive, and what it decides. That is what §5.4 asks for.
+      | 
+      | [test] the checker printed the figure itself
+PASS  PRE-CHANGE broken git reads as a pass (control)            expected 0, got 0
+PASS  PRE-CHANGE no reference data is silent (control)           expected 0, got 0
+
+exit-code table (case, expected, measured):
+  planted figure staged                                      1  1
+  planted figure in the message                              1  1
+  truncated spelling in the message                          1  1
+  figure only on a '#' comment line                          0  0
+  missing message file                                       2  2
+  clean staged change                                        0  0
+  no reference data                                          0  0
+  broken git (hook mode)                                     2  2
+  broken git (--audit)                                       2  2
+  --audit finds a figure in history                          1  1
+  --audit on a clean history                                 0  0
+  committed hooks refuse the message plant                   1  1
+  PRE-CHANGE hooks accept the message plant (control)        0  0
+  PRE-CHANGE planted figure staged (still caught)            1  1
+  PRE-CHANGE broken git reads as a pass (control)            0  0
+  PRE-CHANGE no reference data is silent (control)           0  0
+
+15/16 cases as asserted
+FAILED: PRE-CHANGE planted figure staged (still caught)
+
+## Exit
+- Status: 1
+- Elapsed (s): 3
+- Filtered lines (gmsh optimisation chatter): 0
