@@ -165,9 +165,13 @@ def _kappa_at(built, comm):
     }
 
 
-@pytest.fixture(scope="module")
-def c_tuned():
-    """`PORT-15` step 3's ``C_tuned``, recomputed by that module on its record."""
+def build_c_tuned():
+    """`PORT-15` step 3's ``C_tuned``, recomputed by that module on its record.
+
+    Module-level body of the ``c_tuned`` fixture (rule (a) additive lift,
+    `EX-61`'s precedent `EX-58`'s ``build_step3_in_model``) — importable by a
+    caller outside pytest without restating the sweep.
+    """
     _, _, roots = tuning_sweep(S_64MHZ_EPS0_RECORD, STEP3_REGISTERED_FREQUENCY_HZ)
     tuned = select_c_tuned(roots)
     assert tuned is not None, (
@@ -185,14 +189,19 @@ def c_tuned():
 
 
 @pytest.fixture(scope="module")
-def window(c_tuned):
-    """One mesh build, then per grid frequency: κ, the untuned 4×4, the tuned drive."""
-    frequencies_mhz = _window_frequencies_mhz()
-    if frequencies_mhz is None:
-        pytest.skip(f"{FREQUENCY_ENV} unset — `PORT-22` step 1 runs only when a slot asks")
+def c_tuned():
+    return build_c_tuned()
 
+
+def run_window(frequencies_mhz, c_f):
+    """One mesh build, then per grid frequency: κ, the untuned 4×4, the tuned drive.
+
+    Module-level body of the ``window`` fixture (rule (a) additive lift) —
+    the fixture below now only resolves the env-var frequency list and
+    delegates here, so a caller outside pytest (`EX-61`) can name its own
+    frequency tuple without restating this loop.
+    """
     comm = MPI.COMM_WORLD
-    c_f = float(c_tuned["c_f"])
     outdir = _results_dir()
     if comm.rank == 0:
         os.makedirs(outdir, exist_ok=True)
@@ -292,6 +301,14 @@ def window(c_tuned):
             flush=True,
         )
     return {"rows": rows, "frequencies_mhz": frequencies_mhz, "cells": cells, "c_f": c_f}
+
+
+@pytest.fixture(scope="module")
+def window(c_tuned):
+    frequencies_mhz = _window_frequencies_mhz()
+    if frequencies_mhz is None:
+        pytest.skip(f"{FREQUENCY_ENV} unset — `PORT-22` step 1 runs only when a slot asks")
+    return run_window(frequencies_mhz, float(c_tuned["c_f"]))
 
 
 @complex_only
