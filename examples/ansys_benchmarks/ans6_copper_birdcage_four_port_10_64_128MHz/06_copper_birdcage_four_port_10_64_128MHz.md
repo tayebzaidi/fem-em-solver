@@ -76,7 +76,8 @@ docker compose exec -T fem-em-solver bash -lc 'cd /workspace && source /usr/loca
 and N1curl degree `p` — no σ-ladder, no PEC cross-check, no field export. The
 gates are asserted as usual, plus a negative control that every C4 class moves
 by more than 1e-6 relative from the tracked degree-1 `metrics.json`. Output is
-`metrics_degree<p>_<f>MHz.json` (untracked; do not commit); `metrics.json` and
+a degree- and frequency-tagged metrics file beside `metrics.json` (untracked;
+do not commit); `metrics.json` and
 `COMPARISON.md` are never rewritten on this route. Unset, the script behaves
 exactly as before. Measured at `p = 2`, 64 MHz, `-n 8`: 183.9 s, 13.78 GiB
 summed peak RSS.
