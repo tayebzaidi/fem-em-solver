@@ -28,6 +28,15 @@ unless fixing it is the task.
 
 ## Failing tests
 
+### ℹ️ RESOLVED-IN-CODE 2026-09-22 (`OPS-62`) — the `ANS-4` step 3e XL window exited 1 on a spurious guard; its four rungs' data are intact
+
+| | |
+| --- | --- |
+| **Symptom** | `20260922T070007Z_ANS-4-step3e.log` has Status 1 and one failure, `test_every_finer_rung_actually_refines`: `resolution 0.015 gave 116085 cells, not more than 0.015's 116085` (`:8802–8805, 8812`). |
+| **Cause** | The guard asserted cells, not unknowns, on a ladder whose first two rungs are the **same mesh** at degree 1 then degree 2 by construction (`FEM_EM_ANS4_STEP2_RUNGSPEC="0.015:1 0.015:2 0.0075:2 0.005:2"`); the discretisation refined ~139 302 → ~742 944 unknowns (`:2452, 4542`). Not a physics or mesh defect. |
+| **Read the log as** | A **usable measurement with one spurious red.** All four rungs built and solved; the record-rung check, the imported `PORT-11` reciprocity / passivity / C4 gates on every rung, and the full readout all passed (`:8814–8817` and following). |
+| **Fixed by** | `OPS-62` (2026-09-22): the guard now counts unknowns via `_estimated_dofs`, and a control asserts that exact ladder shape with that window's own cell counts passes. Whether step 3e is re-run is a review's call, not this entry's. |
+
 ### 🟡 DELIBERATE 2026-09-21 (`OPS-60`, 04:30 implementer slot) — `tests/environment/test_scikit_rf_version.py` is red on the running image until the operator rebuilds it
 
 | | |

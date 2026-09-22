@@ -24,8 +24,9 @@ only reason these rungs are comparable with it at all.
 class spreads against `PORT-11`'s ``ADJACENT_SPREAD_BAND``, passivity against
 ``PASSIVITY_SIGMA_TOLERANCE``, reciprocity against ``RECIPROCITY_BAND``; the ×1
 rung reproduces `GEO-19` step B's cell record; and each finer rung actually
-refines (`PORT-14` step 1b's mechanical control — a keyword that silently did
-nothing would otherwise read as a converged ladder).
+refines **in unknowns** (`PORT-14` step 1b's mechanical control — an ``h``
+keyword or a ``degree`` knob that silently did nothing would otherwise read as
+a converged ladder).
 
 **What is printed and asserted nowhere**: the three C4 entries `S₁₁` / `S₂₁` /
 `S₃₁` on every rung with their relative move from the ×1 record, and a
@@ -265,6 +266,44 @@ def _estimated_dofs(cells, degree):
     for the stop rule and the record; nothing is gated on it.
     """
     return (1.2 if degree == 1 else 6.4) * float(cells)
+
+
+def _refinement_measure(rung):
+    """The currency the refinement guard counts in: **estimated unknowns**.
+
+    Cells are the wrong currency for a ladder that refines in ``h`` *and* ``p``.
+    Step 2d's rungspec (``0.015:1 0.015:2 …``) deliberately holds the mesh fixed
+    and raises the element order, so two consecutive rungs share a cell count by
+    construction while the discretisation genuinely refines — the `ANS-4` step 3e
+    window (2026-09-22) died on exactly that, 116 085 cells against 116 085 with
+    ~139 302 -> ~742 944 unknowns between them.  Unknowns are the same currency
+    this module's stop rule already uses (``STOP_ABOVE_DOFS``, and the comment
+    above it), through the same `_estimated_dofs`; no second estimator exists.
+
+    Counting unknowns is **strictly stronger** than counting cells here: an inert
+    ``h`` keyword still gives identical meshes at a fixed degree and so identical
+    unknowns, and an inert ``degree`` knob — which a cell count cannot see at all
+    — is caught too.
+    """
+    return _estimated_dofs(rung["cells"], int(rung.get("degree", 1)))
+
+
+def _check_refines(rungs):
+    """Consecutive rung pairs that did **not** refine, coarse to fine.
+
+    Pure: takes the rung dicts (only ``cells``, ``degree``, ``factor`` and the
+    optional ``knob`` are read) and returns a list of
+    ``(coarser, finer, dofs_coarser, dofs_finer)``.  Empty means every step of
+    the ladder increased the unknown count strictly.  Strictly: no tolerance, no
+    ``>=``, no exemption for equal cells.
+    """
+    failures = []
+    for coarser, finer in zip(rungs, rungs[1:]):
+        dofs_c = _refinement_measure(coarser)
+        dofs_f = _refinement_measure(finer)
+        if not dofs_f > dofs_c:
+            failures.append((coarser, finer, dofs_c, dofs_f))
+    return failures
 
 
 def _ladder_resolutions():
@@ -607,11 +646,17 @@ def test_the_record_rung_reproduces_the_fixture(ladder):
 
 @complex_only
 def test_every_finer_rung_actually_refines(ladder):
-    """`PORT-14` step 1b's mechanical control on the keyword.
+    """`PORT-14` step 1b's mechanical control on the refinement knobs.
 
-    A ``conductor_resolution`` that silently did nothing would produce four
-    identical rungs, which would read as a perfectly converged ladder — the
-    most dangerous possible false positive for this measurement.
+    A ``conductor_resolution`` (or ``resolution``) that silently did nothing
+    would produce four identical rungs, which would read as a perfectly
+    converged ladder — the most dangerous possible false positive for this
+    measurement.  A ``degree`` that silently did nothing is the same false
+    positive on step 2d's ``h:degree`` ladder, and the cell count is blind to
+    it.  The measure is therefore **unknowns** (`_refinement_measure`, the
+    ``STOP_ABOVE_DOFS`` currency), which covers both and is strictly stronger
+    than the cell count it replaced (`OPS-62`, 2026-09-22).  Cells stay in the
+    printed readout so an XL log still shows the mesh sizes.
     """
     comm = MPI.COMM_WORLD
     rungs = sorted(ladder["rungs"], key=lambda r: -r["factor"])
@@ -620,17 +665,75 @@ def test_every_finer_rung_actually_refines(ladder):
     if comm.rank == 0:
         for r in rungs:
             print(
-                f"[ANS-4 step2] refinement: x{r['factor']:g} -> {r['cells']} cells",
+                f"[ANS-4 step2] refinement: x{r['factor']:g} degree "
+                f"{int(r.get('degree', 1))} -> {r['cells']} cells, "
+                f"~{_refinement_measure(r):,.0f} unknowns",
                 flush=True,
             )
-    for coarser, finer in zip(rungs, rungs[1:]):
-        knob = finer.get("knob", "conductor_resolution")
-        assert finer["cells"] > coarser["cells"], (
-            f"{knob} {finer['factor']:g} gave {finer['cells']} cells, not more "
-            f"than {coarser['factor']:g}'s {coarser['cells']} — the keyword did "
-            "not refine anything, so this ladder is re-runs of one mesh rather "
-            "than a convergence measurement"
-        )
+    failures = _check_refines(rungs)
+    assert not failures, "; ".join(
+        f"{finer.get('knob', 'conductor_resolution')} rung {finer['factor']:g} "
+        f"degree {int(finer.get('degree', 1))} gave ~{dofs_f:,.0f} unknowns, not "
+        f"more than rung {coarser['factor']:g} degree "
+        f"{int(coarser.get('degree', 1))}'s ~{dofs_c:,.0f} — neither the cell "
+        "size nor the element order reached the solve on that step, so those two "
+        "rungs are one discretisation re-solved rather than a convergence step"
+        for coarser, finer, dofs_c, dofs_f in failures
+    )
+
+
+def _synthetic_rung(factor, cells, degree):
+    """A rung dict carrying only what `_check_refines` reads."""
+    return {"factor": float(factor), "cells": int(cells), "degree": int(degree)}
+
+
+def test_refinement_check_controls():
+    """`OPS-62` — the refinement guard's comparison logic, without a solve.
+
+    The guard itself only runs behind the XL-scale ``ladder`` fixture, so the
+    rule it enforces is tested here on synthetic rungs.  Each case is a fact
+    about `_check_refines`, not about the mesher.
+    """
+    # 1. An inert refinement keyword: four identical rungs. Caught on every step.
+    inert = [_synthetic_rung(f, 116_085, 1) for f in (0.015, 0.012, 0.0095, 0.0075)]
+    assert len(_check_refines(inert)) == 3
+
+    # 2. A p-rung: the same mesh at degree 1 then degree 2. This is the case the
+    #    cell-count guard failed on in the `ANS-4` step 3e window (2026-09-22).
+    p_rung = [_synthetic_rung(0.015, 116_085, 1), _synthetic_rung(0.015, 116_085, 2)]
+    assert _check_refines(p_rung) == []
+    assert _refinement_measure(p_rung[0]) == pytest.approx(139_302.0)
+    assert _refinement_measure(p_rung[1]) == pytest.approx(742_944.0)
+
+    # 3. An h-rung: more cells at a fixed degree.
+    h_rung = [_synthetic_rung(0.015, 116_085, 1), _synthetic_rung(0.0075, 281_728, 1)]
+    assert _check_refines(h_rung) == []
+
+    # 4. The real step 3e ladder, `0.015:1 0.015:2 0.0075:2 0.005:2`, with the
+    #    cell counts that window measured.
+    step3e = [
+        _synthetic_rung(0.015, 116_085, 1),
+        _synthetic_rung(0.015, 116_085, 2),
+        _synthetic_rung(0.0075, 281_728, 2),
+        _synthetic_rung(0.005, 592_744, 2),
+    ]
+    assert _check_refines(step3e) == []
+
+    # 5. A degree *drop* at fixed h: unknowns fall, so it is caught.
+    drop = [_synthetic_rung(0.015, 116_085, 2), _synthetic_rung(0.015, 116_085, 1)]
+    assert len(_check_refines(drop)) == 1
+
+    # 6. Equal unknowns between consecutive rungs: 1600 x 1.2 == 300 x 6.4.
+    tie = [_synthetic_rung(0.02, 1_600, 1), _synthetic_rung(0.015, 300, 2)]
+    assert _refinement_measure(tie[0]) == _refinement_measure(tie[1])
+    assert len(_check_refines(tie)) == 1
+
+    # 7. Strictly stronger than the cell count it replaced: cells rise while the
+    #    degree knob goes inert-and-backwards, so the old guard passed this and
+    #    the new one does not.
+    stronger = [_synthetic_rung(0.015, 100_000, 2), _synthetic_rung(0.0075, 200_000, 1)]
+    assert stronger[1]["cells"] > stronger[0]["cells"]
+    assert len(_check_refines(stronger)) == 1
 
 
 @complex_only
