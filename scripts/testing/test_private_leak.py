@@ -18,6 +18,19 @@ checker's exit codes exactly:
     broken git                            -> 2, prints "could not inspect:"
     installed commit-msg hook, plant      -> the commit is refused
 
+plus the **shared-input allowlist** controls (OPS-58, operator ruling
+2026-09-21). The allowlist must suppress exactly its one named site and
+blind the checker to nothing else:
+
+    allowlisted site alone                -> 0, "clean:" AND the suppression
+                                             is reported, never silent
+    a genuine (synthetic) AED *output*
+      alongside it                        -> 1, still BLOCKED
+    the same value in another file        -> 1
+    the same value under another key      -> 1
+    every entry reproduces from its
+      published closed form               -> asserted in-process
+
 plus the pre-change control: the checker and hook installer pinned at
 PRECHANGE_SHA (the commit before OPS-58) *pass* the message plant and the
 broken-git case, which is the defect this chunk fixes. Exit 0 iff every
@@ -25,6 +38,7 @@ assertion holds.
 """
 from __future__ import annotations
 
+import importlib.util
 import os
 import shutil
 import subprocess
@@ -41,6 +55,9 @@ PRECHANGE_SHA = "bef049382da0258fa111636d7e8d1f807dd2c490"
 # 9 distinct, so it is "informative" under the checker's rules.
 FIGURE = "0.7351928464"
 TRUNCATED = "0.73519284"          # 8 significant digits: the minimum length
+# Stands in for a genuine AED *output* in the allowlist controls: synthetic,
+# invented here, reproducible from nothing.
+OUTPUT_FIGURE = "0.4182736509"
 SECRET_GLOB = "examples/ansys_benchmarks/*/aed_results/*"
 
 GIT_ENV = {
@@ -111,6 +128,26 @@ def expect(label: str, proc: subprocess.CompletedProcess, code: int,
         print("      | " + out.strip().replace("\n", "\n      | "))
 
 
+def expect_text(label: str, proc: subprocess.CompletedProcess, needle: str) -> None:
+    """A content assertion on output whose exit code another case pinned."""
+    out = proc.stdout + proc.stderr
+    ok = needle in out
+    table.append((label, 1, int(ok)))
+    print(f"{'PASS' if ok else 'FAIL'}  {label:58} {needle!r} "
+          f"{'present' if ok else 'ABSENT'}")
+    if not ok:
+        failures.append(label)
+        print("      | " + out.strip().replace("\n", "\n      | "))
+
+
+def load_checker():
+    """Import the checker as a module, to read SHARED_INPUTS directly."""
+    spec = importlib.util.spec_from_file_location("check_private_leak", CHECKER)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
 def main() -> int:
     base = Path(tempfile.mkdtemp(prefix="ops58_"))
     try:
@@ -162,6 +199,80 @@ def main() -> int:
         expect("--audit finds a figure in history", run_checker(CHECKER, repo, "--audit"), 1, "commit ")
         repo = make_repo(base, "auditclean")
         expect("--audit on a clean history", run_checker(CHECKER, repo, "--audit"), 0, "clean:")
+
+        print("\n== shared-input allowlist (OPS-58 operator ruling 2026-09-21) ==")
+        checker = load_checker()
+        entry = checker.SHARED_INPUTS[0]
+        value = repr(entry["compute"]())
+        # (1) Every entry must be a shared *input*: reproducible, bit for bit,
+        # from geometry the repo already publishes, and already published
+        # itself. An AED output can satisfy neither, which is what keeps the
+        # tracked allowlist safe. The cited source must be a tracked file and
+        # must carry the value to the precision it publishes it at.
+        for e in checker.SHARED_INPUTS:
+            label = f"allowlist entry reproduces from {e['closed_form']}"
+            value = e["compute"]()
+            src = ROOT / e["published_in"].split(":")[0]
+            cited = src.is_file()
+            published = cited and f"{value:.6e}" in src.read_text()
+            good = bool(e["reason"].strip()) and cited and published
+            table.append((label, 1, int(good)))
+            print(f"{'PASS' if good else 'FAIL'}  {label:58} "
+                  f"cited source {'tracked' if cited else 'MISSING'}, "
+                  f"value {'published there' if published else 'NOT PUBLISHED'}")
+            if not good:
+                failures.append(label)
+
+        def allowlist_repo(name: str) -> Path:
+            """A scratch repo reproducing the allowlisted site exactly.
+
+            The reference export holds the allowlisted value (as the raw AED
+            export does — AED echoes its input back) and, separately, a
+            synthetic figure standing in for a genuine AED output.
+            """
+            repo = make_repo(base, name)
+            ref = repo / "examples/ansys_benchmarks/case/aed_results/export.csv"
+            ref.write_text(f"volume,{value}\nsomething,{OUTPUT_FIGURE}\n")
+            site = repo / entry["path"]
+            site.parent.mkdir(parents=True, exist_ok=True)
+            site.write_text('{\n  "%s": %s\n}\n' % (entry["key"], value))
+            git(repo, "add", "-A")
+            git(repo, "commit", "-q", "--no-verify", "-m", "the shared input")
+            return repo
+
+        repo = allowlist_repo("allow_clean")
+        proc = run_checker(CHECKER, repo, "--audit")
+        expect("allowlisted shared input alone", proc, 0, "clean:")
+        expect_text("the suppression is reported, never silent", proc,
+                    "1 shared-input match suppressed")
+        expect_text("the suppression names the site, not the figure", proc,
+                    entry["key"])
+
+        repo = allowlist_repo("allow_output")
+        (repo / "notes.md").write_text(f"AED reported {OUTPUT_FIGURE} for this port\n")
+        git(repo, "add", "-A")
+        git(repo, "commit", "-q", "--no-verify", "-m", "a genuine output")
+        proc = run_checker(CHECKER, repo, "--audit")
+        expect("a genuine AED output beside it is still flagged", proc, 1, "BLOCKED")
+        expect_text("...and the suppression is still reported", proc,
+                    "1 shared-input match suppressed")
+
+        repo = allowlist_repo("allow_otherfile")
+        (repo / "notes.md").write_text(
+            '  "%s": %s\n' % (entry["key"], value))
+        git(repo, "add", "-A")
+        git(repo, "commit", "-q", "--no-verify", "-m", "same value, another file")
+        expect("the same value in another file is NOT suppressed",
+               run_checker(CHECKER, repo, "--audit"), 1, "BLOCKED")
+
+        repo = allowlist_repo("allow_otherkey")
+        site = repo / entry["path"]
+        site.write_text('{\n  "%s": %s,\n  "peak_sar_1g_w_per_kg": %s\n}\n'
+                        % (entry["key"], value, value))
+        git(repo, "add", "-A")
+        git(repo, "commit", "-q", "--no-verify", "-m", "same value, another key")
+        expect("the same value under another key is NOT suppressed",
+               run_checker(CHECKER, repo, "--audit"), 1, "BLOCKED")
 
         print("\n== installed hooks, end to end (a scratch clone laid out like this one) ==")
         for label, checker_src, installer_src, code in (

@@ -50,10 +50,18 @@ design (OPS-58): the hook is a copy-paste net, the written rule the control.
 tracked file at HEAD it is not a secret any more, whatever its provenance,
 and flagging a second occurrence would be noise. ``--audit`` skips that
 subtraction, which is how you find a leak that already happened.
+
+**Shared inputs are allowlisted, one named site at a time** — see
+``SHARED_INPUTS`` below. A value both sides were *given* (geometry, material
+constants) appears in the raw exports because AED echoed its input back, not
+because it measured anything; suppressing it is not suppressing a result.
+Every suppression is counted and printed, so a suppressed match never reads
+like no match.
 """
 from __future__ import annotations
 
 import argparse
+import math
 import os
 import re
 import subprocess
@@ -78,6 +86,41 @@ MIN_DISTINCT_DIGITS = 5
 # A number, in any of the spellings these files use: 0.1234567890123456,
 # -9.87, 1.1111e+06, 987.6543210987.
 NUMBER = re.compile(r"[-+]?\d*\.?\d+(?:[eE][-+]?\d+)?")
+
+# ---------------------------------------------------------------------------
+# Shared-input allowlist (OPS-58, operator ruling 2026-09-21).
+#
+# THIS TABLE IS TRACKED, AND THAT IS SAFE ONLY BECAUSE EVERY ENTRY IS, BY
+# CONSTRUCTION, ALREADY PUBLIC. An entry may name only a value the repo
+# itself already publishes in a tracked file (``published_in``) *and* that
+# is reproducible from published geometry or material constants
+# (``closed_form``) — i.e. an input handed to both the FEM model and AED,
+# which AED merely echoed back into its export. **Never add an AED output.**
+# A measured result cannot satisfy ``closed_form``; if you find yourself
+# wanting to delete that field to fit a number in, the number is a leak and
+# the answer is a history rewrite, not an allowlist entry.
+#
+# Each entry is keyed on all three of (tracked path, key/identity that must
+# appear on the line, exact value) — never on the value alone, so the same
+# digits elsewhere in the tree are still flagged.
+#
+# The value is not written out: it is *computed* from ``compute``, so this
+# file carries only the published geometry (0.03 m, 0.08 m) and no long digit
+# string of its own — which also means an entry can exist only for a value
+# that is reproducible by construction.
+SHARED_INPUTS = (
+    {
+        "path": ("examples/ansys_benchmarks/"
+                 "ans2_birdcage_coil_driven_sar_10MHz/metrics.json"),
+        "key": "phantom_volume_closed_form_m3",
+        "closed_form": "math.pi * 0.03**2 * 0.08",
+        "compute": lambda: math.pi * 0.03 ** 2 * 0.08,
+        "reason": ("shared input: the phantom cylinder's volume, a geometry "
+                   "figure both solvers were given, not a solver result"),
+        "published_in": ("examples/ansys_benchmarks/"
+                         "ans2_birdcage_coil_driven_sar_10MHz/SPEC.md:167"),
+    },
+)
 
 
 class InspectionError(RuntimeError):
@@ -249,6 +292,21 @@ def message_file_lines(path: str):
         yield "commit message", i, line
 
 
+def shared_input_entry(path: str, text: str, digits: str):
+    """The allowlist entry covering this match, or None.
+
+    All three of path, key and exact value must agree: the same digits in a
+    different file, or on a line that does not carry the named key, are not
+    covered (`test_private_leak.py` asserts both).
+    """
+    for entry in SHARED_INPUTS:
+        if (path == entry["path"]
+                and entry["key"] in text
+                and digits == significant_digits(repr(entry["compute"]()))):
+            return entry
+    return None
+
+
 def scan(lines, secrets):
     # Either spelling may be the truncated one. Every prefix of a secret (at
     # the minimum length or longer) goes in one set, so `digits` is a prefix
@@ -259,6 +317,7 @@ def scan(lines, secrets):
     prefixes = {s[:k] for s in secrets
                 for k in range(MIN_SIGNIFICANT_DIGITS, len(s) + 1)}
     hits = []
+    suppressed = []
     for path, lineno, text in lines:
         for token in NUMBER.findall(text):
             digits = significant_digits(token)
@@ -267,8 +326,12 @@ def scan(lines, secrets):
             if digits in prefixes or any(
                     digits[:k] in secrets
                     for k in range(MIN_SIGNIFICANT_DIGITS, len(digits))):
+                entry = shared_input_entry(path, text, digits)
+                if entry is not None:
+                    suppressed.append((path, lineno, entry))
+                    continue
                 hits.append((path, lineno, token, text.strip()[:100]))
-    return hits
+    return hits, suppressed
 
 
 def run(args) -> int:
@@ -291,14 +354,26 @@ def run(args) -> int:
     else:
         where = "staged changes"
         lines = list(staged_additions())  # inspect even if nothing is left to match
-    hits = scan(lines, secrets)
+    hits, suppressed = scan(lines, secrets)
+    # Never silent: a suppressed match is reported whether or not anything
+    # else matched, so it can never be mistaken for no match at all.
+    note = ""
+    if suppressed:
+        note = (f"; {len(suppressed)} shared-input match"
+                f"{'es' if len(suppressed) != 1 else ''} suppressed "
+                f"(allowlisted, already published: "
+                + ", ".join(sorted({f"{p}:{n} [{e['key']}]"
+                                    for p, n, e in suppressed})) + ")")
     if not hits:
         print(f"clean: {where} ({len(lines)} lines) carry none of the {n_ref} "
               f"reference figures ({len(secrets)} compared; "
-              f">= {MIN_SIGNIFICANT_DIGITS} digits, >= {MIN_DISTINCT_DIGITS} distinct)")
+              f">= {MIN_SIGNIFICANT_DIGITS} digits, "
+              f">= {MIN_DISTINCT_DIGITS} distinct){note}")
         return 0
 
     print(f"\nBLOCKED — Ansys benchmark figures found in {where}.\n")
+    if suppressed:
+        print(f"(also{note[1:]})\n")
     print("Licence terms restrict disclosure of these (operator directive")
     print("2026-09-02). They belong only in the gitignored aed_results/,")
     print("COMPARISON_private.md and docs/private/. Committing one puts it in")

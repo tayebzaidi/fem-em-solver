@@ -1,0 +1,39 @@
+# Test Run
+- Chunk: OPS-58-audit
+- Commit: ba9aeac394df6edbee5be26c30c2cc31246ca656
+- Time (UTC): 2026-09-22 04:01:16
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.13.12
+- Docker Compose: Docker Compose version v5.5.1
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: timeout -k 30 180 python3 scripts/testing/check_private_leak.py --audit
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 24
+drwxr-xr-x  3 taz5297 taz5297 4096 Sep 21 04:30 .
+drwxr-xr-x 17 taz5297 taz5297 4096 Sep 21 23:01 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  744 Sep 21 04:30 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 4275 Sep 13 19:19 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.5.1
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'timeout -k 30 180 python3 scripts/testing/check_private_leak.py --audit'
+clean: tracked files and commit messages (853212 lines) carry none of the 2061 reference figures (2061 compared; >= 8 digits, >= 5 distinct); 1 shared-input match suppressed (allowlisted, already published: examples/ansys_benchmarks/ans2_birdcage_coil_driven_sar_10MHz/metrics.json:13 [phantom_volume_closed_form_m3])
+
+## Exit
+- Status: 0
+- Elapsed (s): 8
+- Filtered lines (gmsh optimisation chatter): 0

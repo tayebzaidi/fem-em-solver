@@ -33,16 +33,14 @@ page is a read-only digest for the human operator.
    file. The reviews change nothing and repeat no level: **either confirm
    that a relative level is publishable (and the Privacy clause gets a
    sentence saying so) or redact to the bare verdict before pushing.**
-1a. 🔴 **New 2026-09-21 (`OPS-58`): the leak audit found 1 match in a tracked
-   file.** The fail-closed checker (parked on `attempt/OPS-58-20260921T123545Z`,
-   controls 16/16) run as `--audit` on this clone matched one tracked line
-   against the raw `aed_results/` exports — so item 1's "no raw AED value is in
-   any tracked file" is in doubt until you rule. File, line and introducing
-   commit are in gitignored `docs/private/OPS-58-audit-hit.md` (no figure was
-   read or printed). **Rule it a leak (rewrite before any push) or a false
-   positive (a shared input value), then re-run
-   `scripts/testing/install_git_hooks.sh` once after the branch merges (adds
-   the commit-msg hook).**
+1a. 🟠 **`OPS-58` landed — one thing left for you: re-run
+   `scripts/testing/install_git_hooks.sh` once** (`.git/hooks` is untracked and
+   not agent-writable; this adds the `commit-msg` hook beside `pre-commit`).
+   Your 2026-09-21 ruling — the audit's single match is a **false positive**, a
+   shared geometric *input* the repo already publishes in its own `SPEC.md` —
+   is implemented as a narrow, counted allowlist, and `--audit` on this clone
+   now reports `clean:` with `1 shared-input match suppressed`. No history
+   rewrite was needed.
 2. 🟠 **Rebuild the image when `OPS-60` lands** (`docker compose build`,
    outside the sandbox). The first slot today pins `scikit-rf` in the
    Dockerfile and shows the import failing on the current image; `PORT-23`
