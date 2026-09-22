@@ -1,11 +1,13 @@
 #!/usr/bin/env bash
 # Install the repo's git hooks. `.git/hooks` is not tracked, so a fresh clone
 # has none of this and the Ansys-privacy rule is back to being held by
-# discipline alone. Run once per clone:
+# discipline alone. Run once per clone (and again after OPS-58, which added
+# the commit-msg hook):
 #
 #     scripts/testing/install_git_hooks.sh
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+
 HOOK="$ROOT/.git/hooks/pre-commit"
 cat > "$HOOK" <<'HOOKEOF'
 #!/usr/bin/env bash
@@ -16,6 +18,18 @@ cat > "$HOOK" <<'HOOKEOF'
 #
 # Bypass, only with a reason you would defend: git commit --no-verify
 exec python3 "$(git rev-parse --show-toplevel)/scripts/testing/check_private_leak.py"
+HOOKEOF
+chmod +x "$HOOK"
+echo "installed $HOOK"
+
+# pre-commit never sees the message; CLAUDE.md forbids AED figures there too
+# (OPS-58). git passes the message file as $1.
+HOOK="$ROOT/.git/hooks/commit-msg"
+cat > "$HOOK" <<'HOOKEOF'
+#!/usr/bin/env bash
+# Refuse a commit whose *message* carries an Ansys benchmark figure (OPS-58).
+# Bypass, only with a reason you would defend: git commit --no-verify
+exec python3 "$(git rev-parse --show-toplevel)/scripts/testing/check_private_leak.py" --message-file "$1"
 HOOKEOF
 chmod +x "$HOOK"
 echo "installed $HOOK"

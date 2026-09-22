@@ -34,9 +34,11 @@ jobs:
     # AED-derived figure may reach a tracked file. The local pre-commit hook
     # (scripts/testing/install_git_hooks.sh) is the first net, but .git/hooks
     # is not tracked and cannot be installed by an agent, so this is the net
-    # that always exists. It is a no-op on a runner, where the gitignored raw
-    # exports are absent and there is nothing to compare against — its value
-    # is on a clone that has them.
+    # that always exists. The audit step is a no-op on a runner, where the
+    # gitignored raw exports are absent: it prints SKIPPED, not clean
+    # (OPS-58). The controls step is the part of this job that tests
+    # something on a runner — synthetic figures in scratch repos, exit codes
+    # asserted exactly, plus the pre-change control (needs fetch-depth 0).
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -45,7 +47,9 @@ jobs:
     - uses: actions/setup-python@v5
       with:
         python-version: '3.11'
-    - name: No Ansys figure in a tracked file
+    - name: Leak-checker controls (synthetic figures)
+      run: python3 scripts/testing/test_private_leak.py
+    - name: No Ansys figure in a tracked file or commit message
       run: python3 scripts/testing/check_private_leak.py --audit
 
   lint:
