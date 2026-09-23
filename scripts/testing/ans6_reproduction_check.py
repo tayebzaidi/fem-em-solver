@@ -48,5 +48,47 @@ def main(ref_path: str) -> None:
     print("[ANS-6 step 2] control PASS", flush=True)
 
 
+def knob_worst_deviation(knob: dict, ref: dict):
+    """`ANS-6` step 2b (additive): a knob-route payload vs a full-ladder file.
+
+    ``knob`` is a ``metrics_degree<p>[_h<res>]_<f>MHz.json`` payload (one
+    frequency, ``cu`` / ``pec`` columns); ``ref`` a full-ladder
+    ``metrics.json``. Compares the knob frequency's subset of ``ref`` -- every
+    S leaf of both columns, relative to the reference entry's modulus -- and
+    returns ``(worst, where, n)``. The caller asserts against
+    ``LEG_D0_REPRODUCTION_BAND``.
+    """
+    label = knob["frequency"]
+    worst, where, n = 0.0, None, 0
+    for col in ("cu", "pec"):
+        a = ref["rungs"][label][col]["s_matrix"]
+        b = knob[col]["s_matrix"]
+        for i, row in enumerate(a):
+            for j, e in enumerate(row):
+                za = complex(e["re"], e["im"])
+                zb = complex(b[i][j]["re"], b[i][j]["im"])
+                rel = abs(zb - za) / abs(za)
+                n += 1
+                if rel > worst:
+                    worst, where = rel, (label, col, i + 1, j + 1)
+    return worst, where, n
+
+
+def main_knob(knob_path: str) -> None:
+    """``--knob <file>``: a knob-route file vs the tracked ``metrics.json``."""
+    knob = json.loads(Path(knob_path).read_text())
+    ref = json.loads((CASE / "metrics.json").read_text())
+    worst, where, n = knob_worst_deviation(knob, ref)
+    print(f"[ANS-6 step 2b] knob control: {n} S leaves ({knob['frequency']}, -n "
+          f"{knob['mpi_ranks']}) vs tracked metrics.json (-n {ref['mpi_ranks']}); worst "
+          f"relative deviation {worst:.3e} at {where} (ASSERTED <= "
+          f"LEG_D0_REPRODUCTION_BAND {LEG_D0_REPRODUCTION_BAND:.0e})", flush=True)
+    assert worst <= LEG_D0_REPRODUCTION_BAND, (worst, where)
+    print("[ANS-6 step 2b] knob control PASS", flush=True)
+
+
 if __name__ == "__main__":
-    main(sys.argv[1])
+    if len(sys.argv) == 3 and sys.argv[1] == "--knob":
+        main_knob(sys.argv[2])
+    else:
+        main(sys.argv[1])

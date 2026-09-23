@@ -253,7 +253,7 @@ def ladder():
     return _build_ladder()
 
 
-def _build_ladder(degree: int = 1, sigmas=None):
+def _build_ladder(degree: int = 1, sigmas=None, resolution=None):
     """`ladder`'s body, lifted module-level (`ANS-6`, rule (a)) so a caller
 
     outside pytest's fixture machinery — the `ans:6` example script — can
@@ -264,18 +264,29 @@ def _build_ladder(degree: int = 1, sigmas=None):
     ``degree`` / ``sigmas`` (`ANS-6` step 2, additive): the N1curl order
     forwarded to every solve, and the σ subset of ``SIGMA_LADDER`` to sweep.
     Defaults (1, the full ladder) are this module's gate, unchanged.
+
+    ``resolution`` (`ANS-6` step 2b, additive): forwarded verbatim to
+    ``_sheets_build``'s own ``resolution`` keyword (`WF-6` step 4f's). ``None``
+    -- this module's gate value -- builds the identical 0.015 m mesh.
     """
     sigma_list = SIGMA_LADDER if sigmas is None else tuple(sigmas)
     comm = MPI.COMM_WORLD
     t0 = time.perf_counter()
-    msh, cell_tags, facet_tags, _diag, t_mesh = _sheets_build(True, as_hole=True)
+    msh, cell_tags, facet_tags, _diag, t_mesh = _sheets_build(
+        True, as_hole=True, resolution=resolution)
     tdim = msh.topology.dim
     msh.topology.create_connectivity(tdim - 1, tdim)
     msh.topology.create_entity_permutations()
     ncells = int(msh.topology.index_map(tdim).size_global)
     outer_tags, census = _outer_box_tags(msh, facet_tags, comm)
     tags_f, port_defs, specs = _build_ports(msh, cell_tags, comm)
-    out = {"cells": ncells, "census": census, "freqs": {}}
+    # Global unknown count of the N1curl space every solve below builds on this
+    # mesh (`ANS-6` step 2b, additive: a returned key, printed by the `ans:6`
+    # knob route; no gate here reads it).
+    _v = fem.functionspace(msh, ("N1curl", degree))
+    unknowns = int(_v.dofmap.index_map.size_global * _v.dofmap.index_map_bs)
+    del _v
+    out = {"cells": ncells, "unknowns": unknowns, "census": census, "freqs": {}}
     if comm.rank == 0:
         print(f"\n[TH-14 step2] hole mesh {ncells} cells, mesh {t_mesh:.1f} s, -n {comm.size}; "
               f"census {census}", flush=True)

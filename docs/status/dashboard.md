@@ -153,8 +153,8 @@ and PubMed are unauthorised in this headless session; nothing here needs them.
     the ordinary service, no recreate needed; your rebuild is fully landed.
 34. ~~**`PORT-23` step 1**~~ **DONE 04:30 slot** — the `scikit-rf` circuit
     layer matches the raw reduction to machine precision; step 2 open.
-35. **`ANS-6` step 2b** *(heavy)* — a resolution knob on `ans:6`, unlocking
-    the matched hole-mesh XL probe (chain T9b).
+35. ~~**`ANS-6` step 2b**~~ **DONE 04:30 slot** — resolution knob landed;
+    XL entry 14 (hole-mesh probe) is READY for the next review to queue.
 36. **`WF-7` step 2** *(heavy)* — `|B₁⁺|` of the 32-port quadrature drive at
     human scale, C16-gated (chain H4).
 37. **`GEO-34` step 1a** *(standard)* — STEP round trip of the F-small

@@ -96,6 +96,7 @@ from fem_em_solver.io.paraview_utils import (  # noqa: E402
 from fem_em_solver.post.setup_figure import write_setup_figure  # noqa: E402
 from fem_em_solver.ports.lumped import run_lumped_sheet_port_case  # noqa: E402
 
+from tests.mesh.test_birdcage_port_sheets import RESOLUTION as SHEETS_RESOLUTION  # noqa: E402
 from tests.mesh.test_birdcage_port_sheets import _build as _sheets_build  # noqa: E402
 from tests.mesh.test_birdcage_port_tags import LEG_COUNT  # noqa: E402
 from tests.validation.test_port_birdcage_four_port import (  # noqa: E402
@@ -156,6 +157,13 @@ _EX34 = _load_example(
 )
 _paraview_fields = _EX34._paraview_fields
 
+# `ANS-6` step 2b's reproduction check, imported by path (``scripts/testing``
+# is not a package) rather than re-implemented.
+_REPRO = _load_example(
+    _REPO_ROOT / "scripts" / "testing" / "ans6_reproduction_check.py",
+    "ans6_reproduction_check_for_ans6",
+)
+
 CASE_DIR = Path(__file__).resolve().parent
 OUTPUT_DIR = CASE_DIR / "paraview_output"
 FIGURE_DIR = CASE_DIR / "figures"
@@ -194,6 +202,18 @@ KNOB_MOVE_CEILING = 2.0
 #: PREDICTED size, printed only: F-small's one-mesh order move, 6.09 / 5.38 /
 #: 6.70 % at 128 MHz (`ANS-4` step 2b) => roughly 3e-2 .. 7e-2.
 KNOB_MOVE_PREDICTED = (3.0e-2, 7.0e-2)
+#: `ANS-6` step 2b: the mesh-resolution knob (float, metres; the name is the
+#: `xl-pending.md` entry 14 contract). Honoured only on the degree-knob route;
+#: set without ``FEM_EM_ANS6_DEGREE`` => RuntimeError. Unset => the gate
+#: fixture's own ``RESOLUTION`` (0.015 m), byte-identical on both routes.
+RESOLUTION_ENV = "FEM_EM_ANS6_RESOLUTION"
+
+
+def _resolution_tag(resolution: float) -> str:
+    """``h0p005`` for 0.005 -- ``p`` for the decimal point, never ``.``
+    (``write_xdmf_with_tags`` strips everything after the last dot, `ANS-2`
+    step 4a's trap)."""
+    return "h" + f"{resolution:g}".replace(".", "p").replace("-", "m")
 
 
 def _basis_order(degree: int) -> str:
@@ -207,8 +227,23 @@ def _basis_unknowns_per_tet(degree: int) -> int:
     return degree * (degree + 2) * (degree + 3) // 2
 
 
-def _knob_main(comm, degree: int) -> None:
-    """The degree-knob route: Cu + PEC columns at one frequency, gates asserted."""
+def _knob_main(comm, degree: int, resolution=None) -> None:
+    """The degree-knob route: Cu + PEC columns at one frequency, gates asserted.
+
+    ``resolution`` (`ANS-6` step 2b): ``None`` -- ``FEM_EM_ANS6_RESOLUTION``
+    unset -- is the fixture's own 0.015 m mesh and the file name carries no
+    resolution tag (step 2's behaviour, unchanged). A float is forwarded to
+    ``_build_ladder(resolution=...)`` and tags the metrics file ``h<res>``.
+
+    Negative control. At every ``(degree, resolution)`` except the tracked
+    configuration itself, every C4 class must move by more than
+    ``KNOB_MOVE_FLOOR`` against the tracked degree-1 ``metrics.json``
+    (ASSERTED). At exactly ``(degree 1, h = 0.015)`` there is nothing to move,
+    so that floor would fail by construction; there it is REPLACED by the
+    reproduction assert -- same cell count as the tracked file, and every Cu
+    and PEC S leaf at this frequency within ``LEG_D0_REPRODUCTION_BAND``
+    (1e-9) of it, strictly stronger than the 1e-6 floor it replaces.
+    """
     import resource
 
     raw_f = os.environ.get(FREQ_ENV)
@@ -228,7 +263,7 @@ def _knob_main(comm, degree: int) -> None:
         )
     tracked = json.loads((CASE_DIR / "metrics.json").read_text())
     started = time.perf_counter()
-    ladder = _build_ladder(degree=degree, sigmas=(COPPER_SIGMA,))
+    ladder = _build_ladder(degree=degree, sigmas=(COPPER_SIGMA,), resolution=resolution)
     comm.Barrier()
     elapsed = time.perf_counter() - started
     rec = ladder["freqs"][key]
@@ -252,6 +287,19 @@ def _knob_main(comm, degree: int) -> None:
         cp = _class_entries(np.asarray(sw["s"]))
         moves[name] = {c: float(abs(cp[c] - c1[c]) / abs(c1[c])) for c in CLASSES}
     rss_kib = comm.allreduce(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss, op=MPI.SUM)
+    h_eff = SHEETS_RESOLUTION if resolution is None else float(resolution)
+    is_tracked_config = degree == 1 and h_eff == SHEETS_RESOLUTION
+    if comm.rank == 0 and resolution is not None:
+        print(
+            f"[ANS-6 step 2] resolution knob: {RESOLUTION_ENV}={h_eff:g} m; "
+            f"{int(ladder['cells'])} cells, {int(ladder['unknowns'])} global unknowns "
+            f"(N1curl degree {degree}); negative control: "
+            + ("REPLACED by the 1e-9 reproduction assert (tracked configuration)"
+               if is_tracked_config else f"class move > {KNOB_MOVE_FLOOR:.0e} ASSERTED"),
+            flush=True,
+        )
+    replaced = resolution is not None and is_tracked_config
+    move_status = "PRINTED, floor REPLACED by reproduction" if replaced else "ASSERTED"
     if comm.rank == 0:
         for name, sw in (("cu", cu), ("pec", pec)):
             print(
@@ -259,7 +307,7 @@ def _knob_main(comm, degree: int) -> None:
                 f"{sw['reciprocity']:.3e} (band {RECIPROCITY_BAND:.0e}), sigma_max "
                 f"{float(np.max(sw['sigma'])):.12f}, spreads "
                 + ", ".join(f"{c} {v * 100:.4f}%" for c, v in sw["spreads"].items())
-                + f"; class move vs degree 1 (ASSERTED > {KNOB_MOVE_FLOOR:.0e}, <= "
+                + f"; class move vs degree 1 ({move_status} > {KNOB_MOVE_FLOOR:.0e}, <= "
                 f"{KNOB_MOVE_CEILING:g}; PREDICTED {KNOB_MOVE_PREDICTED[0]:.0e}.."
                 f"{KNOB_MOVE_PREDICTED[1]:.0e}): "
                 + ", ".join(f"{c} {v:.4e}" for c, v in moves[name].items()),
@@ -273,11 +321,34 @@ def _knob_main(comm, degree: int) -> None:
             f"{rss_kib / 1024 ** 2:.2f} GiB",
             flush=True,
         )
-    for name in ("cu", "pec"):
-        for c, v in moves[name].items():
-            assert KNOB_MOVE_FLOOR < v <= KNOB_MOVE_CEILING, (name, c, v)
+    repro = None
+    if replaced:
+        knob_view = {
+            "frequency": label,
+            "cu": {"s_matrix": _matrix_payload(np.asarray(cu["s"]))},
+            "pec": {"s_matrix": _matrix_payload(np.asarray(pec["s"]))},
+        }
+        worst, where, n_leaves = _REPRO.knob_worst_deviation(knob_view, tracked)
+        repro = {"worst_rel": float(worst), "where": list(where), "n_leaves": int(n_leaves)}
+        if comm.rank == 0:
+            print(
+                f"[ANS-6 step 2b] reproduction control: {n_leaves} S leaves ({label}) at -n "
+                f"{comm.size} vs tracked metrics.json (-n {tracked['mpi_ranks']}), "
+                f"{int(ladder['cells'])} cells vs tracked {tracked['n_cells']}; worst "
+                f"relative deviation {worst:.3e} at {where} (ASSERTED <= "
+                f"LEG_D0_REPRODUCTION_BAND {_REPRO.LEG_D0_REPRODUCTION_BAND:.0e})",
+                flush=True,
+            )
+        assert int(ladder["cells"]) == int(tracked["n_cells"]), (
+            ladder["cells"], tracked["n_cells"])
+        assert worst <= _REPRO.LEG_D0_REPRODUCTION_BAND, (worst, where)
+    else:
+        for name in ("cu", "pec"):
+            for c, v in moves[name].items():
+                assert KNOB_MOVE_FLOOR < v <= KNOB_MOVE_CEILING, (name, c, v)
     if comm.rank == 0:
-        out = CASE_DIR / f"metrics_degree{degree}_{key}MHz.json"
+        tag = "" if resolution is None else f"_{_resolution_tag(h_eff)}"
+        out = CASE_DIR / f"metrics_degree{degree}{tag}_{key}MHz.json"
         payload = {
             "chunk": "ANS-6 step 2",
             "degree": degree,
@@ -287,6 +358,14 @@ def _knob_main(comm, degree: int) -> None:
             "n_cells": int(ladder["cells"]),
             "mpi_ranks": int(comm.size),
             "seconds": float(elapsed),
+            **({} if resolution is None else {
+                "resolution_m": float(h_eff),
+                "global_unknowns": int(ladder["unknowns"]),
+                "t_pec_s": float(rec["t_pec"]),
+                "t_cu_s": float(cu["t"]),
+                "t_p1_s": float(rec["t_p1"]),
+                "reproduction_vs_tracked": repro,
+            }),
             "summed_ru_maxrss_gib": float(rss_kib / 1024 ** 2),
             "cu": {"s_matrix": _matrix_payload(np.asarray(cu["s"])),
                    "reciprocity": float(cu["reciprocity"]),
@@ -528,8 +607,18 @@ def main() -> None:
         )
 
     raw_degree = os.environ.get(DEGREE_ENV)
+    raw_resolution = os.environ.get(RESOLUTION_ENV)
+    if raw_resolution is not None and raw_degree is None:
+        raise RuntimeError(
+            f"{RESOLUTION_ENV} is honoured only on the degree-knob route: set "
+            f"{DEGREE_ENV} (and {FREQ_ENV}) as well; got {RESOLUTION_ENV}={raw_resolution!r} "
+            f"with {DEGREE_ENV} unset"
+        )
     if raw_degree is not None:
-        _knob_main(comm, int(raw_degree))
+        _knob_main(
+            comm, int(raw_degree),
+            None if raw_resolution is None else float(raw_resolution),
+        )
         return
 
     if comm.rank == 0:

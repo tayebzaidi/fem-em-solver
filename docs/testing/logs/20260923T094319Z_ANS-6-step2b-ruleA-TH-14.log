@@ -1,0 +1,1392 @@
+# Test Run
+- Chunk: ANS-6-step2b-ruleA-TH-14
+- Commit: b84a5b8016ee7425b728e28bf908cccb27034ad2
+- Time (UTC): 2026-09-23 09:43:19
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.5.1
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose -f docker/docker-compose.yml exec -T fem-em-solver bash -lc 'cd /workspace && source /usr/local/bin/dolfinx-complex-mode && mkdir -p /workspace/logs && PYTHONPATH=/workspace/src timeout -k 30 590 mpiexec -n 4 python3 -m pytest tests/validation/test_th14_birdcage_copper.py -v --tb=short -s > /workspace/logs/ans6-2b-th14.log 2>&1; rc=$?; cat /workspace/logs/ans6-2b-th14.log; exit $rc'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 24
+drwxr-xr-x  3 taz5297 taz5297 4096 Sep 21 04:30 .
+drwxr-xr-x 17 taz5297 taz5297 4096 Sep 23 04:43 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  744 Sep 21 04:30 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 4275 Sep 13 19:19 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.5.1
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose -f docker/docker-compose.yml exec -T fem-em-solver bash -lc '\''cd /workspace && source /usr/local/bin/dolfinx-complex-mode && mkdir -p /workspace/logs && PYTHONPATH=/workspace/src timeout -k 30 590 mpiexec -n 4 python3 -m pytest tests/validation/test_th14_birdcage_copper.py -v --tb=short -s > /workspace/logs/ans6-2b-th14.log 2>&1; rc=$?; cat /workspace/logs/ans6-2b-th14.log; exit $rc'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.15.1
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.15.1
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.15.1
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.15.1
+collecting ... collected 11 items
+
+tests/validation/test_th14_birdcage_copper.py::test_outer_box_group_is_exterior_minus_cavity collected 11 items
+
+tests/validation/test_th14_birdcage_copper.py::test_outer_box_group_is_exterior_minus_cavity collected 11 items
+
+tests/validation/test_th14_birdcage_copper.py::test_outer_box_group_is_exterior_minus_cavity collected 11 items
+
+tests/validation/test_th14_birdcage_copper.py::test_outer_box_group_is_exterior_minus_cavity [birdcage-mesh] conductor cavity (CAD) tag 401: 40 surface(s) area=4.084633555e-02; volumes after the drop=10 (conductor solids removed: 10)
+[birdcage-mesh] fragment volumes=10 air=1.118814e-02(1p) phantom=2.261947e-04(1p) port_P1_lower=7.840000e-07(1p) port_P2_lower=7.840000e-07(1p) port_P3_lower=7.840000e-07(1p) port_P4_lower=7.840000e-07(1p) port_P1_upper=7.840000e-07(1p) port_P2_upper=7.840000e-07(1p) port_P3_upper=7.840000e-07(1p) port_P4_upper=7.840000e-07(1p)
+[birdcage-mesh] port sheets (CAD) P1: 1 surface(s) area=1.120000000e-04 extents=(1.400020e-02, 2.000000e-07, 8.000200e-03) P2: 1 surface(s) area=1.120000000e-04 extents=(2.000000e-07, 1.400020e-02, 8.000200e-03) P3: 1 surface(s) area=1.120000000e-04 extents=(1.400020e-02, 2.000000e-07, 8.000200e-03) P4: 1 surface(s) area=1.120000000e-04 extents=(2.000000e-07, 1.400020e-02, 8.000200e-03)
+[birdcage-mesh] conductor grading: h_c=1.600000e-03 m over 40 surfaces, shell=1.200000e-02 m, h_global=1.500000e-02 m
+Info    : Meshing 1D...
+Info    : [  0%] Meshing curve 1 (Circle)
+Info    : [ 10%] Meshing curve 2 (Circle)
+Info    : [ 10%] Meshing curve 3 (Circle)
+Info    : [ 10%] Meshing curve 4 (Circle)
+Info    : [ 10%] Meshing curve 5 (Circle)
+Info    : [ 10%] Meshing curve 6 (Line)
+Info    : [ 10%] Meshing curve 7 (Circle)
+Info    : [ 10%] Meshing curve 8 (Circle)
+Info    : [ 10%] Meshing curve 9 (Line)
+Info    : [ 10%] Meshing curve 10 (Circle)
+Info    : [ 10%] Meshing curve 11 (Circle)
+Info    : [ 10%] Meshing curve 12 (Line)
+Info    : [ 10%] Meshing curve 13 (Circle)
+Info    : [ 10%] Meshing curve 14 (Circle)
+Info    : [ 10%] Meshing curve 15 (Line)
+Info    : [ 10%] Meshing curve 16 (Circle)
+Info    : [ 10%] Meshing curve 17 (Circle)
+Info    : [ 10%] Meshing curve 18 (Line)
+Info    : [ 10%] Meshing curve 19 (Circle)
+Info    : [ 10%] Meshing curve 20 (Circle)
+Info    : [ 20%] Meshing curve 21 (Line)
+Info    : [ 20%] Meshing curve 22 (Circle)
+Info    : [ 20%] Meshing curve 23 (Circle)
+Info    : [ 20%] Meshing curve 24 (Line)
+Info    : [ 20%] Meshing curve 25 (Circle)
+Info    : [ 20%] Meshing curve 26 (Circle)
+Info    : [ 20%] Meshing curve 27 (Line)
+Info    : [ 20%] Meshing curve 28 (Circle)
+Info    : [ 20%] Meshing curve 29 (Circle)
+Info    : [ 20%] Meshing curve 30 (Line)
+Info    : [ 20%] Meshing curve 31 (Circle)
+Info    : [ 20%] Meshing curve 32 (Line)
+Info    : [ 20%] Meshing curve 33 (Line)
+Info    : [ 20%] Meshing curve 34 (Line)
+Info    : [ 20%] Meshing curve 35 (Line)
+Info    : [ 20%] Meshing curve 36 (Line)
+Info    : [ 20%] Meshing curve 37 (Line)
+Info    : [ 20%] Meshing curve 38 (Line)
+Info    : [ 20%] Meshing curve 39 (Line)
+Info    : [ 20%] Meshing curve 40 (Line)
+Info    : [ 30%] Meshing curve 41 (Line)
+Info    : [ 30%] Meshing curve 42 (Line)
+Info    : [ 30%] Meshing curve 43 (Line)
+Info    : [ 30%] Meshing curve 44 (BSpline)
+Info    : [ 30%] Meshing curve 45 (Circle)
+Info    : [ 30%] Meshing curve 46 (BSpline)
+Info    : [ 30%] Meshing curve 47 (BSpline)
+Info    : [ 30%] Meshing curve 48 (BSpline)
+Info    : [ 30%] Meshing curve 49 (Circle)
+Info    : [ 30%] Meshing curve 50 (Circle)
+Info    : [ 30%] Meshing curve 51 (BSpline)
+Info    : [ 30%] Meshing curve 52 (Line)
+Info    : [ 30%] Meshing curve 53 (Line)
+Info    : [ 30%] Meshing curve 54 (Circle)
+Info    : [ 30%] Meshing curve 55 (Circle)
+Info    : [ 30%] Meshing curve 56 (Circle)
+Info    : [ 30%] Meshing curve 57 (BSpline)
+Info    : [ 30%] Meshing curve 58 (Line)
+Info    : [ 30%] Meshing curve 59 (Line)
+Info    : [ 30%] Meshing curve 60 (Line)
+Info    : [ 40%] Meshing curve 61 (TrimmedCurve)
+Info    : [ 40%] Meshing curve 62 (TrimmedCurve)
+Info    : [ 40%] Meshing curve 63 (Line)
+Info    : [ 40%] Meshing curve 64 (Line)
+Info    : [ 40%] Meshing curve 65 (Line)
+Info    : [ 40%] Meshing curve 66 (Circle)
+Info    : [ 40%] Meshing curve 67 (BSpline)
+Info    : [ 40%] Meshing curve 68 (BSpline)
+Info    : [ 40%] Meshing curve 69 (BSpline)
+Info    : [ 40%] Meshing curve 70 (TrimmedCurve)
+Info    : [ 40%] Meshing curve 71 (TrimmedCurve)
+Info    : [ 40%] Meshing curve 72 (TrimmedCurve)
+Info    : [ 40%] Meshing curve 73 (TrimmedCurve)
+Info    : [ 40%] Meshing curve 74 (TrimmedCurve)
+Info    : [ 40%] Meshing curve 75 (TrimmedCurve)
+Info    : [ 40%] Meshing curve 76 (TrimmedCurve)
+Info    : [ 40%] Meshing curve 77 (TrimmedCurve)
+Info    : [ 40%] Meshing curve 78 (Circle)
+Info    : [ 40%] Meshing curve 79 (BSpline)
+Info    : [ 40%] Meshing curve 80 (Line)
+Info    : [ 50%] Meshing curve 81 (Line)
+Info    : [ 50%] Meshing curve 82 (TrimmedCurve)
+Info    : [ 50%] Meshing curve 83 (Line)
+Info    : [ 50%] Meshing curve 84 (Line)
+Info    : [ 50%] Meshing curve 85 (Line)
+Info    : [ 50%] Meshing curve 86 (TrimmedCurve)
+Info    : [ 50%] Meshing curve 87 (Line)
+Info    : [ 50%] Meshing curve 88 (Line)
+Info    : [ 50%] Meshing curve 89 (Line)
+Info    : [ 50%] Meshing curve 90 (Line)
+Info    : [ 50%] Meshing curve 91 (Line)
+Info    : [ 50%] Meshing curve 92 (Line)
+Info    : [ 50%] Meshing curve 93 (Line)
+Info    : [ 50%] Meshing curve 94 (Circle)
+Info    : [ 50%] Meshing curve 95 (Circle)
+Info    : [ 50%] Meshing curve 96 (Circle)
+Info    : [ 50%] Meshing curve 97 (BSpline)
+Info    : [ 50%] Meshing curve 98 (TrimmedCurve)
+Info    : [ 50%] Meshing curve 99 (TrimmedCurve)
+Info    : [ 50%] Meshing curve 100 (TrimmedCurve)
+Info    : [ 60%] Meshing curve 101 (TrimmedCurve)
+Info    : [ 60%] Meshing curve 102 (TrimmedCurve)
+Info    : [ 60%] Meshing curve 103 (TrimmedCurve)
+Info    : [ 60%] Meshing curve 104 (TrimmedCurve)
+Info    : [ 60%] Meshing curve 105 (TrimmedCurve)
+Info    : [ 60%] Meshing curve 106 (TrimmedCurve)
+Info    : [ 60%] Meshing curve 107 (TrimmedCurve)
+Info    : [ 60%] Meshing curve 108 (TrimmedCurve)
+Info    : [ 60%] Meshing curve 109 (TrimmedCurve)
+Info    : [ 60%] Meshing curve 110 (Circle)
+Info    : [ 60%] Meshing curve 111 (Circle)
+Info    : [ 60%] Meshing curve 112 (BSpline)
+Info    : [ 60%] Meshing curve 113 (TrimmedCurve)
+Info    : [ 60%] Meshing curve 114 (Circle)
+Info    : [ 60%] Meshing curve 115 (TrimmedCurve)
+Info    : [ 60%] Meshing curve 116 (Circle)
+Info    : [ 60%] Meshing curve 117 (TrimmedCurve)
+Info    : [ 60%] Meshing curve 118 (TrimmedCurve)
+Info    : [ 60%] Meshing curve 119 (TrimmedCurve)
+Info    : [ 60%] Meshing curve 120 (TrimmedCurve)
+Info    : [ 70%] Meshing curve 121 (TrimmedCurve)
+Info    : [ 70%] Meshing curve 122 (TrimmedCurve)
+Info    : [ 70%] Meshing curve 123 (TrimmedCurve)
+Info    : [ 70%] Meshing curve 124 (TrimmedCurve)
+Info    : [ 70%] Meshing curve 125 (Circle)
+Info    : [ 70%] Meshing curve 126 (TrimmedCurve)
+Info    : [ 70%] Meshing curve 127 (Circle)
+Info    : [ 70%] Meshing curve 128 (Circle)
+Info    : [ 70%] Meshing curve 129 (TrimmedCurve)
+Info    : [ 70%] Meshing curve 130 (Circle)
+Info    : [ 70%] Meshing curve 131 (TrimmedCurve)
+Info    : [ 70%] Meshing curve 132 (TrimmedCurve)
+Info    : [ 70%] Meshing curve 133 (TrimmedCurve)
+Info    : [ 70%] Meshing curve 134 (TrimmedCurve)
+Info    : [ 70%] Meshing curve 135 (TrimmedCurve)
+Info    : [ 70%] Meshing curve 136 (TrimmedCurve)
+Info    : [ 70%] Meshing curve 137 (TrimmedCurve)
+Info    : [ 70%] Meshing curve 138 (TrimmedCurve)
+Info    : [ 70%] Meshing curve 139 (BSpline)
+Info    : [ 70%] Meshing curve 140 (BSpline)
+Info    : [ 80%] Meshing curve 141 (TrimmedCurve)
+Info    : [ 80%] Meshing curve 142 (TrimmedCurve)
+Info    : [ 80%] Meshing curve 143 (TrimmedCurve)
+Info    : [ 80%] Meshing curve 144 (TrimmedCurve)
+Info    : [ 80%] Meshing curve 145 (TrimmedCurve)
+Info    : [ 80%] Meshing curve 146 (TrimmedCurve)
+Info    : [ 80%] Meshing curve 147 (TrimmedCurve)
+Info    : [ 80%] Meshing curve 148 (TrimmedCurve)
+Info    : [ 80%] Meshing curve 149 (TrimmedCurve)
+Info    : [ 80%] Meshing curve 150 (TrimmedCurve)
+Info    : [ 80%] Meshing curve 151 (TrimmedCurve)
+Info    : [ 80%] Meshing curve 152 (TrimmedCurve)
+Info    : [ 80%] Meshing curve 153 (BSpline)
+Info    : [ 80%] Meshing curve 154 (Line)
+Info    : [ 80%] Meshing curve 155 (BSpline)
+Info    : [ 80%] Meshing curve 156 (BSpline)
+Info    : [ 80%] Meshing curve 157 (Line)
+Info    : [ 80%] Meshing curve 158 (BSpline)
+Info    : [ 80%] Meshing curve 159 (TrimmedCurve)
+Info    : [ 80%] Meshing curve 160 (TrimmedCurve)
+Info    : [ 90%] Meshing curve 161 (TrimmedCurve)
+Info    : [ 90%] Meshing curve 162 (TrimmedCurve)
+Info    : [ 90%] Meshing curve 163 (TrimmedCurve)
+Info    : [ 90%] Meshing curve 164 (TrimmedCurve)
+Info    : [ 90%] Meshing curve 165 (TrimmedCurve)
+Info    : [ 90%] Meshing curve 166 (TrimmedCurve)
+Info    : [ 90%] Meshing curve 167 (TrimmedCurve)
+Info    : [ 90%] Meshing curve 168 (TrimmedCurve)
+Info    : [ 90%] Meshing curve 169 (TrimmedCurve)
+Info    : [ 90%] Meshing curve 170 (TrimmedCurve)
+Info    : [ 90%] Meshing curve 171 (Circle)
+Info    : [ 90%] Meshing curve 172 (BSpline)
+Info    : [ 90%] Meshing curve 173 (BSpline)
+Info    : [ 90%] Meshing curve 174 (BSpline)
+Info    : [ 90%] Meshing curve 175 (Circle)
+Info    : [ 90%] Meshing curve 176 (TrimmedCurve)
+Info    : [ 90%] Meshing curve 177 (Circle)
+Info    : [ 90%] Meshing curve 178 (Circle)
+Info    : [ 90%] Meshing curve 179 (TrimmedCurve)
+Info    : [ 90%] Meshing curve 180 (Circle)
+Info    : [100%] Meshing curve 181 (Circle)
+Info    : [100%] Meshing curve 182 (BSpline)
+Info    : [100%] Meshing curve 183 (TrimmedCurve)
+Info    : [100%] Meshing curve 184 (Circle)
+Info    : [100%] Meshing curve 185 (TrimmedCurve)
+Info    : [100%] Meshing curve 186 (Circle)
+Info    : [100%] Meshing curve 187 (Line)
+Info    : [100%] Meshing curve 188 (Line)
+Info    : [100%] Meshing curve 189 (BSpline)
+Info    : [100%] Meshing curve 190 (BSpline)
+Info    : [100%] Meshing curve 191 (Circle)
+Info    : [100%] Meshing curve 192 (TrimmedCurve)
+Info    : [100%] Meshing curve 193 (TrimmedCurve)
+Info    : [100%] Meshing curve 194 (TrimmedCurve)
+Info    : [100%] Meshing curve 195 (TrimmedCurve)
+Info    : [100%] Meshing curve 196 (TrimmedCurve)
+Info    : [100%] Meshing curve 197 (TrimmedCurve)
+Info    : [100%] Meshing curve 198 (TrimmedCurve)
+Info    : [100%] Meshing curve 199 (TrimmedCurve)
+Info    : Done meshing 1D (Wall 6.16037s, CPU 6.14446s)
+Info    : Meshing 2D...
+Info    : [  0%] Meshing surface 1 (Torus, Frontal-Delaunay)
+Info    : [ 10%] Meshing surface 2 (Torus, Frontal-Delaunay)
+Info    : [ 10%] Meshing surface 3 (Cylinder, Frontal-Delaunay)
+Info    : [ 10%] Meshing surface 4 (Plane, Frontal-Delaunay)
+Info    : [ 10%] Meshing surface 5 (Plane, Frontal-Delaunay)
+Info    : [ 10%] Meshing surface 6 (Cylinder, Frontal-Delaunay)
+Info    : [ 10%] Meshing surface 7 (Plane, Frontal-Delaunay)
+Info    : [ 10%] Meshing surface 8 (Plane, Frontal-Delaunay)
+Info    : [ 10%] Meshing surface 9 (Cylinder, Frontal-Delaunay)
+Info    : [ 10%] Meshing surface 10 (Plane, Frontal-Delaunay)
+Info    : [ 10%] Meshing surface 11 (Plane, Frontal-Delaunay)
+Info    : [ 10%] Meshing surface 12 (Cylinder, Frontal-Delaunay)
+Info    : [ 20%] Meshing surface 13 (Plane, Frontal-Delaunay)
+Info    : [ 20%] Meshing surface 14 (Plane, Frontal-Delaunay)
+Info    : [ 20%] Meshing surface 15 (Cylinder, Frontal-Delaunay)
+Info    : [ 20%] Meshing surface 16 (Plane, Frontal-Delaunay)
+Info    : [ 20%] Meshing surface 17 (Plane, Frontal-Delaunay)
+Info    : [ 20%] Meshing surface 18 (Cylinder, Frontal-Delaunay)
+Info    : [ 20%] Meshing surface 19 (Plane, Frontal-Delaunay)
+Info    : [ 20%] Meshing surface 20 (Plane, Frontal-Delaunay)
+Info    : [ 20%] Meshing surface 21 (Cylinder, Frontal-Delaunay)
+Info    : [ 20%] Meshing surface 22 (Plane, Frontal-Delaunay)
+Info    : [ 20%] Meshing surface 23 (Plane, Frontal-Delaunay)
+Info    : [ 30%] Meshing surface 24 (Cylinder, Frontal-Delaunay)
+Info    : [ 30%] Meshing surface 25 (Plane, Frontal-Delaunay)
+Info    : [ 30%] Meshing surface 26 (Plane, Frontal-Delaunay)
+Info    : [ 30%] Meshing surface 27 (Cylinder, Frontal-Delaunay)
+Info    : [ 30%] Meshing surface 28 (Plane, Frontal-Delaunay)
+Info    : [ 30%] Meshing surface 29 (Plane, Frontal-Delaunay)
+Info    : [ 30%] Meshing surface 36 (BSpline surface, Frontal-Delaunay)
+Info    : [ 30%] Meshing surface 43 (BSpline surface, Frontal-Delaunay)
+Info    : [ 30%] Meshing surface 50 (BSpline surface, Frontal-Delaunay)
+Info    : [ 30%] Meshing surface 57 (BSpline surface, Frontal-Delaunay)
+Info    : [ 30%] Meshing surface 58 (Plane, Frontal-Delaunay)
+Info    : [ 40%] Meshing surface 59 (Plane, Frontal-Delaunay)
+Info    : [ 40%] Meshing surface 60 (Plane, Frontal-Delaunay)
+Info    : [ 40%] Meshing surface 61 (Plane, Frontal-Delaunay)
+Info    : [ 40%] Meshing surface 62 (Plane, Frontal-Delaunay)
+Info    : [ 40%] Meshing surface 63 (Plane, Frontal-Delaunay)
+Info    : [ 40%] Meshing surface 64 (Torus, Frontal-Delaunay)
+Info    : [ 40%] Meshing surface 65 (Cylinder, Frontal-Delaunay)
+Info    : [ 40%] Meshing surface 66 (Cylinder, Frontal-Delaunay)
+Info    : [ 40%] Meshing surface 67 (Plane, Frontal-Delaunay)
+Info    : [ 40%] Meshing surface 68 (Plane, Frontal-Delaunay)
+Info    : [ 40%] Meshing surface 69 (Torus, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 70 (BSpline surface, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 71 (BSpline surface, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 72 (Torus, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 73 (Plane, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 74 (Plane, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 75 (Plane, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 76 (Plane, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 77 (Plane, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 78 (Plane, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 79 (Cylinder, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 80 (BSpline surface, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 81 (BSpline surface, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 82 (BSpline surface, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 83 (BSpline surface, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 84 (BSpline surface, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 85 (BSpline surface, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 86 (Cylinder, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 87 (Plane, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 88 (Plane, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 89 (BSpline surface, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 90 (BSpline surface, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 91 (Torus, Frontal-Delaunay)
+Info    : [ 70%] Meshing surface 92 (BSpline surface, Frontal-Delaunay)
+Info    : [ 70%] Meshing surface 93 (BSpline surface, Frontal-Delaunay)
+Info    : [ 70%] Meshing surface 94 (BSpline surface, Frontal-Delaunay)
+Info    : [ 70%] Meshing surface 95 (BSpline surface, Frontal-Delaunay)
+Info    : [ 70%] Meshing surface 96 (Cylinder, Frontal-Delaunay)
+Info    : [ 70%] Meshing surface 97 (BSpline surface, Frontal-Delaunay)
+Info    : [ 70%] Meshing surface 98 (BSpline surface, Frontal-Delaunay)
+Info    : [ 70%] Meshing surface 99 (BSpline surface, Frontal-Delaunay)
+Info    : [ 70%] Meshing surface 100 (BSpline surface, Frontal-Delaunay)
+Info    : [ 70%] Meshing surface 101 (BSpline surface, Frontal-Delaunay)
+Info    : [ 70%] Meshing surface 102 (BSpline surface, Frontal-Delaunay)
+Info    : [ 80%] Meshing surface 103 (Cylinder, Frontal-Delaunay)
+Info    : [ 80%] Meshing surface 104 (BSpline surface, Frontal-Delaunay)
+Info    : [ 80%] Meshing surface 105 (BSpline surface, Frontal-Delaunay)
+Info    : [ 80%] Meshing surface 106 (BSpline surface, Frontal-Delaunay)
+Info    : [ 80%] Meshing surface 107 (BSpline surface, Frontal-Delaunay)
+Info    : [ 80%] Meshing surface 108 (BSpline surface, Frontal-Delaunay)
+Info    : [ 80%] Meshing surface 109 (BSpline surface, Frontal-Delaunay)
+Info    : [ 80%] Meshing surface 110 (Torus, Frontal-Delaunay)
+Info    : [ 80%] Meshing surface 111 (Torus, Frontal-Delaunay)
+Info    : [ 80%] Meshing surface 112 (BSpline surface, Frontal-Delaunay)
+Info    : [ 80%] Meshing surface 113 (BSpline surface, Frontal-Delaunay)
+Info    : [ 90%] Meshing surface 114 (Torus, Frontal-Delaunay)
+Info    : [ 90%] Meshing surface 115 (BSpline surface, Frontal-Delaunay)
+Info    : [ 90%] Meshing surface 116 (BSpline surface, Frontal-Delaunay)
+Info    : [ 90%] Meshing surface 117 (Cylinder, Frontal-Delaunay)
+Info    : [ 90%] Meshing surface 118 (Cylinder, Frontal-Delaunay)
+Info    : [ 90%] Meshing surface 119 (Torus, Frontal-Delaunay)
+Info    : [ 90%] Meshing surface 120 (Plane, Frontal-Delaunay)
+Info    : [ 90%] Meshing surface 121 (Plane, Frontal-Delaunay)
+Info    : [ 90%] Meshing surface 122 (Plane, Frontal-Delaunay)
+Info    : [ 90%] Meshing surface 123 (Plane, Frontal-Delaunay)
+Info    : [ 90%] Meshing surface 124 (Plane, Frontal-Delaunay)
+Info    : [100%] Meshing surface 125 (Plane, Frontal-Delaunay)
+Info    : [100%] Meshing surface 126 (Plane, Frontal-Delaunay)
+Info    : [100%] Meshing surface 127 (Plane, Frontal-Delaunay)
+Info    : [100%] Meshing surface 128 (Plane, Frontal-Delaunay)
+Info    : [100%] Meshing surface 129 (Plane, Frontal-Delaunay)
+Info    : [100%] Meshing surface 130 (Plane, Frontal-Delaunay)
+Info    : [100%] Meshing surface 131 (Plane, Frontal-Delaunay)
+Info    : [100%] Meshing surface 132 (Plane, Frontal-Delaunay)
+Info    : [100%] Meshing surface 133 (Plane, Frontal-Delaunay)
+Info    : [100%] Meshing surface 134 (Plane, Frontal-Delaunay)
+Info    : [100%] Meshing surface 135 (Plane, Frontal-Delaunay)
+Info    : Done meshing 2D (Wall 1.55245s, CPU 1.5448s)
+Info    : Meshing 3D...
+Info    : 3D Meshing 10 volumes with 1 connected component
+Info    : Tetrahedrizing 12281 nodes...
+Info    : Done tetrahedrizing 12289 nodes (Wall 0.256421s, CPU 0.256387s)
+Info    : Reconstructing mesh...
+Info    :  - Creating surface mesh
+Info    :  - Identifying boundary edges
+Info    :  - Recovering boundary
+Info    : Done reconstructing mesh (Wall 0.59523s, CPU 0.583232s)
+Info    : Found volume 12
+Info    : Found void region
+Info    : Found void region
+Info    : Found volume 11
+Info    : Found volume 19
+Info    : Found volume 15
+Info    : Found volume 17
+Info    : Found volume 14
+Info    : Found volume 16
+Info    : Found volume 13
+Info    : Found volume 20
+Info    : Found volume 18
+Info    : It. 0 - 0 nodes created - worst tet radius 19.373 (nodes removed 0 0)
+Info    : It. 500 - 499 nodes created - worst tet radius 3.85199 (nodes removed 0 1)
+Info    : It. 1000 - 999 nodes created - worst tet radius 2.29912 (nodes removed 0 1)
+Info    : It. 1500 - 1499 nodes created - worst tet radius 1.84261 (nodes removed 0 1)
+Info    : It. 2000 - 1999 nodes created - worst tet radius 1.5742 (nodes removed 0 1)
+Info    : It. 2500 - 2499 nodes created - worst tet radius 1.42868 (nodes removed 0 1)
+Info    : It. 3000 - 2999 nodes created - worst tet radius 1.32915 (nodes removed 0 1)
+Info    : It. 3500 - 3499 nodes created - worst tet radius 1.25465 (nodes removed 0 1)
+Info    : It. 4000 - 3999 nodes created - worst tet radius 1.18864 (nodes removed 0 1)
+Info    : It. 4500 - 4498 nodes created - worst tet radius 1.13656 (nodes removed 0 2)
+Info    : It. 5000 - 4998 nodes created - worst tet radius 1.09437 (nodes removed 0 2)
+Info    : It. 5500 - 5498 nodes created - worst tet radius 1.05913 (nodes removed 0 2)
+Info    : It. 6000 - 5997 nodes created - worst tet radius 1.02326 (nodes removed 0 3)
+Info    : 3D refinement terminated (28216 nodes total):
+Info    :  - 3 Delaunay cavities modified for star shapeness
+Info    :  - 3 nodes could not be inserted
+Info    :  - 81007 tetrahedra created in 1.09245 sec. (74151 tets/s)
+Info    : 29 node relocations
+Info    : Done meshing 3D (Wall 2.82279s, CPU 2.80685s)
+[harness] 13 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 10 edge swaps, 0 node relocations (volume = 0.000219529): worst = 0.3213 / average = 0.772746 (Wall 0.000216198s, CPU 0.000218s)
+Info    : No ill-shaped tets in the mesh :-)
+[harness] 22 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 2618 edge swaps, 152 node relocations (volume = 0.0111978): worst = 0.0691918 / average = 0.661704 (Wall 0.0882477s, CPU 0.088248s)
+Info    : 2719 edge swaps, 175 node relocations (volume = 0.0111978): worst = 0.131662 / average = 0.661964 (Wall 0.115909s, CPU 0.115906s)
+Info    : 2726 edge swaps, 181 node relocations (volume = 0.0111978): worst = 0.152889 / average = 0.661993 (Wall 0.139056s, CPU 0.139056s)
+Info    : 2727 edge swaps, 183 node relocations (volume = 0.0111978): worst = 0.152889 / average = 0.661994 (Wall 0.1619s, CPU 0.1619s)
+Info    : No ill-shaped tets in the mesh :-)
+[harness] 22 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 22 edge swaps, 0 node relocations (volume = 7.84e-07): worst = 0.28372 / average = 0.639301 (Wall 0.000650696s, CPU 0.000662s)
+Info    : 23 edge swaps, 0 node relocations (volume = 7.84e-07): worst = 0.28372 / average = 0.6407 (Wall 0.000734896s, CPU 0.000749s)
+Info    : No ill-shaped tets in the mesh :-)
+[harness] 22 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 18 edge swaps, 0 node relocations (volume = 7.84e-07): worst = 0.290803 / average = 0.634892 (Wall 0.000360098s, CPU 0.000364s)
+Info    : 19 edge swaps, 0 node relocations (volume = 7.84e-07): worst = 0.292724 / average = 0.635912 (Wall 0.000438497s, CPU 0.000443s)
+Info    : No ill-shaped tets in the mesh :-)
+[harness] 22 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 21 edge swaps, 0 node relocations (volume = 7.84e-07): worst = 0.293459 / average = 0.642979 (Wall 0.000441397s, CPU 0.000444s)
+Info    : No ill-shaped tets in the mesh :-)
+[harness] 22 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 25 edge swaps, 1 node relocations (volume = 7.84e-07): worst = 0.241779 / average = 0.631633 (Wall 0.000462297s, CPU 0.000464s)
+Info    : 26 edge swaps, 1 node relocations (volume = 7.84e-07): worst = 0.241779 / average = 0.631354 (Wall 0.000655796s, CPU 0.000658s)
+Info    : No ill-shaped tets in the mesh :-)
+[harness] 22 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 14 edge swaps, 0 node relocations (volume = 7.84e-07): worst = 0.289734 / average = 0.66538 (Wall 0.000291799s, CPU 0.000296s)
+Info    : 15 edge swaps, 0 node relocations (volume = 7.84e-07): worst = 0.293459 / average = 0.6668 (Wall 0.000355098s, CPU 0.00036s)
+Info    : No ill-shaped tets in the mesh :-)
+[harness] 22 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 15 edge swaps, 0 node relocations (volume = 7.84e-07): worst = 0.293543 / average = 0.667053 (Wall 0.000313798s, CPU 0.000317s)
+Info    : No ill-shaped tets in the mesh :-)
+[harness] 22 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 20 edge swaps, 0 node relocations (volume = 7.84e-07): worst = 0.283954 / average = 0.643062 (Wall 0.000380298s, CPU 0.000382s)
+Info    : 22 edge swaps, 0 node relocations (volume = 7.84e-07): worst = 0.283954 / average = 0.646128 (Wall 0.000481197s, CPU 0.000484s)
+Info    : No ill-shaped tets in the mesh :-)
+[harness] 22 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 20 edge swaps, 0 node relocations (volume = 7.84e-07): worst = 0.293263 / average = 0.660711 (Wall 0.000475297s, CPU 0.000476s)
+Info    : No ill-shaped tets in the mesh :-)
+[harness] 10 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : Done optimizing mesh (Wall 0.327843s, CPU 0.327796s)
+Info    : 28216 nodes 125837 elements
+[harness] 2 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : CalcLocalH: 149 Points 434 Elements 256 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 76 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 13.9698 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 46 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 21.0103 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 13 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 71.0504 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 3 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 71.0504 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 7 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 18.8396 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 0 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 5.60863 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 0 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 5.06851 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : CalcLocalH: 18193 Points 74814 Elements 23818 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 1761 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 73.4984 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 1037 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 79.7905 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 374 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 4222.6 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 117 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 837.442 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 27 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 837.442 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 303 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 51.8866 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 31 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 30.1813 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 18 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 30.3332 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : CalcLocalH: 164 Points 426 Elements 310 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 157 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 21.0831 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 110 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 32.0685 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 81 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 44.634 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 44 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 292.42 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 16 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 292.42 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 6 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 292.42 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 2 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 292.42 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 18 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 55.4719 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 3 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 19.721 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 3 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 17.9373 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : CalcLocalH: 168 Points 432 Elements 318 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 158 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 21.2108 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 125 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 32.4522 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 91 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 33.8856 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 57 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 1375.81 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 35 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 72.2918 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 20 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 72.2918 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 9 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 72.2918 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 23 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 27.7085 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 5 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 29.5087 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 1 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 18.3707 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : CalcLocalH: 163 Points 418 Elements 308 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 152 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 21.1462 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 115 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 41.1911 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 93 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 43.5126 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 60 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 661.312 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 31 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 661.312 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 14 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 661.312 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 8 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 661.312 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 3 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 661.312 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 23 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 31.3952 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 5 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 27.1532 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 2 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 17.7515 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : CalcLocalH: 162 Points 410 Elements 308 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 155 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 21.1197 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 121 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 70.6204 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 87 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 71.5978 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 46 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 291.047 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 20 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 291.047 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 3 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 291.047 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 15 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 47.9888 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 5 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 21.6415 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 1 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 17.5091 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : CalcLocalH: 166 Points 435 Elements 310 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 150 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 21.1461 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 103 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 46.8153 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 63 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 439.356 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 26 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 439.356 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 5 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 439.356 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 4 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 439.356 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 19 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 40.4587 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 2 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 21.1947 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 0 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 22.9232 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : CalcLocalH: 169 Points 449 Elements 314 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 153 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 21.1192 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 110 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 31.1628 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 81 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 274.936 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 50 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 274.936 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 28 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 274.936 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 13 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 274.936 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 3 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 274.936 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 22 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 28.1208 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 2 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 14.1236 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 1 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 13.3316 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : CalcLocalH: 165 Points 412 Elements 314 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 153 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 21.0831 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 119 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 33.5844 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 84 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 55.5062 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 46 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 880.946 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 24 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 880.946 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 14 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 880.946 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 6 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 880.946 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 3 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 880.946 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 26 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 25.4981 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 2 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 25.0162 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 1 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 18.425 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : CalcLocalH: 168 Points 431 Elements 316 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 157 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 21.2097 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 110 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 1989.84 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 69 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 57.4549 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 38 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 57.4549 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 17 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 239.467 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 2 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 239.467 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 19 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 30.7353 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 6 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 15.812 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 1 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 13.5564 
+[harness] 11 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : Done optimizing mesh (Wall 8.77248s, CPU 8.76045s)
+[birdcage-mesh] mesh wall time 20.24 s; CAD masses [m^3]: air=1.118814235e-02 phantom=2.261946711e-04 port_P1_lower=7.840000000e-07 port_P2_lower=7.840000085e-07 port_P3_lower=7.840000006e-07 port_P4_lower=7.840000006e-07 port_P1_upper=7.840000000e-07 port_P2_upper=7.840000006e-07 port_P3_upper=7.840000006e-07 port_P4_upper=7.840000085e-07
+
+[TH-14 step2] hole mesh 80181 cells, mesh 23.0 s, -n 4; census {'exterior': 23144, 'cavity': 19826, 'cavity_exterior': 19826, 'outer': 3318, 'tag_collision': 0}
+[lumped-sheet] driven port 'P1' (facet tag 211, V_src = (1+0j), R = 4.558827e+01+0.000000e+00j Ohm/square):
+    P1: V = +2.657078677e-01+7.319533492e-02j V, I = +1.468584265e-02-1.463906698e-03j A (driven)
+    P2: V = +2.458997590e-01-2.066794170e-02j V, I = -4.917995180e-03+4.133588340e-04j A (undriven)
+    P3: V = +2.424490605e-01-3.848963065e-02j V, I = -4.848981209e-03+7.697926130e-04j A (undriven)
+    P4: V = +2.458958133e-01-2.068712390e-02j V, I = -4.917916267e-03+4.137424779e-04j A (undriven)
+[lumped-sheet] driven port 'P2' (facet tag 212, V_src = (1+0j), R = 4.558827e+01+0.000000e+00j Ohm/square):
+    P1: V = +2.458997590e-01-2.066794170e-02j V, I = -4.917995180e-03+4.133588340e-04j A (undriven)
+    P2: V = +2.657009700e-01+7.315862858e-02j V, I = +1.468598060e-02-1.463172572e-03j A (driven)
+    P3: V = +2.459021430e-01-2.065651369e-02j V, I = -4.918042859e-03+4.131302739e-04j A (undriven)
+    P4: V = +2.424504586e-01-3.848366590e-02j V, I = -4.849009171e-03+7.696733180e-04j A (undriven)
+[lumped-sheet] driven port 'P3' (facet tag 213, V_src = (1+0j), R = 4.558827e+01+0.000000e+00j Ohm/square):
+    P1: V = +2.424490605e-01-3.848963065e-02j V, I = -4.848981209e-03+7.697926130e-04j A (undriven)
+    P2: V = +2.459021430e-01-2.065651369e-02j V, I = -4.918042859e-03+4.131302739e-04j A (undriven)
+    P3: V = +2.657037537e-01+7.317176883e-02j V, I = +1.468592493e-02-1.463435377e-03j A (driven)
+    P4: V = +2.458983493e-01-2.067510165e-02j V, I = -4.917966985e-03+4.135020330e-04j A (undriven)
+[lumped-sheet] driven port 'P4' (facet tag 214, V_src = (1+0j), R = 4.558827e+01+0.000000e+00j Ohm/square):
+    P1: V = +2.458958133e-01-2.068712390e-02j V, I = -4.917916267e-03+4.137424779e-04j A (undriven)
+    P2: V = +2.424504586e-01-3.848366590e-02j V, I = -4.849009171e-03+7.696733180e-04j A (undriven)
+    P3: V = +2.458983493e-01-2.067510165e-02j V, I = -4.917966985e-03+4.135020330e-04j A (undriven)
+    P4: V = +2.657078427e-01+7.319662154e-02j V, I = +1.468584315e-02-1.463932431e-03j A (driven)
+n-port S-parameter sweep diagnostics:
+  frequency [Hz]: 1.000000e+07
+  ports: P1, P2, P3, P4
+  S-matrix shape: (4, 4)
+  diagonal terms: S11=-4.686e-01+1.464e-01j, S22=-4.686e-01+1.463e-01j, S33=-4.686e-01+1.463e-01j, S44=-4.686e-01+1.464e-01j
+  S-matrix sanity metrics:
+    reciprocity: max|Sij-Sji|=1.214e-14, max rel=2.472e-14
+    passivity: sigma_max=1.000e+00, max column power sum=9.692e-01
+    warnings: none
+[lumped-sheet] driven port 'P1' (facet tag 211, V_src = (1+0j), R = 4.558827e+01+0.000000e+00j Ohm/square):
+    P1: V = +2.658065874e-01+7.325993948e-02j V, I = +1.468386825e-02-1.465198790e-03j A (driven)
+    P2: V = +2.458751163e-01-2.068605598e-02j V, I = -4.917502326e-03+4.137211196e-04j A (undriven)
+    P3: V = +2.423995321e-01-3.851809224e-02j V, I = -4.847990642e-03+7.703618447e-04j A (undriven)
+    P4: V = +2.458712626e-01-2.070515310e-02j V, I = -4.917425253e-03+4.141030620e-04j A (undriven)
+[lumped-sheet] driven port 'P2' (facet tag 212, V_src = (1+0j), R = 4.558827e+01+0.000000e+00j Ohm/square):
+    P1: V = +2.458751163e-01-2.068605598e-02j V, I = -4.917502326e-03+4.137211196e-04j A (undriven)
+    P2: V = +2.657996628e-01+7.322322611e-02j V, I = +1.468400674e-02-1.464464522e-03j A (driven)
+    P3: V = +2.458776413e-01-2.067451628e-02j V, I = -4.917552826e-03+4.134903256e-04j A (undriven)
+    P4: V = +2.424009087e-01-3.851214814e-02j V, I = -4.848018174e-03+7.702429628e-04j A (undriven)
+[lumped-sheet] driven port 'P3' (facet tag 213, V_src = (1+0j), R = 4.558827e+01+0.000000e+00j Ohm/square):
+    P1: V = +2.423995321e-01-3.851809224e-02j V, I = -4.847990642e-03+7.703618447e-04j A (undriven)
+    P2: V = +2.458776413e-01-2.067451628e-02j V, I = -4.917552826e-03+4.134903256e-04j A (undriven)
+    P3: V = +2.658023491e-01+7.323626435e-02j V, I = +1.468395302e-02-1.464725287e-03j A (driven)
+    P4: V = +2.458737835e-01-2.069313547e-02j V, I = -4.917475669e-03+4.138627095e-04j A (undriven)
+[lumped-sheet] driven port 'P4' (facet tag 214, V_src = (1+0j), R = 4.558827e+01+0.000000e+00j Ohm/square):
+    P1: V = +2.458712626e-01-2.070515310e-02j V, I = -4.917425253e-03+4.141030620e-04j A (undriven)
+    P2: V = +2.424009087e-01-3.851214814e-02j V, I = -4.848018174e-03+7.702429628e-04j A (undriven)
+    P3: V = +2.458737835e-01-2.069313547e-02j V, I = -4.917475669e-03+4.138627095e-04j A (undriven)
+    P4: V = +2.658065074e-01+7.326116604e-02j V, I = +1.468386985e-02-1.465223321e-03j A (driven)
+n-port S-parameter sweep diagnostics:
+  frequency [Hz]: 1.000000e+07
+  ports: P1, P2, P3, P4
+  S-matrix shape: (4, 4)
+  diagonal terms: S11=-4.684e-01+1.465e-01j, S22=-4.684e-01+1.464e-01j, S33=-4.684e-01+1.465e-01j, S44=-4.684e-01+1.465e-01j
+  S-matrix sanity metrics:
+    reciprocity: max|Sij-Sji|=1.851e-14, max rel=3.751e-14
+    passivity: sigma_max=1.000e+00, max column power sum=9.689e-01
+    warnings: none
+[lumped-sheet] driven port 'P1' (facet tag 211, V_src = (1+0j), R = 4.558827e+01+0.000000e+00j Ohm/square):
+    P1: V = +2.657177887e-01+7.320179235e-02j V, I = +1.468564423e-02-1.464035847e-03j A (driven)
+    P2: V = +2.458972816e-01-2.066975285e-02j V, I = -4.917945632e-03+4.133950571e-04j A (undriven)
+    P3: V = +2.424440825e-01-3.849247411e-02j V, I = -4.848881649e-03+7.698494821e-04j A (undriven)
+    P4: V = +2.458933475e-01-2.068892674e-02j V, I = -4.917866950e-03+4.137785348e-04j A (undriven)
+[lumped-sheet] driven port 'P2' (facet tag 212, V_src = (1+0j), R = 4.558827e+01+0.000000e+00j Ohm/square):
+    P1: V = +2.458972816e-01-2.066975285e-02j V, I = -4.917945632e-03+4.133950571e-04j A (undriven)
+    P2: V = +2.657108882e-01+7.316508529e-02j V, I = +1.468578224e-02-1.463301706e-03j A (driven)
+    P3: V = +2.458996827e-01-2.065831393e-02j V, I = -4.917993654e-03+4.131662786e-04j A (undriven)
+    P4: V = +2.424454778e-01-3.848651136e-02j V, I = -4.848909556e-03+7.697302272e-04j A (undriven)
+[lumped-sheet] driven port 'P3' (facet tag 213, V_src = (1+0j), R = 4.558827e+01+0.000000e+00j Ohm/square):
+    P1: V = +2.424440825e-01-3.849247411e-02j V, I = -4.848881649e-03+7.698494821e-04j A (undriven)
+    P2: V = +2.458996827e-01-2.065831393e-02j V, I = -4.917993654e-03+4.131662786e-04j A (undriven)
+    P3: V = +2.657136584e-01+7.317821554e-02j V, I = +1.468572683e-02-1.463564311e-03j A (driven)
+    P4: V = +2.458958827e-01-2.067690491e-02j V, I = -4.917917655e-03+4.135380983e-04j A (undriven)
+[lumped-sheet] driven port 'P4' (facet tag 214, V_src = (1+0j), R = 4.558827e+01+0.000000e+00j Ohm/square):
+    P1: V = +2.458933475e-01-2.068892674e-02j V, I = -4.917866950e-03+4.137785348e-04j A (undriven)
+    P2: V = +2.424454778e-01-3.848651136e-02j V, I = -4.848909556e-03+7.697302272e-04j A (undriven)
+    P3: V = +2.458958827e-01-2.067690491e-02j V, I = -4.917917655e-03+4.135380983e-04j A (undriven)
+    P4: V = +2.657177557e-01+7.320307304e-02j V, I = +1.468564489e-02-1.464061461e-03j A (driven)
+n-port S-parameter sweep diagnostics:
+  frequency [Hz]: 1.000000e+07
+  ports: P1, P2, P3, P4
+  S-matrix shape: (4, 4)
+  diagonal terms: S11=-4.686e-01+1.464e-01j, S22=-4.686e-01+1.463e-01j, S33=-4.686e-01+1.464e-01j, S44=-4.686e-01+1.464e-01j
+  S-matrix sanity metrics:
+    reciprocity: max|Sij-Sji|=1.472e-14, max rel=2.983e-14
+    passivity: sigma_max=1.000e+00, max column power sum=9.692e-01
+    warnings: none
+[lumped-sheet] driven port 'P1' (facet tag 211, V_src = (1+0j), R = 4.558827e+01+0.000000e+00j Ohm/square):
+    P1: V = +2.657088603e-01+7.319598057e-02j V, I = +1.468582279e-02-1.463919611e-03j A (driven)
+    P2: V = +2.458995111e-01-2.066812280e-02j V, I = -4.917990222e-03+4.133624560e-04j A (undriven)
+    P3: V = +2.424485624e-01-3.848991494e-02j V, I = -4.848971248e-03+7.697982988e-04j A (undriven)
+    P4: V = +2.458955666e-01-2.068730417e-02j V, I = -4.917911333e-03+4.137460833e-04j A (undriven)
+[lumped-sheet] driven port 'P2' (facet tag 212, V_src = (1+0j), R = 4.558827e+01+0.000000e+00j Ohm/square):
+    P1: V = +2.458995111e-01-2.066812280e-02j V, I = -4.917990222e-03+4.133624560e-04j A (undriven)
+    P2: V = +2.657019623e-01+7.315927415e-02j V, I = +1.468596075e-02-1.463185483e-03j A (driven)
+    P3: V = +2.459018968e-01-2.065669371e-02j V, I = -4.918037936e-03+4.131338742e-04j A (undriven)
+    P4: V = +2.424499602e-01-3.848395039e-02j V, I = -4.848999204e-03+7.696790078e-04j A (undriven)
+[lumped-sheet] driven port 'P3' (facet tag 213, V_src = (1+0j), R = 4.558827e+01+0.000000e+00j Ohm/square):
+    P1: V = +2.424485624e-01-3.848991494e-02j V, I = -4.848971248e-03+7.697982988e-04j A (undriven)
+    P2: V = +2.459018968e-01-2.065669371e-02j V, I = -4.918037936e-03+4.131338742e-04j A (undriven)
+    P3: V = +2.657047447e-01+7.317241342e-02j V, I = +1.468590511e-02-1.463448268e-03j A (driven)
+    P4: V = +2.458981025e-01-2.067528196e-02j V, I = -4.917962050e-03+4.135056393e-04j A (undriven)
+[lumped-sheet] driven port 'P4' (facet tag 214, V_src = (1+0j), R = 4.558827e+01+0.000000e+00j Ohm/square):
+    P1: V = +2.458955666e-01-2.068730417e-02j V, I = -4.917911333e-03+4.137460833e-04j A (undriven)
+    P2: V = +2.424499602e-01-3.848395039e-02j V, I = -4.848999204e-03+7.696790078e-04j A (undriven)
+    P3: V = +2.458981025e-01-2.067528196e-02j V, I = -4.917962050e-03+4.135056393e-04j A (undriven)
+    P4: V = +2.657088346e-01+7.319726661e-02j V, I = +1.468582331e-02-1.463945332e-03j A (driven)
+n-port S-parameter sweep diagnostics:
+  frequency [Hz]: 1.000000e+07
+  ports: P1, P2, P3, P4
+  S-matrix shape: (4, 4)
+  diagonal terms: S11=-4.686e-01+1.464e-01j, S22=-4.686e-01+1.463e-01j, S33=-4.686e-01+1.463e-01j, S44=-4.686e-01+1.464e-01j
+  S-matrix sanity metrics:
+    reciprocity: max|Sij-Sji|=1.546e-14, max rel=3.133e-14
+    passivity: sigma_max=1.000e+00, max column power sum=9.692e-01
+    warnings: none
+
+[TH-14 step2] f = 1.000000e+07 Hz: PEC sweep 4.3 s, P1 copper field solve 3.2 s
+    S_PEC_1k = -4.685842647e-01+1.463906698e-01j  +4.917995180e-01-4.133588340e-02j  +4.848981209e-01-7.697926130e-02j  +4.917916267e-01-4.137424779e-02j
+    S_PEC_2k = +4.917995180e-01-4.133588340e-02j  -4.685980601e-01+1.463172572e-01j  +4.918042859e-01-4.131302739e-02j  +4.849009171e-01-7.696733180e-02j
+    S_PEC_3k = +4.848981209e-01-7.697926130e-02j  +4.918042859e-01-4.131302739e-02j  -4.685924926e-01+1.463435377e-01j  +4.917966985e-01-4.135020330e-02j
+    S_PEC_4k = +4.917916267e-01-4.137424779e-02j  +4.849009171e-01-7.696733180e-02j  +4.917966985e-01-4.135020330e-02j  -4.685843145e-01+1.463932431e-01j
+  sigma = 5.8e+07 S/m: Z_s = 8.250226e-04(1+j) ohm, sweep 4.1 s
+    S_1k = -4.683868251e-01+1.465198790e-01j  +4.917502326e-01-4.137211196e-02j  +4.847990642e-01-7.703618447e-02j  +4.917425253e-01-4.141030620e-02j
+    S_2k = +4.917502326e-01-4.137211196e-02j  -4.684006744e-01+1.464464522e-01j  +4.917552826e-01-4.134903256e-02j  +4.848018174e-01-7.702429628e-02j
+    S_3k = +4.847990642e-01-7.703618447e-02j  +4.917552826e-01-4.134903256e-02j  -4.683953018e-01+1.464725287e-01j  +4.917475669e-01-4.138627095e-02j
+    S_4k = +4.917425253e-01-4.141030620e-02j  +4.848018174e-01-7.702429628e-02j  +4.917475669e-01-4.138627095e-02j  -4.683869853e-01+1.465223321e-01j
+    ||S-S^T||/||S|| = 2.085248922e-14 (band 1e-03); sigma_max(S) = 0.999994231395; spreads self 0.0190% adjacent 0.0094% opposite 0.0059% (band 0.5%)
+    max|S_sigma - S_PEC| per class: self 2.359605257e-04, adjacent 6.116825665e-05, opposite 1.143053417e-04; max entry 2.359605257e-04
+  sigma = 5.8e+09 S/m: Z_s = 8.250226e-05(1+j) ohm, sweep 4.0 s
+    S_1k = -4.685644226e-01+1.464035847e-01j  +4.917945632e-01-4.133950571e-02j  +4.848881649e-01-7.698494821e-02j  +4.917866950e-01-4.137785348e-02j
+    S_2k = +4.917945632e-01-4.133950571e-02j  -4.685782235e-01+1.463301706e-01j  +4.917993654e-01-4.131662786e-02j  +4.848909556e-01-7.697302272e-02j
+    S_3k = +4.848881649e-01-7.698494821e-02j  +4.917993654e-01-4.131662786e-02j  -4.685726831e-01+1.463564311e-01j  +4.917917655e-01-4.135380983e-02j
+    S_4k = +4.917866950e-01-4.137785348e-02j  +4.848909556e-01-7.697302272e-02j  +4.917917655e-01-4.135380983e-02j  -4.685644886e-01+1.464061461e-01j
+    ||S-S^T||/||S|| = 1.554728145e-14 (band 1e-03); sigma_max(S) = 0.999994233803; spreads self 0.0190% adjacent 0.0094% opposite 0.0059% (band 0.5%)
+    max|S_sigma - S_PEC| per class: self 2.367489042e-05, adjacent 6.137666174e-06, opposite 1.147246814e-05; max entry 2.367489042e-05
+  sigma = 5.8e+11 S/m: Z_s = 8.250226e-06(1+j) ohm, sweep 4.0 s
+    S_1k = -4.685822794e-01+1.463919611e-01j  +4.917990222e-01-4.133624560e-02j  +4.848971248e-01-7.697982988e-02j  +4.917911333e-01-4.137460833e-02j
+    S_2k = +4.917990222e-01-4.133624560e-02j  -4.685960753e-01+1.463185483e-01j  +4.918037936e-01-4.131338742e-02j  +4.848999204e-01-7.696790078e-02j
+    S_3k = +4.848971248e-01-7.697982988e-02j  +4.918037936e-01-4.131338742e-02j  -4.685905107e-01+1.463448268e-01j  +4.917962050e-01-4.135056393e-02j
+    S_4k = +4.917911333e-01-4.137460833e-02j  +4.848999204e-01-7.696790078e-02j  +4.917962050e-01-4.135056393e-02j  -4.685823309e-01+1.463945332e-01j
+    ||S-S^T||/||S|| = 1.845788802e-14 (band 1e-03); sigma_max(S) = 0.999994234083; spreads self 0.0190% adjacent 0.0094% opposite 0.0059% (band 0.5%)
+    max|S_sigma - S_PEC| per class: self 2.368289703e-06, adjacent 6.139918735e-07, opposite 1.147675770e-06; max entry 2.368289703e-06
+    negative control (PREDICTED, printed): sigma = 5.8e+11 max|S - S_PEC| = 2.368e-06 vs predicted <= 1e-04: met
+    (b) P1 copper: P_src 2.658065874e-03 W, sum P_sheet 2.657170000e-03 W, P_phantom 6.375118485e-08 W, P_(Omega\phantom) 0.000000000e+00 W, P_surf 8.321237084e-07 W; residual/P_src 1.534e-13 (ASSERTED <= 1e-06)
+    PRINTED: P_coil/P_in = 9.288392e-01, P_phantom/P_in = 7.116081e-02 (copper, f = 1.000e+07 Hz)
+[lumped-sheet] driven port 'P1' (facet tag 211, V_src = (1+0j), R = 4.558827e+01+0.000000e+00j Ohm/square):
+    P1: V = +4.825019235e-01+3.247153037e-01j V, I = +1.034996153e-02-6.494306074e-03j A (driven)
+    P2: V = +1.977026856e-01-1.094348294e-01j V, I = -3.954053712e-03+2.188696587e-03j A (undriven)
+    P3: V = +1.202389121e-01-1.486198571e-01j V, I = -2.404778243e-03+2.972397142e-03j A (undriven)
+    P4: V = +1.976159732e-01-1.094707703e-01j V, I = -3.952319464e-03+2.189415405e-03j A (undriven)
+[lumped-sheet] driven port 'P2' (facet tag 212, V_src = (1+0j), R = 4.558827e+01+0.000000e+00j Ohm/square):
+    P1: V = +1.977026856e-01-1.094348294e-01j V, I = -3.954053712e-03+2.188696587e-03j A (undriven)
+    P2: V = +4.823591487e-01+3.246335287e-01j V, I = +1.035281703e-02-6.492670573e-03j A (driven)
+    P3: V = +1.977545811e-01-1.094142588e-01j V, I = -3.955091623e-03+2.188285176e-03j A (undriven)
+    P4: V = +1.202646415e-01-1.486125759e-01j V, I = -2.405292829e-03+2.972251519e-03j A (undriven)
+[lumped-sheet] driven port 'P3' (facet tag 213, V_src = (1+0j), R = 4.558827e+01+0.000000e+00j Ohm/square):
+    P1: V = +1.202389121e-01-1.486198571e-01j V, I = -2.404778243e-03+2.972397142e-03j A (undriven)
+    P2: V = +1.977545811e-01-1.094142588e-01j V, I = -3.955091623e-03+2.188285176e-03j A (undriven)
+    P3: V = +4.824139240e-01+3.246556417e-01j V, I = +1.035172152e-02-6.493112833e-03j A (driven)
+    P4: V = +1.976726465e-01-1.094491772e-01j V, I = -3.953452930e-03+2.188983543e-03j A (undriven)
+[lumped-sheet] driven port 'P4' (facet tag 214, V_src = (1+0j), R = 4.558827e+01+0.000000e+00j Ohm/square):
+    P1: V = +1.976159732e-01-1.094707703e-01j V, I = -3.952319464e-03+2.189415405e-03j A (undriven)
+    P2: V = +1.202646415e-01-1.486125759e-01j V, I = -2.405292829e-03+2.972251519e-03j A (undriven)
+    P3: V = +1.976726465e-01-1.094491772e-01j V, I = -3.953452930e-03+2.188983543e-03j A (undriven)
+    P4: V = +4.825050789e-01+3.247237120e-01j V, I = +1.034989842e-02-6.494474239e-03j A (driven)
+n-port S-parameter sweep diagnostics:
+  frequency [Hz]: 6.400000e+07
+  ports: P1, P2, P3, P4
+  S-matrix shape: (4, 4)
+  diagonal terms: S11=-3.500e-02+6.494e-01j, S22=-3.528e-02+6.493e-01j, S33=-3.517e-02+6.493e-01j, S44=-3.499e-02+6.494e-01j
+  S-matrix sanity metrics:
+    reciprocity: max|Sij-Sji|=2.011e-15, max rel=4.449e-15
+    passivity: sigma_max=9.998e-01, max column power sum=9.776e-01
+    warnings: none
+[lumped-sheet] driven port 'P1' (facet tag 211, V_src = (1+0j), R = 4.558827e+01+0.000000e+00j Ohm/square):
+    P1: V = +4.826959624e-01+3.246363714e-01j V, I = +1.034608075e-02-6.492727428e-03j A (driven)
+    P2: V = +1.976399234e-01-1.094261100e-01j V, I = -3.952798468e-03+2.188522201e-03j A (undriven)
+    P3: V = +1.201699778e-01-1.485584314e-01j V, I = -2.403399556e-03+2.971168628e-03j A (undriven)
+    P4: V = +1.975534789e-01-1.094621012e-01j V, I = -3.951069578e-03+2.189242023e-03j A (undriven)
+[lumped-sheet] driven port 'P2' (facet tag 212, V_src = (1+0j), R = 4.558827e+01+0.000000e+00j Ohm/square):
+    P1: V = +1.976399234e-01-1.094261100e-01j V, I = -3.952798468e-03+2.188522201e-03j A (undriven)
+    P2: V = +4.825532170e-01+3.245546679e-01j V, I = +1.034893566e-02-6.491093359e-03j A (driven)
+    P3: V = +1.976921157e-01-1.094056893e-01j V, I = -3.953842314e-03+2.188113786e-03j A (undriven)
+    P4: V = +1.201956401e-01-1.485511333e-01j V, I = -2.403912802e-03+2.971022665e-03j A (undriven)
+[lumped-sheet] driven port 'P3' (facet tag 213, V_src = (1+0j), R = 4.558827e+01+0.000000e+00j Ohm/square):
+    P1: V = +1.201699778e-01-1.485584314e-01j V, I = -2.403399556e-03+2.971168628e-03j A (undriven)
+    P2: V = +1.976921157e-01-1.094056893e-01j V, I = -3.953842314e-03+2.188113786e-03j A (undriven)
+    P3: V = +4.826076820e-01+3.245768259e-01j V, I = +1.034784636e-02-6.491536518e-03j A (driven)
+    P4: V = +1.976101319e-01-1.094405047e-01j V, I = -3.952202637e-03+2.188810094e-03j A (undriven)
+[lumped-sheet] driven port 'P4' (facet tag 214, V_src = (1+0j), R = 4.558827e+01+0.000000e+00j Ohm/square):
+    P1: V = +1.975534789e-01-1.094621012e-01j V, I = -3.951069578e-03+2.189242023e-03j A (undriven)
+    P2: V = +1.201956401e-01-1.485511333e-01j V, I = -2.403912802e-03+2.971022665e-03j A (undriven)
+    P3: V = +1.976101319e-01-1.094405047e-01j V, I = -3.952202637e-03+2.188810094e-03j A (undriven)
+    P4: V = +4.826989369e-01+3.246448047e-01j V, I = +1.034602126e-02-6.492896095e-03j A (driven)
+n-port S-parameter sweep diagnostics:
+  frequency [Hz]: 6.400000e+07
+  ports: P1, P2, P3, P4
+  S-matrix shape: (4, 4)
+  diagonal terms: S11=-3.461e-02+6.493e-01j, S22=-3.489e-02+6.491e-01j, S33=-3.478e-02+6.492e-01j, S44=-3.460e-02+6.493e-01j
+  S-matrix sanity metrics:
+    reciprocity: max|Sij-Sji|=1.787e-15, max rel=3.955e-15
+    passivity: sigma_max=9.998e-01, max column power sum=9.770e-01
+    warnings: none
+[lumped-sheet] driven port 'P1' (facet tag 211, V_src = (1+0j), R = 4.558827e+01+0.000000e+00j Ohm/square):
+    P1: V = +4.825213494e-01+3.247073759e-01j V, I = +1.034957301e-02-6.494147517e-03j A (driven)
+    P2: V = +1.976964009e-01-1.094339488e-01j V, I = -3.953928017e-03+2.188678976e-03j A (undriven)
+    P3: V = +1.202320130e-01-1.486136954e-01j V, I = -2.404640260e-03+2.972273909e-03j A (undriven)
+    P4: V = +1.976097160e-01-1.094698964e-01j V, I = -3.952194320e-03+2.189397928e-03j A (undriven)
+[lumped-sheet] driven port 'P2' (facet tag 212, V_src = (1+0j), R = 4.558827e+01+0.000000e+00j Ohm/square):
+    P1: V = +1.976964009e-01-1.094339488e-01j V, I = -3.953928017e-03+2.188678976e-03j A (undriven)
+    P2: V = +4.823785774e-01+3.246256080e-01j V, I = +1.035242845e-02-6.492512161e-03j A (driven)
+    P3: V = +1.977483271e-01-1.094133954e-01j V, I = -3.954966542e-03+2.188267908e-03j A (undriven)
+    P4: V = +1.202577355e-01-1.486064122e-01j V, I = -2.405154710e-03+2.972128243e-03j A (undriven)
+[lumped-sheet] driven port 'P3' (facet tag 213, V_src = (1+0j), R = 4.558827e+01+0.000000e+00j Ohm/square):
+    P1: V = +1.202320130e-01-1.486136954e-01j V, I = -2.404640260e-03+2.972273909e-03j A (undriven)
+    P2: V = +1.977483271e-01-1.094133954e-01j V, I = -3.954966542e-03+2.188267908e-03j A (undriven)
+    P3: V = +4.824333202e-01+3.246477281e-01j V, I = +1.035133360e-02-6.492954562e-03j A (driven)
+    P4: V = +1.976663878e-01-1.094483036e-01j V, I = -3.953327756e-03+2.188966072e-03j A (undriven)
+[lumped-sheet] driven port 'P4' (facet tag 214, V_src = (1+0j), R = 4.558827e+01+0.000000e+00j Ohm/square):
+    P1: V = +1.976097160e-01-1.094698964e-01j V, I = -3.952194320e-03+2.189397928e-03j A (undriven)
+    P2: V = +1.202577355e-01-1.486064122e-01j V, I = -2.405154710e-03+2.972128243e-03j A (undriven)
+    P3: V = +1.976663878e-01-1.094483036e-01j V, I = -3.953327756e-03+2.188966072e-03j A (undriven)
+    P4: V = +4.825244855e-01+3.247157885e-01j V, I = +1.034951029e-02-6.494315769e-03j A (driven)
+n-port S-parameter sweep diagnostics:
+  frequency [Hz]: 6.400000e+07
+  ports: P1, P2, P3, P4
+  S-matrix shape: (4, 4)
+  diagonal terms: S11=-3.496e-02+6.494e-01j, S22=-3.524e-02+6.493e-01j, S33=-3.513e-02+6.493e-01j, S44=-3.495e-02+6.494e-01j
+  S-matrix sanity metrics:
+    reciprocity: max|Sij-Sji|=3.615e-15, max rel=8.001e-15
+    passivity: sigma_max=9.998e-01, max column power sum=9.775e-01
+    warnings: none
+[lumped-sheet] driven port 'P1' (facet tag 211, V_src = (1+0j), R = 4.558827e+01+0.000000e+00j Ohm/square):
+    P1: V = +4.825038663e-01+3.247145105e-01j V, I = +1.034992267e-02-6.494290211e-03j A (driven)
+    P2: V = +1.977020571e-01-1.094347412e-01j V, I = -3.954041141e-03+2.188694824e-03j A (undriven)
+    P3: V = +1.202382222e-01-1.486192407e-01j V, I = -2.404764443e-03+2.972384815e-03j A (undriven)
+    P4: V = +1.976153474e-01-1.094706828e-01j V, I = -3.952306948e-03+2.189413656e-03j A (undriven)
+[lumped-sheet] driven port 'P2' (facet tag 212, V_src = (1+0j), R = 4.558827e+01+0.000000e+00j Ohm/square):
+    P1: V = +1.977020571e-01-1.094347412e-01j V, I = -3.954041141e-03+2.188694824e-03j A (undriven)
+    P2: V = +4.823610917e-01+3.246327362e-01j V, I = +1.035277817e-02-6.492654724e-03j A (driven)
+    P3: V = +1.977539556e-01-1.094141724e-01j V, I = -3.955079113e-03+2.188283448e-03j A (undriven)
+    P4: V = +1.202639508e-01-1.486119594e-01j V, I = -2.405279016e-03+2.972239187e-03j A (undriven)
+[lumped-sheet] driven port 'P3' (facet tag 213, V_src = (1+0j), R = 4.558827e+01+0.000000e+00j Ohm/square):
+    P1: V = +1.202382222e-01-1.486192407e-01j V, I = -2.404764443e-03+2.972384815e-03j A (undriven)
+    P2: V = +1.977539556e-01-1.094141724e-01j V, I = -3.955079113e-03+2.188283448e-03j A (undriven)
+    P3: V = +4.824158638e-01+3.246548500e-01j V, I = +1.035168272e-02-6.493096999e-03j A (driven)
+    P4: V = +1.976720206e-01-1.094490897e-01j V, I = -3.953440411e-03+2.188981795e-03j A (undriven)
+[lumped-sheet] driven port 'P4' (facet tag 214, V_src = (1+0j), R = 4.558827e+01+0.000000e+00j Ohm/square):
+    P1: V = +1.976153474e-01-1.094706828e-01j V, I = -3.952306948e-03+2.189413656e-03j A (undriven)
+    P2: V = +1.202639508e-01-1.486119594e-01j V, I = -2.405279016e-03+2.972239187e-03j A (undriven)
+    P3: V = +1.976720206e-01-1.094490897e-01j V, I = -3.953440411e-03+2.188981795e-03j A (undriven)
+    P4: V = +4.825070198e-01+3.247229193e-01j V, I = +1.034985960e-02-6.494458386e-03j A (driven)
+n-port S-parameter sweep diagnostics:
+  frequency [Hz]: 6.400000e+07
+  ports: P1, P2, P3, P4
+  S-matrix shape: (4, 4)
+  diagonal terms: S11=-3.499e-02+6.494e-01j, S22=-3.528e-02+6.493e-01j, S33=-3.517e-02+6.493e-01j, S44=-3.499e-02+6.494e-01j
+  S-matrix sanity metrics:
+    reciprocity: max|Sij-Sji|=3.005e-14, max rel=7.859e-14
+    passivity: sigma_max=9.998e-01, max column power sum=9.776e-01
+    warnings: none
+
+[TH-14 step2] f = 6.400000e+07 Hz: PEC sweep 4.1 s, P1 copper field solve 3.3 s
+    S_PEC_1k = -3.499615304e-02+6.494306074e-01j  +3.954053712e-01-2.188696587e-01j  +2.404778243e-01-2.972397142e-01j  +3.952319464e-01-2.189415405e-01j
+    S_PEC_2k = +3.954053712e-01-2.188696587e-01j  -3.528170266e-02+6.492670573e-01j  +3.955091623e-01-2.188285176e-01j  +2.405292829e-01-2.972251519e-01j
+    S_PEC_3k = +2.404778243e-01-2.972397142e-01j  +3.955091623e-01-2.188285176e-01j  -3.517215206e-02+6.493112833e-01j  +3.953452930e-01-2.188983543e-01j
+    S_PEC_4k = +3.952319464e-01-2.189415405e-01j  +2.405292829e-01-2.972251519e-01j  +3.953452930e-01-2.188983543e-01j  -3.498984230e-02+6.494474239e-01j
+  sigma = 5.8e+07 S/m: Z_s = 2.087161e-03(1+j) ohm, sweep 3.8 s
+    S_1k = -3.460807528e-02+6.492727428e-01j  +3.952798468e-01-2.188522201e-01j  +2.403399556e-01-2.971168628e-01j  +3.951069578e-01-2.189242023e-01j
+    S_2k = +3.952798468e-01-2.188522201e-01j  -3.489356605e-02+6.491093359e-01j  +3.953842314e-01-2.188113786e-01j  +2.403912802e-01-2.971022665e-01j
+    S_3k = +2.403399556e-01-2.971168628e-01j  +3.953842314e-01-2.188113786e-01j  -3.478463598e-02+6.491536518e-01j  +3.952202637e-01-2.188810094e-01j
+    S_4k = +3.951069578e-01-2.189242023e-01j  +2.403912802e-01-2.971022665e-01j  +3.952202637e-01-2.188810094e-01j  -3.460212626e-02+6.492896095e-01j
+    ||S-S^T||/||S|| = 2.267512592e-15 (band 1e-03); sigma_max(S) = 0.999813505191; spreads self 0.0482% adjacent 0.0496% opposite 0.0326% (band 0.5%)
+    max|S_sigma - S_PEC| per class: self 4.189583071e-04, adjacent 1.267300294e-04, opposite 1.847852002e-04; max entry 4.189583071e-04
+  sigma = 5.8e+09 S/m: Z_s = 2.087161e-04(1+j) ohm, sweep 4.0 s
+    S_1k = -3.495730124e-02+6.494147517e-01j  +3.953928017e-01-2.188678976e-01j  +2.404640260e-01-2.972273909e-01j  +3.952194320e-01-2.189397928e-01j
+    S_2k = +3.953928017e-01-2.188678976e-01j  -3.524284517e-02+6.492512161e-01j  +3.954966542e-01-2.188267908e-01j  +2.405154710e-01-2.972128243e-01j
+    S_3k = +2.404640260e-01-2.972273909e-01j  +3.954966542e-01-2.188267908e-01j  -3.513335966e-02+6.492954562e-01j  +3.953327756e-01-2.188966072e-01j
+    S_4k = +3.952194320e-01-2.189397928e-01j  +2.405154710e-01-2.972128243e-01j  +3.953327756e-01-2.188966072e-01j  -3.495102905e-02+6.494315769e-01j
+    ||S-S^T||/||S|| = 3.555505840e-15 (band 1e-03); sigma_max(S) = 0.999813763721; spreads self 0.0483% adjacent 0.0496% opposite 0.0326% (band 0.5%)
+    max|S_sigma - S_PEC| per class: self 4.196266840e-05, adjacent 1.269230650e-05, opposite 1.851322668e-05; max entry 4.196266840e-05
+  sigma = 5.8e+11 S/m: Z_s = 2.087161e-05(1+j) ohm, sweep 3.9 s
+    S_1k = -3.499226745e-02+6.494290211e-01j  +3.954041141e-01-2.188694824e-01j  +2.404764443e-01-2.972384815e-01j  +3.952306948e-01-2.189413656e-01j
+    S_2k = +3.954041141e-01-2.188694824e-01j  -3.527781651e-02+6.492654724e-01j  +3.955079113e-01-2.188283448e-01j  +2.405279016e-01-2.972239187e-01j
+    S_3k = +2.404764443e-01-2.972384815e-01j  +3.955079113e-01-2.188283448e-01j  -3.516827240e-02+6.493096999e-01j  +3.953440411e-01-2.188981795e-01j
+    S_4k = +3.952306948e-01-2.189413656e-01j  +2.405279016e-01-2.972239187e-01j  +3.953440411e-01-2.188981795e-01j  -3.498596050e-02+6.494458386e-01j
+    ||S-S^T||/||S|| = 3.859497462e-14 (band 1e-03); sigma_max(S) = 0.999813789642; spreads self 0.0483% adjacent 0.0497% opposite 0.0326% (band 0.5%)
+    max|S_sigma - S_PEC| per class: self 4.196924625e-06, adjacent 1.269441752e-06, opposite 1.851654242e-06; max entry 4.196924625e-06
+    negative control (PREDICTED, printed): sigma = 5.8e+11 max|S - S_PEC| = 4.197e-06 vs predicted <= 1e-04: met
+    (b) P1 copper: P_src 4.826959624e-03 W, sum P_sheet 4.823617235e-03 W, P_phantom 1.843774021e-06 W, P_(Omega\phantom) 0.000000000e+00 W, P_surf 1.498614831e-06 W; residual/P_src 2.967e-13 (ASSERTED <= 1e-06)
+    PRINTED: P_coil/P_in = 4.483664e-01, P_phantom/P_in = 5.516336e-01 (copper, f = 6.400e+07 Hz)
+[lumped-sheet] driven port 'P1' (facet tag 211, V_src = (1+0j), R = 4.558827e+01+0.000000e+00j Ohm/square):
+    P1: V = +7.319333130e-01+3.264748195e-01j V, I = +5.361333739e-03-6.529496390e-03j A (driven)
+    P2: V = +1.193749131e-01-1.455205659e-01j V, I = -2.387498262e-03+2.910411317e-03j A (undriven)
+    P3: V = +2.142999640e-02-1.229587599e-01j V, I = -4.285999281e-04+2.459175198e-03j A (undriven)
+    P4: V = +1.192734445e-01-1.454798592e-01j V, I = -2.385468889e-03+2.909597185e-03j A (undriven)
+[lumped-sheet] driven port 'P2' (facet tag 212, V_src = (1+0j), R = 4.558827e+01+0.000000e+00j Ohm/square):
+    P1: V = +1.193749131e-01-1.455205659e-01j V, I = -2.387498262e-03+2.910411317e-03j A (undriven)
+    P2: V = +7.317836389e-01+3.264834933e-01j V, I = +5.364327222e-03-6.529669865e-03j A (driven)
+    P3: V = +1.194344126e-01-1.455462013e-01j V, I = -2.388688252e-03+2.910924025e-03j A (undriven)
+    P4: V = +2.145491432e-02-1.229714917e-01j V, I = -4.290982863e-04+2.459429833e-03j A (undriven)
+[lumped-sheet] driven port 'P3' (facet tag 213, V_src = (1+0j), R = 4.558827e+01+0.000000e+00j Ohm/square):
+    P1: V = +2.142999640e-02-1.229587599e-01j V, I = -4.285999281e-04+2.459175198e-03j A (undriven)
+    P2: V = +1.194344126e-01-1.455462013e-01j V, I = -2.388688252e-03+2.910924025e-03j A (undriven)
+    P3: V = +7.318372225e-01+3.264645730e-01j V, I = +5.363255551e-03-6.529291460e-03j A (driven)
+    P4: V = +1.193433742e-01-1.455111735e-01j V, I = -2.386867483e-03+2.910223470e-03j A (undriven)
+[lumped-sheet] driven port 'P4' (facet tag 214, V_src = (1+0j), R = 4.558827e+01+0.000000e+00j Ohm/square):
+    P1: V = +1.192734445e-01-1.454798592e-01j V, I = -2.385468889e-03+2.909597185e-03j A (undriven)
+    P2: V = +2.145491432e-02-1.229714917e-01j V, I = -4.290982863e-04+2.459429833e-03j A (undriven)
+    P3: V = +1.193433742e-01-1.455111735e-01j V, I = -2.386867483e-03+2.910223470e-03j A (undriven)
+    P4: V = +7.319376478e-01+3.264832870e-01j V, I = +5.361247044e-03-6.529665740e-03j A (driven)
+n-port S-parameter sweep diagnostics:
+  frequency [Hz]: 1.280000e+08
+  ports: P1, P2, P3, P4
+  S-matrix shape: (4, 4)
+  diagonal terms: S11=4.639e-01+6.529e-01j, S22=4.636e-01+6.530e-01j, S33=4.637e-01+6.529e-01j, S44=4.639e-01+6.530e-01j
+  S-matrix sanity metrics:
+    reciprocity: max|Sij-Sji|=7.712e-16, max rel=2.049e-15
+    passivity: sigma_max=9.995e-01, max column power sum=9.871e-01
+    warnings: none
+[lumped-sheet] driven port 'P1' (facet tag 211, V_src = (1+0j), R = 4.558827e+01+0.000000e+00j Ohm/square):
+    P1: V = +7.320096963e-01+3.263353156e-01j V, I = +5.359806073e-03-6.526706312e-03j A (driven)
+    P2: V = +1.193349031e-01-1.454794710e-01j V, I = -2.386698062e-03+2.909589421e-03j A (undriven)
+    P3: V = +2.143248896e-02-1.229019395e-01j V, I = -4.286497792e-04+2.458038790e-03j A (undriven)
+    P4: V = +1.192335842e-01-1.454389531e-01j V, I = -2.384671685e-03+2.908779063e-03j A (undriven)
+[lumped-sheet] driven port 'P2' (facet tag 212, V_src = (1+0j), R = 4.558827e+01+0.000000e+00j Ohm/square):
+    P1: V = +1.193349031e-01-1.454794710e-01j V, I = -2.386698062e-03+2.909589421e-03j A (undriven)
+    P2: V = +7.318600973e-01+3.263439757e-01j V, I = +5.362798055e-03-6.526879513e-03j A (driven)
+    P3: V = +1.193944850e-01-1.455053342e-01j V, I = -2.387889699e-03+2.910106684e-03j A (undriven)
+    P4: V = +2.145737753e-02-1.229146190e-01j V, I = -4.291475505e-04+2.458292379e-03j A (undriven)
+[lumped-sheet] driven port 'P3' (facet tag 213, V_src = (1+0j), R = 4.558827e+01+0.000000e+00j Ohm/square):
+    P1: V = +2.143248896e-02-1.229019395e-01j V, I = -4.286497792e-04+2.458038790e-03j A (undriven)
+    P2: V = +1.193944850e-01-1.455053342e-01j V, I = -2.387889699e-03+2.910106684e-03j A (undriven)
+    P3: V = +7.319135129e-01+3.263252450e-01j V, I = +5.361729743e-03-6.526504900e-03j A (driven)
+    P4: V = +1.193034956e-01-1.454702575e-01j V, I = -2.386069912e-03+2.909405150e-03j A (undriven)
+[lumped-sheet] driven port 'P4' (facet tag 214, V_src = (1+0j), R = 4.558827e+01+0.000000e+00j Ohm/square):
+    P1: V = +1.192335842e-01-1.454389531e-01j V, I = -2.384671685e-03+2.908779063e-03j A (undriven)
+    P2: V = +2.145737753e-02-1.229146190e-01j V, I = -4.291475505e-04+2.458292379e-03j A (undriven)
+    P3: V = +1.193034956e-01-1.454702575e-01j V, I = -2.386069912e-03+2.909405150e-03j A (undriven)
+    P4: V = +7.320139242e-01+3.263439027e-01j V, I = +5.359721517e-03-6.526878054e-03j A (driven)
+n-port S-parameter sweep diagnostics:
+  frequency [Hz]: 1.280000e+08
+  ports: P1, P2, P3, P4
+  S-matrix shape: (4, 4)
+  diagonal terms: S11=4.640e-01+6.527e-01j, S22=4.637e-01+6.527e-01j, S33=4.638e-01+6.527e-01j, S44=4.640e-01+6.527e-01j
+  S-matrix sanity metrics:
+    reciprocity: max|Sij-Sji|=9.635e-16, max rel=2.559e-15
+    passivity: sigma_max=9.995e-01, max column power sum=9.867e-01
+    warnings: none
+[lumped-sheet] driven port 'P1' (facet tag 211, V_src = (1+0j), R = 4.558827e+01+0.000000e+00j Ohm/square):
+    P1: V = +7.319409480e-01+3.264608450e-01j V, I = +5.361181039e-03-6.529216900e-03j A (driven)
+    P2: V = +1.193709110e-01-1.455164480e-01j V, I = -2.387418220e-03+2.910328959e-03j A (undriven)
+    P3: V = +2.143025134e-02-1.229530696e-01j V, I = -4.286050268e-04+2.459061391e-03j A (undriven)
+    P4: V = +1.192694571e-01-1.454757612e-01j V, I = -2.385389142e-03+2.909515224e-03j A (undriven)
+[lumped-sheet] driven port 'P2' (facet tag 212, V_src = (1+0j), R = 4.558827e+01+0.000000e+00j Ohm/square):
+    P1: V = +1.193709110e-01-1.455164480e-01j V, I = -2.387418220e-03+2.910328959e-03j A (undriven)
+    P2: V = +7.317912814e-01+3.264695175e-01j V, I = +5.364174372e-03-6.529390350e-03j A (driven)
+    P3: V = +1.194304184e-01-1.455421074e-01j V, I = -2.388608369e-03+2.910842149e-03j A (undriven)
+    P4: V = +2.145516642e-02-1.229657959e-01j V, I = -4.291033285e-04+2.459315918e-03j A (undriven)
+[lumped-sheet] driven port 'P3' (facet tag 213, V_src = (1+0j), R = 4.558827e+01+0.000000e+00j Ohm/square):
+    P1: V = +2.143025134e-02-1.229530696e-01j V, I = -4.286050268e-04+2.459061391e-03j A (undriven)
+    P2: V = +1.194304184e-01-1.455421074e-01j V, I = -2.388608369e-03+2.910842149e-03j A (undriven)
+    P3: V = +7.318448484e-01+3.264506178e-01j V, I = +5.363103032e-03-6.529012356e-03j A (driven)
+    P4: V = +1.193393849e-01-1.455070750e-01j V, I = -2.386787699e-03+2.910141500e-03j A (undriven)
+[lumped-sheet] driven port 'P4' (facet tag 214, V_src = (1+0j), R = 4.558827e+01+0.000000e+00j Ohm/square):
+    P1: V = +1.192694571e-01-1.454757612e-01j V, I = -2.385389142e-03+2.909515224e-03j A (undriven)
+    P2: V = +2.145516642e-02-1.229657959e-01j V, I = -4.291033285e-04+2.459315918e-03j A (undriven)
+    P3: V = +1.193393849e-01-1.455070750e-01j V, I = -2.386787699e-03+2.910141500e-03j A (undriven)
+    P4: V = +7.319452722e-01+3.264693258e-01j V, I = +5.361094555e-03-6.529386515e-03j A (driven)
+n-port S-parameter sweep diagnostics:
+  frequency [Hz]: 1.280000e+08
+  ports: P1, P2, P3, P4
+  S-matrix shape: (4, 4)
+  diagonal terms: S11=4.639e-01+6.529e-01j, S22=4.636e-01+6.529e-01j, S33=4.637e-01+6.529e-01j, S44=4.639e-01+6.529e-01j
+  S-matrix sanity metrics:
+    reciprocity: max|Sij-Sji|=1.777e-15, max rel=4.724e-15
+    passivity: sigma_max=9.995e-01, max column power sum=9.871e-01
+    warnings: none
+[lumped-sheet] driven port 'P1' (facet tag 211, V_src = (1+0j), R = 4.558827e+01+0.000000e+00j Ohm/square):
+    P1: V = +7.319340765e-01+3.264734218e-01j V, I = +5.361318470e-03-6.529468436e-03j A (driven)
+    P2: V = +1.193745129e-01-1.455201540e-01j V, I = -2.387490257e-03+2.910403080e-03j A (undriven)
+    P3: V = +2.143002196e-02-1.229581908e-01j V, I = -4.286004391e-04+2.459163815e-03j A (undriven)
+    P4: V = +1.192730457e-01-1.454794493e-01j V, I = -2.385460914e-03+2.909588987e-03j A (undriven)
+[lumped-sheet] driven port 'P2' (facet tag 212, V_src = (1+0j), R = 4.558827e+01+0.000000e+00j Ohm/square):
+    P1: V = +1.193745129e-01-1.455201540e-01j V, I = -2.387490257e-03+2.910403080e-03j A (undriven)
+    P2: V = +7.317844031e-01+3.264820955e-01j V, I = +5.364311937e-03-6.529641909e-03j A (driven)
+    P3: V = +1.194340132e-01-1.455457918e-01j V, I = -2.388680264e-03+2.910915836e-03j A (undriven)
+    P4: V = +2.145493959e-02-1.229709220e-01j V, I = -4.290987917e-04+2.459418440e-03j A (undriven)
+[lumped-sheet] driven port 'P3' (facet tag 213, V_src = (1+0j), R = 4.558827e+01+0.000000e+00j Ohm/square):
+    P1: V = +2.143002196e-02-1.229581908e-01j V, I = -4.286004391e-04+2.459163815e-03j A (undriven)
+    P2: V = +1.194340132e-01-1.455457918e-01j V, I = -2.388680264e-03+2.910915836e-03j A (undriven)
+    P3: V = +7.318379850e-01+3.264631772e-01j V, I = +5.363240299e-03-6.529263545e-03j A (driven)
+    P4: V = +1.193429752e-01-1.455107636e-01j V, I = -2.386859504e-03+2.910215271e-03j A (undriven)
+[lumped-sheet] driven port 'P4' (facet tag 214, V_src = (1+0j), R = 4.558827e+01+0.000000e+00j Ohm/square):
+    P1: V = +1.192730457e-01-1.454794493e-01j V, I = -2.385460914e-03+2.909588987e-03j A (undriven)
+    P2: V = +2.145493959e-02-1.229709220e-01j V, I = -4.290987917e-04+2.459418440e-03j A (undriven)
+    P3: V = +1.193429752e-01-1.455107636e-01j V, I = -2.386859504e-03+2.910215271e-03j A (undriven)
+    P4: V = +7.319384101e-01+3.264818907e-01j V, I = +5.361231797e-03-6.529637813e-03j A (driven)
+n-port S-parameter sweep diagnostics:
+  frequency [Hz]: 1.280000e+08
+  ports: P1, P2, P3, P4
+  S-matrix shape: (4, 4)
+  diagonal terms: S11=4.639e-01+6.529e-01j, S22=4.636e-01+6.530e-01j, S33=4.637e-01+6.529e-01j, S44=4.639e-01+6.530e-01j
+  S-matrix sanity metrics:
+    reciprocity: max|Sij-Sji|=2.411e-14, max rel=6.406e-14
+    passivity: sigma_max=9.995e-01, max column power sum=9.871e-01
+    warnings: none
+
+[TH-14 step2] f = 1.280000e+08 Hz: PEC sweep 4.1 s, P1 copper field solve 3.2 s
+    S_PEC_1k = +4.638666261e-01+6.529496390e-01j  +2.387498262e-01-2.910411317e-01j  +4.285999281e-02-2.459175198e-01j  +2.385468889e-01-2.909597185e-01j
+    S_PEC_2k = +2.387498262e-01-2.910411317e-01j  +4.635672778e-01+6.529669865e-01j  +2.388688252e-01-2.910924025e-01j  +4.290982863e-02-2.459429833e-01j
+    S_PEC_3k = +4.285999281e-02-2.459175198e-01j  +2.388688252e-01-2.910924025e-01j  +4.636744449e-01+6.529291460e-01j  +2.386867483e-01-2.910223470e-01j
+    S_PEC_4k = +2.385468889e-01-2.909597185e-01j  +4.290982863e-02-2.459429833e-01j  +2.386867483e-01-2.910223470e-01j  +4.638752956e-01+6.529665740e-01j
+  sigma = 5.8e+07 S/m: Z_s = 2.951691e-03(1+j) ohm, sweep 3.8 s
+    S_1k = +4.640193927e-01+6.526706312e-01j  +2.386698062e-01-2.909589421e-01j  +4.286497792e-02-2.458038790e-01j  +2.384671685e-01-2.908779063e-01j
+    S_2k = +2.386698062e-01-2.909589421e-01j  +4.637201945e-01+6.526879513e-01j  +2.387889699e-01-2.910106684e-01j  +4.291475505e-02-2.458292379e-01j
+    S_3k = +4.286497792e-02-2.458038790e-01j  +2.387889699e-01-2.910106684e-01j  +4.638270257e-01+6.526504900e-01j  +2.386069912e-01-2.909405150e-01j
+    S_4k = +2.384671685e-01-2.908779063e-01j  +4.291475505e-02-2.458292379e-01j  +2.386069912e-01-2.909405150e-01j  +4.640278483e-01+6.526878054e-01j
+    ||S-S^T||/||S|| = 1.138402049e-15 (band 1e-03); sigma_max(S) = 0.999500813629; spreads self 0.0454% adjacent 0.0734% opposite 0.0465% (band 0.5%)
+    max|S_sigma - S_PEC| per class: self 3.181888997e-04, adjacent 1.147097996e-04, opposite 1.138520458e-04; max entry 3.181888997e-04
+  sigma = 5.8e+09 S/m: Z_s = 2.951691e-04(1+j) ohm, sweep 4.0 s
+    S_1k = +4.638818961e-01+6.529216900e-01j  +2.387418220e-01-2.910328959e-01j  +4.286050268e-02-2.459061391e-01j  +2.385389142e-01-2.909515224e-01j
+    S_2k = +2.387418220e-01-2.910328959e-01j  +4.635825628e-01+6.529390350e-01j  +2.388608369e-01-2.910842149e-01j  +4.291033285e-02-2.459315918e-01j
+    S_3k = +4.286050268e-02-2.459061391e-01j  +2.388608369e-01-2.910842149e-01j  +4.636896968e-01+6.529012356e-01j  +2.386787699e-01-2.910141500e-01j
+    S_4k = +2.385389142e-01-2.909515224e-01j  +4.291033285e-02-2.459315918e-01j  +2.386787699e-01-2.910141500e-01j  +4.638905445e-01+6.529386515e-01j
+    ||S-S^T||/||S|| = 1.692998657e-15 (band 1e-03); sigma_max(S) = 0.999502381151; spreads self 0.0455% adjacent 0.0734% opposite 0.0465% (band 0.5%)
+    max|S_sigma - S_PEC| per class: self 3.185776454e-05, adjacent 1.148452228e-05, opposite 1.140271085e-05; max entry 3.185776454e-05
+  sigma = 5.8e+11 S/m: Z_s = 2.951691e-05(1+j) ohm, sweep 4.3 s
+    S_1k = +4.638681530e-01+6.529468436e-01j  +2.387490257e-01-2.910403080e-01j  +4.286004391e-02-2.459163815e-01j  +2.385460914e-01-2.909588987e-01j
+    S_2k = +2.387490257e-01-2.910403080e-01j  +4.635688063e-01+6.529641909e-01j  +2.388680264e-01-2.910915836e-01j  +4.290987917e-02-2.459418440e-01j
+    S_3k = +4.286004391e-02-2.459163815e-01j  +2.388680264e-01-2.910915836e-01j  +4.636759701e-01+6.529263545e-01j  +2.386859504e-01-2.910215271e-01j
+    S_4k = +2.385460914e-01-2.909588987e-01j  +4.290987917e-02-2.459418440e-01j  +2.386859504e-01-2.910215271e-01j  +4.638768203e-01+6.529637813e-01j
+    ||S-S^T||/||S|| = 2.114585839e-14 (band 1e-03); sigma_max(S) = 0.999502538034; spreads self 0.0455% adjacent 0.0734% opposite 0.0465% (band 0.5%)
+    max|S_sigma - S_PEC| per class: self 3.186164717e-06, adjacent 1.148600389e-06, opposite 1.140470157e-06; max entry 3.186164717e-06
+    negative control (PREDICTED, printed): sigma = 5.8e+11 max|S - S_PEC| = 3.186e-06 vs predicted <= 1e-04: met
+    (b) P1 copper: P_src 7.320096963e-03 W, sum P_sheet 7.314853328e-03 W, P_phantom 4.096988778e-06 W, P_(Omega\phantom) 0.000000000e+00 W, P_surf 1.146646986e-06 W; residual/P_src 7.000e-14 (ASSERTED <= 1e-06)
+    PRINTED: P_coil/P_in = 2.186740e-01, P_phantom/P_in = 7.813260e-01 (copper, f = 1.280e+08 Hz)
+[TH-14 step2] total 81.7 s at -n 4
+PASSEDPASSEDPASSED
+tests/validation/test_th14_birdcage_copper.py::test_copper_birdcage_port_gates[10] 
+tests/validation/test_th14_birdcage_copper.py::test_copper_birdcage_port_gates[10] 
+tests/validation/test_th14_birdcage_copper.py::test_copper_birdcage_port_gates[10] PASSEDPASSEDPASSEDPASSED
+tests/validation/test_th14_birdcage_copper.py::test_copper_birdcage_port_gates[10] 
+tests/validation/test_th14_birdcage_copper.py::test_copper_birdcage_port_gates[64] 
+tests/validation/test_th14_birdcage_copper.py::test_copper_birdcage_port_gates[64] 
+tests/validation/test_th14_birdcage_copper.py::test_copper_birdcage_port_gates[64] PASSEDPASSEDPASSEDPASSED
+tests/validation/test_th14_birdcage_copper.py::test_copper_birdcage_port_gates[64] 
+tests/validation/test_th14_birdcage_copper.py::test_copper_birdcage_port_gates[128] 
+tests/validation/test_th14_birdcage_copper.py::test_copper_birdcage_port_gates[128] 
+tests/validation/test_th14_birdcage_copper.py::test_copper_birdcage_port_gates[128] PASSEDPASSEDPASSEDPASSED
+tests/validation/test_th14_birdcage_copper.py::test_copper_birdcage_port_gates[128] 
+tests/validation/test_th14_birdcage_copper.py::test_copper_surface_loss_identity[10] 
+tests/validation/test_th14_birdcage_copper.py::test_copper_surface_loss_identity[10] 
+tests/validation/test_th14_birdcage_copper.py::test_copper_surface_loss_identity[10] PASSEDPASSEDPASSED
+tests/validation/test_th14_birdcage_copper.py::test_copper_surface_loss_identity[64] 
+tests/validation/test_th14_birdcage_copper.py::test_copper_surface_loss_identity[64] 
+tests/validation/test_th14_birdcage_copper.py::test_copper_surface_loss_identity[64] PASSEDPASSEDPASSED
+tests/validation/test_th14_birdcage_copper.py::test_copper_surface_loss_identity[128] 
+tests/validation/test_th14_birdcage_copper.py::test_copper_surface_loss_identity[128] 
+tests/validation/test_th14_birdcage_copper.py::test_copper_surface_loss_identity[128] PASSEDPASSEDPASSEDPASSED
+tests/validation/test_th14_birdcage_copper.py::test_copper_is_bracketed_by_pec_and_the_solid_record_at_10mhz 
+tests/validation/test_th14_birdcage_copper.py::test_copper_is_bracketed_by_pec_and_the_solid_record_at_10mhz 
+tests/validation/test_th14_birdcage_copper.py::test_copper_is_bracketed_by_pec_and_the_solid_record_at_10mhz 
+tests/validation/test_th14_birdcage_copper.py::test_copper_surface_loss_identity[10] PASSEDPASSEDPASSEDPASSED
+tests/validation/test_th14_birdcage_copper.py::test_sigma_ladder_approaches_pec_monotonically[10] 
+tests/validation/test_th14_birdcage_copper.py::test_sigma_ladder_approaches_pec_monotonically[10] 
+tests/validation/test_th14_birdcage_copper.py::test_sigma_ladder_approaches_pec_monotonically[10] PASSEDPASSED
+tests/validation/test_th14_birdcage_copper.py::test_copper_surface_loss_identity[64] PASSED
+tests/validation/test_th14_birdcage_copper.py::test_sigma_ladder_approaches_pec_monotonically[64] 
+tests/validation/test_th14_birdcage_copper.py::test_sigma_ladder_approaches_pec_monotonically[64] 
+tests/validation/test_th14_birdcage_copper.py::test_sigma_ladder_approaches_pec_monotonically[64] PASSEDPASSEDPASSED
+tests/validation/test_th14_birdcage_copper.py::test_copper_surface_loss_identity[128] PASSED
+tests/validation/test_th14_birdcage_copper.py::test_sigma_ladder_approaches_pec_monotonically[128] 
+tests/validation/test_th14_birdcage_copper.py::test_sigma_ladder_approaches_pec_monotonically[128] 
+tests/validation/test_th14_birdcage_copper.py::test_sigma_ladder_approaches_pec_monotonically[128] PASSEDPASSEDPASSED
+tests/validation/test_th14_birdcage_copper.py::test_copper_is_bracketed_by_pec_and_the_solid_record_at_10mhz PASSED[TH-14 step2] (c) 10 MHz per class max|dS|: self: copper 2.359605257e-04 vs solid-800 record 9.769447964e-02; adjacent: copper 6.116825665e-05 vs solid-800 record 2.484421356e-02; opposite: copper 1.143053417e-04 vs solid-800 record 4.827949879e-02
+PASSED
+tests/validation/test_th14_birdcage_copper.py::test_sigma_ladder_approaches_pec_monotonically[10] PASSED
+tests/validation/test_th14_birdcage_copper.py::test_sigma_ladder_approaches_pec_monotonically[64] PASSED
+tests/validation/test_th14_birdcage_copper.py::test_sigma_ladder_approaches_pec_monotonically[128] PASSED
+
+======================== 11 passed in 83.01s (0:01:23) =========================
+
+
+======================== 11 passed in 83.03s (0:01:23) =========================
+
+
+======================== 11 passed in 83.04s (0:01:23) =========================
+
+
+======================== 11 passed in 83.00s (0:01:23) =========================
+
+## Exit
+- Status: 0
+- Elapsed (s): 85
+- Filtered lines (gmsh optimisation chatter): 1096

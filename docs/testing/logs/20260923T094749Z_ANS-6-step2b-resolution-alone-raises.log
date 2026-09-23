@@ -1,0 +1,45 @@
+# Test Run
+- Chunk: ANS-6-step2b-resolution-alone-raises
+- Commit: b84a5b8016ee7425b728e28bf908cccb27034ad2
+- Time (UTC): 2026-09-23 09:47:49
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.5.1
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && source /usr/local/bin/dolfinx-complex-mode && PYTHONPATH=/workspace/src FEM_EM_ANS6_RESOLUTION=0.0075 timeout -k 30 60 mpiexec -n 1 python3 examples/ansys_benchmarks/ans6_copper_birdcage_four_port_10_64_128MHz/06_copper_birdcage_four_port_10_64_128MHz.py; echo example_exit=$?'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 24
+drwxr-xr-x  3 taz5297 taz5297 4096 Sep 21 04:30 .
+drwxr-xr-x 17 taz5297 taz5297 4096 Sep 23 04:47 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  744 Sep 21 04:30 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 4275 Sep 13 19:19 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.5.1
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && source /usr/local/bin/dolfinx-complex-mode && PYTHONPATH=/workspace/src FEM_EM_ANS6_RESOLUTION=0.0075 timeout -k 30 60 mpiexec -n 1 python3 examples/ansys_benchmarks/ans6_copper_birdcage_four_port_10_64_128MHz/06_copper_birdcage_four_port_10_64_128MHz.py; echo example_exit=$?'\'''
+Traceback (most recent call last):
+  File "/workspace/examples/ansys_benchmarks/ans6_copper_birdcage_four_port_10_64_128MHz/06_copper_birdcage_four_port_10_64_128MHz.py", line 880, in <module>
+    main()
+  File "/workspace/examples/ansys_benchmarks/ans6_copper_birdcage_four_port_10_64_128MHz/06_copper_birdcage_four_port_10_64_128MHz.py", line 612, in main
+    raise RuntimeError(
+RuntimeError: FEM_EM_ANS6_RESOLUTION is honoured only on the degree-knob route: set FEM_EM_ANS6_DEGREE (and FEM_EM_ANS6_FREQ_MHZ) as well; got FEM_EM_ANS6_RESOLUTION='0.0075' with FEM_EM_ANS6_DEGREE unset
+example_exit=1
+
+## Exit
+- Status: 0
+- Elapsed (s): 3
+- Filtered lines (gmsh optimisation chatter): 0

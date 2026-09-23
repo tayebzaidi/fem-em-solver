@@ -241,15 +241,20 @@ def _cavity_census(msh, facet_tags, comm):
     )
 
 
-def _hole_rung(frequency_hz, degree: int = 1):
+def _hole_rung(frequency_hz, degree: int = 1, resolution=None):
     """`_four_port_rung`'s construction on the hole mesh; no conductor material.
 
     ``degree`` (`ANS-6` step 2, additive): N1curl order forwarded to both
     solves; the default 1 is this module's gate, unchanged.
+
+    ``resolution`` (`ANS-6` step 2b, additive): forwarded verbatim to
+    ``_sheets_build``'s own ``resolution`` keyword; ``None`` -- this module's
+    gate value -- builds the identical 0.015 m mesh.
     """
     comm = MPI.COMM_WORLD
     ports_idx = list(range(1, LEG_COUNT + 1))
-    msh, cell_tags, facet_tags, diag, t_mesh = _sheets_build(True, as_hole=True)
+    msh, cell_tags, facet_tags, diag, t_mesh = _sheets_build(
+        True, as_hole=True, resolution=resolution)
     tdim = msh.topology.dim
     ncells = int(msh.topology.index_map(tdim).size_global)
     msh.topology.create_connectivity(tdim - 1, tdim)

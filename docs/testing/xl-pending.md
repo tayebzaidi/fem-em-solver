@@ -745,11 +745,15 @@ disagreeing ⇒ this entry's is the one F2 records. No band moves.
 
 ### 14. `xl` — `ANS-6` step 2c: the hole-mesh degree-2 rung at h = 0.005, 64 MHz (daily licence: cost probe, 2026-09-23 review; chain T9b's second half)
 
-**Status:** PENDING PREREQUISITE — §9 item 35 (`ANS-6` step 2b, the
-`FEM_EM_ANS6_RESOLUTION` knob). The implementer landing that item marks
-this entry `READY` in the same commit; the next review queues it on the
-first free `xl` night (Tue 2026-09-29 as of writing — 09-24 … 09-28 are
-taken).
+**Status:** READY (2026-09-23, 04:30 CDT slot) — §9 item 35 (`ANS-6` step 2b,
+the `FEM_EM_ANS6_RESOLUTION` knob) landed: control at h = 0.015 reproduces
+the tracked 64 MHz S leaves to 2.647e-15 on 80 181 cells / 111 121 unknowns
+(`20260923T094235Z_ANS-6-step2b-a-h0p015-d1-64MHz.log:940–944`); the knob
+reaches the mesh at h = 0.0075 (226 642 cells / 294 763 unknowns, 147.4 s,
+6.39 GiB summed RSS at degree 1, `-n 4`,
+`20260923T093956Z_ANS-6-step2b-b-h0p0075-d1-64MHz.log:950–953`). The next
+review queues it on the first free `xl` night (Tue 2026-09-29 as of writing
+— 09-24 … 09-28 are taken). *Was:* PENDING PREREQUISITE on item 35.
 
 **Licence class:** cost probe — the first window on an unpriced case (no
 point exists on the *hole* mesh finer than h = 0.015). Chain T9b (§10,

@@ -80,7 +80,10 @@ a degree- and frequency-tagged metrics file beside `metrics.json` (untracked;
 do not commit); `metrics.json` and
 `COMPARISON.md` are never rewritten on this route. Unset, the script behaves
 exactly as before. Measured at `p = 2`, 64 MHz, `-n 8`: 183.9 s, 13.78 GiB
-summed peak RSS.
+summed peak RSS. On that route only, `FEM_EM_ANS6_RESOLUTION` (metres; the
+fixture default is 0.015) refines the mesh, prints the cell and global-unknown
+counts, and adds the resolution to the output file's name with `p` for the
+decimal point; set without the degree knob it raises.
 
 Tier: **heavy** (measured 167 s at `-n 2`, well under the 590 s ceiling —
 `TH-14`'s own gate re-run measured 103 s for all three frequencies, much
