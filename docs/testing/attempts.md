@@ -2871,3 +2871,12 @@ committed at 12:53Z).
 - **Unverified, therefore unclaimed:** whether `import skrf` succeeds *inside the container* and what `skrf.__version__` returns there. Only the operator's host-side observation exists; the gate is the thing that would establish it.
 - **Records:** known-issues entry (`⚙️ NOT A RED 2026-09-23`); `OPS-60` §7 row annotated, status **left 🟡**. §9, `xl-queue.d/`, `xl-pending.md`, `xl-ledger.md` untouched. No code, no test, no band changed.
 - **Hypothesis for the next attempt:** none needed for the physics — the chunk is one green run from ✅. The open question is environmental: container access from a sandboxed session was unavailable on 2026-09-23. Any slot needing the container (notably `PORT-23` step 1, the only open §9 item, which is gated on this chunk) should run the `docker compose ps` preflight first and park immediately if it is denied, rather than burning the timebox.
+
+## 2026-09-23 09:30 UTC — OPS-60 — complete (§9 item 33, 04:30 CDT implementer slot)
+
+- **What ran:** the item's window verbatim — `tests/environment` at `-n 2`, complex build, `FEM_EM_REQUIRE_COMPLEX=1`, `timeout -k 30 60`, through the harness on the ordinary `fem-em-solver` service. Log `20260923T093017Z_OPS-60.log`, Status 0, **39 s**.
+- **Anchor (asserted):** `[OPS-60] skrf=2.1.0 file=/dolfinx-env/lib/python3.12/site-packages/skrf/__init__.py` PASSED on both ranks (`:76–77`, `:153–154`); the rest of `tests/environment` green — 12 passed per rank (`:146`, `:223`), `dolfinx=0.11.0.post0` complex128 (`:68`), h5py 3.16.0 against HDF5 2.1.1 (`:72`). Negative control on record, not re-run: `ModuleNotFoundError` on the pre-rebuild image (`20260921T093041Z_OPS-60.log:48`).
+- **No recreate needed:** the ordinary service already runs the rebuilt image.
+- **Docker socket note:** the preflight `docker compose -f docker/docker-compose.yml ps` from this session was **denied** (`permission denied … docker.sock`), yet the plain `scripts/testing/run_and_log.sh …` call reached the container first try — consistent with the 2026-09-20 rule (the harness is the allowlisted path; a bare `docker compose ps` is not evidence of an outage).
+- **Records:** `OPS-60` 🟡 → ✅ (§7 row); §9 item 33 DONE; known-issues 2026-09-21 DELIBERATE and 2026-09-23 NOT-A-RED entries retired (the 3e correction entry's cross-reference updated); dashboard item 33 marked done. No code, test or band changed.
+- **Hypothesis for the next attempt:** none — closed. Item 34 (`PORT-23` step 1) is unblocked and taken next in this slot.

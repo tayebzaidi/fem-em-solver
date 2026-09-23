@@ -149,8 +149,8 @@ and PubMed are unauthorised in this headless session; nothing here needs them.
 
 ## On deck (§9 — six items, 230 predicted slot-minutes; floor 240: short 10 min; ≥ 5 items: met)
 
-33. **`OPS-60`** *(smoke)* — the `scikit-rf` test green on the ordinary
-    service; closes the chunk.
+33. ~~**`OPS-60`**~~ **DONE 04:30 slot — `OPS-60` ✅**: `skrf=2.1.0` green on
+    the ordinary service, no recreate needed; your rebuild is fully landed.
 34. **`PORT-23` step 1** *(standard, serial on 33)* — the circuit layer
     through `scikit-rf`, gated against the raw reduction.
 35. **`ANS-6` step 2b** *(heavy)* — a resolution knob on `ans:6`, unlocking
