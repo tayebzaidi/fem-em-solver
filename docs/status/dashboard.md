@@ -151,8 +151,8 @@ and PubMed are unauthorised in this headless session; nothing here needs them.
 
 33. ~~**`OPS-60`**~~ **DONE 04:30 slot — `OPS-60` ✅**: `skrf=2.1.0` green on
     the ordinary service, no recreate needed; your rebuild is fully landed.
-34. **`PORT-23` step 1** *(standard, serial on 33)* — the circuit layer
-    through `scikit-rf`, gated against the raw reduction.
+34. ~~**`PORT-23` step 1**~~ **DONE 04:30 slot** — the `scikit-rf` circuit
+    layer matches the raw reduction to machine precision; step 2 open.
 35. **`ANS-6` step 2b** *(heavy)* — a resolution knob on `ans:6`, unlocking
     the matched hole-mesh XL probe (chain T9b).
 36. **`WF-7` step 2** *(heavy)* — `|B₁⁺|` of the 32-port quadrature drive at

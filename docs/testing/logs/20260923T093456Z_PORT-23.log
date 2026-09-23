@@ -1,0 +1,101 @@
+# Test Run
+- Chunk: PORT-23
+- Commit: 64f393cf3bc749b13e44bde5a67d9014391de987
+- Time (UTC): 2026-09-23 09:34:57
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.5.1
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'source /usr/local/bin/dolfinx-complex-mode && cd /workspace && PYTHONPATH=/workspace/src:/workspace timeout -k 30 180 mpiexec -n 2 python3 -m pytest tests/validation/test_port_circuit_skrf.py -v -s --tb=short'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 24
+drwxr-xr-x  3 taz5297 taz5297 4096 Sep 21 04:30 .
+drwxr-xr-x 17 taz5297 taz5297 4096 Sep 23 04:34 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  744 Sep 21 04:30 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 4275 Sep 13 19:19 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.5.1
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''source /usr/local/bin/dolfinx-complex-mode && cd /workspace && PYTHONPATH=/workspace/src:/workspace timeout -k 30 180 mpiexec -n 2 python3 -m pytest tests/validation/test_port_circuit_skrf.py -v -s --tb=short'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.15.1
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.15.1
+collecting ... collected 6 items
+
+tests/validation/test_port_circuit_skrf.py::test_skrf_version_is_printed PASSED
+tests/validation/test_port_circuit_skrf.py::test_a_terminate_matches_c2_at_c_tuned_64mhz collected 6 items
+
+tests/validation/test_port_circuit_skrf.py::test_skrf_version_is_printed 
+[PORT-23] skrf.__version__ = 2.1.0 (PRINTED); -n 2, every rank computes the same serial circuit
+PASSED
+tests/validation/test_port_circuit_skrf.py::test_a_terminate_matches_c2_at_c_tuned_64mhz PASSED
+tests/validation/test_port_circuit_skrf.py::test_b_terminate_matches_c2_at_10mhz_step2_terminations 
+[PORT-23] (a) 64 MHz, C_tuned = 1.556993028375804e-11 F (Z_C = 0.000000000e+00-1.597178626e+02j Ohm), skrf Circuit vs (C2) (ASSERTED max|d| <= 1e-12):
+    1x1 (P2..P4 in C)  max|d| = 3.511e-16
+      S11 (C2) -7.614129636150996e-01+4.440892098500626e-16j  skrf -7.614129636150999e-01+3.330669073875470e-16j
+      Z_in (C2) 6.772603623151e+00+1.431356598647e-14j Ohm  skrf 6.772603623151e+00+1.073517448986e-14j Ohm (PRINTED, drive port with the others as in the kept network)
+    2x2 (P3, P4 in C)  max|d| = 1.415e-16
+      S11 (C2) -7.749970129693351e-02-9.902828022384624e-03j  skrf -7.749970129693348e-02-9.902828022384486e-03j
+      Z_in (C2) 4.279961186968e+01-8.528806047773e-01j Ohm  skrf 4.279961186968e+01-8.528806047772e-01j Ohm (PRINTED, drive port with the others as in the kept network)
+PASSED
+tests/validation/test_port_circuit_skrf.py::test_b_terminate_matches_c2_at_10mhz_step2_terminations PASSED
+tests/validation/test_port_circuit_skrf.py::test_c_tuning_zero_through_skrf_reproduces_c_tuned 
+[PORT-23] (b) 10 MHz, P1 terminated, 3x3 kept (ASSERTED max|d| <= 1e-12):
+    C = 100 pF   Z = 0.000000000e+00-1.591549431e+02j Ohm  max|d| = 3.925e-17
+    L = 1 uH     Z = 0.000000000e+00+6.283185307e+01j Ohm  max|d| = 1.388e-16
+    R = 200 Ohm  Z = 2.000000000e+02+0.000000000e+00j Ohm  max|d| = 1.112e-16
+PASSED
+tests/validation/test_port_circuit_skrf.py::test_c_tuning_zero_through_skrf_reproduces_c_tuned PASSED
+tests/validation/test_port_circuit_skrf.py::test_d_wave_convention_control PASSED
+tests/validation/test_port_circuit_skrf.py::test_negative_control_swapped_ports_2x2_breaks_gate_a PASSED
+[PORT-23] (c) Im Z_in(C) swept through skrf on 2001 grid points (4.8 s): 1 sign change(s)
+    C = 1.556993028375804e-11 F  Z_in = 6.772603623e+00+1.073517449e-14j Ohm  |S11| = 0.761412964  |Im Z|/|Z| = 1.585e-15  ZERO
+    skrf C = 1.556993028375804e-11 F vs PORT-15 C_tuned 1.556993028375804e-11 F: |ratio - 1| = 0.000e+00 (ASSERTED <= 1e-06); |Im Z|/|Z| = 1.585e-15 (ASSERTED <= 1e-06)
+    Z_in at C_tuned (PRINTED): skrf 6.772603623151e+00+1.073517448986e-14j Ohm, (C2) 6.772603623151e+00+1.431356598647e-14j Ohm
+    tuned S11 skrf -7.614129636151e-01+3.330669073875e-16j vs PORT-15 in-model record -7.614132983688e-01+6.285992898694e-05j: residual 8.255812e-05 (ASSERTED <= REDUCTION_BAND 1e-03)
+PASSED
+tests/validation/test_port_circuit_skrf.py::test_d_wave_convention_control 
+[PORT-23] (d) convention control on the 64 MHz 4x4 (ASSERTED <= 1e-12):
+    50 -> 75 -> 50 Ohm round trip  max|d| = 2.122e-15
+    75 Ohm: power vs traveling       max|d| = 1.433e-15
+    75 Ohm: power vs raw z_to_s(s_to_z) max|d| = 9.421e-16
+    75 Ohm: power vs pseudo (PRINTED) max|d| = 3.237e-16; the 75 Ohm matrix moved 2.350e-01 from the 50 Ohm one (PRINTED: the renormalisation is not a no-op)
+PASSED
+tests/validation/test_port_circuit_skrf.py::test_negative_control_swapped_ports_2x2_breaks_gate_a 
+[PORT-23] negative control (ASSERTED >= 1e-03): 2x2 kept (P1, P2), P3/P4 in C_tuned, netlist port map (0, 2, 1, 3) (P2 <-> P3)
+    class gap |S12 - S13| of the imported 4x4 = 1.596183e-01 (stop below 1e-02)
+    miss vs (C2) max|d| = 2.019128e-01 = 201.9x the floor; miss / gap = 1.2650
+PASSED
+
+============================== 6 passed in 6.87s ===============================
+
+
+============================== 6 passed in 7.00s ===============================
+
+## Exit
+- Status: 0
+- Elapsed (s): 8
+- Filtered lines (gmsh optimisation chatter): 0

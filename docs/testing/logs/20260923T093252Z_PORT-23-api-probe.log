@@ -1,0 +1,289 @@
+# Test Run
+- Chunk: PORT-23-api-probe
+- Commit: 64f393cf3bc749b13e44bde5a67d9014391de987
+- Time (UTC): 2026-09-23 09:32:53
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.5.1
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 60 python3 port23_probe.py'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 24
+drwxr-xr-x  3 taz5297 taz5297 4096 Sep 21 04:30 .
+drwxr-xr-x 17 taz5297 taz5297 4096 Sep 23 04:32 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  744 Sep 21 04:30 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 4275 Sep 13 19:19 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.5.1
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 60 python3 port23_probe.py'\'''
+2.1.0
+['Circuit', 'Network', 'NotRequired', 'S_DEF_DEFAULT', 'Sequence', 'TYPE_CHECKING', 'TypedDict', 'Unpack', 'annotations', 'cached_property', 'chain', 'connect', 'innerconnect', 'media', 'np', 'reduce_circuit', 's2s', 'subplots', 'warnings']
+['Frequency', 'Network', 'calibration', 'calibrationSet', 'circuit', 'constants', 'data', 'deembedding', 'frequency', 'instances', 'io', 'mathFunctions', 'media', 'network', 'networkSet', 'plotting', 'qfactor', 'setup_plotting', 'stylely', 'taper', 'time', 'tlineFunctions', 'util', 'vectorFitting', 'vi']
+<class 'skrf.circuit.Circuit'>
+['C', 'CACHEDPROPERTIES', 'C_F', 'G', 'Ground', 'Open', 'Port', 'SeriesImpedance', 'ShuntAdmittance', 'T', 'X', 'X_F', '_C', '_REDUCE_OPTIONS', '_X', '_Xk', '_a', '_a_external', '_b', '_cnx_z0', '_currents_directions', '_get_nx', '_is_ground', '_is_named', '_is_open', '_is_port', 'check_duplicate_names', 'connections', 'connections_list', 'connections_nb', 'connections_pair', 'currents', 'currents_external', 'dim', 'edge_labels', 'edges', 'graph', 'intersections_dict', 'is_connected', 'network', 'networks_dict', 'networks_list', 'networks_nb', 'nodes_nb', 'plot_graph', 'port_indexes', 'port_names', 'port_z0', 's', 's_active', 's_external', 'update_networks', 'voltages', 'voltages_external', 'vswr_active', 'y_active', 'z0', 'z_active']
+(self, connections: 'list[list[tuple[Network, int]]]', name: 'str | None' = None, *, auto_reduce: 'bool' = False, **kwargs: 'Unpack[_REDUCE_OPTIONS]') -> 'None'
+SeriesImpedance (frequency: 'Frequency', Z: 'NumberLike', name: 'str', z0: 'float' = 50) -> 'Network'
+    @classmethod
+    def SeriesImpedance(cls, frequency: Frequency, Z: NumberLike, name: str, z0: float = 50) -> Network:
+        """
+        Return a 2-port network of a series impedance.
+
+        The network topology is::
+
+            (Port 1)-----[Z]-----(Port 2)
+
+        Passing the frequency and name is mandatory.
+
+        Parameters
+        ----------
+        frequency : :class:`~skrf.frequency.Frequency`
+            Frequency common to all other networks in the circuit
+        Z : complex array of shape n_freqs or complex
+            Impedance
+        name : string
+            Name of the series impedance
+        z0 : real, optional
+            Characteristic impedance of the port. Default is 50 Ohm.
+
+        Returns
+        -------
+        serie_impedance : :class:`~skrf.network.Network` object
+            2-port network
+
+        Examples
+        --------
+        .. ipython::
+
+            @suppress
+            In [16]: import skrf as rf
+
+            In [17]: freq = rf.Frequency(start=1, stop=2, npoints=101)
+
+            In [18]: open = rf.circuit.Circuit.SeriesImpedance(freq, rf.constants.INF, name='series_impedance')
+
+        """
+        A = np.zeros(shape=(len(frequency), 2, 2), dtype=complex)
+        A[:, 0, 0] = 1
+        A[:, 0, 1] = Z
+        A[:, 1, 0] = 0
+        A[:, 1, 1] = 1
+        ntw = Network(a=A, frequency=frequency, z0=z0, name=name)
+        return ntw
+
+Port (frequency: 'Frequency', name: 'str', z0: 'float' = 50) -> 'Network'
+    @classmethod
+    def Port(cls, frequency: Frequency, name: str, z0: float = 50) -> Network:
+        """
+        Return a 1-port Network to be used as a Circuit port.
+
+        The network topology is::
+
+            (Port)
+
+        Parameters
+        ----------
+        frequency : :class:`~skrf.frequency.Frequency`
+            Frequency common to all other networks in the circuit
+        name : string
+            Name of the port.
+        z0 : real, optional
+            Characteristic impedance of the port. Default is 50 Ohm.
+
+        Returns
+        -------
+        port : :class:`~skrf.network.Network` object
+            1-port network
+
+        Examples
+        --------
+        .. ipython::
+
+            @suppress
+            In [16]: import skrf as rf
+
+            In [17]: freq = rf.Frequency(start=1, stop=2, npoints=101)
+
+            In [18]: port1 = rf.circuit.Circuit.Port(freq, name='Port1')
+        """
+        from .media import DefinedGammaZ0
+        _media = DefinedGammaZ0(frequency, z0=z0)
+        port = _media.match(name=name)
+        port._ext_attrs['_is_circuit_port'] = True
+        return port
+
+Ground (frequency: 'Frequency', name: 'str', z0: 'float' = 50) -> 'Network'
+    @classmethod
+    def Ground(cls, frequency: Frequency, name: str, z0: float = 50) -> Network:
+        """
+        Return a 1-port network of a grounded link.
+
+        The network topology is::
+
+            (Port)-----Gnd
+
+        Passing the frequency and a name is mandatory.
+
+        The ground link is implemented by media.short object.
+
+        Parameters
+        ----------
+        frequency : :class:`~skrf.frequency.Frequency`
+            Frequency common to all other networks in the circuit
+        name : string
+            Name of the ground.
+        z0 : real, optional
+            Characteristic impedance of the port. Default is 50 Ohm.
+
+        Returns
+        -------
+        ground : :class:`~skrf.network.Network` object
+            1-port network
+
+        Examples
+        --------
+        .. ipython::
+
+            @suppress
+            In [16]: import skrf as rf
+
+            In [17]: freq = rf.Frequency(start=1, stop=2, npoints=101)
+
+            In [18]: ground = rf.circuit.Circuit.Ground(freq, name='GND')
+
+        """
+        _media = media.DefinedGammaZ0(frequency, z0=z0)
+        ground = _media.short(name=name)
+        ground._ext_attrs['_is_circuit_ground'] = True
+        return ground
+
+Open (frequency: 'Frequency', name: 'str', z0: 'float' = 50) -> 'Network'
+    @classmethod
+    def Open(cls, frequency: Frequency, name: str, z0: float = 50) -> Network:
+        """
+        Return a 1-port network of an open link.
+
+        The network topology is::
+
+            (Port)-----Open
+
+        Passing the frequency and name is mandatory.
+
+        The open link is implemented by media.open object.
+
+        Parameters
+        ----------
+        frequency : :class:`~skrf.frequency.Frequency`
+            Frequency common to all other networks in the circuit
+        name : string
+            Name of the open.
+        z0 : real, optional
+            Characteristic impedance of the port. Default is 50 Ohm.
+
+        Returns
+        -------
+        open : :class:`~skrf.network.Network` object
+            1-port network
+
+        Examples
+        --------
+        .. ipython::
+
+            @suppress
+            In [16]: import skrf as rf
+
+            In [17]: freq = rf.Frequency(start=1, stop=2, npoints=101)
+
+            In [18]: open = rf.circuit.Circuit.Open(freq, name='open')
+
+        """
+        _media = media.DefinedGammaZ0(frequency, z0=z0)
+        Open = _media.open(name=name)
+        Open._ext_attrs['_is_circuit_open'] = True
+        return Open
+
+ShuntAdmittance (frequency: 'Frequency', Y: 'NumberLike', name: 'str', z0: 'float' = 50) -> 'Network'
+    @classmethod
+    def ShuntAdmittance(cls, frequency: Frequency, Y: NumberLike, name: str, z0: float = 50) -> Network:
+        """
+        Return a 2-port network of a shunt admittance.
+
+        The network topology is::
+
+            (Port 1)-----(Port 2)
+                      |
+                     [Y]
+                      |
+                     Gnd
+
+        Passing the frequency and name is mandatory.
+
+        Parameters
+        ----------
+        frequency : :class:`~skrf.frequency.Frequency`
+            Frequency common to all other networks in the circuit
+        Y : complex array of shape n_freqs or complex
+            Admittance
+        name : string
+            Name of the shunt admittance
+        z0 : real, optional
+            Characteristic impedance of the port. Default is 50 Ohm.
+
+        Returns
+        -------
+        shunt_admittance : :class:`~skrf.network.Network` object
+            2-port network
+
+        Examples
+        --------
+        .. ipython::
+
+            @suppress
+            In [16]: import skrf as rf
+
+            In [17]: freq = rf.Frequency(start=1, stop=2, npoints=101)
+
+            In [18]: short = rf.circuit.Circuit.ShuntAdmittance(freq, rf.constants.INF, name='shunt_admittance')
+
+        """
+        A = np.zeros(shape=(len(frequency), 2, 2), dtype=complex)
+        A[:, 0, 0] = 1
+        A[:, 0, 1] = 0
+        A[:, 1, 0] = Y
+        A[:, 1, 1] = 1
+        ntw = Network(a=A, frequency=frequency, z0=z0, name=name)
+        return ntw
+
+(self, z_new: 'NumberLike', s_def: 'SdefT | None' = None) -> 'None'
+(self, file: 'str' = None, name: 'str' = None, params: 'dict' = None, comments: 'str' = None, f_unit: 'FrequencyUnitT | None' = None, s_def: 'SdefT | None' = None, **kwargs) -> 'None'
+Creates a circuit made of a set of N-ports networks.
+
+For instructions on how to create Circuit see  :func:`__init__`.
+
+A Circuit object is representation a circuit assembly of an arbitrary
+number of N-ports networks connected together via an arbitrary topology.
+
+The algorithm used to calculate the resultant network can be found in [#]_.
+
+References
+----------
+.. [#] P. Hallbjörner, Microw. Opt. Technol. Lett. 38, 99 (2003).
+
+## Exit
+- Status: 0
+- Elapsed (s): 1
+- Filtered lines (gmsh optimisation chatter): 0
