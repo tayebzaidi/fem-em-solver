@@ -3693,6 +3693,11 @@ step 1 as its row asks a review to cost it.
    `20260923T125238Z_EX-57.log`); flagged run 281 s at `-n 8` and unflagged
    256 s, printed records identical (418888 cells, ΔR 0.2747 %); docrefs
    `stale` 12 → 11, exit 2 (`20260923T125244Z_EX-57.log`).
+   Drained-queue fallback (2026-09-23 14:00-14:10 UTC slot) — `EX-57`
+   `mat:2` figure, census `missing` 28 → 27 (`ok` 28 → 29, `broken` 0,
+   `20260923T140441Z_EX-57.log`); flagged 56 s and unflagged 52 s at `-n 2`,
+   printed records identical (74020 cells, SAR error 3.422 % / 3.536 %);
+   docrefs `stale` 11 → 10, exit 2 (`20260923T140448Z_EX-57.log`); `cabb2f3`.
 
 *(The per-review journal — slot recap, completion audits, plan-work notes,
 §10 assessment — lives in the review commits and
