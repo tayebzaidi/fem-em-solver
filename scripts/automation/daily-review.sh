@@ -45,7 +45,11 @@ if [[ -f "$MODEL_ENV" ]]; then
   # shellcheck source=/dev/null
   source "$MODEL_ENV" || true
   REVIEW_MODEL="${REVIEW_MODEL_DEFAULT:-$REVIEW_MODEL}"
-  if [[ -n "${REVIEW_MODEL_OVERRIDE:-}" && -n "${REVIEW_MODEL_OVERRIDE_UNTIL:-}" ]]; then
+  # An override scoped to the other review (REVIEW_MODEL_OVERRIDE_SCOPE) is
+  # ignored here; an empty scope means both reviews.
+  if [[ -n "${REVIEW_MODEL_OVERRIDE_SCOPE:-}" && "$REVIEW_MODEL_OVERRIDE_SCOPE" != "daily" ]]; then
+    echo "$(date -u) review-model override scoped to ${REVIEW_MODEL_OVERRIDE_SCOPE}, not daily; ignored" >> "$LOG"
+  elif [[ -n "${REVIEW_MODEL_OVERRIDE:-}" && -n "${REVIEW_MODEL_OVERRIDE_UNTIL:-}" ]]; then
     if [[ "$(date +%Y-%m-%d)" > "$REVIEW_MODEL_OVERRIDE_UNTIL" ]]; then
       echo "$(date -u) review-model override expired ${REVIEW_MODEL_OVERRIDE_UNTIL}; using ${REVIEW_MODEL}" >> "$LOG"
     else
