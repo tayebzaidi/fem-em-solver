@@ -71,11 +71,16 @@ from fem_em_solver.io.paraview_utils import (  # noqa: E402
     adopt_host_ownership,
     write_xdmf_with_tags,
 )
+from fem_em_solver.post.setup_figure import write_setup_figure  # noqa: E402
 
 from tests.mesh.test_birdcage_port_sheets import (  # noqa: E402
     PORT_LOWER,
     PORT_UPPER,
     SHEET_IFACE,
+)
+from tests.mesh.test_birdcage_port_tags import (  # noqa: E402
+    COIL_LENGTH,
+    RING_RADIUS,
 )
 from tests.validation.test_birdcage_f_human_rung import (  # noqa: E402
     CAD_MASS_GATE,
@@ -95,7 +100,16 @@ from tests.validation.test_birdcage_f_human_rung import (  # noqa: E402
 CELL_TAG_NAMES = {1: "conductor", 2: "air", 3: "phantom"}
 
 OUTPUT_DIR = Path(__file__).resolve().parent / "paraview_output"
+FIGURE_DIR = Path(__file__).resolve().parent / "figures"  # committed, EX-57
 BASENAME = "meshing_12_birdcage_f_human_rung"
+
+# Branch B's own coil length: `_params` scales `COIL_LENGTH` by
+# `F_HUMAN_RING_RADIUS / RING_RADIUS` (`test_birdcage_f_human_rung._params`).
+# Both end rings sit at +/- half of this, so the mid-plane slice needs the
+# same 1 mm off-centre offset `mesh:9` (`EX-57`, 2026-09-21) and `mesh:11`
+# (`EX-57`, 2026-09-23) measured necessary on this same both-rings-cut
+# construction, to avoid a degenerate near-empty slice through a ring band.
+_F_HUMAN_COIL_LENGTH = COIL_LENGTH * (F_HUMAN_RING_RADIUS / RING_RADIUS)
 
 
 def _cell_diameter_function(mesh):
@@ -163,6 +177,53 @@ def main() -> None:
 
     # ---- branch B: fixed absolute sizing, the fixture — mesh kept for export
     fixture = _build_rung(F_HUMAN_RING_RADIUS, scale_sizing=False, keep_mesh=True)
+
+    # Right after the mesh is built, before any analysis or printed timer —
+    # `fixture["build_elapsed"]`/`mesh_wall_time_s` are already captured
+    # inside `_build_rung`, so the render time never folds into either
+    # printed record (`EX-57`). This is the gated rung the figure draws:
+    # branch B, the fixed-absolute-sizing fixture at the F-human 0.15 m
+    # ring radius (`GEO-25` step 2's own cell-count record); branch A (the
+    # negative control) is not written to disk anywhere in this script, so
+    # there is no second mesh to picture as a control.
+    write_setup_figure(
+        fixture["mesh"],
+        fixture["cell_tags"],
+        FIGURE_DIR / f"{BASENAME}_setup.png",
+        region_names={
+            1: "conductor",
+            2: "air",
+            3: "phantom",
+            **{
+                PORT_LOWER + i: f"leg L{i} conductor (uncut)"
+                for i in range(1, LEG_COUNT + 1)
+            },
+            **{
+                PORT_LOWER + i: f"ring port P{i} lower (inner, u < R)"
+                for i in fixture["ring_ports"]
+            },
+            **{
+                PORT_UPPER + i: f"ring port P{i} upper (outer, u > R)"
+                for i in fixture["ring_ports"]
+            },
+        },
+        hide_tags=(2,),
+        translucent_tags=(3,),
+        slice_normal=(0.0, 0.0, 1.0),
+        # Off the mid-plane by 1 mm, the same offset `mesh:9`/`mesh:11`
+        # measured necessary on this same both-rings-cut construction. The
+        # 3-D panel carries the load: it is the only view that shows all 32
+        # ring-port box halves (red, the `port` colour class) at once; the
+        # slice panel adds the cross-section through the leg conductors and
+        # phantom the 3-D view occludes.
+        slice_origin=(0.0, 0.0, 0.5 * _F_HUMAN_COIL_LENGTH - 1.0e-3),
+        title=(
+            "mesh:12 - F-human 16-leg birdcage, both rings split at u = R, "
+            "R = 0.15 m (GEO-25 step 2)"
+        ),
+        comm=comm,
+    )
+
     # ---- branch A: mesh sizing scaled too, the negative control ------------
     control = _build_rung(F_HUMAN_RING_RADIUS, scale_sizing=True, keep_mesh=False)
 

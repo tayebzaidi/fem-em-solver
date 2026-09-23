@@ -55,6 +55,33 @@ choice for this generator at human scale.**
 claim, and no Phase 6 cost claim at any leg count or radius — `GEO-25` step
 2's own bands are unmoved by this example.
 
+## Setup figure
+
+![mesh:12 setup — F-human 16-leg birdcage, both rings split at u = R, R = 0.15 m](figures/meshing_12_birdcage_f_human_rung_setup.png)
+
+*Left:* branch B, the fixture (`_build_rung(F_HUMAN_RING_RADIUS,
+scale_sizing=False, keep_mesh=True)`) with the air box (tag `2`) hidden and
+the saline phantom (tag `3`) translucent, the `phantom` colour class, blue.
+The sixteen copper legs and the two end rings are the bulk conductor
+(tag `1`); the sixteen free-standing copper cubes at the legs' own azimuths
+are the uncut leg boxes (tags `101`-`116`, named `leg L{i} conductor
+(uncut)` so they take the `conductor` colour class, copper, rather than a
+fallback colour). The sixty-four ring-port box halves (red, the `port`
+colour class — tags `117`-`148` the inner (`u < R`) half and `217`-`248`
+the outer (`u > R`) half of all 32 ring ports, both rings) sit on the outer
+periphery. *Right:* the slice at `z = 0.5 * coil_length - 1 mm` — branch
+B's own coil length, `COIL_LENGTH` scaled by `F_HUMAN_RING_RADIUS /
+RING_RADIUS` (the `_params` scaling this rung's `_build_rung` uses) — 1 mm
+off the mid-plane between the two rings, the same offset `mesh:9` and
+`mesh:11` (`EX-57`) measured necessary on this same both-rings-cut
+construction to avoid a degenerate near-empty slice on a ring's own
+symmetry plane. **The 3-D panel carries the load**: it is the only view
+that shows the 32 red ring-port box halves at once; the slice panel's mesh
+edges show the graded triangulation around the sixteen leg conductors
+(visible as denser clusters) inside the tetrahedral phantom/air fill.
+Branch A (the negative control) is not written to disk anywhere in this
+script, so it is not pictured — only its numbers (§1, §3 step 5).
+
 ## 2. How to run it
 
 ```
