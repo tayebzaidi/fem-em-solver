@@ -1,0 +1,26 @@
+{
+  "description": "GEO-34 step 1a: group map for the F-small four-leg gapped, sheeted birdcage exported by birdcage_port_domain(step_export_path=...). Sizes are the gate's RESOLUTION and CONDUCTOR_RESOLUTION (test asserts equality with the imported constants); grading distance is the generator's default 3*ring_minor_radius. Port halves: *_lower / *_upper carry the generator's PORT_LOWER + i / PORT_UPPER + i tags.",
+  "occ_target_unit": null,
+  "resolution": 0.015,
+  "outer_boundary_tag": 1,
+  "volume_groups": [
+    {"name": "conductor", "tag": 1,
+     "selectors": [
+       {"centroid_in_box": [-0.2, -0.2, 0.006, 0.2, 0.2, 0.2], "bbox_within": [-0.09, -0.09, -0.2, 0.09, 0.09, 0.2]},
+       {"centroid_in_box": [-0.2, -0.2, -0.2, 0.2, 0.2, -0.006], "bbox_within": [-0.09, -0.09, -0.2, 0.09, 0.09, 0.2]}
+     ],
+     "grading": {"size": 0.0016, "distance": 0.012}},
+    {"name": "air", "tag": 2,
+     "selectors": [{"bbox_contains": [-0.09, -0.09, -0.09, 0.09, 0.09, 0.09]}]},
+    {"name": "phantom", "tag": 3,
+     "selectors": [{"bbox_within": [-0.0301, -0.0301, -0.0401, 0.0301, 0.0301, 0.0401]}]},
+    {"name": "port_P1_lower", "tag": 101, "selectors": [{"centroid_in_box": [0.066, -0.006, -0.003, 0.074, 0.0, 0.003]}]},
+    {"name": "port_P1_upper", "tag": 201, "selectors": [{"centroid_in_box": [0.066, 0.0, -0.003, 0.074, 0.006, 0.003]}]},
+    {"name": "port_P2_lower", "tag": 102, "selectors": [{"centroid_in_box": [0.0, 0.066, -0.003, 0.006, 0.074, 0.003]}]},
+    {"name": "port_P2_upper", "tag": 202, "selectors": [{"centroid_in_box": [-0.006, 0.066, -0.003, 0.0, 0.074, 0.003]}]},
+    {"name": "port_P3_lower", "tag": 103, "selectors": [{"centroid_in_box": [-0.074, 0.0, -0.003, -0.066, 0.006, 0.003]}]},
+    {"name": "port_P3_upper", "tag": 203, "selectors": [{"centroid_in_box": [-0.074, -0.006, -0.003, -0.066, 0.0, 0.003]}]},
+    {"name": "port_P4_lower", "tag": 104, "selectors": [{"centroid_in_box": [-0.006, -0.074, -0.003, 0.0, -0.066, 0.003]}]},
+    {"name": "port_P4_upper", "tag": 204, "selectors": [{"centroid_in_box": [0.0, -0.074, -0.003, 0.006, -0.066, 0.003]}]}
+  ]
+}

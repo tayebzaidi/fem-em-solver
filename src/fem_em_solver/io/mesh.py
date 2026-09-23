@@ -3360,8 +3360,16 @@ class MeshGenerator:
         ring_sheet_orientation: str = "transverse",
         as_hole: bool = False,
         c4_congruent_sheets: bool = False,
+        step_export_path: Optional[str] = None,
     ):
         """Generate a coarse, parametric birdcage-like geometry fixture with port tags.
+
+        ``step_export_path`` (`GEO-34` step 1a) is additive, keyword-only and
+        defaults to ``None``, which executes no new gmsh call: every existing
+        caller gets the identical mesh.  A path makes the building rank write
+        the finished OCC model (after the last ``occ.synchronize()``, sizing
+        fields set, before ``generate(3)``) with gmsh's own STEP writer — the
+        emitter `io/step_import.import_step` re-imports.
 
         ``c4_congruent_sheets`` (`GEO-32`) is additive, keyword-only and defaults
         to ``False``, which executes no new gmsh call: every existing caller gets
@@ -3708,6 +3716,7 @@ class MeshGenerator:
                     conductor_resolution=conductor_resolution,
                     conductor_refine_distance=conductor_refine_distance,
                     phantom_resolution=phantom_resolution,
+                    step_export_path=step_export_path,
                 )
             except BaseException as exc:  # noqa: BLE001 — re-raised below, on every rank
                 build_error = exc
@@ -3797,6 +3806,7 @@ class MeshGenerator:
         conductor_resolution: Optional[float] = None,
         conductor_refine_distance: Optional[float] = None,
         phantom_resolution: Optional[float] = None,
+        step_export_path: Optional[str] = None,
     ) -> Dict[str, object]:
         """Build the birdcage gmsh model on the calling rank (see `birdcage_port_domain`)."""
         gmsh.initialize()
@@ -4634,6 +4644,10 @@ class MeshGenerator:
                 "under the snapped z-rotation",
                 flush=True,
             )
+
+        if step_export_path is not None:
+            # `GEO-34` step 1a: the OCC model as built, no mesh in it yet.
+            gmsh.write(str(step_export_path))
 
         mesh_start = time.perf_counter()
         gmsh.model.mesh.generate(3)

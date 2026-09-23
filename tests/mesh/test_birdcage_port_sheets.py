@@ -84,8 +84,14 @@ def _build(
     as_hole=False,
     resolution=None,
     c4_congruent_sheets=False,
+    step_export_path=None,
 ):
     """One graded, gapped birdcage rung, sheeted or not, with its wall time.
+
+    ``step_export_path`` is `GEO-34` step 1a's additive keyword, same
+    precedent: ``None`` — every gate's value — forwards ``None`` and the
+    generator executes no new gmsh call; a path writes the OCC model as STEP
+    before meshing (`tests/mesh/test_step_import.py`).
 
     ``c4_congruent_sheets`` is `WF-6` step 4h's additive keyword, threaded the
     way `ANS-4` step 2a′ threaded it in `tests/mesh/test_birdcage_leg_offset.py`:
@@ -144,6 +150,7 @@ def _build(
         phantom_resolution=phantom_resolution,
         as_hole=as_hole,
         c4_congruent_sheets=bool(c4_congruent_sheets),
+        step_export_path=step_export_path,
         comm=comm,
         return_diagnostics=True,
     )
