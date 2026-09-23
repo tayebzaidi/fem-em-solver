@@ -350,8 +350,16 @@ reciprocity or passivity miss on the human-scale mesh is a finding for a
 
 ### 7. `xl` — `ANS-4` step 3e: the 64 MHz degree-2 *h*-ladder (daily licence: priced-family variant, 2026-09-18 review)
 
-**Status:** QUEUED 2026-09-18 for Tuesday 2026-09-22 02:00 —
-`docs/testing/xl-queue.d/20260922-ANS-4-step3e.env`.
+**Status:** RUN `20260922T070007Z_ANS-4-step3e.log` — 15 passed / 2 failed,
+Status 1, 2206 s, 277.44 GiB; both reds non-physics (the `OPS-62` guard,
+fixed 2026-09-22, and the deliberate pre-rebuild `OPS-60` `skrf` red); all
+four rungs solved and every imported gate green. Not re-run (2026-09-23
+review). Successive changes by the review's hand arithmetic in the ledger
+row: S₁₁ 2.815 → 1.497 % (1.88), S₂₁ 1.570 → 0.816 % (1.92), S₃₁ 1.362 →
+0.831 % (1.64), with the finest cut-off rung's ≈ 10× C4 spread as the
+caveat — the weekly applies the decision rule below. *(Was QUEUED
+2026-09-18 for Tuesday 2026-09-22 02:00 —
+`docs/testing/xl-queue.d/20260922-ANS-4-step3e.env`.)*
 
 **Licence class:** priced-family variant of the `ANS-4-step2d` ledger row
 (2026-09-10) — the same module, the same generator, **the same
@@ -407,8 +415,14 @@ green in that module only at 128 MHz, so a red on a ladder-control test at
 
 ### 8. `xl` — `ANS-4` step 3f: the 10 MHz degree-2 rung on the C4-congruent cut (daily licence: priced-family variant, 2026-09-18 review)
 
-**Status:** QUEUED 2026-09-18 for Wednesday 2026-09-23 02:00 —
-`docs/testing/xl-queue.d/20260923-ANS-4-step3f.env`.
+**Status:** RUN `20260923T070007Z_ANS-4-step3f.log` — 18 passed, Status 0,
+1702 s, 280.28 GiB; degree-2 class spreads with the cut on **0.0303 / 0.0158
+/ 0.0100 %** against 3c's 0.4451 / 0.2199 / 0.2186 % — the decision rule's
+**collapse branch** by the public numbers (the weekly rules). Two-rung move
+4.4499 / 1.2966 / 1.2187 %. Follow-up written by the 2026-09-23 review under
+the daily licence: entry 12 (the 10 MHz *h*-ladder with the cut on). *(Was
+QUEUED 2026-09-18 for Wednesday 2026-09-23 02:00 —
+`docs/testing/xl-queue.d/20260923-ANS-4-step3f.env`.)*
 
 **Licence class:** priced-family variant of `ANS-4-step3c` (2026-09-18,
 1603 s / 284.8 GiB) and `ANS-4-step3b` (2026-09-17, 1539 s / 273.1 GiB) —
@@ -625,6 +639,158 @@ with the same outcome on 3e the production default flips to degree 2 by
 residual. Non-monotone or non-falling ⇒ the 10 MHz order-matched figure is a
 point, not a value; the default stays at degree 1; the ladder is the finding.
 No band moves.
+
+### 12. `xl` — `ANS-4` step 3h: the 10 MHz degree-2 *h*-ladder on the C4-congruent cut (daily licence: priced-family variant, 2026-09-23 review)
+
+**Status:** QUEUED 2026-09-23 for Sunday 2026-09-27 02:00 —
+`docs/testing/xl-queue.d/20260927-ANS-4-step3h.env`.
+
+**Licence class:** priced-family variant of entry 11 (`ANS-4` step 3g, the
+weekly's chain step F2) — the same module, the same
+`RUNGSPEC="0.015:1 0.015:2 0.0075:2 0.005:2"`, the same 10 MHz; **one named
+env knob varied**: `FEM_EM_ANS4_STEP2_C4_CONGRUENT=1`, the knob 3b / 3d / 3f
+ran green at `-n 16` on this module (3f at this frequency, 2026-09-23).
+
+**Why (the §10 question it answers):** F2 asks whether the 10 MHz degree-2
+rung is *h*-converged. Entry 8 (3f) has since come back in its **collapse
+branch** — with the cut on, the degree-2 self-class C4 spread at 10 MHz falls
+from 3c's 0.4451 % to 0.0303 % — so the cut-off mesh entry 11 runs carries a
+≈ 0.4 % port-sheet asymmetry on its finest rung, the same size as the
+successive changes F2 is trying to read (3e's 64 MHz cut-off ladder shows the
+mechanism: its finest rung's spread is ≈ 10× the middle rungs', which leaves
+S₃₁'s ratio anywhere in ≈ 1.3–2.2). Entry 8's own rule names the congruent
+cut as the rung to quote at low frequency; this is F2's ladder on that mesh.
+Entry 11 is not replaced — the pair separates *h* from the cut.
+
+**Command** (entry 11's, with the knob added exactly where entry 8 carries it
+and the raw-log name changed — nothing else):
+
+```
+XL_CHUNK="ANS-4-step3h"
+XL_COMMAND="docker compose --profile xl exec -T fem-em-solver-xl bash -lc 'cd /workspace && source /usr/local/bin/dolfinx-complex-mode && mkdir -p /workspace/logs && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 FEM_EM_SOLVER_PROGRESS=2 FEM_EM_ANS4_FREQUENCY_HZ=10e6 FEM_EM_ANS4_STEP2_C4_CONGRUENT=1 FEM_EM_ANS4_STEP2_RUNGSPEC=\"0.015:1 0.015:2 0.0075:2 0.005:2\" timeout -k 60 14400 mpiexec -n 16 python3 -m pytest tests/environment tests/validation/test_ans4_resolution_ladder.py -v -s --tb=short > /workspace/logs/ans4-step3h-raw.log 2>&1; rc=\$?; echo \"[XL] memory.peak bytes:\" >> /workspace/logs/ans4-step3h-raw.log; cat /sys/fs/cgroup/memory.peak >> /workspace/logs/ans4-step3h-raw.log; echo \"[capture] rc=\$rc\" >> /workspace/logs/ans4-step3h-raw.log; cat /workspace/logs/ans4-step3h-raw.log; exit \$rc'"
+```
+
+**Price, measured in the family (scaling stated):** this `RUNGSPEC` at
+`-n 16` ran in **2206 s, 277.44 GiB** (3e, cut off, 64 MHz; four-drive
+times 4.3 / 52.0 / 309.6 / 1502.0 s); the finest rung **with the cut on at
+10 MHz** is 3f's own — 592 550 cells, 3 827 268 dofs, four drives 1476.9 s,
+280.28 GiB. The cut-on 0.0075 rung's cell count is unmeasured (cut off:
+281 728); memory is set by the finest rung. Frequency does not change the
+factorisation's size ⇒ **predicted 2 100–2 700 s, 275–290 GiB**. Timeout
+14 400 s inside the 4 h window; 512 GiB limit.
+
+**Readout (record; the module's imported gates and ladder controls, nothing
+else asserted):** the three C4 classes and the imported `PORT-11` gates on
+each of the three degree-2 rungs with the cut on; the printed driven-column
+entries per rung. **The module does not print successive changes** — the
+review that finds the ledger row computes them by hand (module's move
+convention, coarser rung as reference) as the 2026-09-23 review did for 3e,
+beside entry 11's cut-off ladder. The finest rung reproduces 3f's (cells
+592 550, spreads 0.0303 / 0.0158 / 0.0100 %) — printed, not asserted.
+Private: nothing new.
+
+**Decision rule for the weekly:** successive degree-2 changes falling with
+ratio ≳ 1.5 on **all three** classes **and** the last change below 3f's
+smallest two-rung class move (1.2187 %) ⇒ 3f's cut-on `0.005:2` figure is an
+*h*-converged value at 10 MHz and F2's 10 MHz answer is read on this ladder;
+entry 11 agreeing within the cut-off rung's own spreads ⇒ the cut does not
+move the *h*-statement; disagreeing ⇒ entry 11's reading is the cut's, and
+this entry's is the one F2 records. Non-monotone or non-falling ⇒ the 10 MHz
+order-matched figure is a point, not a value. No band moves. A red on a
+ladder-control test is a module finding for a §9 item, not physics.
+
+### 13. `xl` — `ANS-4` step 3i: the 64 MHz degree-2 *h*-ladder on the C4-congruent cut (daily licence: priced-family variant, 2026-09-23 review)
+
+**Status:** QUEUED 2026-09-23 for Monday 2026-09-28 02:00 —
+`docs/testing/xl-queue.d/20260928-ANS-4-step3i.env`.
+
+**Licence class:** priced-family variant of entry 7 (`ANS-4` step 3e,
+**RUN 2026-09-22, 2206 s / 277.44 GiB**) — the same module, `RUNGSPEC` and
+64 MHz; **one named env knob varied**: `FEM_EM_ANS4_STEP2_C4_CONGRUENT=1`,
+run green on this module's finest rung at 64 MHz by 3d (2026-09-20).
+
+**Why (the §10 question it answers):** 3e's successive changes (ledger row,
+review arithmetic) are S₁₁ 2.815 → 1.497 %, S₂₁ 1.570 → 0.816 %, S₃₁ 1.362 →
+0.831 %, ratios 1.88 / 1.92 / 1.64 — but its finest rung is the cut-off mesh
+whose C4 spread (0.17–0.20 %) is ≈ 10× the middle rungs', so a last change of
+≈ 0.8 % read on one C4 member carries ≈ ±0.2 pp of member choice and S₃₁'s
+ratio straddles the 1.5 threshold. With the cut on the 64 MHz finest rung
+reads 0.0132 / 0.0126 / 0.0081 % (3d). This window removes the ambiguity
+from the F2 answer the weekly rules on at 64 MHz.
+
+**Command** (entry 7's, with the knob added where entry 8 carries it and the
+raw-log name changed — nothing else):
+
+```
+XL_CHUNK="ANS-4-step3i"
+XL_COMMAND="docker compose --profile xl exec -T fem-em-solver-xl bash -lc 'cd /workspace && source /usr/local/bin/dolfinx-complex-mode && mkdir -p /workspace/logs && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 FEM_EM_SOLVER_PROGRESS=2 FEM_EM_ANS4_FREQUENCY_HZ=64e6 FEM_EM_ANS4_STEP2_C4_CONGRUENT=1 FEM_EM_ANS4_STEP2_RUNGSPEC=\"0.015:1 0.015:2 0.0075:2 0.005:2\" timeout -k 60 14400 mpiexec -n 16 python3 -m pytest tests/environment tests/validation/test_ans4_resolution_ladder.py -v -s --tb=short > /workspace/logs/ans4-step3i-raw.log 2>&1; rc=\$?; echo \"[XL] memory.peak bytes:\" >> /workspace/logs/ans4-step3i-raw.log; cat /sys/fs/cgroup/memory.peak >> /workspace/logs/ans4-step3i-raw.log; echo \"[capture] rc=\$rc\" >> /workspace/logs/ans4-step3i-raw.log; cat /workspace/logs/ans4-step3i-raw.log; exit \$rc'"
+```
+
+**Price, measured in the family:** 3e — this `RUNGSPEC`, cut off, 64 MHz,
+`-n 16` — **2206 s, 277.44 GiB**; 3d — the cut-on finest rung at 64 MHz —
+1619 s, 281.1 GiB (four drives 1425.5 s) ⇒ **predicted 2 100–2 700 s,
+275–290 GiB**. Timeout 14 400 s; 512 GiB limit.
+
+**Readout (record):** as entry 12, at 64 MHz, beside 3e's cut-off ladder;
+the finest rung reproduces 3d's (592 550 cells, 0.0132 / 0.0126 / 0.0081 %)
+— printed, not asserted. Successive changes by the review's hand
+arithmetic, as for 3e. Private: nothing new.
+
+**Decision rule for the weekly:** entry 7's, unchanged — ratio ≳ 1.5 on all
+three classes and the last change below step 3's smallest class move
+(2.60 %) ⇒ the 64 MHz order-matched figure is an *h*-converged value; now
+read on the mesh whose finest rung does not carry the 10× C4 spread. 3e and
+this entry agreeing within 3e's finest-rung spread ⇒ 3e's answer stands;
+disagreeing ⇒ this entry's is the one F2 records. No band moves.
+
+### 14. `xl` — `ANS-6` step 2c: the hole-mesh degree-2 rung at h = 0.005, 64 MHz (daily licence: cost probe, 2026-09-23 review; chain T9b's second half)
+
+**Status:** PENDING PREREQUISITE — §9 item 35 (`ANS-6` step 2b, the
+`FEM_EM_ANS6_RESOLUTION` knob). The implementer landing that item marks
+this entry `READY` in the same commit; the next review queues it on the
+first free `xl` night (Tue 2026-09-29 as of writing — 09-24 … 09-28 are
+taken).
+
+**Licence class:** cost probe — the first window on an unpriced case (no
+point exists on the *hole* mesh finer than h = 0.015). Chain T9b (§10,
+2026-09-19): "an `xl` cost probe on the hole mesh at h = 0.005 degree 2".
+The readout *is* the price; fixed brackets, no gate, no band.
+
+**Why:** the `ANS-6` preliminary reading (§7 row, 2026-09-20) attributes
+`ANS-4`'s self-class offset to the lumped-port model / our degree-1 mesh and
+clears the resolved-conductor interior; the hole mesh removes the interior
+from both codes (chain F5). The order- and *h*-matched hole rung is what the
+09-26 weekly's adjudication of `ANS-6` needs next, and nothing prices it.
+
+**Command** (the knob name is the contract; final when item 35 lands):
+
+```
+XL_CHUNK="ANS-6-step2c"
+XL_COMMAND="docker compose --profile xl exec -T fem-em-solver-xl bash -lc 'cd /workspace && source /usr/local/bin/dolfinx-complex-mode && mkdir -p /workspace/logs && R=/workspace/logs/ans6-step2c-raw.log && { echo [orphans-before]; pgrep -c python3; true; } > \$R 2>&1; PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 FEM_EM_ANS6_DEGREE=2 FEM_EM_ANS6_FREQ_MHZ=64 FEM_EM_ANS6_RESOLUTION=0.005 timeout -k 60 14400 mpiexec -n 16 python3 examples/ansys_benchmarks/ans6_copper_birdcage_four_port_10_64_128MHz/06_copper_birdcage_four_port_10_64_128MHz.py >> \$R 2>&1; rc=\$?; { echo [orphans-after]; pgrep -c python3; true; } >> \$R 2>&1; echo \"[XL] memory.peak bytes:\" >> \$R; cat /sys/fs/cgroup/memory.peak >> \$R; echo \"[capture] rc=\$rc\" >> \$R; cat \$R; exit \$rc'"
+```
+
+**Price, predicted (brackets for the readout):** the knob route runs three
+factorisations (PEC sweep, Cu sweep, P1). At h = 0.015 degree 2 the hole
+mesh (80 181 cells) took 61.9 / 53.9 / 44.9 s, 183.9 s, 13.78 GiB summed at
+`-n 8` (`20260921T100022Z_ANS-6-step2-degree2-64MHz.log:924–942`). The
+nearest measured h = 0.005 degree-2 point is `ANS-4`'s *solid-coil* mesh:
+592 744 cells, 3 828 494 unknowns, factorisation 1 332 s, 277 GiB at `-n 16`
+(3e). The hole mesh drops the conductor interior (80 181 / 116 085 = 0.69 at
+h = 0.015) ⇒ **brackets: 350 k–600 k cells, 2.2–3.9 M unknowns, 600–1 500 s
+per factorisation, total 2 000–5 000 s, 170–300 GiB `memory.peak`**, printed
+INSIDE / OUTSIDE by the review, never asserted. Timeout 14 400 s inside the
+4 h window; 512 GiB limit.
+
+**Readout (record — the script's own imported gates asserted as in step 2,
+no band):** cells, unknowns (ZMUMPS `N`), mesh and per-factorisation times,
+`memory.peak`, summed `ru_maxrss`; both columns' reciprocity / σ_max / C4
+spreads and the copper surface-loss identity (the step-2 gates); the class
+moves against the h = 0.015 degree-2 point, printed. The untracked
+`metrics_degree2_…` file is not committed. **Decision rule:** inside the
+brackets ⇒ the matched hole rung is an ordinary `xl` window and the weekly
+may commission it at 10 and 128 MHz; outside above ⇒ the price is the
+finding; a gate red ⇒ a finding for a `TH-15` / `TH-14` §9 item, never a
+band change.
 
 ### Weekly rulings on RUN entries, 2026-09-19 (full text PROJECT_PLAN §10; AED figures private)
 
