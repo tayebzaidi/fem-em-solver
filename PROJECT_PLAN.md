@@ -3671,27 +3671,13 @@ step 1 as its row asks a review to cost it.
    route does not reproduce the F-small fixture" is itself the finding for
    the weekly.
 
-38. **`EX-57` — setup figure for
-   `examples/meshing/11_birdcage_sixteen_ring_sheet_longitudinal.py`**
-   (`example-runner`, spawned **foreground** — "you are the executor, do not
-   spawn agents, never return with a window running"; the example's own tier
-   and width: `EX-45`, standard, 82 s measured at `-n 2`
-   (`docs/planning/chunks/EX-45.md`); real build; independent;
-   **20 slot-min**). The census's `--next` at review time
-   (`20260923T080435Z_EX-57-next.log`: 56 examples, 25 ok, 31 missing,
-   0 broken). Template as amended 2026-09-19 and the 09-21 slots' notes: hide
-   the region that is not the subject; `write_setup_figure` outside any
-   printed timer; title ≤ 130; facet tags captioned, not invented as cell
-   regions; region names carrying a `CLASS_COLOURS` keyword (the 09-21
-   `mesh:9` fallback-palette defect); **the executor states which tags each
-   colour class covers, from the fixture's tag map, before writing the
-   caption** (the `mesh:10` caption defect); a slice off any ring's
-   symmetry plane, and say so when the 3-D panel carries the load; both
-   censuses by their real filenames; full artifact filenames in the guide;
-   **read the PNG and check every caption and source-comment sentence against
-   the geometry before committing**; `git add` the PNG before the `OPS-59` (b)
-   identity re-run. Done-when is the §7 `EX-57` per-item list.
-   **Status it can move:** `EX-57` census `missing` 31 → 30.
+38. DONE 2026-09-23 (06:00 CDT slot) — `EX-57` `mesh:11` figure, census
+   `missing` 31 → 30 (examples 56, `ok` 25 → 26, `broken` 0); flagged run
+   82.17 s reproduced record cell count 270728 and low-state count 10/32
+   digit for digit (`20260923T110927Z_EX-57.log`), unflagged re-run same
+   digits, PNG unchanged (`20260923T111200Z_EX-57.log`); setup-figure census
+   `20260923T111136Z_EX-57.log`; docrefs `dead=0 guide=0 exit=2`
+   (age-driven staleness only, `20260923T111150Z_EX-57.log`).
 
 *(The per-review journal — slot recap, completion audits, plan-work notes,
 §10 assessment — lives in the review commits and

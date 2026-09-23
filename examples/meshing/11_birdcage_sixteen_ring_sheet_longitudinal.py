@@ -83,6 +83,7 @@ from fem_em_solver.io.paraview_utils import (  # noqa: E402
     adopt_host_ownership,
     write_xdmf_with_tags,
 )
+from fem_em_solver.post.setup_figure import write_setup_figure  # noqa: E402
 
 from tests.mesh.test_birdcage_port_sheet_prerequisite import CELL_COUNT_BAND  # noqa: E402
 from tests.mesh.test_birdcage_port_scaleup import SCALED_LEG_COUNT  # noqa: E402
@@ -91,7 +92,7 @@ from tests.mesh.test_birdcage_port_sheets import (  # noqa: E402
     PORT_UPPER,
     SHEET_IFACE,
 )
-from tests.mesh.test_birdcage_port_tags import RING_RADIUS  # noqa: E402
+from tests.mesh.test_birdcage_port_tags import COIL_LENGTH, RING_RADIUS  # noqa: E402
 from tests.mesh.test_birdcage_port_terminals import CONDUCTOR_IFACE  # noqa: E402
 from tests.mesh.test_birdcage_ring_gaps import EXACT, SYMMETRY, _spread  # noqa: E402
 from tests.mesh.test_birdcage_ring_gaps_scaleup import (  # noqa: E402
@@ -113,6 +114,7 @@ from tests.mesh.test_birdcage_ring_sheet_orientation import (  # noqa: E402
 )
 
 OUTPUT_DIR = Path(__file__).resolve().parent / "paraview_output"
+FIGURE_DIR = Path(__file__).resolve().parent / "figures"  # committed, EX-57
 BASENAME = "meshing_11_birdcage_sixteen_ring_sheet_longitudinal"
 
 # `GEO-26` step 3's own record: 10 of 32 terminals on the low area state
@@ -231,6 +233,54 @@ def main() -> None:
 
     # ---- the rung: 16 legs, both end rings cut, longitudinal sheets --------
     m = _measure_ring(SCALED_LEG_COUNT, orientation="longitudinal")
+
+    # Right after the mesh is built, before any analysis or printed timer —
+    # `m["elapsed"]` and `m["diag"]["mesh_wall_time_s"]` are already captured
+    # inside `_measure_ring`, so the render time never folds into either
+    # printed record (`EX-57`). This is the gated rung the figure draws: the
+    # 16-leg, both-end-rings-cut, longitudinal-sheet build is `GEO-26` step
+    # 3's own bistable-terminal rung; no second mesh is built anywhere in
+    # this script to picture as a control.
+    write_setup_figure(
+        m["mesh"],
+        m["cells"],
+        FIGURE_DIR / f"{BASENAME}_setup.png",
+        region_names={
+            1: "conductor",
+            2: "air",
+            3: "phantom",
+            **{
+                PORT_LOWER + i: f"leg L{i} conductor (uncut)"
+                for i in range(1, SCALED_LEG_COUNT + 1)
+            },
+            **{
+                PORT_LOWER + i: f"ring port P{i} lower (inner, u < R)"
+                for i in m["ring_ports"]
+            },
+            **{
+                PORT_UPPER + i: f"ring port P{i} upper (outer, u > R)"
+                for i in m["ring_ports"]
+            },
+        },
+        hide_tags=(2,),
+        translucent_tags=(3,),
+        slice_normal=(0.0, 0.0, 1.0),
+        # Off the top ring's exact axial centre (0.5*COIL_LENGTH) by 1 mm, the
+        # same offset `mesh:9` (`EX-57`, 2026-09-21) measured necessary to
+        # avoid a degenerate near-empty slice through the ring band on this
+        # same both-rings-cut, 16-leg construction. The 3-D panel carries the
+        # load here: it is the only view that shows all 32 ring-port box
+        # halves (red, the `port` colour class) at once; the slice panel adds
+        # the cross-section through the leg conductors and phantom the 3-D
+        # view occludes.
+        slice_origin=(0.0, 0.0, 0.5 * COIL_LENGTH - 1.0e-3),
+        title=(
+            "mesh:11 - 16-leg birdcage, longitudinal ring-gap sheets, both "
+            "rings split at u = R (GEO-26 step 3)"
+        ),
+        comm=comm,
+    )
+
     problem = _report_safely(f"{SCALED_LEG_COUNT} legs longitudinal", m, comm)
 
     layout = m["diag"]["ring_port_layout"]

@@ -60,6 +60,35 @@ assertion, a low-state count off 10, or a third terminal state is a wiring
 defect or a fresh generator finding respectively — journaled in the `EX-45`
 §7 row, nothing widened.
 
+## Setup figure
+
+![mesh:11 setup — 16-leg birdcage, longitudinal ring-gap sheets, both rings split at u = R](figures/meshing_11_birdcage_sixteen_ring_sheet_longitudinal_setup.png)
+
+*Left:* the 16-leg, both-end-rings-cut, longitudinal-sheet rung
+(`_measure_ring(SCALED_LEG_COUNT, orientation="longitudinal")`, `GEO-26`
+step 3's bistable-terminal build) with the air box (tag `2`) hidden and the
+saline phantom (tag `3`) translucent, the `phantom` colour class, blue. The
+sixteen copper rods and the two end rings are the bulk conductor (tag `1`);
+the sixteen free-standing copper cubes at the rods' own azimuths are the
+uncut leg boxes (tags `101`-`116`, named `leg L{i} conductor (uncut)` so
+they take the `conductor` colour class, copper, rather than a fallback
+colour) — no gap in the legs at this rung, so nothing to split. The
+sixty-four ring-port box halves (red, the `port` colour class — tags
+`117`-`148` the inner (`u < R`) half and `217`-`248` the outer (`u > R`)
+half of all 32 ring ports, both rings) sit on the outer periphery at the
+22.5° pitch; no `clip_normal`, since every box sits on the outside with
+nothing in front of it to hide, so the unclipped isometric view keeps all
+32 ports (both halves each) on screen. *Right:* the slice at
+`z = 0.5 * COIL_LENGTH − 1 mm = 0.069 m` (normal `(0, 0, 1)`), 1 mm below
+the top ring's own axial centre — the same offset `mesh:9` (`EX-57`,
+2026-09-21) measured necessary on this same both-rings-cut, 16-leg
+construction to avoid a degenerate near-empty slice exactly on the ring's
+symmetry plane. **The 3-D panel carries the load**: it is the only view
+that shows the 32 red ring-port box halves at all; the slice panel's mesh
+edges show only the sixteen leg conductors' circular cross-sections (brown)
+around the phantom (blue) — at this cut height the thin ring-port boxes
+are too small in the plane to appear as a distinct region.
+
 ## 2. How to run it
 
 ```
