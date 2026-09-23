@@ -179,7 +179,8 @@ and pytest runs that bypass the logging harness.
 override the launcher expires by itself, so a borrowed model cannot outlive
 its reason and no revert has to be remembered. No override is set; the
 launcher logs which model it chose on every run. Implementer runs do not read
-that file and always run on Opus.
+that file and always run on Opus (`claude-opus-5-5` since 2026-09-22, pinned
+in `implementer-run.sh`).
 
 If you are one of these scheduled sessions, your protocol document is
 authoritative; read it before acting. If you are an interactive session,

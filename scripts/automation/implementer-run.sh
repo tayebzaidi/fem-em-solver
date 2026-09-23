@@ -64,7 +64,7 @@ START="$(date '+%Y-%m-%d %H:%M %Z')"
 # allowed.
 STATUS=0
 timeout --kill-after=120 3900 "$CLAUDE_BIN" \
-  --model claude-opus-5 \
+  --model claude-opus-5-5 \
   --effort medium \
   --permission-mode acceptEdits \
   --disallowedTools WebFetch WebSearch \
