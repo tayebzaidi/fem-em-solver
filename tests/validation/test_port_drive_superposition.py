@@ -1245,7 +1245,7 @@ def _ring_quadrature_slots(sheets):
     return az_ref, slots
 
 
-def _build_ring_quadrature_case():
+def _build_ring_quadrature_case(built=None, cell_record=None):
     """One 32-drive field-keeping sweep on the ring rung; both senses; CG1 reads.
 
     Lifted out of the ``ring_quadrature_case`` fixture below so a caller
@@ -1253,15 +1253,25 @@ def _build_ring_quadrature_case():
     the same case without pytest's fixture machinery. Additive only — the
     fixture is now a thin wrapper that keeps its environment-gated skip and
     calls this. No behaviour changed (`EX-55`, 2026-09-14).
+
+    ``built`` / ``cell_record`` (additive, `WF-7` step 2, 2026-09-23): ``None``
+    (the default) builds ``names.build_ring_context()`` and prints against
+    ``RING_LONGITUDINAL_SCALED_CELL_RECORD`` exactly as before; a dict carrying
+    the same keys (``comm``; ``ctx`` with ``specs``, ``solver``, ``msh``,
+    ``cell_tags``, ``tags_f``; ``cells``; ``sheets`` with ``z``, ``ordinal``,
+    ``azimuth_deg``) and a record are used instead — the F-human fixture.
     """
     names = _step3_imports()
     SCALED_LEG_COUNT = names.SCALED_LEG_COUNT
     AZIMUTH_STEP_DEG = names.AZIMUTH_STEP_DEG
-    RING_LONGITUDINAL_SCALED_CELL_RECORD = names.RING_LONGITUDINAL_SCALED_CELL_RECORD
+    RING_LONGITUDINAL_SCALED_CELL_RECORD = (
+        names.RING_LONGITUDINAL_SCALED_CELL_RECORD if cell_record is None else cell_record
+    )
     RECORDED_CW_SPREAD = names.RECORDED_CW_SPREAD
     CW_SEPARATION_FACTOR = names.CW_SEPARATION_FACTOR
     t_start = time.perf_counter()
-    built = names.build_ring_context()
+    if built is None:
+        built = names.build_ring_context()
     comm = built["comm"]
     ctx = built["ctx"]
 
@@ -1439,6 +1449,13 @@ def _build_ring_quadrature_case():
         "frequency_hz": float(result.frequency_hz),
         "z0_ohm": float(drive.z0_ohm.real),
         "sheets": built["sheets"],
+        # Additive (`WF-7` step 2): the sweep result and the allgathered sample
+        # points / validity mask, for the unit-weight identity and the
+        # single-drive control — no existing key touched.
+        "result": result,
+        "points": points,
+        "mask": mask,
+        "az_ref": az_ref,
     }
 
 

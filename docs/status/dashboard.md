@@ -155,8 +155,8 @@ and PubMed are unauthorised in this headless session; nothing here needs them.
     layer matches the raw reduction to machine precision; step 2 open.
 35. ~~**`ANS-6` step 2b**~~ **DONE 04:30 slot** — resolution knob landed;
     XL entry 14 (hole-mesh probe) is READY for the next review to queue.
-36. **`WF-7` step 2** *(heavy)* — `|B₁⁺|` of the 32-port quadrature drive at
-    human scale, C16-gated (chain H4).
+36. ~~**`WF-7` step 2**~~ **DONE 04:30 slot** — human-scale `|B₁⁺|` is
+    C16-symmetric to 0.15 % (5 % band); H5 (hotspot) becomes queueable.
 37. **`GEO-34` step 1a** *(standard)* — STEP round trip of the F-small
     birdcage through a config-driven importer, mesh-level gates.
 38. **`EX-57` figure** — `meshing/11_birdcage_sixteen_ring_sheet_longitudinal.py`.
