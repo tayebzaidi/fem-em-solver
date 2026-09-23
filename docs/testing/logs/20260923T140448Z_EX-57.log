@@ -1,0 +1,54 @@
+# Test Run
+- Chunk: EX-57
+- Commit: f2e5a908eb1c191a081a01651138ae56e8e5866e
+- Time (UTC): 2026-09-23 14:04:48
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.5.1
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 60 python3 scripts/testing/check_example_doc_references.py'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 24
+drwxr-xr-x  3 taz5297 taz5297 4096 Sep 21 04:30 .
+drwxr-xr-x 17 taz5297 taz5297 4096 Sep 23 09:04 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  744 Sep 21 04:30 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 4275 Sep 13 19:19 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.5.1
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 60 python3 scripts/testing/check_example_doc_references.py'\'''
+Scanned 71 guide(s) under examples/, 241 distinct file reference(s) checked, 1 allowlisted.
+PASS: every referenced file exists.
+STALE: 10 stale artifact(s) (--stale-severity report):
+  - ans1_loop_over_lossy_slab_combined.xdmf: stale in examples/ansys_benchmarks/ans1_loop_over_lossy_slab_10MHz/paraview_output/ (405.0 h old, limit 336.0 h) — rerun the example that writes it, or the reference is dead  [examples/ansys_benchmarks/ans1_loop_over_lossy_slab_10MHz/01_loop_over_lossy_slab_10MHz.md:93, examples/ansys_benchmarks/ans1_loop_over_lossy_slab_10MHz/01_loop_over_lossy_slab_10MHz.md:176, examples/ansys_benchmarks/ans1_loop_over_lossy_slab_10MHz/COMPARISON.md:86]
+  - ans4_birdcage_four_port_128mhz_combined.xdmf: stale in examples/ansys_benchmarks/ans4_birdcage_four_port_10_64_128MHz/paraview_output/ (441.8 h old, limit 336.0 h) — rerun the example that writes it, or the reference is dead  [examples/ansys_benchmarks/ans4_birdcage_four_port_10_64_128MHz/04_birdcage_four_port_10_64_128MHz.md:22, examples/ansys_benchmarks/ans4_birdcage_four_port_10_64_128MHz/COMPARISON.md:208]
+  - ports_01_two_torus_port_pair_combined.xdmf: stale in examples/ports/paraview_output/ (469.4 h old, limit 336.0 h) — rerun the example that writes it, or the reference is dead  [examples/ports/01_two_torus_port_pair.md:101]
+  - ports_08_birdcage_b1_larmor_ladder_128MHz_combined.xdmf: stale in examples/ports/paraview_output/ (540.0 h old, limit 336.0 h) — rerun the example that writes it, or the reference is dead  [examples/ports/08_birdcage_b1_larmor_ladder.md:138]
+  - ports_08_birdcage_b1_larmor_ladder_64MHz_combined.xdmf: stale in examples/ports/paraview_output/ (540.0 h old, limit 336.0 h) — rerun the example that writes it, or the reference is dead  [examples/ports/08_birdcage_b1_larmor_ladder.md:137]
+  - ports_09_birdcage_sar_quadrant_powers_combined.xdmf: stale in examples/ports/paraview_output/ (481.5 h old, limit 336.0 h) — rerun the example that writes it, or the reference is dead  [examples/ports/09_birdcage_sar_quadrant_powers.md:91]
+  - ports_10_birdcage_ring_column_combined.xdmf: stale in examples/ports/paraview_output/ (449.9 h old, limit 336.0 h) — rerun the example that writes it, or the reference is dead  [examples/ports/10_birdcage_ring_column.md:94]
+  - ports_11_birdcage_ring_mirror_pair_combined.xdmf: stale in examples/ports/paraview_output/ (451.5 h old, limit 336.0 h) — rerun the example that writes it, or the reference is dead  [examples/ports/11_birdcage_ring_mirror_pair.md:101]
+  - ports_12_birdcage_ring_quarter_turn_combined.xdmf: stale in examples/ports/paraview_output/ (436.4 h old, limit 336.0 h) — rerun the example that writes it, or the reference is dead  [examples/ports/12_birdcage_ring_quarter_turn.md:131]
+  - time_harmonic_09_pec_sphere_hole_combined.xdmf: stale in examples/time_harmonic/paraview_output/ (420.0 h old, limit 336.0 h) — rerun the example that writes it, or the reference is dead  [examples/time_harmonic/09_pec_sphere_as_hole.md:128]
+Guide pass: 56 runnable example(s) from scripts/run_examples.sh --list, 56 checked against 3 required heading(s), 0 pending (EX-15 steps 2-3).
+PASS: every runnable example has a guide with all required sections.
+RESULT: dead=0 guide=0 stale=10 stale_severity=report exit=2
+
+## Exit
+- Status: 2
+- Elapsed (s): 1
+- Filtered lines (gmsh optimisation chatter): 0

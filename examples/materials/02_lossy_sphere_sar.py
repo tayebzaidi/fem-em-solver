@@ -94,6 +94,7 @@ from fem_em_solver.io.paraview_utils import (  # noqa: E402
     write_xdmf_with_tags,
 )
 from fem_em_solver.post.sar import point_sar, uniform_sphere_sar_closed_form  # noqa: E402
+from fem_em_solver.post.setup_figure import write_setup_figure  # noqa: E402
 
 from tests.validation.test_lossy_sphere_sar import (  # noqa: E402
     BOX_HALF_WIDTH,
@@ -113,7 +114,12 @@ from tests.validation.test_lossy_sphere_sar import (  # noqa: E402
 from fem_em_solver.utils.constants import EPSILON_0  # noqa: E402
 
 OUTPUT_DIR = Path(__file__).resolve().parent / "paraview_output"
+FIGURE_DIR = Path(__file__).resolve().parent / "figures"  # committed, EX-57
 BASENAME = "materials_02_lossy_sphere_sar_combined"
+#: `BASENAME` above already carries the `_combined` XDMF stem; the setup
+#: figure follows the group-and-number-prefix convention (matching the
+#: script stem, `materials_02_lossy_sphere_sar_setup.png`), not `BASENAME`.
+FIGURE_BASENAME = "materials_02_lossy_sphere_sar"
 
 #: The fine mesh rung only, per the §9 item — the coarse rung exists in the
 #: gate to demonstrate refinement, which is not this example's job.
@@ -222,6 +228,28 @@ def main() -> None:
     )
     run_vacuum = _solve_lossy_sphere(0.0, RESOLUTION_SPHERE, RESOLUTION_FAR)
     solve_seconds = time.perf_counter() - solve_started
+
+    # EX-57 setup figure: only the SIGMA_HIGH solve carries the mesh/cell_tags
+    # (return_fields=True); this fixture is the same `sphere_in_box_domain`
+    # mesh `mri:2` already pictures -- tag SPHERE_TAG (1) is the lossy sphere
+    # this whole example measures SAR over (translucent so its uniform
+    # interior field stays legible), tag 2 is the surrounding air box,
+    # hidden. Sliced through z = 0, the equatorial plane the interior E_z
+    # closed form is compared on (§1 "interior E_z"). Placed after
+    # `solve_seconds` is captured so the render never folds into a printed
+    # timer. No-op unless FEM_EM_SETUP_FIGURES=1.
+    write_setup_figure(
+        run_high["mesh"],
+        run_high["cell_tags"],
+        FIGURE_DIR / f"{FIGURE_BASENAME}_setup.png",
+        region_names={SPHERE_TAG: "sphere (lossy dielectric)", 2: "air"},
+        hide_tags=(2,),
+        translucent_tags=(SPHERE_TAG,),
+        slice_normal=(0.0, 0.0, 1.0),
+        slice_origin=(0.0, 0.0, 0.0),
+        title="mat:2 -- imposed-field SAR on the lossy sphere (MAT-4 step 1 fixture)",
+        comm=comm,
+    )
 
     closed = {
         s: uniform_sphere_sar_closed_form(

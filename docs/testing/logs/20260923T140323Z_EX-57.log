@@ -1,0 +1,276 @@
+# Test Run
+- Chunk: EX-57
+- Commit: f2e5a908eb1c191a081a01651138ae56e8e5866e
+- Time (UTC): 2026-09-23 14:03:24
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.5.1
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T -e FEM_EM_SETUP_FIGURES=1 fem-em-solver bash -lc "cd /workspace && source /usr/local/bin/dolfinx-complex-mode && PYTHONPATH=/workspace/src timeout -k 30 300 mpiexec -n 2 python3 examples/materials/02_lossy_sphere_sar.py"
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 24
+drwxr-xr-x  3 taz5297 taz5297 4096 Sep 21 04:30 .
+drwxr-xr-x 17 taz5297 taz5297 4096 Sep 23 09:03 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  744 Sep 21 04:30 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 4275 Sep 13 19:19 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.5.1
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T -e FEM_EM_SETUP_FIGURES=1 fem-em-solver bash -lc "cd /workspace && source /usr/local/bin/dolfinx-complex-mode && PYTHONPATH=/workspace/src timeout -k 30 300 mpiexec -n 2 python3 examples/materials/02_lossy_sphere_sar.py"'
+========================================================================
+EX-52 -- imposed-field SAR on the lossy sphere vs its closed form
+========================================================================
+
+[geometry] R = 10.0 mm sphere, eps_r = 78.0, f = 64 MHz, rho = 1000 kg/m^3, box half-width 20 mm
+[mesh] fine rung only: h_sphere = 0.00100 m, h_far = 0.00200 m
+[caveat] imposed uniform field on the box wall, solved for the interior -- no coil, no mass averaging, no Larmor-coil claim
+Info    : Meshing 1D...
+Info    : [ 10%] Meshing curve 2 (Circle)
+Info    : [ 30%] Meshing curve 4 (Line)
+Info    : [ 30%] Meshing curve 5 (Line)
+Info    : [ 40%] Meshing curve 6 (Line)
+Info    : [ 50%] Meshing curve 7 (Line)
+Info    : [ 50%] Meshing curve 8 (Line)
+Info    : [ 60%] Meshing curve 9 (Line)
+Info    : [ 70%] Meshing curve 10 (Line)
+Info    : [ 70%] Meshing curve 11 (Line)
+Info    : [ 80%] Meshing curve 12 (Line)
+Info    : [ 90%] Meshing curve 13 (Line)
+Info    : [ 90%] Meshing curve 14 (Line)
+Info    : [100%] Meshing curve 15 (Line)
+Info    : Done meshing 1D (Wall 0.00194459s, CPU 0s)
+Info    : Meshing 2D...
+Info    : [  0%] Meshing surface 1 (Sphere, Frontal-Delaunay)
+Info    : [ 20%] Meshing surface 2 (Plane, Frontal-Delaunay)
+Info    : [ 30%] Meshing surface 3 (Plane, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 4 (Plane, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 5 (Plane, Frontal-Delaunay)
+Info    : [ 80%] Meshing surface 6 (Plane, Frontal-Delaunay)
+Info    : [ 90%] Meshing surface 7 (Plane, Frontal-Delaunay)
+Info    : Done meshing 2D (Wall 0.213115s, CPU 0.194806s)
+Info    : Meshing 3D...
+Info    : 3D Meshing 2 volumes with 1 connected component
+Info    : Tetrahedrizing 4377 nodes...
+Info    : Done tetrahedrizing 4385 nodes (Wall 0.0757802s, CPU 0.071653s)
+Info    : Reconstructing mesh...
+Info    :  - Creating surface mesh
+Info    :  - Identifying boundary edges
+Info    :  - Recovering boundary
+Info    : Done reconstructing mesh (Wall 0.156182s, CPU 0.135456s)
+Info    : Found volume 1
+Info    : Found volume 2
+Info    : It. 0 - 0 nodes created - worst tet radius 11.1366 (nodes removed 0 0)
+Info    : It. 500 - 498 nodes created - worst tet radius 2.31938 (nodes removed 0 2)
+Info    : It. 1000 - 998 nodes created - worst tet radius 1.91146 (nodes removed 0 2)
+Info    : It. 1500 - 1498 nodes created - worst tet radius 1.70789 (nodes removed 0 2)
+Info    : It. 2000 - 1998 nodes created - worst tet radius 1.56893 (nodes removed 0 2)
+Info    : It. 2500 - 2498 nodes created - worst tet radius 1.46767 (nodes removed 0 2)
+Info    : It. 3000 - 2998 nodes created - worst tet radius 1.3966 (nodes removed 0 2)
+Info    : It. 3500 - 3498 nodes created - worst tet radius 1.33482 (nodes removed 0 2)
+Info    : It. 4000 - 3998 nodes created - worst tet radius 1.28386 (nodes removed 0 2)
+Info    : It. 4500 - 4498 nodes created - worst tet radius 1.23672 (nodes removed 0 2)
+Info    : It. 5000 - 4998 nodes created - worst tet radius 1.19827 (nodes removed 0 2)
+Info    : It. 5500 - 5498 nodes created - worst tet radius 1.16389 (nodes removed 0 2)
+Info    : It. 6000 - 5998 nodes created - worst tet radius 1.15678 (nodes removed 0 2)
+Info    : It. 6500 - 6498 nodes created - worst tet radius 1.12133 (nodes removed 0 2)
+Info    : It. 7000 - 6998 nodes created - worst tet radius 1.08181 (nodes removed 0 2)
+Info    : It. 7500 - 7498 nodes created - worst tet radius 1.05738 (nodes removed 0 2)
+Info    : It. 8000 - 7998 nodes created - worst tet radius 1.03658 (nodes removed 0 2)
+Info    : It. 8500 - 8498 nodes created - worst tet radius 1.01637 (nodes removed 0 2)
+Info    : 3D refinement terminated (13360 nodes total):
+Info    :  - 2 Delaunay cavities modified for star shapeness
+Info    :  - 2 nodes could not be inserted
+Info    :  - 75374 tetrahedra created in 0.81102 sec. (92937 tets/s)
+Info    : 0 node relocations
+Info    : Done meshing 3D (Wall 1.1943s, CPU 1.17119s)
+[harness] 13 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 405 edge swaps, 19 node relocations (volume = 4.17365e-06): worst = 0.26774 / average = 0.78929 (Wall 0.0111711s, CPU 0.01117s)
+Info    : 407 edge swaps, 20 node relocations (volume = 4.17365e-06): worst = 0.26774 / average = 0.789311 (Wall 0.0133935s, CPU 0.013185s)
+Info    : No ill-shaped tets in the mesh :-)
+[harness] 22 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 1099 edge swaps, 36 node relocations (volume = 5.98263e-05): worst = 0.226447 / average = 0.784672 (Wall 0.0349472s, CPU 0.034946s)
+Info    : 1108 edge swaps, 39 node relocations (volume = 5.98263e-05): worst = 0.300099 / average = 0.784739 (Wall 0.0427045s, CPU 0.042704s)
+Info    : No ill-shaped tets in the mesh :-)
+[harness] 10 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : Done optimizing mesh (Wall 0.181672s, CPU 0.154701s)
+Info    : 13360 nodes 83048 elements
+Info    : Meshing 1D...
+Info    : [ 10%] Meshing curve 2 (Circle)
+Info    : [ 30%] Meshing curve 4 (Line)
+Info    : [ 30%] Meshing curve 5 (Line)
+Info    : [ 40%] Meshing curve 6 (Line)
+Info    : [ 50%] Meshing curve 7 (Line)
+Info    : [ 50%] Meshing curve 8 (Line)
+Info    : [ 60%] Meshing curve 9 (Line)
+Info    : [ 70%] Meshing curve 10 (Line)
+Info    : [ 70%] Meshing curve 11 (Line)
+Info    : [ 80%] Meshing curve 12 (Line)
+Info    : [ 90%] Meshing curve 13 (Line)
+Info    : [ 90%] Meshing curve 14 (Line)
+Info    : [100%] Meshing curve 15 (Line)
+Info    : Done meshing 1D (Wall 0.0012291s, CPU 0.001078s)
+Info    : Meshing 2D...
+Info    : [  0%] Meshing surface 1 (Sphere, Frontal-Delaunay)
+Info    : [ 20%] Meshing surface 2 (Plane, Frontal-Delaunay)
+Info    : [ 30%] Meshing surface 3 (Plane, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 4 (Plane, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 5 (Plane, Frontal-Delaunay)
+Info    : [ 80%] Meshing surface 6 (Plane, Frontal-Delaunay)
+Info    : [ 90%] Meshing surface 7 (Plane, Frontal-Delaunay)
+Info    : Done meshing 2D (Wall 0.194957s, CPU 0.194943s)
+Info    : Meshing 3D...
+Info    : 3D Meshing 2 volumes with 1 connected component
+Info    : Tetrahedrizing 4377 nodes...
+Info    : Done tetrahedrizing 4385 nodes (Wall 0.0713451s, CPU 0.071323s)
+Info    : Reconstructing mesh...
+Info    :  - Creating surface mesh
+Info    :  - Identifying boundary edges
+Info    :  - Recovering boundary
+Info    : Done reconstructing mesh (Wall 0.149427s, CPU 0.149398s)
+Info    : Found volume 1
+Info    : Found volume 2
+Info    : It. 0 - 0 nodes created - worst tet radius 11.1366 (nodes removed 0 0)
+Info    : It. 500 - 498 nodes created - worst tet radius 2.31938 (nodes removed 0 2)
+Info    : It. 1000 - 998 nodes created - worst tet radius 1.91146 (nodes removed 0 2)
+Info    : It. 1500 - 1498 nodes created - worst tet radius 1.70789 (nodes removed 0 2)
+Info    : It. 2000 - 1998 nodes created - worst tet radius 1.56893 (nodes removed 0 2)
+Info    : It. 2500 - 2498 nodes created - worst tet radius 1.46767 (nodes removed 0 2)
+Info    : It. 3000 - 2998 nodes created - worst tet radius 1.3966 (nodes removed 0 2)
+Info    : It. 3500 - 3498 nodes created - worst tet radius 1.33482 (nodes removed 0 2)
+Info    : It. 4000 - 3998 nodes created - worst tet radius 1.28386 (nodes removed 0 2)
+Info    : It. 4500 - 4498 nodes created - worst tet radius 1.23672 (nodes removed 0 2)
+Info    : It. 5000 - 4998 nodes created - worst tet radius 1.19827 (nodes removed 0 2)
+Info    : It. 5500 - 5498 nodes created - worst tet radius 1.16389 (nodes removed 0 2)
+Info    : It. 6000 - 5998 nodes created - worst tet radius 1.15678 (nodes removed 0 2)
+Info    : It. 6500 - 6498 nodes created - worst tet radius 1.12133 (nodes removed 0 2)
+Info    : It. 7000 - 6998 nodes created - worst tet radius 1.08181 (nodes removed 0 2)
+Info    : It. 7500 - 7498 nodes created - worst tet radius 1.05738 (nodes removed 0 2)
+Info    : It. 8000 - 7998 nodes created - worst tet radius 1.03658 (nodes removed 0 2)
+Info    : It. 8500 - 8498 nodes created - worst tet radius 1.01637 (nodes removed 0 2)
+Info    : 3D refinement terminated (13360 nodes total):
+Info    :  - 2 Delaunay cavities modified for star shapeness
+Info    :  - 2 nodes could not be inserted
+Info    :  - 75374 tetrahedra created in 0.839481 sec. (89786 tets/s)
+Info    : 0 node relocations
+Info    : Done meshing 3D (Wall 1.22142s, CPU 1.22126s)
+[harness] 13 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 405 edge swaps, 19 node relocations (volume = 4.17365e-06): worst = 0.26774 / average = 0.78929 (Wall 0.0127609s, CPU 0.012761s)
+Info    : 407 edge swaps, 20 node relocations (volume = 4.17365e-06): worst = 0.26774 / average = 0.789311 (Wall 0.0151922s, CPU 0.015194s)
+Info    : No ill-shaped tets in the mesh :-)
+[harness] 22 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 1099 edge swaps, 36 node relocations (volume = 5.98263e-05): worst = 0.226447 / average = 0.784672 (Wall 0.0349633s, CPU 0.034964s)
+Info    : 1108 edge swaps, 39 node relocations (volume = 5.98263e-05): worst = 0.300099 / average = 0.784739 (Wall 0.0426954s, CPU 0.042697s)
+Info    : No ill-shaped tets in the mesh :-)
+[harness] 10 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : Done optimizing mesh (Wall 0.17234s, CPU 0.172336s)
+Info    : 13360 nodes 83048 elements
+Info    : Meshing 1D...
+Info    : [ 10%] Meshing curve 2 (Circle)
+Info    : [ 30%] Meshing curve 4 (Line)
+Info    : [ 30%] Meshing curve 5 (Line)
+Info    : [ 40%] Meshing curve 6 (Line)
+Info    : [ 50%] Meshing curve 7 (Line)
+Info    : [ 50%] Meshing curve 8 (Line)
+Info    : [ 60%] Meshing curve 9 (Line)
+Info    : [ 70%] Meshing curve 10 (Line)
+Info    : [ 70%] Meshing curve 11 (Line)
+Info    : [ 80%] Meshing curve 12 (Line)
+Info    : [ 90%] Meshing curve 13 (Line)
+Info    : [ 90%] Meshing curve 14 (Line)
+Info    : [100%] Meshing curve 15 (Line)
+Info    : Done meshing 1D (Wall 0.00149499s, CPU 0.001355s)
+Info    : Meshing 2D...
+Info    : [  0%] Meshing surface 1 (Sphere, Frontal-Delaunay)
+Info    : [ 20%] Meshing surface 2 (Plane, Frontal-Delaunay)
+Info    : [ 30%] Meshing surface 3 (Plane, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 4 (Plane, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 5 (Plane, Frontal-Delaunay)
+Info    : [ 80%] Meshing surface 6 (Plane, Frontal-Delaunay)
+Info    : [ 90%] Meshing surface 7 (Plane, Frontal-Delaunay)
+Info    : Done meshing 2D (Wall 0.203626s, CPU 0.2036s)
+Info    : Meshing 3D...
+Info    : 3D Meshing 2 volumes with 1 connected component
+Info    : Tetrahedrizing 4377 nodes...
+Info    : Done tetrahedrizing 4385 nodes (Wall 0.0763866s, CPU 0.076386s)
+Info    : Reconstructing mesh...
+Info    :  - Creating surface mesh
+Info    :  - Identifying boundary edges
+Info    :  - Recovering boundary
+Info    : Done reconstructing mesh (Wall 0.163992s, CPU 0.163989s)
+Info    : Found volume 1
+Info    : Found volume 2
+Info    : It. 0 - 0 nodes created - worst tet radius 11.1366 (nodes removed 0 0)
+Info    : It. 500 - 498 nodes created - worst tet radius 2.31938 (nodes removed 0 2)
+Info    : It. 1000 - 998 nodes created - worst tet radius 1.91146 (nodes removed 0 2)
+Info    : It. 1500 - 1498 nodes created - worst tet radius 1.70789 (nodes removed 0 2)
+Info    : It. 2000 - 1998 nodes created - worst tet radius 1.56893 (nodes removed 0 2)
+Info    : It. 2500 - 2498 nodes created - worst tet radius 1.46767 (nodes removed 0 2)
+Info    : It. 3000 - 2998 nodes created - worst tet radius 1.3966 (nodes removed 0 2)
+Info    : It. 3500 - 3498 nodes created - worst tet radius 1.33482 (nodes removed 0 2)
+Info    : It. 4000 - 3998 nodes created - worst tet radius 1.28386 (nodes removed 0 2)
+Info    : It. 4500 - 4498 nodes created - worst tet radius 1.23672 (nodes removed 0 2)
+Info    : It. 5000 - 4998 nodes created - worst tet radius 1.19827 (nodes removed 0 2)
+Info    : It. 5500 - 5498 nodes created - worst tet radius 1.16389 (nodes removed 0 2)
+Info    : It. 6000 - 5998 nodes created - worst tet radius 1.15678 (nodes removed 0 2)
+Info    : It. 6500 - 6498 nodes created - worst tet radius 1.12133 (nodes removed 0 2)
+Info    : It. 7000 - 6998 nodes created - worst tet radius 1.08181 (nodes removed 0 2)
+Info    : It. 7500 - 7498 nodes created - worst tet radius 1.05738 (nodes removed 0 2)
+Info    : It. 8000 - 7998 nodes created - worst tet radius 1.03658 (nodes removed 0 2)
+Info    : It. 8500 - 8498 nodes created - worst tet radius 1.01637 (nodes removed 0 2)
+Info    : 3D refinement terminated (13360 nodes total):
+Info    :  - 2 Delaunay cavities modified for star shapeness
+Info    :  - 2 nodes could not be inserted
+Info    :  - 75374 tetrahedra created in 0.83728 sec. (90022 tets/s)
+Info    : 0 node relocations
+Info    : Done meshing 3D (Wall 1.23501s, CPU 1.23106s)
+[harness] 13 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 405 edge swaps, 19 node relocations (volume = 4.17365e-06): worst = 0.26774 / average = 0.78929 (Wall 0.0104866s, CPU 0.010487s)
+Info    : 407 edge swaps, 20 node relocations (volume = 4.17365e-06): worst = 0.26774 / average = 0.789311 (Wall 0.012748s, CPU 0.012749s)
+Info    : No ill-shaped tets in the mesh :-)
+[harness] 22 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 1099 edge swaps, 36 node relocations (volume = 5.98263e-05): worst = 0.226447 / average = 0.784672 (Wall 0.0366922s, CPU 0.036691s)
+Info    : 1108 edge swaps, 39 node relocations (volume = 5.98263e-05): worst = 0.300099 / average = 0.784739 (Wall 0.0446348s, CPU 0.044635s)
+Info    : No ill-shaped tets in the mesh :-)
+[harness] 10 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : Done optimizing mesh (Wall 0.175609s, CPU 0.175606s)
+Info    : 13360 nodes 83048 elements
+2026-09-23 14:04:12.474 (   1.632s) [    79349AC4C140]vtkXOpenGLRenderWindow.:1450  WARN| bad X server connection. DISPLAY=
+/workspace/src/fem_em_solver/post/setup_figure.py:315: PyVistaFutureWarning: The default value of `algorithm` for the filter
+`UnstructuredGrid.extract_surface` will change in the future. It currently defaults to
+`'dataset_surface'`, but will change to `None`. Explicitly set the `algorithm` keyword to
+silence this warning.
+  surface = part.extract_surface() if tdim == 3 else part
+[setup-figure] wrote /workspace/examples/materials/figures/materials_02_lossy_sphere_sar_setup.png (468 KiB; regions 1=sphere (lossy dielectric), 2=air)
+
+[solve] 44.2 s for three solves (sigma = 0.05, 0.57, 0.0 S/m) at 74020 cells
+
+[sigma = 0.05 S/m] |k_in|R = 0.1194, closed-form SAR = 3.410534e-08 W/kg, measured mean SAR = 3.527226e-08 W/kg (3.422% vs 10% bound), E_z spread = 0.067% (bound 2%), Im/Re E_z measured 0.1752 vs closed 0.1755
+
+[sigma = 0.57 S/m] |k_in|R = 0.1790, closed-form SAR = 8.008354e-08 W/kg, measured mean SAR = 8.291558e-08 W/kg (3.536% vs 10% bound), E_z spread = 0.107% (bound 2%), Im/Re E_z measured 1.9900 vs closed 2.0011
+
+[control 1] two-sigma ratio: FEM 2.3507, closed form 2.3481, sigma-blind 11.4000 => separation 4.850x (ceiling 4.855x, module's own arithmetic, printed not asserted)
+[control 2] sigma = 0 (vacuum): dissipated_power_w = 0.000000e+00 W, mean SAR = 0.000000e+00 W/kg
+
+[write] materials_02_lossy_sphere_sar_combined.xdmf: SAR_pointwise (DG0, sigma=0.57), SAR_closed_form (DG0 constant on sphere cells), CellTags
+[plan record] fine-rung mean-SAR error vs closed form -- printed 3.42% against plan record 3.42%, 3.54% against plan record 3.54% (assertion is only the 10% bound above, not these figures)
+
+EX-52 complete in 53.5 s. All anchors and both negative controls held.
+
+## Exit
+- Status: 0
+- Elapsed (s): 56
+- Filtered lines (gmsh optimisation chatter): 135

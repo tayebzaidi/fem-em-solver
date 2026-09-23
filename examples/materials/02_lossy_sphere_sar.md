@@ -45,6 +45,24 @@ refinement, which is not this example's job). Two conductivities,
 This example closes nothing new; it is a Phase-3 §5.4 ramp backfill for an
 already-closed gate.
 
+## Setup figure
+
+![mat:2 setup — imposed-field SAR on the lossy sphere (MAT-4 step 1 fixture)](figures/materials_02_lossy_sphere_sar_setup.png)
+
+*Left:* the fixture (`_solve_lossy_sphere` →
+`MeshGenerator.sphere_in_box_domain`) with the air box (tag `2`) hidden and
+the sphere (tag `1`, `SPHERE_TAG`) translucent blue — the same
+`sphere_in_box_domain` mesh `mri:2` already pictures, since both examples
+share the fixture. There is nothing else inside the sphere to reveal by the
+translucency here (no second conductor, no coil); it is drawn translucent by
+the same one-object-class convention. *Right:* the slice at `z = 0`, the
+mesh centre and the equatorial plane the interior `E_z` closed-form
+comparison (§1, §3 step 2) is made on — the sphere's cross-section sits
+centred in the square air-box cross-section, grey outside and blue inside.
+There is no second geometry to picture as a control — the in-fixture
+negative controls (§1, §3 steps 3–4: the two-sigma ratio and the `sigma = 0`
+vacuum solve) run on the same mesh, not a second one.
+
 ## 2. How to run it
 
 ```
