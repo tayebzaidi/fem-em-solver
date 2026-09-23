@@ -80,6 +80,26 @@ reported, and `MAT-6` gates on the filament form only.
 
 This example closes nothing; Phase-3 §5.4 backfill.
 
+## Setup figure
+
+![mat:1 setup — wire loop over a conductive half-space (MAT-6 W=0.15 fixture)](figures/materials_01_dodd_deeds_coil_loading_setup.png)
+
+*Left:* the fixture (`_build_fixture`, `MeshGenerator.loop_over_half_space_domain`)
+with the air box (tag `2`, `z > 0`) hidden and the lossy half-space slab
+(tag `3`, `z < 0`) translucent purple, so the wire loop sitting above it
+stays visible; the wire (tag `1`) is the `conductor` colour class, copper.
+*Right:* the slice at `x = 0`, the mesh centre — cutting through the loop's
+own vertical symmetry plane, air grey on the left (`z > 0`) and slab purple
+on the right (`z < 0`). The wire's two cross-sections at `y = ±a`
+(`a = FEM_LOOP_RADIUS = 0.04` m), `z = FEM_LIFTOFF = 0.02` m are only a few
+pixels at this scale; read them from where the triangulation grades down,
+just left of the slab/air interface at `z = 0`. That is the plane that shows the physics this example measures:
+the loop drives eddy currents into the slab surface immediately beneath it,
+and the loss lives in the thin skin-depth layer the slice panel's graded
+mesh resolves. There is no second geometry to picture as a control — the
+in-fixture negative control (§1, §3 step 5) is the same mesh at σ = 0, not
+a second mesh.
+
 ## 2. How to run it
 
 ```

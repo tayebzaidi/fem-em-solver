@@ -78,6 +78,7 @@ from fem_em_solver.io.paraview_utils import (  # noqa: E402
     adopt_host_ownership,
     write_xdmf_with_tags,
 )
+from fem_em_solver.post.setup_figure import write_setup_figure  # noqa: E402
 from fem_em_solver.utils.dodd_deeds import (  # noqa: E402
     coil_impedance_change,
     coil_impedance_change_finite_wire,
@@ -119,6 +120,7 @@ FINITE_WIRE_CORRECTION_RTOL = 1e-6
 MU0 = 4.0e-7 * np.pi
 
 OUTPUT_DIR = Path(__file__).resolve().parent / "paraview_output"
+FIGURE_DIR = Path(__file__).resolve().parent / "figures"  # committed, EX-57
 BASENAME = "materials_01_dodd_deeds_coil_loading"
 
 
@@ -231,6 +233,35 @@ def main() -> None:
         print(
             f"\n[mesh] {n_cells} cells built in {mesh_seconds:.1f} s", flush=True
         )
+
+    # Right after the mesh is built and its wall time captured, before any
+    # analysis or printed timer, so the render never folds into a printed
+    # record (`EX-57`). This is the fixture's only mesh: the wire loop above
+    # the lossy half-space at `MAT-6`'s W = 0.15 fixture; there is no second
+    # geometry to picture as a control (the free-solve control in this
+    # example is sigma = 0 on the same mesh, not a second mesh).
+    write_setup_figure(
+        msh,
+        cell_tags,
+        FIGURE_DIR / f"{BASENAME}_setup.png",
+        region_names={
+            WIRE_TAG: "wire (loop conductor)",
+            2: "air (z > 0)",
+            SLAB_TAG: "slab (lossy half-space, sigma = 100 S/m, z < 0)",
+        },
+        hide_tags=(2,),
+        translucent_tags=(SLAB_TAG,),
+        # Vertical plane through the mesh centre (x = 0) bisects the loop at
+        # y = +/- FEM_LOOP_RADIUS, z = FEM_LIFTOFF, showing the wire's two
+        # cross-sections sitting above the slab/air interface at z = 0 -
+        # the plane that shows where the eddy current concentrates.
+        slice_normal=(1.0, 0.0, 0.0),
+        title=(
+            "mat:1 - Dodd-Deeds coil loading: wire loop over a conductive "
+            "half-space (MAT-6 W=0.15 fixture)"
+        ),
+        comm=comm,
+    )
 
     # ---- the two solves: loaded (σ = 100) and free (σ = 0) ------------------
     e_loaded, j_prime, t_loaded = _solve_projected(
