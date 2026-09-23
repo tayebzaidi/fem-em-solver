@@ -37,6 +37,13 @@ unless fixing it is the task.
 | **Read the log as** | A **usable measurement with one spurious red.** All four rungs built and solved; the record-rung check, the imported `PORT-11` reciprocity / passivity / C4 gates on every rung, and the full readout all passed (`:8814–8817` and following). |
 | **Fixed by** | `OPS-62` (2026-09-22): the guard now counts unknowns via `_estimated_dofs`, and a control asserts that exact ladder shape with that window's own cell counts passes. Whether step 3e is re-run is a review's call, not this entry's. |
 
+### ⚙️ NOT A RED 2026-09-23 — `20260923T021343Z_OPS-60.log` is a sandbox docker-socket denial, not an `OPS-60` test failure
+
+| | |
+| --- | --- |
+| **Symptom** | `docs/testing/logs/20260923T021343Z_OPS-60.log` and its `test-results.md` row (`2026-09-23 02:13:44`, Status 1, 0 s) read like an `OPS-60` red. The log's only content is `permission denied while trying to connect to the docker API at unix:///var/run/docker.sock`. **No test ran, no container was entered**; it is evidence about the sandbox, not about the code or the image. Do not diagnose it. The same denial recurred for a subagent at 2026-09-23 ~02:2x, so container access from a sandboxed session was unavailable that night — `OPS-60`'s remaining green run and anything else needing the container must wait for a session with docker-socket access. |
+| **Cause** | The Bash sandbox in the interactive/subagent session had no access to `/var/run/docker.sock`. Environment boundary, operator's to change; log and row kept deliberately as the record of it. |
+
 ### 🟡 DELIBERATE 2026-09-21 (`OPS-60`, 04:30 implementer slot) — `tests/environment/test_scikit_rf_version.py` is red on the running image until the operator rebuilds it
 
 | | |
