@@ -114,7 +114,9 @@ that solves in the frequency domain needs the complex DolfinX build
   `examples/ansys_benchmarks/*/aed_results/`, `*/COMPARISON_private.md` and
   `docs/private/`; quote none of them (R/X/ΔZ, tet counts, passes, energy
   errors, timings) in plan annotations, journals or commit messages — the
-  qualitative verdict (agree / disagree / inconclusive) is all that goes public.
+  qualitative verdict (agree / disagree / inconclusive) goes public, and
+  (operator ruling 2026-09-24) so may a **relative agreement level** — "agrees
+  to within x %", our-vs-AED gap in % — though never the AED value itself.
 - Commit code, tests, harness logs, and PROJECT_PLAN/known-issues updates
   together.
 - The project permission allowlist (.claude/settings.json) funnels all compute

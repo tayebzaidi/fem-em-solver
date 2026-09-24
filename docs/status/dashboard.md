@@ -24,16 +24,10 @@ page is a read-only digest for the human operator.
 
 ## Waiting on you
 
-1. 🔴 **Privacy, before the next push — four places.** *(Carried.)* (a) the
-   `ANS-2` adjudication commits (`1f3b563`, `e4697e9`, `f5759f5`, `9315634`)
-   state *relative agreement levels* against HFSS in tracked files; (b) the §7
-   `ANS-3` row's preliminary paragraph (`114db4c`); (c) the ours-vs-AED gap
-   percentages in `998edf9`'s diff; (d) the `OPS-61` row and the 09-20
-   version of this page (`9a1f37a`) give a relative size for the `ANS-4` /
-   `ANS-6` self-class offset. No raw AED value is in any tracked file. The
-   reviews change nothing and repeat no level: **either confirm that a
-   relative level is publishable (and the Privacy clause gets a sentence
-   saying so) or redact to the bare verdict before pushing.**
+1. ✅ **Privacy — resolved 2026-09-24 (operator):** relative agreement
+   levels against AED are publishable; the Privacy clause in `CLAUDE.md`
+   and `weekly-review.md` now says so. The four flagged places stand as
+   written; raw AED values stay private. Drop this item at the next review.
 2. 🟠 **Re-run `scripts/testing/install_git_hooks.sh` once** *(carried from
    `OPS-58` ✅)* — `.git/hooks` is untracked and not agent-writable; this adds
    the `commit-msg` hook beside `pre-commit`.

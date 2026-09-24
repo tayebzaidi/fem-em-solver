@@ -199,6 +199,8 @@ mitigations.
      qualitative verdict** (agree / disagree / inconclusive, and what it
      decides) into PROJECT_PLAN.md, the dashboard and the commit message —
      no AED R/X/ΔZ values, tet counts, pass counts, energy errors or timings.
+     A relative agreement level (our-vs-AED difference in %, "within x %")
+     may go public with the verdict (operator ruling 2026-09-24).
    - *Adjudicate:* if any case gained AED numbers from the human
      operator since last week, adjudicate them now — agreements promote into
      §7 gates with the AED value as the reference; disagreements open a
