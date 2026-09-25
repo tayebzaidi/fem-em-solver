@@ -28,6 +28,16 @@ unless fixing it is the task.
 
 ## Failing tests
 
+### 🟡 OPEN 2026-09-25 (`GEO-34` step 1b, §9 item 40, 04:30 CDT implementer slot) — on the STEP-imported F-small birdcage, `PORT-9`'s C4 gate (iii′) misses: the Z class spreads are 7–100× the primitive mesh's
+
+| | |
+| --- | --- |
+| **Test** | `tests/mesh/test_step_import_four_port.py::test_iii_c4_classes_and_separation` (`FEM_EM_GEO34_STEP1B=1`), on branch `attempt/GEO-34-step1b-20260925T094541Z` (`92d03fa`), parent `main` `8643f53`. Not on `main`. |
+| **Symptom** | `AssertionError: self class spreads 3.3151%` (`20260925T094541Z_GEO-34-step1b.log:5543`). Spreads: self 3.3151 %, adjacent 1.1102 %, opposite 2.2713 %, all against the unmoved 0.5 % `ADJACENT_SPREAD_BAND`. Pooled 10.1158 % ⇒ separation 3.0514× against the 10× floor. On the primitive mesh the same module (rule (a), `20260925T094757Z_GEO-34-step1b-ruleA.log`) reads 0.0553 / 0.0353 / 0.0214 % and 166.6766×. The other anchors pass on the import: (iv) azimuths 0/90/180/270° exact (err 0.000e+00); (i) ‖S − Sᵀ‖/‖S‖ = 1.897e-14; (ii) σ_max 0.999992218, column sums 0.7634 / 0.7865 / 0.7627 / 0.7871. |
+| **Cause** | Not diagnosed. The pattern is two-fold, not random: Z₁₁ ≈ Z₃₃ ≈ 23.13–23.15 Ω, Z₂₂ ≈ Z₄₄ ≈ 22.36–22.38 Ω, so the x-axis legs and the y-axis legs differ. The narrowed sheets are not congruent either: 26 / 26 / 29 / 26 facets, `w = A/h` 7.264 / 7.294 / 7.508 / 7.294 mm (`:3667–3670`). ‖Z − Zᵀ‖/‖Z‖ = 6.78e-3 against 8.8e-5 on the primitive mesh (`:3681`). **Leading hypothesis:** the STEP → OCC fragment → mesh path loses the rotational congruence of the port-box triangulation that `GEO-19` step B's snapped local-frame construction gives the primitive mesh. The `f = 0.5` interior-width filter then picks different facet sets per port. |
+| **Not affected** | Step 1a's mesh-level gates (tag census, sheet area, CAD mass). The primitive `PORT-9` gates (rule (a) green, every digit unchanged). The P2/P3-swapped negative control, which fails pre-gate (iv) at P2 and P3 exactly, as asserted. |
+| **Unblock condition** | A review decision on the next probe (attempts.md 2026-09-25 GEO-34 step 1b). For example: measure per-port sheet triangulations on the import, or give the import config per-port-box sizing / a `GEO-32`-style congruent sheet cut, then re-run the parked module. Bands do not move. |
+
 ### 🟡 OPEN 2026-09-25 (03:00 daily review, from the `log-pathologist` reading of `20260925T070008Z_ANS-2-step4.log`) — the `ans:2` example prints ASSERTED for three checks it never runs, and its tracked text quotes an AED figure
 
 | | |
