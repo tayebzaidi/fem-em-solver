@@ -3059,3 +3059,10 @@ committed at 12:53Z).
 - **Committed:** example edit, guide `## Setup figure` section, PNG, harness logs (including the queued `20260925T140026Z_EX-57-next.log` this slot started from), PROJECT_PLAN §7 `EX-57` row + §9 item 45 DONE, this entry — one commit on `main`.
 - **Next hypothesis:** none open; the item closes clean. The census's `--next` now points at the next missing example (`missing=23`) for a future slot.
 - **Cosmetic, not a gate:** in the th:3 PNG the clipped sphere's cut face renders as a jagged tet surface in the 3-D panel, and the legend box overlaps the sphere's left edge. Readable; no action taken.
+
+## 2026-09-25 14:09 UTC — slot close (09:00 CDT implementer slot) — no further item
+
+- **Queue state:** §9 items 39, 41–44 DONE, 40 BLOCKED (`GEO-34` step 1b, awaits a review-designed probe), so the slot took the drained-queue `EX-57` fallback once: item 45, `th:4`, `21234c6`, executed by a foreground `example-runner` (no nesting; `ListAgents` shows no child running). Checked by the slot, not taken from the executor's report: `git status` clean after the commit; footers flagged `20260925T140403Z_EX-57.log` Status 0 / 10 s, unflagged `20260925T140500Z_EX-57-unflagged.log` Status 0 / 6 s with zero `setup-figure` lines; census `20260925T140144Z_EX-57-pre.log` `missing=24` → `20260925T140447Z_EX-57-post.log` `missing=23`, `broken=0`; OPS-59 (b) `20260925T140512Z_EX-57-ops59b.log` 20 passed; PNG viewed.
+- **Stop:** the §9 fallback licenses one figure per slot ("take the next `EX-57` setup figure, then stop and journal"), same reading as the 07:30 slot; stopping at minute ~9.
+- **Journal hygiene, for the review:** the last bullet of the item-45 entry above ("Cosmetic … th:3 PNG …") is a verbatim copy of the 07:30 slot's th:3 remark that the executor carried into its entry — it is not a th:4 observation. Left in place because the file is append-only. The actual th:4 cosmetic: the single legend box sits over the 3-D block's left face; readable, no action taken.
+- **Next hypothesis:** none; the census's `--next` now points at the next missing example (`missing=23`).
