@@ -71,6 +71,8 @@ Asserted, all of it against those imported bands:
 | Mesh, total / phantom | 199 920 / 58 866, ratio 1.000000 | 1 % |
 | **Negative control** — mis-paired 1 g `(c_{k+2}; k)` | 87.0143 / 87.0546 / 87.0506 / 87.0592 % | asserted **≥ 10×** the 5 % band |
 
+Since `OPS-63` the script also asserts the checks the shared builders' printed blocks label ASSERTED: `PORT-9` reciprocity, passivity and Z class spreads (`RECIPROCITY_BAND`, `PASSIVITY_SIGMA_TOLERANCE`, `ADJACENT_SPREAD_BAND`), the 10 g ball containment inside `PHANTOM_RADIUS` and half of `PHANTOM_HEIGHT`, and the 10 g mis-paired control's sign against `C4_COVARIANCE_BAND`, all imported; its `[ANS-2] LABEL KEY` line says which ASSERTED labels in the log belong to the builders' pytest modules and which the script asserts itself.
+
 The negative control is what stops the C4 identity being vacuous: the
 *far-side* ball under the same drive misses by ~87 % where the cyclic pair
 misses by ~0.1 %, a separation of ≈ 17×. It is asserted as a **floor** (10× the

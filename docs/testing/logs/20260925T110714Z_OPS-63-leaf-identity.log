@@ -1,0 +1,48 @@
+# Test Run
+- Chunk: OPS-63-leaf-identity
+- Commit: a9ef2f89459447d70c4c2ca178e3bd434c2ead83
+- Time (UTC): 2026-09-25 11:07:15
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.5.1
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && source /usr/local/bin/dolfinx-complex-mode && D=examples/ansys_benchmarks/ans2_birdcage_coil_driven_sar_10MHz && PYTHONPATH=/workspace/src timeout -k 30 60 python3 /workspace/logs/ops63_cmp.py $D/metrics.json $D/metrics_h0.0025.json knob0.0025-vs-tracked && git -C /workspace status --porcelain $D'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 24
+drwxr-xr-x  3 taz5297 taz5297 4096 Sep 21 04:30 .
+drwxr-xr-x 17 taz5297 taz5297 4096 Sep 25 06:07 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  744 Sep 21 04:30 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 4275 Sep 13 19:19 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.5.1
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && source /usr/local/bin/dolfinx-complex-mode && D=examples/ansys_benchmarks/ans2_birdcage_coil_driven_sar_10MHz && PYTHONPATH=/workspace/src timeout -k 30 60 python3 /workspace/logs/ops63_cmp.py $D/metrics.json $D/metrics_h0.0025.json knob0.0025-vs-tracked && git -C /workspace status --porcelain $D'\'''
+[cmp knob0.0025-vs-tracked] residual .coverage.power_miss: 8.926193e-14 vs 2.786660e-14 — both ASSERTED <= 1e-10: PASS
+[cmp knob0.0025-vs-tracked] residual .coverage.mass_miss: 5.284662e-14 vs 5.284662e-14 — both ASSERTED <= 1e-10: PASS
+[cmp knob0.0025-vs-tracked] leaves compared: 145 (123 numeric primary)
+[cmp knob0.0025-vs-tracked] worst PRIMARY relative deviation 9.646362e-11 at .pointwise.0.sar_w_per_kg[1] (ASSERTED <= imported EXACT_IDENTITY_RTOL 1e-10)
+[cmp knob0.0025-vs-tracked] worst DERIVED (C4-miss) relative deviation 4.950585e-08 at .ten_pairs.1 — REPORTED; each value gated at the imported 5% C4 band / 50% control floor instead
+[cmp knob0.0025-vs-tracked] PASS — digit-identical inside 1e-10
+fatal: detected dubious ownership in repository at '/workspace'
+To add an exception for this directory, call:
+
+	git config --global --add safe.directory /workspace
+
+## Exit
+- Status: 128
+- Elapsed (s): 2
+- Filtered lines (gmsh optimisation chatter): 0
