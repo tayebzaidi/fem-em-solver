@@ -10,7 +10,8 @@ review's to write (docs/automation/weekly-review.md step 2b). The point of
 the script is that the review spends its tokens on that judgement and not on
 counting rows.
 
-Read-only, no solves, no network, stdlib only. Every figure names its source.
+Read-only, no solves, no network, stdlib only. Every figure names its source;
+the token table reads Claude Code's own session transcripts, outside the repo.
 A figure that cannot be measured is printed as `unavailable` with the reason —
 never estimated, never omitted. Nothing here is a score, and three of these
 numbers are explicitly NOT success measures: commit count, queue depth and
@@ -20,6 +21,8 @@ from __future__ import annotations
 
 import argparse
 import datetime as dt
+import json
+import os
 import re
 import subprocess
 import sys
@@ -200,6 +203,95 @@ def attempts(since: dt.datetime) -> list[str]:
     return out
 
 
+# --- tokens (Claude Code session transcripts, outside the repo) ---------------
+# Every session — headless `claude -p` included — writes a JSONL transcript to
+# <config>/projects/<repo path with non-alphanumerics as '-'>/<session>.jsonl,
+# its subagents to <session>/subagents/*.jsonl. Assistant lines carry the
+# API's `usage`; a streamed message repeats its id, so the last line per id wins.
+PROMPT_KINDS = (("Scheduled daily review", "daily-review"),
+                ("Scheduled weekly planning review", "weekly-review"),
+                ("Scheduled implementer run", "implementer"))
+USAGE_KEYS = (("input_tokens", "Input Mtok"), ("cache_creation_input_tokens", "Cache write Mtok"),
+              ("cache_read_input_tokens", "Cache read Mtok"), ("output_tokens", "Output Mtok"))
+
+
+def transcript_dir() -> Path:
+    base = Path(os.environ.get("CLAUDE_CONFIG_DIR", Path.home() / ".claude"))
+    return base / "projects" / re.sub(r"[^A-Za-z0-9]", "-", str(ROOT))
+
+
+def session_kind(path: Path) -> str:
+    with path.open(encoding="utf-8", errors="replace") as fh:
+        for line in fh:
+            try:
+                d = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if d.get("type") != "user":
+                continue
+            c = d.get("message", {}).get("content")
+            text = c if isinstance(c, str) else " ".join(
+                b.get("text", "") for b in c or [] if isinstance(b, dict))
+            return next((k for p, k in PROMPT_KINDS if text.startswith(p)), "interactive")
+    return "interactive"
+
+
+def tokens(since: dt.datetime) -> list[str]:
+    tdir = transcript_dir()
+    if not tdir.is_dir():
+        return [f"- unavailable — no transcript directory `{tdir}` (run this on the automation box, "
+                "as the user the cron sessions run as)"]
+    by_kind: dict[str, Counter] = defaultdict(Counter)
+    by_model: dict[str, Counter] = defaultdict(Counter)
+    sessions_seen: dict[str, set] = defaultdict(set)
+    for main in tdir.glob("*.jsonl"):
+        if main.stat().st_mtime < since.timestamp():
+            continue
+        kind = session_kind(main)
+        last: dict[str, tuple[str, dict]] = {}
+        for f in [main, *sorted((tdir / main.stem).glob("subagents/*.jsonl"))]:
+            with f.open(encoding="utf-8", errors="replace") as fh:
+                for line in fh:
+                    try:
+                        d = json.loads(line)
+                        when = dt.datetime.fromisoformat(d["timestamp"].replace("Z", "+00:00"))
+                    except (json.JSONDecodeError, KeyError, ValueError):
+                        continue
+                    m = d.get("message") or {}
+                    if when < since or not m.get("usage") or not m.get("id") or m.get("model") == "<synthetic>":
+                        continue
+                    last[f"{f.name}:{m['id']}"] = (m.get("model", "?"), m["usage"])
+        if not last:
+            continue
+        sessions_seen[kind].add(main.stem)
+        for model, u in last.values():
+            for key, _ in USAGE_KEYS:
+                by_kind[kind][key] += u.get(key) or 0
+                by_model[model][key] += u.get(key) or 0
+    if not by_kind:
+        return [f"- no transcript messages in this interval (`{tdir}`)"]
+
+    def mtok(c: Counter) -> str:
+        return " | ".join(f"{c[k] / 1e6:.2f}" for k, _ in USAGE_KEYS)
+
+    head = " | ".join(label for _, label in USAGE_KEYS)
+    out = [f"| Session kind | Sessions | {head} |", "|---|---:|" + "---:|" * len(USAGE_KEYS)]
+    for kind in sorted(by_kind):
+        out.append(f"| {kind} | {len(sessions_seen[kind])} | {mtok(by_kind[kind])} |")
+    total = sum(by_kind.values(), Counter())
+    out.append(f"| **all** | {sum(len(s) for s in sessions_seen.values())} | {mtok(total)} |")
+    out += ["", f"| Model | {head} |", "|---|" + "---:|" * len(USAGE_KEYS)]
+    for model in sorted(by_model):
+        out.append(f"| `{model}` | {mtok(by_model[model])} |")
+    out.append("")
+    out.append("- Source: Claude Code transcripts in `" + str(tdir) + "`, subagents included and "
+               "attributed to the session that spawned them; kind from the session's first prompt "
+               "(the launchers' `-p` text), everything else is `interactive`. Messages are counted by "
+               "their own timestamp, so a session straddling the interval start is split. Tokens only — "
+               "no prices: what a token costs depends on the plan, and this script does not judge.")
+    return out
+
+
 # --- git-derived --------------------------------------------------------------
 def git_counts(since: dt.datetime) -> list[str]:
     iso = since.isoformat()
@@ -236,17 +328,14 @@ def main() -> int:
           f"({days:.2f} days; {how})\n")
     print("*Generated by `scripts/automation/weekly_counts.py`; counts only, no judgement.*\n")
     for title, fn in (("Sessions and lost slots", sessions), ("Compute", compute),
-                      ("Attempts journal", attempts), ("Defects and parked work", git_counts)):
+                      ("Attempts journal", attempts), ("Defects and parked work", git_counts),
+                      ("Tokens", tokens)):
         print(f"**{title}**\n")
         try:
             print("\n".join(fn(since)))
         except Exception as exc:  # one broken source must not take the others with it
             print(f"- unavailable — `{fn.__name__}` failed: {type(exc).__name__}: {exc}")
         print()
-    print("**Tokens**\n")
-    print("- unavailable — the launchers run `claude -p` in text mode, which records no usage. "
-          "Session wall-minutes above are the only proxy, and a poor one. "
-          "Recording real usage means `--output-format json` in the launchers: an operator decision, not made.")
     return 0
 
 

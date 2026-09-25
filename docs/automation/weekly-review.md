@@ -86,8 +86,9 @@ mitigations.
    and read the block from the log it names. (Through the harness because a
    bare `python3` is not on the headless allowlist and would be refused; the
    log is also the durable record of the counts.) It is
-   read-only, < 1 s, no solves — counts from the launcher logs,
-   `test-results.md`, both ledgers, `attempts.md` and `git`, over the same
+   read-only, ~1 s, no solves — counts from the launcher logs,
+   `test-results.md`, both ledgers, `attempts.md`, `git` and (since
+   2026-09-24) Claude Code's session transcripts for tokens, over the same
    "since the last weekly-review commit" interval as step 1 (this session's
    own commits, younger than 12 h, are skipped). **Append**
    one section headed `## YYYY-MM-DD` to `docs/status/weekly-progress.md`:
