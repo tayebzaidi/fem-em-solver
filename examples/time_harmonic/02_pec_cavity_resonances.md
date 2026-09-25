@@ -66,6 +66,24 @@ record, of which 0.6 s is the eigensolve; the 720-cell mesh is deliberately
 tiny, because closed-form accuracy here is set by the (6, 5, 4) element count
 the gate chose, not by throwing cells at it.
 
+## Setup figure
+
+![th:2 setup — the 1.0x0.8x0.6 m PEC box, (6,5,4) mesh](figures/time_harmonic_02_pec_cavity_mode_setup.png)
+
+`examples/time_harmonic/figures/time_harmonic_02_pec_cavity_mode_setup.png`.
+This is a plain box domain with **no cell-tag regions** — the fixture is a
+single lossless, source-free medium filling the whole 1.0 × 0.8 × 0.6 m box,
+bounded by the PEC wall condition `n × E = 0` on every face, so there is
+nothing to colour by region (and no field either: the helper draws the mesh,
+not a solved array) and none is invented here. The figure is rendered on the
+gate's own (6, 5, 4) mesh right after `solve_pec_cavity_modes` returns, the
+same mesh every frequency and every assertion in this example comes from. The
+3-D panel shows the single untagged volume (one colour, since there is only
+one region); the slice panel cuts normal to y through the box centre
+(0.5, 0.4, 0.3), i.e. the x–z plane — the plane that shows the fundamental
+mode's (TE₁₀₁) half-wave structure, which runs along x and along z and not
+along y (step 5 of §3 below), with the (6, 5, 4) mesh's edges visible.
+
 ## 3. How to analyze it, step by step
 
 **Step 1 — the four frequencies against their closed forms.** This is the

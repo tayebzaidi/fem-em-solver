@@ -84,6 +84,7 @@ from fem_em_solver.io.paraview_utils import (
     adopt_host_ownership,
     write_xdmf_with_tags,
 )
+from fem_em_solver.post.setup_figure import write_setup_figure
 
 # The gated fixture lives in the test that closed `TH-9`; the §7 `EX-5` plan
 # requires importing it rather than restating it. The runner puts only ``src``
@@ -111,6 +112,7 @@ RECORD_NULL_CLUSTER_RATIO = 3.2e-15
 RECORD_NULL_COUNT = 8
 
 OUTPUT_DIR = Path(__file__).resolve().parent / "paraview_output"
+FIGURE_DIR = Path(__file__).resolve().parent / "figures"  # committed, EX-57
 BASENAME = "time_harmonic_02_pec_cavity_mode"
 
 
@@ -195,6 +197,29 @@ def main() -> None:
         return_modes=True,
     )
     solve_seconds = time.perf_counter() - solve_started
+
+    # EX-57 setup figure: `solve_pec_cavity_modes` builds a plain box mesh
+    # (`create_box`, no cell_tags) -- this is a lossless, source-free PEC box,
+    # one homogeneous region, nothing to threshold or colour by (the helper
+    # offers no field-colouring mode, so the untagged mesh itself is drawn).
+    # Sliced normal to y (the x-z plane): the fundamental (mode 1, TE_101)
+    # has its half-wave structure along x and along z and none along y (step
+    # 5 of the guide), so this is the one plane that shows that pattern's
+    # axes together. Placed after `solve_seconds` is captured so the render
+    # never folds into the printed [solve] timing. No-op unless
+    # FEM_EM_SETUP_FIGURES=1.
+    write_setup_figure(
+        spectrum.mesh,
+        None,
+        FIGURE_DIR / f"{BASENAME}_setup.png",
+        region_names={0: "box (lossless PEC cavity, no cell-tag regions)"},
+        slice_normal=(0.0, 1.0, 0.0),
+        title=(
+            "th:2 -- PEC cavity resonances: 1.0x0.8x0.6 m box, "
+            "(6,5,4) mesh, n x E = 0 on every face"
+        ),
+        comm=comm,
+    )
 
     rel_error = np.abs(spectrum.frequencies_hz - analytic) / analytic
 
