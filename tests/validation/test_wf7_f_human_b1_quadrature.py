@@ -61,8 +61,14 @@ def _step2_on() -> bool:
     return os.environ.get(STEP2_ENV, "").strip() == "1"
 
 
-def _build_f_human(comm):
-    """The F-human context in the dict shape ``_build_ring_quadrature_case`` reads."""
+def _build_f_human(comm, phantom_resolution=None):
+    """The F-human context in the dict shape ``_build_ring_quadrature_case`` reads.
+
+    ``phantom_resolution`` (additive, `WF-7` step 3, 2026-09-25): ``None`` (the
+    default) adds no key to the generator kwargs — byte-identical to step 2; a
+    float is forwarded to ``birdcage_port_domain(phantom_resolution=...)`` to
+    refine the phantom only (the 10 g SAR module builds at 0.0075 m).
+    """
     from fem_em_solver.core import (
         HomogeneousMaterial,
         TimeHarmonicProblem,
@@ -97,6 +103,8 @@ def _build_f_human(comm):
 
     kwargs = _params(F_HUMAN_RING_RADIUS, scale_sizing=False)
     kwargs["ring_sheet_orientation"] = "longitudinal"
+    if phantom_resolution is not None:
+        kwargs["phantom_resolution"] = float(phantom_resolution)
     msh, cell_tags, _facets, diag = MeshGenerator.birdcage_port_domain(
         comm=comm, return_diagnostics=True, **kwargs
     )
