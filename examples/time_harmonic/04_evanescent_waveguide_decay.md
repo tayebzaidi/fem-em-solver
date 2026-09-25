@@ -67,6 +67,23 @@ example closes nothing; Phase-2 §5.4 backfill.
 real build raises. Tier: **standard**; 7 s harness-wall / 5.1 s in-example on
 record for the single 41 472-cell solve.
 
+## Setup figure
+
+![th:4 setup — evanescent TE10 waveguide below cutoff (TH-7 gate fixture)](figures/time_harmonic_04_evanescent_waveguide_setup.png)
+
+`examples/time_harmonic/figures/time_harmonic_04_evanescent_waveguide_setup.png`.
+*Left:* the fixture (`_solve` → `dmesh.create_box`) — a plain PEC-walled box
+with **no cell tags at all**: one lossless homogeneous medium (`εᵣ = μᵣ = 1`,
+`σ = 0`) fills the whole guide, so there is nothing to hide and nothing to draw
+translucent here (no second conductor, no phantom, no port). *Right:* the
+slice at `y = B_M/2`, the mesh centre — the plane through the guide's own
+long axis, which carries both quantities the physics is read off: `z` is the
+propagation/decay axis the fitted `γ` is measured along (`e^{−γz}`), and `x` is
+the transverse direction the `sin(πx/a)` TE₁₀ half-arch spans, pinned to zero
+at the two PEC side walls. There is no second geometry to picture as a
+control — the negative control (step 4 below) is the cited `TH-7` frequency
+sweep on this same fixture, not re-run here, so nothing else is pictured.
+
 ## 3. How to analyze it, step by step
 
 **Step 1 — γ against `√(k_c² − k₀²)`.** This is the anchor:

@@ -84,6 +84,7 @@ from fem_em_solver.io.paraview_utils import (
     write_xdmf_with_tags,
 )
 from fem_em_solver.post.evaluation import evaluate_vector_field_parallel
+from fem_em_solver.post.setup_figure import write_setup_figure
 
 # The gated fixture lives in the test that closed `TH-7`; the §7 `EX-7` plan
 # requires importing it rather than restating it. The runner puts only ``src``
@@ -155,6 +156,7 @@ PROFILE_X_MAX_FRACTION = 0.88
 N_PROFILE = 25
 
 OUTPUT_DIR = Path(__file__).resolve().parent / "paraview_output"
+FIGURE_DIR = Path(__file__).resolve().parent / "figures"  # committed, EX-57
 BASENAME = "time_harmonic_04_evanescent_waveguide"
 
 
@@ -306,6 +308,24 @@ def main() -> None:
     solve_started = time.perf_counter()
     msh, fields, exact_ufl, n_cells = _solve()
     solve_seconds = time.perf_counter() - solve_started
+
+    # EX-57 setup figure: `_solve` builds a plain `dmesh.create_box` guide with
+    # no cell tags at all -- one lossless homogeneous medium bounded by PEC
+    # walls, so there is nothing to hide or make translucent. Sliced through
+    # y = B_M/2 (the plane normal to the b-dimension), which carries both axes
+    # the physics lives on: z is the propagation/decay axis (`e^{-gamma z}`)
+    # and x is the TE10 half-arch (`sin(pi x/a)`). Placed after `solve_seconds`
+    # is captured so the render never folds into the printed [solve] timing.
+    # No-op unless FEM_EM_SETUP_FIGURES=1.
+    write_setup_figure(
+        msh,
+        None,
+        FIGURE_DIR / f"{BASENAME}_setup.png",
+        region_names={0: "guide interior (no cell tags -- single lossless medium, eps_r=mu_r=1, sigma=0)"},
+        slice_normal=(0.0, 1.0, 0.0),
+        title="th:4 -- evanescent TE10 waveguide below cutoff, real decay not loss (TH-7 gate fixture)",
+        comm=comm,
+    )
 
     # ---- the anchor: fitted gamma vs sqrt(k_c^2 - k0^2) ---------------------
     points = _probe_points()
