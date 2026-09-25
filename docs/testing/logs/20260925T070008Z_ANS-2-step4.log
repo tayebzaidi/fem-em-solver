@@ -1,0 +1,2133 @@
+# Test Run
+- Chunk: ANS-2-step4
+- Commit: 42d7bba1413baa7b2164eb035c89a6df9de82da4
+- Time (UTC): 2026-09-25 07:00:09
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.5.1
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose --profile xl exec -T fem-em-solver-xl bash -lc 'cd /workspace && source /usr/local/bin/dolfinx-complex-mode && mkdir -p /workspace/logs && R=/workspace/logs/ans2-step4-raw.log && { echo [orphans-before]; pgrep -c python3; true; } > $R 2>&1; PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 FEM_EM_ANS2_PHANTOM_RESOLUTION=0.00125 timeout -k 60 7200 mpiexec -n 8 python3 examples/ansys_benchmarks/ans2_birdcage_coil_driven_sar_10MHz/02_birdcage_coil_driven_sar_10MHz.py >> $R 2>&1; rc=$?; { echo [orphans-after]; pgrep -c python3; true; } >> $R 2>&1; echo "[XL] memory.peak bytes:" >> $R; cat /sys/fs/cgroup/memory.peak >> $R; echo "[capture] rc=$rc" >> $R; cat $R; exit $rc'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 24
+drwxr-xr-x  3 taz5297 taz5297 4096 Sep 21 04:30 .
+drwxr-xr-x 17 taz5297 taz5297 4096 Sep 24 19:47 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  744 Sep 21 04:30 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 4275 Sep 13 19:19 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.5.1
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
+[harness] XL window started: row held in logs/xl-ledger.pending, folded into xl-ledger.md when the window ends
++ bash -lc 'docker compose --profile xl exec -T fem-em-solver-xl bash -lc '\''cd /workspace && source /usr/local/bin/dolfinx-complex-mode && mkdir -p /workspace/logs && R=/workspace/logs/ans2-step4-raw.log && { echo [orphans-before]; pgrep -c python3; true; } > $R 2>&1; PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 FEM_EM_ANS2_PHANTOM_RESOLUTION=0.00125 timeout -k 60 7200 mpiexec -n 8 python3 examples/ansys_benchmarks/ans2_birdcage_coil_driven_sar_10MHz/02_birdcage_coil_driven_sar_10MHz.py >> $R 2>&1; rc=$?; { echo [orphans-after]; pgrep -c python3; true; } >> $R 2>&1; echo "[XL] memory.peak bytes:" >> $R; cat /sys/fs/cgroup/memory.peak >> $R; echo "[capture] rc=$rc" >> $R; cat $R; exit $rc'\'''
+[orphans-before]
+0
+/workspace/examples/ansys_benchmarks/ans2_birdcage_coil_driven_sar_10MHz/02_birdcage_coil_driven_sar_10MHz.py:572: SyntaxWarning: invalid escape sequence '\|'
+  """
+/workspace/examples/ansys_benchmarks/ans2_birdcage_coil_driven_sar_10MHz/02_birdcage_coil_driven_sar_10MHz.py:572: SyntaxWarning: invalid escape sequence '\|'
+/workspace/examples/ansys_benchmarks/ans2_birdcage_coil_driven_sar_10MHz/02_birdcage_coil_driven_sar_10MHz.py:572: SyntaxWarning: invalid escape sequence '\|'
+  """
+  """
+/workspace/examples/ansys_benchmarks/ans2_birdcage_coil_driven_sar_10MHz/02_birdcage_coil_driven_sar_10MHz.py:572: SyntaxWarning: invalid escape sequence '\|'
+  """
+/workspace/examples/ansys_benchmarks/ans2_birdcage_coil_driven_sar_10MHz/02_birdcage_coil_driven_sar_10MHz.py:572: SyntaxWarning: invalid escape sequence '\|'
+  """
+/workspace/examples/ansys_benchmarks/ans2_birdcage_coil_driven_sar_10MHz/02_birdcage_coil_driven_sar_10MHz.py:572: SyntaxWarning: invalid escape sequence '\|'
+/workspace/examples/ansys_benchmarks/ans2_birdcage_coil_driven_sar_10MHz/02_birdcage_coil_driven_sar_10MHz.py:572: SyntaxWarning: invalid escape sequence '\|'
+  """
+  """
+/workspace/examples/ansys_benchmarks/ans2_birdcage_coil_driven_sar_10MHz/02_birdcage_coil_driven_sar_10MHz.py:572: SyntaxWarning: invalid escape sequence '\|'
+  """
+==============================================================================
+ANS-2 step 1 - coil-driven SAR, loaded 4-leg birdcage, 10 MHz (runnable half, SPEC rows 1-3, 7, 8)
+==============================================================================
+[ANS-2] fixture `GEO-18` gapped + sheeted birdcage, phantom loaded (conductor tag 1, phantom tag 3) on `GEO-27`'s phantom_resolution = 0.00125 m rung
+[ANS-2] basis: Nedelec first kind, degree 1 (N1curl), 6 unknowns/tet = HFSS Zero Order (20 unknowns/tet = First Order, the AED default, is the order-sensitivity column)
+[ANS-2] scope: rows 1-3, 7, 8.  Rows 4-6 held for step 2 (the sphere-vs-cube averaging systematic the SPEC pre-registers).  NO absolute-SAR, compliance, homogeneity, B1+, Larmor or quadrature claim from our side.
+[ANS-2 step 4] FEM_EM_ANS2_PHANTOM_RESOLUTION=0.00125 — running at phantom_resolution = 0.00125 m instead of the 0.0025 m record rung.  Outputs are resolution-tagged (metrics_h0.00125.json, ans2_birdcage_coil_driven_sar_10mhz_combined_h0p00125.xdmf) and COMPARISON.md / COMPARISON_private.md are NOT rewritten — the tracked comparison stays the 0.0025 rung's.
+[birdcage-mesh] fragment volumes=34 conductor=9.939059e-05(24p) air=1.118814e-02(1p) phantom=2.261947e-04(1p) port_P1_lower=7.840000e-07(1p) port_P2_lower=7.840000e-07(1p) port_P3_lower=7.840000e-07(1p) port_P4_lower=7.840000e-07(1p) port_P1_upper=7.840000e-07(1p) port_P2_upper=7.840000e-07(1p) port_P3_upper=7.840000e-07(1p) port_P4_upper=7.840000e-07(1p)
+[birdcage-mesh] port sheets (CAD) P1: 1 surface(s) area=1.120000000e-04 extents=(1.400020e-02, 2.000000e-07, 8.000200e-03) P2: 1 surface(s) area=1.120000000e-04 extents=(2.000000e-07, 1.400020e-02, 8.000200e-03) P3: 1 surface(s) area=1.120000000e-04 extents=(1.400020e-02, 2.000000e-07, 8.000200e-03) P4: 1 surface(s) area=1.120000000e-04 extents=(2.000000e-07, 1.400020e-02, 8.000200e-03)
+[birdcage-mesh] conductor grading: h_c=1.600000e-03 m over 40 surfaces, shell=1.200000e-02 m, h_global=1.500000e-02 m
+[birdcage-mesh] phantom sizing: h_p=1.250000e-03 m over r<=3.000000e-02 m, |z|<=4.000000e-02 m (+4.000e-05 m margin), h_global=1.500000e-02 m
+Info    : Meshing 1D...
+Info    : [  0%] Meshing curve 29 (Circle)
+Info    : [ 10%] Meshing curve 30 (Line)
+Info    : [ 10%] Meshing curve 31 (Circle)
+Info    : [ 10%] Meshing curve 32 (Line)
+Info    : [ 10%] Meshing curve 33 (Line)
+Info    : [ 10%] Meshing curve 34 (Line)
+Info    : [ 10%] Meshing curve 35 (Line)
+Info    : [ 10%] Meshing curve 36 (Line)
+Info    : [ 10%] Meshing curve 37 (Line)
+Info    : [ 10%] Meshing curve 38 (Line)
+Info    : [ 10%] Meshing curve 39 (Line)
+Info    : [ 10%] Meshing curve 40 (Line)
+Info    : [ 10%] Meshing curve 41 (Line)
+Info    : [ 10%] Meshing curve 42 (Line)
+Info    : [ 10%] Meshing curve 43 (Line)
+Info    : [ 10%] Meshing curve 44 (BSpline)
+Info    : [ 10%] Meshing curve 45 (Circle)
+Info    : [ 10%] Meshing curve 46 (BSpline)
+Info    : [ 10%] Meshing curve 47 (BSpline)
+Info    : [ 10%] Meshing curve 48 (BSpline)
+Info    : [ 20%] Meshing curve 49 (Line)
+Info    : [ 20%] Meshing curve 50 (Circle)
+Info    : [ 20%] Meshing curve 51 (Circle)
+Info    : [ 20%] Meshing curve 52 (Circle)
+Info    : [ 20%] Meshing curve 53 (BSpline)
+Info    : [ 20%] Meshing curve 54 (Line)
+Info    : [ 20%] Meshing curve 55 (Line)
+Info    : [ 20%] Meshing curve 56 (Circle)
+Info    : [ 20%] Meshing curve 57 (Circle)
+Info    : [ 20%] Meshing curve 58 (Circle)
+Info    : [ 20%] Meshing curve 59 (Circle)
+Info    : [ 20%] Meshing curve 60 (BSpline)
+Info    : [ 20%] Meshing curve 61 (Line)
+Info    : [ 20%] Meshing curve 62 (TrimmedCurve)
+Info    : [ 20%] Meshing curve 63 (TrimmedCurve)
+Info    : [ 20%] Meshing curve 64 (Line)
+Info    : [ 20%] Meshing curve 65 (Line)
+Info    : [ 20%] Meshing curve 66 (Line)
+Info    : [ 20%] Meshing curve 67 (Line)
+Info    : [ 20%] Meshing curve 68 (Line)
+Info    : [ 30%] Meshing curve 69 (Circle)
+Info    : [ 30%] Meshing curve 70 (BSpline)
+Info    : [ 30%] Meshing curve 71 (BSpline)
+Info    : [ 30%] Meshing curve 72 (BSpline)
+Info    : [ 30%] Meshing curve 73 (TrimmedCurve)
+Info    : [ 30%] Meshing curve 74 (TrimmedCurve)
+Info    : [ 30%] Meshing curve 75 (TrimmedCurve)
+Info    : [ 30%] Meshing curve 76 (TrimmedCurve)
+Info    : [ 30%] Meshing curve 77 (TrimmedCurve)
+Info    : [ 30%] Meshing curve 78 (TrimmedCurve)
+Info    : [ 30%] Meshing curve 79 (TrimmedCurve)
+Info    : [ 30%] Meshing curve 80 (TrimmedCurve)
+Info    : [ 30%] Meshing curve 81 (Circle)
+Info    : [ 30%] Meshing curve 82 (BSpline)
+Info    : [ 30%] Meshing curve 83 (TrimmedCurve)
+Info    : [ 30%] Meshing curve 84 (Line)
+Info    : [ 30%] Meshing curve 85 (Line)
+Info    : [ 30%] Meshing curve 86 (TrimmedCurve)
+Info    : [ 30%] Meshing curve 87 (Line)
+Info    : [ 30%] Meshing curve 88 (Line)
+Info    : [ 40%] Meshing curve 89 (Line)
+Info    : [ 40%] Meshing curve 90 (Line)
+Info    : [ 40%] Meshing curve 91 (Line)
+Info    : [ 40%] Meshing curve 92 (Line)
+Info    : [ 40%] Meshing curve 93 (Line)
+Info    : [ 40%] Meshing curve 94 (Line)
+Info    : [ 40%] Meshing curve 95 (Line)
+Info    : [ 40%] Meshing curve 96 (Line)
+Info    : [ 40%] Meshing curve 97 (Circle)
+Info    : [ 40%] Meshing curve 98 (Circle)
+Info    : [ 40%] Meshing curve 99 (Circle)
+Info    : [ 40%] Meshing curve 100 (Circle)
+Info    : [ 40%] Meshing curve 101 (BSpline)
+Info    : [ 40%] Meshing curve 102 (TrimmedCurve)
+Info    : [ 40%] Meshing curve 103 (TrimmedCurve)
+Info    : [ 40%] Meshing curve 104 (TrimmedCurve)
+Info    : [ 40%] Meshing curve 105 (TrimmedCurve)
+Info    : [ 40%] Meshing curve 106 (TrimmedCurve)
+Info    : [ 40%] Meshing curve 107 (TrimmedCurve)
+Info    : [ 40%] Meshing curve 108 (TrimmedCurve)
+Info    : [ 50%] Meshing curve 109 (TrimmedCurve)
+Info    : [ 50%] Meshing curve 110 (TrimmedCurve)
+Info    : [ 50%] Meshing curve 111 (TrimmedCurve)
+Info    : [ 50%] Meshing curve 112 (TrimmedCurve)
+Info    : [ 50%] Meshing curve 113 (TrimmedCurve)
+Info    : [ 50%] Meshing curve 114 (Line)
+Info    : [ 50%] Meshing curve 115 (Circle)
+Info    : [ 50%] Meshing curve 116 (Circle)
+Info    : [ 50%] Meshing curve 117 (Circle)
+Info    : [ 50%] Meshing curve 118 (BSpline)
+Info    : [ 50%] Meshing curve 119 (TrimmedCurve)
+Info    : [ 50%] Meshing curve 120 (Circle)
+Info    : [ 50%] Meshing curve 121 (TrimmedCurve)
+Info    : [ 50%] Meshing curve 122 (Circle)
+Info    : [ 50%] Meshing curve 123 (TrimmedCurve)
+Info    : [ 50%] Meshing curve 124 (TrimmedCurve)
+Info    : [ 50%] Meshing curve 125 (TrimmedCurve)
+Info    : [ 50%] Meshing curve 126 (TrimmedCurve)
+Info    : [ 50%] Meshing curve 127 (TrimmedCurve)
+Info    : [ 50%] Meshing curve 128 (TrimmedCurve)
+Info    : [ 60%] Meshing curve 129 (TrimmedCurve)
+Info    : [ 60%] Meshing curve 130 (TrimmedCurve)
+Info    : [ 60%] Meshing curve 131 (Circle)
+Info    : [ 60%] Meshing curve 132 (TrimmedCurve)
+Info    : [ 60%] Meshing curve 133 (Circle)
+Info    : [ 60%] Meshing curve 134 (Circle)
+Info    : [ 60%] Meshing curve 135 (TrimmedCurve)
+Info    : [ 60%] Meshing curve 136 (Circle)
+Info    : [ 60%] Meshing curve 137 (TrimmedCurve)
+Info    : [ 60%] Meshing curve 138 (TrimmedCurve)
+Info    : [ 60%] Meshing curve 139 (TrimmedCurve)
+Info    : [ 60%] Meshing curve 140 (TrimmedCurve)
+Info    : [ 60%] Meshing curve 141 (TrimmedCurve)
+Info    : [ 60%] Meshing curve 142 (TrimmedCurve)
+Info    : [ 60%] Meshing curve 143 (TrimmedCurve)
+Info    : [ 60%] Meshing curve 144 (TrimmedCurve)
+Info    : [ 60%] Meshing curve 145 (Line)
+Info    : [ 60%] Meshing curve 146 (Circle)
+Info    : [ 60%] Meshing curve 147 (BSpline)
+Info    : [ 60%] Meshing curve 148 (BSpline)
+Info    : [ 70%] Meshing curve 149 (TrimmedCurve)
+Info    : [ 70%] Meshing curve 150 (TrimmedCurve)
+Info    : [ 70%] Meshing curve 151 (TrimmedCurve)
+Info    : [ 70%] Meshing curve 152 (TrimmedCurve)
+Info    : [ 70%] Meshing curve 153 (TrimmedCurve)
+Info    : [ 70%] Meshing curve 154 (TrimmedCurve)
+Info    : [ 70%] Meshing curve 155 (TrimmedCurve)
+Info    : [ 70%] Meshing curve 156 (TrimmedCurve)
+Info    : [ 70%] Meshing curve 157 (TrimmedCurve)
+Info    : [ 70%] Meshing curve 158 (TrimmedCurve)
+Info    : [ 70%] Meshing curve 159 (TrimmedCurve)
+Info    : [ 70%] Meshing curve 160 (TrimmedCurve)
+Info    : [ 70%] Meshing curve 161 (Line)
+Info    : [ 70%] Meshing curve 162 (BSpline)
+Info    : [ 70%] Meshing curve 163 (Line)
+Info    : [ 70%] Meshing curve 164 (Circle)
+Info    : [ 70%] Meshing curve 165 (BSpline)
+Info    : [ 70%] Meshing curve 166 (BSpline)
+Info    : [ 70%] Meshing curve 167 (BSpline)
+Info    : [ 70%] Meshing curve 168 (TrimmedCurve)
+Info    : [ 80%] Meshing curve 169 (TrimmedCurve)
+Info    : [ 80%] Meshing curve 170 (TrimmedCurve)
+Info    : [ 80%] Meshing curve 171 (TrimmedCurve)
+Info    : [ 80%] Meshing curve 172 (TrimmedCurve)
+Info    : [ 80%] Meshing curve 173 (TrimmedCurve)
+Info    : [ 80%] Meshing curve 174 (TrimmedCurve)
+Info    : [ 80%] Meshing curve 175 (TrimmedCurve)
+Info    : [ 80%] Meshing curve 176 (TrimmedCurve)
+Info    : [ 80%] Meshing curve 177 (TrimmedCurve)
+Info    : [ 80%] Meshing curve 178 (TrimmedCurve)
+Info    : [ 80%] Meshing curve 179 (TrimmedCurve)
+Info    : [ 80%] Meshing curve 180 (Circle)
+Info    : [ 80%] Meshing curve 181 (Circle)
+Info    : [ 80%] Meshing curve 182 (BSpline)
+Info    : [ 80%] Meshing curve 183 (BSpline)
+Info    : [ 80%] Meshing curve 184 (BSpline)
+Info    : [ 80%] Meshing curve 185 (TrimmedCurve)
+Info    : [ 80%] Meshing curve 186 (Circle)
+Info    : [ 80%] Meshing curve 187 (Circle)
+Info    : [ 80%] Meshing curve 188 (TrimmedCurve)
+Info    : [ 90%] Meshing curve 189 (Circle)
+Info    : [ 90%] Meshing curve 190 (Circle)
+Info    : [ 90%] Meshing curve 191 (BSpline)
+Info    : [ 90%] Meshing curve 192 (TrimmedCurve)
+Info    : [ 90%] Meshing curve 193 (Circle)
+Info    : [ 90%] Meshing curve 194 (TrimmedCurve)
+Info    : [ 90%] Meshing curve 195 (Circle)
+Info    : [ 90%] Meshing curve 196 (Line)
+Info    : [ 90%] Meshing curve 197 (Line)
+Info    : [ 90%] Meshing curve 198 (Circle)
+Info    : [ 90%] Meshing curve 199 (BSpline)
+Info    : [ 90%] Meshing curve 200 (Line)
+Info    : [ 90%] Meshing curve 201 (Circle)
+Info    : [ 90%] Meshing curve 202 (BSpline)
+Info    : [ 90%] Meshing curve 203 (Circle)
+Info    : [ 90%] Meshing curve 204 (Circle)
+Info    : [ 90%] Meshing curve 205 (Circle)
+Info    : [ 90%] Meshing curve 206 (Circle)
+Info    : [ 90%] Meshing curve 207 (TrimmedCurve)
+Info    : [ 90%] Meshing curve 208 (Line)
+Info    : [100%] Meshing curve 209 (Line)
+Info    : [100%] Meshing curve 210 (Circle)
+Info    : [100%] Meshing curve 211 (TrimmedCurve)
+Info    : [100%] Meshing curve 212 (TrimmedCurve)
+Info    : [100%] Meshing curve 213 (Circle)
+Info    : [100%] Meshing curve 214 (TrimmedCurve)
+Info    : [100%] Meshing curve 215 (TrimmedCurve)
+Info    : [100%] Meshing curve 216 (TrimmedCurve)
+Info    : [100%] Meshing curve 217 (Circle)
+Info    : [100%] Meshing curve 218 (TrimmedCurve)
+Info    : [100%] Meshing curve 219 (Circle)
+Info    : [100%] Meshing curve 220 (Circle)
+Info    : [100%] Meshing curve 221 (Circle)
+Info    : [100%] Meshing curve 222 (TrimmedCurve)
+Info    : [100%] Meshing curve 223 (Circle)
+Info    : [100%] Meshing curve 224 (Circle)
+Info    : [100%] Meshing curve 225 (Line)
+Info    : [100%] Meshing curve 226 (Line)
+Info    : [100%] Meshing curve 227 (Circle)
+Info    : Done meshing 1D (Wall 5.71744s, CPU 5.71479s)
+Info    : Meshing 2D...
+Info    : [  0%] Meshing surface 27 (Cylinder, Frontal-Delaunay)
+Info    : [ 10%] Meshing surface 28 (Plane, Frontal-Delaunay)
+Info    : [ 10%] Meshing surface 29 (Plane, Frontal-Delaunay)
+Info    : [ 10%] Meshing surface 36 (BSpline surface, Frontal-Delaunay)
+Info    : [ 10%] Meshing surface 43 (BSpline surface, Frontal-Delaunay)
+Info    : [ 10%] Meshing surface 50 (BSpline surface, Frontal-Delaunay)
+Info    : [ 10%] Meshing surface 57 (BSpline surface, Frontal-Delaunay)
+Info    : [ 10%] Meshing surface 58 (Plane, Frontal-Delaunay)
+Info    : [ 10%] Meshing surface 59 (Plane, Frontal-Delaunay)
+Info    : [ 10%] Meshing surface 60 (Plane, Frontal-Delaunay)
+Info    : [ 10%] Meshing surface 61 (Plane, Frontal-Delaunay)
+Info    : [ 10%] Meshing surface 62 (Plane, Frontal-Delaunay)
+Info    : [ 10%] Meshing surface 63 (Plane, Frontal-Delaunay)
+Info    : [ 20%] Meshing surface 64 (Torus, Frontal-Delaunay)
+Info    : [ 20%] Meshing surface 65 (Cylinder, Frontal-Delaunay)
+Info    : [ 20%] Meshing surface 66 (Cylinder, Frontal-Delaunay)
+Info    : [ 20%] Meshing surface 67 (Plane, Frontal-Delaunay)
+Info    : [ 20%] Meshing surface 68 (Plane, Frontal-Delaunay)
+Info    : [ 20%] Meshing surface 69 (Plane, Frontal-Delaunay)
+Info    : [ 20%] Meshing surface 70 (Torus, Frontal-Delaunay)
+Info    : [ 20%] Meshing surface 71 (BSpline surface, Frontal-Delaunay)
+Info    : [ 20%] Meshing surface 72 (BSpline surface, Frontal-Delaunay)
+Info    : [ 20%] Meshing surface 73 (Plane, Frontal-Delaunay)
+Info    : [ 20%] Meshing surface 74 (Torus, Frontal-Delaunay)
+Info    : [ 20%] Meshing surface 75 (Plane, Frontal-Delaunay)
+Info    : [ 30%] Meshing surface 76 (Plane, Frontal-Delaunay)
+Info    : [ 30%] Meshing surface 77 (Plane, Frontal-Delaunay)
+Info    : [ 30%] Meshing surface 78 (Plane, Frontal-Delaunay)
+Info    : [ 30%] Meshing surface 79 (Plane, Frontal-Delaunay)
+Info    : [ 30%] Meshing surface 80 (Plane, Frontal-Delaunay)
+Info    : [ 30%] Meshing surface 81 (Cylinder, Frontal-Delaunay)
+Info    : [ 30%] Meshing surface 82 (BSpline surface, Frontal-Delaunay)
+Info    : [ 30%] Meshing surface 83 (BSpline surface, Frontal-Delaunay)
+Info    : [ 30%] Meshing surface 84 (BSpline surface, Frontal-Delaunay)
+Info    : [ 30%] Meshing surface 85 (BSpline surface, Frontal-Delaunay)
+Info    : [ 30%] Meshing surface 86 (BSpline surface, Frontal-Delaunay)
+Info    : [ 30%] Meshing surface 87 (BSpline surface, Frontal-Delaunay)
+Info    : [ 40%] Meshing surface 88 (Cylinder, Frontal-Delaunay)
+Info    : [ 40%] Meshing surface 89 (Plane, Frontal-Delaunay)
+Info    : [ 40%] Meshing surface 90 (Plane, Frontal-Delaunay)
+Info    : [ 40%] Meshing surface 91 (BSpline surface, Frontal-Delaunay)
+Info    : [ 40%] Meshing surface 92 (BSpline surface, Frontal-Delaunay)
+Info    : [ 40%] Meshing surface 93 (Plane, Frontal-Delaunay)
+Info    : [ 40%] Meshing surface 94 (Torus, Frontal-Delaunay)
+Info    : [ 40%] Meshing surface 95 (BSpline surface, Frontal-Delaunay)
+Info    : [ 40%] Meshing surface 96 (BSpline surface, Frontal-Delaunay)
+Info    : [ 40%] Meshing surface 97 (BSpline surface, Frontal-Delaunay)
+Info    : [ 40%] Meshing surface 98 (BSpline surface, Frontal-Delaunay)
+Info    : [ 40%] Meshing surface 99 (Plane, Frontal-Delaunay)
+Info    : [ 40%] Meshing surface 100 (Cylinder, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 101 (BSpline surface, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 102 (BSpline surface, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 103 (BSpline surface, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 104 (BSpline surface, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 105 (BSpline surface, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 106 (BSpline surface, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 107 (Cylinder, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 108 (BSpline surface, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 109 (BSpline surface, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 110 (BSpline surface, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 111 (BSpline surface, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 112 (BSpline surface, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 113 (BSpline surface, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 114 (Plane, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 115 (Torus, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 116 (Torus, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 117 (BSpline surface, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 118 (BSpline surface, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 119 (Plane, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 120 (Torus, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 121 (BSpline surface, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 122 (BSpline surface, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 123 (Cylinder, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 124 (Cylinder, Frontal-Delaunay)
+Info    : [ 70%] Meshing surface 125 (Plane, Frontal-Delaunay)
+Info    : [ 70%] Meshing surface 126 (Torus, Frontal-Delaunay)
+Info    : [ 70%] Meshing surface 127 (Plane, Frontal-Delaunay)
+Info    : [ 70%] Meshing surface 128 (Torus, Frontal-Delaunay)
+Info    : [ 70%] Meshing surface 129 (Torus, Frontal-Delaunay)
+Info    : [ 70%] Meshing surface 130 (Cylinder, Frontal-Delaunay)
+Info    : [ 70%] Meshing surface 131 (Cylinder, Frontal-Delaunay)
+Info    : [ 70%] Meshing surface 132 (Plane, Frontal-Delaunay)
+Info    : [ 70%] Meshing surface 133 (Plane, Frontal-Delaunay)
+Info    : [ 70%] Meshing surface 134 (Cylinder, Frontal-Delaunay)
+Info    : [ 70%] Meshing surface 135 (Cylinder, Frontal-Delaunay)
+Info    : [ 70%] Meshing surface 136 (Cylinder, Frontal-Delaunay)
+Info    : [ 70%] Meshing surface 137 (Cylinder, Frontal-Delaunay)
+Info    : [ 80%] Meshing surface 138 (Torus, Frontal-Delaunay)
+Info    : [ 80%] Meshing surface 139 (Cylinder, Frontal-Delaunay)
+Info    : [ 80%] Meshing surface 140 (Plane, Frontal-Delaunay)
+Info    : [ 80%] Meshing surface 141 (Plane, Frontal-Delaunay)
+Info    : [ 80%] Meshing surface 142 (Plane, Frontal-Delaunay)
+Info    : [ 80%] Meshing surface 143 (Plane, Frontal-Delaunay)
+Info    : [ 80%] Meshing surface 144 (Torus, Frontal-Delaunay)
+Info    : [ 80%] Meshing surface 145 (Cylinder, Frontal-Delaunay)
+Info    : [ 80%] Meshing surface 146 (Plane, Frontal-Delaunay)
+Info    : [ 80%] Meshing surface 147 (Plane, Frontal-Delaunay)
+Info    : [ 80%] Meshing surface 148 (Cylinder, Frontal-Delaunay)
+Info    : [ 80%] Meshing surface 149 (Plane, Frontal-Delaunay)
+Info    : [ 90%] Meshing surface 150 (Plane, Frontal-Delaunay)
+Info    : [ 90%] Meshing surface 151 (Cylinder, Frontal-Delaunay)
+Info    : [ 90%] Meshing surface 152 (Plane, Frontal-Delaunay)
+Info    : [ 90%] Meshing surface 153 (Plane, Frontal-Delaunay)
+Info    : [ 90%] Meshing surface 154 (Torus, Frontal-Delaunay)
+Info    : [ 90%] Meshing surface 155 (Plane, Frontal-Delaunay)
+Info    : [ 90%] Meshing surface 156 (Plane, Frontal-Delaunay)
+Info    : [ 90%] Meshing surface 157 (Torus, Frontal-Delaunay)
+Info    : [ 90%] Meshing surface 158 (Torus, Frontal-Delaunay)
+Info    : [ 90%] Meshing surface 159 (Plane, Frontal-Delaunay)
+Info    : [ 90%] Meshing surface 160 (Plane, Frontal-Delaunay)
+Info    : [ 90%] Meshing surface 161 (Torus, Frontal-Delaunay)
+Info    : [100%] Meshing surface 162 (Torus, Frontal-Delaunay)
+Info    : [100%] Meshing surface 163 (Cylinder, Frontal-Delaunay)
+Info    : [100%] Meshing surface 164 (Cylinder, Frontal-Delaunay)
+Info    : [100%] Meshing surface 165 (Cylinder, Frontal-Delaunay)
+Info    : [100%] Meshing surface 166 (Cylinder, Frontal-Delaunay)
+Info    : [100%] Meshing surface 167 (Cylinder, Frontal-Delaunay)
+Info    : [100%] Meshing surface 168 (Cylinder, Frontal-Delaunay)
+Info    : [100%] Meshing surface 169 (Torus, Frontal-Delaunay)
+Info    : [100%] Meshing surface 170 (Cylinder, Frontal-Delaunay)
+Info    : [100%] Meshing surface 171 (Cylinder, Frontal-Delaunay)
+Info    : [100%] Meshing surface 172 (Cylinder, Frontal-Delaunay)
+Info    : [100%] Meshing surface 173 (Cylinder, Frontal-Delaunay)
+Info    : Done meshing 2D (Wall 2.0048s, CPU 1.99745s)
+Info    : Meshing 3D...
+Info    : 3D Meshing 34 volumes with 1 connected component
+Info    : Tetrahedrizing 28009 nodes...
+Info    : Done tetrahedrizing 28017 nodes (Wall 0.676077s, CPU 0.611506s)
+Info    : Reconstructing mesh...
+Info    :  - Creating surface mesh
+Info    :  - Identifying boundary edges
+Info    :  - Recovering boundary
+Info    :  - Added 101 Steiner points
+Info    : Done reconstructing mesh (Wall 1.96346s, CPU 1.7537s)
+Info    : Found volume 11
+Info    : Found volume 12
+Info    : Found volume 37
+Info    : Found volume 15
+Info    : Found volume 30
+Info    : Found volume 18
+Info    : Found volume 39
+Info    : Found volume 31
+Info    : Found volume 14
+Info    : Found volume 34
+Info    : Found volume 22
+Info    : Found volume 35
+Info    : Found volume 21
+Info    : Found volume 41
+Info    : Found volume 23
+Info    : Found volume 26
+Info    : Found volume 16
+Info    : Found volume 43
+Info    : Found volume 38
+Info    : Found volume 32
+Info    : Found volume 33
+Info    : Found volume 24
+Info    : Found volume 27
+Info    : Found volume 19
+Info    : Found volume 25
+Info    : Found volume 20
+Info    : Found volume 28
+Info    : Found volume 13
+Info    : Found volume 36
+Info    : Found volume 42
+Info    : Found volume 44
+Info    : Found volume 40
+Info    : Found volume 17
+Info    : Found volume 29
+Info    : It. 0 - 0 nodes created - worst tet radius 86990 (nodes removed 0 0)
+Info    : It. 500 - 52 nodes created - worst tet radius 13.7428 (nodes removed 0 448)
+Info    : It. 1000 - 549 nodes created - worst tet radius 5.72416 (nodes removed 0 451)
+Info    : It. 1500 - 1048 nodes created - worst tet radius 4.50097 (nodes removed 0 452)
+Info    : It. 2000 - 1548 nodes created - worst tet radius 3.87021 (nodes removed 0 452)
+Info    : It. 2500 - 2048 nodes created - worst tet radius 3.49477 (nodes removed 0 452)
+Info    : It. 3000 - 2548 nodes created - worst tet radius 3.22572 (nodes removed 0 452)
+Info    : It. 3500 - 3048 nodes created - worst tet radius 3.02916 (nodes removed 0 452)
+Info    : It. 4000 - 3548 nodes created - worst tet radius 2.88928 (nodes removed 0 452)
+Info    : It. 4500 - 4048 nodes created - worst tet radius 2.76223 (nodes removed 0 452)
+Info    : It. 5000 - 4548 nodes created - worst tet radius 2.64619 (nodes removed 0 452)
+Info    : It. 5500 - 5047 nodes created - worst tet radius 2.55455 (nodes removed 0 453)
+Info    : It. 6000 - 5547 nodes created - worst tet radius 2.47153 (nodes removed 0 453)
+Info    : It. 6500 - 6047 nodes created - worst tet radius 2.44797 (nodes removed 0 453)
+Info    : It. 7000 - 6547 nodes created - worst tet radius 2.49646 (nodes removed 0 453)
+Info    : It. 7500 - 7047 nodes created - worst tet radius 2.52909 (nodes removed 0 453)
+Info    : It. 8000 - 7547 nodes created - worst tet radius 2.34118 (nodes removed 0 453)
+Info    : It. 8500 - 8047 nodes created - worst tet radius 2.29397 (nodes removed 0 453)
+Info    : It. 9000 - 8547 nodes created - worst tet radius 2.24599 (nodes removed 0 453)
+Info    : It. 9500 - 9047 nodes created - worst tet radius 2.20188 (nodes removed 0 453)
+Info    : It. 10000 - 9547 nodes created - worst tet radius 2.98593 (nodes removed 0 453)
+Info    : It. 10500 - 10047 nodes created - worst tet radius 2.15899 (nodes removed 0 453)
+Info    : It. 11000 - 10546 nodes created - worst tet radius 2.12228 (nodes removed 0 454)
+Info    : It. 11500 - 11046 nodes created - worst tet radius 2.09108 (nodes removed 0 454)
+Info    : It. 12000 - 11546 nodes created - worst tet radius 2.05854 (nodes removed 0 454)
+Info    : It. 12500 - 12045 nodes created - worst tet radius 2.02955 (nodes removed 0 455)
+Info    : It. 13000 - 12545 nodes created - worst tet radius 2.00303 (nodes removed 0 455)
+Info    : It. 13500 - 13045 nodes created - worst tet radius 1.97652 (nodes removed 0 455)
+Info    : It. 14000 - 13545 nodes created - worst tet radius 1.95518 (nodes removed 0 455)
+Info    : It. 14500 - 14045 nodes created - worst tet radius 1.93064 (nodes removed 0 455)
+Info    : It. 15000 - 14545 nodes created - worst tet radius 2.18339 (nodes removed 0 455)
+Info    : It. 15500 - 15045 nodes created - worst tet radius 1.88388 (nodes removed 0 455)
+Info    : It. 16000 - 15545 nodes created - worst tet radius 1.86394 (nodes removed 0 455)
+Info    : It. 16500 - 16045 nodes created - worst tet radius 1.84254 (nodes removed 0 455)
+Info    : It. 17000 - 16545 nodes created - worst tet radius 1.87128 (nodes removed 0 455)
+Info    : It. 17500 - 17044 nodes created - worst tet radius 1.80533 (nodes removed 0 456)
+Info    : It. 18000 - 17544 nodes created - worst tet radius 1.78785 (nodes removed 0 456)
+Info    : It. 18500 - 18044 nodes created - worst tet radius 1.7713 (nodes removed 0 456)
+Info    : It. 19000 - 18544 nodes created - worst tet radius 1.75686 (nodes removed 0 456)
+Info    : It. 19500 - 19044 nodes created - worst tet radius 1.74026 (nodes removed 0 456)
+Info    : It. 20000 - 19544 nodes created - worst tet radius 1.72627 (nodes removed 0 456)
+Info    : It. 20500 - 20044 nodes created - worst tet radius 1.72094 (nodes removed 0 456)
+Info    : It. 21000 - 20544 nodes created - worst tet radius 1.69738 (nodes removed 0 456)
+Info    : It. 21500 - 21044 nodes created - worst tet radius 1.68479 (nodes removed 0 456)
+Info    : It. 22000 - 21544 nodes created - worst tet radius 1.67188 (nodes removed 0 456)
+Info    : It. 22500 - 22044 nodes created - worst tet radius 1.66004 (nodes removed 0 456)
+Info    : It. 23000 - 22544 nodes created - worst tet radius 1.648 (nodes removed 0 456)
+Info    : It. 23500 - 23044 nodes created - worst tet radius 1.63632 (nodes removed 0 456)
+Info    : It. 24000 - 23544 nodes created - worst tet radius 1.75623 (nodes removed 0 456)
+Info    : It. 24500 - 24044 nodes created - worst tet radius 1.61486 (nodes removed 0 456)
+Info    : It. 25000 - 24544 nodes created - worst tet radius 1.60432 (nodes removed 0 456)
+Info    : It. 25500 - 25044 nodes created - worst tet radius 1.59294 (nodes removed 0 456)
+Info    : It. 26000 - 25544 nodes created - worst tet radius 1.58217 (nodes removed 0 456)
+Info    : It. 26500 - 26044 nodes created - worst tet radius 1.57195 (nodes removed 0 456)
+Info    : It. 27000 - 26544 nodes created - worst tet radius 1.56152 (nodes removed 0 456)
+Info    : It. 27500 - 27044 nodes created - worst tet radius 1.55191 (nodes removed 0 456)
+Info    : It. 28000 - 27544 nodes created - worst tet radius 1.54309 (nodes removed 0 456)
+Info    : It. 28500 - 28044 nodes created - worst tet radius 1.53468 (nodes removed 0 456)
+Info    : It. 29000 - 28544 nodes created - worst tet radius 1.53028 (nodes removed 0 456)
+Info    : It. 29500 - 29044 nodes created - worst tet radius 1.51757 (nodes removed 0 456)
+Info    : It. 30000 - 29544 nodes created - worst tet radius 1.50906 (nodes removed 0 456)
+Info    : It. 30500 - 30043 nodes created - worst tet radius 1.5011 (nodes removed 0 457)
+Info    : It. 31000 - 30543 nodes created - worst tet radius 1.49342 (nodes removed 0 457)
+Info    : It. 31500 - 31043 nodes created - worst tet radius 1.48526 (nodes removed 0 457)
+Info    : It. 32000 - 31543 nodes created - worst tet radius 1.47739 (nodes removed 0 457)
+Info    : It. 32500 - 32043 nodes created - worst tet radius 1.46934 (nodes removed 0 457)
+Info    : It. 33000 - 32543 nodes created - worst tet radius 1.46182 (nodes removed 0 457)
+Info    : It. 33500 - 33043 nodes created - worst tet radius 1.45412 (nodes removed 0 457)
+Info    : It. 34000 - 33543 nodes created - worst tet radius 1.44689 (nodes removed 0 457)
+Info    : It. 34500 - 34042 nodes created - worst tet radius 1.43936 (nodes removed 0 458)
+Info    : It. 35000 - 34542 nodes created - worst tet radius 1.43228 (nodes removed 0 458)
+Info    : It. 35500 - 35042 nodes created - worst tet radius 1.42587 (nodes removed 0 458)
+Info    : It. 36000 - 35541 nodes created - worst tet radius 1.4192 (nodes removed 0 459)
+Info    : It. 36500 - 36041 nodes created - worst tet radius 1.41228 (nodes removed 0 459)
+Info    : It. 37000 - 36541 nodes created - worst tet radius 1.40565 (nodes removed 0 459)
+Info    : It. 37500 - 37040 nodes created - worst tet radius 1.39935 (nodes removed 0 460)
+Info    : It. 38000 - 37540 nodes created - worst tet radius 1.39339 (nodes removed 0 460)
+Info    : It. 38500 - 38040 nodes created - worst tet radius 1.3875 (nodes removed 0 460)
+Info    : It. 39000 - 38540 nodes created - worst tet radius 1.38134 (nodes removed 0 460)
+Info    : It. 39500 - 39039 nodes created - worst tet radius 1.37501 (nodes removed 0 461)
+Info    : It. 40000 - 39539 nodes created - worst tet radius 1.42004 (nodes removed 0 461)
+Info    : It. 40500 - 40039 nodes created - worst tet radius 1.36358 (nodes removed 0 461)
+Info    : It. 41000 - 40539 nodes created - worst tet radius 1.358 (nodes removed 0 461)
+Info    : It. 41500 - 41038 nodes created - worst tet radius 1.35268 (nodes removed 0 462)
+Info    : It. 42000 - 41538 nodes created - worst tet radius 1.34758 (nodes removed 0 462)
+Info    : It. 42500 - 42038 nodes created - worst tet radius 1.34276 (nodes removed 0 462)
+Info    : It. 43000 - 42538 nodes created - worst tet radius 1.33731 (nodes removed 0 462)
+Info    : It. 43500 - 43037 nodes created - worst tet radius 1.33226 (nodes removed 0 463)
+Info    : It. 44000 - 43537 nodes created - worst tet radius 1.32693 (nodes removed 0 463)
+Info    : It. 44500 - 44037 nodes created - worst tet radius 1.32208 (nodes removed 0 463)
+Info    : It. 45000 - 44537 nodes created - worst tet radius 1.31755 (nodes removed 0 463)
+Info    : It. 45500 - 45037 nodes created - worst tet radius 1.32395 (nodes removed 0 463)
+Info    : It. 46000 - 45537 nodes created - worst tet radius 1.30784 (nodes removed 0 463)
+Info    : It. 46500 - 46037 nodes created - worst tet radius 1.30341 (nodes removed 0 463)
+Info    : It. 47000 - 46537 nodes created - worst tet radius 1.29845 (nodes removed 0 463)
+Info    : It. 47500 - 47037 nodes created - worst tet radius 1.29364 (nodes removed 0 463)
+Info    : It. 48000 - 47537 nodes created - worst tet radius 1.28914 (nodes removed 0 463)
+Info    : It. 48500 - 48037 nodes created - worst tet radius 1.28486 (nodes removed 0 463)
+Info    : It. 49000 - 48537 nodes created - worst tet radius 1.28046 (nodes removed 0 463)
+Info    : It. 49500 - 49037 nodes created - worst tet radius 1.27596 (nodes removed 0 463)
+Info    : It. 50000 - 49537 nodes created - worst tet radius 1.27163 (nodes removed 0 463)
+Info    : It. 50500 - 50037 nodes created - worst tet radius 1.26748 (nodes removed 0 463)
+Info    : It. 51000 - 50537 nodes created - worst tet radius 1.26358 (nodes removed 0 463)
+Info    : It. 51500 - 51037 nodes created - worst tet radius 1.2594 (nodes removed 0 463)
+Info    : It. 52000 - 51537 nodes created - worst tet radius 1.25552 (nodes removed 0 463)
+Info    : It. 52500 - 52037 nodes created - worst tet radius 1.25146 (nodes removed 0 463)
+Info    : It. 53000 - 52537 nodes created - worst tet radius 1.24723 (nodes removed 0 463)
+Info    : It. 53500 - 53037 nodes created - worst tet radius 1.24353 (nodes removed 0 463)
+Info    : It. 54000 - 53537 nodes created - worst tet radius 1.23973 (nodes removed 0 463)
+Info    : It. 54500 - 54037 nodes created - worst tet radius 1.2359 (nodes removed 0 463)
+Info    : It. 55000 - 54537 nodes created - worst tet radius 1.23215 (nodes removed 0 463)
+Info    : It. 55500 - 55037 nodes created - worst tet radius 1.2287 (nodes removed 0 463)
+Info    : It. 56000 - 55537 nodes created - worst tet radius 1.22517 (nodes removed 0 463)
+Info    : It. 56500 - 56037 nodes created - worst tet radius 1.2218 (nodes removed 0 463)
+Info    : It. 57000 - 56537 nodes created - worst tet radius 1.25134 (nodes removed 0 463)
+Info    : It. 57500 - 57037 nodes created - worst tet radius 1.84126 (nodes removed 0 463)
+Info    : It. 58000 - 57537 nodes created - worst tet radius 1.21134 (nodes removed 0 463)
+Info    : It. 58500 - 58037 nodes created - worst tet radius 1.20776 (nodes removed 0 463)
+Info    : It. 59000 - 58537 nodes created - worst tet radius 1.20449 (nodes removed 0 463)
+Info    : It. 59500 - 59037 nodes created - worst tet radius 1.20131 (nodes removed 0 463)
+Info    : It. 60000 - 59537 nodes created - worst tet radius 1.19783 (nodes removed 0 463)
+Info    : It. 60500 - 60037 nodes created - worst tet radius 1.19459 (nodes removed 0 463)
+Info    : It. 61000 - 60537 nodes created - worst tet radius 1.24826 (nodes removed 0 463)
+Info    : It. 61500 - 61037 nodes created - worst tet radius 1.18867 (nodes removed 0 463)
+Info    : It. 62000 - 61537 nodes created - worst tet radius 1.18545 (nodes removed 0 463)
+Info    : It. 62500 - 62037 nodes created - worst tet radius 1.18252 (nodes removed 0 463)
+Info    : It. 63000 - 62536 nodes created - worst tet radius 1.17944 (nodes removed 0 464)
+Info    : It. 63500 - 63036 nodes created - worst tet radius 1.17633 (nodes removed 0 464)
+Info    : It. 64000 - 63536 nodes created - worst tet radius 1.17332 (nodes removed 0 464)
+Info    : It. 64500 - 64036 nodes created - worst tet radius 1.17036 (nodes removed 0 464)
+Info    : It. 65000 - 64536 nodes created - worst tet radius 1.16735 (nodes removed 0 464)
+Info    : It. 65500 - 65035 nodes created - worst tet radius 1.16453 (nodes removed 0 465)
+Info    : It. 66000 - 65535 nodes created - worst tet radius 1.16188 (nodes removed 0 465)
+Info    : It. 66500 - 66035 nodes created - worst tet radius 1.15883 (nodes removed 0 465)
+Info    : It. 67000 - 66535 nodes created - worst tet radius 1.1559 (nodes removed 0 465)
+Info    : It. 67500 - 67035 nodes created - worst tet radius 1.15299 (nodes removed 0 465)
+Info    : It. 68000 - 67535 nodes created - worst tet radius 1.15049 (nodes removed 0 465)
+Info    : It. 68500 - 68035 nodes created - worst tet radius 1.14786 (nodes removed 0 465)
+Info    : It. 69000 - 68535 nodes created - worst tet radius 1.14517 (nodes removed 0 465)
+Info    : It. 69500 - 69035 nodes created - worst tet radius 1.14243 (nodes removed 0 465)
+Info    : It. 70000 - 69535 nodes created - worst tet radius 1.1397 (nodes removed 0 465)
+Info    : It. 70500 - 70035 nodes created - worst tet radius 1.13713 (nodes removed 0 465)
+Info    : It. 71000 - 70535 nodes created - worst tet radius 1.13443 (nodes removed 0 465)
+Info    : It. 71500 - 71035 nodes created - worst tet radius 1.13191 (nodes removed 0 465)
+Info    : It. 72000 - 71535 nodes created - worst tet radius 1.12949 (nodes removed 0 465)
+Info    : It. 72500 - 72035 nodes created - worst tet radius 1.127 (nodes removed 0 465)
+Info    : It. 73000 - 72535 nodes created - worst tet radius 1.1246 (nodes removed 0 465)
+Info    : It. 73500 - 73035 nodes created - worst tet radius 1.12199 (nodes removed 0 465)
+Info    : It. 74000 - 73535 nodes created - worst tet radius 1.11967 (nodes removed 0 465)
+Info    : It. 74500 - 74035 nodes created - worst tet radius 1.11722 (nodes removed 0 465)
+Info    : It. 75000 - 74535 nodes created - worst tet radius 1.11473 (nodes removed 0 465)
+Info    : It. 75500 - 75035 nodes created - worst tet radius 1.11247 (nodes removed 0 465)
+Info    : It. 76000 - 75535 nodes created - worst tet radius 1.1099 (nodes removed 0 465)
+Info    : It. 76500 - 76035 nodes created - worst tet radius 1.10752 (nodes removed 0 465)
+Info    : It. 77000 - 76535 nodes created - worst tet radius 1.10494 (nodes removed 0 465)
+Info    : It. 77500 - 77035 nodes created - worst tet radius 1.10262 (nodes removed 0 465)
+Info    : It. 78000 - 77535 nodes created - worst tet radius 1.10011 (nodes removed 0 465)
+Info    : It. 78500 - 78035 nodes created - worst tet radius 1.09803 (nodes removed 0 465)
+Info    : It. 79000 - 78535 nodes created - worst tet radius 1.09578 (nodes removed 0 465)
+Info    : It. 79500 - 79035 nodes created - worst tet radius 1.09346 (nodes removed 0 465)
+Info    : It. 80000 - 79535 nodes created - worst tet radius 1.09098 (nodes removed 0 465)
+Info    : It. 80500 - 80035 nodes created - worst tet radius 1.08883 (nodes removed 0 465)
+Info    : It. 81000 - 80535 nodes created - worst tet radius 1.08664 (nodes removed 0 465)
+Info    : It. 81500 - 81035 nodes created - worst tet radius 1.08453 (nodes removed 0 465)
+Info    : It. 82000 - 81535 nodes created - worst tet radius 1.08231 (nodes removed 0 465)
+Info    : It. 82500 - 82035 nodes created - worst tet radius 1.08029 (nodes removed 0 465)
+Info    : It. 83000 - 82534 nodes created - worst tet radius 1.07809 (nodes removed 0 466)
+Info    : It. 83500 - 83033 nodes created - worst tet radius 1.07598 (nodes removed 0 467)
+Info    : It. 84000 - 83533 nodes created - worst tet radius 1.07401 (nodes removed 0 467)
+Info    : It. 84500 - 84033 nodes created - worst tet radius 1.0719 (nodes removed 0 467)
+Info    : It. 85000 - 84533 nodes created - worst tet radius 1.06975 (nodes removed 0 467)
+Info    : It. 85500 - 85033 nodes created - worst tet radius 1.06763 (nodes removed 0 467)
+Info    : It. 86000 - 85533 nodes created - worst tet radius 1.06566 (nodes removed 0 467)
+Info    : It. 86500 - 86033 nodes created - worst tet radius 1.06353 (nodes removed 0 467)
+Info    : It. 87000 - 86533 nodes created - worst tet radius 1.06144 (nodes removed 0 467)
+Info    : It. 87500 - 87033 nodes created - worst tet radius 1.05951 (nodes removed 0 467)
+Info    : It. 88000 - 87533 nodes created - worst tet radius 1.05741 (nodes removed 0 467)
+Info    : It. 88500 - 88033 nodes created - worst tet radius 1.05549 (nodes removed 0 467)
+Info    : It. 89000 - 88533 nodes created - worst tet radius 1.05355 (nodes removed 0 467)
+Info    : It. 89500 - 89033 nodes created - worst tet radius 1.09042 (nodes removed 0 467)
+Info    : It. 90000 - 89533 nodes created - worst tet radius 1.04992 (nodes removed 0 467)
+Info    : It. 90500 - 90033 nodes created - worst tet radius 1.04801 (nodes removed 0 467)
+Info    : It. 91000 - 90533 nodes created - worst tet radius 1.0462 (nodes removed 0 467)
+Info    : It. 91500 - 91033 nodes created - worst tet radius 1.04441 (nodes removed 0 467)
+Info    : It. 92000 - 91533 nodes created - worst tet radius 1.04272 (nodes removed 0 467)
+Info    : It. 92500 - 92033 nodes created - worst tet radius 1.04099 (nodes removed 0 467)
+Info    : It. 93000 - 92533 nodes created - worst tet radius 1.03931 (nodes removed 0 467)
+Info    : It. 93500 - 93033 nodes created - worst tet radius 1.0375 (nodes removed 0 467)
+Info    : It. 94000 - 93533 nodes created - worst tet radius 1.03568 (nodes removed 0 467)
+Info    : It. 94500 - 94033 nodes created - worst tet radius 1.03386 (nodes removed 0 467)
+Info    : It. 95000 - 94532 nodes created - worst tet radius 1.03213 (nodes removed 0 468)
+Info    : It. 95500 - 95032 nodes created - worst tet radius 1.03031 (nodes removed 0 468)
+Info    : It. 96000 - 95532 nodes created - worst tet radius 1.02853 (nodes removed 0 468)
+Info    : It. 96500 - 96032 nodes created - worst tet radius 1.0269 (nodes removed 0 468)
+Info    : It. 97000 - 96532 nodes created - worst tet radius 1.02533 (nodes removed 0 468)
+Info    : It. 97500 - 97032 nodes created - worst tet radius 1.02359 (nodes removed 0 468)
+Info    : It. 98000 - 97532 nodes created - worst tet radius 1.0218 (nodes removed 0 468)
+Info    : It. 98500 - 98032 nodes created - worst tet radius 1.02005 (nodes removed 0 468)
+Info    : It. 99000 - 98532 nodes created - worst tet radius 1.01832 (nodes removed 0 468)
+Info    : It. 99500 - 99032 nodes created - worst tet radius 1.01657 (nodes removed 0 468)
+Info    : It. 100000 - 99532 nodes created - worst tet radius 1.01485 (nodes removed 0 468)
+Info    : It. 100500 - 100032 nodes created - worst tet radius 1.01319 (nodes removed 0 468)
+Info    : It. 101000 - 100532 nodes created - worst tet radius 1.0115 (nodes removed 0 468)
+Info    : It. 101500 - 101032 nodes created - worst tet radius 1.00982 (nodes removed 0 468)
+Info    : It. 102000 - 101532 nodes created - worst tet radius 1.00816 (nodes removed 0 468)
+Info    : It. 102500 - 102032 nodes created - worst tet radius 1.00664 (nodes removed 0 468)
+Info    : It. 103000 - 102532 nodes created - worst tet radius 1.00508 (nodes removed 0 468)
+Info    : It. 103500 - 103032 nodes created - worst tet radius 1.01907 (nodes removed 0 468)
+Info    : It. 104000 - 103532 nodes created - worst tet radius 1.002 (nodes removed 0 468)
+Info    : It. 104500 - 104032 nodes created - worst tet radius 1.00051 (nodes removed 0 468)
+Info    : 3D refinement terminated (132312 nodes total):
+Info    :  - 16 Delaunay cavities modified for star shapeness
+Info    :  - 468 nodes could not be inserted
+Info    :  - 821927 tetrahedra created in 19.5144 sec. (42118 tets/s)
+Info    : 6604 node relocations
+Info    : Done meshing 3D (Wall 28.6159s, CPU 28.2823s)
+[harness] 13 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 9555 edge swaps, 267 node relocations (volume = 0.000226145): worst = 0.184244 / average = 0.79889 (Wall 0.498299s, CPU 0.49825s)
+Info    : 9589 edge swaps, 273 node relocations (volume = 0.000226145): worst = 0.257981 / average = 0.798928 (Wall 0.671633s, CPU 0.671554s)
+Info    : 9590 edge swaps, 273 node relocations (volume = 0.000226145): worst = 0.257981 / average = 0.79893 (Wall 0.863653s, CPU 0.86333s)
+Info    : No ill-shaped tets in the mesh :-)
+[harness] 22 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 8609 edge swaps, 1413 node relocations (volume = 0.0111912): worst = 0.0763448 / average = 0.693001 (Wall 1.02819s, CPU 1.0261s)
+Info    : 9456 edge swaps, 2017 node relocations (volume = 0.0111912): worst = 0.101934 / average = 0.693318 (Wall 1.7308s, CPU 1.72871s)
+Info    : 9683 edge swaps, 2334 node relocations (volume = 0.0111912): worst = 0.101934 / average = 0.693477 (Wall 2.39462s, CPU 2.39253s)
+Info    : No ill-shaped tets in the mesh :-)
+[harness] 22 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 12 edge swaps, 0 node relocations (volume = 5.34007e-07): worst = 0.230213 / average = 0.663983 (Wall 0.000226699s, CPU 0.000239s)
+Info    : No ill-shaped tets in the mesh :-)
+[harness] 22 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 80 edge swaps, 1 node relocations (volume = 6.79668e-06): worst = 0.257392 / average = 0.646202 (Wall 0.00383488s, CPU 0.003838s)
+Info    : 81 edge swaps, 1 node relocations (volume = 6.79668e-06): worst = 0.291286 / average = 0.646139 (Wall 0.00424598s, CPU 0.004251s)
+Info    : No ill-shaped tets in the mesh :-)
+[harness] 22 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 33 edge swaps, 0 node relocations (volume = 4.72525e-06): worst = 0.302477 / average = 0.710017 (Wall 0.000610097s, CPU 0.000612s)
+Info    : No ill-shaped tets in the mesh :-)
+[harness] 22 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 52 edge swaps, 1 node relocations (volume = 4.72654e-06): worst = 0.204906 / average = 0.695955 (Wall 0.000821796s, CPU 0.000823s)
+Info    : No ill-shaped tets in the mesh :-)
+[harness] 22 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 6 edge swaps, 0 node relocations (volume = 5.21597e-07): worst = 0.31622 / average = 0.673736 (Wall 0.000103999s, CPU 0.000108s)
+Info    : No ill-shaped tets in the mesh :-)
+[harness] 22 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 72 edge swaps, 0 node relocations (volume = 6.80675e-06): worst = 0.300181 / average = 0.670495 (Wall 0.00300238s, CPU 0.003003s)
+Info    : No ill-shaped tets in the mesh :-)
+[harness] 22 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 21 edge swaps, 0 node relocations (volume = 7.84e-07): worst = 0.290803 / average = 0.632228 (Wall 0.000427398s, CPU 0.000431s)
+Info    : 22 edge swaps, 0 node relocations (volume = 7.84e-07): worst = 0.292724 / average = 0.633214 (Wall 0.000534498s, CPU 0.000539s)
+Info    : No ill-shaped tets in the mesh :-)
+[harness] 22 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 20 edge swaps, 0 node relocations (volume = 7.84e-07): worst = 0.28372 / average = 0.648383 (Wall 0.000431998s, CPU 0.000434s)
+Info    : 21 edge swaps, 0 node relocations (volume = 7.84e-07): worst = 0.28372 / average = 0.648448 (Wall 0.000515897s, CPU 0.000519s)
+Info    : No ill-shaped tets in the mesh :-)
+[harness] 22 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 7 edge swaps, 0 node relocations (volume = 5.23548e-07): worst = 0.302481 / average = 0.680883 (Wall 0.000124699s, CPU 0.000126s)
+Info    : No ill-shaped tets in the mesh :-)
+[harness] 22 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 80 edge swaps, 6 node relocations (volume = 6.80685e-06): worst = 0.166822 / average = 0.651919 (Wall 0.00179709s, CPU 0.001797s)
+Info    : No ill-shaped tets in the mesh :-)
+[harness] 22 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 55 edge swaps, 0 node relocations (volume = 4.72965e-06): worst = 0.303809 / average = 0.707965 (Wall 0.000898696s, CPU 0.0009s)
+Info    : No ill-shaped tets in the mesh :-)
+[harness] 22 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 25 edge swaps, 0 node relocations (volume = 7.84e-07): worst = 0.293459 / average = 0.646313 (Wall 0.000536897s, CPU 0.000539s)
+Info    : No ill-shaped tets in the mesh :-)
+[harness] 22 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 26 edge swaps, 0 node relocations (volume = 7.84e-07): worst = 0.195182 / average = 0.636319 (Wall 0.000542797s, CPU 0.000544s)
+Info    : 28 edge swaps, 0 node relocations (volume = 7.84e-07): worst = 0.293435 / average = 0.637475 (Wall 0.000660497s, CPU 0.000663s)
+Info    : No ill-shaped tets in the mesh :-)
+[harness] 22 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 39 edge swaps, 0 node relocations (volume = 4.71246e-06): worst = 0.301255 / average = 0.70451 (Wall 0.00188459s, CPU 0.001885s)
+Info    : No ill-shaped tets in the mesh :-)
+[harness] 22 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 14 edge swaps, 0 node relocations (volume = 7.84e-07): worst = 0.289734 / average = 0.667169 (Wall 0.000281599s, CPU 0.000286s)
+Info    : 15 edge swaps, 0 node relocations (volume = 7.84e-07): worst = 0.293459 / average = 0.668619 (Wall 0.000338699s, CPU 0.000343s)
+Info    : No ill-shaped tets in the mesh :-)
+[harness] 22 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 14 edge swaps, 0 node relocations (volume = 7.84e-07): worst = 0.293543 / average = 0.667507 (Wall 0.000262599s, CPU 0.000267s)
+Info    : No ill-shaped tets in the mesh :-)
+[harness] 22 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 8 edge swaps, 0 node relocations (volume = 5.18248e-07): worst = 0.43693 / average = 0.688495 (Wall 0.000110999s, CPU 0.000112s)
+Info    : No ill-shaped tets in the mesh :-)
+[harness] 22 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 84 edge swaps, 2 node relocations (volume = 6.81283e-06): worst = 0.0239935 / average = 0.656544 (Wall 0.00173169s, CPU 0.00173s)
+Info    : 89 edge swaps, 3 node relocations (volume = 6.81283e-06): worst = 0.277301 / average = 0.657291 (Wall 0.00222079s, CPU 0.002222s)
+Info    : No ill-shaped tets in the mesh :-)
+[harness] 22 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 72 edge swaps, 2 node relocations (volume = 6.79862e-06): worst = 0.202061 / average = 0.655414 (Wall 0.00174129s, CPU 0.00174s)
+Info    : 74 edge swaps, 2 node relocations (volume = 6.79862e-06): worst = 0.202061 / average = 0.655388 (Wall 0.00222979s, CPU 0.002229s)
+Info    : No ill-shaped tets in the mesh :-)
+[harness] 22 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 19 edge swaps, 0 node relocations (volume = 7.84e-07): worst = 0.222254 / average = 0.649232 (Wall 0.000383799s, CPU 0.000388s)
+Info    : 20 edge swaps, 0 node relocations (volume = 7.84e-07): worst = 0.293263 / average = 0.6507 (Wall 0.000459298s, CPU 0.000464s)
+Info    : No ill-shaped tets in the mesh :-)
+[harness] 22 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 20 edge swaps, 0 node relocations (volume = 7.84e-07): worst = 0.283955 / average = 0.644508 (Wall 0.000472197s, CPU 0s)
+Info    : 21 edge swaps, 0 node relocations (volume = 7.84e-07): worst = 0.283955 / average = 0.645972 (Wall 0.000582097s, CPU 0s)
+Info    : No ill-shaped tets in the mesh :-)
+[harness] 22 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 81 edge swaps, 0 node relocations (volume = 6.80413e-06): worst = 0.130708 / average = 0.656282 (Wall 0.00169019s, CPU 0.001602s)
+Info    : 82 edge swaps, 0 node relocations (volume = 6.80413e-06): worst = 0.300045 / average = 0.656504 (Wall 0.00204309s, CPU 0.001947s)
+Info    : No ill-shaped tets in the mesh :-)
+[harness] 22 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 77 edge swaps, 3 node relocations (volume = 6.8022e-06): worst = 0.176006 / average = 0.650903 (Wall 0.00149479s, CPU 0.001475s)
+Info    : 79 edge swaps, 4 node relocations (volume = 6.8022e-06): worst = 0.176006 / average = 0.651229 (Wall 0.00187589s, CPU 0.001847s)
+Info    : No ill-shaped tets in the mesh :-)
+[harness] 22 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 15 edge swaps, 0 node relocations (volume = 5.3247e-07): worst = 0.354074 / average = 0.676114 (Wall 0.000221499s, CPU 0.000225s)
+Info    : No ill-shaped tets in the mesh :-)
+[harness] 22 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 48 edge swaps, 0 node relocations (volume = 4.72413e-06): worst = 0.300424 / average = 0.693332 (Wall 0.000813696s, CPU 0.000814s)
+Info    : No ill-shaped tets in the mesh :-)
+[harness] 22 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 31 edge swaps, 0 node relocations (volume = 4.71845e-06): worst = 0.231302 / average = 0.709984 (Wall 0.000572397s, CPU 0.000574s)
+Info    : No ill-shaped tets in the mesh :-)
+[harness] 22 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 59 edge swaps, 0 node relocations (volume = 6.80681e-06): worst = 0.237126 / average = 0.664142 (Wall 0.00137799s, CPU 0.001378s)
+Info    : No ill-shaped tets in the mesh :-)
+[harness] 22 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 7 edge swaps, 0 node relocations (volume = 5.23212e-07): worst = 0.251924 / average = 0.679882 (Wall 0.0001329s, CPU 0.000137s)
+Info    : No ill-shaped tets in the mesh :-)
+[harness] 22 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 39 edge swaps, 0 node relocations (volume = 4.72242e-06): worst = 0.137726 / average = 0.693388 (Wall 0.000746097s, CPU 0.000746s)
+Info    : No ill-shaped tets in the mesh :-)
+[harness] 22 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 6 edge swaps, 0 node relocations (volume = 5.23467e-07): worst = 0.301735 / average = 0.663307 (Wall 0.0001208s, CPU 0.000125s)
+Info    : No ill-shaped tets in the mesh :-)
+[harness] 22 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 43 edge swaps, 1 node relocations (volume = 4.71847e-06): worst = 0.220152 / average = 0.705868 (Wall 0.000833296s, CPU 0.000833s)
+Info    : 44 edge swaps, 1 node relocations (volume = 4.71847e-06): worst = 0.303142 / average = 0.706338 (Wall 0.0010328s, CPU 0.001035s)
+Info    : No ill-shaped tets in the mesh :-)
+[harness] 22 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 10 edge swaps, 0 node relocations (volume = 5.27151e-07): worst = 0.338607 / average = 0.686066 (Wall 0.000154899s, CPU 0.000157s)
+Info    : No ill-shaped tets in the mesh :-)
+[harness] 10 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : Done optimizing mesh (Wall 5.90306s, CPU 5.60447s)
+Info    : 132211 nodes 865228 elements
+[harness] 2 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : CalcLocalH: 90698 Points 519881 Elements 30870 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 923 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 21.9236 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 504 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 31.7057 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 113 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 45.8073 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 6 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 45.8073 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 5775 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 13.9005 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 1245 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 6.56874 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 272 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 6.58874 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : CalcLocalH: 55387 Points 251496 Elements 54430 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 1782 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 719.669 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 1082 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 719.669 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 425 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 3858.52 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 126 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 1623.51 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 9 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 2740.46 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 2800 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 215.99 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 566 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 120.794 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 202 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 84.1254 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : CalcLocalH: 97 Points 207 Elements 186 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 84 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 18.7693 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 46 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 13.9679 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 11 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 32.6606 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 10 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 20.2528 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 1 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 7.92472 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 0 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 6.94488 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : CalcLocalH: 853 Points 2359 Elements 1592 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 236 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 28.3875 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 161 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 29.5881 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 72 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 36.7161 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 21 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 52.172 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 9 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 52.172 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 24 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 46.0473 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 4 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 15.9946 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 0 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 18.2766 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : CalcLocalH: 586 Points 1436 Elements 1114 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 89 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 14.6665 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 65 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 44.7007 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 41 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 3171.76 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 12 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 79.4914 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 14 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 37.5292 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 5 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 18.8012 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 0 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 10.0397 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : CalcLocalH: 586 Points 1412 Elements 1122 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 104 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 30.6244 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 65 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 58.7021 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 40 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 478.896 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 15 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 6502.43 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 14 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 48.3902 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 4 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 27.4396 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 2 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 27.4657 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : CalcLocalH: 87 Points 181 Elements 166 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 74 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 7.77329 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 46 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 15.8827 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 13 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 52.8614 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 11 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 22.8211 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 1 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 8.3188 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 0 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 8.33559 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : CalcLocalH: 832 Points 2311 Elements 1534 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 225 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 24.2932 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 171 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 36.3646 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 82 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 727.509 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 21 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 727.509 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 3 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 727.509 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 22 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 56.7756 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 4 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 18.3609 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 2 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 18.05 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : CalcLocalH: 170 Points 438 Elements 322 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 156 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 21.2108 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 122 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 42.3287 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 99 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 45.409 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 65 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 224.432 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 36 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 224.432 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 20 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 224.432 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 7 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 224.432 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 17 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 30.1867 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 9 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 28.5921 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 0 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 16.8059 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : CalcLocalH: 164 Points 421 Elements 310 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 157 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 21.0831 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 112 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 39.1126 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 80 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 59.055 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 39 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 63.7889 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 19 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 63.7889 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 2 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 63.7889 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 19 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 70.3594 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 6 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 17.1399 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 3 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 12.5437 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : CalcLocalH: 86 Points 179 Elements 164 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 76 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 13.9744 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 56 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 22.9379 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 29 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 22.9379 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 6 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 23.1349 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 12 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 11.649 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 0 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 7.54613 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 1 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 6.10187 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : CalcLocalH: 816 Points 2240 Elements 1516 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 224 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 42.5577 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 159 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 64.8485 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 85 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 3591.58 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 25 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 85.4025 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 3 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 85.4025 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 31 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 47.6402 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 2 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 32.9445 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 1 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 33.0359 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : CalcLocalH: 591 Points 1462 Elements 1122 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 94 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 20.6269 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 70 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 37.8127 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 49 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 407.611 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 15 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 430.95 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 6 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 430.95 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 13 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 51.9195 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 1 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 20.7676 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 1 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 17.3507 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : CalcLocalH: 163 Points 424 Elements 306 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 152 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 21.1462 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 111 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 41.1911 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 87 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 43.5126 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 52 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 43.5126 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 34 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 252.574 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 14 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 252.574 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 7 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 252.574 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 22 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 34.3045 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 4 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 17.5727 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 1 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 17.8297 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : CalcLocalH: 164 Points 421 Elements 310 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 154 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 21.1197 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 116 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 44.0736 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 85 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 71.5978 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 48 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 71.5978 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 27 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 81.9173 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 10 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 81.9173 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 2 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 81.9173 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 21 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 46.3568 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 2 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 22.237 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 2 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 13.7963 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : CalcLocalH: 573 Points 1384 Elements 1094 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 96 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 14.4979 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 64 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 28.8001 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 40 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 1381.5 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 14 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 137.673 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 6 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 137.673 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 13 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 35.3527 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 1 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 27.6096 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 5 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 27.6656 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : CalcLocalH: 165 Points 431 Elements 308 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 150 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 21.1461 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 105 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 46.8153 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 51 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 260.514 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 18 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 260.514 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 10 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 260.514 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 4 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 260.514 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 18 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 37.2227 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 2 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 14.7443 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 0 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 14.643 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : CalcLocalH: 168 Points 446 Elements 312 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 153 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 21.1192 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 108 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 31.1628 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 79 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 45.9273 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 39 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 210.826 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 22 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 210.826 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 6 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 380.044 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 17 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 26.2093 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 3 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 14.0434 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 2 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 13.957 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : CalcLocalH: 86 Points 176 Elements 164 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 69 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 5.55028 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 37 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 16.8735 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 13 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 16.8735 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 11 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 12.0413 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 1 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 7.49042 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 0 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 7.20924 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : CalcLocalH: 832 Points 2322 Elements 1538 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 220 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 27.5629 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 155 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 38.9911 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 82 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 187.395 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 25 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 187.395 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 30 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 29.7279 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 3 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 20.7957 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 2 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 17.2143 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : CalcLocalH: 859 Points 2398 Elements 1594 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 231 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 50.1537 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 153 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 769.373 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 62 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 769.373 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 16 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 2746.65 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 5 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 769.373 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 25 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 38.8902 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 7 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 22.351 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 0 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 18.5304 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : CalcLocalH: 171 Points 442 Elements 322 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 156 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 21.2097 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 104 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 9648.68 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 69 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 68.4287 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 30 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 292.066 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 17 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 47.3856 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 6 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 17.823 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 1 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 17.9264 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : CalcLocalH: 163 Points 408 Elements 310 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 155 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 21.0831 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 122 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 33.5844 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 84 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 55.5062 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 50 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 71.9324 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 24 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 71.9324 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 9 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 71.9324 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 5 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 71.9324 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 24 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 38.2546 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 4 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 24.9257 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 1 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 16.7423 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : CalcLocalH: 812 Points 2251 Elements 1504 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 216 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 20.9255 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 160 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 32.6103 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 73 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 250.263 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 19 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 501.295 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 5 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 703.431 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 21 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 32.496 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 4 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 20.8676 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 1 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 19.4265 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : CalcLocalH: 793 Points 2168 Elements 1480 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 225 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 44.3384 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 154 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 124.678 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 67 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 124.678 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 15 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 124.678 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 24 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 37.3597 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 1 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 35.1211 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 0 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 22.3206 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : CalcLocalH: 96 Points 201 Elements 184 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 81 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 10.5748 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 53 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 17.9791 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 19 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 32.8873 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 7 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 32.8873 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 11 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 22.5941 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 0 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 7.1158 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 0 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 6.9906 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : CalcLocalH: 585 Points 1431 Elements 1116 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 113 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 11.925 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 65 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 34.2993 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 42 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 50.3833 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 17 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 50.3833 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 6 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 50.3833 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 21 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 31.5894 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 1 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 25.1717 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 1 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 25.1834 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : CalcLocalH: 564 Points 1365 Elements 1076 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 98 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 17.327 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 66 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 29.7677 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 34 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 160.95 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 9 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 160.95 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 13 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 30.468 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 4 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 26.9378 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 1 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 15.415 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : CalcLocalH: 853 Points 2390 Elements 1570 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 216 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 25.5521 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 156 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 36.5431 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 82 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 396.581 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 26 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 396.581 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 3 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 396.581 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 19 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 31.3902 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 2 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 20.2094 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 1 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 19.9663 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : CalcLocalH: 86 Points 179 Elements 164 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 76 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 22.8099 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 52 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 22.8099 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 29 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 22.8099 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 5 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 28.2026 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 4 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 46.8439 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 10 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 13.3933 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 2 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 6.96794 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 0 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 6.93627 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : CalcLocalH: 580 Points 1400 Elements 1110 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 113 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 72.7914 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 69 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 38.077 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 48 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 159.75 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 19 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 159.75 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 11 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 159.75 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 17 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 47.4949 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 4 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 26.6908 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 2 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 24.1541 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : CalcLocalH: 87 Points 185 Elements 166 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 82 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 14.1781 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 47 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 25.6437 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 20 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 25.6437 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 11 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 70.9195 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 8 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 36.4885 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 2 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 9.16779 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 0 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 8.68664 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : CalcLocalH: 579 Points 1428 Elements 1100 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 99 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 14.7609 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 65 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 25.2404 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 39 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 100.129 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 7 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 100.129 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 3 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 100.129 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 12 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 28.488 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 0 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 21.2575 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 3 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 12.7985 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : CalcLocalH: 85 Points 177 Elements 162 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 78 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 10.504 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 49 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 14.2983 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 16 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 16.8176 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 3 illegal tets 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 18.49 
+[harness] 5 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+[harness] 1 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 10 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 8.53397 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 0 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 7.33272 
+[harness] 12 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : 0 elements combined 
+[harness] 4 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : badmax = 7.87682 
+[harness] 11 gmsh optimisation lines elided (docs/testing/retention-policy.md §2; FEM_LOG_FILTER=0 keeps them)
+Info    : Done optimizing mesh (Wall 103.694s, CPU 103.169s)
+[birdcage-mesh] mesh wall time 147.59 s; CAD masses [m^3]: conductor=9.939058968e-05 air=1.118814235e-02 phantom=2.261946711e-04 port_P1_lower=7.840000000e-07 port_P2_lower=7.840000085e-07 port_P3_lower=7.840000006e-07 port_P4_lower=7.840000006e-07 port_P1_upper=7.840000000e-07 port_P2_upper=7.840000006e-07 port_P3_upper=7.840000006e-07 port_P4_upper=7.840000085e-07
+[lumped-sheet] driven port 'P1' (facet tag 211, V_src = (1+0j), R = 4.558827e+01+0.000000e+00j Ohm/square):
+    P1: V = +3.143853928e-01+7.096224166e-02j V, I = +1.371229214e-02-1.419244833e-03j A (driven)
+    P2: V = +2.335464996e-01-2.091706346e-02j V, I = -4.670929992e-03+4.183412692e-04j A (undriven)
+    P3: V = +2.184602615e-01-3.576870396e-02j V, I = -4.369205229e-03+7.153740793e-04j A (undriven)
+    P4: V = +2.335608077e-01-2.089394817e-02j V, I = -4.671216153e-03+4.178789634e-04j A (undriven)
+[lumped-sheet] driven port 'P2' (facet tag 212, V_src = (1+0j), R = 4.558827e+01+0.000000e+00j Ohm/square):
+    P1: V = +2.335464996e-01-2.091706346e-02j V, I = -4.670929992e-03+4.183412692e-04j A (undriven)
+    P2: V = +3.144078294e-01+7.096797052e-02j V, I = +1.371184341e-02-1.419359410e-03j A (driven)
+    P3: V = +2.335057913e-01-2.090613446e-02j V, I = -4.670115826e-03+4.181226892e-04j A (undriven)
+    P4: V = +2.184930925e-01-3.576211540e-02j V, I = -4.369861850e-03+7.152423081e-04j A (undriven)
+[lumped-sheet] driven port 'P3' (facet tag 213, V_src = (1+0j), R = 4.558827e+01+0.000000e+00j Ohm/square):
+    P1: V = +2.184602615e-01-3.576870396e-02j V, I = -4.369205229e-03+7.153740793e-04j A (undriven)
+    P2: V = +2.335057913e-01-2.090613446e-02j V, I = -4.670115826e-03+4.181226892e-04j A (undriven)
+    P3: V = +3.145136741e-01+7.095325163e-02j V, I = +1.370972652e-02-1.419065033e-03j A (driven)
+    P4: V = +2.334736466e-01-2.089446209e-02j V, I = -4.669472931e-03+4.178892417e-04j A (undriven)
+[lumped-sheet] driven port 'P4' (facet tag 214, V_src = (1+0j), R = 4.558827e+01+0.000000e+00j Ohm/square):
+    P1: V = +2.335608077e-01-2.089394817e-02j V, I = -4.671216153e-03+4.178789634e-04j A (undriven)
+    P2: V = +2.184930925e-01-3.576211540e-02j V, I = -4.369861850e-03+7.152423081e-04j A (undriven)
+    P3: V = +2.334736466e-01-2.089446209e-02j V, I = -4.669472931e-03+4.178892417e-04j A (undriven)
+    P4: V = +3.144255806e-01+7.093356442e-02j V, I = +1.371148839e-02-1.418671288e-03j A (driven)
+n-port S-parameter sweep diagnostics:
+  frequency [Hz]: 1.000000e+07
+  ports: P1, P2, P3, P4
+  S-matrix shape: (4, 4)
+  diagonal terms: S11=-3.712e-01+1.419e-01j, S22=-3.712e-01+1.419e-01j, S33=-3.710e-01+1.419e-01j, S44=-3.711e-01+1.419e-01j
+  S-matrix sanity metrics:
+    reciprocity: max|Sij-Sji|=4.779e-15, max rel=1.019e-14
+    passivity: sigma_max=1.000e+00, max column power sum=7.938e-01
+    warnings: none
+
+[PORT-9 step3d] gapped+sheeted birdcage: 719769 cells (record 116085, ratio 6.200362), mesh 147.59 s, rung 156.33 s; f = 1.000e+07 Hz, f_width = 0.5; four driven solves through the lumped-sheet sweep in 235.43 s wall at -n 8
+    Z_p (lumped sheet, leg (d0)'s termination) = 5.000000e+01 Ohm;  z0_ohm (S-matrix reference) = 5.000000e+01 Ohm  — the same number by leg (d0)'s finding, not by coincidence
+    sheet 211 (P1): azimuth 360.000 deg;    26 facets  area 5.835298880e-05 m^2  h = 8.000000000e-03 m  w = A/h = 7.294123600e-03 m  out-of-plane 0.000e+00 m
+    sheet 212 (P2): azimuth  90.000 deg;    26 facets  area 5.835298880e-05 m^2  h = 8.000000000e-03 m  w = A/h = 7.294123600e-03 m  out-of-plane 0.000e+00 m
+    sheet 213 (P3): azimuth 180.000 deg;    26 facets  area 5.835298880e-05 m^2  h = 8.000000000e-03 m  w = A/h = 7.294123600e-03 m  out-of-plane 0.000e+00 m
+    sheet 214 (P4): azimuth 270.000 deg;    26 facets  area 5.835298880e-05 m^2  h = 8.000000000e-03 m  w = A/h = 7.294123600e-03 m  out-of-plane 0.000e+00 m
+[PORT-9 step3d] Z (Ohm), column k = port k driven:
+    Z_1k = +2.215430810e+01+7.468089790e+00j  +1.700813000e+01+2.350950060e-01j  +1.603296835e+01-9.494630835e-01j  +1.700952403e+01+2.360775944e-01j
+    Z_2k = +1.700759660e+01+2.348899877e-01j  +2.215649586e+01+7.469163579e+00j  +1.700774757e+01+2.355236914e-01j  +1.603325753e+01-9.492910555e-01j
+    Z_3k = +1.602997291e+01-9.493852381e-01j  +1.700511100e+01+2.355795472e-01j  +2.216771855e+01+7.469929159e+00j  +1.700323840e+01+2.353897657e-01j
+    Z_4k = +1.700845636e+01+2.366647094e-01j  +1.603280901e+01-9.485082831e-01j  +1.700534056e+01+2.361259411e-01j  +2.215906617e+01+7.466001682e+00j
+[PORT-9 step3d] S (z0 = 50 Ohm):
+    S_1k = -3.712292144e-01+1.419244833e-01j  +4.670929992e-01-4.183412692e-02j  +4.369205229e-01-7.153740793e-02j  +4.671216153e-01-4.178789634e-02j
+    S_2k = +4.670929992e-01-4.183412692e-02j  -3.711843412e-01+1.419359410e-01j  +4.670115826e-01-4.181226892e-02j  +4.369861850e-01-7.152423081e-02j
+    S_3k = +4.369205229e-01-7.153740793e-02j  +4.670115826e-01-4.181226892e-02j  -3.709726518e-01+1.419065033e-01j  +4.669472931e-01-4.178892417e-02j
+    S_4k = +4.671216153e-01-4.178789634e-02j  +4.369861850e-01-7.152423081e-02j  +4.669472931e-01-4.178892417e-02j  -3.711488387e-01+1.418671288e-01j
+    ||S - S^T||/||S|| = 7.131533380e-15   ||Z - Z^T||/||Z|| = 9.220111893e-05
+    sigma(S) = 0.999993910, 0.881817351, 0.835872939, 0.835725732
+    column power sums = 0.793845629, 0.793770316, 0.793409481, 0.793685305
+    class spreads: self 0.0579%  adjacent 0.0372%  opposite 0.0205%  (band 0.5%); pooled off-diagonal 9.2126%
+
+[MAT-4 step 4] the C95.3 mass-averaging operator on the COIL-DRIVEN field: 719769 cells (452228 tag-3) at phantom_resolution = 0.00125 m, f = 1.000e+07 Hz, degree 1, quadrature_degree 16 (imported from MAT-4 step 3)
+    cell counts NOT asserted here — this is not the PHANTOM_RESOLUTION_FINE rung; the caller owns them
+    ball radii a_1g = 6.2035 mm, a_10g = 13.3650 mm at rho = 1000.0 kg/m3; centres at r0 = 15.0 mm on the four port azimuths — containment r0 + a_10g = 28.3650 mm < phantom radius 30.0 mm, ASSERTED
+    solve times P1 202.77 s, P2 216.25 s, P3 208.62 s, P4 182.36 s
+    (i) WHOLE-PHANTOM BALL (r = 0.0501 m > the phantom circumradius 0.05 m), P1 drive:
+        ball    1/2 int sigma|E|^2 = 5.488084496378e-08 W, mass 2.261454499316e-01 kg, volume 5.268191399e-04 m3
+        tagged  1/2 int sigma|E|^2 = 5.488084496378e-08 W, volume 2.261454499e-04 m3
+        relative difference 6.816769e-14 (ASSERTED <= 1e-10); mass vs rho*V_phantom 3.819167e-14 (ASSERTED <= 1e-10); against step 3f's record 5.587038273e-08 W 1.771131e-02 (NOT asserted — step 3f's record is the 0.0075 m mesh's, this is a rung-to-rung move)
+    SAR_10g(c_j; drive k) [W/kg] — rows are drives, columns are centres; the diagonal is the C4 orbit, the (k, k+2) entry is the negative control:
+        k=0 (P1)  6.162725026e-07  4.612531115e-08  9.137200181e-08  4.610241212e-08   peak over centres 6.162725026e-07 W/kg  — NOT a C95.3 compliance figure
+        k=1 (P2)  4.611614844e-08  6.157416646e-07  4.613692706e-08  9.157524544e-08   peak over centres 6.157416646e-07 W/kg  — NOT a C95.3 compliance figure
+        k=2 (P3)  9.117391924e-08  4.609570749e-08  6.152070332e-07  4.607458506e-08   peak over centres 6.152070332e-07 W/kg  — NOT a C95.3 compliance figure
+        k=3 (P4)  4.617401906e-08  9.156121541e-08  4.615768293e-08  6.162839910e-07   peak over centres 6.162839910e-07 W/kg  — NOT a C95.3 compliance figure
+    (ii) the four cyclic 10 g C4 pairs |SAR(c_k+1; k+1) - SAR(c_k; k)| / SAR(c_k; k), ASSERTED <= the imported unmoved 5.0% band:
+        k=0->1  10 g    0.0861%   1 g    0.1075% (PRINTED NOT GATED)   mis-paired control (c_2; 0)   85.1734% (sign ASSERTED > band; size PREDICTED ~90%, ceiling 100%)
+        k=1->2  10 g    0.0868%   1 g    0.0562% (PRINTED NOT GATED)   mis-paired control (c_3; 1)   85.1277% (sign ASSERTED > band; size PREDICTED ~90%, ceiling 100%)
+        k=2->3  10 g    0.1751%   1 g    0.1474% (PRINTED NOT GATED)   mis-paired control (c_0; 2)   85.1800% (sign ASSERTED > band; size PREDICTED ~90%, ceiling 100%)
+        k=3->0  10 g    0.0019%   1 g    0.0164% (PRINTED NOT GATED)   mis-paired control (c_1; 3)   85.1430% (sign ASSERTED > band; size PREDICTED ~90%, ceiling 100%)
+    kernel mass int_B rho dV vs the closed form rho*4/3*pi*a^3 — PREDICTED comparison at the imported 0.1% budget (rule (e): the sphere gate measured 0.0120% / 0.0044% at a far finer h/a; NOT asserted here):
+        1 g   closed form 1.000000 g   errors   0.0132%   0.0039%   0.0123%   0.0113%
+        10 g  closed form 10.000000 g   errors   0.0021%   0.0036%   0.0006%   0.0029%
+    PRE-REGISTERED 1 g VERDICT: (a) — the worst 1 g C4 pair reads 0.1474%, inside the 5.0% band the 10 g column is gated at — gating 1 g on this fixture is the NEXT REVIEW's ruling, never in-slot
+    SCOPE: 10 MHz, degree 1, one mesh, four single drives.  NO absolute SAR, NO C95.3 compliance or limit claim, no homogeneity, no Larmor, no convergence claim, no quadrature drive.
+
+[ANS-2] ROW 1 — POINTWISE SAR sigma|E|^2/(2 rho) at the four named points (sigma = 5.000000000e-01 S/m imported and gated uniform, rho = 1000.0 kg/m^3); rows are drives, columns are the points (+x, +y, -x, -y at r = 0.015 m):
+        drive P1  5.555326768e-07  6.324647033e-09  6.699025317e-08  5.631431031e-09  W/kg
+        drive P2  7.381111444e-09  5.580723459e-07  5.847948372e-09  6.773370990e-08  W/kg
+        drive P3  6.994374073e-08  7.700074241e-09  5.338971091e-07  9.521238212e-09  W/kg
+        drive P4  6.797944466e-09  7.072455015e-08  9.386230171e-09  5.377819772e-07  W/kg
+[ANS-2] ROW 2/3 — WHOLE-PHANTOM DISSIPATED POWER and AVERAGE SAR (meshed phantom volume 2.261454499e-04 m^3 vs the CAD closed form 2.261946711e-04 m^3):
+        drive P1  power 5.488084496378e-08 W   average SAR 2.426794127e-07 W/kg
+        drive P2  power 5.490498525733e-08 W   average SAR 2.427861594e-07 W/kg
+        drive P3  power 5.483630938903e-08 W   average SAR 2.424824793e-07 W/kg
+        drive P4  power 5.493365586764e-08 W   average SAR 2.429129389e-07 W/kg
+[ANS-2] ROW 7 — EXCITATION.  NORMALISATION IS CARRIED, NEVER MATCHED: our incident power is 2.5000000e-03 W (V_src = 1 V behind 50 Ohm); HFSS's default is 1 W.  SAR is LINEAR in incident power; the adjudicating review applies the ratio.
+        drive P1  incident 2.5000000e-03 W   supplied Re P 6.856146072e-03 W   accepted Re P 2.105115778e-03 W   |Im P|/Re P 0.337094 (PRINTED, NEVER GATED)
+        drive P2  incident 2.5000000e-03 W   supplied Re P 6.855921706e-03 W   accepted Re P 2.105190934e-03 W   |Im P|/Re P 0.337109 (PRINTED, NEVER GATED)
+        drive P3  incident 2.5000000e-03 W   supplied Re P 6.854863259e-03 W   accepted Re P 2.105604590e-03 W   |Im P|/Re P 0.336973 (PRINTED, NEVER GATED)
+        drive P4  incident 2.5000000e-03 W   supplied Re P 6.855744194e-03 W   accepted Re P 2.105305643e-03 W   |Im P|/Re P 0.336928 (PRINTED, NEVER GATED)
+[ANS-2] ROW 8 — SOLVE METADATA: 719769 cells (452228 tag-3) at mpiexec -n 8, Nedelec first kind, degree 1 (N1curl), four drives in 202.77 s + 216.25 s + 208.62 s + 182.36 s, 1311.6 s wall
+[ANS-2] ANCHORS — every band and every record IMPORTED from the `MAT-4` gate modules, none restated and none moved:
+        k=0->1  10 g    0.0861%   1 g    0.1075%   ASSERTED <= 5.0%   mis-paired 1 g control (c_2; 0)   86.9314%  ASSERTED >= 50% (10x the band)
+        k=1->2  10 g    0.0868%   1 g    0.0562%   ASSERTED <= 5.0%   mis-paired 1 g control (c_3; 1)   86.8930%  ASSERTED >= 50% (10x the band)
+        k=2->3  10 g    0.1751%   1 g    0.1474%   ASSERTED <= 5.0%   mis-paired 1 g control (c_0; 2)   86.9387%  ASSERTED >= 50% (10x the band)
+        k=3->0  10 g    0.0019%   1 g    0.0164%   ASSERTED <= 5.0%   mis-paired 1 g control (c_1; 3)   86.9059%  ASSERTED >= 50% (10x the band)
+        coverage identity: power 6.816769e-14, mass 3.819167e-14, ASSERTED <= 1e-10
+[ANS-2 step 4] MESH-RECORD ASSERTIONS SKIPPED — phantom_resolution = 0.00125 m is not the 0.0025 m rung the `MAT-4` step 5b records (199920 / 58866 cells at the imported 1% CELL_COUNT_BAND) were measured on, and this rung has no record yet.  Measured here: 719769 cells / 452228 phantom (tag-3) cells — a CANDIDATE record for a review, asserted against nothing.  Every other band above stays asserted.
+
+[ANS-2 step 4] READOUT at phantom_resolution = 0.00125 m (719769 cells / 452228 phantom), against the tracked 0.0025 m rung (metrics.json):
+[ANS-2 step 4] driven-point SAR sigma|E|^2/(2 rho) [W/kg] — drive Pk read at the k-th named point, the four samples C4 symmetry makes equal:
+        drive P1 @ point 0   5.555326768e-07   (0.0025 rung 5.878191741e-07, change -5.493%)
+        drive P2 @ point 1   5.580723459e-07   (0.0025 rung 5.079232898e-07, change +9.873%)
+        drive P3 @ point 2   5.338971091e-07   (0.0025 rung 5.287007744e-07, change +0.983%)
+        drive P4 @ point 3   5.377819772e-07   (0.0025 rung 5.763100136e-07, change -6.685%)
+[ANS-2 step 4] C4 SAMPLING SPREAD (max-min)/min = 4.528%   (0.0025 rung 15.730%)   — HFSS reads 0.02% on its own mesh; PRINTED, NEVER GATED
+[ANS-2 step 4] whole-phantom dissipated power [W] — one volume integral, no sampling, the cleanest number in the case:
+        drive P1   5.488084496378e-08   (0.0025 rung 5.503204728560e-08, change -0.2748%)
+        drive P2   5.490498525733e-08   (0.0025 rung 5.498192946960e-08, change -0.1399%)
+        drive P3   5.483630938903e-08   (0.0025 rung 5.500091017262e-08, change -0.2993%)
+        drive P4   5.493365586764e-08   (0.0025 rung 5.496862018673e-08, change -0.0636%)
+[ANS-2 step 4] the decision rule is the review's, not this run's: nothing above is asserted and no band is moved here.
+
+[ANS-2] wrote metrics_h0.00125.json, COMPARISON.md NOT rewritten (`ANS-2` step 4a: the tracked comparison stays the 0.0025 rung's) and ans2_birdcage_coil_driven_sar_10mhz_combined_h0p00125.xdmf
+[ANS-2] ALL ANCHORS GREEN.  This closes the RUNNABLE HALF only: `ANS-2` stays amber pending SPEC rows 4-6 (step 2) and the operator's AED replication (step 3).  No absolute-SAR or compliance claim follows from this run.
+[orphans-after]
+0
+[XL] memory.peak bytes:
+42850295808
+[capture] rc=0
+
+## Exit
+- Status: 0
+- Elapsed (s): 1315
+- Filtered lines (gmsh optimisation chatter): 3400
+[harness] XL slot recorded: row(s) folded into xl-ledger.md
