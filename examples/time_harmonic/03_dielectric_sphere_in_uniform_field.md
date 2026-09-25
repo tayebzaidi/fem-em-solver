@@ -63,6 +63,26 @@ nothing; Phase-2 §5.4 backfill.
 real build raises. Tier: **standard**; 9 s harness-wall on record, 7.3 s of it
 the single solve on 39 693 cells.
 
+## Setup figure
+
+![th:3 setup — dielectric sphere in a uniform field (TH-8 gate fixture)](figures/time_harmonic_03_dielectric_sphere_setup.png)
+
+`examples/time_harmonic/figures/time_harmonic_03_dielectric_sphere_setup.png`.
+*Left:* the fixture (`_solve` → `MeshGenerator.sphere_in_box_domain`) with the
+air box (tag `2`) hidden and the sphere (tag `1`, `SPHERE_TAG`) translucent
+blue — the same `sphere_in_box_domain` mesh `mri:2` and `mat:2` already
+picture, since all three examples share the fixture. There is nothing else
+inside the sphere to reveal by the translucency here (no second conductor,
+no coil); it is drawn translucent by the same one-object-class convention.
+*Right:* the slice at `z = 0`, the mesh centre and near the plane the
+interior probe cloud and both exterior pole/equator probes sit close to —
+the sphere's cross-section sits centred in the square air-box
+cross-section, grey outside (tag `2`, not hidden in the slice) and blue
+inside. There is no second geometry to picture as a control — the negative
+control (step 4 below) is the *same* solve with the sphere dropped from the
+`material_map`, cited from the `TH-8` gate log rather than re-run, so
+nothing else is pictured.
+
 ## 3. How to analyze it, step by step
 
 **Step 1 — the interior field against `3/(ε+2)E₀`.** This is the anchor:

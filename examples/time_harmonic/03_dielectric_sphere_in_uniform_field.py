@@ -94,6 +94,7 @@ from fem_em_solver.io.paraview_utils import (
     write_xdmf_with_tags,
 )
 from fem_em_solver.post.evaluation import evaluate_vector_field_parallel
+from fem_em_solver.post.setup_figure import write_setup_figure
 
 # The gated fixture lives in the test that closed `TH-8`; the §7 `EX-6` plan
 # requires importing it rather than restating it. The runner puts only ``src``
@@ -158,6 +159,7 @@ VOLUME_VS_PROBE_MAX = 0.03
 EXTERIOR_RTOL = 0.10
 
 OUTPUT_DIR = Path(__file__).resolve().parent / "paraview_output"
+FIGURE_DIR = Path(__file__).resolve().parent / "figures"  # committed, EX-57
 BASENAME = "time_harmonic_03_dielectric_sphere"
 
 
@@ -314,6 +316,28 @@ def main() -> None:
     solve_started = time.perf_counter()
     msh, cell_tags, fields, n_cells = _solve()
     solve_seconds = time.perf_counter() - solve_started
+
+    # EX-57 setup figure: `_solve` builds a `sphere_in_box_domain` mesh (the
+    # same generator `mri:2`/`mat:2` already picture) -- tag SPHERE_TAG (1) is
+    # the dielectric sphere eps sets the interior field of (translucent, the
+    # region this example's anchor is read from), tag 2 is the surrounding
+    # air box the exterior Dirichlet data lives on (hidden). Sliced through
+    # z = 0, the equatorial plane the interior probe cloud (`_interior_probe_
+    # points`) and the exterior pole/equator probes both sit near. Placed
+    # after `solve_seconds` is captured so the render never folds into the
+    # printed [solve] timing. No-op unless FEM_EM_SETUP_FIGURES=1.
+    write_setup_figure(
+        msh,
+        cell_tags,
+        FIGURE_DIR / f"{BASENAME}_setup.png",
+        region_names={SPHERE_TAG: "sphere (dielectric, eps_r=78)", 2: "air"},
+        hide_tags=(2,),
+        translucent_tags=(SPHERE_TAG,),
+        slice_normal=(0.0, 0.0, 1.0),
+        slice_origin=(0.0, 0.0, 0.0),
+        title="th:3 -- dielectric sphere in a uniform field (TH-8 gate fixture)",
+        comm=comm,
+    )
 
     # ---- the anchor: probe-averaged interior E_z vs 3/(eps+2) ---------------
     points = _interior_probe_points()
