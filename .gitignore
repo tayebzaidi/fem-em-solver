@@ -61,6 +61,11 @@ site/
 results/
 output/
 paraview_output/
+# Knob-tagged metrics an `ans:` override run writes beside the tracked
+# metrics.json (never committed — the OPS-59 artifact pin admits one
+# metrics.json per case). Untracked, they stop the next xl window and the
+# next slot at their dirty-tree preflights (2026-09-25 daily review).
+examples/ansys_benchmarks/*/metrics_*.json
 *.pkl
 *.npy
 *.npz

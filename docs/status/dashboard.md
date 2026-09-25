@@ -1,17 +1,18 @@
 # FEM-EM Solver — status
 
-**Updated:** 2026-09-23 03:00 daily review (Wednesday). Headline: **Monday's
-four slots emptied the queue — twelve items landed, including the first
-*gated* human-scale result (`WF-7` step 1: the F-human 32×32's reciprocity,
-passivity and 18 symmetry classes, all inside their bands) and six ✅ closures
-from the external code review; all eight new ✅s audited PASS (one auditor
-DEMOTE overruled with the log line).** Your image rebuild worked: last night's
-XL window ran the `scikit-rf` test green on the new image with DolfinX and the
-mesh records unchanged; the 04:30 slot closes `OPS-60` on the ordinary
-service and then starts the `scikit-rf` circuit layer (`PORT-23`). The two
-XL nights read the 64 MHz degree-2 *h*-ladder (converging, one class
-ambiguous) and showed the 10 MHz near-band C4 spread was the uncut port
-sheets, not the physics. Six items queued, 230 of the 240-minute floor.
+**Updated:** 2026-09-25 03:00 daily review (Friday). Headline: **the
+ordinary solver container had been down since ≈ 10:00 Wednesday. This
+review found it, restarted it, and cleared the untracked XL output that
+would have stopped both today's first slot and Saturday's XXL window.**
+Two XL nights read: the phantom h-halving for the coil-driven SAR case
+(`ANS-2`) came back in branch (a). The point-SAR symmetry scatter fell from
+15.7 % to 4.5 % and the phantom power did not move, so the residual against
+HFSS is the feed and the pointwise band tightens to 4.5 %. The 10 MHz
+degree-2 ladder (`ANS-4` 3g) falls but has not converged on `S₁₁` (last
+change 3.6 %), which the weekly rules on. Wednesday's slots landed the
+`scikit-rf` circuit engine, the human-scale `|B₁⁺|` symmetry gate and the
+STEP import round trip. Four items are queued (165 of the 240-minute floor);
+the first is the human-scale 10 g SAR hotspot, which can close `WF-7`.
 
 **Still a self-consistency story at the Larmor frequencies for degree-1
 figures:** the order-matched 4×4 is externally checked at 128 MHz (AGREE
@@ -24,136 +25,124 @@ page is a read-only digest for the human operator.
 
 ## Waiting on you
 
-1. ✅ **Privacy — resolved 2026-09-24 (operator):** relative agreement
-   levels against AED are publishable; the Privacy clause in `CLAUDE.md`
-   and `weekly-review.md` now says so. The four flagged places stand as
-   written; raw AED values stay private. Drop this item at the next review.
-2. 🟠 **Re-run `scripts/testing/install_git_hooks.sh` once** *(carried from
-   `OPS-58` ✅)* — `.git/hooks` is untracked and not agent-writable; this adds
-   the `commit-msg` hook beside `pre-commit`.
-3. 🟠 **`ans:3` needs one interactive re-run** *(carried)* — its tracked
-   `metrics.json` / `COMPARISON.md` still show the pre-`PORT-20` S table; the
-   script rewrites the gitignored private comparison, so no slot may run it.
+1. 🟠 **An AED figure sits in tracked text: your call on history.** The
+   `ans:2` example's docstring and one print line (since `a2e4a04`, 09-19)
+   quote HFSS's own driven-point C4 spread. That is an AED value, not a
+   relative agreement level. Last night's tracked XL log printed it again
+   (`20260925T070008Z_ANS-2-step4.log:2113`). The source lines are queued
+   for removal (`OPS-63`, item 41), and this review redacted the same figure
+   from the plan's `ANS-2` row. The logs and history already committed need
+   your decision. The number is quoted nowhere in this review.
+2. 🟠 **The solver container died at ≈ 10:00 Wednesday, cause unknown**
+   (`Exited (137)`, i.e. SIGKILL, typical of an OOM kill or a manual stop). No
+   automation stops it. It is running again, and no known-issues entry was
+   opened because the restart resolved it. If you know what happened (Docker
+   Desktop, WSL, a manual stop), say so. Nothing was lost: Thursday was off.
+3. 🟠 **Re-run `scripts/testing/install_git_hooks.sh` once** *(carried from
+   `OPS-58` ✅)* — `.git/hooks` is untracked and agents cannot write it;
+   the script adds the `commit-msg` hook beside `pre-commit`.
+4. 🟠 **`ans:3` needs one interactive re-run** *(carried)* — its tracked
+   `metrics.json` / `COMPARISON.md` still show the pre-`PORT-20` S table.
    Also: **CLAUDE.md's "two external findings stand open" sentence still
    names `PORT-20`**, which is closed.
-4. 🟠 **`ANS-6` adjudication is the 09-26 weekly's** *(carried)*. On our
-   side: a resolution knob for `ans:6` is queued (item 35) and, once it lands,
-   an XL cost probe of the matched hole-mesh rung (h = 0.005, degree 2) is
-   pre-registered (`xl-pending.md` entry 14). Still no private-mode comparison
-   writer for this example — say if you want one.
-5. 🟠 **`GEO-34` (STEP import) is queued, with one substitution you may want
-   to overrule.** Step 1 is split into 1a (STEP round trip + config group map,
-   mesh-level gates — item 37), 1b (the four-port gates on the imported mesh)
-   and 1c (an independent CAD emitter). CadQuery / build123d are **not in the
-   image**, so 1a writes the STEP with Gmsh's own OCC writer: it exercises the
-   STEP reader and the group map but not an independent CAD kernel. If you
-   want 1c, add one of them to `docker/Dockerfile` and rebuild.
-6. 🟠 **For the 09-26 weekly** *(information)*: `OPS-61` (Palace) to
-   commission; `TH-17`'s gate "mode 1 at 64 MHz" may be mis-posed (the eigen
-   solve terminates all four ports, the driven sweep one); **human-scale step
-   H6 conflicts with your 09-20 strip-conductor note on `GEO-33`** (the chain
-   says a round-tube cost rung; the note says the 32-leg rung should carry
-   zero-thickness strips) — not queued until reconciled; feature-ladder B1
-   (`TH-5`, radiation boundary) was never queued and now has its skip reason
-   recorded.
-7. 🟡 **`example-runner` should not be able to spawn agents, and its "no
-   deviations" is not evidence.** *(Carried.)* The durable fix is in
-   `.claude/agents/example-runner.md` (not writable from scheduled reviews).
-8. 🟡 **Two figure-style choices are yours.** *(Carried.)* Legends collapse
-   more than two same-colour entries to `first … last`, and one colour per
-   region class cannot show a split between two same-class regions.
-9. 🟡 **XL nights cannot prove "no orphans".** Every ledger row since 09-20
-   reads "orphans: not established": the `ANS-4` commands carry no count and
-   `xl-run.sh` does no post-window check. A one-line count in the launcher
-   would make it uniform. Not queued — no status rides on it; flagged to the
-   weekly.
-10. 🟡 **XL / XXL windows ahead — information only.** Thu 09-24 `ANS-4` 3g
-    (10 MHz four-rung ladder); Fri 09-25 `ANS-2` step 4 (phantom h-halving);
-    Sat 09-26 XXL `WF-7` 0d (human-scale 32 ports at degree 2); Sun 09-27 3h
-    and Mon 09-28 3i (the 10 and 64 MHz ladders on the symmetric port cut).
-    Every night finds five charged rows in its own trailing week.
-11. 🟡 **Codex review rollout — paused, yours.** *(Carried.)* Handoff at
+5. 🟠 **`ANS-6` adjudication is Saturday's weekly** *(carried)*. The
+   hole-mesh degree-2 cost probe runs Tue 09-29 (XL entry 14). There is
+   still no private-mode comparison writer for this example; say if you
+   want one.
+6. 🟡 **`example-runner` must not spawn agents** *(carried; happened again
+   09-23)*. On Wednesday a spawned runner started a background runner, which
+   **resumed after the slot had committed**; the slot caught it. The rule
+   now sits in §9, but the durable fix is `.claude/agents/example-runner.md`,
+   which scheduled sessions cannot write.
+7. 🟡 **`GEO-34` step 1c needs a CAD kernel in the image** *(carried)* —
+   CadQuery / build123d in `docker/Dockerfile` plus a rebuild, if you want
+   the independent-emitter check. Step 1b (the four-port gates on the
+   imported mesh) is queued without it.
+8. 🟡 **Leftover directory `.worktrees/census-before`** (09-23 slot):
+   gitignored, partly root-owned. `sudo rm -rf` it when convenient.
+9. 🟡 **For the 09-26 weekly** *(information)*: 3g's "falling but not
+   converged" reading, which the pre-registered rule does not cover; the
+   `ANS-2` band into the private file; no XXL window is pre-registered after
+   Saturday's; H6 vs your strip-conductor note on `GEO-33`; B1 `TH-5`;
+   `OPS-54`, `OPS-61`.
+10. 🟡 **XL nights still cannot prove "no orphans" for the `ANS-4` windows**
+    *(carried)*. The `ANS-2` / `ANS-6` commands count them; the ladder
+    commands do not, and `xl-run.sh` does no post-window check.
+11. 🟡 **Two figure-style choices are yours.** *(Carried.)* Legends collapse
+    more than two same-colour entries to `first … last`, and one colour per
+    region class cannot show a split between two same-class regions.
+12. 🟡 **Codex review rollout — paused, yours.** *(Carried.)* Handoff at
     `logs/automation/codex-rollout-paused-20260910/HANDOFF.md` (gitignored).
-12. **Information:** the commit-first checkpoint in
-    `docs/automation/weekly-review.md` (08-30) still awaits your OK.
-13. **One click: does ParaView open a DG1 `.bp`?** (since 2026-08-12.)
-    `scripts/probes/post4_step5_probe.py` writes the `.bp`, reads it back
-    exactly and ends `PROBE_RESULT PASS`.
+13. **Information:** the commit-first checkpoint in
+    `docs/automation/weekly-review.md` (08-30) still awaits your OK. **One
+    click:** does ParaView open a DG1 `.bp`? (since 2026-08-12;
+    `scripts/probes/post4_step5_probe.py` writes it and ends `PROBE_RESULT PASS`.)
 
-Nothing is blocked on you today. Claude connectors for Gmail, Microsoft 365
-and PubMed are unauthorised in this headless session; nothing here needs them.
+The privacy item from 09-23 is closed by your 09-24 ruling and dropped.
+Claude connectors for Gmail, Microsoft 365 and PubMed are unauthorised in
+this headless session; nothing here needs them.
 
-## Honest current state (digest of §2 — §2 unchanged since 09-20; rows refreshed from §7)
+## Honest current state (digest of §2 — §2 changed: the circuit layer names its engine)
 
 | Capability | State | Gate |
 |---|---|---|
 | Magnetostatics | ✅ validated | closed forms green; h-refinement gate on 0.11 (`MAG-20` ✅) |
-| Time-harmonic curl-curl | ✅ validated | lossy plane wave < 0.06%; Larmor sphere 3.64% / 1.77%, power 3.63%; degree 2 gated at 0.1405% on the sphere (`TH-12` ✅) — production order: target degree 2, default not flipped, decided 09-26 on the 3e / 3g ladders |
-| Conductor model | ✅ two routes gated (`TH-14` ✅): the birdcage as a PEC hole and copper as a Leontovich surface | one loop, one liftoff, 10 MHz for the floor; no absolute S on a copper coil — `ANS-6` both halves landed, adjudication 09-26 |
-| Coil loading | 🟡 measured flat in f across 10–64 MHz on one XL window — a record, not a gate | `MAT-6` ✅ Dodd–Deeds at 10 MHz; `TH-11` step 5d bracket [−2.04%, −0.43%] |
-| S-parameters / ports | ✅ 4-leg identities at 10/64/128 MHz; order-matched 4×4 externally checked: AGREE at 128 MHz; at 64 and 10 MHz couplings AGREE, **self class `S₁₁` DISAGREE, open** (`PORT-21` step 1 table on `main`); 64 MHz degree-2 *h*-ladder converging (ratios 1.88 / 1.92 / 1.64, one class ambiguous — the weekly rules); two-torus current route reports `S = z_to_s(Z)` (`PORT-20` ✅) | **no absolute `S₁₁` / `Z_in` at 10 or 64 MHz at either order**; `ans:3`'s tracked tables still pre-fix (Waiting-on-you 3) |
-| Lumped RLC / circuit layer | ✅ `PORT-14`, `PORT-15`, `PORT-22` (circuit reduction = in-model tuned `S₁₁` to ≤ 8.3e-5, 44–84 MHz); `EX-61` ✅ plots the resonance curve | series resonance on one fixture, not matched; `scikit-rf` engine (`PORT-23`) queued behind `OPS-60`'s closure (items 33–34) |
-| Multi-port drive | ✅ `POST-6` — 32-port ccw quadrature C16-invariant (0.81 %) | 10 MHz only; the human-scale version is item 36 |
+| Time-harmonic curl-curl | ✅ validated | lossy plane wave < 0.06%; Larmor sphere 3.64% / 1.77%, power 3.63%; degree 2 gated at 0.1405% on the sphere (`TH-12` ✅). Production order: target degree 2, decided by the weekly; 3g (10 MHz) not converged on `S₁₁` |
+| Conductor model | ✅ two routes gated (`TH-14` ✅) | no absolute S on a copper coil. `ANS-6` adjudication 09-26; hole-mesh degree-2 probe 09-29 |
+| Coil loading | 🟡 measured flat in f across 10–64 MHz on one XL window — a record, not a gate | `MAT-6` ✅ Dodd–Deeds at 10 MHz |
+| S-parameters / ports | ✅ 4-leg identities at 10/64/128 MHz; order-matched 4×4: AGREE at 128 MHz; at 64 and 10 MHz couplings AGREE, **`S₁₁` DISAGREE, open**; degree-2 *h*-ladders: 64 MHz converging, **10 MHz falling but not converged on `S₁₁`** | **no absolute `S₁₁` / `Z_in` at 10 or 64 MHz** |
+| Lumped RLC / circuit layer | ✅ `PORT-14`, `PORT-15`, `PORT-22`, `EX-61`; **`scikit-rf` 2.1.0 engine = raw reduction to ≤ 3.5e-16** (`PORT-23` step 1, `OPS-60` ✅) | series resonance on one fixture, not matched |
+| Multi-port drive | ✅ `POST-6` — 32-port ccw quadrature C16-invariant | 10 MHz on the ring rung; human-scale version below |
 | B₁⁺ | ✅ `WF-6` — two-rung convergence statement (5.25 % → 2.07 %) | a convergence statement only |
-| Coil-driven SAR | ✅ 1 g / 10 g C4-gated at 10 MHz on one fixture (`MAT-4`); externally checked — `ANS-2` adjudicated AGREE, numbers private | no compliance claim; one fixture, 10 MHz; the phantom h-halving is an `xl` window, 09-25 |
-| Human-scale mesh | 🟡 **identities gated** (`WF-7` step 1, 09-21): F-human 32×32 at 64 MHz, degree 1 — reciprocity 9.2e-15, σ_max 0.99991, 18 symmetry classes worst 3.70 % (band 5 %), exact power identity ≤ 2.8e-15 on 4 drives | no field, B₁⁺ or SAR yet (`|B₁⁺|` is item 36); degree 1 carries a 5.5 % order caveat; degree-2 32-port price 09-26 |
-| Examples | **56 runnable**, census clean; **25 of 56 guides have a setup figure** (`EX-57`, recurring; 31 owed) | the figure helper refuses an over-long title (`OPS-53` ✅) |
-| Test-suite trust | ✅ the external-review rows closed (`OPS-55` / `-56` / `-57` / `-58` / `-59` / `-62`, `OPS-50`); known reds: known-issues entry 3's two port tests, the padding module, and `OPS-60`'s deliberate red (item 33 retires it) | the `B` projection is not run-to-run reproducible below ≈ 4e-6 (no gate reads it) |
+| Coil-driven SAR | ✅ 1 g / 10 g C4-gated at 10 MHz (`MAT-4`); `ANS-2` AGREE, **phantom h-halving → branch (a): residual is the feed, pointwise band 10 % → 4.5 %** | no compliance claim; one fixture, 10 MHz |
+| Human-scale | 🟡 **identities + `|B₁⁺|` C16 gated** (`WF-7` steps 1–2): 32×32 reciprocity 9.2e-15, 18 classes ≤ 3.70 %; ccw `|B₁⁺|` C16 0.15 %, mirror 0.16 % | the 10 g hotspot is item 39; degree 1 carries a 5.5 % order caveat; degree-2 32-port price 09-26 (XXL) |
+| CAD input | 🟡 STEP round trip of F-small through a config group map, mesh gates green (`GEO-34` 1a) | four-port gates on the import are item 40; no independent CAD kernel |
+| Examples | **56 runnable**, census clean; **29 of 56 guides have a setup figure** (`EX-57`; 27 owed) | — |
+| Test-suite trust | ✅ external-review rows closed; known reds: known-issues entry 3's two port tests, the padding module; **new: the `ans:2` example's mislabelled ASSERTED lines** (`OPS-63`) | the `B` projection is not run-to-run reproducible below ≈ 4e-6 (no gate reads it) |
 
-## Recent activity (2026-09-21 03:00 → 2026-09-23 03:00; Tuesday off)
+## Recent activity (2026-09-23 03:00 → 2026-09-25 03:00; Thursday off)
 
-- **Mon 04:30 slot:** `OPS-60` pin (→ 🟡); **`WF-7` step 1 🧪 → 🟡**;
-  `PORT-21` step 1 on `main` (the symmetric-cut variant inside its band);
-  `ANS-6` degree knob + first degree-2 price on the hole mesh.
-- **Mon 06:00 slot:** `TH-17` step 1c green (the eigen pencil reproduces an
-  LC loop's closed form to 2 %); **`OPS-59`, `OPS-50`, `OPS-55`, `OPS-56`,
-  `OPS-57` ✅**.
-- **Mon 07:30 slot:** `OPS-58` stopped on its pre-registered audit hit (you
-  ruled it that evening); **`EX-61` ✅**; `EX-57` `mesh:9`.
-- **Mon 09:00 slot:** queue drained ⇒ `EX-57` `mesh:10` fallback.
-- **Your sessions:** `OPS-58` ✅ (allowlist); `OPS-62` ✅ (ladder guard);
-  image rebuild; Opus 5.5 for implementers and this review.
-- **`xl` 09-22:** `ANS-4` 3e — every gate green, Status 1 on two non-physics
-  reds only. **`xl` 09-23:** 3f — 18 / 18, first window on the new image.
-- **03:00 review (this one):** eight audits (seven PASS, one DEMOTE
-  overruled); two XL ledger rows filled; 3e not re-run; three XL entries
-  written (two queued, one pending); six items written. Journal:
-  `docs/planning/reviews/2026-09-23-daily.md`.
+- **Wed 04:30 slot:** `OPS-60` ✅; `PORT-23` step 1 (the `scikit-rf`
+  engine); `ANS-6` resolution knob; `WF-7` step 2 (human-scale `|B₁⁺|`).
+- **Wed 06:00 slot:** `GEO-34` step 1a (STEP import); `EX-57` `mesh:11`,
+  `mesh:12`.
+- **Wed 07:30 / 09:00 slots:** queue drained ⇒ `EX-57` `mat:1`, `mat:2`.
+- **≈ Wed 10:00:** solver container exited (found and restarted 09-25).
+- **XL Thu:** `ANS-4` 3g, 18 / 18, 2084 s. **XL Fri:** `ANS-2` step 4, rc 0,
+  1315 s, 39.9 GiB.
+- **Your sessions:** the privacy ruling; `weekly_counts.py` tokens.
+- **03:00 review (this one):** one audit (DEMOTE on a tier word, overruled);
+  two XL rows read and ruled; two XL entries queued (one written); `OPS-63`
+  opened; four items written. Journal:
+  `docs/planning/reviews/2026-09-25-daily.md`.
 
 ## Automation health
 
-- **Implementer slots: 4 of 4 fired Monday; 14 items attempted, 12 landed,
-  1 parked for you (since resolved), 1 fallback figure.** No window died, no
-  masked status, no dirty tree. Take-next carried the 06:00 slot through
-  six items.
-- **Reviews:** this one ran on `claude-opus-5-5` (the daily override through
-  09-29). Thursday is off; next daily Friday 09-25 03:00, weekly Saturday
-  09-26 21:00.
-- **XL: 6 of 6 windows used in the trailing 7 days as of today (each queued
-  night counts 5 at its own cutoff), 4 entries ahead (floor 4) — met.**
-  **XXL: 1 ahead (09-26, floor 1) — met.** Entry 14 waits on item 35.
-- **Docker socket:** the 09-22 evening denial was specific to that sandboxed
-  session; this review and last night's XL window both reached the
-  container.
-- **Tree:** clean. **Branches:** 5 `attempt/*` (4 kept on the 09-09 ruling;
-  `attempt/OPS-50-…` kept because its tip is the `OPS-50` control's pinned
-  sha). No `recovered/*`.
-- **§9 size:** 45.8 KB against a ~25 KB target (59.3 KB before) — six
-  full-rubric items are ~24 KB on their own (journal §7).
+- **Implementer slots: 4 of 4 fired Wednesday.** Six items and four
+  fallback figures landed; nothing parked; one executor-nesting breach,
+  caught.
+- **Service outage:** the ordinary container was down ≈ 41 h (mostly the
+  off day); restarted 03:03 local.
+- **Reviews:** this one ran on `claude-opus-5-5` (the daily override
+  through 09-29). Next daily Sat 09-26 03:00; weekly Sat 09-26 21:00.
+- **XL: 6 of 6 windows used in the trailing 7 days, 4 entries ahead
+  (floor 4) — met.** **XXL: 1 ahead (09-26), floor 1 — met;** nothing
+  after it.
+- **Tree:** clean after this commit. The untracked XL output was moved into
+  the gitignored `paraview_output/`: committing it would break the artifact
+  pin.
+  **Branches:** five `attempt/*` kept; no `recovered/*`.
+- **§9 size:** 39.3 KB against a ~25 KB target (48.0 KB before).
 
-## On deck (§9 — six items, 230 predicted slot-minutes; floor 240: short 10 min; ≥ 5 items: met)
+## On deck (§9 — four items, 165 predicted slot-minutes; floor 240: short 75 min; ≥ 5 items: short one)
 
-33. ~~**`OPS-60`**~~ **DONE 04:30 slot — `OPS-60` ✅**: `skrf=2.1.0` green on
-    the ordinary service, no recreate needed; your rebuild is fully landed.
-34. ~~**`PORT-23` step 1**~~ **DONE 04:30 slot** — the `scikit-rf` circuit
-    layer matches the raw reduction to machine precision; step 2 open.
-35. ~~**`ANS-6` step 2b**~~ **DONE 04:30 slot** — resolution knob landed;
-    XL entry 14 (hole-mesh probe) is READY for the next review to queue.
-36. ~~**`WF-7` step 2**~~ **DONE 04:30 slot** — human-scale `|B₁⁺|` is
-    C16-symmetric to 0.15 % (5 % band); H5 (hotspot) becomes queueable.
-37. **`GEO-34` step 1a** *(standard)* — STEP round trip of the F-small
-    birdcage through a config-driven importer, mesh-level gates.
-38. **`EX-57` figure** — `meshing/11_birdcage_sixteen_ring_sheet_longitudinal.py`.
+39. **`WF-7` step 3** *(heavy)* — the 10 g SAR hotspot on the human-scale
+    birdcage (refined phantom), C16- and mirror-gated; can close `WF-7`.
+40. **`GEO-34` step 1b** *(standard)* — the four-port gates at 10 MHz on the
+    STEP-imported mesh.
+41. **`OPS-63`** *(heavy)* — the `ans:2` example asserts what it says it
+    asserts; the AED figure leaves its source.
+42. **`EX-57` figure** — `time_harmonic/01_lossy_plane_wave.py`.
 
 ---
 

@@ -28,6 +28,14 @@ unless fixing it is the task.
 
 ## Failing tests
 
+### 🟡 OPEN 2026-09-25 (03:00 daily review, from the `log-pathologist` reading of `20260925T070008Z_ANS-2-step4.log`) — the `ans:2` example prints ASSERTED for three checks it never runs, and its tracked text quotes an AED figure
+
+| | |
+| --- | --- |
+| **Symptom** | The example's log labels ball containment (`:2061`), the 10 g mis-paired control's sign (`:2073–2076`) and the `PORT-9` bands (`:2057`) "ASSERTED". None of the three is asserted by the example. The labels are printed by shared builders whose asserts live in pytest functions the example does not call. The arithmetic behind each label holds on this run, so no number is wrong; the labels overstate what the example checks. The same log labels the 1 g pairs both "(PRINTED NOT GATED)" (`:2073–2076`) and "ASSERTED" (`:2100–2103`); the second is true. Separately, `02_birdcage_coil_driven_sar_10MHz.py:394` and `:620` quote AED's own driven-point C4 spread. That is an AED value, not a relative agreement level, so it may not sit in tracked text (CLAUDE.md hard rule; operator ruling 2026-09-24). It entered with `a2e4a04` (2026-09-19) and is now printed at `:2113` of the tracked log. |
+| **Not affected** | The branch-(a) ruling on `ANS-2` step 4 (§7 row). It rests on the example's real asserts and the pathologist's recomputation from the metrics JSON, not on the mislabelled lines. |
+| **Resolves with** | `OPS-63` (§7). The tracked logs that already carry the figure are the operator's call (dashboard Waiting-on-you). |
+
 ### ℹ️ RESOLVED-IN-CODE 2026-09-22 (`OPS-62`) — the `ANS-4` step 3e XL window exited 1 on a spurious guard; its four rungs' data are intact
 
 | | |

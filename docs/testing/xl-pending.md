@@ -525,8 +525,17 @@ suspect, a `POST` item — **never a band change**.
 
 ### 10. `xl` — `ANS-2` step 4: the phantom h-halving, four drives (operator session 2026-09-19; daily-licence class: cost probe, price measured by the step's own probe)
 
-**Status:** QUEUED 2026-09-20 for Friday 2026-09-25 02:00 —
-`docs/testing/xl-queue.d/20260925-ANS-2-step4.env`. *(Was READY.)* `ANS-2` step 4a landed 2026-09-19 (§9 item 9): the example
+**Status:** RUN `20260925T070008Z_ANS-2-step4.log` — Status 0, 1315 s,
+39.91 GiB, orphans 0 / 0: C4 driven-point spread 15.730 → 4.528 %, phantom
+power moves ≤ 0.30 % ⇒ **branch (a)**, ruled by the 2026-09-25 review (ledger
+row; §7 `ANS-2`). `metrics_h0.00125.json` is **not committed**, despite
+"Outputs to commit" below. The `OPS-59` artifact pin
+(`tests/unit/test_doc_reference_exit_codes.py:463`) lists exactly one
+`metrics.json` per `ans:` case, so a second tracked JSON would turn it red.
+The review moved the file beside the XDMF under the gitignored
+`paraview_output/`; the log carries every readout figure. *(Was QUEUED
+2026-09-20 for Friday 2026-09-25 02:00 —
+`docs/testing/xl-queue.d/20260925-ANS-2-step4.env`; before that READY.)* `ANS-2` step 4a landed 2026-09-19 (§9 item 9): the example
 reads `FEM_EM_ANS2_PHANTOM_RESOLUTION`, tags `metrics_h<res>.json` and the
 XDMF, skips the two 0.0025-rung mesh-record assertions **with a printed
 `[ANS-2 step 4] MESH-RECORD ASSERTIONS SKIPPED` line** while every other
@@ -590,10 +599,16 @@ No band moves in the window; the review that finds the ledger row rules.
 
 ### 11. `xl` — `ANS-4` step 3g: the 10 MHz degree-2 *h*-ladder (weekly 2026-09-19, §10 chain F step F2)
 
-**Status:** QUEUED 2026-09-20 for Thursday 2026-09-24 02:00 —
+**Status:** RUN `20260924T070008Z_ANS-4-step3g.log` — 18 passed, Status 0,
+2084 s, 281.95 GiB (ledger row, 2026-09-25 review): gates green on every
+rung; successive degree-2 changes 6.969 → 3.606 % / 1.813 → 0.934 % /
+1.843 → 1.100 % (ratios 1.93 / 1.94 / 1.67) — falling, but the last change
+is above 1.08 % on S₁₁ and S₃₁, so neither branch of the rule below is met
+as written; the weekly rules, with 3h (entry 12) as the cut control. *(Was
+QUEUED 2026-09-20 for Thursday 2026-09-24 02:00 —
 `docs/testing/xl-queue.d/20260924-ANS-4-step3g.env` (ahead of entry 10 so
 that a budget-denied night still leaves 3g run before the 09-26 weekly,
-which reads it with 3e). *(Was READY.)* No prerequisite; the knob, the module and the `RUNGSPEC`
+which reads it with 3e). Before that READY.)* No prerequisite; the knob, the module and the `RUNGSPEC`
 have all run green at `-n 16` (`ANS-4-step3c` 2026-09-18 at 10 MHz, step 2d
 2026-09-10 with this `RUNGSPEC`). The next daily review queues it for the
 first free `xl` night.
@@ -745,7 +760,9 @@ disagreeing ⇒ this entry's is the one F2 records. No band moves.
 
 ### 14. `xl` — `ANS-6` step 2c: the hole-mesh degree-2 rung at h = 0.005, 64 MHz (daily licence: cost probe, 2026-09-23 review; chain T9b's second half)
 
-**Status:** READY (2026-09-23, 04:30 CDT slot) — §9 item 35 (`ANS-6` step 2b,
+**Status:** QUEUED 2026-09-25 for Tuesday 2026-09-29 02:00 —
+`docs/testing/xl-queue.d/20260929-ANS-6-step2c.env` (command line
+byte-identical to the block below). *Before that* READY (2026-09-23, 04:30 CDT slot) — §9 item 35 (`ANS-6` step 2b,
 the `FEM_EM_ANS6_RESOLUTION` knob) landed: control at h = 0.015 reproduces
 the tracked 64 MHz S leaves to 2.647e-15 on 80 181 cells / 111 121 unknowns
 (`20260923T094235Z_ANS-6-step2b-a-h0p015-d1-64MHz.log:940–944`); the knob
@@ -795,6 +812,66 @@ brackets ⇒ the matched hole rung is an ordinary `xl` window and the weekly
 may commission it at 10 and 128 MHz; outside above ⇒ the price is the
 finding; a gate red ⇒ a finding for a `TH-15` / `TH-14` §9 item, never a
 band change.
+
+### 15. `xl` — `ANS-4` step 3j: the 128 MHz degree-2 *h*-ladder on the C4-congruent cut (daily licence: priced-family variant, 2026-09-25 review)
+
+**Status:** QUEUED 2026-09-25 for Wednesday 2026-09-30 02:00 —
+`docs/testing/xl-queue.d/20260930-ANS-4-step3j.env`.
+
+**Licence class:** priced-family variant of entry 13 (`ANS-4` step 3i) —
+the same module, `RUNGSPEC="0.015:1 0.015:2 0.0075:2 0.005:2"` and
+congruent cut (`FEM_EM_ANS4_STEP2_C4_CONGRUENT=1`); **one knob varied: the
+frequency**, by leaving `FEM_EM_ANS4_FREQUENCY_HZ` unset (the module's
+default, 128 MHz — how entry 3 (3b) and step 2d ran it). Both halves are
+measured at `-n 16`: this `RUNGSPEC` at 128 MHz cut off (step 2d, 2026-09-10)
+and the cut-on finest rung at 128 MHz (3b, 2026-09-17). Written because the
+`xl` floor was one short after entry 14 was queued (§6b rule 4); the weekly's
+list of preferred variants names "the `ANS-4` degree-2 rung at the other
+Larmor frequency".
+
+**Why (the §10 question it answers):** the 09-26 weekly's production-order
+ruling (chain T6, `TH-19` step 4) re-records every degree-1 S record beside
+its degree-2 value, at 10, 64 and 128 MHz. With 3h (10 MHz) and 3i (64 MHz)
+queued, 128 MHz is the only frequency whose degree-2 *h*-ladder rests on the
+**cut-off** mesh (step 2d: successive change 1.19 → 0.62 %, ratio 1.90). Its
+finest rung carried the sheet-triangulation spread that 3b later removed
+(0.0056 / 0.0088 / 0.0070 % with the cut on). 3g (entry 11, 2026-09-24) has
+just shown that a ladder can fall with ratio ≈ 1.9 while its last change is
+still ≈ 3.6 % on the self class. This window puts all three frequencies on one
+mesh family, so T6 reads its ladders on the same cut.
+
+**Command** (entry 13's with `FEM_EM_ANS4_FREQUENCY_HZ=64e6` removed and the
+raw-log name changed — nothing else):
+
+```
+XL_CHUNK="ANS-4-step3j"
+XL_COMMAND="docker compose --profile xl exec -T fem-em-solver-xl bash -lc 'cd /workspace && source /usr/local/bin/dolfinx-complex-mode && mkdir -p /workspace/logs && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 FEM_EM_SOLVER_PROGRESS=2 FEM_EM_ANS4_STEP2_C4_CONGRUENT=1 FEM_EM_ANS4_STEP2_RUNGSPEC=\"0.015:1 0.015:2 0.0075:2 0.005:2\" timeout -k 60 14400 mpiexec -n 16 python3 -m pytest tests/environment tests/validation/test_ans4_resolution_ladder.py -v -s --tb=short > /workspace/logs/ans4-step3j-raw.log 2>&1; rc=\$?; echo \"[XL] memory.peak bytes:\" >> /workspace/logs/ans4-step3j-raw.log; cat /sys/fs/cgroup/memory.peak >> /workspace/logs/ans4-step3j-raw.log; echo \"[capture] rc=\$rc\" >> /workspace/logs/ans4-step3j-raw.log; cat /workspace/logs/ans4-step3j-raw.log; exit \$rc'"
+```
+
+**Price, measured in the family:** this `RUNGSPEC` cut off at `-n 16` —
+2206 s / 277.44 GiB (3e, 64 MHz) and 2084 s / 281.95 GiB (3g, 10 MHz), both
+with factor reuse. Step 2d's 7225 s at 128 MHz predates held
+back-substitution and is not the price. The cut-on finest rung at 128 MHz is
+3b's own, four drives 1361.4 s, 273.1 GiB. Frequency does not change the
+factorisation's size ⇒ **predicted 2 000–2 700 s, 270–290 GiB**. Timeout
+14 400 s inside the 4 h window; 512 GiB limit.
+
+**Readout (record; the module's imported gates and ladder controls, nothing
+else asserted):** as entries 12 and 13, at 128 MHz, beside step 2d's cut-off
+ladder. The finest rung reproduces 3b's (592 550 cells, 0.0056 / 0.0088 /
+0.0070 %), printed, not asserted. **Expected skip:** the frequency-knob test
+takes its `is_default` branch and skips at `-n 16` against the `-n 8`
+record width (`OPS-41`), exactly as 3b did (15 passed / 1 skipped). A skip
+there is not a red. Successive changes are the review's hand arithmetic, as
+for 3e and 3g. Private: nothing new; the 128 MHz AGREE was read on 3b.
+
+**Decision rule for the weekly:** step 2d's reading (ratio ≳ 1.5, the last
+change below step 2b's smallest 128 MHz degree 1 → 2 class move, 5.3841 %,
+ledger 2026-09-09 — the analogue of entry 7's 2.60 % and entry 11's 1.08 %)
+either reproduces on the cut —
+the 128 MHz degree-2 figure is an *h*-converged value on both meshes — or it
+does not, in which case this entry's is the one T6 records. No band moves. A
+red on a ladder-control test is a module finding for a §9 item, not physics.
 
 ### Weekly rulings on RUN entries, 2026-09-19 (full text PROJECT_PLAN §10; AED figures private)
 
