@@ -138,11 +138,16 @@ are yours.
 
    **The setup-figure filler (operator directive 2026-09-13, `EX-57`).**
    After the real items, **always append one `EX-57` item** — the recurring
-   background task the operator asked for — naming the script that
-   `python3 scripts/testing/check_example_setup_figures.py --next` prints
-   (run it; do not guess the order). Cost it at the example's recorded
-   window + 15 min (≈ 20 slot-min), tier the example's own, `example-runner`,
-   independent, "**Status it can move:** `EX-57` census `missing` − 1". Its
+   background task the operator asked for — naming the scripts that
+   `python3 scripts/testing/check_example_setup_figures.py --next 3` prints,
+   cut at the first one outside the leading script's group directory
+   (run it; do not guess the order). **Batched since 2026-09-25** (operator
+   directive): one `example-runner` run draws all of them, so its start-up
+   reads are paid once, not once per figure. Cost it at the examples'
+   recorded windows + 15 min + 10 min per figure after the first (≈ 20
+   slot-min for one, ≈ 40 for three), tier the heaviest example's,
+   `example-runner`, independent, "**Status it can move:** `EX-57` census
+   `missing` − k" (k = scripts named). Its
    done-when is the §7 `EX-57` entry's per-item list; copy nothing else.
    When the census prints nothing (`missing=0`), flip `EX-57` to ✅ in §7
    and stop appending. This item counts toward the slot-minutes floor but
