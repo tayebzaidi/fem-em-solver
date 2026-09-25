@@ -3039,3 +3039,9 @@ committed at 12:53Z).
 - **OPS-59 (b) identity:** `20260925T123254Z_EX-57.log`, `pytest tests/unit/test_doc_reference_exit_codes.py -v --tb=short -s`, Status 0, 20 passed (run after `git add`ing the PNG).
 - **Committed:** example edit, guide `## Setup figure` section, PNG, harness logs, PROJECT_PLAN §7 `EX-57` row + §9 item 44 DONE, this entry — one commit on `main`.
 - **Next hypothesis:** none open; the item closes clean. The census's `--next` now points at the next missing example for a future slot.
+
+## 2026-09-25 12:37 UTC — slot close (07:30 CDT implementer slot) — no further item
+
+- **Queue state:** §9 items 39, 41, 42, 43 DONE; 40 BLOCKED (`GEO-34` step 1b, awaits a review-designed probe). The slot took the drained-queue `EX-57` fallback once (item 44, `4e4e1e0`, entry above), verified by the slot: `git status` clean, the harness footers (flagged 11 s, unflagged 7 s, both Status 0), census `missing` 25 → 24, `broken=0`, `ListAgents` shows no child still running.
+- **Stop:** the §9 fallback paragraph says "take the next `EX-57` setup figure, then stop and journal", so the slot stops at minute ~7 without drawing a second figure. **For the review:** if more than one fallback figure per slot is intended (as the 09-23 06:00 slot did, item 38), say so in that paragraph; as written it licenses one.
+- **Cosmetic, not a gate:** in the th:3 PNG the clipped sphere's cut face renders as a jagged tet surface in the 3-D panel, and the legend box overlaps the sphere's left edge. Readable; no action taken.
