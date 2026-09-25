@@ -64,6 +64,23 @@ The refinement pair is the point: a single mesh can match a closed form by
 coincidence, and the O(h) rate is what rules that out. Do not drop the coarse
 solve to save 4 s.
 
+## Setup figure
+
+![th:1 setup — the 0.1 m homogeneous-medium box, 24^3 fine rung](figures/time_harmonic_01_lossy_plane_wave_setup.png)
+
+`examples/time_harmonic/figures/time_harmonic_01_lossy_plane_wave_setup.png`.
+This is a plain box domain with **no cell-tag regions** — the fixture is one
+homogeneous lossy medium filling the whole 0.1 m cube, with the analytic wave
+imposed as Dirichlet data on every face, so there is nothing to colour by
+region and none is invented here. The figure is rendered on the **24³ fine
+rung's** mesh right after that solve returns (`_solve_plane_wave(N_FINE, ...,
+return_fields=True)`), the same mesh the α/β fit and the ParaView export use.
+The 3-D panel shows the single untagged volume (one colour, since there is
+only one region); the slice panel cuts normal to y through the box centre,
+i.e. the x–z plane — the plane that shows both the propagation axis (+x,
+along which the wave decays) and the polarisation axis (z, `E = ẑ
+exp(−jkx)`), with the mesh edges of the 24³ rung visible.
+
 ## 3. How to analyze it, step by step
 
 **Step 1 — the two constants against their closed forms.** This is the anchor,

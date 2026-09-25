@@ -74,6 +74,7 @@ from fem_em_solver.io.paraview_utils import (  # noqa: E402
     adopt_host_ownership,
     write_xdmf_with_tags,
 )
+from fem_em_solver.post.setup_figure import write_setup_figure  # noqa: E402
 
 from tests.validation.test_lossy_plane_wave import (  # noqa: E402
     BOX_L,
@@ -96,6 +97,7 @@ ALPHA_BETA_RTOL = 0.01
 N_COARSE, N_FINE = 12, 24
 
 OUTPUT_DIR = Path(__file__).resolve().parent / "paraview_output"
+FIGURE_DIR = Path(__file__).resolve().parent / "figures"  # committed, EX-57
 BASENAME = "time_harmonic_01_lossy_plane_wave"
 
 
@@ -169,6 +171,26 @@ def main() -> None:
         N_FINE, SIGMA, return_fields=True
     )
     fine_seconds = time.perf_counter() - fine_started
+
+    # EX-57 setup figure: the fine (24^3) solve returns `msh` with no
+    # cell_tags -- this is a homogeneous box (the analytic wave imposed on
+    # every face, one lossy medium filling it), so there are no cell-tag
+    # regions to colour by; the caption says so rather than inventing any.
+    # `write_setup_figure` treats an untagged mesh as one region (tag 0),
+    # which is what is named below. Sliced normal to y (the xz plane), the
+    # one plane that shows both the propagation axis (+x, along which the
+    # wave decays) and the polarisation axis (z, E = z_hat exp(-jkx)).
+    # Placed after `fine_seconds` is captured so the render never folds into
+    # either printed [solve] line. No-op unless FEM_EM_SETUP_FIGURES=1.
+    write_setup_figure(
+        msh,
+        None,
+        FIGURE_DIR / f"{BASENAME}_setup.png",
+        region_names={0: "box (homogeneous lossy medium, no cell-tag regions)"},
+        slice_normal=(0.0, 1.0, 0.0),
+        title="th:1 -- lossy plane wave: 0.1 m cube, homogeneous lossy medium, 24^3 fine rung",
+        comm=comm,
+    )
 
     rate = float(np.log(rel_coarse / rel_fine) / np.log(2.0))
     alpha_err = abs(alpha_fine - alpha_exact) / alpha_exact
